@@ -10,6 +10,10 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters?"":(props.mod.parameters = {});
     props.mod.parameters["jwt-type"]?"":(props.mod.parameters["jwt-type"] = "rsa");
     props.mod.parameters["jwt-key-size"]?"":(props.mod.parameters["jwt-key-size"] = "256");
+    props.mod.parameters["jwks-uri"]?"":(props.mod.parameters["jwks-uri"] = "");
+    props.mod.parameters["jwks-private"]?"":(props.mod.parameters["jwks-private"] = "");
+    props.mod.parameters["default-kid"]?"":(props.mod.parameters["default-kid"] = "");
+    props.mod.parameters["client-sign_kid-parameter"]?"":(props.mod.parameters["client-sign_kid-parameter"] = "");
     props.mod.parameters["key"]?"":(props.mod.parameters["key"] = "");
     props.mod.parameters["cert"]?"":(props.mod.parameters["cert"] = "");
     props.mod.parameters["cert"]?"":(props.mod.parameters["cert"] = "");
@@ -81,6 +85,7 @@ class GlwdOIDCParams extends Component {
     this.changeParam = this.changeParam.bind(this);
     this.changeParamWithValue = this.changeParamWithValue.bind(this);
     this.changeNumberParam = this.changeNumberParam.bind(this);
+    this.emptyParameter = this.emptyParameter.bind(this);
     this.toggleParam = this.toggleParam.bind(this);
     this.changeJwtType = this.changeJwtType.bind(this);
     this.changeSecretType = this.changeSecretType.bind(this);
@@ -124,6 +129,10 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters?"":(nextProps.mod.parameters = {});
     nextProps.mod.parameters["jwt-type"]?"":(nextProps.mod.parameters["jwt-type"] = "rsa");
     nextProps.mod.parameters["jwt-key-size"]?"":(nextProps.mod.parameters["jwt-key-size"] = "256");
+    nextProps.mod.parameters["jwks-uri"]?"":(nextProps.mod.parameters["jwks-uri"] = "");
+    nextProps.mod.parameters["jwks-private"]?"":(nextProps.mod.parameters["jwks-private"] = "");
+    nextProps.mod.parameters["default-kid"]?"":(nextProps.mod.parameters["default-kid"] = "");
+    nextProps.mod.parameters["client-sign_kid-parameter"]?"":(nextProps.mod.parameters["client-sign_kid-parameter"] = "");
     nextProps.mod.parameters["key"]?"":(nextProps.mod.parameters["key"] = "");
     nextProps.mod.parameters["cert"]?"":(nextProps.mod.parameters["cert"] = "");
     nextProps.mod.parameters["cert"]?"":(nextProps.mod.parameters["cert"] = "");
@@ -205,6 +214,12 @@ class GlwdOIDCParams extends Component {
   changeNumberParam(e, param) {
     var mod = this.state.mod;
     mod.parameters[param] = parseInt(e.target.value);
+    this.setState({mod: mod});
+  }
+  
+  emptyParameter(param) {
+    var mod = this.state.mod;
+    delete mod.parameters[param];
     this.setState({mod: mod});
   }
   
@@ -522,15 +537,17 @@ class GlwdOIDCParams extends Component {
       errorList["iss"] = "admin.mod-glwd-iss-error";
       errorList["general"] = true;
     }
-    if (!this.state.mod.parameters["key"]) {
-      hasError = true;
-      errorList["key"] = "admin.mod-glwd-key-error";
-      errorList["signature"] = true;
-    }
-    if (this.state.mod.parameters["jwt-type"] !== "sha" && !this.state.mod.parameters["cert"]) {
-      hasError = true;
-      errorList["cert"] = "admin.mod-glwd-cert-error";
-      errorList["signature"] = true;
+    if (!this.state.mod.parameters["jwks-private"]) {
+      if (!this.state.mod.parameters["key"]) {
+        hasError = true;
+        errorList["key"] = "admin.mod-glwd-key-error";
+        errorList["signature"] = true;
+      }
+      if (this.state.mod.parameters["jwt-type"] !== "sha" && !this.state.mod.parameters["cert"]) {
+        hasError = true;
+        errorList["cert"] = "admin.mod-glwd-cert-error";
+        errorList["signature"] = true;
+      }
     }
     if (!this.state.mod.parameters["access-token-duration"]) {
       hasError = true;
@@ -677,7 +694,7 @@ class GlwdOIDCParams extends Component {
               <label className="custom-file-label" htmlFor="mod-glwd-key">{i18next.t("admin.choose-file")}</label>
             </div>
           </div>
-          {this.state.mod.parameters["key"]?<div className="alert alert-primary">{this.state.mod.parameters["key"].substring(0, 40)}</div>:""}
+          {this.state.mod.parameters["key"]?<div className="alert alert-primary">{this.state.mod.parameters["key"].substring(0, 40)}<button type="button" onClick={(e) => this.emptyParameter("key")} className="close"><span aria-hidden="true"><i className="fas fa-trash"></i></span></button></div>:""}
           {this.state.errorList["key"]?<span className="error-input">{this.state.errorList["key"]}</span>:""}
         </div>;
       certJsx =
@@ -691,7 +708,7 @@ class GlwdOIDCParams extends Component {
               <label className="custom-file-label" htmlFor="mod-glwd-cert">{i18next.t("admin.choose-file")}</label>
             </div>
           </div>
-          {this.state.mod.parameters["cert"]?<div className="alert alert-primary">{this.state.mod.parameters["cert"].substring(0, 40)}</div>:""}
+          {this.state.mod.parameters["cert"]?<div className="alert alert-primary">{this.state.mod.parameters["cert"].substring(0, 40)}<button type="button" onClick={(e) => this.emptyParameter("cert")} className="close"><span aria-hidden="true"><i className="fas fa-trash"></i></span></button></div>:""}
           {this.state.errorList["cert"]?<span className="error-input">{this.state.errorList["cert"]}</span>:""}
         </div>;
     }
@@ -1213,6 +1230,61 @@ class GlwdOIDCParams extends Component {
                 <div className="form-group">
                   <div className="input-group mb-3">
                     <div className="input-group-prepend">
+                      <h5>{i18next.t("admin.mod-glwd-specify-jwks")}</h5>
+                    </div>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwks-uri">{i18next.t("admin.mod-glwd-jwks-uri")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-jwks-uri" onChange={(e) => this.changeParam(e, "jwks-uri")} value={this.state.mod.parameters["jwks-uri"]} placeholder={i18next.t("admin.mod-glwd-jwks-uri-ph")} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwks-private">{i18next.t("admin.mod-glwd-jwks")}</label>
+                    </div>
+                    <div className="custom-file">
+                      <input type="file" id="mod-glwd-jwks-private" className="custom-file-input" onChange={(e) => this.uploadFile(e, "jwks-private")} />
+                      <label className="custom-file-label" htmlFor="mod-glwd-jwks-private">{i18next.t("admin.choose-file")}</label>
+                    </div>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <textarea className="form-control" id="mod-glwd-jwks-private" onChange={(e) => this.changeParam(e, "jwks-private")}>{this.state.mod.parameters["jwks-private"]}</textarea>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-default-kid">{i18next.t("admin.mod-glwd-default-kid")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-default-kid" onChange={(e) => this.changeParam(e, "default-kid")} value={this.state.mod.parameters["default-kid"]} placeholder={i18next.t("admin.mod-glwd-default-kid-ph")} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-client-sign_kid-parameter">{i18next.t("admin.mod-glwd-client-sign_kid-parameter")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-client-sign_kid-parameter" onChange={(e) => this.changeParam(e, "client-sign_kid-parameter")} value={this.state.mod.parameters["client-sign_kid-parameter"]} placeholder={i18next.t("admin.mod-glwd-client-sign_kid-parameter-ph")} />
+                  </div>
+                </div>
+                <hr/>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <h5>{i18next.t("admin.mod-glwd-specify-keys")}</h5>
+                    </div>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-glwd-jwt-type">{i18next.t("admin.mod-glwd-jwt-type")}</label>
                     </div>
                     <div className="dropdown">
@@ -1223,6 +1295,8 @@ class GlwdOIDCParams extends Component {
                         <a className={"dropdown-item"+(this.state.mod.parameters["jwt-type"]==="rsa"?" active":"")} href="#" onClick={(e) => this.changeJwtType(e, 'rsa')}>{i18next.t("admin.mod-glwd-jwt-type-rsa")}</a>
                         <a className={"dropdown-item"+(this.state.mod.parameters["jwt-type"]==="ecdsa"?" active":"")} href="#" onClick={(e) => this.changeJwtType(e, 'ecdsa')}>{i18next.t("admin.mod-glwd-jwt-type-ecdsa")}</a>
                         <a className={"dropdown-item"+(this.state.mod.parameters["jwt-type"]==="sha"?" active":"")} href="#" onClick={(e) => this.changeJwtType(e, 'sha')}>{i18next.t("admin.mod-glwd-jwt-type-sha")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["jwt-type"]==="rsa-pss"?" active":"")} href="#" onClick={(e) => this.changeJwtType(e, 'rsa-pss')}>{i18next.t("admin.mod-glwd-jwt-type-rsa-pss")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["jwt-type"]==="eddsa"?" active":"")} href="#" onClick={(e) => this.changeJwtType(e, 'eddsa')}>{i18next.t("admin.mod-glwd-jwt-type-eddsa")}</a>
                       </div>
                     </div>
                   </div>
@@ -1234,7 +1308,7 @@ class GlwdOIDCParams extends Component {
                       <label className="input-group-text" htmlFor="mod-glwd-jwt-key-size">{i18next.t("admin.mod-glwd-jwt-key-size")}</label>
                     </div>
                     <div className="dropdown">
-                      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-glwd-jwt-key-size" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-glwd-jwt-key-size" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={this.state.mod.parameters["jwt-type"]==="eddsa"}>
                         {i18next.t("admin.mod-glwd-jwt-key-size-" + this.state.mod.parameters["jwt-key-size"])}
                       </button>
                       <div className="dropdown-menu" aria-labelledby="mod-glwd-jwt-key-size">
