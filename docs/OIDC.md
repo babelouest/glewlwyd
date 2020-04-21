@@ -40,10 +40,14 @@ To generate a symmetric key encryption, you must build a SHA256 hash of the secr
 - `A192KW`, `A192GCMKW`: 24 first bytes of the hash
 - `A256KW`, `A256GCMKW`: 32 bytes of the hash
 
-If the key management encryption algorithm is `dir`, you must build a SHA256 hash of the secret, then depending on the `enc` value, you must use the n first bytes of the hash as follows:
+If the key management encryption algorithm is `dir`, you must build a SHA512 hash of the secret, then depending on the `enc` value, you must use the n first bytes of the hash as follows:
 - `A128CBC-HS256`, `A128GCM`, `A192GCM`, `A256GCM`: 32 first bytes of the hash
 - `A192CBC-HS384`: 48 first bytes of the hash
 - `A256CBC-HS512`: 64 bytes of the hash
+
+### Multipls keys
+
+If the plugin has multiple keys available, the client can choose any of them to encrypt their requests. But the client MUST set the `kid` value in the JWT header to specify the key to use for decryption.
 
 ### Access tokens, refresh tokens and code encryption
 
@@ -67,18 +71,20 @@ An access token payload has the following JSON format:
 }
 ```
 
-## Generate a key pair for JWT access tokens signatures
+## Keys for JWT tokens signatures
 
-To create a key/certificate pair in RSA or ECDSA format, run the following commands on a linux shell with openssl installed:
+### Single key pair in PEM format
+
+To create a key/certificate pair for RSA, ECDSA, RSA-PSS or EdDSA format, run the following commands on a linux shell with openssl installed:
 
 ```shell
-$ # RSA KEY
+$ # RSA/RSA-PSS KEY
 $ # private key
 $ openssl genrsa -out private-rsa.key 4096
 $ # public key
 $ openssl rsa -in private-rsa.key -outform PEM -pubout -out public-rsa.pem
 
-$ # ECDSA KEY
+$ # ECDSA/EdDSA KEY
 $ # private key
 $ openssl ecparam -genkey -name secp521r1 -noout -out private-ecdsa.key
 $ # public key
@@ -86,6 +92,16 @@ $ openssl ec -in private-ecdsa.key -pubout -out public-ecdsa.pem
 ```
 
 For more information on keys generation, see [OpenSSL Documentation](https://www.openssl.org/docs/).
+
+### Multiple private keys in JWKS format
+
+If you want to use multiple keys for signatures, you need to setup the keys in JWKS format. The JWKS must follow these rules:
+
+- All keys in the JWKS must be either private ECC/RSA keys or symmetric keys
+- All keys must have a `'alg'` property with the value corresponding to the algorithm to use
+- All keys must have a `'kid'` property
+
+If the `'default-kid'` value is empty in the configuration, the first key in the JWKS will be the default signing key.
 
 ## Installation
 
@@ -125,6 +141,22 @@ Important note: This list has no effect on what scopes are actually allowed by u
 The meaning of existence of this list is to allow the administrator to choose which scopes will be shown on the discovery endpoint.
 
 Therefore, the administrator can chose to show in the discovery endpoint all scopes, only `openid` (which is mandatory in the specification) or a subset of all scopes available, including `openid`.
+
+### JWKS URI
+
+URI to fetch the private keys JWKS. This uri is loaded each time the plugin is enbled. If you want to update your server keys, you must restart the Glewlwyd server or call the api [Enable or disable an existing plugin module instance](API.md#enable-or-disable-an-existing-plugin-module-instance) with the action value `reset`.
+
+### JWKS to use
+
+Enter the JWKS value directly or select the local file tat contains the private keys JWKS.
+
+### Default Key ID (KID)
+
+The default KID that will be used to sign tokens if the client does not specify a `sign_kid` value. If not set, the default KID will be the first one in the JWKS.
+
+### Client sign_kid property
+
+Client property that will hold the default kid. This option is used to specify a different KID than the default one for a specific client.
 
 ### JWT Type
 
@@ -203,11 +235,11 @@ Enable response type `refresh_token`.
 
 ### JWKS available
 
-Enable JWKS available at the address `<plugin_root>/jwks`. Note, JWKS is available for key types `RSA` and `ECDSA` only.
+Enable JWKS available at the address `<plugin_root>/jwks`. Note, JWKS will display public keys for key types `RSA` and `ECDSA` only.
 
 ### X5C certificate chain (optional)
 
-Add or remove the chain of X5C certificate to help clients and users validate the certificate chain of each `id_token` or `access_token`.
+Add or remove the chain of X5C certificate to help clients and users validate the certificate chain of each `id_token` or `access_token`. Ignored if the keys are specified via JWKS.
 
 ### Specific scope parameters
 
