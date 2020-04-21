@@ -48,10 +48,11 @@
 
 struct _oidc_resource_config {
   int       method;
-  char *    oauth_scope;
-  jwt_t *   jwt;
+  char    * oauth_scope;
+  jwt_t   * jwt;
+  jwk_t   * jwk_verify_default;
   jwa_alg   alg;
-  char *    realm;
+  char    * realm;
   unsigned short accept_access_token;
   unsigned short accept_client_token;
 };
