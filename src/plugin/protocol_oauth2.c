@@ -87,13 +87,15 @@ static json_t * check_parameters (json_t * j_params) {
       ret = G_ERROR_PARAM;
     }
     if (json_object_get(j_params, "jwt-type") == NULL || !json_is_string(json_object_get(j_params, "jwt-type"))) {
-      json_array_append_new(j_error, json_string("jwt-type must be a string and have one of the following values: 'rsa', 'ecdsa', 'sha'"));
+      json_array_append_new(j_error, json_string("jwt-type must be a string and have one of the following values: 'rsa', 'ecdsa', 'sha', 'rsa-pss', 'eddsa'"));
       ret = G_ERROR_PARAM;
     }
     if (0 != o_strcmp("rsa", json_string_value(json_object_get(j_params, "jwt-type"))) &&
-               0 != o_strcmp("ecdsa", json_string_value(json_object_get(j_params, "jwt-type"))) &&
-               0 != o_strcmp("sha", json_string_value(json_object_get(j_params, "jwt-type")))) {
-      json_array_append_new(j_error, json_string("jwt-type must be a string and have one of the following values: 'rsa', 'ecdsa', 'sha'"));
+        0 != o_strcmp("ecdsa", json_string_value(json_object_get(j_params, "jwt-type"))) &&
+        0 != o_strcmp("sha", json_string_value(json_object_get(j_params, "jwt-type"))) &&
+        0 != o_strcmp("rsa-pss", json_string_value(json_object_get(j_params, "jwt-type"))) &&
+        0 != o_strcmp("eddsa", json_string_value(json_object_get(j_params, "jwt-type")))) {
+      json_array_append_new(j_error, json_string("jwt-type must be a string and have one of the following values: 'rsa', 'ecdsa', 'sha', 'rsa-pss', 'eddsa'"));
       ret = G_ERROR_PARAM;
     }
     if (json_object_get(j_params, "jwt-key-size") == NULL || !json_is_string(json_object_get(j_params, "jwt-key-size"))) {
@@ -2726,7 +2728,7 @@ static int jwt_autocheck(struct _oauth2_config * config) {
 
 json_t * plugin_module_load(struct config_plugin * config) {
   UNUSED(config);
-  return json_pack("{si ss ss ss s{ s{sssos[sss]} s{sssos[sss]} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ss so s{ssso} s{ssso} }}}",
+  return json_pack("{si ss ss ss s{ s{sssos[sssss]} s{sssos[sss]} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ss so s{ssso} s{ssso} }}}",
                    "result",
                    G_OK,
                    
@@ -2749,6 +2751,8 @@ json_t * plugin_module_load(struct config_plugin * config) {
                          "rsa",
                          "ecdsa",
                          "sha",
+                         "rsa-pss",
+                         "eddsa",
                          
                      "jwt-key-size",
                        "type",
@@ -2855,6 +2859,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
   json_t * j_return = NULL, * j_result = NULL, * j_element = NULL;
   size_t index = 0;
   struct _oauth2_config * p_config = NULL;
+  jwk_t * key_priv = NULL, * key_pub = NULL;
   
   y_log_message(Y_LOG_LEVEL_INFO, "Init plugin Glewlwyd Oauth2 '%s'", name);
   *cls = o_malloc(sizeof(struct _oauth2_config));
@@ -2934,8 +2939,8 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         break;
       }
       
+      key = (const unsigned char *)json_string_value(json_object_get(p_config->j_params, "key"));
       if (0 == o_strcmp("rsa", json_string_value(json_object_get(p_config->j_params, "jwt-type")))) {
-        key = (const unsigned char *)json_string_value(json_object_get(p_config->j_params, "key"));
         if (0 == o_strcmp("256", json_string_value(json_object_get(p_config->j_params, "jwt-key-size")))) {
           alg = R_JWA_ALG_RS256;
         } else if (0 == o_strcmp("256", json_string_value(json_object_get(p_config->j_params, "jwt-key-size")))) {
@@ -2944,7 +2949,6 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           alg = R_JWA_ALG_RS512;
         }
       } else if (0 == o_strcmp("ecdsa", json_string_value(json_object_get(p_config->j_params, "jwt-type")))) {
-        key = (const unsigned char *)json_string_value(json_object_get(p_config->j_params, "key"));
         if (0 == o_strcmp("256", json_string_value(json_object_get(p_config->j_params, "jwt-key-size")))) {
           alg = R_JWA_ALG_ES256;
         } else if (0 == o_strcmp("256", json_string_value(json_object_get(p_config->j_params, "jwt-key-size")))) {
@@ -2952,8 +2956,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         } else { // 512
           alg = R_JWA_ALG_ES512;
         }
-      } else { // SHA
-        key = (const unsigned char *)json_string_value(json_object_get(p_config->j_params, "key"));
+      } else if (0 == o_strcmp("sha", json_string_value(json_object_get(p_config->j_params, "jwt-type")))) {
         if (0 == o_strcmp("256", json_string_value(json_object_get(p_config->j_params, "jwt-key-size")))) {
           alg = R_JWA_ALG_HS256;
         } else if (0 == o_strcmp("256", json_string_value(json_object_get(p_config->j_params, "jwt-key-size")))) {
@@ -2961,6 +2964,16 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         } else { // 512
           alg = R_JWA_ALG_HS512;
         }
+      } else if (0 == o_strcmp("rsa-pss", json_string_value(json_object_get(p_config->j_params, "jwt-type")))) { // SHA
+        if (0 == o_strcmp("256", json_string_value(json_object_get(p_config->j_params, "jwt-key-size")))) {
+          alg = R_JWA_ALG_PS256;
+        } else if (0 == o_strcmp("256", json_string_value(json_object_get(p_config->j_params, "jwt-key-size")))) {
+          alg = R_JWA_ALG_PS384;
+        } else { // 512
+          alg = R_JWA_ALG_PS512;
+        }
+      } else {
+        alg = R_JWA_ALG_EDDSA;
       }
       
       if (r_jwt_set_sign_alg(p_config->jwt_key, alg) != RHN_OK) {
@@ -2987,12 +3000,34 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           break;
         }
       } else {
-        if (r_jwt_add_sign_keys_pem_der(p_config->jwt_key, R_FORMAT_PEM, NULL, 0, key, o_strlen((const char *)key))  != RHN_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - Error r_jwt_add_sign_keys_pem_der");
+        if (r_jwk_init(&key_priv) != RHN_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - Error r_jwk_init key_priv");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
-        if (r_jwt_add_sign_keys_pem_der(p_config->glewlwyd_resource_config->jwt, R_FORMAT_PEM, (const unsigned char *)json_string_value(json_object_get(p_config->j_params, "cert")), json_string_length(json_object_get(p_config->j_params, "cert")), NULL, 0) != RHN_OK) {
+        if (r_jwk_init(&key_pub) != RHN_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - Error r_jwk_init key_pub");
+          j_return = json_pack("{si}", "result", G_ERROR);
+          break;
+        }
+        if (r_jwk_import_from_pem_der(key_priv, R_X509_TYPE_PRIVKEY, R_FORMAT_PEM, key, o_strlen((const char *)key)) != RHN_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - Error r_jwk_import_from_pem_der key_priv");
+          j_return = json_pack("{si}", "result", G_ERROR);
+          break;
+        }
+        if (r_jwk_import_from_pem_der(key_pub, R_X509_TYPE_PUBKEY, R_FORMAT_PEM, (const unsigned char *)json_string_value(json_object_get(p_config->j_params, "cert")), json_string_length(json_object_get(p_config->j_params, "cert"))) != RHN_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - Error r_jwk_import_from_pem_der key_pub");
+          j_return = json_pack("{si}", "result", G_ERROR);
+          break;
+        }
+        r_jwk_delete_property_str(key_priv, "kid");
+        r_jwk_delete_property_str(key_pub, "kid");
+        if (r_jwt_add_sign_keys(p_config->jwt_key, key_priv, NULL)  != RHN_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - Error r_jwt_add_sign_keys");
+          j_return = json_pack("{si}", "result", G_ERROR);
+          break;
+        }
+        if (r_jwt_add_sign_keys(p_config->glewlwyd_resource_config->jwt, NULL, key_pub) != RHN_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 protocol_init - Error r_jwt_add_sign_keys_pem_der (2)");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
@@ -3057,6 +3092,8 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       
     } while (0);
     json_decref(j_result);
+    r_jwk_free(key_priv);
+    r_jwk_free(key_pub);
     if (j_return == NULL) {
       j_return = json_pack("{si}", "result", G_OK);
     } else {
