@@ -418,6 +418,27 @@ int generate_digest_pbkdf2(const char * data, const char * salt, char * out_dige
 }
 
 /**
+ * Generates a digest using crypt library
+ * uses a 16-bytes random salt
+ */
+int generate_digest_crypt(const char * data, const char * method, char * out_digest) {
+  char salt[GLEWLWYD_DEFAULT_SALT_LENGTH+4] = {0},  * out_crypt;
+  int res;
+  
+  if (method != NULL) {
+    o_strcpy(salt, method);
+  }
+  rand_string_nonce(salt+o_strlen(method), GLEWLWYD_DEFAULT_SALT_LENGTH);
+  if ((out_crypt = crypt(data, salt)) != NULL) {
+    o_strcpy(out_digest, out_crypt);
+    res = 1;
+  } else {
+    res = 0;
+  }
+  return res;
+}
+
+/**
  * Generates a hash from the specified string data, using the digest method specified
  * returned value must be 'd after user
  */
@@ -428,93 +449,121 @@ char * generate_hash(digest_algorithm digest, const char * data) {
     switch (digest) {
       case digest_SSHA1:
         if (generate_digest(digest_SHA1, data, 1, buffer)) {
-          to_return = msprintf("{SSHA}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SSHA}%s", buffer);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA");
         }
         break;
       case digest_SHA1:
         if (generate_digest(digest_SHA1, data, 0, buffer)) {
-          to_return = msprintf("{SHA}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SHA}%s", buffer);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA");
         }
         break;
       case digest_SSHA224:
         if (generate_digest(digest_SHA224, data, 1, buffer)) {
-          to_return = msprintf("{SSHA224}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SSHA224}%s", buffer);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA");
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA224");
         }
         break;
       case digest_SHA224:
         if (generate_digest(digest_SHA224, data, 0, buffer)) {
-          to_return = msprintf("{SHA224}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SHA224}%s", buffer);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA");
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA224");
         }
         break;
       case digest_SSHA256:
         if (generate_digest(digest_SHA256, data, 1, buffer)) {
-          to_return = msprintf("{SSHA256}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SSHA256}%s", buffer);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA");
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA256");
         }
         break;
       case digest_SHA256:
         if (generate_digest(digest_SHA256, data, 0, buffer)) {
-          to_return = msprintf("{SHA256}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SHA256}%s", buffer);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA");
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA256");
         }
         break;
       case digest_SSHA384:
         if (generate_digest(digest_SHA384, data, 1, buffer)) {
-          to_return = msprintf("{SSHA384}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SSHA384}%s", buffer);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA");
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA384");
         }
         break;
       case digest_SHA384:
         if (generate_digest(digest_SHA384, data, 0, buffer)) {
-          to_return = msprintf("{SHA384}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SHA384}%s", buffer);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA");
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA384");
         }
         break;
       case digest_SSHA512:
         if (generate_digest(digest_SHA512, data, 1, buffer)) {
-          to_return = msprintf("{SSHA512}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SSHA512}%s", buffer);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA");
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA512");
         }
         break;
       case digest_SHA512:
         if (generate_digest(digest_SHA512, data, 0, buffer)) {
-          to_return = msprintf("{SHA512}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SHA512}%s", buffer);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA");
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA512");
         }
         break;
       case digest_SMD5:
         if (generate_digest(digest_MD5, data, 1, buffer)) {
-          to_return = msprintf("{SMD5}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{SMD5}%s", buffer);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SSHA");
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SMD5");
         }
         break;
       case digest_MD5:
         if (generate_digest(digest_MD5, data, 0, buffer)) {
-          to_return = msprintf("{MD5}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{MD5}%s", buffer);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest SHA");
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest MD5");
         }
         break;
       case digest_PBKDF2_SHA256:
         if (generate_digest_pbkdf2(data, NULL, buffer)) {
-          to_return = msprintf("{PBKDF2}%s", buffer, o_strlen(buffer));
+          to_return = msprintf("{PBKDF2}%s", buffer);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest PKCS5S2");
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest PBKDF2");
+        }
+        break;
+      case digest_CRYPT:
+        if (generate_digest_crypt(data, NULL, buffer)) {
+          to_return = msprintf("{CRYPT}%s", buffer);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest CRYPT");
+        }
+        break;
+      case digest_CRYPT_MD5:
+        if (generate_digest_crypt(data, "$1$", buffer)) {
+          to_return = msprintf("{CRYPT}%s", buffer);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest CRYPT_MD5");
+        }
+        break;
+      case digest_CRYPT_SHA256:
+        if (generate_digest_crypt(data, "$5$", buffer)) {
+          to_return = msprintf("{CRYPT}%s", buffer);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest CRYPT_SHA256");
+        }
+        break;
+      case digest_CRYPT_SHA512:
+        if (generate_digest_crypt(data, "$6$", buffer)) {
+          to_return = msprintf("{CRYPT}%s", buffer);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest CRYPT_SHA512");
         }
         break;
       default:

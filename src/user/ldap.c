@@ -151,7 +151,7 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params, int readonly) {
         }
       }
       if (readonly) {
-        if (json_object_get(j_params, "scope-property") != NULL || !json_string_length(json_object_get(j_params, "scope-property"))) {
+        if (!json_string_length(json_object_get(j_params, "scope-property"))) {
           json_array_append_new(j_error, json_string("scope-property is mandatory and must be a non empty string"));
         }
       } else {
@@ -235,10 +235,14 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params, int readonly) {
            0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SMD5") && 
            0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "MD5") && 
            //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "PKCS5S2") && 
+           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "CRYPT") && 
+           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "CRYPT_MD5") && 
+           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "CRYPT_SHA256") && 
+           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "CRYPT_SHA512") && 
            0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "PLAIN"))) {
           //json_array_append_new(j_error, json_string("password-property is mandatory and must have one of the following values: 'SHA', 'SHA256', 'SHA284', 'SHA512', 'SSHA', "
           //                                           "'SSHA256', 'SSHA384', 'SSHA512', 'SMD5', 'MD5', 'PKCS5S2', 'PLAIN'"));
-          json_array_append_new(j_error, json_string("password-property is mandatory and must have one of the following values: 'SHA', 'SSHA', 'SMD5', 'MD5', 'PLAIN'"));
+          json_array_append_new(j_error, json_string("password-property is mandatory and must have one of the following values: 'SHA', 'SSHA', 'SMD5', 'MD5', 'CRYPT', 'CRYPT_MD5', 'CRYPT_SHA256', 'CRYPT_SHA512', 'PLAIN'"));
         }
         if (json_object_get(j_params, "object-class") == NULL || (!json_is_string(json_object_get(j_params, "object-class")) && !json_is_array(json_object_get(j_params, "object-class")))) {
           json_array_append_new(j_error, json_string("object-class is mandatory and must be a non empty string or an array of non empty strings"));
@@ -464,6 +468,14 @@ static digest_algorithm get_digest_algorithm(json_t * j_params) {
     return digest_MD5;
   } else if (0 == o_strcmp("SMD5", json_string_value(json_object_get(j_params, "password-algorithm")))) {
     return digest_SMD5;
+  } else if (0 == o_strcmp("CRYPT", json_string_value(json_object_get(j_params, "password-algorithm")))) {
+    return digest_CRYPT;
+  } else if (0 == o_strcmp("CRYPT_MD5", json_string_value(json_object_get(j_params, "password-algorithm")))) {
+    return digest_CRYPT_MD5;
+  } else if (0 == o_strcmp("CRYPT_SHA256", json_string_value(json_object_get(j_params, "password-algorithm")))) {
+    return digest_CRYPT_SHA256;
+  } else if (0 == o_strcmp("CRYPT_SHA512", json_string_value(json_object_get(j_params, "password-algorithm")))) {
+    return digest_CRYPT_SHA512;
   } else {
     return digest_PLAIN;
   }
