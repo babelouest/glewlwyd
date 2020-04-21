@@ -3,6 +3,8 @@
 ## 2.3.0
 
 - Replace libjwt with Rhonabwy
+- Allow messages encryption (incoming and outcoming)
+- Allow OIDC plugin to use multiple signing or encryption keys via a JWKS
 
 ## 2.2.0
 
