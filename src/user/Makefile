@@ -41,7 +41,7 @@ libmoddatabase.so: ../glewlwyd-common.h database.o misc.o
 	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o misc.o $(LIBS) $(shell pkg-config --libs libhoel)
 
 libmodldap.so: ../glewlwyd-common.h ldap.o misc.o
-	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o misc.o $(LIBS) -lldap
+	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o misc.o $(LIBS) -lldap -lcrypt
 
 libmodhttp.so: ../glewlwyd-common.h http.o misc.o
 	$(CC) -shared -Wl,-soname,libmodhttp.so -o libmodhttp.so http.o misc.o $(LIBS)
