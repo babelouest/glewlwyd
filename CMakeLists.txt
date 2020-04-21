@@ -72,7 +72,7 @@ if (_GNU_SOURCE)
 	add_definitions(-D_GNU_SOURCE)
 endif ()
 
-set(GLWD_LIBS "-ldl")
+set(GLWD_LIBS "-ldl -lcrypt")
 
 find_package(Threads REQUIRED)
 set(GLWD_LIBS ${GLWD_LIBS} ${CMAKE_THREAD_LIBS_INIT})
