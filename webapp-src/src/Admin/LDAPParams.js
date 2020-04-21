@@ -580,6 +580,10 @@ class LDAPParams extends Component {
                 <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'SHA')}>{i18next.t("admin.mod-ldap-password-algorithm-sha")}</a>
                 <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'SMD5')}>{i18next.t("admin.mod-ldap-password-algorithm-smd5")}</a>
                 <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'MD5')}>{i18next.t("admin.mod-ldap-password-algorithm-md5")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'CRYPT')}>{i18next.t("admin.mod-ldap-password-algorithm-crypt")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'CRYPT_MD5')}>{i18next.t("admin.mod-ldap-password-algorithm-crypt-md5")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'CRYPT_SHA256')}>{i18next.t("admin.mod-ldap-password-algorithm-crypt-sha256")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'CRYPT_SHA512')}>{i18next.t("admin.mod-ldap-password-algorithm-crypt-sha512")}</a>
                 <a className="dropdown-item" href="#" onClick={(e) => this.changePasswordAlgorithm(e, 'PLAIN')}>{i18next.t("admin.mod-ldap-password-algorithm-plain")}</a>
               </div>
             </div>
