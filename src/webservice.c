@@ -338,11 +338,7 @@ int callback_glewlwyd_user_auth_register (const struct _u_request * request, str
           j_result = auth_register_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), 0, json_object_get(j_param, "value"), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             if (json_object_get(j_result, "register") != NULL) {
-              if (json_object_get(j_result, "error") != NULL) {
-                ulfius_set_json_body_response(response, 400, json_object_get(j_result, "register"));
-              } else {
-                response->status = 400;
-              }
+              ulfius_set_json_body_response(response, 400, json_object_get(j_result, "register"));
             } else {
               ulfius_set_string_body_response(response, 400, "bad scheme response");
             }
