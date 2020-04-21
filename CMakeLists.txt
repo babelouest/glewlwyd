@@ -761,6 +761,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oidc_token_revocation
 							glewlwyd_oidc_client_registration
 							glewlwyd_oidc_jwt_encrypted
+							glewlwyd_oidc_jwks_config
 							)
 		endif ()
 
