@@ -133,17 +133,33 @@ static int access_token_check_validity(struct _oidc_resource_config * config, js
  * validates if the token value is a valid jwt and has a valid signature
  */
 static json_t * access_token_check_signature(struct _oidc_resource_config * config, const char * token_value) {
-  json_t * j_return, * j_grants;
+  json_t * j_return = NULL, * j_grants;
   jwt_t * jwt = r_jwt_copy(config->jwt);
+  jwk_t * jwk = NULL;
+  const char * kid;
   
   if (token_value != NULL) {
-    if (r_jwt_parse(jwt, token_value, 0) == RHN_OK && r_jwt_verify_signature(jwt, NULL, 0) == RHN_OK && r_jwt_get_sign_alg(jwt) == config->alg) {
-      j_grants = r_jwt_get_full_claims_json_t(jwt);
-      if (j_grants != NULL) {
-        j_return = json_pack("{siso}", "result", G_TOKEN_OK, "grants", j_grants);
+    if (r_jwt_parse(jwt, token_value, 0) == RHN_OK) {
+      if ((kid = r_jwt_get_header_str_value(jwt, "kid")) != NULL) {
+        if ((jwk = r_jwks_get_by_kid(jwt->jwks_pubkey_sign, kid)) == NULL) {
+          j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+        }
       } else {
-        j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+        jwk = r_jwk_copy(config->jwk_verify_default);
       }
+      if (j_return == NULL) {
+        if (r_jwt_verify_signature(jwt, jwk, 0) == RHN_OK && r_jwt_get_sign_alg(jwt) == config->alg) {
+          j_grants = r_jwt_get_full_claims_json_t(jwt);
+          if (j_grants != NULL) {
+            j_return = json_pack("{siso}", "result", G_TOKEN_OK, "grants", j_grants);
+          } else {
+            j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+          }
+        } else {
+          j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+        }
+      }
+      r_jwk_free(jwk);
     } else {
       j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
     }
