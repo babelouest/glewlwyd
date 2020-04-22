@@ -99,7 +99,10 @@
     "http-title": "HTTP",
     "register-link": "Register new account",
     "oauth2-title": "Connect to an external provider",
-    "oauth2-connect": "Connect with {{provider}}"
+    "oauth2-connect": "Connect with {{provider}}",
+    "end-session-title": "End session",
+    "end-session-message": "Do you want to end the current session?",
+    "ignore-logout": "Stay connected"
   },
   "admin": {
     "error-credential-message": "Please connect with a user that has admin credentials",
