@@ -326,10 +326,10 @@ static LDAP * connect_ldap_server(json_t * j_params) {
   cred.bv_len = o_strlen(json_string_value(json_object_get(j_params, "bind-password")));
   
   if (ldap_initialize(&ldap, json_string_value(json_object_get(j_params, "uri"))) != LDAP_SUCCESS) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_count_total ldap - Error initializing ldap");
+    y_log_message(Y_LOG_LEVEL_ERROR, "connect_ldap_server ldap - Error initializing ldap");
     ldap = NULL;
   } else if (ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version) != LDAP_OPT_SUCCESS) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_count_total ldap - Error setting ldap protocol version");
+    y_log_message(Y_LOG_LEVEL_ERROR, "connect_ldap_server ldap - Error setting ldap protocol version");
     ldap_unbind_ext(ldap, NULL, NULL);
     ldap = NULL;
   } else if ((result = ldap_sasl_bind_s(ldap, json_string_value(json_object_get(j_params, "bind-dn")), ldap_mech, &cred, NULL, NULL, &servcred)) != LDAP_SUCCESS) {
@@ -1394,7 +1394,7 @@ json_t * user_module_get(struct config_module * config, const char * username, v
     ldap_msgfree(answer);
     ldap_unbind_ext(ldap, NULL, NULL);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error connect_ldap_server");
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get ldap user - Error connect_ldap_server");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
   return j_return;
@@ -1422,7 +1422,7 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
     filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "username-property"), username);
     attrs = get_ldap_read_attributes(j_params, 1, (j_properties_user = json_object()));
     if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_profile ldap - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_profile ldap user - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
       j_return = json_pack("{si}", "result", G_ERROR);
     } else {
       if (ldap_count_entries(ldap, answer) > 0) {
@@ -1431,7 +1431,7 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
         if (j_user != NULL) {
           j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error get_user_from_result");
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap user - Error get_user_from_result");
           j_return = json_pack("{si}", "result", G_ERROR);
         }
         json_decref(j_user);
@@ -1446,7 +1446,7 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
     ldap_msgfree(answer);
     ldap_unbind_ext(ldap, NULL, NULL);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error connect_ldap_server");
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_profile ldap user - Error connect_ldap_server");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
   return j_return;
