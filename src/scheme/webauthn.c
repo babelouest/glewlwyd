@@ -1015,7 +1015,7 @@ static int validate_safetynet_ca_root(json_t * j_params, gnutls_x509_crt_t cert_
 static int validate_packed_leaf_certificate(gnutls_x509_crt_t cert, unsigned char * aaguid) {
   int ret = G_OK, i, c_valid = 0, o_valid = 0, ou_valid = 0, cn_valid = 0;
   unsigned int critial = 1, ca = 1;
-  char cert_dn[128], ** dn_exploded = NULL;
+  char cert_dn[128] = {0}, ** dn_exploded = NULL;
   unsigned char aaguid_oid[32];
   size_t cert_dn_len = 128, aaguid_oid_len = 32;
   
