@@ -341,10 +341,10 @@ static LDAP * connect_ldap_server(json_t * j_params) {
   cred.bv_len = o_strlen(json_string_value(json_object_get(j_params, "bind-password")));
   
   if (ldap_initialize(&ldap, json_string_value(json_object_get(j_params, "uri"))) != LDAP_SUCCESS) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "client_module_count_total ldap - Error initializing ldap");
+    y_log_message(Y_LOG_LEVEL_ERROR, "connect_ldap_server ldap - Error initializing ldap");
     ldap = NULL;
   } else if (ldap_set_option(ldap, LDAP_OPT_PROTOCOL_VERSION, &ldap_version) != LDAP_OPT_SUCCESS) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "client_module_count_total ldap - Error setting ldap protocol version");
+    y_log_message(Y_LOG_LEVEL_ERROR, "connect_ldap_server ldap - Error setting ldap protocol version");
     ldap_unbind_ext(ldap, NULL, NULL);
     ldap = NULL;
   } else if ((result = ldap_sasl_bind_s(ldap, json_string_value(json_object_get(j_params, "bind-dn")), ldap_mech, &cred, NULL, NULL, &servcred)) != LDAP_SUCCESS) {
