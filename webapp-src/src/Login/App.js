@@ -9,6 +9,7 @@ import Body from './Body';
 import PasswordForm from './PasswordForm';
 import NoPasswordForm from './NoPasswordForm';
 import SelectAccount from './SelectAccount';
+import EndSession from './EndSession';
 
 class App extends Component {
   constructor(props) {
@@ -33,6 +34,7 @@ class App extends Component {
       refresh_login: props.config.params.refresh_login,
       forceShowGrant: false,
       selectAccount: false,
+      endSession: false,
       login_hint: props.config.params.login_hint||"",
       errorScopesUnavailable: false,
       infoSomeScopeUnavailable: false,
@@ -96,6 +98,10 @@ class App extends Component {
         newState.forceShowGrant = true;
       } else if (this.state.prompt === "select_account") {
         newState.selectAccount = true;
+      } else if (this.state.prompt === "end_session") {
+        newState.endSession = true;
+        newState.newUser = false;
+        newState.currentUser = false;
       } else {
         newState.newUser = false;
       }
@@ -237,26 +243,30 @@ class App extends Component {
     if (this.state.config) {
       var body = "", message;
       if (this.state.loaded) {
-        if (this.state.mustRegisterScheme && !this.state.errorScopesUnavailable) {
-          message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-not-registered-scheme")}</div>
-        } else if (this.state.errorScheme && !this.state.errorScopesUnavailable) {
-          message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-error-scheme")}</div>
-        } else if (!this.state.config.params.callback_url) {
-          message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-no-callback-url")}</div>
-        }
-        if (this.state.errorScopesUnavailable) {
-          body = <div className="alert alert-danger" role="alert">{i18next.t("login.error-scope-unavailable")}</div>
+        if (this.state.endSession) {
+          body = <EndSession config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
         } else {
-          if ((this.state.newUser || this.state.passwordRequired)) {
-            if (!this.state.scheme) {
-              body = <PasswordForm config={this.state.config} username={this.state.login_hint} currentUser={this.state.currentUser} callbackInitProfile={this.initProfile}/>;
-            } else {
-              body = <NoPasswordForm config={this.state.config} username={this.state.login_hint} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
-            }
-          } else if (this.state.selectAccount) {
-            body = <SelectAccount config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
+          if (this.state.mustRegisterScheme && !this.state.errorScopesUnavailable) {
+            message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-not-registered-scheme")}</div>
+          } else if (this.state.errorScheme && !this.state.errorScopesUnavailable) {
+            message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-error-scheme")}</div>
+          } else if (!this.state.config.params.callback_url) {
+            message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-no-callback-url")}</div>
+          }
+          if (this.state.errorScopesUnavailable) {
+            body = <div className="alert alert-danger" role="alert">{i18next.t("login.error-scope-unavailable")}</div>
           } else {
-            body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} showGrant={this.state.showGrant} infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable}/>;
+            if ((this.state.newUser || this.state.passwordRequired)) {
+              if (!this.state.scheme) {
+                body = <PasswordForm config={this.state.config} username={this.state.login_hint} currentUser={this.state.currentUser} callbackInitProfile={this.initProfile}/>;
+              } else {
+                body = <NoPasswordForm config={this.state.config} username={this.state.login_hint} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
+              }
+            } else if (this.state.selectAccount) {
+              body = <SelectAccount config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
+            } else {
+              body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} showGrant={this.state.showGrant} infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable}/>;
+            }
           }
         }
       }

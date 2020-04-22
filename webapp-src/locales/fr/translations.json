@@ -99,7 +99,10 @@
     "http-title": "HTTP",
     "register-link": "Créer un compte",
     "oauth2-title": "Connexion avec un fournisseur externe",
-    "oauth2-connect": "Se connecter avec {{provider}}"
+    "oauth2-connect": "Se connecter avec {{provider}}",
+    "end-session-title": "Fermeture de session",
+    "end-session-message": "Voulez-vous fermer la session en cours?",
+    "ignore-logout": "Rester connecté"
   },
   "admin": {
     "error-credential-message": "Veuillez vous conncecter avec un utilisateur ayant les droits d'administration",
