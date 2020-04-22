@@ -4091,6 +4091,7 @@ static int generate_discovery_content(struct _oidc_config * config) {
     json_object_set_new(j_discovery, "authorization_endpoint", json_pack("s+", plugin_url, "/auth"));
     json_object_set_new(j_discovery, "token_endpoint", json_pack("s+", plugin_url, "/token"));
     json_object_set_new(j_discovery, "userinfo_endpoint", json_pack("s+", plugin_url, "/userinfo"));
+    json_object_set_new(j_discovery, "end_session_endpoint", json_pack("s+", plugin_url, "/end_session"));
     json_object_set_new(j_discovery, "jwks_uri", json_pack("s+", plugin_url, "/jwks"));
     json_object_set_new(j_discovery, "token_endpoint_auth_methods_supported", json_pack("[ss]", "client_secret_basic", "client_secret_post"));
     
@@ -5580,6 +5581,41 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
 }
 
 /**
+ * Redirects the user to an end session prompt
+ */
+static int callback_oidc_end_session(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct _oidc_config * config = (struct _oidc_config *)user_data;
+  struct _u_map map;
+  char * logout_url, * post_logout_redirect_uri = NULL;
+  
+  if (u_map_has_key(request->map_url, "id_token_hint")) {
+    if (revoke_id_token(config, u_map_get(request->map_url, "id_token_hint")) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_end_session - Error revoke_id_token");
+    }
+  }
+  if (u_map_get(request->map_url, "post_logout_redirect_uri") != NULL) {
+    if (u_map_get(request->map_url, "state") != NULL) {
+      if (o_strrchr(u_map_get(request->map_url, "post_logout_redirect_uri"), '?') != NULL || o_strrchr(u_map_get(request->map_url, "post_logout_redirect_uri"), '#') != NULL) {
+        post_logout_redirect_uri = msprintf("%s&state=%s", u_map_get(request->map_url, "post_logout_redirect_uri"), u_map_get(request->map_url, "state"));
+      } else {
+        post_logout_redirect_uri = msprintf("%s?state=%s", u_map_get(request->map_url, "post_logout_redirect_uri"), u_map_get(request->map_url, "state"));
+      }
+    } else {
+      post_logout_redirect_uri = o_strdup(u_map_get(request->map_url, "post_logout_redirect_uri"));
+    }
+  }
+  u_map_init(&map);
+  u_map_put(&map, "prompt", "end_session");
+  logout_url = config->glewlwyd_config->glewlwyd_callback_get_login_url(config->glewlwyd_config, NULL, NULL, post_logout_redirect_uri, &map);
+  response->status = 302;
+  ulfius_add_header_to_response(response, "Location", logout_url);
+  u_map_clean(&map);
+  o_free(logout_url);
+  o_free(post_logout_redirect_uri);
+  return U_CALLBACK_CONTINUE;
+}
+
+/**
  * verify that the http request is authorized based on the access token
  */
 static int callback_check_userinfo(const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -7034,6 +7070,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
          config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_disable_refresh_token, (void*)*cls) != G_OK || 
          config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK || 
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_discovery, (void*)*cls) != G_OK ||
+         config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "end_session/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_end_session, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "jwks", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_jwks, (void*)*cls) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding endpoints");
         j_return = json_pack("{si}", "result", G_ERROR);
