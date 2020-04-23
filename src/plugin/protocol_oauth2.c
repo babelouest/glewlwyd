@@ -2530,6 +2530,7 @@ static int callback_oauth2_authorization(const struct _u_request * request, stru
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
+  u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
 
   if (u_map_get(request->map_url, "state") != NULL) {
     state_encoded = url_encode(u_map_get(request->map_url, "state"));
@@ -2586,6 +2587,7 @@ static int callback_oauth2_token(const struct _u_request * request, struct _u_re
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
+  u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
 
   if (0 == o_strcmp("authorization_code", grant_type)) {
     if (is_authorization_type_enabled(config, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE)) {
@@ -2623,6 +2625,7 @@ static int callback_oauth2_get_profile(const struct _u_request * request, struct
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
+  u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
 
   if (check_result_value(j_profile, G_OK)) {
     json_object_del(json_object_get(j_profile, "user"), "scope");
@@ -2646,6 +2649,7 @@ static int callback_oauth2_refresh_token_list_get(const struct _u_request * requ
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
+  u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
 
   if (u_map_get(request->map_url, "offset") != NULL) {
     l_converted = strtol(u_map_get(request->map_url, "offset"), &endptr, 10);
@@ -2680,6 +2684,7 @@ static int callback_oauth2_disable_refresh_token(const struct _u_request * reque
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
+  u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
 
   if ((res = refresh_token_disable(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "token_hash"), get_ip_source(request))) == G_ERROR_NOT_FOUND) {
     response->status = 404;
