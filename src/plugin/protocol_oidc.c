@@ -5699,6 +5699,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
+  u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
 
   ret = G_OK;
   if (u_map_has_key(map, "state")) {
@@ -6238,6 +6239,7 @@ static int callback_oidc_token(const struct _u_request * request, struct _u_resp
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
+  u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
 
   return result;
 }
@@ -6255,6 +6257,7 @@ static int callback_oidc_get_userinfo(const struct _u_request * request, struct 
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
+  u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
 
   if (username != NULL) {
     j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username);
@@ -6334,6 +6337,7 @@ static int callback_oidc_refresh_token_list_get(const struct _u_request * reques
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
+  u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
 
   if (u_map_get(request->map_url, "offset") != NULL) {
     l_converted = strtol(u_map_get(request->map_url, "offset"), &endptr, 10);
@@ -6371,6 +6375,7 @@ static int callback_oidc_disable_refresh_token(const struct _u_request * request
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
+  u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
 
   if ((res = refresh_token_disable(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "token_hash"), get_ip_source(request))) == G_ERROR_NOT_FOUND) {
     response->status = 404;
@@ -6400,6 +6405,11 @@ static int callback_oidc_clean(const struct _u_request * request, struct _u_resp
  */
 static int callback_oidc_discovery(const struct _u_request * request, struct _u_response * response, void * user_data) {
   UNUSED(request);
+
+  u_map_put(response->map_header, "Cache-Control", "no-store");
+  u_map_put(response->map_header, "Pragma", "no-cache");
+  u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
+
   u_map_put(response->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON);
   ulfius_set_string_body_response(response, 200, ((struct _oidc_config *)user_data)->discovery_str);
   return U_CALLBACK_CONTINUE;
@@ -6411,6 +6421,10 @@ static int callback_oidc_discovery(const struct _u_request * request, struct _u_
 static int callback_oidc_get_jwks(const struct _u_request * request, struct _u_response * response, void * user_data) {
   UNUSED(request);
   struct _oidc_config * config = (struct _oidc_config *)user_data;
+
+  u_map_put(response->map_header, "Cache-Control", "no-store");
+  u_map_put(response->map_header, "Pragma", "no-cache");
+  u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
   
   if (config->jwks_str != NULL) {
     u_map_put(response->map_header, ULFIUS_HTTP_HEADER_CONTENT, ULFIUS_HTTP_ENCODING_JSON);
