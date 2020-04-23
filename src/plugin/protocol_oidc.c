@@ -5587,6 +5587,7 @@ static int callback_oidc_end_session(const struct _u_request * request, struct _
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   struct _u_map map;
   char * logout_url, * post_logout_redirect_uri = NULL;
+  json_t * j_metadata, * j_client;
   
   if (u_map_has_key(request->map_url, "id_token_hint")) {
     if (revoke_id_token(config, u_map_get(request->map_url, "id_token_hint")) != G_OK) {
@@ -5594,14 +5595,25 @@ static int callback_oidc_end_session(const struct _u_request * request, struct _
     }
   }
   if (u_map_get(request->map_url, "post_logout_redirect_uri") != NULL) {
-    if (u_map_get(request->map_url, "state") != NULL) {
-      if (o_strrchr(u_map_get(request->map_url, "post_logout_redirect_uri"), '?') != NULL || o_strrchr(u_map_get(request->map_url, "post_logout_redirect_uri"), '#') != NULL) {
-        post_logout_redirect_uri = msprintf("%s&state=%s", u_map_get(request->map_url, "post_logout_redirect_uri"), u_map_get(request->map_url, "state"));
+    j_metadata = get_token_metadata(config, u_map_get(request->map_url, "id_token_hint"), "id_token", NULL);
+    if (check_result_value(j_metadata, G_OK) && json_object_get(json_object_get(j_metadata, "token"), "active") == json_true()) {
+      j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get(json_object_get(j_metadata, "token"), "client_id")));
+      if (check_result_value(j_client, G_OK)) {
+        if (json_array_has_string(json_object_get(json_object_get(j_client, "client"), "post_logout_redirect_uris"), u_map_get(request->map_url, "post_logout_redirect_uri"))) {
+          if (u_map_get(request->map_url, "state") != NULL) {
+            if (o_strrchr(u_map_get(request->map_url, "post_logout_redirect_uri"), '?') != NULL || o_strrchr(u_map_get(request->map_url, "post_logout_redirect_uri"), '#') != NULL) {
+              post_logout_redirect_uri = msprintf("%s&state=%s", u_map_get(request->map_url, "post_logout_redirect_uri"), u_map_get(request->map_url, "state"));
+            } else {
+              post_logout_redirect_uri = msprintf("%s?state=%s", u_map_get(request->map_url, "post_logout_redirect_uri"), u_map_get(request->map_url, "state"));
+            }
+          } else {
+            post_logout_redirect_uri = o_strdup(u_map_get(request->map_url, "post_logout_redirect_uri"));
+          }
+        }
       } else {
-        post_logout_redirect_uri = msprintf("%s?state=%s", u_map_get(request->map_url, "post_logout_redirect_uri"), u_map_get(request->map_url, "state"));
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_end_session - Error getting client_id %s", json_string_value(json_object_get(json_object_get(j_metadata, "token"), "client_id")));
       }
-    } else {
-      post_logout_redirect_uri = o_strdup(u_map_get(request->map_url, "post_logout_redirect_uri"));
+      json_decref(j_client);
     }
   }
   u_map_init(&map);
