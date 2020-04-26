@@ -24,6 +24,7 @@ The following OpenID Connect functionalities are currently supported:
 - [OpenID Connect Dynamic Registration](http://openid.net/specs/openid-connect-registration-1_0.html)
 - [OAuth 2.0 Form Post Response Mode](http://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html)
 - [Messages encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
+- [Session Management](https://openid.net/specs/openid-connect-session-1_0.html)
 
 The following OpenID Connect functionalities are not supported yet:
 
@@ -481,6 +482,7 @@ OpenID Connect endpoints are used to authenticate the user, and to send tokens, 
   - [Token introspection](#token-introspection)
   - [Token revocation](#token-revocation)
 - [Client registration](#client-registration)
+- [Session Management](#session-management)
 
 ### Endpoints authentication
 
@@ -1419,3 +1421,55 @@ Access denied
 Code 400
 
 Invalid parameters
+
+### Session Management
+
+#### Check Session iframe
+
+This is the iframe content to be used by th client to verify if the user status has changed. Due to Glewlwyd's design, the iframe only checks if the user associated to the id_token is still connected to Glewlwyd and the active user via its session cookie. No other check is performed. Therefore, the advantage of `check_session_iframe` in Glewlwyd is limited.
+
+##### URL
+
+`/api/glwd/check_session_iframe`
+
+##### Method
+
+`GET`
+
+##### Result
+
+##### Success response
+
+Code 200
+
+Content
+
+An HTML page adapted for check_session_iframe, this iframe is intended to indicate to the client webpage that the user status has changed. Check [OIDC Session Status Change Notification](https://openid.net/specs/openid-connect-session-1_0.html#ChangeNotification) for more details and an example on how to use it.
+
+### End session
+
+##### URL
+
+`/api/glwd/end_session`
+
+##### Method
+
+`GET`
+
+##### Data Parameters
+
+Optional
+
+```
+`post_logout_redirect_uri`: string, the uri to redirect the user after end registration is complete and succesfull. Must be previously registered by the client and will be used only if a valid `id_token_hint` is passed too.
+`id_token_hint`: string, the last id_token sent to the client for the user, must be a valid `id_token`. The `id_token` will be invalidated by Glewlwyd on end session.
+`state`: text, a client-defined string that will be sent back to the client via the `post_logout_redirect_uri`
+```
+
+##### Result
+
+##### Success response
+
+Code 302
+
+Redirect the user to the login page with a end session prompt. If the user chooses to end the session, then the session will end and the user will be redirected to `post_logout_redirect_uri` if a valid one is given.
