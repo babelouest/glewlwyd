@@ -6,6 +6,7 @@
 - Allow messages encryption (incoming and outcoming)
 - Allow OIDC plugin to use multiple signing or encryption keys via a JWKS
 - Add support for CRYPT hash in ldap modules, closes #114
+- Add session management in OIDC plugin
 
 ## 2.2.0
 
