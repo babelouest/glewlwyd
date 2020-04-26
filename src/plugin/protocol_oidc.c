@@ -6464,7 +6464,7 @@ static int callback_oidc_check_session_iframe(const struct _u_request * request,
 static int callback_oidc_end_session(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   struct _u_map map;
-  char * logout_url, * post_logout_redirect_uri = NULL;
+  char * logout_url, * post_logout_redirect_uri = NULL, * state;
   json_t * j_metadata, * j_client;
   
   if (u_map_get(request->map_url, "post_logout_redirect_uri") != NULL) {
@@ -6474,19 +6474,29 @@ static int callback_oidc_end_session(const struct _u_request * request, struct _
       if (check_result_value(j_client, G_OK)) {
         if (json_array_has_string(json_object_get(json_object_get(j_client, "client"), "post_logout_redirect_uris"), u_map_get(request->map_url, "post_logout_redirect_uri"))) {
           if (u_map_get(request->map_url, "state") != NULL) {
-            if (o_strrchr(u_map_get(request->map_url, "post_logout_redirect_uri"), '?') != NULL || o_strrchr(u_map_get(request->map_url, "post_logout_redirect_uri"), '#') != NULL) {
-              post_logout_redirect_uri = msprintf("%s&state=%s", u_map_get(request->map_url, "post_logout_redirect_uri"), u_map_get(request->map_url, "state"));
+            if (o_strlen(u_map_get(request->map_url, "state"))) {
+              state = msprintf("state=%s", u_map_get(request->map_url, "state"));
             } else {
-              post_logout_redirect_uri = msprintf("%s?state=%s", u_map_get(request->map_url, "post_logout_redirect_uri"), u_map_get(request->map_url, "state"));
+              state = o_strdup("");
             }
+            if (o_strrchr(u_map_get(request->map_url, "post_logout_redirect_uri"), '?') != NULL || o_strrchr(u_map_get(request->map_url, "post_logout_redirect_uri"), '#') != NULL) {
+              post_logout_redirect_uri = msprintf("%s&%s", u_map_get(request->map_url, "post_logout_redirect_uri"), state);
+            } else {
+              post_logout_redirect_uri = msprintf("%s?%s", u_map_get(request->map_url, "post_logout_redirect_uri"), state);
+            }
+            o_free(state);
           } else {
             post_logout_redirect_uri = o_strdup(u_map_get(request->map_url, "post_logout_redirect_uri"));
           }
+        } {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_end_session - Invalid post_logout_redirect_uris");
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_end_session - Error getting client_id %s", json_string_value(json_object_get(json_object_get(j_metadata, "token"), "client_id")));
       }
       json_decref(j_client);
+    } {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_end_session - Invalid id_token");
     }
     json_decref(j_metadata);
   }
