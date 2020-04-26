@@ -111,6 +111,7 @@ struct _oidc_config {
   
   char                         * discovery_str;
   char                         * jwks_str;
+  char                         * check_session_iframe;
   
   json_int_t                     access_token_duration;
   json_int_t                     refresh_token_duration;
@@ -615,6 +616,10 @@ static json_t * check_parameters (json_t * j_params) {
     }
     if (json_object_get(j_params, "introspection-revocation-allowed") != NULL && !json_is_boolean(json_object_get(j_params, "introspection-revocation-allowed"))) {
       json_array_append_new(j_error, json_string("Property 'introspection-revocation-allowed' is optional and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "session-management-allowed") != NULL && !json_is_boolean(json_object_get(j_params, "session-management-allowed"))) {
+      json_array_append_new(j_error, json_string("Property 'session-management-allowed' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
     if (json_object_get(j_params, "introspection-revocation-allowed") == json_true()) {
@@ -4079,6 +4084,37 @@ static void build_form_post_response(const char * redirect_uri, struct _u_map * 
   o_free(form_output);
 }
 
+static int generate_check_session_iframe(struct _oidc_config * config) {
+  if ((config->check_session_iframe = msprintf("<html> <head> <meta charset=\"utf-8\"> <title>Glewlwydcheck_session_iframe</title> </head> <body> iframe </body> <script>function receiveMessage(e){var client_id=e.data.split(' ')[0]; var session_state=e.data.split(' ')[1]; var salt=session_state.split('.')[1]; var request=new XMLHttpRequest(); request.open(\"GET\", \"%s/%s/profile_list/\", true); request.onload=function(){if (this.status===200){var profile_list=JSON.parse(this.response); if (profile_list && profile_list[0]){const encoder=new TextEncoder(); var intermediate=(client_id + \" \" + e.origin + \" \" + profile_list[0].username + \" \" + salt); const data=encoder.encode(intermediate); crypto.subtle.digest('SHA-256', data).then((value)=>{if (session_state==(btoa(new Uint8Array(value).reduce((s, b)=> s + String.fromCharCode(b), ''))+ \".\" + salt)){e.source.postMessage(\"unchanged\", e.origin);}else{e.source.postMessage(\"changed\", e.origin);}})}else{e.source.postMessage(\"error\", e.origin);}}else if (this.status===401){e.source.postMessage(\"changed\", e.origin);}else{e.source.postMessage(\"error\", e.origin);}}; request.onerror=function(){e.source.postMessage(\"error\", e.origin);}; request.send();}; window.addEventListener('message', receiveMessage, false); </script></html>", config->glewlwyd_config->glewlwyd_config->external_url, config->glewlwyd_config->glewlwyd_config->api_prefix)) == NULL) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "generate_check_session_iframe oidc - Error generating check_session_iframe");
+    return G_ERROR;
+  } else {
+    return G_OK;
+  }
+}
+
+static char * generate_session_state(const char * client_id, const char * redirect_uri, const char * username) {
+  char salt[GLEWLWYD_DEFAULT_SALT_LENGTH+1] = {0}, * session_state = NULL, * origin = NULL, * intermediate = NULL;
+  unsigned char intermediate_hash[32] = {0}, intermediate_hash_b64[64] = {0};
+  size_t intermediate_hash_len = 32, intermediate_hash_b64_len = 0;
+  
+  if (o_strlen(client_id) && (0 == o_strncmp(redirect_uri, "http://", o_strlen("http://")) || 0 == o_strncmp(redirect_uri, "https://", o_strlen("https://"))) && o_strlen(username)) {
+    origin = o_strdup(redirect_uri);
+    *(o_strchr(o_strstr(origin, "://")+3, '/')) = '\0';
+    rand_string_nonce(salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+    intermediate = msprintf("%s %s %s %s", client_id, origin, username, salt);
+    if (generate_digest_raw(digest_SHA256, (const unsigned char *)intermediate, o_strlen(intermediate), intermediate_hash, &intermediate_hash_len)) {
+      if (o_base64_encode(intermediate_hash, intermediate_hash_len, intermediate_hash_b64, &intermediate_hash_b64_len)) {
+        intermediate_hash_b64[intermediate_hash_b64_len] = '\0';
+        session_state = msprintf("%s.%s", intermediate_hash_b64, salt);
+      }
+    }
+    o_free(intermediate);
+    o_free(origin);
+  }
+  return session_state;
+}
+
 static int generate_discovery_content(struct _oidc_config * config) {
   json_t * j_discovery = json_object(), * j_element = NULL, * j_rhon_info = r_library_info_json_t(), * j_sign_pubkey = json_array();
   char * plugin_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, config->name);
@@ -4091,7 +4127,6 @@ static int generate_discovery_content(struct _oidc_config * config) {
     json_object_set_new(j_discovery, "authorization_endpoint", json_pack("s+", plugin_url, "/auth"));
     json_object_set_new(j_discovery, "token_endpoint", json_pack("s+", plugin_url, "/token"));
     json_object_set_new(j_discovery, "userinfo_endpoint", json_pack("s+", plugin_url, "/userinfo"));
-    json_object_set_new(j_discovery, "end_session_endpoint", json_pack("s+", plugin_url, "/end_session"));
     json_object_set_new(j_discovery, "jwks_uri", json_pack("s+", plugin_url, "/jwks"));
     json_object_set_new(j_discovery, "token_endpoint_auth_methods_supported", json_pack("[ss]", "client_secret_basic", "client_secret_post"));
     
@@ -4218,6 +4253,10 @@ static int generate_discovery_content(struct _oidc_config * config) {
     }
     if (json_object_get(config->j_params, "register-client-allowed") == json_true()) {
       json_object_set_new(j_discovery, "registration_endpoint", json_pack("s+", plugin_url, "/register"));
+    }
+    if (json_object_get(config->j_params, "session-management-allowed") == json_true()) {
+      json_object_set_new(j_discovery, "end_session_endpoint", json_pack("s+", plugin_url, "/end_session"));
+      json_object_set_new(j_discovery, "check_session_iframe", json_pack("s+", plugin_url, "/check_session_iframe"));
     }
     config->discovery_str = json_dumps(j_discovery, JSON_COMPACT);
   } else {
@@ -4379,7 +4418,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     form_post = (0 == o_strcmp("form_post", u_map_get(map, "response_mode")));
     
     if (u_map_init(&additional_parameters) != U_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - Error u_map_init");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - Error u_map_init");
       if (form_post) {
         build_form_post_error_response(map, response, "error", "server_error", NULL);
       } else {
@@ -4428,7 +4467,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     if (u_map_has_key(map, "claims") && o_strlen(u_map_get(map, "claims"))) {
       j_claims = json_loads(u_map_get(map, "claims"), JSON_DECODE_ANY, NULL);
       if (j_claims == NULL) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - error claims parameter not in JSON format, origin: %s", ip_source);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - error claims parameter not in JSON format, origin: %s", ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "invalid_request", NULL);
         } else {
@@ -4464,7 +4503,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     }
     
     if (!o_strlen(redirect_uri)) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - redirect_uri missing, origin: %s", ip_source);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - redirect_uri missing, origin: %s", ip_source);
       response->status = 403;
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       break;
@@ -4516,7 +4555,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     }
     
     if (j_claims != NULL && parse_claims_request(j_claims) != G_OK) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - error parsing claims parameter, origin: %s", ip_source);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - error parsing claims parameter, origin: %s", ip_source);
       if (form_post) {
         build_form_post_error_response(map, response, "error", "invalid_request", NULL);
       } else {
@@ -4542,7 +4581,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       break;
     } else if (res != G_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - error is_code_challenge_valid");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - error is_code_challenge_valid");
       if (form_post) {
         build_form_post_error_response(map, response, "error", "server_error", NULL);
       } else {
@@ -4580,7 +4619,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     // Check if at least one scope has been provided
     if (!o_strlen(scope)) {
       // Scope is not allowed for this user
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - scope list is missing or empty or scope 'openid' missing, origin: %s", ip_source);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - scope list is missing or empty or scope 'openid' missing, origin: %s", ip_source);
       if (form_post) {
         build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
       } else {
@@ -4595,7 +4634,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
 
     // Split scope list into scope array
     if (!split_string(scope, " ", &scope_list)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - Error split_string");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - Error split_string");
       if (form_post) {
         build_form_post_error_response(map, response, "error", "server_error", NULL);
       } else {
@@ -4611,7 +4650,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     // Check that the scope 'openid' is provided, otherwise return error
     if ((!string_array_has_value((const char **)scope_list, "openid") && !config->allow_non_oidc) || (auth_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG && !string_array_has_value((const char **)scope_list, "openid"))) {
       // Scope openid missing
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - scope 'openid' missing, origin: %s", ip_source);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - scope 'openid' missing, origin: %s", ip_source);
       if (form_post) {
         build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
       } else {
@@ -4629,7 +4668,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
       if (0 == o_strcmp("none", prompt)) {
         // Scope is not allowed for this user
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - prompt 'none', avoid login page, origin: %s", ip_source);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - prompt 'none', avoid login page, origin: %s", ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "interaction_required", NULL);
         } else {
@@ -4651,7 +4690,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
       if (0 == o_strcmp("none", prompt)) {
         // Scope is not allowed for this user
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - prompt 'none', avoid login page, origin: %s", ip_source);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - prompt 'none', avoid login page, origin: %s", ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "interaction_required", NULL);
         } else {
@@ -4663,7 +4702,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       } else {
         // Scope is not allowed for this user
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - scope list '%s' is invalid for user '%s', origin: %s", scope, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - scope list '%s' is invalid for user '%s', origin: %s", scope, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
         } else {
@@ -4676,7 +4715,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
       }
       break;
     } else if (!check_result_value(j_session, G_OK)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - Error validate_session_client_scope");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - Error validate_session_client_scope");
       if (form_post) {
         build_form_post_error_response(map, response, "error", "server_error", NULL);
       } else {
@@ -4706,7 +4745,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
           if (check_result_value(j_last_token, G_OK)) {
             id_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, id_token_hint);
             if (0 != o_strcmp(id_token_hash, json_string_value(json_object_get(json_object_get(j_last_token, "id_token"), "token_hash")))) {
-              y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - id_token_hint was not the last one provided to client '%s' for user '%s', origin: %s", client_id, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
+              y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - id_token_hint was not the last one provided to client '%s' for user '%s', origin: %s", client_id, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
               if (form_post) {
                 build_form_post_error_response(map, response, "error", "invalid_request", NULL);
               } else {
@@ -4719,7 +4758,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
               break;
             }
           } else if (check_result_value(j_last_token, G_ERROR_NOT_FOUND)) {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - no id_token was provided to client '%s' for user '%s', origin: %s", client_id, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
+            y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - no id_token was provided to client '%s' for user '%s', origin: %s", client_id, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
             if (form_post) {
               build_form_post_error_response(map, response, "error", "invalid_request", NULL);
             } else {
@@ -4731,7 +4770,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
             j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
             break;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - Error get_last_id_token");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - Error get_last_id_token");
             if (form_post) {
               build_form_post_error_response(map, response, "error", "server_error", NULL);
             } else {
@@ -4744,7 +4783,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
             break;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - id_token has invalid content or signature, origin: %s", ip_source);
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - id_token has invalid content or signature, origin: %s", ip_source);
           if (form_post) {
             build_form_post_error_response(map, response, "error", "invalid_request", NULL);
           } else {
@@ -4757,7 +4796,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
           break;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - no id_token provided in the request, origin: %s", ip_source);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - no id_token provided in the request, origin: %s", ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "invalid_request", NULL);
         } else {
@@ -4775,7 +4814,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == json_true()) {
       if (0 == o_strcmp("none", prompt)) {
         // Scope is not allowed for this user
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - prompt 'none', avoid login page, origin: %s", ip_source);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - prompt 'none', avoid login page, origin: %s", ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "interaction_required", NULL);
         } else {
@@ -4798,7 +4837,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     
     issued_for = get_client_hostname(request);
     if (issued_for == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - Error get_client_hostname");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - Error get_client_hostname");
       if (form_post) {
         build_form_post_error_response(map, response, "error", "server_error", NULL);
       } else {
@@ -4813,7 +4852,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     
     // Trigger the use of this session to reset use of some schemes
     if (config->glewlwyd_config->glewlwyd_callback_trigger_session_used(config->glewlwyd_config, request, json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered"))) != G_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_auth_endpoint - Error glewlwyd_callback_trigger_session_used");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - Error glewlwyd_callback_trigger_session_used");
       if (form_post) {
         build_form_post_error_response(map, response, "error", "server_error", NULL);
       } else {
@@ -4828,7 +4867,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
     
     // nonce parameter is required for some authorization types
     if ((auth_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG) && !o_strlen(nonce)) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - nonce required, origin: %s", ip_source);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - nonce required, origin: %s", ip_source);
       if (form_post) {
         build_form_post_error_response(map, response, "error", "invalid_request", NULL);
       } else {
@@ -4856,7 +4895,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
           break;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_auth_endpoint - nonce required, origin: %s", ip_source);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - nonce required, origin: %s", ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "invalid_request", NULL);
         } else {
@@ -5581,6 +5620,17 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
 }
 
 /**
+ * OP Iframe to validate session_state
+ */
+static int callback_oidc_check_session_iframe(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  struct _oidc_config * config = (struct _oidc_config *)user_data;
+  u_map_put(response->map_header, "Content-Type", "text/html; charset=utf-8");
+  ulfius_set_string_body_response(response, 200, config->check_session_iframe);
+  return U_CALLBACK_CONTINUE;
+}
+
+/**
  * Redirects the user to an end session prompt
  */
 static int callback_oidc_end_session(const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -5702,7 +5752,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   const char * response_type = NULL, * redirect_uri = NULL, * client_id = NULL, * nonce = NULL, * state_value = NULL, * ip_source = get_ip_source(request);
   int result = U_CALLBACK_CONTINUE;
-  char * redirect_url, ** resp_type_array = NULL, * authorization_code = NULL, * authorization_code_out = NULL, * access_token = NULL, * id_token = NULL, * id_token_out = NULL, * expires_in_str = NULL, * iat_str = NULL, * query_parameters = NULL, * state = NULL, * str_request = NULL, * access_token_out = NULL;
+  char * redirect_url, ** resp_type_array = NULL, * authorization_code = NULL, * authorization_code_out = NULL, * access_token = NULL, * id_token = NULL, * id_token_out = NULL, * expires_in_str = NULL, * iat_str = NULL, * query_parameters = NULL, * state = NULL, * str_request = NULL, * access_token_out = NULL, * session_state = NULL;
   json_t * j_auth_result = NULL, * j_request = NULL, * j_client = NULL;
   time_t now;
   int ret, implicit_flow = 1, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NULL_FLAG, check_request = 0;
@@ -5899,6 +5949,14 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           }
         }
 
+        if (json_object_get(config->j_params, "session-management-allowed") == json_true()) {
+          session_state = generate_session_state(client_id, redirect_uri, json_string_value(json_object_get(json_object_get(json_object_get(j_auth_result, "session"), "user"), "username")));
+          if (o_strlen(session_state)) {
+            u_map_put(&map_query, "session_state", session_state);
+          }
+          o_free(session_state);
+        }
+    
         if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "code")) {
           if (is_authorization_type_enabled((struct _oidc_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE) && redirect_uri != NULL) {
             // Generates authorization code
@@ -6641,6 +6699,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       p_config->client_register_resource_config = NULL;
       p_config->discovery_str = NULL;
       p_config->jwks_str = NULL;
+      p_config->check_session_iframe = NULL;
       
       j_result = check_parameters(((struct _oidc_config *)*cls)->j_params);
 
@@ -6666,10 +6725,6 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       p_config->oidc_resource_config->realm = NULL;
       p_config->oidc_resource_config->accept_access_token = 1;
       p_config->oidc_resource_config->accept_client_token = 0;
-      p_config->introspect_revoke_resource_config = NULL;
-      p_config->client_register_resource_config = NULL;
-      p_config->discovery_str = NULL;
-      p_config->jwks_str = NULL;
       
       // Set config variables with conig parameters
       p_config->x5u_flags = R_FLAG_FOLLOW_REDIRECT|(json_object_get(p_config->j_params, "request-uri-allow-https-non-secure")==json_true()?R_FLAG_IGNORE_SERVER_CERTIFICATE:0);
@@ -7096,7 +7151,6 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
          config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_disable_refresh_token, (void*)*cls) != G_OK || 
          config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK || 
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_discovery, (void*)*cls) != G_OK ||
-         config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "end_session/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_end_session, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "jwks", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_jwks, (void*)*cls) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding endpoints");
         j_return = json_pack("{si}", "result", G_ERROR);
@@ -7139,7 +7193,6 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       }
       
       if (json_object_get(p_config->j_params, "register-client-allowed") == json_true()) {
-      ;
         if ((p_config->client_register_resource_config = o_malloc(sizeof(struct _oidc_resource_config))) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error allocating resources for client_register_resource_config");
           j_return = json_pack("{si}", "result", G_ERROR);
@@ -7169,7 +7222,23 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
+      }
+      
+      if (json_object_get(p_config->j_params, "session-management-allowed") == json_true()) {
+        if (
+         config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "end_session/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_end_session, (void*)*cls) != G_OK ||
+         config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "check_session_iframe/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_check_session_iframe, (void*)*cls) != G_OK
+        ) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding session-management endpoints");
+          j_return = json_pack("{si}", "result", G_ERROR);
+          break;
+        }
         
+        if (generate_check_session_iframe(p_config) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error generate_check_session_iframe");
+          j_return = json_pack("{si}", "result", G_ERROR);
+          break;
+        }
       }
       
       if (generate_discovery_content(p_config) != G_OK) {
@@ -7216,6 +7285,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         pthread_mutex_destroy(&p_config->insert_lock);
         o_free(p_config->discovery_str);
         o_free(p_config->jwks_str);
+        o_free(p_config->check_session_iframe);
         o_free(p_config);
       }
     }
@@ -7272,6 +7342,7 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
     pthread_mutex_destroy(&((struct _oidc_config *)cls)->insert_lock);
     o_free(((struct _oidc_config *)cls)->discovery_str);
     o_free(((struct _oidc_config *)cls)->jwks_str);
+    o_free(((struct _oidc_config *)cls)->check_session_iframe);
     o_free(cls);
   }
   return G_OK;
