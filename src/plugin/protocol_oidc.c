@@ -5620,64 +5620,6 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
 }
 
 /**
- * OP Iframe to validate session_state
- */
-static int callback_oidc_check_session_iframe(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  UNUSED(request);
-  struct _oidc_config * config = (struct _oidc_config *)user_data;
-  u_map_put(response->map_header, "Content-Type", "text/html; charset=utf-8");
-  ulfius_set_string_body_response(response, 200, config->check_session_iframe);
-  return U_CALLBACK_CONTINUE;
-}
-
-/**
- * Redirects the user to an end session prompt
- */
-static int callback_oidc_end_session(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  struct _oidc_config * config = (struct _oidc_config *)user_data;
-  struct _u_map map;
-  char * logout_url, * post_logout_redirect_uri = NULL;
-  json_t * j_metadata, * j_client;
-  
-  if (u_map_has_key(request->map_url, "id_token_hint")) {
-    if (revoke_id_token(config, u_map_get(request->map_url, "id_token_hint")) != G_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_end_session - Error revoke_id_token");
-    }
-  }
-  if (u_map_get(request->map_url, "post_logout_redirect_uri") != NULL) {
-    j_metadata = get_token_metadata(config, u_map_get(request->map_url, "id_token_hint"), "id_token", NULL);
-    if (check_result_value(j_metadata, G_OK) && json_object_get(json_object_get(j_metadata, "token"), "active") == json_true()) {
-      j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get(json_object_get(j_metadata, "token"), "client_id")));
-      if (check_result_value(j_client, G_OK)) {
-        if (json_array_has_string(json_object_get(json_object_get(j_client, "client"), "post_logout_redirect_uris"), u_map_get(request->map_url, "post_logout_redirect_uri"))) {
-          if (u_map_get(request->map_url, "state") != NULL) {
-            if (o_strrchr(u_map_get(request->map_url, "post_logout_redirect_uri"), '?') != NULL || o_strrchr(u_map_get(request->map_url, "post_logout_redirect_uri"), '#') != NULL) {
-              post_logout_redirect_uri = msprintf("%s&state=%s", u_map_get(request->map_url, "post_logout_redirect_uri"), u_map_get(request->map_url, "state"));
-            } else {
-              post_logout_redirect_uri = msprintf("%s?state=%s", u_map_get(request->map_url, "post_logout_redirect_uri"), u_map_get(request->map_url, "state"));
-            }
-          } else {
-            post_logout_redirect_uri = o_strdup(u_map_get(request->map_url, "post_logout_redirect_uri"));
-          }
-        }
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_end_session - Error getting client_id %s", json_string_value(json_object_get(json_object_get(j_metadata, "token"), "client_id")));
-      }
-      json_decref(j_client);
-    }
-  }
-  u_map_init(&map);
-  u_map_put(&map, "prompt", "end_session");
-  logout_url = config->glewlwyd_config->glewlwyd_callback_get_login_url(config->glewlwyd_config, NULL, NULL, post_logout_redirect_uri, &map);
-  response->status = 302;
-  ulfius_add_header_to_response(response, "Location", logout_url);
-  u_map_clean(&map);
-  o_free(logout_url);
-  o_free(post_logout_redirect_uri);
-  return U_CALLBACK_CONTINUE;
-}
-
-/**
  * verify that the http request is authorized based on the access token
  */
 static int callback_check_userinfo(const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -6506,6 +6448,65 @@ static int callback_oidc_get_jwks(const struct _u_request * request, struct _u_r
 }
 
 /**
+ * OP Iframe to validate session_state
+ */
+static int callback_oidc_check_session_iframe(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  struct _oidc_config * config = (struct _oidc_config *)user_data;
+  u_map_put(response->map_header, "Content-Type", "text/html; charset=utf-8");
+  ulfius_set_string_body_response(response, 200, config->check_session_iframe);
+  return U_CALLBACK_CONTINUE;
+}
+
+/**
+ * Redirects the user to an end session prompt
+ */
+static int callback_oidc_end_session(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct _oidc_config * config = (struct _oidc_config *)user_data;
+  struct _u_map map;
+  char * logout_url, * post_logout_redirect_uri = NULL;
+  json_t * j_metadata, * j_client;
+  
+  if (u_map_get(request->map_url, "post_logout_redirect_uri") != NULL) {
+    j_metadata = get_token_metadata(config, u_map_get(request->map_url, "id_token_hint"), "id_token", NULL);
+    if (check_result_value(j_metadata, G_OK) && json_object_get(json_object_get(j_metadata, "token"), "active") == json_true()) {
+      j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get(json_object_get(j_metadata, "token"), "client_id")));
+      if (check_result_value(j_client, G_OK)) {
+        if (json_array_has_string(json_object_get(json_object_get(j_client, "client"), "post_logout_redirect_uris"), u_map_get(request->map_url, "post_logout_redirect_uri"))) {
+          if (u_map_get(request->map_url, "state") != NULL) {
+            if (o_strrchr(u_map_get(request->map_url, "post_logout_redirect_uri"), '?') != NULL || o_strrchr(u_map_get(request->map_url, "post_logout_redirect_uri"), '#') != NULL) {
+              post_logout_redirect_uri = msprintf("%s&state=%s", u_map_get(request->map_url, "post_logout_redirect_uri"), u_map_get(request->map_url, "state"));
+            } else {
+              post_logout_redirect_uri = msprintf("%s?state=%s", u_map_get(request->map_url, "post_logout_redirect_uri"), u_map_get(request->map_url, "state"));
+            }
+          } else {
+            post_logout_redirect_uri = o_strdup(u_map_get(request->map_url, "post_logout_redirect_uri"));
+          }
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_end_session - Error getting client_id %s", json_string_value(json_object_get(json_object_get(j_metadata, "token"), "client_id")));
+      }
+      json_decref(j_client);
+    }
+    json_decref(j_metadata);
+  }
+  if (u_map_has_key(request->map_url, "id_token_hint")) {
+    if (revoke_id_token(config, u_map_get(request->map_url, "id_token_hint")) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_end_session - Error revoke_id_token");
+    }
+  }
+  u_map_init(&map);
+  u_map_put(&map, "prompt", "end_session");
+  logout_url = config->glewlwyd_config->glewlwyd_callback_get_login_url(config->glewlwyd_config, NULL, NULL, post_logout_redirect_uri, &map);
+  response->status = 302;
+  ulfius_add_header_to_response(response, "Location", logout_url);
+  u_map_clean(&map);
+  o_free(logout_url);
+  o_free(post_logout_redirect_uri);
+  return U_CALLBACK_CONTINUE;
+}
+
+/**
  * verify the private key and public key are valid to build and verify jwts
  */
 static int jwt_autocheck(struct _oidc_config * config) {
@@ -7312,6 +7313,10 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
     config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/*");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "jwks");
+    if (json_object_get(((struct _oidc_config *)cls)->j_params, "session-management-allowed") == json_true()) {
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "end_session/");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "check_session_iframe/");
+    }
     if (((struct _oidc_config *)cls)->introspect_revoke_resource_config != NULL) {
       config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "introspect/");
       config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "revoke/");
