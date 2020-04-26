@@ -31,61 +31,60 @@
  -->
 <!doctype html>
 <html lang="en">
-	<head>
-		
-		<meta charset="utf-8">
-		<title>Glewlwyd test page</title>
-		<meta name="description" content="Glewlwyd OAuth2 Authorization Server">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <meta charset="utf-8">
+    <title>Glewlwyd test page</title>
+    <meta name="description" content="Glewlwyd OAuth2 Authorization Server">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-		<script src="js/jquery.min.js"></script>
-		<link rel="stylesheet" href="css/bootstrap.min.css" crossorigin="anonymous">
-		<script src="js/bootstrap.min.js" crossorigin="anonymous"></script>
-		<style>
-		body {
-		  padding-top: 40px;
-		  padding-bottom: 40px;
-		  background-color: #eee;
-		}
+    <script src="js/jquery.min.js"></script>
+    <link rel="stylesheet" href="css/bootstrap.min.css" crossorigin="anonymous">
+    <script src="js/bootstrap.min.js" crossorigin="anonymous"></script>
+    <style>
+    body {
+      padding-top: 40px;
+      padding-bottom: 40px;
+      background-color: #eee;
+    }
 
-		.form-signin {
-		  max-width: 330px;
-		  padding: 15px;
-		  margin: 0 auto;
-		}
-		.form-signin .form-signin-heading,
-		.form-signin .checkbox {
-		  margin-bottom: 10px;
-		}
-		.form-signin .checkbox {
-		  font-weight: normal;
-		}
-		.form-signin .form-control {
-		  position: relative;
-		  height: auto;
-		  -webkit-box-sizing: border-box;
-			 -moz-box-sizing: border-box;
-				  box-sizing: border-box;
-		  padding: 10px;
-		  font-size: 16px;
-		}
-		.form-signin .form-control:focus {
-		  z-index: 2;
-		}
-		.form-signin input[type="email"] {
-		  margin-bottom: -1px;
-		  border-bottom-right-radius: 0;
-		  border-bottom-left-radius: 0;
-		}
-		.form-signin input[type="password"] {
-		  margin-bottom: 10px;
-		  border-top-left-radius: 0;
-		  border-top-right-radius: 0;
-		}
-		</style>
-	</head>
-	<body>
-		<div class="container">
+    .form-signin {
+      max-width: 330px;
+      padding: 15px;
+      margin: 0 auto;
+    }
+    .form-signin .form-signin-heading,
+    .form-signin .checkbox {
+      margin-bottom: 10px;
+    }
+    .form-signin .checkbox {
+      font-weight: normal;
+    }
+    .form-signin .form-control {
+      position: relative;
+      height: auto;
+      -webkit-box-sizing: border-box;
+       -moz-box-sizing: border-box;
+          box-sizing: border-box;
+      padding: 10px;
+      font-size: 16px;
+    }
+    .form-signin .form-control:focus {
+      z-index: 2;
+    }
+    .form-signin input[type="email"] {
+      margin-bottom: -1px;
+      border-bottom-right-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+    .form-signin input[type="password"] {
+      margin-bottom: 10px;
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+    </style>
+  </head>
+  <body>
+    <div class="container">
       <div class="row">
         <div class="col-md-2">
           <label for="send_method">Send parameter method</label>
@@ -335,49 +334,66 @@
         </div>
       </div>
       <div class="row">
+        <div class="col-md-2">
+          <label for="session_state">session_state</label>
+        </div>
+        <div class="col-md-2">
+          <input type="text" id="session_state" name="session_state" value="" class="form-control">
+        </div>
+        <div class="col-md-2">
+          <div id="session_state_result"></div>
+        </div>
+      </div>
+      <div class="row">
         <div class="col-md-4">
           <button type="button" name="generate_jwt" id="generate_jwt" class="btn btn-lg btn-primary btn-block">Generate unencoded JWT</button>
           <button type="button" name="run" id="run" class="btn btn-lg btn-primary btn-block">Run test</button>
+          <button type="button" name="check_session_state" id="check_session_state" class="btn btn-lg btn-primary btn-block">Check session state</button>
         </div>
       </div>
       <div class="row">
         <div class="col-md-8" id="result" name="result" style="word-wrap: break-word;">
         </div>
       </div>
-		</div>
-	</body>
+      <div id="check-session-iframe-container"></div>
+    </div>
+  </body>
 <script>
   var glewlwyd_api = "api/oidc";
   
   var params;
-	function getQueryParams(qs) {
-		qs = qs.split('+').join(' ');
+  function getQueryParams(qs) {
+    qs = qs.split('+').join(' ');
 
-		var params = {},
-			tokens,
-			re = /[?&]?([^=]+)=([^&]*)/g;
+    var params = {},
+      tokens,
+      re = /[?&]?([^=]+)=([^&]*)/g;
 
-		while (tokens = re.exec(qs)) {
-			params[decodeURIComponent(tokens[1])] = decodeURIComponent(tokens[2]);
-		}
+    while (tokens = re.exec(qs)) {
+      params[decodeURIComponent(tokens[1])] = decodeURIComponent(tokens[2]);
+    }
 
-		return params;
-	}
-	
-	window.onload = function () {
-		params = getQueryParams(location.search);
-		if (params.code) {
-		  $("#code").val(params.code);
-		}
+    return params;
+  }
+  
+  window.onload = function () {
+    params = getQueryParams(location.search);
+    if (params.code) {
+      $("#code").val(params.code);
+    }
     if (params.access_token) {
       $("#access_token").val(params.access_token);
       $("#result").append("<div><strong>access_token</strong>: <code>" + params.access_token + "</code></div>");
     }
+    if (params.session_state) {
+      $("#session_state").val(params.session_state);
+      $("#result").append("<div><strong>session_state</strong>: <code>" + params.session_state + "</code></div>");
+    }
     
-		params = getQueryParams(location.hash.substring(1));
-		if (params.code) {
-		  $("#code").val(params.code);
-		}
+    params = getQueryParams(location.hash.substring(1));
+    if (params.code) {
+      $("#code").val(params.code);
+    }
     if (params.access_token) {
       $("#access_token").val(params.access_token);
       $("#result").append("<div><strong>access_token</strong>: <code>" + params.access_token + "</code></div>");
@@ -390,7 +406,13 @@
       $("#id_token").val(params.id_token);
       $("#result").append("<div><strong>id_token</strong>: <code>" + params.id_token + "</code></div>");
     }
-	};
+    if (params.session_state) {
+      $("#session_state").val(params.session_state);
+      $("#result").append("<div><strong>session_state</strong>: <code>" + params.session_state + "</code></div>");
+    }
+    window.addEventListener('message', receiveMessage, false);
+    $("#check-session-iframe-container").append('<iframe id="check-session-iframe" src="'+glewlwyd_api+'/check_session_iframe/" style="display: none"/>');
+  };
 
   function setAuthHeader(xhr){
     var creds = $("#client_id").val() + ':' + $("#clientpassword").val();
@@ -623,5 +645,23 @@
         break;
     }
   });
+  
+  $("#check_session_state").click(function () {
+    if ($("#session_state").val()) {
+      document.getElementById('check-session-iframe').contentWindow.postMessage($("#client_id").val() + " " + $("#session_state").val());
+    }
+  });
+
+  function receiveMessage(e) {
+    if (e.source.origin === location.origin) {
+      if (e.data === "unchanged") {
+	$("#session_state_result").html("<span class='badge badge-success'>unchanged</span>");
+      } else if (e.data === "changed") {
+	$("#session_state_result").html("<span class='badge badge-secondary'>changed</span>");
+      } else if (e.data === "error") {
+	$("#session_state_result").html("<span class='badge badge-danger'>error</span>");
+      }
+    }
+  }
 </script>
 </html>
