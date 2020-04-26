@@ -1,0 +1,51 @@
+<!--
+This file is the template used to generate (manually-ish) the check_session_iframe content in OIDC plugin
+To apply update, minimise the code below, ^C^V in the function generate_check_session_iframe in the source file plugin_oidc.c, and recompile the plugin
+-->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Glewlwyd	check_session_iframe</title>
+  </head>
+  <body>
+    iframe
+  </body>
+  <script>
+    function receiveMessage(e){
+      var client_id = e.data.split(' ')[0];
+      var session_state = e.data.split(' ')[1];
+      var salt = session_state.split('.')[1];
+      
+      var request = new XMLHttpRequest();
+      request.open("GET", "%s/%s/profile_list/", true);
+      request.onload = function() {
+        if (this.status === 200) {
+          var profile_list = JSON.parse(this.response);
+          if (profile_list && profile_list[0]) {
+            const encoder = new TextEncoder();
+            var intermediate = (client_id + " " + e.origin + " " + profile_list[0].username + " " + salt);
+            const data = encoder.encode(intermediate);
+            crypto.subtle.digest('SHA-256', data).then((value) => {
+              if (session_state == (btoa(new Uint8Array(value).reduce((s, b) => s + String.fromCharCode(b), ''))+ "." + salt)) {
+                e.source.postMessage("unchanged", e.origin);
+              } else {
+                e.source.postMessage("changed", e.origin);
+              }
+            })
+          } else {
+            e.source.postMessage("error", e.origin);
+          }
+        } else if (this.status === 401) {
+          e.source.postMessage("changed", e.origin);
+        } else {
+          e.source.postMessage("error", e.origin);
+        }
+      };
+      request.onerror = function() {
+        e.source.postMessage("error", e.origin);
+      };
+      request.send();
+    };
+    window.addEventListener('message', receiveMessage, false);
+  </script>
+</html>
