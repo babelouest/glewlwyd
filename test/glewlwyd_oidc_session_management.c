@@ -310,6 +310,53 @@ START_TEST(test_oidc_session_management_end_session_valid_post_logout)
 }
 END_TEST
 
+START_TEST(test_oidc_session_management_end_session_no_state)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  char * id_token;
+  json_t * j_body;
+  
+  j_body = json_pack("{ss}", "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_ID, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+
+  ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=id_token&g_continue&client_id=%s&redirect_uri=%s&nonce=nonce1234567&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);
+  id_token = o_strdup(o_strstr(u_map_get(resp.map_header, "Location"), "id_token=")+strlen("id_token="));
+  if (strchr(id_token, '&') != NULL) {
+    *strchr(id_token, '&') = '\0';
+  }
+  ulfius_clean_response(&resp);
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
+  o_free(req.http_verb);
+  o_free(req.http_url);
+  req.http_verb = o_strdup("GET");
+  req.http_url = msprintf(SERVER_URI "/" PLUGIN_NAME "/end_session?post_logout_redirect_uri=%s&id_token_hint=%s", CLIENT_REDIRECT_POST_LOGOUT_ENC, id_token);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 302);
+  ck_assert_ptr_eq(NULL, o_strcasestr(u_map_get(resp.map_header, "Location"), "state="));
+  ck_assert_ptr_ne(NULL, o_strcasestr(u_map_get(resp.map_header, "Location"), CLIENT_REDIRECT_POST_LOGOUT_ENC));
+  
+  j_body = json_pack("{ss}", "scope", "");
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_ID, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  o_free(id_token);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -323,6 +370,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_session_management_end_session_no_post_logout);
   tcase_add_test(tc_core, test_oidc_session_management_end_session_invalid_post_logout);
   tcase_add_test(tc_core, test_oidc_session_management_end_session_valid_post_logout);
+  tcase_add_test(tc_core, test_oidc_session_management_end_session_no_state);
   tcase_add_test(tc_core, test_oidc_session_management_delete_client);
   tcase_add_test(tc_core, test_oidc_session_management_delete_module);
   tcase_set_timeout(tc_core, 30);
