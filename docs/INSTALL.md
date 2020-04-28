@@ -1,6 +1,7 @@
 # Installation
 
-1.  [Upgrade Glewlwyid from 2.0 or 2.1 to 2.2](#upgrade-glewlwyid-from-20-or-21-to-22)
+1.  [Upgrade Glewlwyd](#upgrade-glewlwyid)
+    * [Upgrade to Glewlwyd 2.3.x](#upgrade-to-glewlwyd-23x)
     * [Upgrade to Glewlwyd 2.2.x](#upgrade-to-glewlwyd-22x)
     * [Upgrade to Glewlwyd 2.1.x](#upgrade-to-glewlwyd-21x)
 2.  [Distribution packages](#distribution-packages)
@@ -45,9 +46,33 @@
 
 This document is intended for the future Glewlwyd 2.3. The documentation for current release 2.2 is available in the 2.2 tag: [https://github.com/babelouest/glewlwyd/blob/v2.2.0/docs/INSTALL.md](https://github.com/babelouest/glewlwyd/blob/v2.2.0/docs/INSTALL.md).
 
-## Upgrade Glewlwyid from 2.0 or 2.1 to 2.2
+## Upgrade Glewlwyd
 
-Glewlwyd upgrades come with database changes. It is highly recommended to backup your database before performing the upgrade.
+Glewlwyd upgrades come with database changes. It is highly recommended to backup your database before performing the upgrade. You must perform the database upgrades in the correct order. i.e. if you upgrade from Glewlwyd 2.1 to Glewlwyd 2.3, you must first install the 2.2 upgrade, then the 2.3.
+
+### Upgrade to Glewlwyd 2.3.x
+
+#### Mandatory core tables upgrade
+
+Small changes were added to the core tables. You must execute the script depending on your database backend:
+
+- Mariadb: [upgrade-2.3-core.mariadb.sql](database/upgrade-2.3-core.mariadb.sql)
+
+```shell
+$ mysql glewlwyd < docs/database/upgrade-2.3-core.mariadb.sql
+```
+
+- SQlite3: [upgrade-2.3-core.sqlite3.sql](database/upgrade-2.3-core.sqlite3.sql)
+
+```shell
+$ sqlite3 /path/to/glewlwyd.db < docs/database/upgrade-2.3-core.sqlite3.sql
+```
+
+- PostgreSQL: [upgrade-2.3-core.postgresql.sql](database/upgrade-2.3-core.postgresql.sql)
+
+```shell
+$ psql glewlwyd < docs/database/upgrade-2.3-core.postgresql.sql
+```
 
 ### Upgrade to Glewlwyd 2.2.x
 
