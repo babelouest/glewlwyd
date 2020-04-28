@@ -5429,9 +5429,9 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
 static int check_auth_type_client_credentials_grant (const struct _u_request * request, struct _u_response * response, void * user_data, json_t * j_assertion_client) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   json_t * j_client, * j_element = NULL, * json_body;
-  char ** scope_array, ** scope_allowed = NULL, * scope_joined, * access_token, * access_token_out, * issued_for = get_client_hostname(request), jti[OIDC_JTI_LENGTH] = {0};
+  char ** scope_array, * scope_joined = NULL, * access_token = NULL, * access_token_out = NULL, * issued_for = get_client_hostname(request), jti[OIDC_JTI_LENGTH] = {0};
   size_t index = 0;
-  int i, i_scope_allowed = 0, auth_type_allowed = 0;
+  int i, auth_type_allowed = 0;
   time_t now;
   const char * ip_source = get_ip_source(request);
 
@@ -5454,18 +5454,15 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
         for (i=0; scope_array[i]!=NULL; i++) {
           json_array_foreach(json_object_get(json_object_get(j_client, "client"), "scope"), index, j_element) {
             if (0 == o_strcmp(json_string_value(j_element), scope_array[i])) {
-              if (scope_allowed == NULL) {
-                scope_allowed = o_malloc(2 * sizeof(char*));
+              if (scope_joined == NULL) {
+                scope_joined = o_strdup(scope_array[i]);
               } else {
-                scope_allowed = o_realloc(scope_allowed, (2 + i_scope_allowed) * sizeof(char*));
+                scope_joined = mstrcatf(scope_joined, " %s", scope_array[i]);
               }
-              scope_allowed[i_scope_allowed] = scope_array[i];
-              scope_allowed[i_scope_allowed+1] = NULL;
-              i_scope_allowed++;
             }
           }
         }
-        if (!i_scope_allowed) {
+        if (!o_strlen(scope_joined)) {
           json_body = json_pack("{ss}", "error", "scope_invalid");
           ulfius_set_json_body_response(response, 400, json_body);
           json_decref(json_body);
@@ -5474,7 +5471,6 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
           ulfius_set_json_body_response(response, 400, json_body);
           json_decref(json_body);
         } else {
-          scope_joined = string_array_join((const char **)scope_allowed, " ");
           time(&now);
           if ((access_token = generate_client_access_token(config, json_object_get(j_client, "client"), scope_joined, now, jti)) != NULL) {
             if (serialize_access_token(config, 
@@ -5511,7 +5507,6 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
           }
           o_free(access_token);
           o_free(scope_joined);
-          o_free(scope_allowed);
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_client_credentials_grant - Error split_string");
