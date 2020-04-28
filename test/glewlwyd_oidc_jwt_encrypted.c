@@ -19,6 +19,7 @@
 #define SERVER_URI "http://localhost:4593/api"
 #define ADMIN_USERNAME "admin"
 #define ADMIN_PASSWORD "password"
+#define SCOPE_INTROSPECT "g_admin"
 #define USER_USERNAME "user1"
 #define USER_PASSWORD "password"
 #define PLUGIN "oidc"
@@ -195,7 +196,7 @@ struct _u_request user_req;
 
 START_TEST(test_oidc_jwt_encrypted_add_module_rsa)
 {
-  json_t * j_parameters = json_pack("{sssssssos{sssssssssssisisisososososososososososisssssssossssssssssssssss}}",
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssssisisisososososososososososisssssssosssssssssssssssssssosos[s]}}",
                                 "module", PLUGIN_MODULE,
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_DISPLAY_NAME,
@@ -231,7 +232,11 @@ START_TEST(test_oidc_jwt_encrypted_add_module_rsa)
                                   "client-encrypt_at-parameter", "encrypt_at",
                                   "client-encrypt_userinfo-parameter", "encrypt_userinfo",
                                   "client-encrypt_id_token-parameter", "encrypt_id_token",
-                                  "client-encrypt_refresh_token-parameter", "encrypt_refresh_token");
+                                  "client-encrypt_refresh_token-parameter", "encrypt_refresh_token",
+                                  "client-encrypt_introspection-parameter", "encrypt_introspection",
+                                  "introspection-revocation-allowed", json_true(),
+                                  "introspection-revocation-allow-target-client", json_true(),
+                                  "introspection-revocation-auth-scope", SCOPE_INTROSPECT);
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -246,7 +251,7 @@ END_TEST
 
 START_TEST(test_oidc_jwt_encrypted_add_client_pubkey)
 {
-  json_t * j_client = json_pack("{ss ss ss so s[s] s[sssss] s[s] ss ss ss ss ss ss ss ss so}", "client_id", CLIENT_ID, "client_secret", CLIENT_SECRET, "name", CLIENT_NAME, "confidential", json_true(), "redirect_uri", CLIENT_REDIRECT, "authorization_type", "code", "token", "id_token", "password", "client_credentials", "scope", CLIENT_SCOPE, "pubkey", pubkey_1_pem, "enc", CLIENT_ENC, "alg", CLIENT_PUBKEY_ALG, "encrypt_code", "1", "encrypt_at", "TruE", "encrypt_userinfo", "YES", "encrypt_id_token", "indeed, my friend", "encrypt_refresh_token", "1", "enabled", json_true());
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[sssss] s[s] ss ss ss ss ss ss ss ss ss so}", "client_id", CLIENT_ID, "client_secret", CLIENT_SECRET, "name", CLIENT_NAME, "confidential", json_true(), "redirect_uri", CLIENT_REDIRECT, "authorization_type", "code", "token", "id_token", "password", "client_credentials", "scope", CLIENT_SCOPE, "pubkey", pubkey_1_pem, "enc", CLIENT_ENC, "alg", CLIENT_PUBKEY_ALG, "encrypt_code", "1", "encrypt_at", "TruE", "encrypt_userinfo", "YES", "encrypt_id_token", "indeed, my friend", "encrypt_refresh_token", "1", "encrypt_introspection", "1", "enabled", json_true());
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -701,6 +706,92 @@ START_TEST(test_oidc_jwt_encrypted_code_valid)
 }
 END_TEST
 
+START_TEST(test_oidc_jwt_encrypted_introspection_access_token_target_bearer_jwt)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_body, * j_response, * j_body_introspect, * j_verify;
+  const char * token_auth;
+  char * tmp;
+  jwt_t * jwt;
+  jwe_t * jwe;
+  const unsigned char * payload;
+  size_t payload_len = 0;
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  req.http_verb = o_strdup("POST");
+  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/token");
+  u_map_put(req.map_post_body, "grant_type", "password");
+  u_map_put(req.map_post_body, "scope", SCOPE_LIST);
+  u_map_put(req.map_post_body, "username", USER_USERNAME);
+  u_map_put(req.map_post_body, "password", USER_PASSWORD);
+  req.auth_basic_user = o_strdup(CLIENT_ID);
+  req.auth_basic_password = o_strdup(CLIENT_SECRET);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  j_body = ulfius_get_json_body_response(&resp, NULL);
+  ulfius_clean_response(&resp);
+  ck_assert_int_eq(r_jwe_init(&jwe), RHN_OK);
+  ck_assert_int_eq(r_jwe_parse(jwe, json_string_value(json_object_get(j_body, "access_token")), 0), RHN_OK);
+  ck_assert_int_eq(r_jwe_add_keys_pem_der(jwe, R_FORMAT_PEM, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem), NULL, 0), RHN_OK);
+  ck_assert_int_eq(r_jwe_decrypt(jwe, NULL, 0), RHN_OK);
+  payload = r_jwe_get_payload(jwe, &payload_len);
+  
+  ulfius_init_response(&resp);
+  u_map_put(req.map_post_body, "scope", SCOPE_INTROSPECT);
+  u_map_put(req.map_post_body, "username", ADMIN_USERNAME);
+  u_map_put(req.map_post_body, "password", ADMIN_PASSWORD);
+  o_free(req.auth_basic_user);
+  req.auth_basic_user = NULL;
+  o_free(req.auth_basic_password);
+  req.auth_basic_password = NULL;
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  j_body_introspect = ulfius_get_json_body_response(&resp, NULL);
+  ck_assert_ptr_ne(NULL, token_auth = json_string_value(json_object_get(j_body_introspect, "access_token")));
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  tmp = msprintf("Bearer %s", token_auth);
+  u_map_put(req.map_header, "Authorization", tmp);
+  o_free(tmp);
+  req.http_verb = o_strdup("POST");
+  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/introspect");
+  u_map_put(req.map_header, "Accept", "application/jwt");
+  tmp = o_strndup((const char *)payload, payload_len);
+  ck_assert_int_eq(u_map_put(req.map_post_body, "token", tmp), U_OK);
+  ck_assert_int_eq(u_map_put(req.map_post_body, "token_type_hint", "access_token"), U_OK);
+  o_free(tmp);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_str_eq("application/jwt", u_map_get(resp.map_header, "Content-Type"));
+  ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
+  ck_assert_int_gt(resp.binary_body_length, 0);
+  ck_assert_ptr_ne(NULL, resp.binary_body);
+  ck_assert_int_eq(r_jwt_parsen(jwt, resp.binary_body, resp.binary_body_length, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_enc_keys_pem_der(jwt, R_FORMAT_PEM, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem), NULL, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, NULL, 0, (unsigned char *)pubkey_2_pem, o_strlen(pubkey_2_pem)), RHN_OK);
+  ck_assert_int_eq(r_jwt_decrypt_verify_signature_nested(jwt, NULL, 0, NULL, 0), RHN_OK);
+  ck_assert_ptr_ne(NULL, j_response = r_jwt_get_full_claims_json_t(jwt));
+  j_verify = json_pack("{sossssssssss}", "active", json_true(), "username", USER_USERNAME, "client_id", CLIENT_ID, "token_type", "access_token", "scope", SCOPE_LIST, "iss", PLUGIN_ISS);
+  ck_assert_ptr_ne(NULL, json_search(j_response, j_verify));
+  ck_assert_str_eq("JWT", r_jwt_get_header_str_value(jwt, "typ"));
+
+  r_jwt_free(jwt);
+  r_jwe_free(jwe);
+  json_decref(j_verify);
+  json_decref(j_response);
+  json_decref(j_body);
+  json_decref(j_body_introspect);
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+}
+END_TEST
+
 START_TEST(test_oidc_jwt_encrypted_token_invalid)
 {
   struct _u_response resp;
@@ -984,6 +1075,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_client_cred_valid);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_resource_owner_pwd_cred_valid);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_code_valid);
+  tcase_add_test(tc_core, test_oidc_jwt_encrypted_introspection_access_token_target_bearer_jwt);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_delete_client_pubkey);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_add_client_error);
   tcase_add_test(tc_core, test_oidc_jwt_encrypted_token_invalid);
