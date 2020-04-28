@@ -7,9 +7,10 @@
 #include <time.h>
 
 #include <check.h>
-#include <ulfius.h>
 #include <orcania.h>
 #include <yder.h>
+#include <ulfius.h>
+#include <rhonabwy.h>
 
 #include "unit-tests.h"
 
@@ -523,6 +524,81 @@ START_TEST(test_oidc_introspection_access_token_target_bearer_client_credentials
 }
 END_TEST
 
+START_TEST(test_oidc_introspection_access_token_target_bearer_jwt)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_body, * j_response, * j_body_introspect, * j_verify;
+  const char * token, * token_auth;
+  char * tmp;
+  jwt_t * jwt;
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  req.http_verb = o_strdup("POST");
+  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/token");
+  u_map_put(req.map_post_body, "grant_type", "password");
+  u_map_put(req.map_post_body, "scope", SCOPE_LIST);
+  u_map_put(req.map_post_body, "username", USERNAME);
+  u_map_put(req.map_post_body, "password", PASSWORD);
+  req.auth_basic_user = o_strdup(CLIENT_CONFIDENTIAL_1);
+  req.auth_basic_password = o_strdup(CLIENT_CONFIDENTIAL_1_SECRET);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  j_body = ulfius_get_json_body_response(&resp, NULL);
+  token = json_string_value(json_object_get(j_body, "access_token"));
+  ck_assert_ptr_ne(token, NULL);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  u_map_put(req.map_post_body, "scope", SCOPE_INTROSPECT);
+  u_map_put(req.map_post_body, "username", ADMIN_USERNAME);
+  u_map_put(req.map_post_body, "password", ADMIN_PASSWORD);
+  o_free(req.auth_basic_user);
+  req.auth_basic_user = NULL;
+  o_free(req.auth_basic_password);
+  req.auth_basic_password = NULL;
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  j_body_introspect = ulfius_get_json_body_response(&resp, NULL);
+  token_auth = json_string_value(json_object_get(j_body_introspect, "access_token"));
+  ck_assert_ptr_ne(token_auth, NULL);
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  tmp = msprintf("Bearer %s", token_auth);
+  u_map_put(req.map_header, "Authorization", tmp);
+  o_free(tmp);
+  req.http_verb = o_strdup("POST");
+  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/introspect");
+  u_map_put(req.map_header, "Accept", "application/jwt");
+  ck_assert_int_eq(u_map_put(req.map_post_body, "token", token), U_OK);
+  ck_assert_int_eq(u_map_put(req.map_post_body, "token_type_hint", TOKEN_TYPE_HINT_ACCESS), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_str_eq("application/jwt", u_map_get(resp.map_header, "Content-Type"));
+  ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
+  ck_assert_int_eq(r_jwt_parsen(jwt, resp.binary_body, resp.binary_body_length, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_key_symmetric(jwt, (const unsigned char *)PLUGIN_KEY, o_strlen(PLUGIN_KEY)), RHN_OK);
+  ck_assert_int_eq(r_jwt_verify_signature(jwt, NULL, 0), RHN_OK);
+  ck_assert_ptr_ne(NULL, j_response = r_jwt_get_full_claims_json_t(jwt));
+  j_verify = json_pack("{sossssssssss}", "active", json_true(), "username", USERNAME, "client_id", CLIENT_CONFIDENTIAL_1, "token_type", TOKEN_TYPE_HINT_ACCESS, "scope", SCOPE_LIST, "iss", PLUGIN_ISS);
+  ck_assert_ptr_ne(NULL, json_search(j_response, j_verify));
+  ck_assert_str_eq("introspection+jwt", r_jwt_get_header_str_value(jwt, "typ"));
+
+  r_jwt_free(jwt);
+  json_decref(j_verify);
+  json_decref(j_response);
+  json_decref(j_body);
+  json_decref(j_body_introspect);
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+}
+END_TEST
+
 START_TEST(test_oidc_introspection_refresh_token_target_bearer)
 {
   struct _u_request req;
@@ -759,6 +835,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_introspection_refresh_token_target_bearer);
   tcase_add_test(tc_core, test_oidc_introspection_access_token_target_bearer_no_client_id);
   tcase_add_test(tc_core, test_oidc_introspection_access_token_target_bearer_client_credentials);
+  tcase_add_test(tc_core, test_oidc_introspection_access_token_target_bearer_jwt);
   tcase_add_test(tc_core, test_oidc_introspection_id_token);
   tcase_add_test(tc_core, test_oidc_introspection_plugin_remove);
   tcase_add_test(tc_core, test_oidc_introspection_plugin_add_target_client_check_expiration);
