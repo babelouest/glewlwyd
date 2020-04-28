@@ -93,6 +93,7 @@
 #define GLEWLWYD_TOKEN_TYPE_USERINFO      2
 #define GLEWLWYD_TOKEN_TYPE_ID_TOKEN      3
 #define GLEWLWYD_TOKEN_TYPE_REFRESH_TOKEN 4
+#define GLEWLWYD_TOKEN_TYPE_INTROSPECTION 5
 
 #define GLEWLWYD_AUTH_TOKEN_DEFAULT_MAX_AGE 3600
 #define GLEWLWYD_AUTH_TOKEN_ASSERTION_TYPE "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
@@ -394,6 +395,10 @@ static json_t * check_parameters (json_t * j_params) {
       }
       if (json_object_get(j_params, "client-encrypt_refresh_token-parameter") != NULL && !json_is_string(json_object_get(j_params, "client-encrypt_refresh_token-parameter"))) {
         json_array_append_new(j_error, json_string("Property 'client-encrypt_refresh_token-parameter' is optional and must be a string"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "client-encrypt_introspection-parameter") != NULL && !json_is_string(json_object_get(j_params, "client-encrypt_introspection-parameter"))) {
+        json_array_append_new(j_error, json_string("Property 'client-encrypt_introspection-parameter' is optional and must be a string"));
         ret = G_ERROR_PARAM;
       }
     }
@@ -978,6 +983,9 @@ static int is_encrypt_token_allowed(struct _oidc_config * config, json_t * j_cli
       break;
     case GLEWLWYD_TOKEN_TYPE_REFRESH_TOKEN:
       property = json_string_value(json_object_get(config->j_params, "client-encrypt_refresh_token-parameter"));
+      break;
+    case GLEWLWYD_TOKEN_TYPE_INTROSPECTION:
+      property = json_string_value(json_object_get(config->j_params, "client-encrypt_introspection-parameter"));
       break;
     default:
       property = NULL;
@@ -4393,7 +4401,7 @@ static int callback_introspection(const struct _u_request * request, struct _u_r
             token = r_jwt_serialize_signed(jwt, jwk, 0);
             r_jwk_free(jwk);
             if (token != NULL) {
-              if ((token_out = encrypt_token_if_required(config, token, json_object_get(j_result, "client"), GLEWLWYD_TOKEN_TYPE_USERINFO)) != NULL) {
+              if ((token_out = encrypt_token_if_required(config, token, json_object_get(j_result, "client"), GLEWLWYD_TOKEN_TYPE_INTROSPECTION)) != NULL) {
                 ulfius_set_string_body_response(response, 200, token_out);
                 u_map_put(response->map_header, "Content-Type", "application/jwt");
               } else {
