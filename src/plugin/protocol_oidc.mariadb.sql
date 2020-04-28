@@ -83,10 +83,12 @@ CREATE TABLE gpo_access_token (
   gpoa_issued_for VARCHAR(256), -- IP address or hostname
   gpoa_user_agent VARCHAR(256),
   gpoa_token_hash VARCHAR(512) NOT NULL,
+  gpoa_jti VARCHAR(128),
   gpoa_enabled TINYINT(1) DEFAULT 1,
   FOREIGN KEY(gpor_id) REFERENCES gpo_refresh_token(gpor_id) ON DELETE CASCADE
 );
 CREATE INDEX i_gpoa_token_hash ON gpo_access_token(gpoa_token_hash);
+CREATE INDEX i_gpoa_jti ON gpo_access_token(gpoa_jti);
 
 CREATE TABLE gpo_access_token_scope (
   gpoas_id INT(11) PRIMARY KEY AUTO_INCREMENT,
