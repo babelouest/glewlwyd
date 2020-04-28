@@ -6,7 +6,9 @@
 - Allow messages encryption (incoming and outcoming)
 - Allow OIDC plugin to use multiple signing or encryption keys via a JWKS
 - Add support for CRYPT hash in ldap modules, closes #114
-- Add session management in OIDC plugin
+- Add [Session Management](https://openid.net/specs/openid-connect-session-1_0.html) in OIDC plugin
+- Update access token claims to fit [JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens - draft 05](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-05)
+- Add [JWT Response for OAuth Token Introspection](https://tools.ietf.org/html/draft-ietf-oauth-jwt-introspection-response-08)
 
 ## 2.2.0
 
