@@ -54,7 +54,7 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["register-client-allowed"]!==undefined?"":(props.mod.parameters["register-client-allowed"] = false);
     props.mod.parameters["register-client-auth-scope"]!==undefined?"":(props.mod.parameters["register-client-auth-scope"] = []);
     props.mod.parameters["register-client-credentials-scope"]!==undefined?"":(props.mod.parameters["register-client-credentials-scope"] = []);
-    props.mod.parameters["session-management-allowed"]!==undefined?"":(props.mod.parameters["session-management-allowed"] = true);
+    props.mod.parameters["session-management-allowed"]!==undefined?"":(props.mod.parameters["session-management-allowed"] = false);
     props.mod.parameters["client-pubkey-parameter"]!==undefined?"":(props.mod.parameters["client-pubkey-parameter"] = "");
     props.mod.parameters["client-jwks-parameter"]!==undefined?"":(props.mod.parameters["client-jwks-parameter"] = "jwks");
     props.mod.parameters["client-jwks_uri-parameter"]!==undefined?"":(props.mod.parameters["client-jwks_uri-parameter"] = "jwks_uri");
@@ -68,6 +68,7 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["client-encrypt_userinfo-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_userinfo-parameter"] = "encrypt_userinfo");
     props.mod.parameters["client-encrypt_id_token-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_id_token-parameter"] = "encrypt_id_token");
     props.mod.parameters["client-encrypt_refresh_token-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_refresh_token-parameter"] = "encrypt_refresh_token");
+    props.mod.parameters["client-encrypt_introspection-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_introspection-parameter"] = "encrypt_introspection");
 
     this.state = {
       config: props.config,
@@ -174,7 +175,7 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["register-client-allowed"]!==undefined?"":(nextProps.mod.parameters["register-client-allowed"] = false);
     nextProps.mod.parameters["register-client-auth-scope"]!==undefined?"":(nextProps.mod.parameters["register-client-auth-scope"] = []);
     nextProps.mod.parameters["register-client-credentials-scope"]!==undefined?"":(nextProps.mod.parameters["register-client-credentials-scope"] = []);
-    nextProps.mod.parameters["session-management-allowed"]!==undefined?"":(nextProps.mod.parameters["session-management-allowed"] = true);
+    nextProps.mod.parameters["session-management-allowed"]!==undefined?"":(nextProps.mod.parameters["session-management-allowed"] = false);
     nextProps.mod.parameters["client-pubkey-parameter"]!==undefined?"":(nextProps.mod.parameters["client-pubkey-parameter"] = "");
     nextProps.mod.parameters["client-jwks-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks-parameter"] = "jwks");
     nextProps.mod.parameters["client-jwks_uri-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks_uri-parameter"] = "jwks_uri");
@@ -188,6 +189,7 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["client-encrypt_userinfo-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_userinfo-parameter"] = "encrypt_userinfo");
     nextProps.mod.parameters["client-encrypt_id_token-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_id_token-parameter"] = "encrypt_id_token");
     nextProps.mod.parameters["client-encrypt_refresh_token-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_refresh_token-parameter"] = "encrypt_refresh_token");
+    nextProps.mod.parameters["client-encrypt_introspection-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_introspection-parameter"] = "encrypt_introspection");
     
     this.setState({
       config: nextProps.config,
@@ -1795,6 +1797,14 @@ class GlwdOIDCParams extends Component {
                       <label className="input-group-text" htmlFor="mod-glwd-jwt-request-client-encrypt_refresh_token-parameter">{i18next.t("admin.mod-glwd-jwt-request-client-encrypt_refresh_token-parameter")}</label>
                     </div>
                     <input type="text" className="form-control" id="mod-glwd-jwt-request-client-encrypt_refresh_token-parameter" onChange={(e) => this.changeParam(e, "client-encrypt_refresh_token-parameter")} value={this.state.mod.parameters["client-encrypt_refresh_token-parameter"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-client-encrypt_refresh_token-parameter-ph")} disabled={!this.state.mod.parameters["encrypt-out-token-allow"]} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwt-request-client-encrypt_introspection-parameter">{i18next.t("admin.mod-glwd-jwt-request-client-encrypt_introspection-parameter")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-jwt-request-client-encrypt_introspection-parameter" onChange={(e) => this.changeParam(e, "client-encrypt_introspection-parameter")} value={this.state.mod.parameters["client-encrypt_introspection-parameter"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-client-encrypt_introspection-parameter-ph")} disabled={!this.state.mod.parameters["encrypt-out-token-allow"]} />
                   </div>
                 </div>
               </div>

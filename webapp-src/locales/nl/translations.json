@@ -527,6 +527,8 @@
     "mod-glwd-jwt-request-client-encrypt_id_token-parameter-ph": "encrypt_id_token",
     "mod-glwd-jwt-request-client-encrypt_refresh_token-parameter": "encrypt_refresh_token eigenschap",
     "mod-glwd-jwt-request-client-encrypt_refresh_token-parameter-ph": "encrypt_refresh_token",
+    "mod-glwd-jwt-request-client-encrypt_introspection-parameter": "encrypt_introspection eigenschap",
+    "mod-glwd-jwt-request-client-encrypt_introspection-parameter-ph": "encrypt_introspection",
     "mod-glwd-jwt-request-maximum-exp": "Maximale toegestane vervaltijd voor JWT aanvragen",
     "mod-glwd-jwt-request-maximum-exp-ph": "Ex: 3600",
     "mod-glwd-oidc-general-title": "Algemeen",
