@@ -124,7 +124,7 @@ START_TEST(test_oidc_additional_parameters)
   ck_assert_int_eq(o_base64url_decode((unsigned char *)access_token_split[1], o_strlen(access_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
   str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_payload = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
-  ck_assert_int_eq(json_object_size(j_payload), 13);
+  ck_assert_int_eq(json_object_size(j_payload), 14);
   ck_assert_ptr_ne(json_string_value(json_object_get(j_payload, "sub")), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_payload, "scope")), SCOPE_LIST);
   ck_assert_str_eq(json_string_value(json_object_get(j_payload, "claim-bool")), "1");
@@ -170,7 +170,7 @@ START_TEST(test_oidc_no_additional_parameters)
   ck_assert_int_eq(o_base64url_decode((unsigned char *)access_token_split[1], o_strlen(access_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
   str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_payload = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
-  ck_assert_int_eq(json_object_size(j_payload), 9);
+  ck_assert_int_eq(json_object_size(j_payload), 10);
   ck_assert_ptr_ne(json_string_value(json_object_get(j_payload, "sub")), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_payload, "scope")), SCOPE_LIST);
   ck_assert_ptr_eq(json_object_get(j_payload, "claim-bool"), NULL);
