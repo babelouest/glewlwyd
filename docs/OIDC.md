@@ -25,6 +25,8 @@ The following OpenID Connect functionalities are currently supported:
 - [OAuth 2.0 Form Post Response Mode](http://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html)
 - [Messages encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
 - [Session Management](https://openid.net/specs/openid-connect-session-1_0.html)
+- [JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens - draft 05](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-05)
+- [JWT Response for OAuth Token Introspection](https://tools.ietf.org/html/draft-ietf-oauth-jwt-introspection-response-08)
 
 The following OpenID Connect functionalities are not supported yet:
 
