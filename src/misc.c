@@ -91,21 +91,22 @@ const char * get_ip_source(const struct _u_request * request) {
 
 char * get_client_hostname(const struct _u_request * request) {
   const char * ip_source = get_ip_source(request);
+  struct addrinfo hints;
+  struct addrinfo * lookup = NULL;
   char * hostname = NULL;
-  struct addrinfo hints = { .ai_family = AF_UNSPEC, .ai_flags = AI_CANONNAME };
-  struct addrinfo * lookup;
   
+  memset(&hints, 0, sizeof(struct addrinfo));
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_flags = AI_CANONNAME;
+  hints.ai_canonname = NULL;
   if (ip_source != NULL) {
+    hostname = o_strdup(ip_source);
     if (!getaddrinfo(ip_source, NULL, &hints, &lookup)) {
-      if (lookup->ai_canonname) {
-        hostname = msprintf("%s - %s", ip_source, lookup->ai_canonname);
-      }
-      else {
-        hostname = o_strdup(ip_source);
+      if (o_strlen(lookup->ai_canonname)) {
+        hostname = mstrcatf(hostname, " - %s", lookup->ai_canonname);
       }
       freeaddrinfo(lookup);
-    } else {
-      hostname = o_strdup(ip_source);
+      lookup = NULL;
     }
   }
   
