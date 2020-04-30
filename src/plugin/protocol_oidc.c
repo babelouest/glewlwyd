@@ -98,6 +98,10 @@
 #define GLEWLWYD_AUTH_TOKEN_DEFAULT_MAX_AGE 3600
 #define GLEWLWYD_AUTH_TOKEN_ASSERTION_TYPE "urn:ietf:params:oauth:client-assertion-type:jwt-bearer"
 
+#define GLEWLWYD_REDIRECT_URI_LOOPBACK_1 "http://localhost"
+#define GLEWLWYD_REDIRECT_URI_LOOPBACK_2 "http://127.0.0.1"
+#define GLEWLWYD_REDIRECT_URI_LOOPBACK_3 "http://[::1]"
+
 /**
  * Structure used to store all the plugin parameters and data duringexecution
  */
@@ -3949,6 +3953,30 @@ static json_t * client_register(struct _oidc_config * config, const struct _u_re
   return j_return;
 }
 
+static int is_redirect_uri_valid_without_credential(const char * redirect_uri) {
+  int ret;
+  size_t len;
+  
+  const char * after_slash = o_strstr(redirect_uri, "://")+o_strlen("://");
+  if (o_strstr(redirect_uri, "://") != NULL) {
+    after_slash = o_strstr(redirect_uri, "://")+o_strlen("://");
+    // Detect redirect_uri has no user[:pwd]@url
+    if (o_strchr(after_slash, '/') != NULL) {
+      len = o_strchr(after_slash, '/') - after_slash;
+    } else {
+      len = o_strlen(after_slash);
+    }
+    if (o_strnchr(after_slash, len, '@') != NULL) {
+      ret = 0;
+    } else {
+      ret = 1;
+    }
+  } else {
+    ret = 0;
+  }
+  return ret;
+}
+
 static json_t * is_client_registration_valid(struct _oidc_config * config, json_t * j_registration) {
   json_t * j_error = json_array(), * j_return, * j_element = NULL;
   size_t index = 0;
@@ -3960,8 +3988,12 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         json_array_append_new(j_error, json_string("redirect_uris is mandatory and must be an array of strings"));
       } else {
         json_array_foreach(json_object_get(j_registration, "redirect_uris"), index, j_element) {
-          if (0 != o_strncmp("https://", json_string_value(j_element), o_strlen("https://")) && 0 != o_strncmp("http://localhost", json_string_value(j_element), o_strlen("http://localhost"))) {
-            json_array_append_new(j_error, json_string("a redirect_uri must be a 'https://' uri or a 'http://localhost' uri"));
+          if (!is_redirect_uri_valid_without_credential(json_string_value(j_element)) ||
+             (0 != o_strncmp("https://", json_string_value(j_element), o_strlen("https://")) && 
+              0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_1, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_1)) &&
+              0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_2, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_2)) &&
+              0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_3, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_3)))) {
+            json_array_append_new(j_error, json_string("a redirect_uri must be a 'https://' uri or a 'http://localhost' uri without credentials"));
           }
         }
       }
