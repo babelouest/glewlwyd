@@ -4312,7 +4312,7 @@ static int validate_device_authorization_scope(struct _oidc_config * config, jso
 }
 
 static json_t * validate_device_auth_user_code(struct _oidc_config * config, const char * user_code) {
-  json_t * j_query = NULL, * j_result = NULL, * j_result_scope = NULL, * j_return, * j_element;
+  json_t * j_query = NULL, * j_result = NULL, * j_result_scope = NULL, * j_return, * j_element = NULL;
   int res;
   char * scope = NULL, * expires_at_clause, * user_code_hash, user_code_ucase[GLEWLWYD_DEVICE_AUTH_USER_CODE_LENGTH+2] = {0};
   time_t now;
