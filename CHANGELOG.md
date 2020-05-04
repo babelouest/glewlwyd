@@ -9,6 +9,8 @@
 - Add [Session Management](https://openid.net/specs/openid-connect-session-1_0.html) in OIDC plugin
 - Update access token claims to fit [JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens - draft 05](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-05)
 - Add [JWT Response for OAuth Token Introspection](https://tools.ietf.org/html/draft-ietf-oauth-jwt-introspection-response-08)
+- Adapt client registration `redirect_uri` check to make Glewlwyd OIDC plugin conform to [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252) specification
+- Add [OAuth 2.0 Device Grant](https://tools.ietf.org/html/rfc8628)
 
 ## 2.2.0
 
