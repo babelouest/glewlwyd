@@ -27,6 +27,8 @@ The following OpenID Connect functionalities are currently supported:
 - [Session Management](https://openid.net/specs/openid-connect-session-1_0.html)
 - [JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens - draft 05](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-05)
 - [JWT Response for OAuth Token Introspection](https://tools.ietf.org/html/draft-ietf-oauth-jwt-introspection-response-08)
+- [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252), see [Native Apps Guidelines](#native-apps-guidelines)
+- [OAuth 2.0 Device Grant](https://tools.ietf.org/html/rfc8628)
 
 The following OpenID Connect functionalities are not supported yet:
 
@@ -48,7 +50,7 @@ If the key management encryption algorithm is `dir`, you must build a SHA512 has
 - `A192CBC-HS384`: 48 first bytes of the hash
 - `A256CBC-HS512`: 64 bytes of the hash
 
-### Multipls keys
+### Multiple keys
 
 If the plugin has multiple keys available, the client can choose any of them to encrypt their requests. But the client MUST set the `kid` value in the JWT header to specify the key to use for decryption.
 
@@ -219,6 +221,10 @@ Enable response type `password`.
 ### Authentication type client enabled
 
 Enable response type `client_credential`.
+
+### Authentication type device enabled
+
+Enable response type `device_code`.
 
 ### Authentication type refresh enabled
 
@@ -442,6 +448,16 @@ Add on or more scopes if you want to allow to use endpoint `/register` using val
 
 Default scopes that will be added to the registered clients, can be empty. This scope list is only used in `client_credentials` response type.
 
+## Device Authorization management
+
+### Code expiration (seconds)
+
+`device_code` expiration in seconds.
+
+### Suggested interval between code verification (seconds)
+
+If the client sends the device code in a shorter period, it will receive a `slow_down` error response.
+
 ## Client secret vs password
 
 When you add or edit a client in Glewlwyd, you can set a `client secret` or a `password`. Both can be used to authenticate confidential clients.
@@ -451,6 +467,15 @@ The primary difference is that a client secret is a string stored 'as is' in the
 A client secret has priority over a client password, which means that if a client has set both client secret and client password, the authentication will be executed with client secret only.
 
 The `client secret` can also be used to authenticate a client using the method `client_secret_jwt`.
+
+## Native Apps Guidelines
+
+Glewlwyd is conform to [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252) best current practice considering the following configuration:
+
+- Any `redirect_uri` is allowed if the client is manually added by an admin in the admin app
+- Any `https://` is allowed url or unsecure loopback (locahost/127.0.0.1/[::1]) url when the client uses the client registration encdpoint. `redirect_uris` accepted in the client registration endpoint **MUST NOT** contain username attribute (`https://username@domain.tld`)
+- [PKCE](https://tools.ietf.org/html/rfc7636) extension is supported
+- A client can be specified as public (i.e. not confidential), without secret or public key
 
 ## Glewlwyd OpenID Connect endpoints specifications
 
