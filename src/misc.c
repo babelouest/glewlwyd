@@ -140,18 +140,7 @@ unsigned char random_at_most(unsigned char max, int nonce) {
  * Generates a random string and store it in str
  */
 char * rand_string(char * str, size_t str_size) {
-  const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  size_t n;
-  
-  if (str_size && str != NULL) {
-    for (n = 0; n < str_size; n++) {
-      str[n] = charset[random_at_most((sizeof(charset)) - 2, 0)];
-    }
-    str[str_size] = '\0';
-    return str;
-  } else {
-    return NULL;
-  }
+  return rand_string_from_charset(str, str_size, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
 }
 
 /**
