@@ -801,7 +801,78 @@ START_TEST(test_oidc_device_authorization_device_verification_client_invalid)
   json_decref(j_resp);
   
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
-  ck_assert_int_eq(400, resp.status);
+  ck_assert_int_eq(403, resp.status);
+
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  
+}
+END_TEST
+
+START_TEST(test_oidc_device_authorization_device_verification_client_secret_invalid)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_resp, * j_grant;
+  const char * redirect_uri, * code, * device_code;
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/device_authorization/");
+  req.http_verb = o_strdup("POST");
+  u_map_put(req.map_post_body, "grant_type", "device_authorization");
+  u_map_put(req.map_post_body, "client_id", CLIENT_ID);
+  u_map_put(req.map_post_body, "scope", SCOPE_LIST);
+  req.auth_basic_user = o_strdup(CLIENT_ID);
+  req.auth_basic_password = o_strdup(CLIENT_SECRET);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(200, resp.status);
+  ck_assert_ptr_ne(j_resp = ulfius_get_json_body_response(&resp, NULL), NULL);
+  ck_assert_ptr_ne(json_object_get(j_resp, "device_code"), NULL);
+  ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
+  ck_assert_ptr_ne(code = json_string_value(json_object_get(j_resp, "user_code")), NULL);
+  ck_assert_ptr_ne(device_code = json_string_value(json_object_get(j_resp, "device_code")), NULL);
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
+  ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
+  ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
+  
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  
+  j_grant = json_pack("{ss}", "scope", SCOPE_LIST);
+  run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_ID, NULL, NULL, j_grant, NULL, 200, NULL, NULL, NULL);
+  json_decref(j_grant);
+  
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf(SERVER_URI "/" PLUGIN_NAME "/device?code=%s&g_continue", code);
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(302, resp.status);
+  ck_assert_ptr_ne(redirect_uri = u_map_get(resp.map_header, "Location"), NULL);
+  ck_assert_ptr_ne(o_strstr(redirect_uri, "prompt=deviceComplete"), NULL);
+  ulfius_clean_response(&resp);
+  
+  j_grant = json_pack("{ss}", "scope", "");
+  run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_ID, NULL, NULL, j_grant, NULL, 200, NULL, NULL, NULL);
+  json_decref(j_grant);
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/token/");
+  req.http_verb = o_strdup("POST");
+  u_map_put(req.map_post_body, "grant_type", "urn:ietf:params:oauth:grant-type:device_code");
+  u_map_put(req.map_post_body, "client_id", CLIENT_ID);
+  u_map_put(req.map_post_body, "device_code", device_code);
+  req.auth_basic_user = o_strdup(CLIENT_ID);
+  req.auth_basic_password = o_strdup("error");
+  json_decref(j_resp);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(403, resp.status);
 
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
@@ -837,6 +908,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_device_authorization_device_verification_auth_slow_down);
   tcase_add_test(tc_core, test_oidc_device_authorization_device_verification_device_code_invalid);
   tcase_add_test(tc_core, test_oidc_device_authorization_device_verification_client_invalid);
+  tcase_add_test(tc_core, test_oidc_device_authorization_device_verification_client_secret_invalid);
   tcase_add_test(tc_core, test_oidc_device_authorization_delete_client);
   tcase_add_test(tc_core, test_oidc_device_authorization_delete_module);
   tcase_set_timeout(tc_core, 30);
