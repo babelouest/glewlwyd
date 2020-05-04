@@ -56,7 +56,7 @@ START_TEST(test_oidc_code_client_confidential_client_invalid)
   
   o_free(user_req.http_verb);
   user_req.http_verb = NULL;
-  int res = run_simple_test(&user_req, "POST", url, CLIENT, CLIENT_PASSWORD, NULL, &body, 403, NULL, "unauthorized_client", NULL);
+  int res = run_simple_test(&user_req, "POST", url, "invalid", CLIENT_PASSWORD, NULL, &body, 403, NULL, "unauthorized_client", NULL);
   o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
