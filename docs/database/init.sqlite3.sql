@@ -39,6 +39,8 @@ DROP TABLE IF EXISTS gpo_code_scheme;
 DROP TABLE IF EXISTS gpo_code_scope;
 DROP TABLE IF EXISTS gpo_code;
 DROP TABLE IF EXISTS gpo_client_token_request;
+DROP TABLE IF EXISTS gpo_device_authorization_scope;
+DROP TABLE IF EXISTS gpo_device_authorization;
 DROP TABLE IF EXISTS gs_code;
 DROP TABLE IF EXISTS gs_webauthn_assertion;
 DROP TABLE IF EXISTS gs_webauthn_credential;
@@ -429,6 +431,31 @@ CREATE TABLE gpo_client_token_request (
   gpoctr_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   gpoctr_issued_for TEXT, -- IP address or hostname
   gpoctr_jti_hash TEXT
+);
+
+-- store device authorization requests
+CREATE TABLE gpo_device_authorization (
+  gpoda_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpoda_plugin_name TEXT NOT NULL,
+  gpoda_client_id TEXT NOT NULL,
+  gpoda_username TEXT,
+  gpoda_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpoda_expires_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpoda_issued_for TEXT, -- IP address or hostname of the deice client
+  gpoda_device_code_hash TEXT NOT NULL,
+  gpoda_user_code_hash TEXT NOT NULL,
+  gpoda_status INTEGER DEFAULT 0, -- 0: created, 1: user verified, 2 device completed, 3 disabled
+  gpoda_last_check TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX i_gpoda_device_code_hash ON gpo_device_authorization(gpoda_device_code_hash);
+CREATE INDEX i_gpoda_user_code_hash ON gpo_device_authorization(gpoda_user_code_hash);
+
+CREATE TABLE gpo_device_authorization_scope (
+  gpodas_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpoda_id INTEGER,
+  gpodas_scope TEXT NOT NULL,
+  gpodas_allowed INTEGER DEFAULT 0,
+  FOREIGN KEY(gpoda_id) REFERENCES gpo_device_authorization(gpoda_id) ON DELETE CASCADE
 );
 
 CREATE TABLE gs_code (
