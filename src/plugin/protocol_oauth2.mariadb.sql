@@ -4,6 +4,8 @@ DROP TABLE IF EXISTS gpg_refresh_token_scope;
 DROP TABLE IF EXISTS gpg_refresh_token;
 DROP TABLE IF EXISTS gpg_code_scope;
 DROP TABLE IF EXISTS gpg_code;
+DROP TABLE IF EXISTS gpg_device_authorization_scope;
+DROP TABLE IF EXISTS gpg_device_authorization;
 
 CREATE TABLE gpg_code (
   gpgc_id INT(11) PRIMARY KEY AUTO_INCREMENT,
@@ -77,4 +79,29 @@ CREATE TABLE gpg_access_token_scope (
   gpga_id INT(11),
   gpgas_scope VARCHAR(128) NOT NULL,
   FOREIGN KEY(gpga_id) REFERENCES gpg_access_token(gpga_id) ON DELETE CASCADE
+);
+
+-- store device authorization requests
+CREATE TABLE gpg_device_authorization (
+  gpgda_id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  gpgda_plugin_name VARCHAR(256) NOT NULL,
+  gpgda_client_id VARCHAR(256) NOT NULL,
+  gpgda_username VARCHAR(256),
+  gpgda_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpgda_expires_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpgda_issued_for VARCHAR(256), -- IP address or hostname of the deice client
+  gpgda_device_code_hash VARCHAR(512) NOT NULL,
+  gpgda_user_code_hash VARCHAR(512) NOT NULL,
+  gpgda_status TINYINT(1) DEFAULT 0, -- 0: created, 1: user verified, 2 device completed, 3 disabled
+  gpgda_last_check TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX i_gpgda_device_code_hash ON gpg_device_authorization(gpgda_device_code_hash);
+CREATE INDEX i_gpgda_user_code_hash ON gpg_device_authorization(gpgda_user_code_hash);
+
+CREATE TABLE gpg_device_authorization_scope (
+  gpgdas_id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  gpgda_id INT(11),
+  gpgdas_scope VARCHAR(128) NOT NULL,
+  gpgdas_allowed TINYINT(1) DEFAULT 0,
+  FOREIGN KEY(gpgda_id) REFERENCES gpg_device_authorization(gpgda_id) ON DELETE CASCADE
 );
