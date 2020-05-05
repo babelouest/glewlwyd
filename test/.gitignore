@@ -18,6 +18,7 @@ glewlwyd_oauth2_client_secret
 glewlwyd_oauth2_code_challenge
 glewlwyd_oauth2_token_introspection
 glewlwyd_oauth2_token_revocation
+glewlwyd_oauth2_device_authorization
 
 glewlwyd_oidc_auth_code
 glewlwyd_oidc_code
