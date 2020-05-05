@@ -28,3 +28,28 @@ CREATE TABLE gpo_device_authorization_scope (
   gpodas_allowed INTEGER DEFAULT 0,
   FOREIGN KEY(gpoda_id) REFERENCES gpo_device_authorization(gpoda_id) ON DELETE CASCADE
 );
+
+-- store device authorization requests
+CREATE TABLE gpg_device_authorization (
+  gpgda_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpgda_plugin_name TEXT NOT NULL,
+  gpgda_client_id TEXT NOT NULL,
+  gpgda_username TEXT,
+  gpgda_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpgda_expires_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpgda_issued_for TEXT, -- IP address or hostname of the deice client
+  gpgda_device_code_hash TEXT NOT NULL,
+  gpgda_user_code_hash TEXT NOT NULL,
+  gpgda_status INTEGER DEFAULT 0, -- 0: created, 1: user verified, 2 device completed, 3 disabled
+  gpgda_last_check TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX i_gpgda_device_code_hash ON gpg_device_authorization(gpgda_device_code_hash);
+CREATE INDEX i_gpgda_user_code_hash ON gpg_device_authorization(gpgda_user_code_hash);
+
+CREATE TABLE gpg_device_authorization_scope (
+  gpgdas_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpgda_id INTEGER,
+  gpgdas_scope TEXT NOT NULL,
+  gpgdas_allowed INTEGER DEFAULT 0,
+  FOREIGN KEY(gpgda_id) REFERENCES gpg_device_authorization(gpgda_id) ON DELETE CASCADE
+);

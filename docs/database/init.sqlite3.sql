@@ -22,12 +22,16 @@ DROP TABLE IF EXISTS g_user_property;
 DROP TABLE IF EXISTS g_user_scope_user;
 DROP TABLE IF EXISTS g_user_scope;
 DROP TABLE IF EXISTS g_user;
+DROP TABLE IF EXISTS gpg_device_authorization_scope;
+DROP TABLE IF EXISTS gpg_device_authorization;
 DROP TABLE IF EXISTS gpg_access_token_scope;
 DROP TABLE IF EXISTS gpg_access_token;
 DROP TABLE IF EXISTS gpg_refresh_token_scope;
 DROP TABLE IF EXISTS gpg_refresh_token;
 DROP TABLE IF EXISTS gpg_code_scope;
 DROP TABLE IF EXISTS gpg_code;
+DROP TABLE IF EXISTS gpo_device_authorization_scope;
+DROP TABLE IF EXISTS gpo_device_authorization;
 DROP TABLE IF EXISTS gpo_client_registration;
 DROP TABLE IF EXISTS gpo_subject_identifier;
 DROP TABLE IF EXISTS gpo_id_token;
@@ -39,8 +43,6 @@ DROP TABLE IF EXISTS gpo_code_scheme;
 DROP TABLE IF EXISTS gpo_code_scope;
 DROP TABLE IF EXISTS gpo_code;
 DROP TABLE IF EXISTS gpo_client_token_request;
-DROP TABLE IF EXISTS gpo_device_authorization_scope;
-DROP TABLE IF EXISTS gpo_device_authorization;
 DROP TABLE IF EXISTS gs_code;
 DROP TABLE IF EXISTS gs_webauthn_assertion;
 DROP TABLE IF EXISTS gs_webauthn_credential;
@@ -296,6 +298,31 @@ CREATE TABLE gpg_access_token_scope (
   gpga_id INT(11),
   gpgas_scope TEXT NOT NULL,
   FOREIGN KEY(gpga_id) REFERENCES gpg_access_token(gpga_id) ON DELETE CASCADE
+);
+
+-- store device authorization requests
+CREATE TABLE gpg_device_authorization (
+  gpgda_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpgda_plugin_name TEXT NOT NULL,
+  gpgda_client_id TEXT NOT NULL,
+  gpgda_username TEXT,
+  gpgda_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpgda_expires_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  gpgda_issued_for TEXT, -- IP address or hostname of the deice client
+  gpgda_device_code_hash TEXT NOT NULL,
+  gpgda_user_code_hash TEXT NOT NULL,
+  gpgda_status INTEGER DEFAULT 0, -- 0: created, 1: user verified, 2 device completed, 3 disabled
+  gpgda_last_check TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX i_gpgda_device_code_hash ON gpg_device_authorization(gpgda_device_code_hash);
+CREATE INDEX i_gpgda_user_code_hash ON gpg_device_authorization(gpgda_user_code_hash);
+
+CREATE TABLE gpg_device_authorization_scope (
+  gpgdas_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpgda_id INTEGER,
+  gpgdas_scope TEXT NOT NULL,
+  gpgdas_allowed INTEGER DEFAULT 0,
+  FOREIGN KEY(gpgda_id) REFERENCES gpg_device_authorization(gpgda_id) ON DELETE CASCADE
 );
 
 CREATE TABLE gpo_code (
