@@ -4581,7 +4581,7 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
                                   "set",
                                     "gpoda_last_check",
                                       "raw",
-                                      SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "CURRENT_TIMESTAMP", "CURRENT_TIMESTAMP", "NOW()"),
+                                      SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "CURRENT_TIMESTAMP", "strftime('%s','now')", "NOW()"),
                                   "where",
                                     "gpoda_id",
                                     json_object_get(json_array_get(j_result, 0), "gpoda_id"));
@@ -7207,6 +7207,9 @@ static int callback_oidc_device_authorization(const struct _u_request * request,
   return U_CALLBACK_CONTINUE;
 }
 
+/**
+ * Verifies the device code by the user
+ */
 static int callback_oidc_device_verification(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   char * redirect_url = NULL;
