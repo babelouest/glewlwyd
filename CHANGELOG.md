@@ -11,6 +11,9 @@
 - Add [JWT Response for OAuth Token Introspection](https://tools.ietf.org/html/draft-ietf-oauth-jwt-introspection-response-08)
 - Adapt client registration `redirect_uri` check to make Glewlwyd OIDC plugin conform to [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252) specification
 - Add [OAuth 2.0 Device Grant](https://tools.ietf.org/html/rfc8628)
+- Add `id_token` in response type `password` when the scope `openid` is added
+- Disable response type `password` by default in OIDC plugin config
+- Scope `openid` is assumed to be always granted to clients in OIDC plugin
 
 ## 2.2.0
 
