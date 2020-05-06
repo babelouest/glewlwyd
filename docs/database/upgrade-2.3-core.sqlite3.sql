@@ -29,6 +29,13 @@ CREATE TABLE gpo_device_authorization_scope (
   FOREIGN KEY(gpoda_id) REFERENCES gpo_device_authorization(gpoda_id) ON DELETE CASCADE
 );
 
+CREATE TABLE gpo_device_scheme (
+  gpodh_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpoda_id INTEGER,
+  gpodh_scheme_module TEXT NOT NULL,
+  FOREIGN KEY(gpoda_id) REFERENCES gpo_code(gpo_device_authorization) ON DELETE CASCADE
+);
+
 -- store device authorization requests
 CREATE TABLE gpg_device_authorization (
   gpgda_id INTEGER PRIMARY KEY AUTOINCREMENT,

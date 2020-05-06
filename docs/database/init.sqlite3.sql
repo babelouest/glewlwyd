@@ -30,6 +30,7 @@ DROP TABLE IF EXISTS gpg_refresh_token_scope;
 DROP TABLE IF EXISTS gpg_refresh_token;
 DROP TABLE IF EXISTS gpg_code_scope;
 DROP TABLE IF EXISTS gpg_code;
+DROP TABLE IF EXISTS gpo_device_scheme;
 DROP TABLE IF EXISTS gpo_device_authorization_scope;
 DROP TABLE IF EXISTS gpo_device_authorization;
 DROP TABLE IF EXISTS gpo_client_registration;
@@ -482,6 +483,13 @@ CREATE TABLE gpo_device_authorization_scope (
   gpoda_id INTEGER,
   gpodas_scope TEXT NOT NULL,
   gpodas_allowed INTEGER DEFAULT 0,
+  FOREIGN KEY(gpoda_id) REFERENCES gpo_device_authorization(gpoda_id) ON DELETE CASCADE
+);
+
+CREATE TABLE gpo_device_scheme (
+  gpodh_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpoda_id INTEGER,
+  gpodh_scheme_module TEXT NOT NULL,
   FOREIGN KEY(gpoda_id) REFERENCES gpo_device_authorization(gpoda_id) ON DELETE CASCADE
 );
 
