@@ -132,24 +132,24 @@ class Navbar extends Component {
       if (scheme.module !== "retype-password" && scheme.module !== "email") { // Because schemes retype-password and e-mail code have no user configuration
         schemeList.push(
           <li className={"nav-item" + (this.state.curNav===scheme.name?" active":"")} key={index}>
-            <a className={"nav-link"+highlight} href="#" onClick={(e) => this.navigate(e, scheme.name, scheme.module)}>{scheme.display_name||scheme.name}</a>
+            <a className={"nav-link"+highlight} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, scheme.name, scheme.module)}>{scheme.display_name||scheme.name}</a>
           </li>
         );
       }
     });
     if (!this.state.config.params.delegate && !this.state.config.params.register) {
       passwordJsx = <li className={"nav-item" + (this.state.curNav==="password"?" active":"")}>
-        <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "password", null)}>{i18next.t("profile.menu-password")}</a>
+        <a className="nav-link" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "password", null)}>{i18next.t("profile.menu-password")}</a>
       </li>
     }
     if (this.state.profileList && !this.state.config.params.register) {
       sessionJsx = <li className={"nav-item" + (this.state.curNav==="session"?" active":"")}>
-        <a className="nav-link" href="#" onClick={(e) => this.navigate(e, "session", null)}>{i18next.t("profile.menu-session")}</a>
+        <a className="nav-link" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "session", null)}>{i18next.t("profile.menu-session")}</a>
       </li>
     }
     if (this.state.profileList) {
       this.state.profileList.forEach((profile, index) => {
-        profileList.push(<a className={"dropdown-item"+(!index?" active":"")} href="#" onClick={(e) => this.changeProfile(e, profile)} key={index}>{profile.name||profile.username}</a>);
+        profileList.push(<a className={"dropdown-item"+(!index?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.changeProfile(e, profile)} key={index}>{profile.name||profile.username}</a>);
       });
     }
     profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
@@ -176,14 +176,14 @@ class Navbar extends Component {
       if (complete) {
         completeAlert =
           <li className="nav-item" >
-            <a className="btn btn-success" href="#" onClick={(e) => this.navigate(e, "profile", null)}>
+            <a className="btn btn-success" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "profile", null)}>
               {i18next.t("profile.register-profile-nav-complete")}
             </a>
           </li>
       } else {
         completeAlert =
           <li className="nav-item" >
-            <a className="btn btn-danger" href="#" onClick={(e) => this.navigate(e, "profile", null)}>
+            <a className="btn btn-danger" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "profile", null)}>
               {i18next.t("profile.register-profile-nav-incomplete")}
             </a>
           </li>
@@ -191,17 +191,17 @@ class Navbar extends Component {
     }
 		return (
       <nav className="navbar navbar-expand-lg navbar-light bg-light">
-        <a className="navbar-brand" href="#">
+        <a className="navbar-brand" href="#" data-toggle="collapse">
           <img className="mr-3" src="img/logo-profile.png" alt="logo"/>
           {i18next.t("profile.menu-title")}
         </a>
-        <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <button className="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse.show" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span className="navbar-toggler-icon"></span>
         </button>
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav mr-auto">
             <li className={"nav-item" + (this.state.curNav==="profile"?" active":"")}>
-              <a className={"nav-link"+dataHighlight} href="#" onClick={(e) => this.navigate(e, "profile", null)}>{i18next.t("profile.menu-user")}</a>
+              <a className={"nav-link"+dataHighlight} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "profile", null)}>{i18next.t("profile.menu-user")}</a>
             </li>
             {sessionJsx}
             {passwordJsx}
