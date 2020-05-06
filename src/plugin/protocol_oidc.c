@@ -64,6 +64,7 @@
 #define GLEWLWYD_PLUGIN_OIDC_TABLE_CLIENT_TOKEN_REQUEST       "gpo_client_token_request"
 #define GLEWLWYD_PLUGIN_OIDC_TABLE_DEVICE_AUTHORIZATION       "gpo_device_authorization"
 #define GLEWLWYD_PLUGIN_OIDC_TABLE_DEVICE_AUTHORIZATION_SCOPE "gpo_device_authorization_scope"
+#define GLEWLWYD_PLUGIN_OIDC_TABLE_DEVICE_SCHEME              "gpo_device_scheme"
 
 // Authorization types available
 #define GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE                  0
@@ -2733,21 +2734,23 @@ static json_t * validate_session_client_scope(struct _oidc_config * config, cons
     j_grant = config->glewlwyd_config->glewlwyd_callback_get_client_granted_scopes(config->glewlwyd_config, client_id, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), scope);
     if (check_result_value(j_grant, G_OK)) {
       if (json_array_size(json_object_get(json_object_get(j_grant, "grant"), "scope"))) {
-        // Count and store the number of granted scopes
+        // Count and store the number of granted scopes, we assume the scope openid is granted
         json_array_foreach(json_object_get(json_object_get(j_grant, "grant"), "scope"), index, j_scope_grant) {
-          scopes_granted += json_object_get(j_scope_grant, "granted")==json_true();
+          scopes_granted += json_object_get(j_scope_grant, "granted")==json_true()||(0 == o_strcmp("openid", json_string_value(json_object_get(j_scope_grant, "name")))?1:0);
         }
         json_object_set_new(json_object_get(j_session, "session"), "scopes_granted", json_integer(scopes_granted));
         json_object_set_new(json_object_get(j_session, "session"), "amr", json_array());
         
         json_object_foreach(json_object_get(json_object_get(j_session, "session"), "scope"), scope_session, j_scope_session) {
-          // Evaluate if the scope is granted for the client
+          // Evaluate if the scope is granted for the client, we assume the scope openid is granted
           json_array_foreach(json_object_get(json_object_get(j_grant, "grant"), "scope"), index, j_scope_grant) {
-            if (0 == o_strcmp(scope_session, json_string_value(json_object_get(j_scope_grant, "name")))) {
+            if (0 == o_strcmp("openid", json_string_value(json_object_get(j_scope_grant, "name")))) {
+              json_object_set(j_scope_session, "granted", json_true());
+            } else if (0 == o_strcmp(scope_session, json_string_value(json_object_get(j_scope_grant, "name")))) {
               json_object_set(j_scope_session, "granted", json_object_get(j_scope_grant, "granted"));
             }
           }
-        
+          
           // Evaluate if the scope is authorized
           if (json_object_get(j_scope_session, "available") == json_true()) {
             if (json_object_get(j_scope_session, "password_required") == json_true() && json_object_get(j_scope_session, "password_authenticated") == json_true()) {
@@ -4302,9 +4305,11 @@ static json_t * generate_device_authorization(struct _oidc_config * config, cons
   return j_return;
 }
 
-static int validate_device_authorization_scope(struct _oidc_config * config, json_int_t gpoda_id, const char * username, const char * scope_list) {
+static int validate_device_authorization_scope(struct _oidc_config * config, json_int_t gpoda_id, const char * username, const char * scope_list, json_t * j_amr) {
   char * query, * scope_clause = NULL, * scope_escaped, ** scope_array = NULL, * username_escaped;
   int res, i, ret;
+  json_t * j_query, * j_element = NULL;
+  size_t index = 0;
   
   if (split_string(scope_list, " ", &scope_array)) {
     for (i=0; scope_array[i]!=NULL; i++) {
@@ -4329,7 +4334,22 @@ static int validate_device_authorization_scope(struct _oidc_config * config, jso
       o_free(username_escaped);
       o_free(query);
       if (res == H_OK) {
-        ret = G_OK;
+        if (json_array_size(j_amr)) {
+          j_query = json_pack("{sss[]}", "table", GLEWLWYD_PLUGIN_OIDC_TABLE_DEVICE_SCHEME, "values");
+          json_array_foreach(j_amr, index, j_element) {
+            json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIsO}", "gpoda_id", gpoda_id, "gpodh_scheme_module", j_element));
+          }
+          res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+          json_decref(j_query);
+          if (res == H_OK) {
+            ret = G_OK;
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "validate_device_authorization_scope - Error executing j_query");
+            ret = G_ERROR_DB;
+          }
+        } else {
+          ret = G_OK;
+        }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "validate_device_authorization_scope - Error executing query (2)");
         ret = G_ERROR_DB;
@@ -4432,14 +4452,23 @@ static json_t * validate_device_auth_user_code(struct _oidc_config * config, con
 
 static int check_auth_type_device_code(const struct _u_request * request, struct _u_response * response, void * user_data, json_t * j_assertion_client) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_body, * j_client, * j_query, * j_result = NULL, * j_result_scope = NULL, * j_element = NULL, * j_user = NULL, * j_refresh_token = NULL, * j_refresh = NULL;
+  json_t * j_body, * j_client, * j_query, * j_result = NULL, * j_result_scope = NULL, * j_result_sheme = NULL, * j_element = NULL, * j_user = NULL, * j_refresh_token = NULL, * j_refresh = NULL, * j_amr = NULL;
   const char * device_code = u_map_get(request->map_post_body, "device_code"), 
              * client_id = request->auth_basic_user,
              * client_secret = request->auth_basic_password,
              * ip_source = get_ip_source(request),
              * username = NULL;
   int res;
-  char * device_code_hash, * refresh_token, * refresh_token_out, * access_token, * access_token_out, jti[OIDC_JTI_LENGTH] = {0}, * scope = NULL, * issued_for = get_client_hostname(request);
+  char * device_code_hash,
+       * refresh_token,
+       * refresh_token_out, 
+       * access_token, 
+       * access_token_out,
+       * id_token = NULL,
+       * id_token_out = NULL, 
+         jti[OIDC_JTI_LENGTH] = {0}, 
+       * scope = NULL, 
+       * issued_for = get_client_hostname(request);
   time_t now;
   size_t index = 0;
   
@@ -4504,114 +4533,181 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
                     scope = mstrcatf(scope, " %s", json_string_value(json_object_get(j_element, "gpodas_scope")));
                   }
                 }
-                j_refresh = get_refresh_token_duration_rolling(config, scope);
-                if (check_result_value(j_refresh, G_OK)) {
-                  // All clear, please send back tokens
-                  username = json_string_value(json_object_get(json_array_get(j_result, 0), "username"));
-                  j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username);
-                  if (check_result_value(j_user, G_OK)) {
-                    time(&now);
-                    if ((refresh_token = generate_refresh_token()) != NULL) {
-                      j_refresh_token = serialize_refresh_token(config, 
-                                                                GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION, 
-                                                                0, 
-                                                                username, 
-                                                                client_id, 
-                                                                scope, 
-                                                                now, 
-                                                                json_integer_value(json_object_get(json_object_get(j_refresh, "refresh-token"), "refresh-token-duration")),
-                                                                json_object_get(json_object_get(j_refresh, "refresh-token"), "refresh-token-rolling")==json_true(),
-                                                                NULL,
-                                                                refresh_token, 
-                                                                issued_for, 
-                                                                u_map_get_case(request->map_header, "user-agent"));
-                      if (check_result_value(j_refresh_token, G_OK)) {
-                          if ((access_token = generate_access_token(config, 
+                j_query = json_pack("{sss[s]s{sO}}",
+                                    "table",
+                                    GLEWLWYD_PLUGIN_OIDC_TABLE_DEVICE_SCHEME,
+                                    "columns",
+                                      "gpodh_scheme_module AS scheme_module",
+                                    "where",
+                                      "gpoda_id",
+                                      json_object_get(json_array_get(j_result, 0), "gpoda_id"));
+                res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result_sheme, NULL);
+                json_decref(j_query);
+                if (res == H_OK) {
+                  if ((j_amr = json_array()) != NULL) {
+                    json_array_foreach(j_result_sheme, index, j_element) {
+                      json_array_append(j_amr, json_object_get(j_element, "scheme_module"));
+                    }
+                    j_refresh = get_refresh_token_duration_rolling(config, scope);
+                    if (check_result_value(j_refresh, G_OK)) {
+                      // All clear, please send back tokens
+                      username = json_string_value(json_object_get(json_array_get(j_result, 0), "username"));
+                      j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username);
+                      if (check_result_value(j_user, G_OK)) {
+                        time(&now);
+                        if ((refresh_token = generate_refresh_token()) != NULL) {
+                          j_refresh_token = serialize_refresh_token(config, 
+                                                                    GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION, 
+                                                                    0, 
                                                                     username, 
-                                                                    json_object_get(j_client, "client"), 
-                                                                    json_object_get(j_user, "user"), 
+                                                                    client_id, 
                                                                     scope, 
+                                                                    now, 
+                                                                    json_integer_value(json_object_get(json_object_get(j_refresh, "refresh-token"), "refresh-token-duration")),
+                                                                    json_object_get(json_object_get(j_refresh, "refresh-token"), "refresh-token-rolling")==json_true(),
                                                                     NULL,
-                                                                    now,
-                                                                    jti)) != NULL) {
-                            if (serialize_access_token(config, 
-                                                       GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION, 
-                                                       json_integer_value(json_object_get(j_refresh_token, "gpgr_id")), 
-                                                       username, 
-                                                       client_id, 
-                                                       scope, 
-                                                       now, 
-                                                       issued_for, 
-                                                       u_map_get_case(request->map_header, "user-agent"),
-                                                       access_token,
-                                                       jti) == G_OK) {
-                              if ((access_token_out = encrypt_token_if_required(config, access_token, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_ACCESS_TOKEN)) != NULL && (refresh_token_out = encrypt_token_if_required(config, refresh_token, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_REFRESH_TOKEN)) != NULL) {
-                                j_body = json_pack("{sssssssisIss}",
-                                                   "token_type",
-                                                   "bearer",
-                                                   "access_token",
-                                                   access_token_out,
-                                                   "refresh_token",
-                                                   refresh_token_out,
-                                                   "iat",
-                                                   now,
-                                                   "expires_in",
-                                                   config->access_token_duration,
-                                                   "scope",
-                                                   scope);
-                                ulfius_set_json_body_response(response, 200, j_body);
-                                json_decref(j_body);
+                                                                    refresh_token, 
+                                                                    issued_for, 
+                                                                    u_map_get_case(request->map_header, "user-agent"));
+                          if (check_result_value(j_refresh_token, G_OK)) {
+                              if ((access_token = generate_access_token(config, 
+                                                                        username, 
+                                                                        json_object_get(j_client, "client"), 
+                                                                        json_object_get(j_user, "user"), 
+                                                                        scope, 
+                                                                        NULL,
+                                                                        now,
+                                                                        jti)) != NULL) {
+                                if (serialize_access_token(config, 
+                                                           GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION, 
+                                                           json_integer_value(json_object_get(j_refresh_token, "gpgr_id")), 
+                                                           username, 
+                                                           client_id, 
+                                                           scope, 
+                                                           now, 
+                                                           issued_for, 
+                                                           u_map_get_case(request->map_header, "user-agent"),
+                                                           access_token,
+                                                           jti) == G_OK) {
+                                  if ((id_token = generate_id_token(config, 
+                                                                    username, 
+                                                                    json_object_get(j_user, "user"), 
+                                                                    json_object_get(j_client, "client"), 
+                                                                    now, 
+                                                                    now, 
+                                                                    NULL, 
+                                                                    j_amr, 
+                                                                    access_token, 
+                                                                    NULL, 
+                                                                    scope, 
+                                                                    NULL)) != NULL) {
+                                    if (serialize_id_token(config, 
+                                                           GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION, 
+                                                           id_token, 
+                                                           username, 
+                                                           client_id, 
+                                                           now, 
+                                                           issued_for, 
+                                                           u_map_get_case(request->map_header, "user-agent")) == G_OK) {
+                                    } else {
+                                      y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_id_token");
+                                      j_body = json_pack("{ss}", "error", "server_error");
+                                      ulfius_set_json_body_response(response, 500, j_body);
+                                      json_decref(j_body);
+                                    }
+                                  } else {
+                                    y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_id_token");
+                                    j_body = json_pack("{ss}", "error", "server_error");
+                                    ulfius_set_json_body_response(response, 500, j_body);
+                                    json_decref(j_body);
+                                  }
+                                  if ((access_token_out = encrypt_token_if_required(config, access_token, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_ACCESS_TOKEN)) != NULL &&
+                                      (refresh_token_out = encrypt_token_if_required(config, refresh_token, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_REFRESH_TOKEN)) != NULL &&
+                                      (id_token_out = encrypt_token_if_required(config, id_token, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_ID_TOKEN)) != NULL) {
+                                    j_body = json_pack("{sssssssssisIss}",
+                                                       "token_type",
+                                                       "bearer",
+                                                       "access_token",
+                                                       access_token_out,
+                                                       "refresh_token",
+                                                       refresh_token_out,
+                                                       "id_token",
+                                                       id_token_out,
+                                                       "iat",
+                                                       now,
+                                                       "expires_in",
+                                                       config->access_token_duration,
+                                                       "scope",
+                                                       scope);
+                                    ulfius_set_json_body_response(response, 200, j_body);
+                                    json_decref(j_body);
+                                  } else {
+                                    y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error encrypt_token_if_required");
+                                    j_body = json_pack("{ss}", "error", "server_error");
+                                    ulfius_set_json_body_response(response, 500, j_body);
+                                    json_decref(j_body);
+                                  }
+                                  o_free(id_token_out);
+                                  o_free(access_token_out);
+                                  o_free(refresh_token_out);
+                                  o_free(id_token);
+                                } else {
+                                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_access_token");
+                                  j_body = json_pack("{ss}", "error", "server_error");
+                                  ulfius_set_json_body_response(response, 500, j_body);
+                                  json_decref(j_body);
+                                }
                               } else {
-                                y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error encrypt_token_if_required");
+                                y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_access_token");
                                 j_body = json_pack("{ss}", "error", "server_error");
                                 ulfius_set_json_body_response(response, 500, j_body);
                                 json_decref(j_body);
                               }
-                              o_free(access_token_out);
-                              o_free(refresh_token_out);
-                            } else {
-                              y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_access_token");
-                              j_body = json_pack("{ss}", "error", "server_error");
-                              ulfius_set_json_body_response(response, 500, j_body);
-                              json_decref(j_body);
-                            }
+                              o_free(access_token);
                           } else {
-                            y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_access_token");
+                            y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_refresh_token");
                             j_body = json_pack("{ss}", "error", "server_error");
                             ulfius_set_json_body_response(response, 500, j_body);
                             json_decref(j_body);
                           }
-                          o_free(access_token);
+                          json_decref(j_refresh_token);
+                          o_free(refresh_token);
+                        } else {
+                          y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_refresh_token");
+                          j_body = json_pack("{ss}", "error", "server_error");
+                          ulfius_set_json_body_response(response, 500, j_body);
+                          json_decref(j_body);
+                        }
                       } else {
-                        y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_refresh_token");
+                        y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_device_code - Error getting user %s", username);
                         j_body = json_pack("{ss}", "error", "server_error");
                         ulfius_set_json_body_response(response, 500, j_body);
                         json_decref(j_body);
                       }
-                      json_decref(j_refresh_token);
-                      o_free(refresh_token);
+                      json_decref(j_user);
+                      o_free(scope);
+                      json_decref(j_result_scope);
                     } else {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_refresh_token");
+                      y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_device_code - Error get_refresh_token_duration_rolling");
                       j_body = json_pack("{ss}", "error", "server_error");
                       ulfius_set_json_body_response(response, 500, j_body);
                       json_decref(j_body);
                     }
+                    json_decref(j_refresh);
                   } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_device_code - Error getting user %s", username);
+                    y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - Error allocating resources for j_amr");
                     j_body = json_pack("{ss}", "error", "server_error");
                     ulfius_set_json_body_response(response, 500, j_body);
                     json_decref(j_body);
                   }
-                  json_decref(j_user);
-                  o_free(scope);
-                  json_decref(j_result_scope);
+                  json_decref(j_amr);
+                  json_decref(j_result_sheme);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_device_code - Error get_refresh_token_duration_rolling");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - Error executing j_query (3)");
                   j_body = json_pack("{ss}", "error", "server_error");
                   ulfius_set_json_body_response(response, 500, j_body);
                   json_decref(j_body);
                 }
-                json_decref(j_refresh);
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - Error executing j_query (2)");
                 j_body = json_pack("{ss}", "error", "server_error");
@@ -5809,8 +5905,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
  */
 static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * request, struct _u_response * response, void * user_data, json_t * j_assertion_client) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_user, * j_client = NULL, * j_refresh_token, * j_body, * j_user_only, * j_client_for_sub = NULL, * j_element = NULL, * j_refresh = NULL;
-  int ret = G_OK, auth_type_allowed = 0;
+  json_t * j_user, * j_client = NULL, * j_refresh_token, * j_body, * j_user_only, * j_client_for_sub = NULL, * j_element = NULL, * j_refresh = NULL, * j_amr = NULL;
+  int ret = G_OK, auth_type_allowed = 0, has_openid = 0;
   const char * username = u_map_get(request->map_post_body, "username"),
              * password = u_map_get(request->map_post_body, "password"),
              * scope = u_map_get(request->map_post_body, "scope"),
@@ -5821,7 +5917,10 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
        * refresh_token_out = NULL,
        * access_token = NULL,
        * access_token_out = NULL,
-         jti[OIDC_JTI_LENGTH] = {0};
+       * id_token = NULL,
+       * id_token_out = NULL,
+         jti[OIDC_JTI_LENGTH] = {0},
+      ** scope_array = NULL;
   time_t now;
   size_t index = 0;
   
@@ -5872,110 +5971,172 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
         }
       }
       if (ret == G_OK) {
-        j_refresh = get_refresh_token_duration_rolling(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")));
-        time(&now);
-        if (check_result_value(j_refresh, G_OK)) {
-          if ((refresh_token = generate_refresh_token()) != NULL) {
-            j_refresh_token = serialize_refresh_token(config, 
-                                                      GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, 
-                                                      0, 
-                                                      username, 
-                                                      client_id, 
-                                                      json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), 
-                                                      now, 
-                                                      json_integer_value(json_object_get(json_object_get(j_refresh, "refresh-token"), "refresh-token-duration")),
-                                                      json_object_get(json_object_get(j_refresh, "refresh-token"), "refresh-token-rolling")==json_true(),
-                                                      NULL,
-                                                      refresh_token, 
-                                                      issued_for, 
-                                                      u_map_get_case(request->map_header, "user-agent"));
-            if (check_result_value(j_refresh_token, G_OK)) {
-              j_user_only = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username);
-              if (check_result_value(j_user_only, G_OK)) {
-                if ((access_token = generate_access_token(config, 
-                                                          username, 
-                                                          j_client_for_sub, 
-                                                          json_object_get(j_user_only, "user"), 
-                                                          json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), 
-                                                          NULL,
-                                                          now,
-                                                          jti)) != NULL) {
-                  if (serialize_access_token(config, 
-                                             GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, 
-                                             json_integer_value(json_object_get(j_refresh_token, "gpgr_id")), 
-                                             username, 
-                                             client_id, 
-                                             json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), 
-                                             now, 
-                                             issued_for, 
-                                             u_map_get_case(request->map_header, "user-agent"),
-                                             access_token,
-                                             jti) == G_OK) {
-                    if ((access_token_out = encrypt_token_if_required(config, access_token, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_ACCESS_TOKEN)) != NULL && (refresh_token_out = encrypt_token_if_required(config, refresh_token, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_REFRESH_TOKEN)) != NULL) {
-                      j_body = json_pack("{sssssssisIss}",
-                                         "token_type",
-                                         "bearer",
-                                         "access_token",
-                                         access_token_out,
-                                         "refresh_token",
-                                         refresh_token_out,
-                                         "iat",
-                                         now,
-                                         "expires_in",
-                                         config->access_token_duration,
-                                         "scope",
-                                         json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")));
-                      ulfius_set_json_body_response(response, 200, j_body);
-                      json_decref(j_body);
+        if (split_string(json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), " ", &scope_array)) {
+          for (index=0; scope_array[index]!=NULL; index++) {
+            if (0 == o_strcmp("openid", scope_array[index])) {
+              has_openid = 1;
+            }
+          }
+          free_string_array(scope_array);
+          j_refresh = get_refresh_token_duration_rolling(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")));
+          time(&now);
+          if (check_result_value(j_refresh, G_OK)) {
+            if ((refresh_token = generate_refresh_token()) != NULL) {
+              j_refresh_token = serialize_refresh_token(config, 
+                                                        GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, 
+                                                        0, 
+                                                        username, 
+                                                        client_id, 
+                                                        json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), 
+                                                        now, 
+                                                        json_integer_value(json_object_get(json_object_get(j_refresh, "refresh-token"), "refresh-token-duration")),
+                                                        json_object_get(json_object_get(j_refresh, "refresh-token"), "refresh-token-rolling")==json_true(),
+                                                        NULL,
+                                                        refresh_token, 
+                                                        issued_for, 
+                                                        u_map_get_case(request->map_header, "user-agent"));
+              if (check_result_value(j_refresh_token, G_OK)) {
+                j_user_only = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username);
+                if (check_result_value(j_user_only, G_OK)) {
+                  if ((access_token = generate_access_token(config, 
+                                                            username, 
+                                                            j_client_for_sub, 
+                                                            json_object_get(j_user_only, "user"), 
+                                                            json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), 
+                                                            NULL,
+                                                            now,
+                                                            jti)) != NULL) {
+                    if (serialize_access_token(config, 
+                                               GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, 
+                                               json_integer_value(json_object_get(j_refresh_token, "gpgr_id")), 
+                                               username, 
+                                               client_id, 
+                                               json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), 
+                                               now, 
+                                               issued_for, 
+                                               u_map_get_case(request->map_header, "user-agent"),
+                                               access_token,
+                                               jti) == G_OK) {
+                      if (has_openid) {
+                        j_amr = json_pack("[s]", "password");
+                        if ((id_token = generate_id_token(config, username, json_object_get(j_user, "user"), json_object_get(j_client, "client"), now, now, u_map_get(request->map_post_body, "nonce"), j_amr, access_token, NULL, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), NULL)) != NULL) {
+                          if (serialize_id_token(config, GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, id_token, username, client_id, now, issued_for, u_map_get_case(request->map_header, "user-agent")) == G_OK) {
+                            if ((access_token_out = encrypt_token_if_required(config, access_token, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_ACCESS_TOKEN)) != NULL &&
+                                (refresh_token_out = encrypt_token_if_required(config, refresh_token, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_REFRESH_TOKEN)) != NULL &&
+                                (id_token_out = encrypt_token_if_required(config, id_token, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_ID_TOKEN)) != NULL) {
+                              j_body = json_pack("{sssssssssisIss}",
+                                                 "token_type",
+                                                 "bearer",
+                                                 "access_token",
+                                                 access_token_out,
+                                                 "refresh_token",
+                                                 refresh_token_out,
+                                                 "id_token",
+                                                 id_token_out,
+                                                 "iat",
+                                                 now,
+                                                 "expires_in",
+                                                 config->access_token_duration,
+                                                 "scope",
+                                                 json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")));
+                              ulfius_set_json_body_response(response, 200, j_body);
+                              json_decref(j_body);
+                            } else {
+                              y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error encrypt_token_if_required");
+                              j_body = json_pack("{ss}", "error", "server_error");
+                              ulfius_set_json_body_response(response, 500, j_body);
+                              json_decref(j_body);
+                            }
+                            o_free(access_token_out);
+                            o_free(refresh_token_out);
+                            o_free(id_token_out);
+                          } else {
+                            y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_id_token");
+                            j_body = json_pack("{ss}", "error", "server_error");
+                            ulfius_set_json_body_response(response, 500, j_body);
+                            json_decref(j_body);
+                          }
+                        } else {
+                          y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_id_token");
+                          j_body = json_pack("{ss}", "error", "server_error");
+                          ulfius_set_json_body_response(response, 500, j_body);
+                          json_decref(j_body);
+                        }
+                        json_decref(j_amr);
+                        o_free(id_token);
+                      } else {
+                        if ((access_token_out = encrypt_token_if_required(config, access_token, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_ACCESS_TOKEN)) != NULL && (refresh_token_out = encrypt_token_if_required(config, refresh_token, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_REFRESH_TOKEN)) != NULL) {
+                          j_body = json_pack("{sssssssisIss}",
+                                             "token_type",
+                                             "bearer",
+                                             "access_token",
+                                             access_token_out,
+                                             "refresh_token",
+                                             refresh_token_out,
+                                             "iat",
+                                             now,
+                                             "expires_in",
+                                             config->access_token_duration,
+                                             "scope",
+                                             json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")));
+                          ulfius_set_json_body_response(response, 200, j_body);
+                          json_decref(j_body);
+                        } else {
+                          y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error encrypt_token_if_required");
+                          j_body = json_pack("{ss}", "error", "server_error");
+                          ulfius_set_json_body_response(response, 500, j_body);
+                          json_decref(j_body);
+                        }
+                        o_free(access_token_out);
+                        o_free(refresh_token_out);
+                      }
                     } else {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error encrypt_token_if_required");
+                      y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_access_token");
                       j_body = json_pack("{ss}", "error", "server_error");
                       ulfius_set_json_body_response(response, 500, j_body);
                       json_decref(j_body);
                     }
-                    o_free(access_token_out);
-                    o_free(refresh_token_out);
                   } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_access_token");
+                    y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_access_token");
                     j_body = json_pack("{ss}", "error", "server_error");
                     ulfius_set_json_body_response(response, 500, j_body);
                     json_decref(j_body);
                   }
+                  o_free(access_token);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_access_token");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error glewlwyd_plugin_callback_get_user");
                   j_body = json_pack("{ss}", "error", "server_error");
                   ulfius_set_json_body_response(response, 500, j_body);
                   json_decref(j_body);
                 }
-                o_free(access_token);
+                json_decref(j_user_only);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error glewlwyd_plugin_callback_get_user");
+                y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_refresh_token");
                 j_body = json_pack("{ss}", "error", "server_error");
                 ulfius_set_json_body_response(response, 500, j_body);
                 json_decref(j_body);
               }
-              json_decref(j_user_only);
+              json_decref(j_refresh_token);
+              o_free(refresh_token);
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_refresh_token");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_refresh_token");
               j_body = json_pack("{ss}", "error", "server_error");
               ulfius_set_json_body_response(response, 500, j_body);
               json_decref(j_body);
             }
-            json_decref(j_refresh_token);
-            o_free(refresh_token);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_refresh_token");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error get_refresh_token_duration_rolling");
             j_body = json_pack("{ss}", "error", "server_error");
             ulfius_set_json_body_response(response, 500, j_body);
             json_decref(j_body);
           }
+          json_decref(j_refresh);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error get_refresh_token_duration_rolling");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error split_string");
           j_body = json_pack("{ss}", "error", "server_error");
           ulfius_set_json_body_response(response, 500, j_body);
           json_decref(j_body);
         }
-        json_decref(j_refresh);
       }
       json_decref(j_client_for_sub);
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND) || check_result_value(j_user, G_ERROR_UNAUTHORIZED)) {
@@ -7288,7 +7449,7 @@ static int callback_oidc_device_verification(const struct _u_request * request, 
         if (u_map_has_key(request->map_url, "g_continue")) {
           j_session = validate_session_client_scope(config, request, json_string_value(json_object_get(json_object_get(j_result, "device_auth"), "client_id")), json_string_value(json_object_get(json_object_get(j_result, "device_auth"), "scope")));
           if (check_result_value(j_session, G_OK)) {
-            if (validate_device_authorization_scope(config, json_integer_value(json_object_get(json_object_get(j_result, "device_auth"), "gpoda_id")), json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered"))) == G_OK) {
+            if (validate_device_authorization_scope(config, json_integer_value(json_object_get(json_object_get(j_result, "device_auth"), "gpoda_id")), json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), json_object_get(json_object_get(j_session, "session"), "amr")) == G_OK) {
               u_map_put(&param, "prompt", "deviceComplete");
               response->status = 302;
               redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
