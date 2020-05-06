@@ -544,6 +544,7 @@ START_TEST(test_oidc_device_authorization_device_verification_valid)
   ck_assert_ptr_ne(j_resp = ulfius_get_json_body_response(&resp, NULL), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "access_token"), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "refresh_token"), NULL);
+  ck_assert_ptr_ne(json_object_get(j_resp, "id_token"), NULL);
   
   json_decref(j_resp);
   ulfius_clean_request(&req);

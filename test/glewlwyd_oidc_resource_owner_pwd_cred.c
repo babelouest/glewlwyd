@@ -17,6 +17,7 @@
 #define USERNAME "user1"
 #define PASSWORD "password"
 #define SCOPE_LIST "g_profile scope3"
+#define SCOPE_LIST_OPENID "g_profile scope3 openid"
 
 char * code;
 
@@ -31,6 +32,23 @@ START_TEST(test_oidc_resource_owner_pwd_cred_valid)
   u_map_put(&body, "password", PASSWORD);
 
   int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 200, NULL, "refresh_token", NULL);
+  o_free(url);
+  u_map_clean(&body);
+  ck_assert_int_eq(res, 1);
+}
+END_TEST
+
+START_TEST(test_oidc_resource_owner_pwd_cred_openid_valid)
+{
+  char * url = msprintf("%s/token/", SERVER_URI);
+  struct _u_map body;
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "password");
+  u_map_put(&body, "scope", SCOPE_LIST_OPENID);
+  u_map_put(&body, "username", USERNAME);
+  u_map_put(&body, "password", PASSWORD);
+
+  int res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 200, NULL, "id_token", NULL);
   o_free(url);
   u_map_clean(&body);
   ck_assert_int_eq(res, 1);
@@ -110,6 +128,7 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd oidc resource owner password credential");
   tc_core = tcase_create("test_oidc_resource_owner_pwd_cred");
   tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_valid);
+  tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_openid_valid);
   tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_pwd_invalid);
   tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_user_invalid);
   tcase_add_test(tc_core, test_oidc_resource_owner_pwd_cred_scope_invalid);
