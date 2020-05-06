@@ -326,7 +326,7 @@ START_TEST(test_oidc_code_scope_grant_none)
   code_req.http_url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
-  ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "invalid_scope"), NULL);
+  ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "code="), NULL);
 
   ulfius_clean_request(&code_req);
   ulfius_clean_response(&code_resp);
