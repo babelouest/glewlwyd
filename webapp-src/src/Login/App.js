@@ -141,8 +141,13 @@ class App extends Component {
       if (res.scope.length) {
         var infoSomeScopeUnavailable = (scopeList.split(" ").length > res.scope.length);
         res.scope.forEach((scope) => {
+          if (scope.name === "openid") {
+            scope.granted = true;
+          }
           if (scope.granted) {
-            showGrant = false || this.state.forceShowGrant;
+            if (scope.name !== "openid") {
+              showGrant = false || this.state.forceShowGrant;
+            }
             scopeGranted.push(scope.name);
             scopeGrantedDetails[scope.name] = scope;
           } else {
