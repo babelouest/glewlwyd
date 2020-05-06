@@ -64,14 +64,25 @@ class GrantScope extends Component {
 	render() {
     var scopeList = [];
     this.state.scope.forEach((scope, index) => {
-      scopeList.push(
-        <li className="list-group-item" key={index}>
-          <div className="form-group form-check">
-            <input type="checkbox" className="form-check-input" onChange={() => this.handleToggleGrantScope(scope)} id={"grant-" + scope.name} checked={scope.granted}/>
-            <label className="form-check-label" htmlFor={"grant-" + scope.name}>{scope.display_name}</label>
-          </div>
-        </li>
-      );
+      if (scope.name === "openid") {
+        scopeList.push(
+          <li className="list-group-item" key={index}>
+            <div className="form-group form-check">
+              <input type="checkbox" className="form-check-input" checked={true} disabled={true}/>
+              <label className="form-check-label" htmlFor={"grant-" + scope.name}>{scope.display_name}</label>
+            </div>
+          </li>
+        );
+      } else {
+        scopeList.push(
+          <li className="list-group-item" key={index}>
+            <div className="form-group form-check">
+              <input type="checkbox" className="form-check-input" onChange={() => this.handleToggleGrantScope(scope)} id={"grant-" + scope.name} checked={scope.granted}/>
+              <label className="form-check-label" htmlFor={"grant-" + scope.name}>{scope.display_name}</label>
+            </div>
+          </li>
+        );
+      }
     });
     var infoSomeScopeUnavailable;
     if (this.state.infoSomeScopeUnavailable) {
