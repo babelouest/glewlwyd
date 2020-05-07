@@ -19,8 +19,6 @@
 #define SCOPE_LIST "g_profile scope3"
 #define SCOPE_LIST_OPENID "g_profile scope3 openid"
 
-char * code;
-
 START_TEST(test_oidc_resource_owner_pwd_cred_valid)
 {
   char * url = msprintf("%s/token/", SERVER_URI);
