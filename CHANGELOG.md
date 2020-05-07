@@ -14,6 +14,7 @@
 - Add `id_token` in response type `password` when the scope `openid` is added
 - Disable response type `password` by default in OIDC plugin config
 - Scope `openid` is assumed to be always granted to clients in OIDC plugin
+- Add `one-time-use` refresh token option
 
 ## 2.2.0
 
