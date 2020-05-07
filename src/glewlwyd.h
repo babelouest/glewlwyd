@@ -74,14 +74,6 @@
 #define GLEWLWYD_STOP        1
 #define GLEWLWYD_ERROR       2
 
-#define G_OK                 0
-#define G_ERROR              1
-#define G_ERROR_UNAUTHORIZED 2
-#define G_ERROR_PARAM        3
-#define G_ERROR_DB           4
-#define G_ERROR_MEMORY       5
-#define G_ERROR_NOT_FOUND    6
-
 // Data tables
 #define GLEWLWYD_TABLE_USER_MODULE_INSTANCE                    "g_user_module_instance"
 #define GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE        "g_user_auth_scheme_module_instance"
