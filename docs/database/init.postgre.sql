@@ -375,10 +375,12 @@ CREATE TABLE gpo_refresh_token (
   gpor_issued_for VARCHAR(256), -- IP address or hostname
   gpor_user_agent VARCHAR(256),
   gpor_token_hash VARCHAR(512) NOT NULL,
+  gpor_jti VARCHAR(128),
   gpor_enabled SMALLINT DEFAULT 1,
   FOREIGN KEY(gpoc_id) REFERENCES gpo_code(gpoc_id) ON DELETE CASCADE
 );
 CREATE INDEX i_gpor_token_hash ON gpo_refresh_token(gpor_token_hash);
+CREATE INDEX i_gpor_jti ON gpo_refresh_token(gpor_jti);
 
 CREATE TABLE gpo_refresh_token_scope (
   gpors_id SERIAL PRIMARY KEY,

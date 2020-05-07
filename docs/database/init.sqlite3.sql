@@ -375,10 +375,12 @@ CREATE TABLE gpo_refresh_token (
   gpor_issued_for TEXT, -- IP address or hostname
   gpor_user_agent TEXT,
   gpor_token_hash TEXT NOT NULL,
+  gpor_jti TEXT,
   gpor_enabled INTEGER DEFAULT 1,
   FOREIGN KEY(gpoc_id) REFERENCES gpo_code(gpoc_id) ON DELETE CASCADE
 );
 CREATE INDEX i_gpor_token_hash ON gpo_refresh_token(gpor_token_hash);
+CREATE INDEX i_gpor_jti ON gpo_refresh_token(gpor_jti);
 
 CREATE TABLE gpo_refresh_token_scope (
   gpors_id INTEGER PRIMARY KEY AUTOINCREMENT,
