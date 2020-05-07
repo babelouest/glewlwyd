@@ -198,6 +198,23 @@ Duration of validity of each code sent to the client befire requesting a refresh
 
 If this option is checked, every time an access token is requested using a refresh token, the refresh token issued at time will be reset to the current time. This option allows infinite validity for the refresh tokens if it's not manually disabled, but if a refresh token isn't used for more of the value `Refresh token duration`, it will be disabled.
 
+### One-time use refresh token
+
+Updates the one-time use for refresh tokens.
+
+Values available are
+- `Never`: The one-time use is disabled
+- `Always`: The one-time use is always on
+- `Client-driven`: The one-time use is enabled only for clients who allow it with a specified property
+
+A one-time use refresh token will be disabled after succesfully getting an access token from it, but then a new refresh token will be available along with the new access token in the JSON response. A chain of refresh token will be created, adding a new and enabled refresh token and disablong the previous one on each refresh.
+
+However, if a refresh token is used twice, the chain will be considered broken (i.e. a refresh token has been stolen), therefore the last refresh token of the chain will be disabled.
+
+### refresh-token-one-use property
+
+Enter the client property that will hold the `refresh-token-one-use` flag of the client. This property value will tell if the client allows to encrypt refresh tokens code.
+
 ### Allow non OIDC but valid OAuth2 requests
 
 If this option is checked, the plugin instance will allow requests that are not allowed in the OIDC standard but valid in the OAuth2 standard, such as response_type: `token` (alone), `password` or `client_credential`. In those cases, the request will be trated as a normal OAuth2 but the response will not have an ID Token.
