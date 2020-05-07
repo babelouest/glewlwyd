@@ -21,6 +21,8 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["refresh-token-duration"]?"":(props.mod.parameters["refresh-token-duration"] = 1209600);
     props.mod.parameters["code-duration"]?"":(props.mod.parameters["code-duration"] = 600);
     props.mod.parameters["refresh-token-rolling"]!==undefined?"":(props.mod.parameters["refresh-token-rolling"] = true);
+    props.mod.parameters["refresh-token-one-use"]!==undefined?"":(props.mod.parameters["refresh-token-one-use"] = "never");
+    props.mod.parameters["client-refresh-token-one-use-parameter"]!==undefined?"":(props.mod.parameters["client-refresh-token-one-use-parameter"] = "refresh-token-one-use");
     props.mod.parameters["allow-non-oidc"]!==undefined?"":(props.mod.parameters["allow-non-oidc"] = false);
     props.mod.parameters["auth-type-code-enabled"]!==undefined?"":(props.mod.parameters["auth-type-code-enabled"] = true);
     props.mod.parameters["auth-type-token-enabled"]!==undefined?"":(props.mod.parameters["auth-type-token-enabled"] = true);
@@ -145,6 +147,8 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["refresh-token-duration"]?"":(nextProps.mod.parameters["refresh-token-duration"] = 1209600);
     nextProps.mod.parameters["code-duration"]?"":(nextProps.mod.parameters["code-duration"] = 600);
     nextProps.mod.parameters["refresh-token-rolling"]!==undefined?"":(nextProps.mod.parameters["refresh-token-rolling"] = true);
+    nextProps.mod.parameters["refresh-token-one-use"]!==undefined?"":(nextProps.mod.parameters["refresh-token-one-use"] = "never");
+    nextProps.mod.parameters["client-refresh-token-one-use-parameter"]!==undefined?"":(nextProps.mod.parameters["client-refresh-token-one-use-parameter"] = "refresh-token-one-use");
     nextProps.mod.parameters["allow-non-oidc"]!==undefined?"":(nextProps.mod.parameters["allow-non-oidc"] = false);
     nextProps.mod.parameters["auth-type-code-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-code-enabled"] = true);
     nextProps.mod.parameters["auth-type-token-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-token-enabled"] = true);
@@ -1378,6 +1382,31 @@ class GlwdOIDCParams extends Component {
                 <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-refresh-token-rolling" onChange={(e) => this.toggleParam(e, "refresh-token-rolling")} checked={this.state.mod.parameters["refresh-token-rolling"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-refresh-token-rolling">{i18next.t("admin.mod-glwd-refresh-token-rolling")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-refresh-token-one-use">{i18next.t("admin.mod-glwd-refresh-token-one-use")}</label>
+                    </div>
+                    <div className="dropdown">
+                      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-glwd-refresh-token-one-use" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {i18next.t("admin.mod-glwd-refresh-token-one-use-" + this.state.mod.parameters["refresh-token-one-use"])}
+                      </button>
+                      <div className="dropdown-menu" aria-labelledby="mod-glwd-refresh-token-one-use">
+                        <a className={"dropdown-item"+(this.state.mod.parameters["refresh-token-one-use"]==="never"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('refresh-token-one-use', 'never')}>{i18next.t("admin.mod-glwd-refresh-token-one-use-never")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["refresh-token-one-use"]==="always"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('refresh-token-one-use', 'always')}>{i18next.t("admin.mod-glwd-refresh-token-one-use-always")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["refresh-token-one-use"]==="client-driven"?" active":"")} href="#" onClick={(e) => this.changeParamWithValue('refresh-token-one-use', 'client-driven')}>{i18next.t("admin.mod-glwd-refresh-token-one-use-client-driven")}</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-client-refresh-token-one-use-parameter">{i18next.t("admin.mod-glwd-client-refresh-token-one-use-parameter")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-client-refresh-token-one-use-parameter-parameter" onChange={(e) => this.changeParam(e, "client-refresh-token-one-use-parameter")} value={this.state.mod.parameters["client-refresh-token-one-use-parameter"]} placeholder={i18next.t("admin.mod-glwd-client-refresh-token-one-use-parameter-ph")} disabled={this.state.mod.parameters["refresh-token-one-use"]!=="client-driven"} />
+                  </div>
                 </div>
             </div>
           </div>
