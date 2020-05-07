@@ -2001,7 +2001,7 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
   if (client_secret == NULL && u_map_get(request->map_post_body, "client_secret") != NULL) {
     client_secret = u_map_get(request->map_post_body, "client_secret");
   }
-  if (o_strlen(device_code)) {
+  if (o_strlen(device_code) == GLEWLWYD_DEVICE_AUTH_DEVICE_CODE_LENGTH) {
     j_client = check_client_valid(config, client_id, client_id, client_secret, NULL, GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION, 0, ip_source);
     if (check_result_value(j_client, G_OK)) {
       device_code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, device_code);
@@ -3314,6 +3314,19 @@ static int callback_oauth2_device_verification(const struct _u_request * request
   if (!o_strlen(u_map_get(request->map_url, "code"))) {
     if (u_map_init(&param) == U_OK) {
       u_map_put(&param, "prompt", "device");
+      response->status = 302;
+      redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
+      ulfius_add_header_to_response(response, "Location", redirect_url);
+      o_free(redirect_url);
+      u_map_clean(&param);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_oauth2_device_verification - Error u_map_init");
+      response->status = 500;
+    }
+  } else if (o_strlen(u_map_get(request->map_url, "code")) != (GLEWLWYD_DEVICE_AUTH_USER_CODE_LENGTH+1)) {
+    if (u_map_init(&param) == U_OK) {
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request));
+      u_map_put(&param, "prompt", "deviceCodeError");
       response->status = 302;
       redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
       ulfius_add_header_to_response(response, "Location", redirect_url);

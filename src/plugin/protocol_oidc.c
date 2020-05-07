@@ -4505,7 +4505,7 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
   if (client_secret == NULL && u_map_get(request->map_post_body, "client_secret") != NULL) {
     client_secret = u_map_get(request->map_post_body, "client_secret");
   }
-  if (o_strlen(device_code)) {
+  if (o_strlen(device_code) == GLEWLWYD_DEVICE_AUTH_DEVICE_CODE_LENGTH) {
     if (j_assertion_client != NULL) {
       j_client = json_pack("{sisO}", "result", G_OK, "client", j_assertion_client);
     } else {
@@ -6374,6 +6374,9 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
         }
       }
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
+        if (client_id == NULL) {
+          client_id = json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id"));
+        }
         if (j_assertion_client != NULL) {
           j_client = json_pack("{sisO}", "result", G_OK, "client", j_assertion_client);
         } else {
@@ -6624,7 +6627,7 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
       } else {
         response->status = 400;
       }
-    } else if (check_result_value(j_refresh, G_ERROR_NOT_FOUND)) {
+    } else if (check_result_value(j_refresh, G_ERROR_NOT_FOUND) || check_result_value(j_refresh, G_ERROR_UNAUTHORIZED)) {
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request));
       response->status = 400;
     } else {
@@ -7614,6 +7617,19 @@ static int callback_oidc_device_verification(const struct _u_request * request, 
   if (!o_strlen(u_map_get(request->map_url, "code"))) {
     if (u_map_init(&param) == U_OK) {
       u_map_put(&param, "prompt", "device");
+      response->status = 302;
+      redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
+      ulfius_add_header_to_response(response, "Location", redirect_url);
+      o_free(redirect_url);
+      u_map_clean(&param);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error u_map_init");
+      response->status = 500;
+    }
+  } else if (o_strlen(u_map_get(request->map_url, "code")) != (GLEWLWYD_DEVICE_AUTH_USER_CODE_LENGTH+1)) {
+    if (u_map_init(&param) == U_OK) {
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request));
+      u_map_put(&param, "prompt", "deviceCodeError");
       response->status = 302;
       redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
       ulfius_add_header_to_response(response, "Location", redirect_url);
