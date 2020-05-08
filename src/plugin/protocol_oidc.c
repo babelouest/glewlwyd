@@ -4054,100 +4054,126 @@ static int is_redirect_uri_valid_without_credential(const char * redirect_uri) {
 }
 
 static json_t * is_client_registration_valid(struct _oidc_config * config, json_t * j_registration) {
-  json_t * j_error = json_array(), * j_return, * j_element = NULL;
+  json_t * j_error = NULL, * j_return, * j_element = NULL;
   size_t index = 0;
   jwks_t * jwks = NULL;
 
+  do {
+    if (!json_is_object(j_registration)) {
+      j_error = json_pack("{ssss}", "error", "invalid_redirect_uri", "error_description", "registration parameter must be a JSON object");
+      break;
+    }
+    if (!json_array_size(json_object_get(j_registration, "redirect_uris"))) {
+      j_error = json_pack("{ssss}", "error", "invalid_redirect_uri", "error_description", "redirect_uris is mandatory and must be an array of strings");
+      break;
+    }
+    json_array_foreach(json_object_get(j_registration, "redirect_uris"), index, j_element) {
+      if (!is_redirect_uri_valid_without_credential(json_string_value(j_element)) ||
+         (0 != o_strncmp("https://", json_string_value(j_element), o_strlen("https://")) && 
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_1, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_1)) &&
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_2, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_2)) &&
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_3, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_3)))) {
+        if (j_error == NULL) {
+          j_error = json_pack("{ssss}", "error", "invalid_redirect_uri", "error_description", "a redirect_uri must be a 'https://' uri or a 'http://localhost' uri without credentials");
+        }
+      }
+    }
+    if (j_error != NULL) {
+      break;
+    }
+    if (json_object_get(j_registration, "response_types") != NULL && !json_is_array(json_object_get(j_registration, "response_types"))) {
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "response_types is optional and must be an array of strings");
+      break;
+    }
+    
+    json_array_foreach(json_object_get(j_registration, "response_types"), index, j_element) {
+      if (0 != o_strcmp("code", json_string_value(j_element)) && 0 != o_strcmp("token", json_string_value(j_element)) && 0 != o_strcmp("id_token", json_string_value(j_element)) && 0 != o_strcmp("password", json_string_value(j_element)) && 0 != o_strcmp("client_credentials", json_string_value(j_element)) && 0 != o_strcmp("refresh_token", json_string_value(j_element)) && 0 != o_strcmp("delete_token", json_string_value(j_element)) && 0 != o_strcmp("device_authorization", json_string_value(j_element))) {
+        if (j_error == NULL) {
+          j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "response_types must have one of the following values: 'code', 'token', 'id_token', 'password', 'client_credentials', 'refresh_token', 'delete_token' or 'device_authorization'");
+        }
+      }
+    }
+    if (j_error != NULL) {
+      break;
+    }
+    if (json_object_get(j_registration, "application_type") != NULL && 0 != o_strcmp("web", json_string_value(json_object_get(j_registration, "application_type"))) && 0 != o_strcmp("native", json_string_value(json_object_get(j_registration, "application_type")))) {
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "application_type is optional and must have one of the following values: 'web', 'native'");
+      break;
+    }
+    if (json_object_get(j_registration, "contacts") != NULL && !json_is_array(json_object_get(j_registration, "contacts"))) {
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "contacts is optional and must be an array of strings");
+      break;
+    }
+    json_array_foreach(json_object_get(j_registration, "contacts"), index, j_element) {
+      if (!json_string_length(j_element)) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "contact value must be a non empty string");
+      }
+    }
+    if (j_error != NULL) {
+      break;
+    }
+    if (json_object_get(j_registration, "client_confidential") != NULL && !json_is_boolean(json_object_get(j_registration, "client_confidential"))) {
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "client_confidential is optional and must be a boolean");
+      break;
+    }
+    if (json_object_get(j_registration, "client_name") != NULL && !json_is_string(json_object_get(j_registration, "client_name"))) {
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "client_name is optional and must be a string");
+      break;
+    }
+    if (json_object_get(j_registration, "logo_uri") != NULL && 0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "logo_uri")), o_strlen("https://")) && 0 != o_strncmp("http://", json_string_value(json_object_get(j_registration, "logo_uri")), o_strlen("http://"))) {
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "logo_uri is optional and must be a string");
+      break;
+    }
+    if (json_object_get(j_registration, "client_uri") != NULL && 0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "client_uri")), o_strlen("https://")) && 0 != o_strncmp("http://", json_string_value(json_object_get(j_registration, "client_uri")), o_strlen("http://"))) {
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "client_uri is optional and must be a string");
+      break;
+    }
+    if (json_object_get(j_registration, "policy_uri") != NULL && 0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "policy_uri")), o_strlen("https://")) && 0 != o_strncmp("http://", json_string_value(json_object_get(j_registration, "policy_uri")), o_strlen("http://"))) {
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "policy_uri is optional and must be a string");
+      break;
+    }
+    if (json_object_get(j_registration, "tos_uri") != NULL && 0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "tos_uri")), o_strlen("https://")) && 0 != o_strncmp("http://", json_string_value(json_object_get(j_registration, "tos_uri")), o_strlen("http://"))) {
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "tos_uri is optional and must be a string");
+      break;
+    }
+    if (json_object_get(j_registration, "jwks_uri") != NULL && json_object_get(j_registration, "jwks") != NULL) {
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "jwks_uri and jwks can't coexist");
+      break;
+    }
+    if (json_object_get(j_registration, "jwks_uri") != NULL) {
+      if (0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "jwks_uri")), o_strlen("https://"))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "jwks_uri is optional and must be an https:// uri");
+        break;
+      }
+      r_jwks_init(&jwks);
+      if (r_jwks_import_from_uri(jwks, json_string_value(json_object_get(j_registration, "jwks_uri")), config->x5u_flags) != RHN_OK) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid JWKS pointed by jwks_uri");
+      }
+      r_jwks_free(jwks);
+      if (j_error != NULL) {
+        break;
+      }
+    }
+    if (json_object_get(j_registration, "jwks") != NULL) {
+      r_jwks_init(&jwks);
+      if (r_jwks_import_from_json_t(jwks, json_object_get(j_registration, "jwks")) != RHN_OK) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid JWKS");
+      }
+      r_jwks_free(jwks);
+      if (j_error != NULL) {
+        break;
+      }
+    }
+    if (json_object_get(j_registration, "sector_identifier_uri") != NULL && 0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "sector_identifier_uri")), o_strlen("https://"))) {
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "sector_identifier_uri is optional and must be an https:// uri");
+      break;
+    }
+  } while(0);
+  
   if (j_error != NULL) {
-    if (json_is_object(j_registration)) {
-      if (!json_array_size(json_object_get(j_registration, "redirect_uris"))) {
-        json_array_append_new(j_error, json_string("redirect_uris is mandatory and must be an array of strings"));
-      } else {
-        json_array_foreach(json_object_get(j_registration, "redirect_uris"), index, j_element) {
-          if (!is_redirect_uri_valid_without_credential(json_string_value(j_element)) ||
-             (0 != o_strncmp("https://", json_string_value(j_element), o_strlen("https://")) && 
-              0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_1, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_1)) &&
-              0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_2, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_2)) &&
-              0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_3, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_3)))) {
-            json_array_append_new(j_error, json_string("a redirect_uri must be a 'https://' uri or a 'http://localhost' uri without credentials"));
-          }
-        }
-      }
-      if (json_object_get(j_registration, "response_types") != NULL && !json_is_array(json_object_get(j_registration, "response_types"))) {
-        json_array_append_new(j_error, json_string("response_types is optional and must be an array of strings"));
-      } else {
-        json_array_foreach(json_object_get(j_registration, "response_types"), index, j_element) {
-          if (0 != o_strcmp("code", json_string_value(j_element)) && 0 != o_strcmp("token", json_string_value(j_element)) && 0 != o_strcmp("id_token", json_string_value(j_element)) && 0 != o_strcmp("password", json_string_value(j_element)) && 0 != o_strcmp("client_credentials", json_string_value(j_element)) && 0 != o_strcmp("refresh_token", json_string_value(j_element)) && 0 != o_strcmp("delete_token", json_string_value(j_element))) {
-            json_array_append_new(j_error, json_string("response_types must have one of the following values: 'code', 'token', 'id_token', 'password', 'client_credentials', 'refresh_token' or 'delete_token'"));
-          }
-        }
-      }
-      if (json_object_get(j_registration, "application_type") != NULL && 0 != o_strcmp("web", json_string_value(json_object_get(j_registration, "application_type"))) && 0 != o_strcmp("native", json_string_value(json_object_get(j_registration, "application_type")))) {
-        json_array_append_new(j_error, json_string("application_type is optional and must have one of the following values: 'web', 'native'"));
-      }
-      if (json_object_get(j_registration, "contacts") != NULL && !json_is_array(json_object_get(j_registration, "contacts"))) {
-        json_array_append_new(j_error, json_string("contacts is optional and must be an array of strings"));
-      } else {
-        json_array_foreach(json_object_get(j_registration, "contacts"), index, j_element) {
-          if (!json_string_length(j_element)) {
-            json_array_append_new(j_error, json_string("contact value must be a non empty string"));
-          }
-        }
-      }
-      if (json_object_get(j_registration, "client_confidential") != NULL && !json_is_boolean(json_object_get(j_registration, "client_confidential"))) {
-        json_array_append_new(j_error, json_string("client_confidential is optional and must be a boolean"));
-      }
-      if (json_object_get(j_registration, "client_name") != NULL && !json_is_string(json_object_get(j_registration, "client_name"))) {
-        json_array_append_new(j_error, json_string("client_name is optional and must be a string"));
-      }
-      if (json_object_get(j_registration, "logo_uri") != NULL && 0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "logo_uri")), o_strlen("https://")) && 0 != o_strncmp("http://", json_string_value(json_object_get(j_registration, "logo_uri")), o_strlen("http://"))) {
-        json_array_append_new(j_error, json_string("logo_uri is optional and must be a string"));
-      }
-      if (json_object_get(j_registration, "client_uri") != NULL && 0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "client_uri")), o_strlen("https://")) && 0 != o_strncmp("http://", json_string_value(json_object_get(j_registration, "client_uri")), o_strlen("http://"))) {
-        json_array_append_new(j_error, json_string("client_uri is optional and must be a string"));
-      }
-      if (json_object_get(j_registration, "policy_uri") != NULL && 0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "policy_uri")), o_strlen("https://")) && 0 != o_strncmp("http://", json_string_value(json_object_get(j_registration, "policy_uri")), o_strlen("http://"))) {
-        json_array_append_new(j_error, json_string("policy_uri is optional and must be a string"));
-      }
-      if (json_object_get(j_registration, "tos_uri") != NULL && 0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "tos_uri")), o_strlen("https://")) && 0 != o_strncmp("http://", json_string_value(json_object_get(j_registration, "tos_uri")), o_strlen("http://"))) {
-        json_array_append_new(j_error, json_string("tos_uri is optional and must be a string"));
-      }
-      if (json_object_get(j_registration, "jwks_uri") != NULL) {
-        if (0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "jwks_uri")), o_strlen("https://"))) {
-          json_array_append_new(j_error, json_string("jwks_uri is optional and must be an https:// url"));
-        } else {
-          r_jwks_init(&jwks);
-          if (r_jwks_import_from_uri(jwks, json_string_value(json_object_get(j_registration, "jwks_uri")), config->x5u_flags) != RHN_OK) {
-            json_array_append_new(j_error, json_string("Invalid JWKS pointed by jwks_uri"));
-          }
-          r_jwks_free(jwks);
-        }
-      }
-      if (json_object_get(j_registration, "jwks") != NULL) {
-        r_jwks_init(&jwks);
-        if (r_jwks_import_from_json_t(jwks, json_object_get(j_registration, "jwks")) != RHN_OK) {
-          json_array_append_new(j_error, json_string("Invalid jwks"));
-        }
-        r_jwks_free(jwks);
-      }
-      if (json_object_get(j_registration, "jwks_uri") != NULL && json_object_get(j_registration, "jwks") != NULL) {
-        json_array_append_new(j_error, json_string("Invalid parameters, jwks_uri and jwks can't coexist"));
-      }
-      if (json_object_get(j_registration, "sector_identifier_uri") != NULL && 0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "sector_identifier_uri")), o_strlen("https://"))) {
-        json_array_append_new(j_error, json_string("sector_identifier_uri is optional and must be an https:// uri"));
-      }
-    } else {
-      json_array_append_new(j_error, json_string("registration parameter must be a JSON object"));
-    }
-    if (json_array_size(j_error)) {
-      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
-    } else {
-      j_return = json_pack("{si}", "result", G_OK);
-    }
-    json_decref(j_error);
+    j_return = json_pack("{siso}", "result", G_ERROR_PARAM, "error", j_error);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "is_client_registration_valid - Error allocating resources for j_error");
-    j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+    j_return = json_pack("{si}", "result", G_OK);
   }
   return j_return;
 }
@@ -5067,7 +5093,7 @@ static int callback_introspection(const struct _u_request * request, struct _u_r
   u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
 
   if (check_result_value(j_result, G_OK)) {
-    if (0 == o_strcmp("jwt", u_map_get(request->map_url, "format")) || 0 == o_strcmp("jwt", u_map_get(request->map_post_body, "format")) || 0 == o_strcasecmp("application/jwt", u_map_get(request->map_header, "Accept"))) {
+    if (0 == o_strcmp("jwt", u_map_get(request->map_url, "format")) || 0 == o_strcmp("jwt", u_map_get(request->map_post_body, "format")) || 0 == o_strcasecmp("application/jwt", u_map_get_case(request->map_header, "Accept"))) {
       if (0 == o_strcmp("access_token", json_string_value(json_object_get(json_object_get(j_result, "token"), "token_type")))) {
         if ((jwt = r_jwt_copy(config->jwt_sign)) != NULL) {
           time(&now);
@@ -7303,7 +7329,7 @@ static int callback_oidc_get_userinfo(const struct _u_request * request, struct 
     if (check_result_value(j_user, G_OK)) {
       j_userinfo = get_userinfo(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub")), json_object_get(j_user, "user"), json_object_get((json_t *)response->shared_data, "claims"), json_string_value(json_object_get((json_t *)response->shared_data, "scope")));
       if (j_userinfo != NULL) {
-        if (0 == o_strcmp("jwt", u_map_get(request->map_url, "format")) || 0 == o_strcmp("jwt", u_map_get(request->map_post_body, "format")) || 0 == o_strcasecmp("application/jwt", u_map_get(request->map_header, "Accept"))) {
+        if (0 == o_strcmp("jwt", u_map_get(request->map_url, "format")) || 0 == o_strcmp("jwt", u_map_get(request->map_post_body, "format")) || 0 == o_strcasecmp("application/jwt", u_map_get_case(request->map_header, "Accept"))) {
           if ((jwt = r_jwt_copy(config->jwt_sign)) != NULL) {
             json_object_set(j_userinfo, "iss", json_object_get(config->j_params, "iss"));
             if (r_jwt_set_full_claims_json_t(jwt, j_userinfo) == RHN_OK) {
