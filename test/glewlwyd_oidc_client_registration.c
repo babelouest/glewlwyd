@@ -155,7 +155,7 @@ START_TEST(test_oidc_registration_no_auth_register_client_error_parameters)
                        "jwks",
                        j_jwks);
   ck_assert_ptr_ne(j_client, NULL);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "[\"redirect_uris is mandatory and must be an array of strings\"]", NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"redirect_uris is mandatory and must be an array of strings\"", NULL), 1);
   json_decref(j_client);
   
   // invalid response_types
@@ -181,7 +181,7 @@ START_TEST(test_oidc_registration_no_auth_register_client_error_parameters)
                        "jwks",
                        j_jwks);
   ck_assert_ptr_ne(j_client, NULL);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "[\"response_types must have one of the following values: 'code', 'token', 'id_token', 'password', 'client_credentials', 'refresh_token' or 'delete_token'\"]", NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"response_types must have one of the following values: 'code', 'token', 'id_token', 'password', 'client_credentials', 'refresh_token', 'delete_token' or 'device_authorization'\"", NULL), 1);
   json_decref(j_client);
   
   // Invaid application_type
@@ -213,7 +213,7 @@ START_TEST(test_oidc_registration_no_auth_register_client_error_parameters)
                        "jwks",
                        j_jwks);
   ck_assert_ptr_ne(j_client, NULL);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "[\"application_type is optional and must have one of the following values: 'web', 'native'\"]", NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"application_type is optional and must have one of the following values: 'web', 'native'\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid contacts
@@ -245,7 +245,7 @@ START_TEST(test_oidc_registration_no_auth_register_client_error_parameters)
                        "jwks",
                        j_jwks);
   ck_assert_ptr_ne(j_client, NULL);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "[\"contact value must be a non empty string\"]", NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"contact value must be a non empty string\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid logo_uri
@@ -277,7 +277,7 @@ START_TEST(test_oidc_registration_no_auth_register_client_error_parameters)
                        "jwks",
                        j_jwks);
   ck_assert_ptr_ne(j_client, NULL);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "[\"logo_uri is optional and must be a string\"]", NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"logo_uri is optional and must be a string\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid client_uri
@@ -309,7 +309,7 @@ START_TEST(test_oidc_registration_no_auth_register_client_error_parameters)
                        "jwks",
                        j_jwks);
   ck_assert_ptr_ne(j_client, NULL);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "[\"client_uri is optional and must be a string\"]", NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"client_uri is optional and must be a string\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid policy_uri
@@ -341,7 +341,7 @@ START_TEST(test_oidc_registration_no_auth_register_client_error_parameters)
                        "jwks",
                        j_jwks);
   ck_assert_ptr_ne(j_client, NULL);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "[\"policy_uri is optional and must be a string\"]", NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"policy_uri is optional and must be a string\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid tos_uri
@@ -373,7 +373,7 @@ START_TEST(test_oidc_registration_no_auth_register_client_error_parameters)
                        "jwks",
                        j_jwks);
   ck_assert_ptr_ne(j_client, NULL);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "[\"tos_uri is optional and must be a string\"]", NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"tos_uri is optional and must be a string\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid jwks
@@ -405,7 +405,7 @@ START_TEST(test_oidc_registration_no_auth_register_client_error_parameters)
                        "jwks",
                        "error");
   ck_assert_ptr_ne(j_client, NULL);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "[\"Invalid jwks\"]", NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"Invalid JWKS\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid jwks_uri
@@ -437,11 +437,11 @@ START_TEST(test_oidc_registration_no_auth_register_client_error_parameters)
                        "jwks_uri",
                        "error");
   ck_assert_ptr_ne(j_client, NULL);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "[\"jwks_uri is optional and must be an https:// url\"]", NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"jwks_uri is optional and must be an https:// uri\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid jwks_uri and jwks
-  j_client = json_pack("{sss[s]s[sssssss]sss[s]ssssssssssss}",
+  j_client = json_pack("{sss[s]s[sssssss]sss[s]sssssssssssO}",
                        "client_name",
                        CLIENT_NAME,
                        "redirect_uris",
@@ -467,11 +467,11 @@ START_TEST(test_oidc_registration_no_auth_register_client_error_parameters)
                        "tos_uri",
                        CLIENT_TOS_URI,
                        "jwks_uri",
-                       "error",
+                       CLIENT_JWKS_URI,
                        "jwks",
-                       "error");
+                       j_jwks);
   ck_assert_ptr_ne(j_client, NULL);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "[\"jwks_uri is optional and must be an https:// url\",\"Invalid jwks\",\"Invalid parameters, jwks_uri and jwks can't coexist\"]", NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"jwks_uri and jwks can't coexist\"", NULL), 1);
   json_decref(j_client);
   
   json_decref(j_jwks);
