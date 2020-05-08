@@ -75,7 +75,7 @@ char * get_file_content(const char * file_path) {
  * otherwise the call is direct, return the client_address
  */
 const char * get_ip_source(const struct _u_request * request) {
-  const char * ip_source = u_map_get(request->map_header, "X-Forwarded-For");
+  const char * ip_source = u_map_get_case(request->map_header, "X-Forwarded-For");
   
   if (ip_source == NULL) {
     struct sockaddr_in * in_source = (struct sockaddr_in *)request->client_address;
