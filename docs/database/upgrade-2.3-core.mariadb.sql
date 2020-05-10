@@ -8,6 +8,10 @@ ALTER TABLE gpo_refresh_token
 ADD gpor_jti VARCHAR(128);
 CREATE INDEX i_gpor_jti ON gpo_refresh_token(gpor_jti);
 
+ALTER TABLE gpo_client_registration
+ADD gpocr_management_at_hash VARCHAR(512);
+CREATE INDEX i_gpocr_management_at_hash ON gpo_client_registration(gpocr_management_at_hash);
+
 -- store device authorization requests
 CREATE TABLE gpo_device_authorization (
   gpoda_id INT(11) PRIMARY KEY AUTO_INCREMENT,

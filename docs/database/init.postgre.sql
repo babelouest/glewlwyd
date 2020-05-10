@@ -446,12 +446,14 @@ CREATE TABLE gpo_client_registration (
   gpocr_id SERIAL PRIMARY KEY,
   gpocr_plugin_name VARCHAR(256) NOT NULL,
   gpocr_cient_id VARCHAR(256) NOT NULL,
+  gpocr_management_at_hash VARCHAR(512),
   gpocr_created_at TIMESTAMPTZ DEFAULT NOW(),
   gpoa_id INTEGER,
   gpocr_issued_for VARCHAR(256), -- IP address or hostname
   gpocr_user_agent VARCHAR(256),
   FOREIGN KEY(gpoa_id) REFERENCES gpo_access_token(gpoa_id) ON DELETE CASCADE
 );
+CREATE INDEX i_gpocr_management_at_hash ON gpo_client_registration(gpocr_management_at_hash);
 
 -- store meta information about client request on token endpoint
 CREATE TABLE gpo_client_token_request (
