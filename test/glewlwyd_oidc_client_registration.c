@@ -34,13 +34,20 @@
 
 #define CLIENT_NAME                             "New Client"
 #define CLIENT_REDIRECT_URI                     "https://client.tld/callback"
+#define CLIENT_TOKEN_AUTH_NONE                  "none"
+#define CLIENT_TOKEN_AUTH_SECRET_POST           "client_secret_post"
+#define CLIENT_TOKEN_AUTH_SECRET_BASIC          "client_secret_basic"
+#define CLIENT_TOKEN_AUTH_SECRET_JWT            "client_secret_jwt"
+#define CLIENT_TOKEN_AUTH_PRIVATE_KEY_JWT       "private_key_jwt"
 #define CLIENT_RESPONSE_TYPE_CODE               "code"
 #define CLIENT_RESPONSE_TYPE_TOKEN              "token"
 #define CLIENT_RESPONSE_TYPE_ID_TOKEN           "id_token"
-#define CLIENT_RESPONSE_TYPE_PASSWORD           "password"
-#define CLIENT_RESPONSE_TYPE_CLIENT_CREDENTIALS "client_credentials"
-#define CLIENT_RESPONSE_TYPE_REFRESH_TOKEN      "refresh_token"
-#define CLIENT_RESPONSE_TYPE_DELETE_TOKEN       "delete_token"
+#define CLIENT_GRANT_TYPE_AUTH_CODE             "authorization_code"
+#define CLIENT_GRANT_TYPE_PASSWORD              "password"
+#define CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS    "client_credentials"
+#define CLIENT_GRANT_TYPE_REFRESH_TOKEN         "refresh_token"
+#define CLIENT_GRANT_TYPE_DELETE_TOKEN          "delete_token"
+#define CLIENT_GRANT_TYPE_DEVICE_AUTH           "device_authorization"
 #define CLIENT_APP_TYPE_WEB                     "web"
 #define CLIENT_APP_TYPE_NATIVE                  "native"
 #define CLIENT_LOGO_URI                         "https://client.tld/logo.png"
@@ -128,348 +135,322 @@ START_TEST(test_oidc_registration_no_auth_register_client_error_parameters)
   ck_assert_ptr_ne(j_jwks, NULL);
   
   // No redirect_uri
-  j_client = json_pack("{sss[]s[sssssss]sss[s]sssssssssO}",
-                       "client_name",
-                       CLIENT_NAME,
-                       "redirect_uris",
+  j_client = json_pack("{sssss[ssssss]s[sss]sss[s]ssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
                        "response_types",
                          CLIENT_RESPONSE_TYPE_CODE,
                          CLIENT_RESPONSE_TYPE_TOKEN,
                          CLIENT_RESPONSE_TYPE_ID_TOKEN,
-                         CLIENT_RESPONSE_TYPE_PASSWORD,
-                         CLIENT_RESPONSE_TYPE_CLIENT_CREDENTIALS,
-                         CLIENT_RESPONSE_TYPE_REFRESH_TOKEN,
-                         CLIENT_RESPONSE_TYPE_DELETE_TOKEN,
-                       "application_type",
-                       CLIENT_APP_TYPE_WEB,
+                       "application_type", CLIENT_APP_TYPE_WEB,
                        "contacts",
                          CLIENT_CONTACT,
-                       "logo_uri",
-                       CLIENT_LOGO_URI,
-                       "client_uri",
-                       CLIENT_URI,
-                       "policy_uri",
-                       CLIENT_POLICY_URI,
-                       "tos_uri",
-                       CLIENT_TOS_URI,
-                       "jwks",
-                       j_jwks);
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI);
   ck_assert_ptr_ne(j_client, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"redirect_uris is mandatory and must be an array of strings\"", NULL), 1);
   json_decref(j_client);
   
   // invalid response_types
-  j_client = json_pack("{sss[s]s[s]sss[s]sssssssssO}",
-                       "client_name",
-                       CLIENT_NAME,
-                       "redirect_uris",
-                         CLIENT_REDIRECT_URI,
+  j_client = json_pack("{sss[s]sss[ssssss]s[s]sss[s]ssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
                        "response_types",
                          "error",
-                       "application_type",
-                       CLIENT_APP_TYPE_WEB,
+                       "application_type", CLIENT_APP_TYPE_WEB,
                        "contacts",
                          CLIENT_CONTACT,
-                       "logo_uri",
-                       CLIENT_LOGO_URI,
-                       "client_uri",
-                       CLIENT_URI,
-                       "policy_uri",
-                       CLIENT_POLICY_URI,
-                       "tos_uri",
-                       CLIENT_TOS_URI,
-                       "jwks",
-                       j_jwks);
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI);
   ck_assert_ptr_ne(j_client, NULL);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"response_types must have one of the following values: 'code', 'token', 'id_token', 'password', 'client_credentials', 'refresh_token', 'delete_token' or 'device_authorization'\"", NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"response_types must have one of the following values: 'code', 'token', 'id_token'\"", NULL), 1);
   json_decref(j_client);
   
-  // Invaid application_type
-  j_client = json_pack("{sss[s]s[sssssss]sss[s]sssssssssO}",
-                       "client_name",
-                       CLIENT_NAME,
-                       "redirect_uris",
-                         CLIENT_REDIRECT_URI,
+  // invalid grant_types
+  j_client = json_pack("{sss[s]sss[s]s[sss]sss[s]sssssssssO}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_PRIVATE_KEY_JWT,
+                       "grant_types",
+                         "error",
                        "response_types",
                          CLIENT_RESPONSE_TYPE_CODE,
                          CLIENT_RESPONSE_TYPE_TOKEN,
                          CLIENT_RESPONSE_TYPE_ID_TOKEN,
-                         CLIENT_RESPONSE_TYPE_PASSWORD,
-                         CLIENT_RESPONSE_TYPE_CLIENT_CREDENTIALS,
-                         CLIENT_RESPONSE_TYPE_REFRESH_TOKEN,
-                         CLIENT_RESPONSE_TYPE_DELETE_TOKEN,
-                       "application_type",
-                       "error",
+                       "application_type", CLIENT_APP_TYPE_WEB,
                        "contacts",
                          CLIENT_CONTACT,
-                       "logo_uri",
-                       CLIENT_LOGO_URI,
-                       "client_uri",
-                       CLIENT_URI,
-                       "policy_uri",
-                       CLIENT_POLICY_URI,
-                       "tos_uri",
-                       CLIENT_TOS_URI,
-                       "jwks",
-                       j_jwks);
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "jwks", j_jwks);
+  ck_assert_ptr_ne(j_client, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"grant_types must have one of the following values: 'authorization_code', 'implicit', 'password', 'client_credentials', 'refresh_token', 'delete_token', 'device_authorization'\"", NULL), 1);
+  json_decref(j_client);
+  
+  // Invaid application_type
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
+                       "response_types",
+                         CLIENT_RESPONSE_TYPE_CODE,
+                         CLIENT_RESPONSE_TYPE_TOKEN,
+                         CLIENT_RESPONSE_TYPE_ID_TOKEN,
+                       "application_type", "error",
+                       "contacts",
+                         CLIENT_CONTACT,
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI);
   ck_assert_ptr_ne(j_client, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"application_type is optional and must have one of the following values: 'web', 'native'\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid contacts
-  j_client = json_pack("{sss[s]s[sssssss]sss[i]sssssssssO}",
-                       "client_name",
-                       CLIENT_NAME,
-                       "redirect_uris",
-                         CLIENT_REDIRECT_URI,
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[i]ssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
                        "response_types",
                          CLIENT_RESPONSE_TYPE_CODE,
                          CLIENT_RESPONSE_TYPE_TOKEN,
                          CLIENT_RESPONSE_TYPE_ID_TOKEN,
-                         CLIENT_RESPONSE_TYPE_PASSWORD,
-                         CLIENT_RESPONSE_TYPE_CLIENT_CREDENTIALS,
-                         CLIENT_RESPONSE_TYPE_REFRESH_TOKEN,
-                         CLIENT_RESPONSE_TYPE_DELETE_TOKEN,
-                       "application_type",
-                       CLIENT_APP_TYPE_WEB,
+                       "application_type", CLIENT_APP_TYPE_WEB,
                        "contacts",
                          42,
-                       "logo_uri",
-                       CLIENT_LOGO_URI,
-                       "client_uri",
-                       CLIENT_URI,
-                       "policy_uri",
-                       CLIENT_POLICY_URI,
-                       "tos_uri",
-                       CLIENT_TOS_URI,
-                       "jwks",
-                       j_jwks);
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI);
   ck_assert_ptr_ne(j_client, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"contact value must be a non empty string\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid logo_uri
-  j_client = json_pack("{sss[s]s[sssssss]sss[s]sssssssssO}",
-                       "client_name",
-                       CLIENT_NAME,
-                       "redirect_uris",
-                         CLIENT_REDIRECT_URI,
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
                        "response_types",
                          CLIENT_RESPONSE_TYPE_CODE,
                          CLIENT_RESPONSE_TYPE_TOKEN,
                          CLIENT_RESPONSE_TYPE_ID_TOKEN,
-                         CLIENT_RESPONSE_TYPE_PASSWORD,
-                         CLIENT_RESPONSE_TYPE_CLIENT_CREDENTIALS,
-                         CLIENT_RESPONSE_TYPE_REFRESH_TOKEN,
-                         CLIENT_RESPONSE_TYPE_DELETE_TOKEN,
-                       "application_type",
-                       CLIENT_APP_TYPE_WEB,
+                       "application_type", CLIENT_APP_TYPE_WEB,
                        "contacts",
                          CLIENT_CONTACT,
-                       "logo_uri",
-                       "error",
-                       "client_uri",
-                       CLIENT_URI,
-                       "policy_uri",
-                       CLIENT_POLICY_URI,
-                       "tos_uri",
-                       CLIENT_TOS_URI,
-                       "jwks",
-                       j_jwks);
+                       "logo_uri", "error",
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI);
   ck_assert_ptr_ne(j_client, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"logo_uri is optional and must be a string\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid client_uri
-  j_client = json_pack("{sss[s]s[sssssss]sss[s]sssssssssO}",
-                       "client_name",
-                       CLIENT_NAME,
-                       "redirect_uris",
-                         CLIENT_REDIRECT_URI,
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
                        "response_types",
                          CLIENT_RESPONSE_TYPE_CODE,
                          CLIENT_RESPONSE_TYPE_TOKEN,
                          CLIENT_RESPONSE_TYPE_ID_TOKEN,
-                         CLIENT_RESPONSE_TYPE_PASSWORD,
-                         CLIENT_RESPONSE_TYPE_CLIENT_CREDENTIALS,
-                         CLIENT_RESPONSE_TYPE_REFRESH_TOKEN,
-                         CLIENT_RESPONSE_TYPE_DELETE_TOKEN,
-                       "application_type",
-                       CLIENT_APP_TYPE_WEB,
+                       "application_type", CLIENT_APP_TYPE_WEB,
                        "contacts",
                          CLIENT_CONTACT,
-                       "logo_uri",
-                       CLIENT_LOGO_URI,
-                       "client_uri",
-                       "error",
-                       "policy_uri",
-                       CLIENT_POLICY_URI,
-                       "tos_uri",
-                       CLIENT_TOS_URI,
-                       "jwks",
-                       j_jwks);
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", "error",
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI);
   ck_assert_ptr_ne(j_client, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"client_uri is optional and must be a string\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid policy_uri
-  j_client = json_pack("{sss[s]s[sssssss]sss[s]sssssssssO}",
-                       "client_name",
-                       CLIENT_NAME,
-                       "redirect_uris",
-                         CLIENT_REDIRECT_URI,
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
                        "response_types",
                          CLIENT_RESPONSE_TYPE_CODE,
                          CLIENT_RESPONSE_TYPE_TOKEN,
                          CLIENT_RESPONSE_TYPE_ID_TOKEN,
-                         CLIENT_RESPONSE_TYPE_PASSWORD,
-                         CLIENT_RESPONSE_TYPE_CLIENT_CREDENTIALS,
-                         CLIENT_RESPONSE_TYPE_REFRESH_TOKEN,
-                         CLIENT_RESPONSE_TYPE_DELETE_TOKEN,
-                       "application_type",
-                       CLIENT_APP_TYPE_WEB,
+                       "application_type", CLIENT_APP_TYPE_WEB,
                        "contacts",
                          CLIENT_CONTACT,
-                       "logo_uri",
-                       CLIENT_LOGO_URI,
-                       "client_uri",
-                       CLIENT_URI,
-                       "policy_uri",
-                       "error",
-                       "tos_uri",
-                       CLIENT_TOS_URI,
-                       "jwks",
-                       j_jwks);
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", "error",
+                       "tos_uri", CLIENT_TOS_URI);
   ck_assert_ptr_ne(j_client, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"policy_uri is optional and must be a string\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid tos_uri
-  j_client = json_pack("{sss[s]s[sssssss]sss[s]sssssssssO}",
-                       "client_name",
-                       CLIENT_NAME,
-                       "redirect_uris",
-                         CLIENT_REDIRECT_URI,
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
                        "response_types",
                          CLIENT_RESPONSE_TYPE_CODE,
                          CLIENT_RESPONSE_TYPE_TOKEN,
                          CLIENT_RESPONSE_TYPE_ID_TOKEN,
-                         CLIENT_RESPONSE_TYPE_PASSWORD,
-                         CLIENT_RESPONSE_TYPE_CLIENT_CREDENTIALS,
-                         CLIENT_RESPONSE_TYPE_REFRESH_TOKEN,
-                         CLIENT_RESPONSE_TYPE_DELETE_TOKEN,
-                       "application_type",
-                       CLIENT_APP_TYPE_WEB,
+                       "application_type", CLIENT_APP_TYPE_WEB,
                        "contacts",
                          CLIENT_CONTACT,
-                       "logo_uri",
-                       CLIENT_LOGO_URI,
-                       "client_uri",
-                       CLIENT_URI,
-                       "policy_uri",
-                       CLIENT_POLICY_URI,
-                       "tos_uri",
-                       "error",
-                       "jwks",
-                       j_jwks);
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", "error");
   ck_assert_ptr_ne(j_client, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"tos_uri is optional and must be a string\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid jwks
-  j_client = json_pack("{sss[s]s[sssssss]sss[s]ssssssssss}",
-                       "client_name",
-                       CLIENT_NAME,
-                       "redirect_uris",
-                         CLIENT_REDIRECT_URI,
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_PRIVATE_KEY_JWT,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
                        "response_types",
                          CLIENT_RESPONSE_TYPE_CODE,
                          CLIENT_RESPONSE_TYPE_TOKEN,
                          CLIENT_RESPONSE_TYPE_ID_TOKEN,
-                         CLIENT_RESPONSE_TYPE_PASSWORD,
-                         CLIENT_RESPONSE_TYPE_CLIENT_CREDENTIALS,
-                         CLIENT_RESPONSE_TYPE_REFRESH_TOKEN,
-                         CLIENT_RESPONSE_TYPE_DELETE_TOKEN,
-                       "application_type",
-                       CLIENT_APP_TYPE_WEB,
+                       "application_type", CLIENT_APP_TYPE_WEB,
                        "contacts",
                          CLIENT_CONTACT,
-                       "logo_uri",
-                       CLIENT_LOGO_URI,
-                       "client_uri",
-                       CLIENT_URI,
-                       "policy_uri",
-                       CLIENT_POLICY_URI,
-                       "tos_uri",
-                       CLIENT_TOS_URI,
-                       "jwks",
-                       "error");
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "jwks", "error");
   ck_assert_ptr_ne(j_client, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"Invalid JWKS\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid jwks_uri
-  j_client = json_pack("{sss[s]s[sssssss]sss[s]ssssssssss}",
-                       "client_name",
-                       CLIENT_NAME,
-                       "redirect_uris",
-                         CLIENT_REDIRECT_URI,
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_PRIVATE_KEY_JWT,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
                        "response_types",
                          CLIENT_RESPONSE_TYPE_CODE,
                          CLIENT_RESPONSE_TYPE_TOKEN,
                          CLIENT_RESPONSE_TYPE_ID_TOKEN,
-                         CLIENT_RESPONSE_TYPE_PASSWORD,
-                         CLIENT_RESPONSE_TYPE_CLIENT_CREDENTIALS,
-                         CLIENT_RESPONSE_TYPE_REFRESH_TOKEN,
-                         CLIENT_RESPONSE_TYPE_DELETE_TOKEN,
-                       "application_type",
-                       CLIENT_APP_TYPE_WEB,
+                       "application_type", CLIENT_APP_TYPE_WEB,
                        "contacts",
                          CLIENT_CONTACT,
-                       "logo_uri",
-                       CLIENT_LOGO_URI,
-                       "client_uri",
-                       CLIENT_URI,
-                       "policy_uri",
-                       CLIENT_POLICY_URI,
-                       "tos_uri",
-                       CLIENT_TOS_URI,
-                       "jwks_uri",
-                       "error");
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "jwks_uri", "error");
   ck_assert_ptr_ne(j_client, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"jwks_uri is optional and must be an https:// uri\"", NULL), 1);
   json_decref(j_client);
   
   // Invalid jwks_uri and jwks
-  j_client = json_pack("{sss[s]s[sssssss]sss[s]sssssssssssO}",
-                       "client_name",
-                       CLIENT_NAME,
-                       "redirect_uris",
-                         CLIENT_REDIRECT_URI,
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]sssssssssOss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_PRIVATE_KEY_JWT,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
                        "response_types",
                          CLIENT_RESPONSE_TYPE_CODE,
                          CLIENT_RESPONSE_TYPE_TOKEN,
                          CLIENT_RESPONSE_TYPE_ID_TOKEN,
-                         CLIENT_RESPONSE_TYPE_PASSWORD,
-                         CLIENT_RESPONSE_TYPE_CLIENT_CREDENTIALS,
-                         CLIENT_RESPONSE_TYPE_REFRESH_TOKEN,
-                         CLIENT_RESPONSE_TYPE_DELETE_TOKEN,
-                       "application_type",
-                       CLIENT_APP_TYPE_WEB,
+                       "application_type", CLIENT_APP_TYPE_WEB,
                        "contacts",
                          CLIENT_CONTACT,
-                       "logo_uri",
-                       CLIENT_LOGO_URI,
-                       "client_uri",
-                       CLIENT_URI,
-                       "policy_uri",
-                       CLIENT_POLICY_URI,
-                       "tos_uri",
-                       CLIENT_TOS_URI,
-                       "jwks_uri",
-                       CLIENT_JWKS_URI,
-                       "jwks",
-                       j_jwks);
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "jwks", j_jwks,
+                       "jwks_uri", CLIENT_JWKS_URI);
   ck_assert_ptr_ne(j_client, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, "\"jwks_uri and jwks can't coexist\"", NULL), 1);
   json_decref(j_client);
@@ -480,41 +461,33 @@ END_TEST
 
 START_TEST(test_oidc_registration_no_auth_register_client_ok)
 {
-  json_t * j_client, * j_jwks = json_loads(jwk_pubkey_ecdsa_str, JSON_DECODE_ANY, NULL);
+  json_t * j_client;
   
-  ck_assert_ptr_ne(j_jwks, NULL);
-  
-  j_client = json_pack("{sss[s]s[sssssss]sss[s]sssssssssO}",
-                       "client_name",
-                       CLIENT_NAME,
-                       "redirect_uris",
-                         CLIENT_REDIRECT_URI,
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
                        "response_types",
                          CLIENT_RESPONSE_TYPE_CODE,
                          CLIENT_RESPONSE_TYPE_TOKEN,
                          CLIENT_RESPONSE_TYPE_ID_TOKEN,
-                         CLIENT_RESPONSE_TYPE_PASSWORD,
-                         CLIENT_RESPONSE_TYPE_CLIENT_CREDENTIALS,
-                         CLIENT_RESPONSE_TYPE_REFRESH_TOKEN,
-                         CLIENT_RESPONSE_TYPE_DELETE_TOKEN,
-                       "application_type",
-                       CLIENT_APP_TYPE_WEB,
+                       "application_type", CLIENT_APP_TYPE_WEB,
                        "contacts",
                          CLIENT_CONTACT,
-                       "logo_uri",
-                       CLIENT_LOGO_URI,
-                       "client_uri",
-                       CLIENT_URI,
-                       "policy_uri",
-                       CLIENT_POLICY_URI,
-                       "tos_uri",
-                       CLIENT_TOS_URI,
-                       "jwks",
-                       j_jwks);
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI);
   ck_assert_ptr_ne(j_client, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 200, j_client, NULL, NULL), 1);
   json_decref(j_client);
-  json_decref(j_jwks);
 }
 END_TEST
 
@@ -528,35 +501,29 @@ START_TEST(test_oidc_registration_no_auth_register_client_properties_validated)
   ck_assert_int_eq(ulfius_init_request(&req), U_OK);
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
   
-  j_client = json_pack("{sss[s]s[sssssss]sss[s]sssssssssOss}",
-                       "client_name",
-                       CLIENT_NAME,
-                       "redirect_uris",
-                         CLIENT_REDIRECT_URI,
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]sssssssssO}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_PRIVATE_KEY_JWT,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
                        "response_types",
                          CLIENT_RESPONSE_TYPE_CODE,
                          CLIENT_RESPONSE_TYPE_TOKEN,
                          CLIENT_RESPONSE_TYPE_ID_TOKEN,
-                         CLIENT_RESPONSE_TYPE_PASSWORD,
-                         CLIENT_RESPONSE_TYPE_CLIENT_CREDENTIALS,
-                         CLIENT_RESPONSE_TYPE_REFRESH_TOKEN,
-                         CLIENT_RESPONSE_TYPE_DELETE_TOKEN,
-                       "application_type",
-                       CLIENT_APP_TYPE_WEB,
+                       "application_type", CLIENT_APP_TYPE_WEB,
                        "contacts",
                          CLIENT_CONTACT,
-                       "logo_uri",
-                       CLIENT_LOGO_URI,
-                       "client_uri",
-                       CLIENT_URI,
-                       "policy_uri",
-                       CLIENT_POLICY_URI,
-                       "tos_uri",
-                       CLIENT_TOS_URI,
-                       "jwks",
-                       j_jwks,
-                       "ignored",
-                       "ignored");
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "jwks", j_jwks);
   ck_assert_ptr_ne(j_client, NULL);
   req.http_verb = o_strdup("POST");
   req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/register");
@@ -566,7 +533,9 @@ START_TEST(test_oidc_registration_no_auth_register_client_properties_validated)
   j_result = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_ne(j_result, NULL);
   ck_assert_ptr_ne(json_object_get(j_result, "client_id"), NULL);
-  ck_assert_ptr_ne(json_object_get(j_result, "client_secret"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "client_secret"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "registration_access_token"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "registration_client_uri"), NULL);
   admin_req.http_url = msprintf(SERVER_URI "/client/%s", json_string_value(json_object_get(j_result, "client_id")));
   admin_req.http_verb = o_strdup("GET");
   json_decref(j_result);
@@ -579,16 +548,17 @@ START_TEST(test_oidc_registration_no_auth_register_client_properties_validated)
   j_result = ulfius_get_json_body_response(&resp, NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "enabled"), json_true());
   ck_assert_ptr_ne(json_object_get(j_result, "client_id"), NULL);
-  ck_assert_ptr_ne(json_object_get(j_result, "client_secret"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "client_secret"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "registration_access_token"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "registration_client_uri"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "ignored"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "jwks_uri"), NULL);
   ck_assert_int_eq(json_string_length(json_object_get(j_result, "client_id")), 16);
-  ck_assert_int_eq(json_string_length(json_object_get(j_result, "client_secret")), 32);
   ck_assert_int_eq(json_array_size(json_object_get(j_result, "scope")), 1);
   ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "scope"), 0)), PLUGIN_REGISTER_DEFAULT_SCOPE);
   ck_assert_int_eq(json_array_size(json_object_get(j_result, "redirect_uri")), 1);
   ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "redirect_uri"), 0)), CLIENT_REDIRECT_URI);
-  ck_assert_int_eq(json_array_size(json_object_get(j_result, "authorization_type")), 7);
+  ck_assert_int_eq(json_array_size(json_object_get(j_result, "authorization_type")), 8);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "application_type")), CLIENT_APP_TYPE_WEB);
   ck_assert_int_eq(json_array_size(json_object_get(j_result, "contacts")), 1);
   ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "contacts"), 0)), CLIENT_CONTACT);
@@ -617,7 +587,7 @@ START_TEST(test_oidc_registration_no_auth_register_minimal_client_properties_val
   ck_assert_int_eq(ulfius_init_request(&req), U_OK);
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
   
-  j_client = json_pack("{s[s]}", "redirect_uris", CLIENT_REDIRECT_URI);
+  j_client = json_pack("{sss[s]}", "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_SECRET_BASIC, "redirect_uris", CLIENT_REDIRECT_URI);
   ck_assert_ptr_ne(j_client, NULL);
   req.http_verb = o_strdup("POST");
   req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/register");
@@ -628,6 +598,8 @@ START_TEST(test_oidc_registration_no_auth_register_minimal_client_properties_val
   ck_assert_ptr_ne(j_result, NULL);
   ck_assert_ptr_ne(json_object_get(j_result, "client_id"), NULL);
   ck_assert_ptr_ne(json_object_get(j_result, "client_secret"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "registration_access_token"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "registration_client_uri"), NULL);
   admin_req.http_url = msprintf(SERVER_URI "/client/%s", json_string_value(json_object_get(j_result, "client_id")));
   admin_req.http_verb = o_strdup("GET");
   json_decref(j_result);
@@ -650,15 +622,16 @@ START_TEST(test_oidc_registration_no_auth_register_minimal_client_properties_val
   ck_assert_ptr_eq(json_object_get(j_result, "enabled"), json_true());
   ck_assert_ptr_ne(json_object_get(j_result, "client_id"), NULL);
   ck_assert_ptr_ne(json_object_get(j_result, "client_secret"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "registration_access_token"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "registration_client_uri"), NULL);
   ck_assert_int_eq(json_string_length(json_object_get(j_result, "client_id")), 16);
   ck_assert_int_eq(json_string_length(json_object_get(j_result, "client_secret")), 32);
   ck_assert_int_eq(json_array_size(json_object_get(j_result, "scope")), 1);
   ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "scope"), 0)), PLUGIN_REGISTER_DEFAULT_SCOPE);
   ck_assert_int_eq(json_array_size(json_object_get(j_result, "redirect_uri")), 1);
   ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "redirect_uri"), 0)), CLIENT_REDIRECT_URI);
-  ck_assert_int_eq(json_array_size(json_object_get(j_result, "authorization_type")), 2);
+  ck_assert_int_eq(json_array_size(json_object_get(j_result, "authorization_type")), 1);
   ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "authorization_type"), 0)), CLIENT_RESPONSE_TYPE_CODE);
-  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "authorization_type"), 1)), CLIENT_RESPONSE_TYPE_REFRESH_TOKEN);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "application_type")), CLIENT_APP_TYPE_WEB);
   json_decref(j_result);
   
@@ -717,9 +690,8 @@ START_TEST(test_oidc_registration_no_auth_register_public_client_properties_vali
   ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "scope"), 0)), PLUGIN_REGISTER_DEFAULT_SCOPE);
   ck_assert_int_eq(json_array_size(json_object_get(j_result, "redirect_uri")), 1);
   ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "redirect_uri"), 0)), CLIENT_REDIRECT_URI);
-  ck_assert_int_eq(json_array_size(json_object_get(j_result, "authorization_type")), 2);
+  ck_assert_int_eq(json_array_size(json_object_get(j_result, "authorization_type")), 1);
   ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "authorization_type"), 0)), CLIENT_RESPONSE_TYPE_CODE);
-  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "authorization_type"), 1)), CLIENT_RESPONSE_TYPE_REFRESH_TOKEN);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "application_type")), CLIENT_APP_TYPE_WEB);
   json_decref(j_result);
   
@@ -740,7 +712,7 @@ START_TEST(test_oidc_registration_no_auth_register_then_code_flow)
   ck_assert_int_eq(ulfius_init_request(&req), U_OK);
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
   
-  j_client = json_pack("{s[s]}", "redirect_uris", CLIENT_REDIRECT_URI);
+  j_client = json_pack("{sss[s]s[ss]}", "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_SECRET_BASIC, "redirect_uris", CLIENT_REDIRECT_URI, "grant_types", "authorization_code", "refresh_token");
   ck_assert_ptr_ne(j_client, NULL);
   req.http_verb = o_strdup("POST");
   req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/register");
@@ -751,6 +723,8 @@ START_TEST(test_oidc_registration_no_auth_register_then_code_flow)
   ck_assert_ptr_ne(j_result, NULL);
   ck_assert_ptr_ne(json_object_get(j_result, "client_id"), NULL);
   ck_assert_ptr_ne(json_object_get(j_result, "client_secret"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "registration_access_token"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "registration_client_uri"), NULL);
   client_id = o_strdup(json_string_value(json_object_get(j_result, "client_id")));
   client_secret = o_strdup(json_string_value(json_object_get(j_result, "client_secret")));
   json_decref(j_result);
@@ -942,7 +916,7 @@ START_TEST(test_oidc_registration_auth_register_client_with_valid_credentials)
   tmp = msprintf("Bearer %s", token);
   u_map_put(req_reg.map_header, "Authorization", tmp);
   o_free(tmp);
-  j_client = json_pack("{s[s]}", "redirect_uris", CLIENT_REDIRECT_URI);
+  j_client = json_pack("{sss[s]s[s]}", "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_SECRET_BASIC, "redirect_uris", CLIENT_REDIRECT_URI, "grant_types", "client_credentials");
   ck_assert_ptr_ne(j_client, NULL);
   req_reg.http_verb = o_strdup("POST");
   req_reg.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/register");
@@ -953,6 +927,8 @@ START_TEST(test_oidc_registration_auth_register_client_with_valid_credentials)
   ck_assert_ptr_ne(j_result, NULL);
   ck_assert_ptr_ne(json_object_get(j_result, "client_id"), NULL);
   ck_assert_ptr_ne(json_object_get(j_result, "client_secret"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "registration_access_token"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "registration_client_uri"), NULL);
   admin_req.http_url = msprintf(SERVER_URI "/client/%s", json_string_value(json_object_get(j_result, "client_id")));
   admin_req.http_verb = o_strdup("GET");
   json_decref(j_result);
