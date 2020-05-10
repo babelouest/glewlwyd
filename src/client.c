@@ -320,9 +320,10 @@ int add_client(struct config_elements * config, json_t * j_client, const char * 
 }
 
 int set_client(struct config_elements * config, const char * client_id, json_t * j_client, const char * source) {
-  int ret;
+  int found = 0, ret, result;
   struct _client_module_instance * client_module;
-  json_t * j_cur_client;
+  json_t * j_cur_client, * j_module_list, * j_module;
+  size_t index;
   
   if (source != NULL) {
     client_module = get_client_module_instance(config, source);
@@ -347,15 +348,43 @@ int set_client(struct config_elements * config, const char * client_id, json_t *
       ret = G_ERROR;
     }
   } else {
-    ret = G_ERROR_PARAM;
+    j_module_list = get_client_module_list(config);
+    if (check_result_value(j_module_list, G_OK)) {
+      json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
+        if (!found) {
+          client_module = get_client_module_instance(config, json_string_value(json_object_get(j_module, "name")));
+          if (client_module != NULL && client_module->enabled && !client_module->readonly) {
+            found = 1;
+            result = client_module->module->client_module_update(config->config_m, client_id, j_client, client_module->cls);
+            if (result == G_OK) {
+              ret = G_OK;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "set_client - Error client_module_update");
+              ret = result;
+            }
+          } else if (client_module == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "set_client - Error, client_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
+          }
+        }
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "set_client - Error get_client_module_list");
+      ret = G_ERROR;
+    }
+    json_decref(j_module_list);
+    if (!found) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "set_client - Error no module in write mode available");
+      ret = G_ERROR;
+    }
   }
   return ret;
 }
 
 int delete_client(struct config_elements * config, const char * client_id, const char * source) {
-  int ret, result;
+  int found = 0, ret, result;
   struct _client_module_instance * client_module;
-  json_t * j_client;
+  json_t * j_client, * j_module_list, * j_module;
+  size_t index;
   
   if (source != NULL) {
     client_module = get_client_module_instance(config, source);
@@ -383,7 +412,34 @@ int delete_client(struct config_elements * config, const char * client_id, const
       ret = G_ERROR;
     }
   } else {
-    ret = G_ERROR_PARAM;
+    j_module_list = get_client_module_list(config);
+    if (check_result_value(j_module_list, G_OK)) {
+      json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
+        if (!found) {
+          client_module = get_client_module_instance(config, json_string_value(json_object_get(j_module, "name")));
+          if (client_module != NULL && client_module->enabled && !client_module->readonly) {
+            found = 1;
+            result = client_module->module->client_module_delete(config->config_m, client_id, client_module->cls);
+            if (result == G_OK) {
+              ret = G_OK;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "delete_client - Error client_module_delete");
+              ret = result;
+            }
+          } else if (client_module == NULL) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "delete_client - Error, client_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
+          }
+        }
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "delete_client - Error get_client_module_list");
+      ret = G_ERROR;
+    }
+    json_decref(j_module_list);
+    if (!found) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "delete_client - Error no module in write mode available");
+      ret = G_ERROR;
+    }
   }
   return ret;
 }
