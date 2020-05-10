@@ -88,11 +88,12 @@
 #define GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_FLAG                        128
 #define GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION_FLAG                256
 
-#define GLEWLWYD_OIDC_SUBJECT_TYPE_PUBLIC   1
-#define GLEWLWYD_OIDC_SUBJECT_TYPE_PAIRWISE 3
-#define GLEWLWYD_SUB_LENGTH           32
-#define GLEWLWYD_CLIENT_ID_LENGTH     16
-#define GLEWLWYD_CLIENT_SECRET_LENGTH 32
+#define GLEWLWYD_OIDC_SUBJECT_TYPE_PUBLIC    1
+#define GLEWLWYD_OIDC_SUBJECT_TYPE_PAIRWISE  3
+#define GLEWLWYD_SUB_LENGTH                  32
+#define GLEWLWYD_CLIENT_ID_LENGTH            16
+#define GLEWLWYD_CLIENT_SECRET_LENGTH        32
+#define GLEWLWYD_CLIENT_MANAGEMENT_AT_LENGTH 32
 
 #define GLEWLWYD_TOKEN_TYPE_CODE          0
 #define GLEWLWYD_TOKEN_TYPE_ACCESS_TOKEN  1
@@ -707,6 +708,10 @@ static json_t * check_parameters (json_t * j_params) {
             ret = G_ERROR_PARAM;
           }
         }
+      }
+      if (json_object_get(j_params, "register-client-management-allowed") != NULL && !json_is_boolean(json_object_get(j_params, "register-client-management-allowed"))) {
+        json_array_append_new(j_error, json_string("Property 'register-client-management-allowed' is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
       }
     }
     if (json_object_get(j_params, "auth-type-device-enabled") == json_true()) {
@@ -3898,10 +3903,189 @@ static const char * get_client_id_for_introspection(struct _oidc_config * config
   }
 }
 
-static int serialize_client_register(struct _oidc_config * config, const struct _u_request * request, json_t * j_client) {
+static json_t * convert_client_glewlwyd_to_registration(json_t * j_client) {
+  json_t * j_registration = json_deep_copy(j_client), * j_element = NULL;
+  size_t index = 0;
+  
+  if (j_registration != NULL) {
+    json_object_set(j_registration, "redirect_uris", json_object_get(j_client, "redirect_uri"));
+    json_object_set(j_registration, "client_name", json_object_get(j_client, "name"));
+    json_object_set_new(j_registration, "response_types", json_array());
+    json_array_foreach(json_object_get(j_client, "authorization_type"), index, j_element) {
+      if (0 == o_strcmp(json_string_value(j_element), "code") || 
+          0 == o_strcmp(json_string_value(j_element), "token") || 
+          0 == o_strcmp(json_string_value(j_element), "id_token")) {
+        json_array_append_new(json_object_get(j_registration, "response_types"), json_copy(j_element));
+      }
+    }
+    json_object_set_new(j_registration, "grant_types", json_array());
+    json_array_foreach(json_object_get(j_client, "authorization_type"), index, j_element) {
+      if (0 == o_strcmp(json_string_value(j_element), "code")) {
+        json_array_append_new(json_object_get(j_registration, "grant_types"), json_string("authorization_code"));
+      } else if ((0 == o_strcmp(json_string_value(j_element), "token") || 
+                 0 == o_strcmp(json_string_value(j_element), "id_token")) &&
+                 !json_array_has_string(json_object_get(j_registration, "grant_types"), "implicit")) {
+        json_array_append_new(json_object_get(j_registration, "grant_types"), json_string("implicit"));
+      } else if (0 == o_strcmp(json_string_value(j_element), "password") || 
+                 0 == o_strcmp(json_string_value(j_element), "client_credentials") || 
+                 0 == o_strcmp(json_string_value(j_element), "refresh_token") || 
+                 0 == o_strcmp(json_string_value(j_element), "delete_token") || 
+                 0 == o_strcmp(json_string_value(j_element), "device_authorization") || 
+                 0 == o_strcmp(json_string_value(j_element), "none")) {
+        json_array_append_new(json_object_get(j_registration, "grant_types"), json_copy(j_element));
+      }
+    }
+    json_object_del(j_registration, "redirect_uri");
+    json_object_del(j_registration, "name");
+    json_object_del(j_registration, "confidential");
+    json_object_del(j_registration, "scope");
+    json_object_del(j_registration, "source");
+    json_object_del(j_registration, "enabled");
+    json_object_del(j_registration, "authorization_type");
+    json_object_del(j_registration, "redirect_uri");
+  }
+  return j_registration;
+}
+
+static json_t * convert_client_registration_to_glewlwyd(json_t * j_registration) {
+  json_t * j_client = json_deep_copy(j_registration), * j_element = NULL;
+  size_t index = 0;
+
+  if (j_client != NULL) {
+    json_object_set(j_client, "redirect_uri", json_object_get(j_registration, "redirect_uris"));
+    json_object_set(j_client, "name", json_object_get(j_registration, "client_name"));
+    json_object_set_new(j_client, "authorization_type", json_array());
+    json_array_foreach(json_object_get(j_client, "response_types"), index, j_element) {
+      if (0 == o_strcmp(json_string_value(j_element), "code") || 
+          0 == o_strcmp(json_string_value(j_element), "token") || 
+          0 == o_strcmp(json_string_value(j_element), "id_token")) {
+        json_array_append_new(json_object_get(j_client, "authorization_type"), json_copy(j_element));
+      }
+    }
+    json_array_foreach(json_object_get(j_registration, "grant_types"), index, j_element) {
+      if (0 == o_strcmp(json_string_value(j_element), "authorization_code") && !json_array_has_string(json_object_get(j_client, "authorization_type"), "code")) {
+        json_array_append_new(json_object_get(j_client, "authorization_type"), json_string("code"));
+      } else if (0 == o_strcmp(json_string_value(j_element), "password") || 
+                 0 == o_strcmp(json_string_value(j_element), "client_credentials") || 
+                 0 == o_strcmp(json_string_value(j_element), "refresh_token") || 
+                 0 == o_strcmp(json_string_value(j_element), "delete_token") || 
+                 0 == o_strcmp(json_string_value(j_element), "device_authorization") || 
+                 0 == o_strcmp(json_string_value(j_element), "none")) {
+        json_array_append_new(json_object_get(j_client, "authorization_type"), json_copy(j_element));
+      }
+    }
+    if (json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "none") || json_object_get(j_client, "token_endpoint_auth_method") == NULL) {
+      json_object_set(j_client, "confidential", json_false());
+    } else {
+      json_object_set(j_client, "confidential", json_true());
+    }
+    json_object_del(j_client, "redirect_uris");
+    json_object_del(j_client, "client_name");
+    json_object_del(j_client, "response_types");
+    json_object_del(j_client, "grant_types");
+    json_object_del(j_client, "registration_access_token");
+    json_object_del(j_client, "registration_client_uri");
+  }
+  return j_client;
+}
+
+static int clent_registration_management_delete(struct _oidc_config * config, json_int_t gpocr_id, json_t * j_client) {
+  int ret, res;
+  json_t * j_query;
+  
+  json_object_set(j_client, "enabled", json_false());
+  if ((config->glewlwyd_config->glewlwyd_plugin_callback_set_client(config->glewlwyd_config, json_string_value(json_object_get(j_client, "client_id")), j_client)) == G_OK) {
+    j_query = json_pack("{sss{ss}s{sI}}",
+                        "table",
+                        GLEWLWYD_PLUGIN_OIDC_TABLE_CLIENT_REGISTRATION,
+                        "set",
+                          "gpocr_management_at_hash",
+                          "disabled",
+                        "where",
+                          "gpocr_id",
+                          gpocr_id);
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "clent_registration_management_delete - Error executing j_query");
+      ret = G_ERROR_DB;
+    } else {
+      ret = G_OK;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "clent_registration_management_delete - Error glewlwyd_plugin_callback_set_client");
+    ret = G_ERROR;
+  }
+  return ret;
+}
+
+static json_t * check_client_registration_management_at(struct _oidc_config * config, const char * client_id, const char * management_at) {
+  json_t * j_query, * j_result = NULL, * j_client, * j_return;
+  int res;
+  char * management_at_hash;
+  
+  if (o_strlen(management_at) == GLEWLWYD_CLIENT_MANAGEMENT_AT_LENGTH) {
+    management_at_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, management_at);
+    j_query = json_pack("{sss[ss]s{ss}}",
+                        "table",
+                        GLEWLWYD_PLUGIN_OIDC_TABLE_CLIENT_REGISTRATION,
+                        "columns",
+                          "gpocr_id",
+                          "gpocr_cient_id AS client_id",
+                        "where",
+                          "gpocr_management_at_hash",
+                          management_at_hash);
+    o_free(management_at_hash);
+    res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      if (json_array_size(j_result)) {
+        if (0 == o_strcmp(client_id, json_string_value(json_object_get(json_array_get(j_result, 0), "client_id")))) {
+          j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, client_id);
+          if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
+            j_return = json_pack("{sis{sOsO}}", "result", G_OK, "registration", "gpocr_id", json_object_get(json_array_get(j_result, 0), "gpocr_id"), "client", json_object_get(j_client, "client"));
+          } else {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_registration_management_at - client missing or disabled");
+            j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          }
+          json_decref(j_client);
+        } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_registration_management_at - Invalid client_id for the access token, disabling token");
+          j_query = json_pack("{sss{ss}s{sO}}",
+                              "table",
+                              GLEWLWYD_PLUGIN_OIDC_TABLE_CLIENT_REGISTRATION,
+                              "set",
+                                "gpocr_management_at_hash",
+                                "disabled",
+                              "where",
+                                "gpocr_id",
+                                json_object_get(json_array_get(j_result, 0), "gpocr_id"));
+          res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+          json_decref(j_query);
+          if (res != H_OK) {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_registration_management_at - Error executing j_query (2)");
+          }
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        }
+      } else {
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      }
+      json_decref(j_result);
+    } else {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_registration_management_at - Error executing j_query (1)");
+      j_return = json_pack("{si}", "result", G_ERROR_DB);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_registration_management_at - Missing or invalid access token");
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  }
+  return j_return;
+}
+
+static int serialize_client_register(struct _oidc_config * config, const struct _u_request * request, json_t * j_client, const char * client_management_at) {
   json_t * j_query, * j_result;
   int res, ret = G_OK;
-  char * issued_for = get_client_hostname(request), * access_token_hash = NULL;
+  char * issued_for = get_client_hostname(request), * access_token_hash = NULL, * management_at_hash = NULL;
   json_int_t gpoa_id = 0;
   
   if (json_array_size(json_object_get(config->j_params, "register-client-auth-scope"))) {
@@ -3931,7 +4115,8 @@ static int serialize_client_register(struct _oidc_config * config, const struct 
     }
   }
   if (ret == G_OK) {
-    j_query = json_pack("{sss{sssOssss*}}",
+    management_at_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, client_management_at);
+    j_query = json_pack("{sss{sssOssss*ss?}}",
                         "table",
                         GLEWLWYD_PLUGIN_OIDC_TABLE_CLIENT_REGISTRATION,
                         "values",
@@ -3942,7 +4127,9 @@ static int serialize_client_register(struct _oidc_config * config, const struct 
                           "gpocr_issued_for",
                           issued_for,
                           "gpocr_user_agent",
-                          u_map_get_case(request->map_header, "user-agent"));
+                          u_map_get_case(request->map_header, "user-agent"),
+                          "gpocr_management_at_hash",
+                          management_at_hash);
     if (gpoa_id) {
       json_object_set_new(json_object_get(j_query, "values"), "gpoa_id", json_integer(gpoa_id));
     }
@@ -3955,61 +4142,68 @@ static int serialize_client_register(struct _oidc_config * config, const struct 
   }
   o_free(issued_for);
   o_free(access_token_hash);
+  o_free(management_at_hash);
   return ret;
 }
 
-static json_t * client_register(struct _oidc_config * config, const struct _u_request * request, json_t * j_registration) {
+static json_t * client_register(struct _oidc_config * config, const struct _u_request * request, json_t * j_registration, int update) {
   json_t * j_client, * j_return = NULL;
-  char client_id[GLEWLWYD_CLIENT_ID_LENGTH+1] = {}, client_secret[GLEWLWYD_CLIENT_SECRET_LENGTH+1] = {};
+  char client_id[GLEWLWYD_CLIENT_ID_LENGTH+1] = {}, client_secret[GLEWLWYD_CLIENT_SECRET_LENGTH+1] = {}, client_management_at[GLEWLWYD_CLIENT_MANAGEMENT_AT_LENGTH+1] = {};
+  char * plugin_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, config->name);
+  const char * token_endpoint_auth_method;
   
-  j_client = json_object();
-  rand_string_from_charset(client_id, GLEWLWYD_CLIENT_ID_LENGTH, "abcdefghijklmnopqrstuvwxyz0123456789");
-  if (o_strlen(client_id)) {
-    json_object_set(j_client, "enabled", json_true());
-    json_object_set_new(j_client, "client_id", json_string(client_id));
-    json_object_set_new(j_registration, "client_id", json_string(client_id));
-    json_object_set(j_client, "name", json_object_get(j_registration, "client_name"));
-    json_object_set(j_client, "redirect_uri", json_object_get(j_registration, "redirect_uris"));
-    if (json_object_get(j_registration, "application_type") != NULL) {
-      json_object_set(j_client, "application_type", json_object_get(j_registration, "application_type"));
-    } else {
-      json_object_set_new(j_client, "application_type", json_string("web"));
-    }
-    json_object_set(j_client, "contacts", json_object_get(j_registration, "contacts"));
-    json_object_set(j_client, "logo_uri", json_object_get(j_registration, "logo_uri"));
-    json_object_set(j_client, "client_uri", json_object_get(j_registration, "client_uri"));
-    json_object_set(j_client, "policy_uri", json_object_get(j_registration, "policy_uri"));
-    json_object_set(j_client, "tos_uri", json_object_get(j_registration, "tos_uri"));
-    json_object_set(j_client, "pubkey", json_object_get(j_registration, "pubkey"));
-    json_object_set(j_client, "jwks_uri", json_object_get(j_registration, "jwks_uri"));
-    json_object_set(j_client, "jwks", json_object_get(j_registration, "jwks"));
-    if (json_object_get(j_registration, "confidential") != json_false() && !json_string_length(json_object_get(j_registration, "pubkey")) && !json_string_length(json_object_get(j_registration, "jwks_uri")) && !json_string_length(json_object_get(j_registration, "jwks"))) {
-      json_object_set(j_client, "confidential", json_true());
-      rand_string(client_secret, GLEWLWYD_CLIENT_SECRET_LENGTH);
-      if (!o_strlen(client_secret)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "client_register - Error generating client_secret");
-        j_return = json_pack("{si}", "result", G_ERROR);
-      } else {
-        json_object_set_new(j_client, "client_secret", json_string(client_secret));
-        json_object_set_new(j_registration, "client_secret", json_string(client_secret));
+  if (!update) {
+    rand_string_from_charset(client_id, GLEWLWYD_CLIENT_ID_LENGTH, "abcdefghijklmnopqrstuvwxyz0123456789");
+    if (o_strlen(client_id)) {
+      json_object_set_new(j_registration, "client_id", json_string(client_id));
+      if (json_object_get(config->j_params, "register-client-management-allowed") == json_true()) {
+        rand_string(client_management_at, GLEWLWYD_CLIENT_SECRET_LENGTH);
+        if (!o_strlen(client_management_at)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "client_register - Error generating client_management_at");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        } else {
+          json_object_set_new(j_registration, "registration_access_token", json_string(client_management_at));
+          json_object_set_new(j_registration, "registration_client_uri", json_pack("s++", plugin_url, "/register/", client_id));
+        }
+      }
+      token_endpoint_auth_method = json_string_value(json_object_get(j_registration, "token_endpoint_auth_method"));
+      if (j_return == NULL && (0 == o_strcmp("client_secret_post", token_endpoint_auth_method) || 
+                               0 == o_strcmp("client_secret_basic", token_endpoint_auth_method) || 
+                               0 == o_strcmp("client_secret_jwt", token_endpoint_auth_method))) {
+        rand_string(client_secret, GLEWLWYD_CLIENT_SECRET_LENGTH);
+        if (!o_strlen(client_secret)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "client_register - Error generating client_secret");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        } else {
+          json_object_set_new(j_registration, "client_secret", json_string(client_secret));
+        }
       }
     } else {
-      json_object_set(j_client, "confidential", json_false());
+      y_log_message(Y_LOG_LEVEL_ERROR, "client_register - Error generating client_id");
+      j_return = json_pack("{si}", "result", G_ERROR);
     }
-    if (!json_array_size(json_object_get(j_registration, "response_types"))) {
-      json_object_set_new(j_client, "authorization_type", json_pack("[ss]", "code", "refresh_token"));
-    } else {
-      json_object_set(j_client, "authorization_type", json_object_get(j_registration, "response_types"));
-    }
+  }
+  if (json_object_get(j_registration, "application_type") == NULL) {
+    json_object_set_new(j_registration, "application_type", json_string("web"));
+  }
+  if (!json_array_size(json_object_get(j_registration, "response_types"))) {
+    json_object_set_new(j_registration, "response_types", json_pack("[s]", "code"));
+  }
+  if (!json_array_size(json_object_get(j_registration, "grant_types"))) {
+    json_object_set_new(j_registration, "grant_types", json_pack("[s]", "authorization_code"));
+  }
+  if (j_return == NULL) {
+    j_client = convert_client_registration_to_glewlwyd(j_registration);
+    json_object_set(j_client, "enabled", json_true());
     if (json_object_get(config->j_params, "register-client-credentials-scope") != NULL) {
       json_object_set(j_client, "scope", json_object_get(config->j_params, "register-client-credentials-scope"));
     } else {
       json_object_set_new(j_client, "scope", json_array());
     }
-    json_object_set_new(j_registration, "client_id_issued_at", json_integer(time(NULL)));
-    json_object_set_new(j_registration, "client_secret_expires_at", json_integer(0));
-    if (j_return == NULL) {
-      if (serialize_client_register(config, request, j_client) == G_OK) {
+    if (!update) {
+      json_object_set_new(j_registration, "client_id_issued_at", json_integer(time(NULL)));
+      json_object_set_new(j_registration, "client_secret_expires_at", json_integer(0));
+      if (serialize_client_register(config, request, j_client, client_management_at) == G_OK) {
         if ((config->glewlwyd_config->glewlwyd_plugin_callback_add_client(config->glewlwyd_config, j_client)) == G_OK) {
           j_return = json_pack("{sisO}", "result", G_OK, "client", j_registration);
         } else {
@@ -4020,12 +4214,17 @@ static json_t * client_register(struct _oidc_config * config, const struct _u_re
         y_log_message(Y_LOG_LEVEL_ERROR, "client_register - Error serialize_client_register");
         j_return = json_pack("{si}", "result", G_ERROR);
       }
+    } else {
+      if ((config->glewlwyd_config->glewlwyd_plugin_callback_set_client(config->glewlwyd_config, json_string_value(json_object_get(j_registration, "client_id")), j_client)) == G_OK) {
+        j_return = json_pack("{sisO}", "result", G_OK, "client", j_registration);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "client_register - Error glewlwyd_plugin_callback_set_client");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
     }
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "client_register - Error generating client_id");
-    j_return = json_pack("{si}", "result", G_ERROR);
   }
   json_decref(j_client);
+  o_free(plugin_url);
   return j_return;
 }
 
@@ -4053,28 +4252,43 @@ static int is_redirect_uri_valid_without_credential(const char * redirect_uri) {
   return ret;
 }
 
-static json_t * is_client_registration_valid(struct _oidc_config * config, json_t * j_registration) {
+static json_t * is_client_registration_valid(struct _oidc_config * config, json_t * j_registration, const char * client_id) {
   json_t * j_error = NULL, * j_return, * j_element = NULL;
   size_t index = 0;
   jwks_t * jwks = NULL;
 
   do {
     if (!json_is_object(j_registration)) {
-      j_error = json_pack("{ssss}", "error", "invalid_redirect_uri", "error_description", "registration parameter must be a JSON object");
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "registration parameter must be a JSON object");
       break;
     }
-    if (!json_array_size(json_object_get(j_registration, "redirect_uris"))) {
-      j_error = json_pack("{ssss}", "error", "invalid_redirect_uri", "error_description", "redirect_uris is mandatory and must be an array of strings");
+    if (json_object_get(j_registration, "token_endpoint_auth_method") != NULL &&
+        0 != o_strcmp("none", json_string_value(json_object_get(j_registration, "token_endpoint_auth_method"))) && 
+        0 != o_strcmp("client_secret_post", json_string_value(json_object_get(j_registration, "token_endpoint_auth_method"))) && 
+        0 != o_strcmp("client_secret_basic", json_string_value(json_object_get(j_registration, "token_endpoint_auth_method"))) && 
+        0 != o_strcmp("client_secret_jwt", json_string_value(json_object_get(j_registration, "token_endpoint_auth_method"))) && 
+        0 != o_strcmp("private_key_jwt", json_string_value(json_object_get(j_registration, "token_endpoint_auth_method")))) {
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "token_endpoint_auth_method must have one of the following values: 'none', 'client_secret_post', 'client_secret_basic', 'client_secret_jwt', 'private_key_jwt'");
       break;
     }
-    json_array_foreach(json_object_get(j_registration, "redirect_uris"), index, j_element) {
-      if (!is_redirect_uri_valid_without_credential(json_string_value(j_element)) ||
-         (0 != o_strncmp("https://", json_string_value(j_element), o_strlen("https://")) && 
-          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_1, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_1)) &&
-          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_2, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_2)) &&
-          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_3, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_3)))) {
+    if (client_id != NULL && 0 != o_strcmp(client_id, json_string_value(json_object_get(j_registration, "client_id")))) {
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid client_id");
+      break;
+    }
+    if (json_object_get(j_registration, "grant_types") != NULL && !json_is_array(json_object_get(j_registration, "grant_types"))) {
+      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "grant_types is optional and must be an array of strings");
+      break;
+    }
+    json_array_foreach(json_object_get(j_registration, "grant_types"), index, j_element) {
+      if (0 != o_strcmp("authorization_code", json_string_value(j_element)) && 
+          0 != o_strcmp("implicit", json_string_value(j_element)) && 
+          0 != o_strcmp("password", json_string_value(j_element)) && 
+          0 != o_strcmp("client_credentials", json_string_value(j_element)) && 
+          0 != o_strcmp("refresh_token", json_string_value(j_element)) && 
+          0 != o_strcmp("delete_token", json_string_value(j_element)) && 
+          0 != o_strcmp("device_authorization", json_string_value(j_element))) {
         if (j_error == NULL) {
-          j_error = json_pack("{ssss}", "error", "invalid_redirect_uri", "error_description", "a redirect_uri must be a 'https://' uri or a 'http://localhost' uri without credentials");
+          j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "grant_types must have one of the following values: 'authorization_code', 'implicit', 'password', 'client_credentials', 'refresh_token', 'delete_token', 'device_authorization'");
         }
       }
     }
@@ -4085,16 +4299,37 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "response_types is optional and must be an array of strings");
       break;
     }
-    
     json_array_foreach(json_object_get(j_registration, "response_types"), index, j_element) {
-      if (0 != o_strcmp("code", json_string_value(j_element)) && 0 != o_strcmp("token", json_string_value(j_element)) && 0 != o_strcmp("id_token", json_string_value(j_element)) && 0 != o_strcmp("password", json_string_value(j_element)) && 0 != o_strcmp("client_credentials", json_string_value(j_element)) && 0 != o_strcmp("refresh_token", json_string_value(j_element)) && 0 != o_strcmp("delete_token", json_string_value(j_element)) && 0 != o_strcmp("device_authorization", json_string_value(j_element))) {
+      if (0 != o_strcmp("code", json_string_value(j_element)) && 
+          0 != o_strcmp("token", json_string_value(j_element)) && 
+          0 != o_strcmp("id_token", json_string_value(j_element))) {
         if (j_error == NULL) {
-          j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "response_types must have one of the following values: 'code', 'token', 'id_token', 'password', 'client_credentials', 'refresh_token', 'delete_token' or 'device_authorization'");
+          j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "response_types must have one of the following values: 'code', 'token', 'id_token'");
         }
       }
     }
     if (j_error != NULL) {
       break;
+    }
+    if (json_array_size(json_object_get(j_registration, "response_types"))) {
+      if (!json_array_size(json_object_get(j_registration, "redirect_uris"))) {
+        j_error = json_pack("{ssss}", "error", "invalid_redirect_uri", "error_description", "redirect_uris is mandatory and must be an array of strings");
+        break;
+      }
+      json_array_foreach(json_object_get(j_registration, "redirect_uris"), index, j_element) {
+        if (!is_redirect_uri_valid_without_credential(json_string_value(j_element)) ||
+           (0 != o_strncmp("https://", json_string_value(j_element), o_strlen("https://")) && 
+            0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_1, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_1)) &&
+            0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_2, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_2)) &&
+            0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_3, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_3)))) {
+          if (j_error == NULL) {
+            j_error = json_pack("{ssss}", "error", "invalid_redirect_uri", "error_description", "a redirect_uri must be a 'https://' uri or a 'http://localhost' uri without credentials");
+          }
+        }
+      }
+      if (j_error != NULL) {
+        break;
+      }
     }
     if (json_object_get(j_registration, "application_type") != NULL && 0 != o_strcmp("web", json_string_value(json_object_get(j_registration, "application_type"))) && 0 != o_strcmp("native", json_string_value(json_object_get(j_registration, "application_type")))) {
       j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "application_type is optional and must have one of the following values: 'web', 'native'");
@@ -4136,32 +4371,34 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "tos_uri is optional and must be a string");
       break;
     }
-    if (json_object_get(j_registration, "jwks_uri") != NULL && json_object_get(j_registration, "jwks") != NULL) {
-      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "jwks_uri and jwks can't coexist");
-      break;
-    }
-    if (json_object_get(j_registration, "jwks_uri") != NULL) {
-      if (0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "jwks_uri")), o_strlen("https://"))) {
-        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "jwks_uri is optional and must be an https:// uri");
+    if (0 == o_strcmp("private_key_jwt", json_string_value(json_object_get(j_registration, "token_endpoint_auth_method")))) {
+      if (json_object_get(j_registration, "jwks_uri") != NULL && json_object_get(j_registration, "jwks") != NULL) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "jwks_uri and jwks can't coexist");
         break;
       }
-      r_jwks_init(&jwks);
-      if (r_jwks_import_from_uri(jwks, json_string_value(json_object_get(j_registration, "jwks_uri")), config->x5u_flags) != RHN_OK) {
-        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid JWKS pointed by jwks_uri");
+      if (json_object_get(j_registration, "jwks_uri") != NULL) {
+        if (0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "jwks_uri")), o_strlen("https://"))) {
+          j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "jwks_uri is optional and must be an https:// uri");
+          break;
+        }
+        r_jwks_init(&jwks);
+        if (r_jwks_import_from_uri(jwks, json_string_value(json_object_get(j_registration, "jwks_uri")), config->x5u_flags) != RHN_OK) {
+          j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid JWKS pointed by jwks_uri");
+        }
+        r_jwks_free(jwks);
+        if (j_error != NULL) {
+          break;
+        }
       }
-      r_jwks_free(jwks);
-      if (j_error != NULL) {
-        break;
-      }
-    }
-    if (json_object_get(j_registration, "jwks") != NULL) {
-      r_jwks_init(&jwks);
-      if (r_jwks_import_from_json_t(jwks, json_object_get(j_registration, "jwks")) != RHN_OK) {
-        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid JWKS");
-      }
-      r_jwks_free(jwks);
-      if (j_error != NULL) {
-        break;
+      if (json_object_get(j_registration, "jwks") != NULL) {
+        r_jwks_init(&jwks);
+        if (r_jwks_import_from_json_t(jwks, json_object_get(j_registration, "jwks")) != RHN_OK) {
+          j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid JWKS");
+        }
+        r_jwks_free(jwks);
+        if (j_error != NULL) {
+          break;
+        }
       }
     }
     if (json_object_get(j_registration, "sector_identifier_uri") != NULL && 0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "sector_identifier_uri")), o_strlen("https://"))) {
@@ -5004,13 +5241,80 @@ static int generate_discovery_content(struct _oidc_config * config) {
   return ret;
 }
 
+static int callback_client_registration_management_read(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  json_t * j_client = convert_client_glewlwyd_to_registration(json_object_get((json_t *)response->shared_data, "client"));
+  UNUSED(request);
+  UNUSED(user_data);
+  
+  if (j_client != NULL) {
+    ulfius_set_json_body_response(response, 200, j_client);
+    json_decref(j_client);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_client_registration_management_read - Error json_deep_copy");
+    response->status = 500;
+  }
+  return U_CALLBACK_CONTINUE;
+}
+
+static int callback_client_registration_management_update(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct _oidc_config * config = (struct _oidc_config *)user_data;
+  json_t * j_result_check, * j_result, * j_registration = ulfius_get_json_body_request(request, NULL);
+  
+  j_result_check = is_client_registration_valid(config, j_registration, u_map_get(request->map_url, "client_id"));
+  if (check_result_value(j_result_check, G_OK)) {
+    j_result = client_register(config, request, j_registration, 1);
+    if (check_result_value(j_result, G_OK)) {
+      ulfius_set_json_body_response(response, 200, json_object_get(j_result, "client"));
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_client_registration_management_update - Error client_register");
+      response->status = 500;
+    }
+    json_decref(j_result);
+  } else if (check_result_value(j_result_check, G_ERROR_PARAM)) {
+    ulfius_set_json_body_response(response, 400, json_object_get(j_result_check, "error"));
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_client_registration_management_update - Error is_client_registration_valid");
+    response->status = 500;
+  }
+  json_decref(j_result_check);
+  json_decref(j_registration);
+  return U_CALLBACK_CONTINUE;
+}
+
+static int callback_client_registration_management_delete(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct _oidc_config * config = (struct _oidc_config *)user_data;
+  UNUSED(request);
+  
+  if (clent_registration_management_delete(config, json_integer_value(json_object_get((json_t *)response->shared_data, "gpocr_id")), json_object_get((json_t *)response->shared_data, "client")) != G_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_client_registration_management_read - Error registration_management_delete");
+    response->status = 500;
+  }
+  return U_CALLBACK_CONTINUE;
+}
+
+static int callback_check_registration_management(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct _oidc_config * config = (struct _oidc_config *)user_data;
+  int ret = U_CALLBACK_UNAUTHORIZED;
+  json_t * j_result;
+  
+  if (u_map_get_case(request->map_header, "Authorization")) {
+    j_result = check_client_registration_management_at(config, u_map_get(request->map_url, "client_id"), (u_map_get_case(request->map_header, "Authorization") + o_strlen(HEADER_PREFIX_BEARER)));
+    if (check_result_value(j_result, G_OK)) {
+      response->shared_data = json_incref(json_object_get(j_result, "registration"));
+      ret = U_CALLBACK_CONTINUE;
+    }
+    json_decref(j_result);
+  }
+  return ret;
+}
+
 static int callback_client_registration(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   json_t * j_result_check, * j_result, * j_registration = ulfius_get_json_body_request(request, NULL);
   
-  j_result_check = is_client_registration_valid(config, j_registration);
+  j_result_check = is_client_registration_valid(config, j_registration, NULL);
   if (check_result_value(j_result_check, G_OK)) {
-    j_result = client_register(config, request, j_registration);
+    j_result = client_register(config, request, j_registration, 0);
     if (check_result_value(j_result, G_OK)) {
       ulfius_set_json_body_response(response, 200, json_object_get(j_result, "client"));
     } else {
@@ -8457,6 +8761,19 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
+        if (json_object_get(p_config->j_params, "register-client-management-allowed") == json_true()) {
+          if (
+            config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "register/:client_id", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_registration_management, (void*)*cls) != G_OK || 
+            config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "register/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_client_registration_management_read, (void*)*cls) != G_OK || 
+            config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "register/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_client_registration_management_update, (void*)*cls) != G_OK || 
+            config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "register/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_client_registration_management_delete, (void*)*cls) != G_OK || 
+            config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "register/:client_id", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK
+            ) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding register endpoints");
+            j_return = json_pack("{si}", "result", G_ERROR);
+            break;
+          }
+        }
       }
       
       if (json_object_get(p_config->j_params, "session-management-allowed") == json_true()) {
@@ -8530,6 +8847,12 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         }
         if (p_config->client_register_resource_config != NULL) {
           config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "register/");
+          if (json_object_get(p_config->j_params, "register-client-management-allowed") == json_true()) {
+            config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "register/:client_id");
+            config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "register/:client_id");
+            config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "register/:client_id");
+            config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "register/:client_id");
+          }
         }
         if (json_object_get(p_config->j_params, "auth-type-device-enabled") == json_true()) {
           config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "device_authorization/");
@@ -8609,6 +8932,12 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
       r_jwt_free(((struct _oidc_config *)cls)->client_register_resource_config->jwt);
       r_jwk_free(((struct _oidc_config *)cls)->client_register_resource_config->jwk_verify_default);
       o_free(((struct _oidc_config *)cls)->client_register_resource_config);
+      if (json_object_get(((struct _oidc_config *)cls)->j_params, "register-client-management-allowed") == json_true()) {
+        config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "register/:client_id");
+        config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "register/:client_id");
+        config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "register/:client_id");
+        config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "register/:client_id");
+      }
     }
     if (((struct _oidc_config *)cls)->oidc_resource_config != NULL) {
       o_free(((struct _oidc_config *)cls)->oidc_resource_config->oauth_scope);
