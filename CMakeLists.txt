@@ -766,6 +766,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oidc_session_management
 							glewlwyd_oidc_device_authorization
 							glewlwyd_oidc_refresh_token_one_use
+							glewlwyd_oidc_client_registration_management
 							)
 		endif ()
 
