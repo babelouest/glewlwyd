@@ -465,6 +465,10 @@ Add on or more scopes if you want to allow to use endpoint `/register` using val
 
 Default scopes that will be added to the registered clients, can be empty. This scope list is only used in `client_credentials` response type.
 
+### Allow clients to manage their registration
+
+Add endpoints for clients to manage their registration as defined in [OAuth 2.0 Dynamic Client Registration Management Protocol](https://tools.ietf.org/html/rfc7592).
+
 ## Device Authorization management
 
 ### Code expiration (seconds)
