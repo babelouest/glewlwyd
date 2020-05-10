@@ -6,15 +6,17 @@
 - Allow messages encryption (incoming and outcoming)
 - Allow OIDC plugin to use multiple signing or encryption keys via a JWKS
 - Add support for CRYPT hash in ldap modules, closes #114
-- Add [Session Management](https://openid.net/specs/openid-connect-session-1_0.html) in OIDC plugin
+- Add [Session Management](https://openid.net/specs/openid-connect-session-1_0.html) for OIDC plugin
 - Update access token claims to fit [JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens - draft 05](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-05)
 - Add [JWT Response for OAuth Token Introspection](https://tools.ietf.org/html/draft-ietf-oauth-jwt-introspection-response-08)
 - Adapt client registration `redirect_uri` check to make Glewlwyd OIDC plugin conform to [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252) specification
 - Add [OAuth 2.0 Device Grant](https://tools.ietf.org/html/rfc8628)
 - Add `id_token` in response type `password` when the scope `openid` is added
-- Disable response type `password` by default in OIDC plugin config
-- Scope `openid` is assumed to be always granted to clients in OIDC plugin
+- Disable response type `password` by default for OIDC plugin config
+- Scope `openid` is assumed to be always granted to clients for OIDC plugin
 - Add `one-time-use` refresh token option
+- Add [OAuth 2.0 Dynamic Client Registration Management Protocol](https://tools.ietf.org/html/rfc7592) for OIDC plugin
+- Breaking change since 2.2: Client Registration input parameters are now conform to [OAuth 2.0 Dynamic Client Registration Protocol](https://tools.ietf.org/html/rfc7591)
 
 ## 2.2.0
 
