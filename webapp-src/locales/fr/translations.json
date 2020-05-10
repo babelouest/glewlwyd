@@ -609,6 +609,7 @@
     "mod-glwd-register-client-auth-scope": "Scopes requis dans l'access token",
     "mod-glwd-register-client-auth-scope-open": "Enregistrement ouvert",
     "mod-glwd-register-client-credentials-scope": "Scopes à ajouter aux clients",
+    "mod-glwd-register-client-management-allowed": "Autoriser les clients à gérer leur enregistrement",
     "mod-glwd-session-management-title": "Gestion de la session",
     "mod-glwd-session-management-allowed": "Autoriser les endpoints pour la gestion de session",
     "mod-glwd-device-authorization-title": "Gestion de l'autorisation d'un composant (device)",

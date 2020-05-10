@@ -57,6 +57,7 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["register-client-allowed"]!==undefined?"":(props.mod.parameters["register-client-allowed"] = false);
     props.mod.parameters["register-client-auth-scope"]!==undefined?"":(props.mod.parameters["register-client-auth-scope"] = []);
     props.mod.parameters["register-client-credentials-scope"]!==undefined?"":(props.mod.parameters["register-client-credentials-scope"] = []);
+    props.mod.parameters["register-client-management-allowed"]!==undefined?"":(props.mod.parameters["register-client-management-allowed"] = true);
     props.mod.parameters["session-management-allowed"]!==undefined?"":(props.mod.parameters["session-management-allowed"] = false);
     props.mod.parameters["client-pubkey-parameter"]!==undefined?"":(props.mod.parameters["client-pubkey-parameter"] = "");
     props.mod.parameters["client-jwks-parameter"]!==undefined?"":(props.mod.parameters["client-jwks-parameter"] = "jwks");
@@ -183,6 +184,7 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["register-client-allowed"]!==undefined?"":(nextProps.mod.parameters["register-client-allowed"] = false);
     nextProps.mod.parameters["register-client-auth-scope"]!==undefined?"":(nextProps.mod.parameters["register-client-auth-scope"] = []);
     nextProps.mod.parameters["register-client-credentials-scope"]!==undefined?"":(nextProps.mod.parameters["register-client-credentials-scope"] = []);
+    nextProps.mod.parameters["register-client-management-allowed"]!==undefined?"":(nextProps.mod.parameters["register-client-management-allowed"] = true);
     nextProps.mod.parameters["session-management-allowed"]!==undefined?"":(nextProps.mod.parameters["session-management-allowed"] = false);
     nextProps.mod.parameters["client-pubkey-parameter"]!==undefined?"":(nextProps.mod.parameters["client-pubkey-parameter"] = "");
     nextProps.mod.parameters["client-jwks-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks-parameter"] = "jwks");
@@ -1940,6 +1942,10 @@ class GlwdOIDCParams extends Component {
                     </div>
                     {scopeRegisterClientListJsx}
                   </div>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-register-client-management-allowed" onChange={(e) => this.toggleParam(e, "register-client-management-allowed")} checked={this.state.mod.parameters["register-client-management-allowed"]} disabled={!this.state.mod.parameters["register-client-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-register-client-management-allowed">{i18next.t("admin.mod-glwd-register-client-management-allowed")}</label>
                 </div>
               </div>
             </div>
