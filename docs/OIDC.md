@@ -4,7 +4,7 @@ This plugin is based on the [OpenID Connect Core 1.0 specification](https://open
 
 ## Functionalities summary
 
-The following OpenID Connect functionalities are currently supported:
+The following OpenID Connect and OAuth2 functionalities are currently supported:
 
 - [Authorization Code Flow](https://openid.net/specs/openid-connect-core-1_0.html#CodeFlowAuth)
 - [Implicit flow](https://openid.net/specs/openid-connect-core-1_0.html#ImplicitFlowAuth)
@@ -22,6 +22,8 @@ The following OpenID Connect functionalities are currently supported:
 - [Token introspection (RFC 7662)](https://tools.ietf.org/html/rfc7662)
 - [Token revocation (RFC 7009)](https://tools.ietf.org/html/rfc7009)
 - [OpenID Connect Dynamic Registration](http://openid.net/specs/openid-connect-registration-1_0.html)
+- [OAuth 2.0 Dynamic Client Registration Protocol](https://tools.ietf.org/html/rfc7591)
+- [OAuth 2.0 Dynamic Client Registration Management Protocol](https://tools.ietf.org/html/rfc7592)
 - [OAuth 2.0 Form Post Response Mode](http://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html)
 - [Messages encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
 - [Session Management](https://openid.net/specs/openid-connect-session-1_0.html)
