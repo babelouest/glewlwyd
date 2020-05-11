@@ -5483,9 +5483,31 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
  */
 static json_t * validate_endpoint_auth(const struct _u_request * request, struct _u_response * response, void * user_data, int auth_type, json_t * j_request, json_t * j_client_validated) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  char * redirect_url = NULL, * issued_for = NULL, ** scope_list = NULL, * state_param, * endptr = NULL, * id_token_hash = NULL, code_challenge_stored[GLEWLWYD_CODE_CHALLENGE_MAX_LENGTH + 1] = {0};
-  const char * client_id = NULL, * client_secret = NULL, * redirect_uri = NULL, * scope = NULL, * display = NULL, * ui_locales = NULL, * login_hint = NULL, * prompt = NULL, * nonce = NULL, * max_age = NULL, * id_token_hint = NULL, * code_challenge = NULL, * code_challenge_method = NULL, * ip_source = get_ip_source(request);
-  json_t * j_session = NULL, * j_client = NULL, * j_last_token = NULL, * j_claims = NULL;
+  char * redirect_url = NULL, 
+       * issued_for = NULL, 
+      ** scope_list = NULL, 
+       * state_param, 
+       * endptr = NULL, 
+       * id_token_hash = NULL, 
+       code_challenge_stored[GLEWLWYD_CODE_CHALLENGE_MAX_LENGTH + 1] = {0};
+  const char * client_id = NULL, 
+             * client_secret = NULL, 
+             * redirect_uri = NULL, 
+             * scope = NULL, 
+             * display = NULL, 
+             * ui_locales = NULL, 
+             * login_hint = NULL, 
+             * prompt = NULL, 
+             * nonce = NULL, 
+             * max_age = NULL, 
+             * id_token_hint = NULL, 
+             * code_challenge = NULL, 
+             * code_challenge_method = NULL, 
+             * ip_source = get_ip_source(request);
+  json_t * j_session = NULL, 
+         * j_client = NULL, 
+         * j_last_token = NULL, 
+         * j_claims = NULL;
   json_t * j_return;
   struct _u_map additional_parameters;
   long int l_max_age;
