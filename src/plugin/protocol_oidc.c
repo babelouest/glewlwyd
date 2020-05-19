@@ -4222,8 +4222,8 @@ static json_t * client_register(struct _oidc_config * config, const struct _u_re
         j_return = json_pack("{si}", "result", G_ERROR);
       }
     }
+    json_decref(j_client);
   }
-  json_decref(j_client);
   o_free(plugin_url);
   return j_return;
 }
@@ -4748,11 +4748,11 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
              * ip_source = get_ip_source(request),
              * username = NULL;
   int res;
-  char * device_code_hash,
-       * refresh_token,
-       * refresh_token_out, 
-       * access_token, 
-       * access_token_out,
+  char * device_code_hash = NULL,
+       * refresh_token = NULL,
+       * refresh_token_out = NULL, 
+       * access_token = NULL, 
+       * access_token_out = NULL,
        * id_token = NULL,
        * id_token_out = NULL, 
          jti[OIDC_JTI_LENGTH] = {0}, 
@@ -7069,8 +7069,24 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   const char * response_type = NULL, * redirect_uri = NULL, * client_id = NULL, * nonce = NULL, * state_value = NULL, * ip_source = get_ip_source(request);
   int result = U_CALLBACK_CONTINUE;
-  char * redirect_url, ** resp_type_array = NULL, * authorization_code = NULL, * authorization_code_out = NULL, * access_token = NULL, * id_token = NULL, * id_token_out = NULL, * expires_in_str = NULL, * iat_str = NULL, * query_parameters = NULL, * state = NULL, * str_request = NULL, * access_token_out = NULL, * session_state = NULL, jti[OIDC_JTI_LENGTH] = {0};
-  json_t * j_auth_result = NULL, * j_request = NULL, * j_client = NULL;
+  char * redirect_url, 
+      ** resp_type_array = NULL, 
+       * authorization_code = NULL, 
+       * authorization_code_out = NULL, 
+       * access_token = NULL, 
+       * id_token = NULL, 
+       * id_token_out = NULL, 
+       * expires_in_str = NULL, 
+       * iat_str = NULL, 
+       * query_parameters = NULL, 
+       * state = NULL, 
+       * str_request = NULL, 
+       * access_token_out = NULL, 
+       * session_state = NULL, 
+         jti[OIDC_JTI_LENGTH] = {0};
+  json_t * j_auth_result = NULL, 
+         * j_request = NULL, 
+         * j_client = NULL;
   time_t now;
   int ret, implicit_flow = 1, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NULL_FLAG, check_request = 0;
   struct _u_map map_query, * map = get_map(request);
