@@ -1274,9 +1274,9 @@ END_TEST
 
 START_TEST(test_glwd_scheme_certificate_register_request_certificate_deregister_request_multiple)
 {
-  json_t * j_parameters = json_pack("{ssssss}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME), * j_result, * j_element;
+  json_t * j_parameters = json_pack("{ssssss}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME), * j_result, * j_element = NULL;
   struct _u_response resp;
-  size_t index;
+  size_t index = 0;
   
   user_req.http_verb = o_strdup("PUT");
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
@@ -1447,9 +1447,9 @@ END_TEST
 
 START_TEST(test_glwd_scheme_certificate_register_request_certificate_deregister_request_single)
 {
-  json_t * j_parameters = json_pack("{ssssss}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME), * j_result, * j_element;
+  json_t * j_parameters = json_pack("{ssssss}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME), * j_result, * j_element = NULL;
   struct _u_response resp;
-  size_t index;
+  size_t index = 0;
   
   user_req.http_verb = o_strdup("PUT");
   user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");

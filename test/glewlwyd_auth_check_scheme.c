@@ -24,8 +24,8 @@ START_TEST(test_glwd_auth_check_scheme_no_session)
 {
   struct _u_request req;
   struct _u_response resp;
-  json_t * j_body, * j_element;
-  const char * key;
+  json_t * j_body, * j_element = NULL;
+  const char * key = NULL;
 
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
@@ -51,9 +51,9 @@ START_TEST(test_glwd_auth_check_scheme_session_password)
 {
   struct _u_request auth_req, check_req;
   struct _u_response auth_resp, check_resp;
-  json_t * j_body, * j_element, * j_group;
+  json_t * j_body, * j_element = NULL, * j_group;
   char * cookie;
-  const char * key;
+  const char * key = NULL;
 
   ulfius_init_request(&auth_req);
   ulfius_init_response(&auth_resp);
@@ -135,9 +135,9 @@ START_TEST(test_glwd_auth_check_scheme_session_password_schemes)
 {
   struct _u_request auth_req, check_req;
   struct _u_response auth_resp, check_resp;
-  json_t * j_body, * j_element, * j_group, * j_register;
+  json_t * j_body, * j_element = NULL, * j_group, * j_register;
   char * cookie;
-  const char * key;
+  const char * key = NULL;
 
   ulfius_init_request(&auth_req);
   ulfius_init_response(&auth_resp);
@@ -412,9 +412,9 @@ START_TEST(test_glwd_auth_check_scheme_forbidden)
 {
   struct _u_request auth_req, check_req;
   struct _u_response auth_resp, check_resp;
-  json_t * j_body, * j_element, * j_group;
+  json_t * j_body, * j_element = NULL, * j_group;
   char * cookie;
-  const char * key;
+  const char * key = NULL;
 
   ulfius_init_request(&auth_req);
   ulfius_init_response(&auth_resp);
@@ -499,9 +499,9 @@ START_TEST(test_glwd_auth_check_scheme_missing)
 {
   struct _u_request auth_req, check_req;
   struct _u_response auth_resp, check_resp;
-  json_t * j_body, * j_element, * j_group;
+  json_t * j_body, * j_element = NULL, * j_group;
   char * cookie;
-  const char * key;
+  const char * key = NULL;
 
   ulfius_init_request(&auth_req);
   ulfius_init_response(&auth_resp);
