@@ -70,9 +70,9 @@ START_TEST(test_glwd_oidc_irl_run_workflow)
   struct _u_request auth_req;
   struct _u_response auth_resp, resp;
   struct _u_map body;
-  json_t * j_body, * j_register, * j_element;
+  json_t * j_body, * j_register, * j_element = NULL;
   char * cookie;
-  size_t index;
+  size_t index = 0;
   const char * username = json_string_value(json_object_get(json_object_get(j_params, "user"), "username")),
              * password = json_string_value(json_object_get(json_object_get(j_params, "user"), "password")),
              * client_id = json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")),
