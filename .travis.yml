@@ -13,7 +13,7 @@ addons:
 jobs:
   include:
     - compiler: gcc
-    - compiler: clang
+    #- compiler: clang # Nope, still buggy
     - env: LABEL=cppcheck
       script:
         - cppcheck --force --enable=warning,missingInclude --error-exitcode=1 .
