@@ -5,7 +5,7 @@ sudo: required
 
 language: c
 
-dist: xenial
+dist: bionic
 addons:
   apt:
     packages: [ autoconf, automake, libtool, sqlite3, libsqlite3-dev, libmysqlclient-dev, libpq-dev, libgnutls-dev, libconfig-dev, libssl-dev, uuid-dev, libldap2-dev, liboath-dev, check, libsubunit-dev, cppcheck, gnutls-bin ]
@@ -14,8 +14,8 @@ matrix:
   include:
     - os: linux
       compiler: gcc
-#    - os: linux
-#      compiler: clang # disabled since impossible to understand error appear with xenial clang
+    - os: linux
+      compiler: clang
     - env: LABEL=cppcheck
       os: linux
       script:
