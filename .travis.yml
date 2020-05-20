@@ -12,9 +12,11 @@ addons:
 
 jobs:
   include:
-    - compiler: gcc
-    #- compiler: clang # Nope, still buggy
-    - env: LABEL=cppcheck
+    - env: gcc
+      compiler: gcc
+    #- env: clang
+    #  compiler: clang # Nope, still buggy
+    - env: cppcheck
       script:
         - cppcheck --force --enable=warning,missingInclude --error-exitcode=1 .
 
