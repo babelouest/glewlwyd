@@ -44,19 +44,19 @@
 #define ROOT_CA_CERT_3_PATH "cert/root2.crt"
 #define ROOT_CA_KEY_3_PATH "cert/root2.key"
 
-#define CLIENT_CERT_1_PATH "cert/client1.crt"
-#define CLIENT_CERT_1_DER_PATH "cert/client1.crt.der"
-#define CLIENT_KEY_1_PATH "cert/client1.key"
+#define CLIENT_CERT_1_PATH "cert/user1.crt"
+#define CLIENT_CERT_1_DER_PATH "cert/user1.crt.der"
+#define CLIENT_KEY_1_PATH "cert/user1.key"
 #define CLIENT_KEY_1_PASSWORD ""
 
-#define CLIENT_CERT_2_PATH "cert/client2.crt"
-#define CLIENT_CERT_2_DER_PATH "cert/client2.crt.der"
-#define CLIENT_KEY_2_PATH "cert/client2.key"
+#define CLIENT_CERT_2_PATH "cert/user2.crt"
+#define CLIENT_CERT_2_DER_PATH "cert/user2.crt.der"
+#define CLIENT_KEY_2_PATH "cert/user2.key"
 #define CLIENT_KEY_2_PASSWORD ""
 
-#define CLIENT_CERT_3_PATH "cert/client3.crt"
-#define CLIENT_CERT_3_DER_PATH "cert/client3.crt.der"
-#define CLIENT_KEY_3_PATH "cert/client3.key"
+#define CLIENT_CERT_3_PATH "cert/user3.crt"
+#define CLIENT_CERT_3_DER_PATH "cert/user3.crt.der"
+#define CLIENT_KEY_3_PATH "cert/user3.key"
 #define CLIENT_KEY_3_PASSWORD ""
 
 char client_cert_1_id[128];
