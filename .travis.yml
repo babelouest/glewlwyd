@@ -1,6 +1,6 @@
 # travis configuration file
 # Copyright 2018 Ilya Shipitsin <chipitsine@gmail.com>
-#                Nicolas Mora <mail@babelouest.org>
+#           2018-2020 Nicolas Mora <mail@babelouest.org>
 
 language: c
 
@@ -12,11 +12,11 @@ addons:
 
 jobs:
   include:
-    - env: gcc
+    - env: LABEL=gcc
       compiler: gcc
-    #- env: clang
-    #  compiler: clang # Nope, still buggy
-    - env: cppcheck
+    #- env: LABEL=clang # Nope, still buggy
+    #  compiler: clang
+    - env: LABEL=cppcheck
       script:
         - cppcheck --force --enable=warning,missingInclude --error-exitcode=1 .
 
