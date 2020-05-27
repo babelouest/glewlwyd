@@ -192,6 +192,7 @@
     "client-password": "Mot de passe",
     "client-password-ph": "Entrer un mot de passe",
     "client-password-confirm-ph": "Confirmer le mot de passe",
+    "client-token_endpoint_auth_method": "Méthode d'authentification du endpoint token",
     "client-scope": "Droits",
     "client-redirect-uri": "URIs de redirection",
     "client-redirect-uri-ph": "Ex: https://client.glewlwyd.tld/",
