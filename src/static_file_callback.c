@@ -2,7 +2,7 @@
  *
  * Static file server Ulfius callback
  *
- * Copyright 2017-2019 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2017-2020 Nicolas Mora <mail@babelouest.org>
  *
  * Version 20190118
  *
