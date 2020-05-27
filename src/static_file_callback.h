@@ -1,6 +1,10 @@
 /**
  *
- * Version 20181110
+ * Static file server Ulfius callback
+ *
+ * Copyright 2017-2020 Nicolas Mora <mail@babelouest.org>
+ *
+ * Version 20190118
  *
  * struct static_file_config must be initialized with proper values
  * files_path: path (relative or absolute) to the DocumentRoot folder

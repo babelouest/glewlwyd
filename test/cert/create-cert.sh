@@ -1,5 +1,13 @@
 #!/bin/sh
 
+#
+# Glewlwyd SSO
+#
+# Create certificates
+#
+# Public domain, no copyright. Use at your own risk.
+#
+
 DEST=../test/cert
 RET=0
 
@@ -55,54 +63,54 @@ else
 fi
 
 # client 1
-certtool --generate-privkey --outfile $DEST/client1.key --sec-param High 2>>$DEST/certtool.log
+certtool --generate-privkey --outfile $DEST/user1.key --sec-param High 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
-  printf "client1.key        \033[0;32mOK\033[0m\n"
+  printf "user1.key          \033[0;32mOK\033[0m\n"
 else
-  printf "client1.key        \033[0;31mError\033[0m\n"
+  printf "user1.key          \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-certtool --generate-certificate --load-privkey $DEST/client1.key --load-ca-certificate $DEST/root1.crt --load-ca-privkey $DEST/root1.key --outfile $DEST/client1.crt --template $DEST/template-client.cfg 2>>$DEST/certtool.log
+certtool --generate-certificate --load-privkey $DEST/user1.key --load-ca-certificate $DEST/root1.crt --load-ca-privkey $DEST/root1.key --outfile $DEST/user1.crt --template $DEST/template-client.cfg 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
-  printf "client1.crt        \033[0;32mOK\033[0m\n"
+  printf "user1.crt          \033[0;32mOK\033[0m\n"
 else
-  printf "client1.crt        \033[0;31mError\033[0m\n"
+  printf "user1.crt          \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-certtool --certificate-info --infile $DEST/client1.crt --outder | base64 > $DEST/client1.crt.der 2>>$DEST/certtool.log
+certtool --certificate-info --infile $DEST/user1.crt --outder | base64 > $DEST/user1.crt.der 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
-  printf "client1.crt.der    \033[0;32mOK\033[0m\n"
+  printf "user1.crt.der      \033[0;32mOK\033[0m\n"
 else
-  printf "client1.crt.der    \033[0;31mError\033[0m\n"
+  printf "user1.crt.der      \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
 
 # client 2
-certtool --generate-privkey --outfile $DEST/client2.key --sec-param High 2>>$DEST/certtool.log
+certtool --generate-privkey --outfile $DEST/user2.key --sec-param High 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
-  printf "client2.key        \033[0;32mOK\033[0m\n"
+  printf "user2.key          \033[0;32mOK\033[0m\n"
 else
-  printf "client2.key        \033[0;31mError\033[0m\n"
+  printf "user2.key          \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-certtool --generate-certificate --load-privkey $DEST/client2.key --load-ca-certificate $DEST/root1.crt --load-ca-privkey $DEST/root1.key --outfile $DEST/client2.crt --template $DEST/template-client.cfg 2>>$DEST/certtool.log
+certtool --generate-certificate --load-privkey $DEST/user2.key --load-ca-certificate $DEST/root1.crt --load-ca-privkey $DEST/root1.key --outfile $DEST/user2.crt --template $DEST/template-client.cfg 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
-  printf "client2.crt        \033[0;32mOK\033[0m\n"
+  printf "user2.crt          \033[0;32mOK\033[0m\n"
 else
-  printf "client2.crt        \033[0;31mError\033[0m\n"
+  printf "user2.crt          \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-certtool --certificate-info --infile $DEST/client2.crt --outder | base64 > $DEST/client2.crt.der 2>>$DEST/certtool.log
+certtool --certificate-info --infile $DEST/user2.crt --outder | base64 > $DEST/user2.crt.der 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
-  printf "client2.crt.der    \033[0;32mOK\033[0m\n"
+  printf "user2.crt.der      \033[0;32mOK\033[0m\n"
 else
-  printf "client2.crt.der    \033[0;31mError\033[0m\n"
+  printf "user2.crt.der      \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
 
@@ -125,28 +133,28 @@ else
 fi
 
 # client 3
-certtool --generate-privkey --outfile $DEST/client3.key --sec-param High 2>>$DEST/certtool.log
+certtool --generate-privkey --outfile $DEST/user3.key --sec-param High 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
-  printf "client3.key        \033[0;32mOK\033[0m\n"
+  printf "user3.key          \033[0;32mOK\033[0m\n"
 else
-  printf "client3.key        \033[0;31mError\033[0m\n"
+  printf "user3.key          \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-certtool --generate-certificate --load-privkey $DEST/client3.key --load-ca-certificate $DEST/root2.crt --load-ca-privkey $DEST/root2.key --outfile $DEST/client3.crt --template $DEST/template-client.cfg 2>>$DEST/certtool.log
+certtool --generate-certificate --load-privkey $DEST/user3.key --load-ca-certificate $DEST/root2.crt --load-ca-privkey $DEST/root2.key --outfile $DEST/user3.crt --template $DEST/template-client.cfg 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
-  printf "client3.crt        \033[0;32mOK\033[0m\n"
+  printf "user3.crt          \033[0;32mOK\033[0m\n"
 else
-  printf "client3.crt        \033[0;31mError\033[0m\n"
+  printf "user3.crt          \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-certtool --certificate-info --infile $DEST/client3.crt --outder | base64 > $DEST/client3.crt.der 2>>$DEST/certtool.log
+certtool --certificate-info --infile $DEST/user3.crt --outder | base64 > $DEST/user3.crt.der 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
-  printf "client3.crt.der    \033[0;32mOK\033[0m\n"
+  printf "user3.crt.der      \033[0;32mOK\033[0m\n"
 else
-  printf "client3.crt.der    \033[0;31mError\033[0m\n"
+  printf "user3.crt.der      \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
 

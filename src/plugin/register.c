@@ -9,7 +9,7 @@
  * register plugin
  * Allow unauthentified users to register a new account
  * 
- * Copyright 2019 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2019-2020 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
@@ -162,7 +162,7 @@ static json_t * register_generate_email_verification_code(struct _register_confi
                         j_return = json_pack("{si}", "result", G_ERROR_DB);
                       }
                     } else {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "register_generate_email_verification_code - Error ulfius_send_smtp_email");
+                      y_log_message(Y_LOG_LEVEL_ERROR, "register_generate_email_verification_code - Error ulfius_send_smtp_rich_email");
                       j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
                     }
                     o_free(body);
