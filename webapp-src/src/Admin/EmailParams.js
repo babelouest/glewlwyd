@@ -11,6 +11,26 @@ class EmailParams extends Component {
       props.mod = {parameters: {}};
     }
     
+    if (props.mod.parameters.host === undefined) {
+      props.mod.parameters.host = "";
+    }
+    
+    if (props.mod.parameters.user === undefined) {
+      props.mod.parameters.user = "";
+    }
+    
+    if (props.mod.parameters.password === undefined) {
+      props.mod.parameters.password = "";
+    }
+    
+    if (props.mod.parameters["use-tls"] === undefined) {
+      props.mod.parameters["use-tls"] = false;
+    }
+    
+    if (props.mod.parameters["check-certificate"] === undefined) {
+      props.mod.parameters["check-certificate"] = true;
+    }
+    
     if (!props.mod.parameters["code-length"]) {
       props.mod.parameters["code-length"] = 6;
     }
@@ -23,13 +43,27 @@ class EmailParams extends Component {
       props.mod.parameters["port"] = 0;
     }
 
+    if (props.mod.parameters.from === undefined) {
+      props.mod.parameters.from = "";
+    }
+    
+    if (props.mod.parameters["user-lang-property"] === undefined) {
+      props.mod.parameters["user-lang-property"] = "lang";
+    }
+
+    if (!props.mod.parameters["templates"]) {
+      props.mod.parameters["templates"] = {};
+      props.mod.parameters["templates"][i18next.language] = {subject: props.mod.parameters.subject||"", "body-pattern": props.mod.parameters["body-pattern"]||"", defaultLang: true}
+    }
+
     this.state = {
       config: props.config,
       mod: props.mod,
       role: props.role,
       check: props.check,
       hasError: false,
-      errorList: {}
+      errorList: {},
+      currentLang: i18next.language
     };
     
     if (this.state.check) {
@@ -40,12 +74,34 @@ class EmailParams extends Component {
     this.toggleUseTls = this.toggleUseTls.bind(this);
     this.toggleCheckServerCertificate = this.toggleCheckServerCertificate.bind(this);
     this.checkParameters = this.checkParameters.bind(this);
+    this.changeLang = this.changeLang.bind(this);
+    this.toggleLangDefault = this.toggleLangDefault.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
     
     if (!nextProps.mod) {
       nextProps.mod = {parameters: {}};
+    }
+    
+    if (nextProps.mod.parameters.host === undefined) {
+      nextProps.mod.parameters.host = "";
+    }
+    
+    if (nextProps.mod.parameters.user === undefined) {
+      nextProps.mod.parameters.user = "";
+    }
+    
+    if (nextProps.mod.parameters.password === undefined) {
+      nextProps.mod.parameters.password = "";
+    }
+    
+    if (nextProps.mod.parameters["use-tls"] === undefined) {
+      nextProps.mod.parameters["use-tls"] = false;
+    }
+    
+    if (nextProps.mod.parameters["check-certificate"] === undefined) {
+      nextProps.mod.parameters["check-certificate"] = true;
     }
     
     if (!nextProps.mod.parameters["code-length"]) {
@@ -58,6 +114,19 @@ class EmailParams extends Component {
 
     if (!nextProps.mod.parameters["port"]) {
       nextProps.mod.parameters["port"] = 0;
+    }
+
+    if (nextProps.mod.parameters.from === undefined) {
+      nextProps.mod.parameters.from = "";
+    }
+    
+    if (nextProps.mod.parameters["user-lang-property"] === undefined) {
+      nextProps.mod.parameters["user-lang-property"] = "lang";
+    }
+
+    if (!nextProps.mod.parameters["templates"]) {
+      nextProps.mod.parameters["templates"] = {};
+      nextProps.mod.parameters["templates"][i18next.language] = {subject: nextProps.mod.parameters.subject||"", "body-pattern": nextProps.mod.parameters["body-pattern"]||"", defaultLang: true}
     }
 
     this.setState({
@@ -95,6 +164,28 @@ class EmailParams extends Component {
     this.setState({mod: mod});
   }
   
+  changeLang(e, lang) {
+    var mod = this.state.mod;
+    if (!mod.parameters.templates[lang]) {
+      mod.parameters.templates[lang] = {subject: "", "body-pattern": "", defaultLang: false}
+    }
+    this.setState({currentLang: lang, mod: mod});
+  }
+  
+  changeTemplate(e, param) {
+    var mod = this.state.mod;
+    mod.parameters.templates[this.state.currentLang][param] = e.target.value;
+    this.setState({mod: mod});
+  }
+  
+  toggleLangDefault() {
+    var mod = this.state.mod;
+    Object.keys(mod.parameters.templates).forEach(objKey => {
+      mod.parameters.templates[objKey].defaultLang = (objKey === this.state.currentLang);
+    });
+    this.setState({mod: mod});
+  }
+  
   checkParameters() {
     var errorList = {}, hasError = false;
     if (!this.state.mod.parameters["code-length"]) {
@@ -113,14 +204,22 @@ class EmailParams extends Component {
       hasError = true;
       errorList["from"] = i18next.t("admin.mod-email-from-error")
     }
-    if (!this.state.mod.parameters["subject"]) {
+    if (!this.state.mod.parameters["user-lang-property"]) {
       hasError = true;
-      errorList["subject"] = i18next.t("admin.mod-email-subject-error")
+      errorList["user-lang-property"] = i18next.t("admin.mod-email-user-lang-property-error")
     }
-    if (!this.state.mod.parameters["body-pattern"] || !this.state.mod.parameters["body-pattern"].search("{CODE}")) {
-      hasError = true;
-      errorList["body-pattern"] = i18next.t("admin.mod-email-body-pattern-error")
-    }
+    Object.keys(this.state.mod.parameters.templates).forEach(objKey => {
+      if (this.state.mod.parameters.templates[objKey].defaultLang) {
+        if (!this.state.mod.parameters.templates[objKey]["subject"]) {
+          hasError = true;
+          errorList["subject"] = i18next.t("admin.mod-email-subject-error")
+        }
+        if (!this.state.mod.parameters.templates[objKey]["body-pattern"] || !this.state.mod.parameters.templates[objKey]["body-pattern"].search("{CODE}")) {
+          hasError = true;
+          errorList["body-pattern"] = i18next.t("admin.mod-email-body-pattern-error")
+        }
+      }
+    });
     if (!hasError) {
       this.setState({errorList: {}}, () => {
         messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
@@ -131,6 +230,10 @@ class EmailParams extends Component {
   }
   
   render() {
+    var langList = [];
+    this.state.config.lang.forEach((lang, index) => {
+      langList.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.changeLang(e, lang)}>{lang}</a>);
+    });
     return (
       <div>
         <div className="form-group">
@@ -207,9 +310,37 @@ class EmailParams extends Component {
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-email-lang">{i18next.t("admin.mod-email-lang")}</label>
+            </div>
+            <div className="dropdown">
+              <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-email-lang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                {this.state.currentLang}
+              </button>
+              <div className="dropdown-menu" aria-labelledby="mod-email-lang">
+                {langList}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-email-user-lang-property">{i18next.t("admin.mod-email-user-lang-property")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["user-lang-property"]?"form-control is-invalid":"form-control"} id="mod-email-user-lang-property" onChange={(e) => this.changeParam(e, "user-lang-property")} value={this.state.mod.parameters["user-lang-property"]} placeholder={i18next.t("admin.mod-email-user-lang-property-ph")} />
+          </div>
+          {this.state.errorList["user-lang-property"]?<span className="error-input">{this.state.errorList["user-lang-property"]}</span>:""}
+        </div>
+        <div className="form-group form-check">
+          <input type="checkbox" className="form-check-input" id="mod-email-lang-default" onChange={(e) => this.toggleLangDefault()} checked={this.state.mod.parameters.templates[this.state.currentLang].defaultLang} />
+          <label className="form-check-label" htmlFor="mod-email-lang-default">{i18next.t("admin.mod-email-lang-default")}</label>
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-email-subject">{i18next.t("admin.mod-email-subject")}</label>
             </div>
-            <input type="text" className={this.state.errorList["subject"]?"form-control is-invalid":"form-control"} id="mod-email-subject" onChange={(e) => this.changeParam(e, "subject")} value={this.state.mod.parameters["subject"]||""} placeholder={i18next.t("admin.mod-email-subject-ph")} />
+            <input type="text" className={this.state.errorList["subject"]?"form-control is-invalid":"form-control"} id="mod-email-subject" onChange={(e) => this.changeTemplate(e, "subject")} value={this.state.mod.parameters.templates[this.state.currentLang]["subject"]} placeholder={i18next.t("admin.mod-email-subject-ph")} />
           </div>
           {this.state.errorList["subject"]?<span className="error-input">{this.state.errorList["subject"]}</span>:""}
         </div>
@@ -218,7 +349,7 @@ class EmailParams extends Component {
             <div className="input-group-prepend">
               <span className="input-group-text" >{i18next.t("admin.mod-email-body-pattern")}</span>
             </div>
-            <textarea className={this.state.errorList["body-pattern"]?"form-control is-invalid":"form-control"} id="mod-email-body-pattern" onChange={(e) => this.changeParam(e, "body-pattern")} placeholder={i18next.t("admin.mod-email-body-pattern-ph")} defaultValue={this.state.mod.parameters["body-pattern"]||""}></textarea>
+            <textarea className={this.state.errorList["body-pattern"]?"form-control is-invalid":"form-control"} id="mod-email-body-pattern" onChange={(e) => this.changeTemplate(e, "body-pattern")} placeholder={i18next.t("admin.mod-email-body-pattern-ph")} value={this.state.mod.parameters.templates[this.state.currentLang]["body-pattern"]}></textarea>
           </div>
           {this.state.errorList["body-pattern"]?<span className="error-input">{this.state.errorList["body-pattern"]}</span>:""}
         </div>
