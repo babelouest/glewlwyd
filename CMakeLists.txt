@@ -29,7 +29,7 @@ set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, multiple factor authenti
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(ORCANIA_VERSION_REQUIRED "2.1.0")
 set(YDER_VERSION_REQUIRED "1.4.10")
-set(ULFIUS_VERSION_REQUIRED "2.6.6")
+set(ULFIUS_VERSION_REQUIRED "2.6.7")
 set(HOEL_VERSION_REQUIRED "1.4.16")
 set(RHONABWY_VERSION_REQUIRED "0.9.10")
 set(IDDAWC_VERSION_REQUIRED "0.9.5")
@@ -768,6 +768,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oidc_refresh_token_one_use
 							glewlwyd_oidc_client_registration_management
 							)
+			set(TESTS_SSL ${TESTS_SSL} glewlwyd_oidc_client_certificate)
 		endif ()
 
 		if (WITH_PLUGIN_REGISTER)
@@ -804,7 +805,7 @@ if (BUILD_GLEWLWYD_TESTING)
 		endif ()
 
 		if (WITH_SCHEME_CERTIFICATE)
-			set(TESTS_SSL glewlwyd_scheme_certificate)
+			set(TESTS_SSL ${TESTS_SSL} glewlwyd_scheme_certificate)
 		endif ()
 
 		configure_file(
