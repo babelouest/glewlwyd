@@ -36,10 +36,10 @@ script:
   - ln -s ../test/ .
   - make test || (cat Testing/Temporary/LastTest.log && cat /tmp/glewlwyd.log && false)
   - kill $G_PID
-  - make glewlwyd_scheme_certificate
+  - make glewlwyd_scheme_certificate glewlwyd_oidc_client_certificate
   - glewlwyd --config-file=cert/glewlwyd-cert-ci.conf &
   - export G_PID=$!
-  - ./glewlwyd_scheme_certificate || (cat /tmp/glewlwyd-https.log && false)
+  - (./glewlwyd_scheme_certificate && ./glewlwyd_oidc_client_certificate) || (cat /tmp/glewlwyd-https.log && false)
   - kill $G_PID
   - glewlwyd --config-file=test/glewlwyd-profile-delete-disable.conf &
   - export G_PID=$!
