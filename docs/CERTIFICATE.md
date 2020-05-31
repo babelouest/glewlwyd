@@ -6,7 +6,7 @@ The TLS Certificate Schema implements authentification based on the [Client-auth
 
 !!!Full disclosure!!!
 This authentication scheme has been implemented based on the documentation and examples I could find. But there may be other and better ways to implement this type of authentication.
-If you find bugs, weird behaviours, or wish new features, please [open an issue](https://github.com/babelouest/glewlwyd/issues) in the github repository or send an e-mail. 
+If you find bugs, weird behaviours, or wish new features, please [open an issue](https://github.com/babelouest/glewlwyd/issues) in the github repository or send an e-mail.
 
 ## Installation
 
