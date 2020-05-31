@@ -491,6 +491,66 @@ A client secret has priority over a client password, which means that if a clien
 
 The `client secret` can also be used to authenticate a client using the method `client_secret_jwt`.
 
+## Mutual-TLS Client Authentication (rfc8705)
+
+!!!Full disclosure!!!
+This authentication scheme has been implemented based on the documentation and examples I could find. But there may be other and better ways to implement this type of authentication.
+If you find bugs, weird behaviours, or wish new features, please [open an issue](https://github.com/babelouest/glewlwyd/issues) in the github repository or send an e-mail.
+
+If you intent to use Glewlwyd directly, set this option to `TLS Session`. You must also configure Glewlwyd in secure mode with the proper `secure_connection_ca_file` value. This configuration value must be set to your CA certificate or your CA chain certificate in order to validate clients certificates provided.
+
+Self-signed certificates couldn't be tested in TLS sessions.
+
+### Certificate source
+
+Where to retrieve the client certificate. Values available are:
+- `None` to disable Mutual-TLS Client Authentication
+- `TLS session` to retrieve the client certificate in the TLS session
+- `HTTP header` to retrieve the client certificate in the HTTP header
+- `Both` to retrieve the client certificate both in the TLS session and the header
+
+Important security warning!
+If you don't use Glewlwyd behind a reverse proxy to forward the certificate in the header, this option MUST be set to `TLS Session` only, otherwise, an attacker could manually change the header value, to fake any valid user without having to know its certificate key.
+
+If you set this value to `HTTP Header` or `both`, it allows to use Glewlwyd behind a reverse proxy such as Apache's mod `proxy`. You must then configure the proxy to validate the clients certificate and key using your CA certificate and if the client certificate is valid, the proxy must forward the X509 certificate to Glewlwyd in a specified header.
+
+Here is an example of configuration using Apache web server. In this example, the Glewlwyd service is hosted on the same host than the Apache server.
+You must have enabled the modules `ssl`, `proxy`, `proxy_http`, `headers`.
+
+```config
+<VirtualHost *:443>
+  ServerName glewlwyd.tld
+  SSLEngine on
+  SSLCertificateFile /path/to/your_domain_name.crt
+  SSLCertificateKeyFile /path/to/your_private.key
+  SSLCertificateChainFile /path/to/your_chain_file.crt
+  SSLCACertificateFile /path/to/your_ca.crt
+  SSLVerifyClient optional
+
+  RequestHeader set SSL_CLIENT_CERT ""
+
+  ProxyPass / http://localhost:4593/
+
+  <Location /api/>
+    RequestHeader set SSL_CLIENT_CERT "%{SSL_CLIENT_CERT}s"
+  </Location>
+</VirtualHost>
+```
+
+### Corresponding header property
+
+Header property name to retrieve client certificate. Must be set if certificate source is `header` or `Both`.
+
+### Use alias for client endpoints
+
+If this is set to true, new client endpoints will be added: `mtls/token` as well as `mtls/introspect`, `mtls/revoke` and `mtls/device_authorization` if necessary.
+
+### Allow self-signed certificates
+
+If this is set to true, clients will be allowed to use self-signed certificates for authentication.
+
+**WARNING** This setting must be used with high precaution! Self-signed certificates are less secure than certificates delivered by trusted CA.
+
 ## Native Apps Guidelines
 
 Glewlwyd is conform to [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252) best current practice considering the following configuration:
