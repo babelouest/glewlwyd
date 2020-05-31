@@ -75,6 +75,9 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["client-encrypt_introspection-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_introspection-parameter"] = "encrypt_introspection");
     props.mod.parameters["device-authorization-expiration"]!==undefined?"":(props.mod.parameters["device-authorization-expiration"] = 600);
     props.mod.parameters["device-authorization-interval"]!==undefined?"":(props.mod.parameters["device-authorization-interval"] = 5);
+    props.mod.parameters["client-cert-header-name"]!==undefined?"":(props.mod.parameters["client-cert-header-name"] = "SSL_CLIENT_CERT");
+    props.mod.parameters["client-cert-use-endpoint-aliases"]!==undefined?"":(props.mod.parameters["client-cert-use-endpoint-aliases"] = false);
+    props.mod.parameters["client-cert-self-signed-allowed"]!==undefined?"":(props.mod.parameters["client-cert-self-signed-allowed"] = false);
 
     this.state = {
       config: props.config,
@@ -202,6 +205,9 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["client-encrypt_introspection-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_introspection-parameter"] = "encrypt_introspection");
     nextProps.mod.parameters["device-authorization-expiration"]!==undefined?"":(nextProps.mod.parameters["device-authorization-expiration"] = 600);
     nextProps.mod.parameters["device-authorization-interval"]!==undefined?"":(nextProps.mod.parameters["device-authorization-interval"] = 5);
+    nextProps.mod.parameters["client-cert-header-name"]!==undefined?"":(nextProps.mod.parameters["client-cert-header-name"] = "SSL_CLIENT_CERT");
+    nextProps.mod.parameters["client-cert-use-endpoint-aliases"]!==undefined?"":(nextProps.mod.parameters["client-cert-use-endpoint-aliases"] = false);
+    nextProps.mod.parameters["client-cert-self-signed-allowed"]!==undefined?"":(nextProps.mod.parameters["client-cert-self-signed-allowed"] = false);
     
     this.setState({
       config: nextProps.config,
@@ -543,6 +549,16 @@ class GlwdOIDCParams extends Component {
     e.preventDefault();
     var mod = this.state.mod;
     mod.parameters[param].splice(index, 1);
+    this.setState({mod: mod});
+  }
+  
+  changeMtlsClientSource(e, source) {
+    var mod = this.state.mod;
+    if (source) {
+      mod.parameters["client-cert-source"] = source;
+    } else {
+      delete(mod.parameters["client-cert-source"]);
+    }
     this.setState({mod: mod});
   }
   
@@ -1996,6 +2012,55 @@ class GlwdOIDCParams extends Component {
                     </div>
                     <input type="number" min="1" step="1" className="form-control" id="mod-glwd-device-authorization-interval" onChange={(e) => this.changeNumberParam(e, "device-authorization-interval")} value={this.state.mod.parameters["device-authorization-interval"]} placeholder={i18next.t("admin.mod-glwd-device-authorization-interval-ph")} disabled={!this.state.mod.parameters["auth-type-device-enabled"]} />
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionMtlsClient">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseMtlsClient" aria-expanded="true" aria-controls="collapseMtlsClient">
+                  {i18next.t("admin.mod-glwd-mtls-client-title")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapseMtlsClient" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionMtlsClient">
+              <div className="card-body">
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-mod-glwd-mtls-client-source">{i18next.t("admin.mod-glwd-mtls-client-source")}</label>
+                    </div>
+                    <div className="dropdown">
+                      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-mod-glwd-mtls-client-source" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {i18next.t("admin.mod-glwd-mtls-client-source-" + (this.state.mod.parameters["client-cert-source"]?this.state.mod.parameters["client-cert-source"]:"no"))}
+                      </button>
+                      <div className="dropdown-menu" aria-labelledby="mod-glwd-mtls-client-source">
+                        <a className={"dropdown-item"+(!this.state.mod.parameters["client-cert-source"]?" active":"")} href="#" onClick={(e) => this.changeMtlsClientSource(e, false)}>{i18next.t("admin.mod-glwd-mtls-client-source-no")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["client-cert-source"]==="TLS"?" active":"")} href="#" onClick={(e) => this.changeMtlsClientSource(e, 'TLS')}>{i18next.t("admin.mod-glwd-mtls-client-source-TLS")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["client-cert-source"]==="header"?" active":"")} href="#" onClick={(e) => this.changeMtlsClientSource(e, 'header')}>{i18next.t("admin.mod-glwd-mtls-client-source-header")}</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["client-cert-source"]==="both"?" active":"")} href="#" onClick={(e) => this.changeMtlsClientSource(e, 'both')}>{i18next.t("admin.mod-glwd-mtls-client-source-both")}</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-mtls-client-cert-header-name">{i18next.t("admin.mod-glwd-mtls-client-cert-header-name")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-mtls-client-cert-header-name" onChange={(e) => this.changeParam(e, "client-cert-header-name")} value={this.state.mod.parameters["client-cert-header-name"]} placeholder={i18next.t("admin.mod-glwd-mtls-client-cert-header-name-ph")} disabled={(!this.state.mod.parameters["client-cert-source"]||this.state.mod.parameters["client-cert-source"]==="TLS")} />
+                  </div>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-mtls-client-cert-use-endpoint-aliases" onChange={(e) => this.toggleParam(e, "client-cert-use-endpoint-aliases")} checked={this.state.mod.parameters["client-cert-use-endpoint-aliases"]} disabled={!this.state.mod.parameters["client-cert-source"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-mtls-client-cert-use-endpoint-aliases">{i18next.t("admin.mod-glwd-mtls-client-cert-use-endpoint-aliases")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-mtls-client-cert-self-signed-allowed" onChange={(e) => this.toggleParam(e, "client-cert-self-signed-allowed")} checked={this.state.mod.parameters["client-cert-self-signed-allowed"]} disabled={!this.state.mod.parameters["client-cert-source"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-mtls-client-cert-self-signed-allowed">{i18next.t("admin.mod-glwd-mtls-client-cert-self-signed-allowed")}</label>
                 </div>
               </div>
             </div>
