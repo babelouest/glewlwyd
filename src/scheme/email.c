@@ -166,7 +166,9 @@ static int check_code(struct config_module * config, json_t * j_param, const cha
 }
 
 static json_t * is_scheme_parameters_valid(json_t * j_params) {
-  json_t * j_errors = json_array(), * j_result;
+  json_t * j_errors = json_array(), * j_result, * j_template = NULL;
+  const char * lang = NULL;
+  int nb_default_lang = 0;
   
   if (j_errors != NULL) {
     if (!json_is_object(j_params)) {
@@ -202,14 +204,45 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
       if (json_object_get(j_params, "password") != NULL && !json_is_string(json_object_get(j_params, "password"))) {
         json_array_append_new(j_errors, json_string("password is optional and must be a string"));
       }
-      if (json_object_get(j_params, "from") != NULL && !json_string_length(json_object_get(j_params, "from"))) {
+      if (!json_string_length(json_object_get(j_params, "from"))) {
         json_array_append_new(j_errors, json_string("from is mandatory and must be a non empty string"));
       }
-      if (json_object_get(j_params, "subject") != NULL && !json_string_length(json_object_get(j_params, "subject"))) {
-        json_array_append_new(j_errors, json_string("subject is mandatory and must be a non empty string"));
-      }
-      if (json_object_get(j_params, "body-pattern") != NULL && !json_string_length(json_object_get(j_params, "body-pattern"))) {
-        json_array_append_new(j_errors, json_string("body-pattern is mandatory and must be a non empty string"));
+      if (json_object_get(j_params, "templates") == NULL) {
+        if (json_object_get(j_params, "subject") != NULL && !json_string_length(json_object_get(j_params, "subject"))) {
+          json_array_append_new(j_errors, json_string("subject is mandatory and must be a non empty string"));
+        }
+        if (json_object_get(j_params, "body-pattern") != NULL && !json_string_length(json_object_get(j_params, "body-pattern"))) {
+          json_array_append_new(j_errors, json_string("body-pattern is mandatory and must be a non empty string"));
+        }
+      } else {
+        if (!json_string_length(json_object_get(j_params, "user-lang-property"))) {
+          json_array_append_new(j_errors, json_string("user-lang-property is mandatory and must be a non empty string"));
+        }
+        if (!json_is_object(json_object_get(j_params, "templates"))) {
+          json_array_append_new(j_errors, json_string("templates is mandatory and must be a JSON object"));
+        } else {
+          json_object_foreach(json_object_get(j_params, "templates"), lang, j_template) {
+            if (!json_is_object(j_template)) {
+              json_array_append_new(j_errors, json_string("template content must be a JSON object"));
+            } else {
+              if (!json_is_boolean(json_object_get(j_template, "defaultLang"))) {
+                json_array_append_new(j_errors, json_string("defaultLang is madatory in a template and must be a JSON object"));
+              }
+              if (json_object_get(j_template, "defaultLang") == json_true()) {
+                nb_default_lang++;
+                if (!json_string_length(json_object_get(j_template, "subject"))) {
+                  json_array_append_new(j_errors, json_string("subject is mandatory for default lang and must be a non empty string"));
+                }
+                if (json_object_get(j_template, "body") != NULL && !json_string_length(json_object_get(j_template, "body"))) {
+                  json_array_append_new(j_errors, json_string("body is mandatory for default lang and must be a non empty string"));
+                }
+              }
+            }
+          }
+          if (nb_default_lang != 1) {
+            json_array_append_new(j_errors, json_string("template list must have only one defaultLang set to true"));
+          }
+        }
       }
     }
     if (json_array_size(j_errors)) {
@@ -223,6 +256,28 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
     j_result = json_pack("{si}", "result", G_ERROR_MEMORY);
   }
   return j_result;
+}
+
+static const char * get_template_property(json_t * j_params, json_t * j_user, const char * property_field) {
+  json_t * j_template = NULL;
+  const char * property = NULL, * property_default = NULL, * lang = NULL, * user_lang = json_string_value(json_object_get(j_user, json_string_value(json_object_get(j_params, "user-lang-property"))));
+  
+  if (json_object_get(j_params, "templates") == NULL) {
+    property = json_string_value(json_object_get(j_params, property_field));
+  } else {
+    json_object_foreach(json_object_get(j_params, "templates"), lang, j_template) {
+      if (0 == o_strcmp(user_lang, lang)) {
+        property = json_string_value(json_object_get(j_template, property_field));
+      }
+      if (json_object_get(j_template, "defaultLang") == json_true()) {
+        property_default = json_string_value(json_object_get(j_template, property_field));
+      }
+    }
+    if (property == NULL) {
+      property = property_default;
+    }
+  }
+  return property;
 }
 
 /**
@@ -569,7 +624,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
       if ((code = o_malloc((json_integer_value(json_object_get(j_param, "code-length")) + 1)*sizeof(char))) != NULL) {
         memset(code, 0, (json_integer_value(json_object_get(j_param, "code-length")) + 1));
         if (generate_new_code(config, j_param, username, code, json_integer_value(json_object_get(j_param, "code-length"))) == G_OK) {
-          if ((body = str_replace(json_string_value(json_object_get(j_param, "body-pattern")), "{CODE}", code)) != NULL) {
+          if ((body = str_replace(get_template_property(j_param, json_object_get(j_user, "user"), "body-pattern"), "{CODE}", code)) != NULL) {
             if (ulfius_send_smtp_email(json_string_value(json_object_get(j_param, "host")),
                                        json_integer_value(json_object_get(j_param, "port")),
                                        json_object_get(j_param, "use-tls")==json_true()?1:0,
@@ -580,7 +635,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
                                        json_string_value(json_object_get(json_object_get(j_user, "user"), "email")),
                                        NULL,
                                        NULL,
-                                       json_string_value(json_object_get(j_param, "subject")),
+                                       get_template_property(j_param, json_object_get(j_user, "user"), "subject"),
                                        body) == G_OK) {
               y_log_message(Y_LOG_LEVEL_WARNING, "Security - Scheme email - code sent for username %s at IP Address %s", username, ip_source);
               ret = G_OK;
