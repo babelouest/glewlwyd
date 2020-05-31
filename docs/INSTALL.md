@@ -307,7 +307,7 @@ Download the [latest source tarball](https://github.com/babelouest/glewlwyd/rele
 On a Debian based distribution (Debian, Ubuntu, Raspbian, etc.), you can install those dependencies using the following command:
 
 ```shell
-$ sudo apt-get install libmicrohttpd-dev sqlite3 libsqlite3-dev default-libmysqlclient-dev libpq-dev libgnutls-dev libconfig-dev libldap2-dev liboath-dev libcbor-dev
+$ sudo apt-get install libmicrohttpd-dev sqlite3 libsqlite3-dev default-libmysqlclient-dev libpq-dev libgnutls28-dev libconfig-dev libldap2-dev liboath-dev libcbor-dev libsystemd-dev libjansson-dev libcurl4-gnutls-dev
 ```
 
 #### Libmicrohttpd 0.9.38 minimum required
