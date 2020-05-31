@@ -21,14 +21,18 @@
 
 #define SERVER_URI "http://localhost:4593/api/"
 #define USERNAME "user1"
+#define USERNAME_LANG "user_lang"
+#define NAME_LANG "Dave Lopper with e-mails"
+#define EMAIL "user_lang@glewlwyd.tld"
 #define PASSWORD "password"
-#define SCOPE_LIST "scope1 scope2"
+#define SCOPE_LIST "scope1"
 #define CLIENT "client1_id"
 #define ADMIN_USERNAME "admin"
 #define ADMIN_PASSWORD "password"
 
 #define MODULE_MODULE "email"
 #define MODULE_NAME "mail"
+#define MODULE_LANG_NAME "mail_lang"
 #define MODULE_DISPLAY_NAME "Mail scheme"
 #define MODULE_EXPIRATION 600
 #define MODULE_MAX_USE 0
@@ -39,7 +43,9 @@
 #define MAIL_PORT 2525
 #define MAIL_FROM "glewlwyd"
 #define MAIL_SUBJECT "Authorization Code"
+#define MAIL_SUBJECT_FR "Code d'autorisation en français"
 #define MAIL_BODY_PATTERN "The code is "
+#define MAIL_BODY_PATTERN_FR "Le code en français est "
 #define MAIL_BODY_CODE "{CODE}"
 
 struct _u_request user_req;
@@ -54,6 +60,7 @@ struct smtp_manager {
   char * mail_data;
   unsigned int port;
   int sockfd;
+  const char * body_pattern;
 };
 
 /**
@@ -172,8 +179,8 @@ processline:
         send(manager->sockfd, bufferout, strlen(bufferout), 0);
       }
     } else { // We are inside the message after a DATA verb.
-      if (0 == o_strncmp(MAIL_BODY_PATTERN, buffer, o_strlen(MAIL_BODY_PATTERN))) {
-        manager->mail_data = o_strdup(buffer+o_strlen(MAIL_BODY_PATTERN));
+      if (0 == o_strncmp(manager->body_pattern, buffer, o_strlen(manager->body_pattern))) {
+        manager->mail_data = o_strdup(buffer+o_strlen(manager->body_pattern));
       }
       if (STREQU(buffer, ".")) { // A single "." signifies the end
         sprintf(bufferout, "250 Ok\r\n");
@@ -264,6 +271,54 @@ START_TEST(test_glwd_scheme_mail_irl_module_add)
 }
 END_TEST
 
+START_TEST(test_glwd_scheme_mail_irl_module_multilang_add)
+{
+  json_t * j_parameters = json_pack("{sssssssisis{sisisssisssss{s{sossss}s{sossss}}}}", 
+                                    "module", MODULE_MODULE, 
+                                    "name", MODULE_LANG_NAME, 
+                                    "display_name", MODULE_DISPLAY_NAME, 
+                                    "expiration", MODULE_EXPIRATION, 
+                                    "max_use", MODULE_MAX_USE, 
+                                    "parameters", 
+                                      "code-duration", MAIL_CODE_DURATION,
+                                      "code-length", MAIL_CODE_LEGTH,
+                                      "host", mail_host==NULL?MAIL_HOST:mail_host,
+                                      "port", MAIL_PORT,
+                                      "from", MAIL_FROM,
+                                      "user-lang-property", "lang",
+                                      "templates",
+                                        "en",
+                                          "defaultLang", json_true(),
+                                          "subject", MAIL_SUBJECT,
+                                          "body-pattern", MAIL_BODY_PATTERN MAIL_BODY_CODE,
+                                        "fr",
+                                          "defaultLang", json_false(),
+                                          "subject", MAIL_SUBJECT_FR,
+                                          "body-pattern", MAIL_BODY_PATTERN_FR MAIL_BODY_CODE);
+  
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/mod/scheme/" MODULE_LANG_NAME, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_mail_irl_user_fr_add)
+{
+  json_t * j_parameters = json_pack("{sssssssss[s]so}", "username", USERNAME_LANG, "name", NAME_LANG, "lang", "fr", "email", EMAIL, "scope", SCOPE_LIST, "enabled", json_true());
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/user/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_mail_irl_user_de_add)
+{
+  json_t * j_parameters = json_pack("{sssssssss[s]so}", "username", USERNAME_LANG, "name", NAME_LANG, "lang", "de", "email", EMAIL, "scope", SCOPE_LIST, "enabled", json_true());
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/user/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
 START_TEST(test_glwd_scheme_mail_irl_trigger)
 {
   struct smtp_manager manager;
@@ -273,6 +328,7 @@ START_TEST(test_glwd_scheme_mail_irl_trigger)
   manager.mail_data = NULL;
   manager.port = MAIL_PORT;
   manager.sockfd = 0;
+  manager.body_pattern = MAIL_BODY_PATTERN;
   pthread_create(&thread, NULL, simple_smtp, &manager);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   pthread_join(thread, NULL);
@@ -290,6 +346,7 @@ START_TEST(test_glwd_scheme_mail_irl_validate_error)
   manager.mail_data = NULL;
   manager.port = MAIL_PORT;
   manager.sockfd = 0;
+  manager.body_pattern = MAIL_BODY_PATTERN;
   pthread_create(&thread, NULL, simple_smtp, &manager);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   pthread_join(thread, NULL);
@@ -311,6 +368,7 @@ START_TEST(test_glwd_scheme_mail_irl_validate_ok)
   manager.mail_data = NULL;
   manager.port = MAIL_PORT;
   manager.sockfd = 0;
+  manager.body_pattern = MAIL_BODY_PATTERN;
   pthread_create(&thread, NULL, simple_smtp, &manager);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   pthread_join(thread, NULL);
@@ -333,6 +391,7 @@ START_TEST(test_glwd_scheme_mail_irl_validate_not_valid)
   manager.mail_data = NULL;
   manager.port = MAIL_PORT;
   manager.sockfd = 0;
+  manager.body_pattern = MAIL_BODY_PATTERN;
   pthread_create(&thread, NULL, simple_smtp, &manager);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   pthread_join(thread, NULL);
@@ -354,12 +413,67 @@ START_TEST(test_glwd_scheme_mail_irl_validate_not_valid)
 }
 END_TEST
 
+START_TEST(test_glwd_scheme_mail_irl_validate_lang_fr_ok)
+{
+  struct smtp_manager manager;
+  json_t * j_params = json_pack("{sssssss{}}", "username", USERNAME_LANG, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_LANG_NAME, "value");
+  pthread_t thread;
+
+  manager.mail_data = NULL;
+  manager.port = MAIL_PORT;
+  manager.sockfd = 0;
+  manager.body_pattern = MAIL_BODY_PATTERN_FR;
+  pthread_create(&thread, NULL, simple_smtp, &manager);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  pthread_join(thread, NULL);
+  json_decref(j_params);
+  
+  j_params = json_pack("{sssssss{ss}}", "username", USERNAME_LANG, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_LANG_NAME, "value", "code", manager.mail_data);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  
+  o_free(manager.mail_data);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_mail_irl_validate_lang_default_ok)
+{
+  struct smtp_manager manager;
+  json_t * j_params = json_pack("{sssssss{}}", "username", USERNAME_LANG, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_LANG_NAME, "value");
+  pthread_t thread;
+
+  manager.mail_data = NULL;
+  manager.port = MAIL_PORT;
+  manager.sockfd = 0;
+  manager.body_pattern = MAIL_BODY_PATTERN;
+  pthread_create(&thread, NULL, simple_smtp, &manager);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  pthread_join(thread, NULL);
+  json_decref(j_params);
+  
+  j_params = json_pack("{sssssss{ss}}", "username", USERNAME_LANG, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_LANG_NAME, "value", "code", manager.mail_data);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  
+  o_free(manager.mail_data);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_mail_irl_user_remove)
+{
+  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/user/" USERNAME_LANG, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+}
+END_TEST
+
 START_TEST(test_glwd_scheme_mail_irl_module_remove)
 {
-  char * url = msprintf("%s/mod/scheme/%s", SERVER_URI, MODULE_NAME);
+  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/mod/scheme/" MODULE_NAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+}
+END_TEST
 
-  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
-  o_free(url);
+START_TEST(test_glwd_scheme_mail_irl_module_multilang_remove)
+{
+  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/mod/scheme/" MODULE_LANG_NAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
 }
 END_TEST
 
@@ -376,6 +490,14 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_validate_ok);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_validate_not_valid);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_module_remove);
+  tcase_add_test(tc_core, test_glwd_scheme_mail_irl_module_multilang_add);
+  tcase_add_test(tc_core, test_glwd_scheme_mail_irl_user_fr_add);
+  tcase_add_test(tc_core, test_glwd_scheme_mail_irl_validate_lang_fr_ok);
+  tcase_add_test(tc_core, test_glwd_scheme_mail_irl_user_remove);
+  tcase_add_test(tc_core, test_glwd_scheme_mail_irl_user_de_add);
+  tcase_add_test(tc_core, test_glwd_scheme_mail_irl_validate_lang_default_ok);
+  tcase_add_test(tc_core, test_glwd_scheme_mail_irl_user_remove);
+  tcase_add_test(tc_core, test_glwd_scheme_mail_irl_module_multilang_remove);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
