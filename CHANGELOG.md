@@ -17,6 +17,7 @@
 - Add `one-time-use` refresh token option
 - Add [OAuth 2.0 Dynamic Client Registration Management Protocol](https://tools.ietf.org/html/rfc7592) for OIDC plugin
 - Breaking change since 2.2: Client Registration input parameters are now conform to [OAuth 2.0 Dynamic Client Registration Protocol](https://tools.ietf.org/html/rfc7591)
+- Add [OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens](https://tools.ietf.org/html/rfc8705)
 
 ## 2.2.0
 
