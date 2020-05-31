@@ -94,7 +94,7 @@ START_TEST(test_oidc_registration_plugin_add_using_management)
 }
 END_TEST
 
-START_TEST(test_oidc_revocation_plugin_remove)
+START_TEST(test_oidc_registration_plugin_remove)
 {
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/mod/plugin/" PLUGIN_NAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
 }
@@ -1004,7 +1004,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_registration_auth_register_client_management_update_error_parameters);
   tcase_add_test(tc_core, test_oidc_registration_auth_register_client_management_update);
   tcase_add_test(tc_core, test_oidc_registration_auth_register_client_management_delete);
-  tcase_add_test(tc_core, test_oidc_revocation_plugin_remove);
+  tcase_add_test(tc_core, test_oidc_registration_plugin_remove);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
