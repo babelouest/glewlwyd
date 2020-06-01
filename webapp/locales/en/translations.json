@@ -676,6 +676,7 @@
     "mod-email-from-error": "E-mail sender is mandatory",
     "mod-email-content-type": "Content-Type",
     "mod-email-content-type-ph": "Content-Type: text/plain; charset=utf-8",
+    "mod-email-content-type-error": "Content-Type is mandatory",
     "mod-email-lang": "Lang",
     "mod-email-user-lang-property": "User lang property",
     "mod-email-user-lang-property-ph": "Ex: lang",
