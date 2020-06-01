@@ -63,7 +63,8 @@ class EmailParams extends Component {
       check: props.check,
       hasError: false,
       errorList: {},
-      currentLang: i18next.language
+      currentLang: i18next.language,
+      newLang: ""
     };
     
     if (this.state.check) {
@@ -76,6 +77,9 @@ class EmailParams extends Component {
     this.checkParameters = this.checkParameters.bind(this);
     this.changeLang = this.changeLang.bind(this);
     this.toggleLangDefault = this.toggleLangDefault.bind(this);
+    this.changeNewLang = this.changeNewLang.bind(this);
+    this.addLang = this.addLang.bind(this);
+    this.removeLang = this.removeLang.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -164,12 +168,46 @@ class EmailParams extends Component {
     this.setState({mod: mod});
   }
   
+  changeNewLang(e) {
+    this.setState({newLang: e.target.value});
+  }
+  
+  addLang() {
+    var mod = this.state.mod;
+    var found = false;
+    Object.keys(mod.parameters.templates).forEach(lang => {
+      if (lang === this.state.newLang) {
+        found = true;
+      }
+    });
+    if (!found && this.state.newLang) {
+      mod.parameters.templates[this.state.newLang] = {subject: "", "body-pattern": "", defaultLang: false};
+      this.setState({mod: mod, newLang: "", currentLang: this.state.newLang});
+    }
+  }
+  
+  removeLang(lang) {
+    var mod = this.state.mod;
+    var currentLang = false;
+    delete(mod.parameters.templates[lang]);
+    if (lang == this.state.currentLang) {
+      Object.keys(mod.parameters.templates).forEach(lang => {
+        if (!currentLang) {
+          currentLang = lang;
+        }
+      });
+      this.setState({mod: mod, currentLang: currentLang});
+    } else {
+      this.setState({mod: mod});
+    }
+  }
+  
   changeLang(e, lang) {
     var mod = this.state.mod;
     if (!mod.parameters.templates[lang]) {
       mod.parameters.templates[lang] = {subject: "", "body-pattern": "", defaultLang: false}
     }
-    this.setState({currentLang: lang, mod: mod});
+    this.setState({currentLang: lang});
   }
   
   changeTemplate(e, param) {
@@ -231,8 +269,26 @@ class EmailParams extends Component {
   
   render() {
     var langList = [];
-    this.state.config.lang.forEach((lang, index) => {
-      langList.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.changeLang(e, lang)}>{lang}</a>);
+    langList.push(
+    <div key={-2} className="form-group">
+      <div className="input-group mb-3">
+        <input type="text" className="form-control" id="mod-email-new-lang" placeholder={i18next.t("admin.mod-email-new-lang-ph")} value={this.state.newLang} onChange={(e) => this.changeNewLang(e)} />
+        <div className="input-group-append">
+          <button type="button" onClick={this.addLang} className="btn btn-outline-primary">{i18next.t("admin.mod-email-new-lang-add")}</button>
+        </div>
+      </div>
+    </div>
+    );
+    langList.push(<div key={-1} className="dropdown-divider"></div>);
+    Object.keys(this.state.mod.parameters.templates).forEach((lang, index) => {
+      langList.push(
+      <div key={index*2} className="btn-group btn-group-justified">
+        <button type="button" className="btn btn-primary" disabled={true}>{lang}</button>
+        <button type="button" onClick={(e) => this.removeLang(lang)} className="btn btn-primary" disabled={this.state.mod.parameters.templates[lang].defaultLang}>{i18next.t("admin.mod-email-new-lang-remove")}</button>
+        <button type="button" onClick={(e) => this.changeLang(e, lang)} className="btn btn-primary">{i18next.t("admin.mod-email-new-lang-select")}</button>
+      </div>
+      );
+      langList.push(<div key={(index*2)+1} className="dropdown-divider"></div>);
     });
     return (
       <div>
@@ -310,6 +366,15 @@ class EmailParams extends Component {
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-email-user-lang-property">{i18next.t("admin.mod-email-user-lang-property")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["user-lang-property"]?"form-control is-invalid":"form-control"} id="mod-email-user-lang-property" onChange={(e) => this.changeParam(e, "user-lang-property")} value={this.state.mod.parameters["user-lang-property"]} placeholder={i18next.t("admin.mod-email-user-lang-property-ph")} />
+          </div>
+          {this.state.errorList["user-lang-property"]?<span className="error-input">{this.state.errorList["user-lang-property"]}</span>:""}
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-email-lang">{i18next.t("admin.mod-email-lang")}</label>
             </div>
             <div className="dropdown">
@@ -321,15 +386,6 @@ class EmailParams extends Component {
               </div>
             </div>
           </div>
-        </div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor="mod-email-user-lang-property">{i18next.t("admin.mod-email-user-lang-property")}</label>
-            </div>
-            <input type="text" className={this.state.errorList["user-lang-property"]?"form-control is-invalid":"form-control"} id="mod-email-user-lang-property" onChange={(e) => this.changeParam(e, "user-lang-property")} value={this.state.mod.parameters["user-lang-property"]} placeholder={i18next.t("admin.mod-email-user-lang-property-ph")} />
-          </div>
-          {this.state.errorList["user-lang-property"]?<span className="error-input">{this.state.errorList["user-lang-property"]}</span>:""}
         </div>
         <div className="form-group form-check">
           <input type="checkbox" className="form-check-input" id="mod-email-lang-default" onChange={(e) => this.toggleLangDefault()} checked={this.state.mod.parameters.templates[this.state.currentLang].defaultLang} />
