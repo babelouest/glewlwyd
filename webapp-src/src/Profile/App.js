@@ -44,7 +44,8 @@ class App extends Component {
       },
       invalidCredentialMessage: false,
       invalidDelegateMessage: false,
-      tokenParsed: false
+      tokenParsed: false,
+      registerDefaultLang: false
     };
     
     this.fetchProfile = this.fetchProfile.bind(this);
@@ -186,7 +187,11 @@ class App extends Component {
   fetchRegistration() {
     apiManager.glewlwydRequest("/" + this.state.config.params.register + "/config")
     .then((config) => {
-      this.setState({registerValid: true, registerConfig: config}, () => {
+      var defaultLang = false;
+      if (config.languages.length) {
+        defaultLang = config.languages[0];
+      }
+      this.setState({registerValid: true, registerConfig: config, registerDefaultLang: defaultLang}, () => {
         if (!this.state.config.params.token || this.state.tokenParsed) {
           apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
           .then((profile) => {
@@ -286,7 +291,7 @@ class App extends Component {
       if (this.state.config.params.delegate) {
         userJsx = <UserDelegate config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} />
       } else if (this.state.config.params.register) {
-        userJsx = <Register config={this.state.config} registerConfig={this.state.registerConfig} registerProfile={this.state.registerProfile} registerSchemes={this.state.registerSchemes} registerValid={this.state.registerValid} />
+        userJsx = <Register config={this.state.config} registerConfig={this.state.registerConfig} registerProfile={this.state.registerProfile} registerSchemes={this.state.registerSchemes} registerValid={this.state.registerValid} registerDefaultLang={this.state.registerDefaultLang} />
       } else {
         userJsx = <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false} profileUpdate={this.state.profileUpdate}/>
       }

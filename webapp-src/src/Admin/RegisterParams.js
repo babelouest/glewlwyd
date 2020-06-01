@@ -59,8 +59,9 @@ class RegisterParams extends Component {
       props.mod.parameters["content-type"] = "text/plain; charset=utf-8";
     }
 
-    if (!props.mod.parameters["body-pattern"]) {
-      props.mod.parameters["body-pattern"] = "The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?register=<your_registration_plugin_name>&token={TOKEN}";
+    if (!props.mod.parameters["templates"]) {
+      props.mod.parameters["templates"] = {};
+      props.mod.parameters["templates"][i18next.language] = {subject: props.mod.parameters.subject||"Confirm registration", "body-pattern": props.mod.parameters["body-pattern"]||"The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?register=<your_registration_plugin_name>&token={TOKEN}", defaultLang: true}
     }
 
     this.state = {
@@ -70,7 +71,9 @@ class RegisterParams extends Component {
       role: props.role,
       check: props.check,
       hasError: false,
-      errorList: {}
+      errorList: {},
+      currentLang: i18next.language,
+      newLang: ""
     };
     
     if (this.state.check) {
@@ -81,6 +84,11 @@ class RegisterParams extends Component {
     this.addScope = this.addScope.bind(this);
     this.deleteScope = this.deleteScope.bind(this);
     this.addScheme = this.addScheme.bind(this);
+    this.changeLang = this.changeLang.bind(this);
+    this.toggleLangDefault = this.toggleLangDefault.bind(this);
+    this.changeNewLang = this.changeNewLang.bind(this);
+    this.addLang = this.addLang.bind(this);
+    this.removeLang = this.removeLang.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -132,12 +140,9 @@ class RegisterParams extends Component {
       nextProps.mod.parameters["content-type"] = "text/plain; charset=utf-8";
     }
 
-    if (!nextProps.mod.parameters["subject"]) {
-      nextProps.mod.parameters["subject"] = "Confirm registration";
-    }
-
-    if (!nextProps.mod.parameters["body-pattern"]) {
-      nextProps.mod.parameters["body-pattern"] = "The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?register=<your_registration_plugin_name>&token={TOKEN}";
+    if (!nextProps.mod.parameters["templates"]) {
+      nextProps.mod.parameters["templates"] = {};
+      nextProps.mod.parameters["templates"][i18next.language] = {subject: nextProps.mod.parameters.subject||"Confirm registration", "body-pattern": nextProps.mod.parameters["body-pattern"]||"The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?register=<your_registration_plugin_name>&token={TOKEN}", defaultLang: true}
     }
 
     this.setState({
@@ -240,6 +245,62 @@ class RegisterParams extends Component {
     this.setState({mod: mod});
   }
   
+  changeNewLang(e) {
+    this.setState({newLang: e.target.value});
+  }
+  
+  addLang() {
+    var mod = this.state.mod;
+    var found = false;
+    Object.keys(mod.parameters.templates).forEach(lang => {
+      if (lang === this.state.newLang) {
+        found = true;
+      }
+    });
+    if (!found && this.state.newLang) {
+      mod.parameters.templates[this.state.newLang] = {subject: "", "body-pattern": "", defaultLang: false};
+      this.setState({mod: mod, newLang: "", currentLang: this.state.newLang});
+    }
+  }
+  
+  removeLang(lang) {
+    var mod = this.state.mod;
+    var currentLang = false;
+    delete(mod.parameters.templates[lang]);
+    if (lang == this.state.currentLang) {
+      Object.keys(mod.parameters.templates).forEach(lang => {
+        if (!currentLang) {
+          currentLang = lang;
+        }
+      });
+      this.setState({mod: mod, currentLang: currentLang});
+    } else {
+      this.setState({mod: mod});
+    }
+  }
+  
+  changeLang(e, lang) {
+    var mod = this.state.mod;
+    if (!mod.parameters.templates[lang]) {
+      mod.parameters.templates[lang] = {subject: "", "body-pattern": "", defaultLang: false}
+    }
+    this.setState({currentLang: lang});
+  }
+  
+  changeTemplate(e, param) {
+    var mod = this.state.mod;
+    mod.parameters.templates[this.state.currentLang][param] = e.target.value;
+    this.setState({mod: mod});
+  }
+  
+  toggleLangDefault() {
+    var mod = this.state.mod;
+    Object.keys(mod.parameters.templates).forEach(objKey => {
+      mod.parameters.templates[objKey].defaultLang = (objKey === this.state.currentLang);
+    });
+    this.setState({mod: mod});
+  }
+  
   checkParameters() {
     var errorList = {}, hasError = false, hasMandatory = false;
     if (!this.state.mod.parameters["session-key"]) {
@@ -280,14 +341,18 @@ class RegisterParams extends Component {
         hasError = true;
         errorList["from"] = i18next.t("admin.mod-email-from-error")
       }
-      if (!this.state.mod.parameters["subject"]) {
-        hasError = true;
-        errorList["subject"] = i18next.t("admin.mod-email-subject-error")
-      }
-      if (!this.state.mod.parameters["body-pattern"] || !this.state.mod.parameters["body-pattern"].search("{CODE}")) {
-        hasError = true;
-        errorList["body-pattern"] = i18next.t("admin.mod-email-body-pattern-error")
-      }
+      errorList["subject"] = "";
+      errorList["body-pattern"] = "";
+      Object.keys(this.state.mod.parameters.templates).forEach(lang => {
+        if (!this.state.mod.parameters.templates[lang]["subject"]) {
+          hasError = true;
+          errorList["subject"] += i18next.t("admin.mod-email-subject-error", {lang: lang})
+        }
+        if (!this.state.mod.parameters.templates[lang]["body-pattern"] || !this.state.mod.parameters.templates[lang]["body-pattern"].search("{CODE}")) {
+          hasError = true;
+          errorList["body-pattern"] += i18next.t("admin.mod-email-body-pattern-error", {lang: lang})
+        }
+      });
     }
     if (this.state.mod.parameters["set-password"] !== "always" && !hasMandatory) {
       hasError = true;
@@ -305,6 +370,28 @@ class RegisterParams extends Component {
   }
   
   render() {
+    var langList = [];
+    langList.push(
+    <div key={-2} className="form-group">
+      <div className="input-group mb-3">
+        <input type="text" className="form-control" id="mod-email-new-lang" placeholder={i18next.t("admin.mod-email-new-lang-ph")} value={this.state.newLang} onChange={(e) => this.changeNewLang(e)} />
+        <div className="input-group-append">
+          <button type="button" onClick={this.addLang} className="btn btn-outline-primary">{i18next.t("admin.mod-email-new-lang-add")}</button>
+        </div>
+      </div>
+    </div>
+    );
+    langList.push(<div key={-1} className="dropdown-divider"></div>);
+    Object.keys(this.state.mod.parameters.templates).forEach((lang, index) => {
+      langList.push(
+      <div key={index*2} className="btn-group btn-group-justified">
+        <button type="button" className="btn btn-primary" disabled={true}>{lang}</button>
+        <button type="button" onClick={(e) => this.removeLang(lang)} className="btn btn-primary" disabled={this.state.mod.parameters.templates[lang].defaultLang}>{i18next.t("admin.mod-email-new-lang-remove")}</button>
+        <button type="button" onClick={(e) => this.changeLang(e, lang)} className="btn btn-primary">{i18next.t("admin.mod-email-new-lang-select")}</button>
+      </div>
+      );
+      langList.push(<div key={(index*2)+1} className="dropdown-divider"></div>);
+    });
     var scopeList = [], defaultScopeList = [], schemeList = [];
     this.state.config.pattern.user.forEach((pattern) => {
       if (pattern.name === "scope") {
@@ -520,21 +607,39 @@ class RegisterParams extends Component {
           <div className="form-group">
             <div className="input-group mb-3">
               <div className="input-group-prepend">
-                <label className="input-group-text" htmlFor="mod-register-subject">{i18next.t("admin.mod-email-subject")}</label>
+                <label className="input-group-text" htmlFor="mod-email-lang">{i18next.t("admin.mod-email-lang")}</label>
               </div>
-              <input type="text" className={this.state.errorList["subject"]?"form-control is-invalid":"form-control"} id="mod-register-subject" onChange={(e) => this.changeParam(e, "subject")} value={this.state.mod.parameters["subject"]||""} placeholder={i18next.t("admin.mod-register-subject-ph")} />
+              <div className="dropdown">
+                <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-email-lang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  {this.state.currentLang}
+                </button>
+                <div className="dropdown-menu" aria-labelledby="mod-email-lang">
+                  {langList}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="form-group form-check">
+            <input type="checkbox" className="form-check-input" id="mod-email-lang-default" onChange={(e) => this.toggleLangDefault()} checked={this.state.mod.parameters.templates[this.state.currentLang].defaultLang} />
+            <label className="form-check-label" htmlFor="mod-email-lang-default">{i18next.t("admin.mod-email-lang-default")}</label>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor="mod-email-subject">{i18next.t("admin.mod-email-subject")}</label>
+              </div>
+              <input type="text" className={this.state.errorList["subject"]?"form-control is-invalid":"form-control"} id="mod-email-subject" onChange={(e) => this.changeTemplate(e, "subject")} value={this.state.mod.parameters.templates[this.state.currentLang]["subject"]} placeholder={i18next.t("admin.mod-email-subject-ph")} />
             </div>
             {this.state.errorList["subject"]?<span className="error-input">{this.state.errorList["subject"]}</span>:""}
           </div>
           <div className="form-group">
             <div className="input-group mb-3">
               <div className="input-group-prepend">
-                <span className="input-group-text" >{i18next.t("admin.mod-register-body-pattern")}</span>
+                <span className="input-group-text" >{i18next.t("admin.mod-email-body-pattern")}</span>
               </div>
-              <textarea rows="5" className={this.state.errorList["body-pattern"]?"form-control is-invalid":"form-control"} id="mod-register-body-pattern" onChange={(e) => this.changeParam(e, "body-pattern")} placeholder={i18next.t("admin.mod-register-body-pattern-ph")} defaultValue={this.state.mod.parameters["body-pattern"]||""}></textarea>
+              <textarea className={this.state.errorList["body-pattern"]?"form-control is-invalid":"form-control"} id="mod-email-body-pattern" onChange={(e) => this.changeTemplate(e, "body-pattern")} placeholder={i18next.t("admin.mod-email-body-pattern-ph")} value={this.state.mod.parameters.templates[this.state.currentLang]["body-pattern"]}></textarea>
             </div>
             {this.state.errorList["body-pattern"]?<span className="error-input">{this.state.errorList["body-pattern"]}</span>:""}
-            <span className="badge badge-info">{i18next.t("admin.mod-register-body-pattern-doc")}</span>
           </div>
         </div>
         {this.state.errorList["has-mandatory"]?<span className="error-input">{this.state.errorList["has-mandatory"]}</span>:""}
