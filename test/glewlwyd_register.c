@@ -47,10 +47,13 @@
 #define MAIL_PORT_WITH_USERNAME 2526
 #define MAIL_PORT_WITHOUT_USERNAME 2527
 #define MAIL_PORT_CODE_EXPIRED 2528
+#define MAIL_PORT_MULTILANG 2529
 #define MAIL_FROM "glewlwyd"
 #define MAIL_SUBJECT "Authorization Code"
+#define MAIL_SUBJECT_FR "Code d'autorisation"
 #define MAIL_CONTENT_TYPE "plain/text"
 #define MAIL_BODY_PATTERN "The code or token is "
+#define MAIL_BODY_PATTERN_FR "Le code ou token se trouve être le suivant "
 #define MAIL_BODY_CODE "{CODE}"
 #define MAIL_BODY_TOKEN "{TOKEN}"
 #define GLEWLWYD_TOKEN_LENGTH 32
@@ -67,6 +70,7 @@ struct smtp_manager {
   char * mail_data;
   unsigned int port;
   int sockfd;
+  const char * body_pattern;
 };
 
 /**
@@ -185,8 +189,8 @@ processline:
         send(manager->sockfd, bufferout, strlen(bufferout), 0);
       }
     } else { // We are inside the message after a DATA verb.
-      if (0 == o_strncmp(MAIL_BODY_PATTERN, buffer, o_strlen(MAIL_BODY_PATTERN))) {
-        manager->mail_data = o_strdup(buffer+o_strlen(MAIL_BODY_PATTERN));
+      if (0 == o_strncmp(manager->body_pattern, buffer, o_strlen(manager->body_pattern))) {
+        manager->mail_data = o_strdup(buffer+o_strlen(manager->body_pattern));
       }
       if (STREQU(buffer, ".")) { // A single "." signifies the end
         sprintf(bufferout, "250 Ok\r\n");
@@ -488,6 +492,47 @@ START_TEST(test_glwd_register_add_mod_verify_without_username_code_expired)
                                 "content-type", MAIL_CONTENT_TYPE,
                                 "body-pattern", MAIL_BODY_PATTERN MAIL_BODY_CODE,
                               "enabled", json_true());
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+}
+END_TEST
+
+START_TEST(test_glwd_register_add_mod_verify_multilang_without_username)
+{
+  json_t * j_body = json_pack("{ss ss ss so s{ss si s[s] ss s[{ss ss ss ss}] so so si si ss si ss ss s{s{sossss}s{sossss}}}}",
+                              "module", MOD_TYPE,
+                              "name", MOD_NAME,
+                              "display_name", MOD_DISPLAY_NAME,
+                              "enabled", json_true(),
+                              "parameters",
+                                "session-key", SESSION_KEY,
+                                "session-duration", SESSION_DURATION,
+                                "scope",
+                                  SCOPE,
+                                "set-password", "always",
+                                "schemes",
+                                  "module", SCHEME_TYPE,
+                                  "name", SCHEME_NAME,
+                                  "register", "always",
+                                  "display_name", SCHEME_DISPLAY_NAME,
+                                "verify-email", json_true(),
+                                "email-is-username", json_true(),
+                                "verification-code-length", MAIL_CODE_LEGTH,
+                                "verification-code-duration", MAIL_CODE_DURATION,
+                                "host", MAIL_HOST,
+                                "port", MAIL_PORT_MULTILANG,
+                                "from", MAIL_FROM,
+                                "content-type", MAIL_CONTENT_TYPE,
+                                "templates",
+                                  "en",
+                                    "defaultLang", json_true(),
+                                    "subject", MAIL_SUBJECT,
+                                    "body-pattern", MAIL_BODY_PATTERN MAIL_BODY_CODE,
+                                  "fr",
+                                    "defaultLang", json_false(),
+                                    "subject", MAIL_SUBJECT_FR,
+                                    "body-pattern", MAIL_BODY_PATTERN_FR MAIL_BODY_CODE);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_body);
@@ -885,6 +930,7 @@ START_TEST(test_glwd_register_verify_with_username_cancel_registration)
   manager.mail_data = NULL;
   manager.port = MAIL_PORT_WITH_USERNAME;
   manager.sockfd = 0;
+  manager.body_pattern = MAIL_BODY_PATTERN;
   pthread_create(&thread, NULL, simple_smtp, &manager);
 
   ulfius_init_request(&req);
@@ -985,6 +1031,7 @@ START_TEST(test_glwd_register_verify_without_username_cancel_registration)
   manager.mail_data = NULL;
   manager.port = MAIL_PORT_WITHOUT_USERNAME;
   manager.sockfd = 0;
+  manager.body_pattern = MAIL_BODY_PATTERN;
   pthread_create(&thread, NULL, simple_smtp, &manager);
 
   ulfius_init_request(&req);
@@ -1067,6 +1114,7 @@ START_TEST(test_glwd_register_verify_with_username_token_cancel_registration)
   manager.mail_data = NULL;
   manager.port = MAIL_PORT_WITH_USERNAME;
   manager.sockfd = 0;
+  manager.body_pattern = MAIL_BODY_PATTERN;
   pthread_create(&thread, NULL, simple_smtp, &manager);
 
   ulfius_init_request(&req);
@@ -1216,6 +1264,7 @@ START_TEST(test_glwd_register_verify_without_username_code_expired)
   manager.mail_data = NULL;
   manager.port = MAIL_PORT_CODE_EXPIRED;
   manager.sockfd = 0;
+  manager.body_pattern = MAIL_BODY_PATTERN;
   pthread_create(&thread, NULL, simple_smtp, &manager);
 
   ulfius_init_request(&req);
@@ -1268,6 +1317,172 @@ START_TEST(test_glwd_register_delete_new_user_with_scheme)
 }
 END_TEST
 
+START_TEST(test_glwd_register_verify_without_username_multilang_fr_cancel_registration)
+{
+  struct smtp_manager manager;
+  json_t * j_body;
+  struct _u_request req;
+  struct _u_response resp;
+  int res;
+  char * cookie;
+  pthread_t thread;
+
+  manager.mail_data = NULL;
+  manager.port = MAIL_PORT_MULTILANG;
+  manager.sockfd = 0;
+  manager.body_pattern = MAIL_BODY_PATTERN_FR;
+  pthread_create(&thread, NULL, simple_smtp, &manager);
+
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+
+  j_body = json_pack("{ss}", "username", NEW_EMAIL);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/username", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  // Verification with the new username
+  j_body = json_pack("{ssss}", "email", NEW_EMAIL, "lang", "fr");
+  ck_assert_int_eq(run_simple_test(NULL, "PUT", SERVER_URI "/" MOD_NAME "/verify", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  // Send verification code
+  j_body = json_pack("{ssss}", "email", NEW_EMAIL, "code", manager.mail_data);
+  req.http_url = o_strdup(SERVER_URI "/" MOD_NAME "/verify");
+  req.http_verb = o_strdup("POST");
+  ck_assert_int_eq(ulfius_set_json_body_request(&req, j_body), U_OK);
+  json_decref(j_body);
+  res = ulfius_send_http_request(&req, &resp);
+  ck_assert_int_eq(res, U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.nb_cookies, 1);
+  cookie = msprintf("%s=%s", resp.map_cookie[0].key, resp.map_cookie[0].value);
+  ck_assert_ptr_ne(cookie, NULL);
+  u_map_put(req.map_header, "Cookie", cookie);
+  o_free(cookie);
+  ulfius_clean_response(&resp);
+  
+  pthread_join(thread, NULL);
+  
+  o_free(manager.mail_data);
+
+  // Set password
+  j_body = json_pack("{ss}", "password", NEW_PASSWORD);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" MOD_NAME "/profile/password", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  // Verify canuse response is 401 for scheme mock
+  j_body = json_pack("{ssssss}", "scheme_name", SCHEME_NAME, "scheme_type", SCHEME_TYPE, "username", NEW_EMAIL);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&req, "PUT", SERVER_URI "/" MOD_NAME "/profile/scheme/register/canuse", NULL, NULL, j_body, NULL, 402, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  // Register scheme mock
+  j_body = json_pack("{sssssss{so}}", "scheme_name", SCHEME_NAME, "scheme_type", SCHEME_TYPE, "username", NEW_EMAIL, "value", "register", json_true());
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" MOD_NAME "/profile/scheme/register", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  // Verify canuse response is 200 for scheme mock
+  j_body = json_pack("{ssssss}", "scheme_name", SCHEME_NAME, "scheme_type", SCHEME_TYPE, "username", NEW_EMAIL);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&req, "PUT", SERVER_URI "/" MOD_NAME "/profile/scheme/register/canuse", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  // Cancel registration
+  ck_assert_int_eq(run_simple_test(&req, "DELETE", SERVER_URI "/" MOD_NAME "/profile", NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+  
+  // Verify session is disabled
+  ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" MOD_NAME "/profile", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
+
+  ulfius_clean_request(&req);
+}
+END_TEST
+
+START_TEST(test_glwd_register_verify_without_username_multilang_default_cancel_registration)
+{
+  struct smtp_manager manager;
+  json_t * j_body;
+  struct _u_request req;
+  struct _u_response resp;
+  int res;
+  char * cookie;
+  pthread_t thread;
+
+  manager.mail_data = NULL;
+  manager.port = MAIL_PORT_MULTILANG;
+  manager.sockfd = 0;
+  manager.body_pattern = MAIL_BODY_PATTERN;
+  pthread_create(&thread, NULL, simple_smtp, &manager);
+
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+
+  j_body = json_pack("{ss}", "username", NEW_EMAIL);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/username", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  // Verification with the new username
+  j_body = json_pack("{ss}", "email", NEW_EMAIL);
+  ck_assert_int_eq(run_simple_test(NULL, "PUT", SERVER_URI "/" MOD_NAME "/verify", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  // Send verification code
+  j_body = json_pack("{ssss}", "email", NEW_EMAIL, "code", manager.mail_data);
+  req.http_url = o_strdup(SERVER_URI "/" MOD_NAME "/verify");
+  req.http_verb = o_strdup("POST");
+  ck_assert_int_eq(ulfius_set_json_body_request(&req, j_body), U_OK);
+  json_decref(j_body);
+  res = ulfius_send_http_request(&req, &resp);
+  ck_assert_int_eq(res, U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.nb_cookies, 1);
+  cookie = msprintf("%s=%s", resp.map_cookie[0].key, resp.map_cookie[0].value);
+  ck_assert_ptr_ne(cookie, NULL);
+  u_map_put(req.map_header, "Cookie", cookie);
+  o_free(cookie);
+  ulfius_clean_response(&resp);
+  
+  pthread_join(thread, NULL);
+  
+  o_free(manager.mail_data);
+
+  // Set password
+  j_body = json_pack("{ss}", "password", NEW_PASSWORD);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" MOD_NAME "/profile/password", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  // Verify canuse response is 401 for scheme mock
+  j_body = json_pack("{ssssss}", "scheme_name", SCHEME_NAME, "scheme_type", SCHEME_TYPE, "username", NEW_EMAIL);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&req, "PUT", SERVER_URI "/" MOD_NAME "/profile/scheme/register/canuse", NULL, NULL, j_body, NULL, 402, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  // Register scheme mock
+  j_body = json_pack("{sssssss{so}}", "scheme_name", SCHEME_NAME, "scheme_type", SCHEME_TYPE, "username", NEW_EMAIL, "value", "register", json_true());
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" MOD_NAME "/profile/scheme/register", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  // Verify canuse response is 200 for scheme mock
+  j_body = json_pack("{ssssss}", "scheme_name", SCHEME_NAME, "scheme_type", SCHEME_TYPE, "username", NEW_EMAIL);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&req, "PUT", SERVER_URI "/" MOD_NAME "/profile/scheme/register/canuse", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  // Cancel registration
+  ck_assert_int_eq(run_simple_test(&req, "DELETE", SERVER_URI "/" MOD_NAME "/profile", NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+  
+  // Verify session is disabled
+  ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" MOD_NAME "/profile", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
+
+  ulfius_clean_request(&req);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -1300,6 +1515,10 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_register_delete_mod);
   tcase_add_test(tc_core, test_glwd_register_add_mod_verify_with_username_token);
   tcase_add_test(tc_core, test_glwd_register_verify_with_username_token_cancel_registration);
+  tcase_add_test(tc_core, test_glwd_register_delete_mod);
+  tcase_add_test(tc_core, test_glwd_register_add_mod_verify_multilang_without_username);
+  tcase_add_test(tc_core, test_glwd_register_verify_without_username_multilang_fr_cancel_registration);
+  tcase_add_test(tc_core, test_glwd_register_verify_without_username_multilang_default_cancel_registration);
   tcase_add_test(tc_core, test_glwd_register_delete_mod);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
