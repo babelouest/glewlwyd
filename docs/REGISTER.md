@@ -107,13 +107,21 @@ Address used as sender in the e-mails, required.
 
 Content-type for the e-mail content, default is `text/plain; charset=utf-8`
 
+### Lang
+
+Dropdown value to select, add or remove lang templates for the e-mails.
+
+### Default lang
+
+Checkbox to specify what lang is the default language.
+
 ### E-mail subject
 
-Subject used on the e-mails, required.
+Subject used on the e-mails for the current lang, required.
 
 ### E-mail body
 
-The pattern for the body on the e-mails, You must use at least once the string `{CODE}` in the pattern to be replaced by the code. The pattern {TOKEN} will be replaced by the token used to build the url in the e-mail to get direct access to the validation step without entering the code.
+The pattern for the body on the e-mails for the current lang, You must use at least once the string `{CODE}` in the pattern to be replaced by the code. The pattern {TOKEN} will be replaced by the token used to build the url in the e-mail to get direct access to the validation step without entering the code.
 
 Example, by using the following e-mail pattern:
 
