@@ -215,6 +215,9 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
           json_array_append_new(j_errors, json_string("body-pattern is mandatory and must be a non empty string"));
         }
       } else {
+        if (json_object_get(j_params, "content-type") != NULL && !json_string_length(json_object_get(j_params, "content-type"))) {
+          json_array_append_new(j_errors, json_string("content-type is optional and must be a string"));
+        }
         if (!json_string_length(json_object_get(j_params, "user-lang-property"))) {
           json_array_append_new(j_errors, json_string("user-lang-property is mandatory and must be a non empty string"));
         }
@@ -625,7 +628,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
         memset(code, 0, (json_integer_value(json_object_get(j_param, "code-length")) + 1));
         if (generate_new_code(config, j_param, username, code, json_integer_value(json_object_get(j_param, "code-length"))) == G_OK) {
           if ((body = str_replace(get_template_property(j_param, json_object_get(j_user, "user"), "body-pattern"), "{CODE}", code)) != NULL) {
-            if (ulfius_send_smtp_email(json_string_value(json_object_get(j_param, "host")),
+            if (ulfius_send_smtp_rich_email(json_string_value(json_object_get(j_param, "host")),
                                        json_integer_value(json_object_get(j_param, "port")),
                                        json_object_get(j_param, "use-tls")==json_true()?1:0,
                                        json_object_get(j_param, "verify-certificate")==json_false()?0:1,
@@ -635,6 +638,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
                                        json_string_value(json_object_get(json_object_get(j_user, "user"), "email")),
                                        NULL,
                                        NULL,
+                                       json_string_length(json_object_get(j_param, "content-type"))?json_string_value(json_object_get(j_param, "content-type")):"text/plain; charset=utf-8",
                                        get_template_property(j_param, json_object_get(j_user, "user"), "subject"),
                                        body) == G_OK) {
               y_log_message(Y_LOG_LEVEL_WARNING, "Security - Scheme email - code sent for username %s at IP Address %s", username, ip_source);
