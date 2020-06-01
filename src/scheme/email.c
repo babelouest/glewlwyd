@@ -228,14 +228,14 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
               if (!json_is_boolean(json_object_get(j_template, "defaultLang"))) {
                 json_array_append_new(j_errors, json_string("defaultLang is madatory in a template and must be a JSON object"));
               }
+              if (!json_string_length(json_object_get(j_template, "subject"))) {
+                json_array_append_new(j_errors, json_string("subject is mandatory for default lang and must be a non empty string"));
+              }
+              if (json_object_get(j_template, "body") != NULL && !json_string_length(json_object_get(j_template, "body"))) {
+                json_array_append_new(j_errors, json_string("body is mandatory for default lang and must be a non empty string"));
+              }
               if (json_object_get(j_template, "defaultLang") == json_true()) {
                 nb_default_lang++;
-                if (!json_string_length(json_object_get(j_template, "subject"))) {
-                  json_array_append_new(j_errors, json_string("subject is mandatory for default lang and must be a non empty string"));
-                }
-                if (json_object_get(j_template, "body") != NULL && !json_string_length(json_object_get(j_template, "body"))) {
-                  json_array_append_new(j_errors, json_string("body is mandatory for default lang and must be a non empty string"));
-                }
               }
             }
           }
