@@ -67,13 +67,29 @@ password used to authenticate to the SMTP server if required by the SMTP server,
 
 Address used as sender in the e-mails, required.
 
+### Content-Type
+
+Content-Type for the e-mails, default is plain text but you can set an HTML body if youo need to.
+
+### User lang property
+
+User property which will contain the default lang value used for the e-mail templates. The lang value must be an exact match of the lang template. If the user lang doens't exist in the templates or if the user has no lang property, the e-mail template will use the default language.
+
+### Lang
+
+Dropdown value to select, add or remove lang templates for the e-mails.
+
+### Default lang
+
+Checkbox to specify what lang is the default language. In case the user has no language value or its language value doesn't exist in the templates.
+
 ### E-mail subject
 
-Subject used on the e-mails, required.
+Subject used on the e-mails for the current lang, required.
 
 ### E-mail body, the pattern {CODE} will be replaced by the code.
 
-The pattern for the body on the e-mails, You must use at least once the string `{CODE}` in the pattern to be replaced by the code.
+The pattern for the body on the e-mails for the current lang, You must use at least once the string `{CODE}` in the pattern to be replaced by the code.
 
 Example, by using the following e-mail pattern:
 
