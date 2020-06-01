@@ -42,6 +42,7 @@
 #define MAIL_HOST "localhost"
 #define MAIL_PORT 2525
 #define MAIL_FROM "glewlwyd"
+#define MAIL_CONTENT_TYPE "text/plain; charset=utf-8"
 #define MAIL_SUBJECT "Authorization Code"
 #define MAIL_SUBJECT_FR "Code d'autorisation en français"
 #define MAIL_BODY_PATTERN "The code is "
@@ -273,7 +274,7 @@ END_TEST
 
 START_TEST(test_glwd_scheme_mail_irl_module_multilang_add)
 {
-  json_t * j_parameters = json_pack("{sssssssisis{sisisssisssss{s{sossss}s{sossss}}}}", 
+  json_t * j_parameters = json_pack("{sssssssisis{sisisssisssssss{s{sossss}s{sossss}}}}", 
                                     "module", MODULE_MODULE, 
                                     "name", MODULE_LANG_NAME, 
                                     "display_name", MODULE_DISPLAY_NAME, 
@@ -285,6 +286,7 @@ START_TEST(test_glwd_scheme_mail_irl_module_multilang_add)
                                       "host", mail_host==NULL?MAIL_HOST:mail_host,
                                       "port", MAIL_PORT,
                                       "from", MAIL_FROM,
+                                      "content-type", MAIL_CONTENT_TYPE,
                                       "user-lang-property", "lang",
                                       "templates",
                                         "en",
