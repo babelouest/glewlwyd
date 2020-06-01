@@ -46,6 +46,28 @@ struct _register_config {
   json_t               * j_parameters;
 };
 
+static const char * get_template_property(json_t * j_params, const char * user_lang, const char * property_field) {
+  json_t * j_template = NULL;
+  const char * property = NULL, * property_default = NULL, * lang = NULL;
+  
+  if (json_object_get(j_params, "templates") == NULL) {
+    property = json_string_value(json_object_get(j_params, property_field));
+  } else {
+    json_object_foreach(json_object_get(j_params, "templates"), lang, j_template) {
+      if (0 == o_strcmp(user_lang, lang)) {
+        property = json_string_value(json_object_get(j_template, property_field));
+      }
+      if (json_object_get(j_template, "defaultLang") == json_true()) {
+        property_default = json_string_value(json_object_get(j_template, property_field));
+      }
+    }
+    if (property == NULL) {
+      property = property_default;
+    }
+  }
+  return property;
+}
+
 static int can_register_scheme(struct _register_config * config, const char * scheme_name) {
   json_t * j_element = NULL;
   size_t index = 0;
@@ -60,7 +82,7 @@ static int can_register_scheme(struct _register_config * config, const char * sc
   return 0;
 }
 
-static json_t * register_generate_email_verification_code(struct _register_config * config, const char * username, const char * email, const char * issued_for, const char * user_agent, const char * ip_source) {
+static json_t * register_generate_email_verification_code(struct _register_config * config, const char * username, const char * email, const char * lang, const char * issued_for, const char * user_agent, const char * ip_source) {
   char * code, * code_hash, * expires_at_clause, * tmp_body, * body, token[GLEWLWYD_TOKEN_LENGTH+1], * token_hash;
   json_t * j_return, * j_query;
   int res;
@@ -108,21 +130,21 @@ static json_t * register_generate_email_verification_code(struct _register_confi
           if ((code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code)) != NULL) {
             if (rand_string_nonce(token, GLEWLWYD_TOKEN_LENGTH)) {
               if ((token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, token)) != NULL) {
-                if ((tmp_body = str_replace(json_string_value(json_object_get(config->j_parameters, "body-pattern")), "{TOKEN}", token)) != NULL) {
+                if ((tmp_body = str_replace(get_template_property(config->j_parameters, lang, "body-pattern"), "{TOKEN}", token)) != NULL) {
                   if ((body = str_replace(tmp_body, "{CODE}", code)) != NULL) {
                     if (ulfius_send_smtp_rich_email(json_string_value(json_object_get(config->j_parameters, "host")),
-                                               json_integer_value(json_object_get(config->j_parameters, "port")),
-                                               json_object_get(config->j_parameters, "use-tls")==json_true()?1:0,
-                                               json_object_get(config->j_parameters, "verify-certificate")==json_false()?0:1,
-                                               json_string_length(json_object_get(config->j_parameters, "user"))?json_string_value(json_object_get(config->j_parameters, "user")):NULL,
-                                               json_string_length(json_object_get(config->j_parameters, "password"))?json_string_value(json_object_get(config->j_parameters, "password")):NULL,
-                                               json_string_value(json_object_get(config->j_parameters, "from")),
-                                               email,
-                                               NULL,
-                                               NULL,
-                                               json_string_length(json_object_get(config->j_parameters, "content-type"))?json_string_value(json_object_get(config->j_parameters, "content-type")):"text/plain; charset=utf-8",
-                                               json_string_value(json_object_get(config->j_parameters, "subject")),
-                                               body) == G_OK) {
+                                                   json_integer_value(json_object_get(config->j_parameters, "port")),
+                                                   json_object_get(config->j_parameters, "use-tls")==json_true()?1:0,
+                                                   json_object_get(config->j_parameters, "verify-certificate")==json_false()?0:1,
+                                                   json_string_length(json_object_get(config->j_parameters, "user"))?json_string_value(json_object_get(config->j_parameters, "user")):NULL,
+                                                   json_string_length(json_object_get(config->j_parameters, "password"))?json_string_value(json_object_get(config->j_parameters, "password")):NULL,
+                                                   json_string_value(json_object_get(config->j_parameters, "from")),
+                                                   email,
+                                                   NULL,
+                                                   NULL,
+                                                   json_string_length(json_object_get(config->j_parameters, "content-type"))?json_string_value(json_object_get(config->j_parameters, "content-type")):"text/plain; charset=utf-8",
+                                                   get_template_property(config->j_parameters, lang, "subject"),
+                                                   body) == G_OK) {
                       y_log_message(Y_LOG_LEVEL_WARNING, "Security - register new user - code sent for email %s at IP Address %s", email, ip_source);
                       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
                         expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)json_integer_value(json_object_get(config->j_parameters, "verification-code-duration"))));
@@ -779,11 +801,26 @@ static int register_delete_new_user(struct _register_config * config, const char
 
 static int callback_register_config(const struct _u_request * request, struct _u_response * response, void * user_data) {
   UNUSED(request);
-  struct _register_config * config = (struct _register_config *)user_data; 
-  json_t * j_config = json_pack("{sOsOsOsO}", "set-password", json_object_get(config->j_parameters, "set-password"), 
-                                              "schemes", json_object_get(config->j_parameters, "schemes")!=NULL?json_object_get(config->j_parameters, "schemes"):json_null(),
-                                              "verify-email", json_object_get(config->j_parameters, "verify-email")!=NULL?json_object_get(config->j_parameters, "verify-email"):json_false(),
-                                              "email-is-username", json_object_get(config->j_parameters, "email-is-username")!=NULL?json_object_get(config->j_parameters, "email-is-username"):json_false());
+  struct _register_config * config = (struct _register_config *)user_data;
+  json_t * j_config, * j_template = NULL;
+  const char * lang = NULL;
+  
+  j_config = json_pack("{sOsOsOsOs[]}", "set-password", json_object_get(config->j_parameters, "set-password"), 
+                                      "schemes", json_object_get(config->j_parameters, "schemes")!=NULL?json_object_get(config->j_parameters, "schemes"):json_null(),
+                                      "verify-email", json_object_get(config->j_parameters, "verify-email")!=NULL?json_object_get(config->j_parameters, "verify-email"):json_false(),
+                                      "email-is-username", json_object_get(config->j_parameters, "email-is-username")!=NULL?json_object_get(config->j_parameters, "email-is-username"):json_false(),
+                                      "languages");
+  // Add default lang on top of the list
+  json_object_foreach(json_object_get(config->j_parameters, "templates"), lang, j_template) {
+    if (json_object_get(j_template, "defaultLang") == json_true()) {
+      json_array_append_new(json_object_get(j_config, "languages"), json_string(lang));
+    }
+  }
+  json_object_foreach(json_object_get(config->j_parameters, "templates"), lang, j_template) {
+    if (json_object_get(j_template, "defaultLang") != json_true()) {
+      json_array_append_new(json_object_get(j_config, "languages"), json_string(lang));
+    }
+  }
   if (ulfius_set_json_body_response(response, 200, j_config) != U_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_config - Error ulfius_set_json_body_response");
     response->status = 500;
@@ -911,7 +948,7 @@ static int callback_register_send_email_verification(const struct _u_request * r
     if (o_strlen(email) && o_strlen(username)) {
       issued_for = get_client_hostname(request);
       if (issued_for != NULL) {
-        j_result = register_generate_email_verification_code(config, username, email, issued_for, u_map_get_case(request->map_header, "user-agent"), get_ip_source(request));
+        j_result = register_generate_email_verification_code(config, username, email, json_string_value(json_object_get(j_parameters, "lang")), issued_for, u_map_get_case(request->map_header, "user-agent"), get_ip_source(request));
         if (check_result_value(j_result, G_ERROR_PARAM)) {
           response->status = 400;
         } else if(!check_result_value(j_result, G_OK)) {
@@ -1235,8 +1272,10 @@ static int callback_register_clean_session(const struct _u_request * request, st
 }
 
 json_t * is_plugin_parameters_valid(json_t * j_params) {
-  json_t * j_return, * j_errors = json_array(), * j_element = NULL;
+  json_t * j_return, * j_errors = json_array(), * j_element = NULL, * j_template = NULL;
   size_t index = 0, has_mandatory = 0;
+  const char * lang = NULL;
+  int nb_default_lang = 0;
 
   if (j_errors != NULL) {
     if (!json_is_object(j_params)) {
@@ -1325,11 +1364,39 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
         if (json_object_get(j_params, "content-type") != NULL && !json_string_length(json_object_get(j_params, "content-type"))) {
           json_array_append_new(j_errors, json_string("content-type is optional and must be a string"));
         }
-        if (json_object_get(j_params, "subject") != NULL && !json_string_length(json_object_get(j_params, "subject"))) {
-          json_array_append_new(j_errors, json_string("subject is mandatory and must be a non empty string"));
-        }
-        if (json_object_get(j_params, "body-pattern") != NULL && !json_string_length(json_object_get(j_params, "body-pattern"))) {
-          json_array_append_new(j_errors, json_string("body-pattern is mandatory and must be a non empty string"));
+        if (json_object_get(j_params, "templates") == NULL) {
+          if (json_object_get(j_params, "subject") != NULL && !json_string_length(json_object_get(j_params, "subject"))) {
+            json_array_append_new(j_errors, json_string("subject is mandatory and must be a non empty string"));
+          }
+          if (json_object_get(j_params, "body-pattern") != NULL && !json_string_length(json_object_get(j_params, "body-pattern"))) {
+            json_array_append_new(j_errors, json_string("body-pattern is mandatory and must be a non empty string"));
+          }
+        } else {
+          if (!json_is_object(json_object_get(j_params, "templates"))) {
+            json_array_append_new(j_errors, json_string("templates is mandatory and must be a JSON object"));
+          } else {
+            json_object_foreach(json_object_get(j_params, "templates"), lang, j_template) {
+              if (!json_is_object(j_template)) {
+                json_array_append_new(j_errors, json_string("template content must be a JSON object"));
+              } else {
+                if (!json_is_boolean(json_object_get(j_template, "defaultLang"))) {
+                  json_array_append_new(j_errors, json_string("defaultLang is madatory in a template and must be a JSON object"));
+                }
+                if (json_object_get(j_template, "defaultLang") == json_true()) {
+                  nb_default_lang++;
+                  if (!json_string_length(json_object_get(j_template, "subject"))) {
+                    json_array_append_new(j_errors, json_string("subject is mandatory for default lang and must be a non empty string"));
+                  }
+                  if (json_object_get(j_template, "body") != NULL && !json_string_length(json_object_get(j_template, "body"))) {
+                    json_array_append_new(j_errors, json_string("body is mandatory for default lang and must be a non empty string"));
+                  }
+                }
+              }
+            }
+            if (nb_default_lang != 1) {
+              json_array_append_new(j_errors, json_string("template list must have only one defaultLang set to true"));
+            }
+          }
         }
       }
     }
