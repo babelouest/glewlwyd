@@ -51,6 +51,10 @@ class EmailParams extends Component {
       props.mod.parameters["user-lang-property"] = "lang";
     }
 
+    if (props.mod.parameters["content-type"] === undefined) {
+      props.mod.parameters["content-type"] = "text/plain; charset=utf-8";
+    }
+
     if (!props.mod.parameters["templates"]) {
       props.mod.parameters["templates"] = {};
       props.mod.parameters["templates"][i18next.language] = {subject: props.mod.parameters.subject||"", "body-pattern": props.mod.parameters["body-pattern"]||"", defaultLang: true}
@@ -128,6 +132,10 @@ class EmailParams extends Component {
       nextProps.mod.parameters["user-lang-property"] = "lang";
     }
 
+    if (nextProps.mod.parameters["content-type"] === undefined) {
+      nextProps.mod.parameters["content-type"] = "text/plain; charset=utf-8";
+    }
+
     if (!nextProps.mod.parameters["templates"]) {
       nextProps.mod.parameters["templates"] = {};
       nextProps.mod.parameters["templates"][i18next.language] = {subject: nextProps.mod.parameters.subject||"", "body-pattern": nextProps.mod.parameters["body-pattern"]||"", defaultLang: true}
@@ -203,10 +211,6 @@ class EmailParams extends Component {
   }
   
   changeLang(e, lang) {
-    var mod = this.state.mod;
-    if (!mod.parameters.templates[lang]) {
-      mod.parameters.templates[lang] = {subject: "", "body-pattern": "", defaultLang: false}
-    }
     this.setState({currentLang: lang});
   }
   
@@ -241,6 +245,10 @@ class EmailParams extends Component {
     if (!this.state.mod.parameters["from"]) {
       hasError = true;
       errorList["from"] = i18next.t("admin.mod-email-from-error")
+    }
+    if (!this.state.mod.parameters["content-type"]) {
+      hasError = true;
+      errorList["content-type"] = i18next.t("admin.mod-email-content-type-error")
     }
     if (!this.state.mod.parameters["user-lang-property"]) {
       hasError = true;
@@ -362,6 +370,15 @@ class EmailParams extends Component {
             <input type="text" className={this.state.errorList["from"]?"form-control is-invalid":"form-control"} id="mod-email-from" onChange={(e) => this.changeParam(e, "from")} value={this.state.mod.parameters["from"]} placeholder={i18next.t("admin.mod-email-from-ph")} />
           </div>
           {this.state.errorList["from"]?<span className="error-input">{this.state.errorList["from"]}</span>:""}
+        </div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-email-content-type">{i18next.t("admin.mod-email-content-type")}</label>
+            </div>
+            <input type="text" className={this.state.errorList["content-type"]?"form-control is-invalid":"form-control"} id="mod-content-type-from" onChange={(e) => this.changeParam(e, "content-type")} value={this.state.mod.parameters["content-type"]} placeholder={i18next.t("admin.mod-email-content-type-ph")} />
+          </div>
+          {this.state.errorList["content-type"]?<span className="error-input">{this.state.errorList["content-type"]}</span>:""}
         </div>
         <div className="form-group">
           <div className="input-group mb-3">

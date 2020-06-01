@@ -15,6 +15,7 @@ class Register extends Component {
       registerSchemes: props.registerSchemes,
       token: props.token,
       registerValid: props.registerValid,
+      registerDefaultLang: props.registerDefaultLang,
       
       username: "",
       email: "",
@@ -50,7 +51,8 @@ class Register extends Component {
       registerConfig: nextProps.registerConfig,
       registerProfile: nextProps.registerProfile,
       token: nextProps.token,
-      registerValid: nextProps.registerValid
+      registerValid: nextProps.registerValid,
+      registerDefaultLang: nextProps.registerDefaultLang
     });
   }
   
@@ -225,7 +227,7 @@ class Register extends Component {
   }
   
   sendVerificationEmail() {
-    apiManager.glewlwydRequest("/" + this.state.config.params.register + "/verify", "PUT", {username: this.state.username, email: this.state.email})
+    apiManager.glewlwydRequest("/" + this.state.config.params.register + "/verify", "PUT", {username: this.state.username, email: this.state.email, lang: this.state.registerDefaultLang})
     .then(() => {
       messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-profile-email-sent", {email: this.state.email})});
       this.setState({verificationSent: true});
@@ -291,6 +293,10 @@ class Register extends Component {
   
   updatePassword() {
     this.setState({modifyPassword: true});
+  }
+  
+  changeLang(e, lang) {
+    this.setState({registerDefaultLang: lang});
   }
   
   render() {
@@ -467,7 +473,21 @@ class Register extends Component {
         </form>
     } else if (!this.state.registerProfile) {
       if (this.state.registerConfig["verify-email"]) {
-        var buttonVerifyJsx, codeInputJsx;
+        var buttonVerifyJsx, codeInputJsx, langListJsx;
+        if (this.state.registerDefaultLang && this.state.registerConfig.languages.length > 1) {
+          var langList = [];
+          this.state.registerConfig.languages.forEach((lang, index) => {
+            langList.push(<a key={index} className={"dropdown-item"+(this.state.registerDefaultLang===lang?" active":"")} href="#" onClick={(e) => this.changeLang(e, lang)}>{lang}</a>);
+          });
+          langListJsx = <div className="btn-group dropup" role="group">
+            <button className="btn btn-success dropdown-toggle" type="button" id="register-profile-lang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {this.state.registerDefaultLang}
+            </button>
+            <div className="dropdown-menu" aria-labelledby="register-profile-lang">
+              {langList}
+            </div>
+          </div>;
+        }
         if (this.state.verificationSent) {
           codeInputJsx =
             <div>
@@ -491,22 +511,28 @@ class Register extends Component {
                       title={i18next.t("profile.register-profile-verify-code")}>
                 {i18next.t("profile.register-profile-verify-code")}
               </button>
-              <button className="btn btn-success" 
-                      type="button" 
-                      onClick={() => this.sendVerificationEmail()} 
-                      title={i18next.t("profile.register-profile-reverify-email")}>
-                {i18next.t("profile.register-profile-reverify-email")}
-              </button>
+              <div className="btn-group" role="group">
+                <button className="btn btn-success" 
+                        type="button" 
+                        onClick={() => this.sendVerificationEmail()} 
+                        title={i18next.t("profile.register-profile-reverify-email")}>
+                  {i18next.t("profile.register-profile-reverify-email")}
+                </button>
+                {langListJsx}
+              </div>
             </div>
         } else {
           buttonVerifyJsx = 
-            <button className="btn btn-success" 
-                    type="button" 
-                    onClick={() => this.sendVerificationEmail()} 
-                    disabled={!this.state.usernameValid || !this.state.email || !this.state.registerValid}
-                    title={i18next.t("profile.register-profile-verify-email")}>
-              {i18next.t("profile.register-profile-verify-email")}
-            </button>
+            <div className="btn-group" role="group">
+              <button className="btn btn-success" 
+                      type="button" 
+                      onClick={() => this.sendVerificationEmail()} 
+                      disabled={!this.state.usernameValid || !this.state.email || !this.state.registerValid}
+                      title={i18next.t("profile.register-profile-verify-email")}>
+                {i18next.t("profile.register-profile-verify-email")}
+              </button>
+              {langListJsx}
+            </div>
         }
         if (this.state.registerConfig["email-is-username"]) {
           formJsx = 
