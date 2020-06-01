@@ -246,16 +246,16 @@ class EmailParams extends Component {
       hasError = true;
       errorList["user-lang-property"] = i18next.t("admin.mod-email-user-lang-property-error")
     }
-    Object.keys(this.state.mod.parameters.templates).forEach(objKey => {
-      if (this.state.mod.parameters.templates[objKey].defaultLang) {
-        if (!this.state.mod.parameters.templates[objKey]["subject"]) {
-          hasError = true;
-          errorList["subject"] = i18next.t("admin.mod-email-subject-error")
-        }
-        if (!this.state.mod.parameters.templates[objKey]["body-pattern"] || !this.state.mod.parameters.templates[objKey]["body-pattern"].search("{CODE}")) {
-          hasError = true;
-          errorList["body-pattern"] = i18next.t("admin.mod-email-body-pattern-error")
-        }
+    errorList["subject"] = "";
+    errorList["body-pattern"] = "";
+    Object.keys(this.state.mod.parameters.templates).forEach(lang => {
+      if (!this.state.mod.parameters.templates[lang]["subject"]) {
+        hasError = true;
+        errorList["subject"] += i18next.t("admin.mod-email-subject-error", {lang: lang})
+      }
+      if (!this.state.mod.parameters.templates[lang]["body-pattern"] || !this.state.mod.parameters.templates[lang]["body-pattern"].search("{CODE}")) {
+        hasError = true;
+        errorList["body-pattern"] += i18next.t("admin.mod-email-body-pattern-error", {lang: lang})
       }
     });
     if (!hasError) {
