@@ -4872,8 +4872,8 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
        * access_token_out = NULL,
        * id_token = NULL,
        * id_token_out = NULL, 
-         jti[OIDC_JTI_LENGTH] = {0}, 
-         jti_r[OIDC_JTI_LENGTH] = {0},
+         jti[OIDC_JTI_LENGTH+1] = {0}, 
+         jti_r[OIDC_JTI_LENGTH+1] = {0},
        * scope = NULL, 
        * issued_for = get_client_hostname(request);
   time_t now;
@@ -6437,8 +6437,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
        * refresh_token_out = NULL, 
        * access_token = NULL, 
        * access_token_out = NULL, 
-         jti[OIDC_JTI_LENGTH] = {0}, 
-         jti_r[OIDC_JTI_LENGTH] = {0};
+         jti[OIDC_JTI_LENGTH+1] = {0}, 
+         jti_r[OIDC_JTI_LENGTH+1] = {0};
   json_t * j_code, 
          * j_body, 
          * j_refresh_token, 
@@ -6698,8 +6698,8 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
        * access_token_out = NULL,
        * id_token = NULL,
        * id_token_out = NULL,
-         jti[OIDC_JTI_LENGTH] = {0},
-         jti_r[OIDC_JTI_LENGTH] = {0},
+         jti[OIDC_JTI_LENGTH+1] = {0},
+         jti_r[OIDC_JTI_LENGTH+1] = {0},
       ** scope_array = NULL;
   time_t now;
   size_t index = 0;
@@ -6959,12 +6959,12 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
   json_t * j_client, 
          * j_element = NULL, 
          * json_body;
-  char ** scope_array, 
+  char ** scope_array = NULL, 
         * scope_joined = NULL, 
         * access_token = NULL, 
         * access_token_out = NULL, 
         * issued_for = get_client_hostname(request), 
-          jti[OIDC_JTI_LENGTH] = {0};
+          jti[OIDC_JTI_LENGTH+1] = {0};
   size_t index = 0;
   int i, auth_type_allowed = 0;
   time_t now;
@@ -7149,7 +7149,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
        * new_refresh_token_out = NULL, 
        * scope_joined = NULL, 
        * issued_for = NULL,
-         jti[OIDC_JTI_LENGTH] = {0};
+         jti[OIDC_JTI_LENGTH+1] = {0};
   int has_error = 0, has_issues = 0;
   json_int_t gpor_id = 0;
 
@@ -7523,7 +7523,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
              * state_value = NULL,
              * ip_source = get_ip_source(request);
   int result = U_CALLBACK_CONTINUE;
-  char * redirect_url, 
+  char * redirect_url = NULL, 
       ** resp_type_array = NULL, 
        * authorization_code = NULL, 
        * authorization_code_out = NULL, 
@@ -7537,16 +7537,20 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
        * str_request = NULL, 
        * access_token_out = NULL, 
        * session_state = NULL, 
-         jti[OIDC_JTI_LENGTH] = {0};
+         jti[OIDC_JTI_LENGTH+1] = {0};
   json_t * j_auth_result = NULL, 
          * j_request = NULL, 
          * j_client = NULL;
-  time_t now;
-  int ret, 
+  time_t now = 0;
+  int ret = G_ERROR, 
       implicit_flow = 1, 
       client_auth_method = GLEWLWYD_CLIENT_AUTH_METHOD_NONE,
       auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NULL_FLAG, 
-      check_request = 0;
+      check_request = 0,
+      has_code = 0,
+      has_token = 0,
+      has_id_token = 0,
+      has_none = 0;
   struct _u_map map_query, * map = get_map(request);
   int form_post = (0 == o_strcmp("form_post", u_map_get(map, "response_mode")));
 
@@ -7672,6 +7676,10 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       }
       ret = G_ERROR_PARAM;
     } else if (split_string(response_type, " ", &resp_type_array)) {
+      has_code = string_array_has_value((const char **)resp_type_array, "code");
+      has_token = string_array_has_value((const char **)resp_type_array, "token");
+      has_id_token = string_array_has_value((const char **)resp_type_array, "id_token");
+      has_none = string_array_has_value((const char **)resp_type_array, "none");
       if (u_map_init(&map_query) == U_OK) {
         time(&now);
         
@@ -7679,10 +7687,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           u_map_put(&map_query, "state", state_value);
         }
         
-        if (!string_array_has_value((const char **)resp_type_array, "code") && 
-            !string_array_has_value((const char **)resp_type_array, "token") &&
-            !string_array_has_value((const char **)resp_type_array, "id_token") &&
-            !string_array_has_value((const char **)resp_type_array, "none")) {
+        if (!has_code && !has_token && !has_id_token && !has_none) {
           if (form_post) {
             build_form_post_error_response(map, response, "error", "unsupported_response_type", NULL);
           } else {
@@ -7694,7 +7699,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           ret = G_ERROR_PARAM;
         }
 
-        if (ret == G_OK && string_array_size(resp_type_array) == 1 && string_array_has_value((const char **)resp_type_array, "token") && !config->allow_non_oidc) {
+        if (ret == G_OK && string_array_size(resp_type_array) == 1 && has_token && !config->allow_non_oidc) {
           if (form_post) {
             build_form_post_error_response(map, response, "error", "unsupported_response_type", NULL);
           } else {
@@ -7704,23 +7709,23 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
             o_free(redirect_url);
           }
           ret = G_ERROR_PARAM;
-        } else if (ret == G_OK && string_array_size(resp_type_array) == 1 && string_array_has_value((const char **)resp_type_array, "code")) {
+        } else if (ret == G_OK && string_array_size(resp_type_array) == 1 && has_code) {
           implicit_flow = 0;
         }
 
-        if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "code")) {
+        if (ret == G_OK && has_code) {
           auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG;
         }
 
-        if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "token") && config->allow_non_oidc) {
+        if (ret == G_OK && has_token && config->allow_non_oidc) {
           auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_FLAG;
         }
 
-        if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "id_token")) {
+        if (ret == G_OK && has_id_token) {
           auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG;
         }
 
-        if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "none")) {
+        if (ret == G_OK && has_none) {
           auth_type |= GLEWLWYD_AUTHORIZATION_TYPE_NONE_FLAG;
         }
 
@@ -7750,7 +7755,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           o_free(session_state);
         }
     
-        if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "code")) {
+        if (ret == G_OK && has_code) {
           if (is_authorization_type_enabled((struct _oidc_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE) && redirect_uri != NULL) {
             // Generates authorization code
             if ((authorization_code = generate_authorization_code(config,
@@ -7808,7 +7813,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           }
         }
 
-        if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "token")) {
+        if (ret == G_OK && has_token) {
           if (is_authorization_type_enabled((struct _oidc_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_TOKEN) && redirect_uri != NULL) {
             if ((access_token = generate_access_token(config, 
                                                       json_string_value(json_object_get(json_object_get(json_object_get(j_auth_result, "session"), "user"), "username")), 
@@ -7889,7 +7894,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           }
         }
 
-        if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "id_token")) {
+        if (ret == G_OK && has_id_token) {
           if (is_authorization_type_enabled((struct _oidc_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN) && redirect_uri != NULL) {
             if ((id_token = generate_id_token(config, 
                                               json_string_value(json_object_get(json_object_get(json_object_get(j_auth_result, "session"), "user"), "username")), 
@@ -7964,7 +7969,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           }
         }
 
-        if (ret == G_OK && string_array_has_value((const char **)resp_type_array, "none")) {
+        if (ret == G_OK && has_none) {
           if (!is_authorization_type_enabled((struct _oidc_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_NONE)) {
             if (redirect_uri != NULL) {
               if (form_post) {
@@ -8602,7 +8607,7 @@ static int callback_oidc_device_verification(const struct _u_request * request, 
  */
 static int jwt_autocheck(struct _oidc_config * config) {
   time_t now;
-  char * token, jti[OIDC_JTI_LENGTH] = {0};
+  char * token, jti[OIDC_JTI_LENGTH+1] = {0};
   jwt_t * jwt = NULL;
   int ret;
   
