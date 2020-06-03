@@ -8,8 +8,8 @@
 3.  [Pre-compiled packages](#pre-compiled-packages)
     * [Install Glewlwyd on Debian Buster](#install-glewlwyd-on-debian-buster)
     * [Install Glewlwyd on Raspbian Buster for Raspberry Pi](#install-glewlwyd-on-raspbian-buster-for-raspberry-pi)
+    * [Install Glewlwyd on Ubuntu 20.04 LTS Focal](#install-glewlwyd-on-ubuntu-2004-lts-focal)
     * [Install Glewlwyd on Ubuntu 18.04 LTS Bionic](#install-glewlwyd-on-ubuntu-1804-lts-bionic)
-    * [Install Glewlwyd on Ubuntu 19.10 Eoan](#install-glewlwyd-on-ubuntu-1910-eoan)
 4.  [Docker](#docker)
 5.  [Manual install from source](#manual-install-from-source)
     * [Dependencies](#dependencies)
@@ -171,77 +171,78 @@ libconfig
 libgnutls
 liboath
 libcbor
+libzlib
 ```
 
 ### Install Glewlwyd on Debian Buster
 
 ```shell
-$ sudo apt install -y libjansson4 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.2.0/glewlwyd-full_2.2.0_debian_buster_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.2.0_debian_buster_x86_64.tar.gz
+$ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0 pkg-config
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.0/glewlwyd-full_2.3.0_debian_buster_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.3.0_debian_buster_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.1.0_debian_buster_x86_64.deb
 $ sudo dpkg -i libyder_1.4.10_debian_buster_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.14_debian_buster_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.5_debian_buster_x86_64.deb
-$ sudo dpkg -i librhonabwy_0.9.5_debian_buster_x86_64.deb
-$ sudo dpkg -i libiddawc_0.9.4_debian_buster_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.2.0_debian_buster_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.16_debian_buster_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.7_debian_buster_x86_64.deb
+$ sudo dpkg -i librhonabwy_0.9.10_debian_buster_x86_64.deb
+$ sudo dpkg -i libiddawc_0.9.5_debian_buster_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.3.0_debian_buster_x86_64.deb
 ```
 
 ### Install Glewlwyd on Raspbian Buster for Raspberry Pi
 
 ```shell
-$ sudo apt install -y libjansson4 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.2.0/glewlwyd-full_2.2.0_raspbian_buster_armv6l.tar.gz
-$ tar xf glewlwyd-full_2.2.0_raspbian_buster_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.0.0_raspbian_buster_x86_64.deb
-$ sudo dpkg -i libyder_1.4.6_raspbian_buster_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.14_raspbian_buster_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.1_raspbian_buster_x86_64.deb
-$ sudo dpkg -i librhonabwy_0.9.5_raspbian_buster_x86_64.deb
-$ sudo dpkg -i libiddawc_0.9.4_raspbian_buster_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.2.0_raspbian_buster_x86_64.deb
+$ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0 pkg-config
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.0/glewlwyd-full_2.3.0_raspbian_buster_armv6l.tar.gz
+$ tar xf glewlwyd-full_2.3.0_raspbian_buster_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.1.0_raspbian_buster_armv7l.deb
+$ sudo dpkg -i libyder_1.4.10_raspbian_buster_armv7l.deb
+$ sudo dpkg -i libhoel_1.4.16_raspbian_buster_armv7l.deb
+$ sudo dpkg -i libulfius_2.6.7_raspbian_buster_armv7l.deb
+$ sudo dpkg -i librhonabwy_0.9.10_raspbian_buster_armv7l.deb
+$ sudo dpkg -i libiddawc_0.9.5_raspbian_buster_armv7l.deb
+$ sudo dpkg -i glewlwyd_2.3.0_raspbian_buster_armv7l.deb
+```
+
+### Install Glewlwyd on Ubuntu 20.04 LTS Focal
+
+```shell
+$ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0.6 pkg-config
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.0/glewlwyd-full_2.3.0_ubuntu_focal_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.3.0_ubuntu_focal_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.1.0_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i libyder_1.4.10_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.16_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.7_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i librhonabwy_0.9.10_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i libiddawc_0.9.5_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.3.0_ubuntu_focal_x86_64.deb
 ```
 
 ### Install Glewlwyd on Ubuntu 18.04 LTS Bionic
 
 ```shell
 $ # Note: jansson provided in Ubuntu 18.04 LTS Bionic is too old to work with Glewlwyd, here is the procedure to install them from the source
-$ # If you have installed their packages, please uninstall them first
+$ # If you have installed jansson package, please uninstall first
 $ sudo apt remove libjansson4
-$ sudo apt install -y pkg-config autoconf automake make cmake libtool libsqlite3-0 libmariadbclient18 libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0 libcbor0 libssl-dev libmicrohttpd12 default-mysql-client wget
-$ wget https://github.com/akheron/jansson/archive/v2.12.tar.gz -O jansson.tar.gz
+$ sudo apt install -y pkg-config autoconf automake make cmake libtool wget sqlite3 liboath0 libconfig9 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0.6 pkg-config
+$ wget https://github.com/akheron/jansson/archive/v2.13.1.tar.gz -O jansson.tar.gz
 $ tar xf jansson.tar.gz
-$ cd jansson-2.12
+$ cd jansson-2.13.1
 $ autoreconf -i
 $ ./configure
 $ make
 $ sudo make install
 $ cd ..
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.2.0/glewlwyd-full_2.2.0_ubuntu_bionic_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.2.0_ubuntu_bionic_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.0/glewlwyd-full_2.3.0_ubuntu_bionic_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.3.0_ubuntu_bionic_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.1.0_ubuntu_bionic_x86_64.deb
 $ sudo dpkg -i libyder_1.4.10_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.14_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.5_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i librhonabwy_0.9.5_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libiddawc_0.9.4_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.2.0_ubuntu_bionic_x86_64.deb
-```
-
-### Install Glewlwyd on Ubuntu 19.10 Eoan
-
-```shell
-$ sudo apt install -y libjansson4 libcbor0 libsqlite3-0 default-mysql-client libpq5 libgnutls30 libconfig9 libldap-2.4-2 liboath0
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.2.0/glewlwyd-full_2.2.0_ubuntu_eoan_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.2.0_ubuntu_eoan_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.1.0_ubuntu_eoan_x86_64.deb
-$ sudo dpkg -i libyder_1.4.10_ubuntu_eoan_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.14_ubuntu_eoan_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.5_ubuntu_eoan_x86_64.deb
-$ sudo dpkg -i librhonabwy_0.9.5_ubuntu_eoan_x86_64.deb
-$ sudo dpkg -i libiddawc_0.9.4_ubuntu_eoan_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.2.0_ubuntu_eoan_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.16_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.7_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i librhonabwy_0.9.10_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i libiddawc_0.9.5_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.3.0_ubuntu_bionic_x86_64.deb
 ```
 
 If there's no package available for your distribution, you can compile it manually using `CMake` or `Makefile`.
@@ -295,6 +296,8 @@ Glewlwyd has been successfuly compiled for the folowing distribtions:
 - Fedora 29+
 - OpenSuse Leap 15
 - OpenSuse Tumbleweed
+- Alpine Linux
+- Free BSD
 
 And probably more!
 
@@ -307,7 +310,7 @@ Download the [latest source tarball](https://github.com/babelouest/glewlwyd/rele
 On a Debian based distribution (Debian, Ubuntu, Raspbian, etc.), you can install those dependencies using the following command:
 
 ```shell
-$ sudo apt-get install libmicrohttpd-dev sqlite3 libsqlite3-dev default-libmysqlclient-dev libpq-dev libgnutls28-dev libconfig-dev libldap2-dev liboath-dev libcbor-dev libsystemd-dev libjansson-dev libcurl4-gnutls-dev
+$ sudo apt-get install libmicrohttpd-dev sqlite3 libsqlite3-dev default-libmysqlclient-dev libpq-dev libgnutls28-dev libconfig-dev libldap2-dev liboath-dev libcbor-dev libsystemd-dev libjansson-dev libcurl4-gnutls-dev cmake
 ```
 
 #### Libmicrohttpd 0.9.38 minimum required
