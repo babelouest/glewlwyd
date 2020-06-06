@@ -20,7 +20,7 @@ class SelectAccount extends Component {
     this.handleLogoutAccount = this.handleLogoutAccount.bind(this);
   }
   
-  UNSAFE_componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       userList: nextProps.userList||[],
