@@ -16,10 +16,10 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 module.exports = {
 	mode: 'production',
 	entry: {
-		admin: ["babel-polyfill", './src/admin.js'],
-		login: ["babel-polyfill", './src/login.js'],
-		profile: ["babel-polyfill", './src/profile.js'],
-		callback: ["babel-polyfill", './src/callback.js']
+		admin: ["@babel/polyfill", './src/admin.js'],
+		login: ["@babel/polyfill", './src/login.js'],
+		profile: ["@babel/polyfill", './src/profile.js'],
+		callback: ["@babel/polyfill", './src/callback.js']
 	},
 	output: {
 		path: path.resolve(__dirname, 'output'),
