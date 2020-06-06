@@ -16,10 +16,10 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 module.exports = {
 	mode: 'production',
 	entry: {
-		admin: ["@babel/polyfill", './src/admin.js'],
-		login: ["@babel/polyfill", './src/login.js'],
-		profile: ["@babel/polyfill", './src/profile.js'],
-		callback: ["@babel/polyfill", './src/callback.js']
+		admin: ["@babel/polyfill", path.resolve(__dirname, 'src/admin.js')],
+		login: ["@babel/polyfill", path.resolve(__dirname, 'src/login.js')],
+		profile: ["@babel/polyfill", path.resolve(__dirname, 'src/profile.js')],
+		callback: ["@babel/polyfill", path.resolve(__dirname, 'src/callback.js')]
 	},
 	output: {
 		path: path.resolve(__dirname, 'output'),
@@ -31,12 +31,11 @@ module.exports = {
 		rules: [
 			{
 				test: /\.js$/,
-				exclude: /(node_modules|bower_components|build)/,
-				use: {
-					loader: 'babel-loader',
-					options: {
-						presets: ['@babel/env','@babel/react']
-					}
+				include: [ path.resolve(__dirname, "src") ],
+				exclude: [ path.resolve(__dirname, "node_modules") ],
+				loader: 'babel-loader',
+				options: {
+					presets: ['@babel/env','@babel/react']
 				}
 			},
 			{

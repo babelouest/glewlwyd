@@ -14,10 +14,10 @@ var path = require('path');
 module.exports = {
 	mode: 'development',
 	entry: {
-		admin: './src/admin.js',
-		login: './src/login.js',
-		profile: './src/profile.js',
-		callback: './src/callback.js'
+		admin: path.resolve(__dirname, 'src/admin.js'),
+		login: path.resolve(__dirname, 'src/login.js'),
+		profile: path.resolve(__dirname, 'src/profile.js'),
+		callback: path.resolve(__dirname, 'src/callback.js')
 	},
 	devtool: 'inline-source-map',
 	output: {
@@ -38,12 +38,11 @@ module.exports = {
 		rules: [
 			{
 				test: /\.js$/,
-				exclude: /(node_modules|bower_components|build)/,
-				use: {
-					loader: 'babel-loader',
-					options: {
-						presets: ['@babel/env','@babel/react']
-					}
+				include: [ path.resolve(__dirname, "src") ],
+				exclude: [ path.resolve(__dirname, "node_modules") ],
+				loader: 'babel-loader',
+				options: {
+					presets: ['@babel/env','@babel/react']
 				}
 			},
 			{
