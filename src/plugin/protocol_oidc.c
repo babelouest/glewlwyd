@@ -3552,13 +3552,13 @@ static int check_request_jti_unused(struct _oidc_config * config, const char * j
         if (res == H_OK) {
           ret = G_OK;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_request_jti_unused - Error excuting j_query (2)");
+          y_log_message(Y_LOG_LEVEL_ERROR, "check_request_jti_unused - Error executing j_query (2)");
           ret = G_ERROR_DB;
         }
       }
       json_decref(j_result);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "check_request_jti_unused - Error excuting j_query (1)");
+      y_log_message(Y_LOG_LEVEL_ERROR, "check_request_jti_unused - Error executing j_query (1)");
       ret = G_ERROR_DB;
     }
     o_free(jti_hash);

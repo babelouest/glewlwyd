@@ -108,7 +108,7 @@ json_t * user_auth_scheme_module_load(struct config_module * config) {
                    "display_name",
                    "Short session password",
                    "description",
-                   "Glewlwyd authentification via user password with a short session duration",
+                   "Glewlwyd authentication via user password with a short session duration",
                    "parameters");
 }
 

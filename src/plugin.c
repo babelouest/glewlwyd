@@ -49,7 +49,7 @@ int glewlwyd_callback_add_plugin_endpoint(struct config_plugin * config, const c
       ret = G_ERROR_MEMORY;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_add_plugin_endpoint - Error input paramters");
+    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_add_plugin_endpoint - Error input parameters");
     ret = G_ERROR_PARAM;
   }
   return ret;
@@ -75,7 +75,7 @@ int glewlwyd_callback_remove_plugin_endpoint(struct config_plugin * config, cons
       ret = G_ERROR_MEMORY;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_remove_plugin_endpoint - Error input paramters");
+    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_remove_plugin_endpoint - Error input parameters");
     ret = G_ERROR_PARAM;
   }
   return ret;
