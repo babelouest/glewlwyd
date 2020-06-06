@@ -8408,7 +8408,7 @@ static int callback_oidc_device_authorization(const struct _u_request * request,
          * j_result, 
          * j_assertion = NULL,
          * j_assertion_client = NULL;
-  int result = U_CALLBACK_CONTINUE, client_auth_method;
+  int result = U_CALLBACK_CONTINUE, client_auth_method = GLEWLWYD_CLIENT_AUTH_METHOD_NONE;
   
   if (o_strlen(u_map_get(request->map_post_body, "client_assertion")) && 0 == o_strcmp(GLEWLWYD_AUTH_TOKEN_ASSERTION_TYPE, u_map_get(request->map_post_body, "client_assertion_type"))) {
     if (json_object_get(config->j_params, "request-parameter-allow") == json_true()) {
