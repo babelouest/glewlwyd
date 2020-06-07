@@ -14,6 +14,7 @@ class User extends Component {
       pattern: props.pattern,
       profile: props.profile,
       profileUpdate: props.profileUpdate,
+      loggedIn: props.loggedIn,
       listAddValue: this.initListAdd(props.pattern),
       listEltConfirm: this.initListConfirm(props.pattern),
       listError: {}
@@ -44,6 +45,7 @@ class User extends Component {
       pattern: nextProps.pattern,
       profile: nextProps.profile,
       profileUpdate: nextProps.profileUpdate,
+      loggedIn: nextProps.loggedIn,
       listAddValue: this.initListAdd(nextProps.pattern),
       listEltConfirm: this.initListConfirm(nextProps.pattern),
       listError: {}
@@ -451,30 +453,34 @@ class User extends Component {
     if (this.state.config.delete_profile !== "no") {
       deleteButtonJsx = <button type="button" className="btn btn-danger btn-icon" onClick={(e) => this.deleteProfile(e)} disabled={!this.state.profile || !this.state.profileUpdate}>{i18next.t("profile.delete")}</button>
     }
-    return (
-      <div>
-        <div className="row">
-          <div className="col-md-12">
-            <h4>{i18next.t("profile.hello", {name: (this.state.profile.name || this.state.profile.username)})}</h4>
+    if (this.state.loggedIn) {
+      return (
+        <div>
+          <div className="row">
+            <div className="col-md-12">
+              <h4>{i18next.t("profile.hello", {name: (this.state.profile.name || this.state.profile.username)})}</h4>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-md-12">
+              <form className="needs-validation" noValidate>
+                {editLines}
+              </form>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-md-6">
+              {deleteButtonJsx}
+            </div>
+            <div className="col-md-6 text-right">
+              <button type="button" className="btn btn-primary" onClick={(e) => this.saveProfile(e)} disabled={!this.state.profile || !this.state.profileUpdate}>{i18next.t("profile.save")}</button>
+            </div>
           </div>
         </div>
-        <div className="row">
-          <div className="col-md-12">
-            <form className="needs-validation" noValidate>
-              {editLines}
-            </form>
-          </div>
-        </div>
-        <div className="row">
-          <div className="col-md-6">
-            {deleteButtonJsx}
-          </div>
-          <div className="col-md-6 text-right">
-            <button type="button" className="btn btn-primary" onClick={(e) => this.saveProfile(e)} disabled={!this.state.profile || !this.state.profileUpdate}>{i18next.t("profile.save")}</button>
-          </div>
-        </div>
-      </div>
-    );
+      );
+    } else {
+      return (<div></div>);
+    }
   }
 }
 
