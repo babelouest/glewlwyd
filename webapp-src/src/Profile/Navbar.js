@@ -115,7 +115,7 @@ class Navbar extends Component {
 	render() {
     var langList = [], schemeList = [], profileList = [], dataHighlight = "", completeAlert = "", complete = true;
     var profileDropdown, logoutButton;
-    var passwordJsx, sessionJsx, profileJsx;
+    var passwordJsx, sessionJsx, profileJsx, userJsx;
     this.state.config.lang.forEach((lang, i) => {
       if (lang === i18next.language) {
         langList.push(<a className="dropdown-item active" href="#" key={i}>{lang}</a>);
@@ -137,7 +137,7 @@ class Navbar extends Component {
         );
       }
     });
-    if (!this.state.config.params.delegate && !this.state.config.params.register) {
+    if (!this.state.config.params.delegate && !this.state.config.params.register && this.state.loggedIn) {
       passwordJsx = <li className={"nav-item" + (this.state.curNav==="password"?" active":"")}>
         <a className="nav-link" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "password", null)}>{i18next.t("profile.menu-password")}</a>
       </li>
@@ -151,6 +151,11 @@ class Navbar extends Component {
       this.state.profileList.forEach((profile, index) => {
         profileList.push(<a className={"dropdown-item"+(!index?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.changeProfile(e, profile)} key={index}>{profile.name||profile.username}</a>);
       });
+    }
+    if (this.state.loggedIn) {
+      userJsx = <li className={"nav-item" + (this.state.curNav==="profile"?" active":"")}>
+        <a className={"nav-link"+dataHighlight} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "profile", null)}>{i18next.t("profile.menu-user")}</a>
+      </li>
     }
     profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
     profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeProfile(e, null)} key={profileList.length}>{i18next.t("profile.menu-session-new")}</a>);
@@ -200,9 +205,7 @@ class Navbar extends Component {
         </button>
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav mr-auto">
-            <li className={"nav-item" + (this.state.curNav==="profile"?" active":"")}>
-              <a className={"nav-link"+dataHighlight} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "profile", null)}>{i18next.t("profile.menu-user")}</a>
-            </li>
+            {userJsx}
             {sessionJsx}
             {passwordJsx}
             {schemeList}

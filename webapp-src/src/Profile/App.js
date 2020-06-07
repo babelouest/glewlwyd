@@ -293,7 +293,7 @@ class App extends Component {
       } else if (this.state.config.params.register) {
         userJsx = <Register config={this.state.config} registerConfig={this.state.registerConfig} registerProfile={this.state.registerProfile} registerSchemes={this.state.registerSchemes} registerValid={this.state.registerValid} registerDefaultLang={this.state.registerDefaultLang} />
       } else {
-        userJsx = <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false} profileUpdate={this.state.profileUpdate}/>
+        userJsx = <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false} profileUpdate={this.state.profileUpdate} loggedIn={this.state.loggedIn}/>
       }
       return (
         <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
