@@ -1,4 +1,8 @@
+-- ----------------------------------------------------- --
 -- Upgrade Glewlwyd 2.2.x 2.3.0
+-- Copyright 2020 Nicolas Mora <mail@babelouest.org>     --
+-- License: MIT                                          --
+-- ----------------------------------------------------- --
 
 ALTER TABLE gpg_access_token
 ADD gpoa_jti TEXT;

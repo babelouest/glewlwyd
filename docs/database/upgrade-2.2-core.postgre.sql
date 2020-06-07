@@ -1,4 +1,8 @@
+-- ----------------------------------------------------- --
 -- Upgrade Glewlwyd 2.0.x or 2.1.x to 2.2.0
+-- Copyright 2020 Nicolas Mora <mail@babelouest.org>     --
+-- License: MIT                                          --
+-- ----------------------------------------------------- --
 
 ALTER TABLE g_user_module_instance
 ADD gumi_enabled SMALLINT DEFAULT 1;
