@@ -284,6 +284,7 @@ struct config_elements {
   char *                                      secure_connection_ca_file;
   struct _h_connection *                      conn;
   struct _u_instance *                        instance;
+  unsigned int                                instance_initialized;
   char *                                      session_key;
   unsigned int                                session_expiration;
   unsigned int                                salt_length;
