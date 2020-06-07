@@ -1309,9 +1309,36 @@ class App extends Component {
   }
 
 	render() {
-    var invalidCredentialMessage;
+    var invalidCredentialMessage, userJsx;
     if (this.state.invalidCredentialMessage) {
       invalidCredentialMessage = <div className="alert alert-danger" role="alert">{i18next.t("admin.error-credential-message")}</div>
+    }
+    if (this.state.loggedIn) {
+      userJsx = <div id="carouselBody" className="carousel slide" data-ride="carousel">
+        <div className="carousel-inner">
+          <div className={"carousel-item" + (this.state.curNav==="users"?" active":"")}>
+            <Users config={this.state.config} users={this.state.users} loggedIn={this.state.loggedIn} />
+          </div>
+          <div className={"carousel-item" + (this.state.curNav==="clients"?" active":"")}>
+            <Clients config={this.state.config} clients={this.state.clients} loggedIn={this.state.loggedIn} />
+          </div>
+          <div className={"carousel-item" + (this.state.curNav==="scopes"?" active":"")}>
+            <Scopes config={this.state.config} scopes={this.state.scopes} loggedIn={this.state.loggedIn} />
+          </div>
+          <div className={"carousel-item" + (this.state.curNav==="users-mod"?" active":"")}>
+            <UserMod mods={this.state.modUsers} types={this.state.modTypes.user} loggedIn={this.state.loggedIn} />
+          </div>
+          <div className={"carousel-item" + (this.state.curNav==="clients-mod"?" active":"")}>
+            <ClientMod mods={this.state.modClients} types={this.state.modTypes.client} loggedIn={this.state.loggedIn} />
+          </div>
+          <div className={"carousel-item" + (this.state.curNav==="auth-schemes"?" active":"")}>
+            <SchemeMod mods={this.state.modSchemes} types={this.state.modTypes.scheme} loggedIn={this.state.loggedIn} />
+          </div>
+          <div className={"carousel-item" + (this.state.curNav==="plugins"?" active":"")}>
+            <Plugin mods={this.state.plugins} types={this.state.modTypes.plugin} loggedIn={this.state.loggedIn} />
+          </div>
+        </div>
+      </div>
     }
     if (this.state.config) {
       return (
@@ -1322,31 +1349,7 @@ class App extends Component {
             </div>
             {invalidCredentialMessage}
             <div className="card-body">
-              <div id="carouselBody" className="carousel slide" data-ride="carousel">
-                <div className="carousel-inner">
-                  <div className={"carousel-item" + (this.state.curNav==="users"?" active":"")}>
-                    <Users config={this.state.config} users={this.state.users} loggedIn={this.state.loggedIn} />
-                  </div>
-                  <div className={"carousel-item" + (this.state.curNav==="clients"?" active":"")}>
-                    <Clients config={this.state.config} clients={this.state.clients} loggedIn={this.state.loggedIn} />
-                  </div>
-                  <div className={"carousel-item" + (this.state.curNav==="scopes"?" active":"")}>
-                    <Scopes config={this.state.config} scopes={this.state.scopes} loggedIn={this.state.loggedIn} />
-                  </div>
-                  <div className={"carousel-item" + (this.state.curNav==="users-mod"?" active":"")}>
-                    <UserMod mods={this.state.modUsers} types={this.state.modTypes.user} loggedIn={this.state.loggedIn} />
-                  </div>
-                  <div className={"carousel-item" + (this.state.curNav==="clients-mod"?" active":"")}>
-                    <ClientMod mods={this.state.modClients} types={this.state.modTypes.client} loggedIn={this.state.loggedIn} />
-                  </div>
-                  <div className={"carousel-item" + (this.state.curNav==="auth-schemes"?" active":"")}>
-                    <SchemeMod mods={this.state.modSchemes} types={this.state.modTypes.scheme} loggedIn={this.state.loggedIn} />
-                  </div>
-                  <div className={"carousel-item" + (this.state.curNav==="plugins"?" active":"")}>
-                    <Plugin mods={this.state.plugins} types={this.state.modTypes.plugin} loggedIn={this.state.loggedIn} />
-                  </div>
-                </div>
-              </div>
+              {userJsx}
             </div>
           </div>
           <Notification/>
