@@ -116,6 +116,8 @@ int main (int argc, char ** argv) {
   config->config_file = NULL;
   config->port = 0;
   config->bind_address = NULL;
+  config->instance = NULL;
+  config->instance_initialized = 0;
   config->api_prefix = o_strdup(GLEWLWYD_DEFAULT_API_PREFIX);
   config->external_url = NULL;
   config->cookie_domain = NULL;
@@ -243,12 +245,15 @@ int main (int argc, char ** argv) {
     inet_aton(config->bind_address, (struct in_addr *)&bind_address.sin_addr.s_addr);
     if (ulfius_init_instance(config->instance, config->port, &bind_address, NULL) != U_OK) {
       fprintf(stderr, "Error initializing webservice instance with bind address %s\n", config->bind_address);
+      exit_server(&config, GLEWLWYD_ERROR);
     }
   } else {
     if (ulfius_init_instance(config->instance, config->port, NULL, NULL) != U_OK) {
       fprintf(stderr, "Error initializing webservice instance\n");
+      exit_server(&config, GLEWLWYD_ERROR);
     }
   }
+  config->instance_initialized = 1;
 
   // Initialize module config structure
   config->config_m->external_url = config->external_url;
@@ -616,8 +621,10 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free((*config)->plugin_module_list);
     
     /* stop framework */
-    ulfius_stop_framework((*config)->instance);
-    ulfius_clean_instance((*config)->instance);
+    if ((*config)->instance_initialized) {
+      ulfius_stop_framework((*config)->instance);
+      ulfius_clean_instance((*config)->instance);
+    }
     h_close_db((*config)->conn);
     h_clean_connection((*config)->conn);
     
@@ -780,9 +787,11 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
           break;
         case 'h':
           print_help(stdout);
+          exit_server(&config, 0);
           break;
         case 'v':
           fprintf(stdout, "%s\n", _GLEWLWYD_VERSION_);
+          exit_server(&config, 0);
           break;
       }
       
@@ -807,309 +816,313 @@ int build_config_from_file(struct config_elements * config) {
   
   config_init(&cfg);
   
-  if (!config_read_file(&cfg, config->config_file)) {
-    fprintf(stderr, "Error parsing config file %s\nOn line %d error: %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
-    config_destroy(&cfg);
-    ret = G_ERROR_PARAM;
-  }
-  
-  // Get Port number to listen to
-  if (!config->port && config_lookup_int(&cfg, "port", &int_value) == CONFIG_TRUE) {
-    config->port = (uint)int_value;
-  }
-
-  if (config_lookup_string(&cfg, "bind_address", &str_value) == CONFIG_TRUE) {
-    config->bind_address = o_strdup(str_value);
-    if (config->bind_address == NULL) {
-      fprintf(stderr, "Error allocating config->bind_address, exiting\n");
-      config_destroy(&cfg);
+  do {
+    if (!config_read_file(&cfg, config->config_file)) {
+      fprintf(stderr, "Error parsing config file %s\nOn line %d error: %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
       ret = G_ERROR_PARAM;
+      break;
     }
-  }
-  
-  if (config_lookup_string(&cfg, "api_prefix", &str_value) == CONFIG_TRUE) {
-    o_free(config->api_prefix);
-    config->api_prefix = o_strdup(str_value);
-    if (config->api_prefix == NULL) {
-      fprintf(stderr, "Error allocating config->api_prefix, exiting\n");
-      config_destroy(&cfg);
-      ret = G_ERROR_PARAM;
+    
+    // Get Port number to listen to
+    if (!config->port && config_lookup_int(&cfg, "port", &int_value) == CONFIG_TRUE) {
+      config->port = (uint)int_value;
     }
-  }
 
-  if (config_lookup_string(&cfg, "cookie_domain", &str_value) == CONFIG_TRUE) {
-    o_free(config->cookie_domain);
-    config->cookie_domain = o_strdup(str_value);
-    if (config->cookie_domain == NULL) {
-      fprintf(stderr, "Error allocating config->cookie_domain, exiting\n");
-      config_destroy(&cfg);
-      ret = G_ERROR_PARAM;
+    if (config_lookup_string(&cfg, "bind_address", &str_value) == CONFIG_TRUE) {
+      config->bind_address = o_strdup(str_value);
+      if (config->bind_address == NULL) {
+        fprintf(stderr, "Error allocating config->bind_address, exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
     }
-  }
+    
+    if (config_lookup_string(&cfg, "api_prefix", &str_value) == CONFIG_TRUE) {
+      o_free(config->api_prefix);
+      config->api_prefix = o_strdup(str_value);
+      if (config->api_prefix == NULL) {
+        fprintf(stderr, "Error allocating config->api_prefix, exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+    }
 
-  if (config_lookup_int(&cfg, "cookie_secure", &int_value) == CONFIG_TRUE) {
-    config->cookie_secure = (uint)int_value;
-  }
-  
-  // Get log mode
-  if (!config->log_mode_args && config_lookup_string(&cfg, "log_mode", &str_value) == CONFIG_TRUE) {
-    config->log_mode = Y_LOG_MODE_NONE;
-    one_log_mode = strtok((char *)str_value, ",");
-    while (one_log_mode != NULL) {
-      if (0 == o_strcmp("console", one_log_mode)) {
-        config->log_mode |= Y_LOG_MODE_CONSOLE;
-      } else if (0 == o_strcmp("syslog", one_log_mode)) {
-        config->log_mode |= Y_LOG_MODE_SYSLOG;
-      } else if (0 == o_strcmp("journald", one_log_mode)) {
-        config->log_mode |= Y_LOG_MODE_JOURNALD;
-      } else if (0 == o_strcmp("file", one_log_mode)) {
-        config->log_mode |= Y_LOG_MODE_FILE;
-        // Get log file path
-        if (config->log_file == NULL) {
-          if (config_lookup_string(&cfg, "log_file", &str_value_2) == CONFIG_TRUE) {
-            config->log_file = o_strdup(str_value_2);
-            if (config->log_file == NULL) {
-              fprintf(stderr, "Error allocating config->log_file, exiting\n");
-              config_destroy(&cfg);
-              ret = G_ERROR_PARAM;
+    if (config_lookup_string(&cfg, "cookie_domain", &str_value) == CONFIG_TRUE) {
+      o_free(config->cookie_domain);
+      config->cookie_domain = o_strdup(str_value);
+      if (config->cookie_domain == NULL) {
+        fprintf(stderr, "Error allocating config->cookie_domain, exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+    }
+
+    if (config_lookup_int(&cfg, "cookie_secure", &int_value) == CONFIG_TRUE) {
+      config->cookie_secure = (uint)int_value;
+    }
+    
+    // Get log mode
+    if (!config->log_mode_args && config_lookup_string(&cfg, "log_mode", &str_value) == CONFIG_TRUE) {
+      config->log_mode = Y_LOG_MODE_NONE;
+      one_log_mode = strtok((char *)str_value, ",");
+      while (one_log_mode != NULL) {
+        if (0 == o_strcmp("console", one_log_mode)) {
+          config->log_mode |= Y_LOG_MODE_CONSOLE;
+        } else if (0 == o_strcmp("syslog", one_log_mode)) {
+          config->log_mode |= Y_LOG_MODE_SYSLOG;
+        } else if (0 == o_strcmp("journald", one_log_mode)) {
+          config->log_mode |= Y_LOG_MODE_JOURNALD;
+        } else if (0 == o_strcmp("file", one_log_mode)) {
+          config->log_mode |= Y_LOG_MODE_FILE;
+          // Get log file path
+          if (config->log_file == NULL) {
+            if (config_lookup_string(&cfg, "log_file", &str_value_2) == CONFIG_TRUE) {
+              config->log_file = o_strdup(str_value_2);
+              if (config->log_file == NULL) {
+                fprintf(stderr, "Error allocating config->log_file, exiting\n");
+                ret = G_ERROR_PARAM;
+                break;
+              }
             }
           }
+        } else {
+          fprintf(stderr, "Error - logging mode '%s' unknown\n", one_log_mode);
+          ret = G_ERROR_PARAM;
+          break;
+        }
+        one_log_mode = strtok(NULL, ",");
+      }
+      if (ret != G_OK) {
+        break;
+      }
+    }
+    
+    // Get log level
+    if (!config->log_level_args && config_lookup_string(&cfg, "log_level", &str_value) == CONFIG_TRUE) {
+      config->log_level = Y_LOG_LEVEL_NONE;
+      if (0 == o_strcmp("ERROR", str_value)) {
+        config->log_level = Y_LOG_LEVEL_ERROR;
+      } else if (0 == o_strcmp("WARNING", str_value)) {
+        config->log_level = Y_LOG_LEVEL_WARNING;
+      } else if (0 == o_strcmp("INFO", str_value)) {
+        config->log_level = Y_LOG_LEVEL_INFO;
+      } else if (0 == o_strcmp("DEBUG", str_value)) {
+        config->log_level = Y_LOG_LEVEL_DEBUG;
+      }
+    }
+
+    // Get allow-origin value for CORS
+    if (config_lookup_string(&cfg, "allow_origin", &str_value) == CONFIG_TRUE) {
+      o_free(config->allow_origin);
+      config->allow_origin = o_strdup(str_value);
+      if (config->allow_origin == NULL) {
+        fprintf(stderr, "Error allocating config->allow_origin, exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+    }
+    
+    if (config_lookup_string(&cfg, "session_key", &str_value) == CONFIG_TRUE) {
+      o_free(config->session_key);
+      config->session_key = o_strdup(str_value);
+    }
+
+    if (config_lookup_int(&cfg, "session_expiration", &int_value) == CONFIG_TRUE) {
+      config->session_expiration = (uint)int_value;
+    }
+    
+    if (config_lookup_string(&cfg, "external_url", &str_value) == CONFIG_TRUE) {
+      o_free(config->external_url);
+      config->external_url = o_strdup(str_value);
+      if (config->external_url == NULL) {
+        fprintf(stderr, "Error allocating resources for config->external_url, exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+    }
+    
+    if (config_lookup_string(&cfg, "login_url", &str_value) == CONFIG_TRUE) {
+      o_free(config->login_url);
+      config->login_url = o_strdup(str_value);
+      if (config->login_url == NULL) {
+        fprintf(stderr, "Error allocating resources for config->login_url, exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+    }
+    
+    if (config_lookup_string(&cfg, "delete_profile", &str_value) == CONFIG_TRUE) {
+      if (0 == o_strcmp("no", str_value)) {
+        config->delete_profile = GLEWLWYD_PROFILE_DELETE_UNAUTHORIZED;
+      } else if (0 == o_strcmp("delete", str_value)) {
+        config->delete_profile = GLEWLWYD_PROFILE_DELETE_AUTHORIZED;
+      } else if (0 == o_strcmp("disable", str_value)) {
+        config->delete_profile = GLEWLWYD_PROFILE_DELETE_AUTHORIZED | GLEWLWYD_PROFILE_DELETE_DISABLE_PROFILE;
+      } else {
+        fprintf(stderr, "Invalid value for delete_profile, expected 'no', 'delete' or 'disable', exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+    }
+
+    // Get path that serve static files
+    if (config_lookup_string(&cfg, "static_files_path", &str_value) == CONFIG_TRUE) {
+      o_free(config->static_file_config->files_path);
+      config->static_file_config->files_path = o_strdup(str_value);
+      if (config->static_file_config->files_path == NULL) {
+        fprintf(stderr, "Error allocating config->files_path, exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+    }
+    
+    // Populate mime types u_map
+    mime_type_list = config_lookup(&cfg, "static_files_mime_types");
+    if (mime_type_list != NULL) {
+      int len = config_setting_length(mime_type_list);
+      for (i=0; i<len; i++) {
+        mime_type = config_setting_get_elem(mime_type_list, i);
+        if (mime_type != NULL) {
+          if (config_setting_lookup_string(mime_type, "extension", &str_value) == CONFIG_TRUE && 
+              config_setting_lookup_string(mime_type, "mime_type", &str_value_2) == CONFIG_TRUE) {
+            u_map_put(config->static_file_config->mime_types, str_value, str_value_2);
+          }
+        }
+      }
+    }
+    
+    if (config_lookup_bool(&cfg, "use_secure_connection", &int_value) == CONFIG_TRUE) {
+      if (config_lookup_string(&cfg, "secure_connection_key_file", &str_value) == CONFIG_TRUE && 
+          config_lookup_string(&cfg, "secure_connection_pem_file", &str_value_2) == CONFIG_TRUE) {
+        config->use_secure_connection = int_value;
+        config->secure_connection_key_file = o_strdup(str_value);
+        config->secure_connection_pem_file = o_strdup(str_value_2);
+        if (config_lookup_string(&cfg, "secure_connection_ca_file", &str_value) == CONFIG_TRUE) {
+          config->secure_connection_ca_file = o_strdup(str_value);
         }
       } else {
-        fprintf(stderr, "Error - logging mode '%s' unknown\n", one_log_mode);
-        config_destroy(&cfg);
+        fprintf(stderr, "Error secure connection is active but certificate is not valid, exiting\n");
         ret = G_ERROR_PARAM;
-      }
-      one_log_mode = strtok(NULL, ",");
-    }
-  }
-  
-  // Get log level
-  if (!config->log_level_args && config_lookup_string(&cfg, "log_level", &str_value) == CONFIG_TRUE) {
-    config->log_level = Y_LOG_LEVEL_NONE;
-    if (0 == o_strcmp("ERROR", str_value)) {
-      config->log_level = Y_LOG_LEVEL_ERROR;
-    } else if (0 == o_strcmp("WARNING", str_value)) {
-      config->log_level = Y_LOG_LEVEL_WARNING;
-    } else if (0 == o_strcmp("INFO", str_value)) {
-      config->log_level = Y_LOG_LEVEL_INFO;
-    } else if (0 == o_strcmp("DEBUG", str_value)) {
-      config->log_level = Y_LOG_LEVEL_DEBUG;
-    }
-  }
-
-  // Get allow-origin value for CORS
-  if (config_lookup_string(&cfg, "allow_origin", &str_value) == CONFIG_TRUE) {
-    o_free(config->allow_origin);
-    config->allow_origin = o_strdup(str_value);
-    if (config->allow_origin == NULL) {
-      fprintf(stderr, "Error allocating config->allow_origin, exiting\n");
-      config_destroy(&cfg);
-      ret = G_ERROR_PARAM;
-    }
-  }
-  
-  if (config_lookup_string(&cfg, "session_key", &str_value) == CONFIG_TRUE) {
-    o_free(config->session_key);
-    config->session_key = o_strdup(str_value);
-  }
-
-  if (config_lookup_int(&cfg, "session_expiration", &int_value) == CONFIG_TRUE) {
-    config->session_expiration = (uint)int_value;
-  }
-  
-  if (config_lookup_string(&cfg, "external_url", &str_value) == CONFIG_TRUE) {
-    o_free(config->external_url);
-    config->external_url = o_strdup(str_value);
-    if (config->external_url == NULL) {
-      fprintf(stderr, "Error allocating resources for config->external_url, exiting\n");
-      config_destroy(&cfg);
-      ret = G_ERROR_PARAM;
-    }
-  }
-  
-  if (config_lookup_string(&cfg, "login_url", &str_value) == CONFIG_TRUE) {
-    o_free(config->login_url);
-    config->login_url = o_strdup(str_value);
-    if (config->login_url == NULL) {
-      fprintf(stderr, "Error allocating resources for config->login_url, exiting\n");
-      config_destroy(&cfg);
-      ret = G_ERROR_PARAM;
-    }
-  }
-  
-  if (config_lookup_string(&cfg, "delete_profile", &str_value) == CONFIG_TRUE) {
-    if (0 == o_strcmp("no", str_value)) {
-      config->delete_profile = GLEWLWYD_PROFILE_DELETE_UNAUTHORIZED;
-    } else if (0 == o_strcmp("delete", str_value)) {
-      config->delete_profile = GLEWLWYD_PROFILE_DELETE_AUTHORIZED;
-    } else if (0 == o_strcmp("disable", str_value)) {
-      config->delete_profile = GLEWLWYD_PROFILE_DELETE_AUTHORIZED | GLEWLWYD_PROFILE_DELETE_DISABLE_PROFILE;
-    } else {
-      fprintf(stderr, "Invalid value for delete_profile, expected 'no', 'delete' or 'disable', exiting\n");
-      config_destroy(&cfg);
-      ret = G_ERROR_PARAM;
-    }
-  }
-
-  // Get path that serve static files
-  if (config_lookup_string(&cfg, "static_files_path", &str_value) == CONFIG_TRUE) {
-    o_free(config->static_file_config->files_path);
-    config->static_file_config->files_path = o_strdup(str_value);
-    if (config->static_file_config->files_path == NULL) {
-      fprintf(stderr, "Error allocating config->files_path, exiting\n");
-      config_destroy(&cfg);
-      ret = G_ERROR_PARAM;
-    }
-  }
-  
-  // Populate mime types u_map
-  mime_type_list = config_lookup(&cfg, "static_files_mime_types");
-  if (mime_type_list != NULL) {
-    int len = config_setting_length(mime_type_list);
-    for (i=0; i<len; i++) {
-      mime_type = config_setting_get_elem(mime_type_list, i);
-      if (mime_type != NULL) {
-        if (config_setting_lookup_string(mime_type, "extension", &str_value) == CONFIG_TRUE && 
-            config_setting_lookup_string(mime_type, "mime_type", &str_value_2) == CONFIG_TRUE) {
-          u_map_put(config->static_file_config->mime_types, str_value, str_value_2);
-        }
+        break;
       }
     }
-  }
-  
-  if (config_lookup_bool(&cfg, "use_secure_connection", &int_value) == CONFIG_TRUE) {
-    if (config_lookup_string(&cfg, "secure_connection_key_file", &str_value) == CONFIG_TRUE && 
-        config_lookup_string(&cfg, "secure_connection_pem_file", &str_value_2) == CONFIG_TRUE) {
-      config->use_secure_connection = int_value;
-      config->secure_connection_key_file = o_strdup(str_value);
-      config->secure_connection_pem_file = o_strdup(str_value_2);
-      if (config_lookup_string(&cfg, "secure_connection_ca_file", &str_value) == CONFIG_TRUE) {
-        config->secure_connection_ca_file = o_strdup(str_value);
+    
+    // Get token hash algorithm
+    if (config_lookup_string(&cfg, "hash_algorithm", &str_value) == CONFIG_TRUE) {
+      if (!o_strcmp("SHA1", str_value)) {
+        config->hash_algorithm = digest_SHA1;
+      } else if (!o_strcmp("SHA224", str_value)) {
+        config->hash_algorithm = digest_SHA224;
+      } else if (!o_strcmp("SHA256", str_value)) {
+        config->hash_algorithm = digest_SHA256;
+      } else if (!o_strcmp("SHA384", str_value)) {
+        config->hash_algorithm = digest_SHA384;
+      } else if (!o_strcmp("SHA512", str_value)) {
+        config->hash_algorithm = digest_SHA512;
+      } else if (!o_strcmp("MD5", str_value)) {
+        config->hash_algorithm = digest_MD5;
+      } else {
+        fprintf(stderr, "Error token hash algorithm: %s\n", str_value);
+        ret = G_ERROR_PARAM;
+        break;
       }
-    } else {
-      fprintf(stderr, "Error secure connection is active but certificate is not valid, exiting\n");
-      config_destroy(&cfg);
-      ret = G_ERROR_PARAM;
     }
-  }
-  
-  // Get token hash algorithm
-  if (config_lookup_string(&cfg, "hash_algorithm", &str_value) == CONFIG_TRUE) {
-    if (!o_strcmp("SHA1", str_value)) {
-      config->hash_algorithm = digest_SHA1;
-    } else if (!o_strcmp("SHA224", str_value)) {
-      config->hash_algorithm = digest_SHA224;
-    } else if (!o_strcmp("SHA256", str_value)) {
-      config->hash_algorithm = digest_SHA256;
-    } else if (!o_strcmp("SHA384", str_value)) {
-      config->hash_algorithm = digest_SHA384;
-    } else if (!o_strcmp("SHA512", str_value)) {
-      config->hash_algorithm = digest_SHA512;
-    } else if (!o_strcmp("MD5", str_value)) {
-      config->hash_algorithm = digest_MD5;
-    } else {
-      config_destroy(&cfg);
-      fprintf(stderr, "Error token hash algorithm: %s\n", str_value);
-      ret = G_ERROR_PARAM;
-    }
-  }
-  
-  root = config_root_setting(&cfg);
-  database = config_setting_get_member(root, "database");
-  if (database != NULL) {
-    if (config_setting_lookup_string(database, "type", &str_value) == CONFIG_TRUE) {
-      if (0 == o_strcmp(str_value, "sqlite3")) {
-        if (config_setting_lookup_string(database, "path", &str_value_2) == CONFIG_TRUE) {
-          config->conn = h_connect_sqlite(str_value_2);
-          if (config->conn == NULL) {
-            fprintf(stderr, "Error opening sqlite database %s\n", str_value_2);
-            config_destroy(&cfg);
-            ret = G_ERROR_PARAM;
+    
+    root = config_root_setting(&cfg);
+    database = config_setting_get_member(root, "database");
+    if (database != NULL) {
+      if (config_setting_lookup_string(database, "type", &str_value) == CONFIG_TRUE) {
+        if (0 == o_strcmp(str_value, "sqlite3")) {
+          if (config_setting_lookup_string(database, "path", &str_value_2) == CONFIG_TRUE) {
+            config->conn = h_connect_sqlite(str_value_2);
+            if (config->conn == NULL) {
+              fprintf(stderr, "Error opening sqlite database %s\n", str_value_2);
+              ret = G_ERROR_PARAM;
+              break;
+            } else {
+              if (h_exec_query_sqlite(config->conn, "PRAGMA foreign_keys = ON;") != H_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "Error executing sqlite3 query 'PRAGMA foreign_keys = ON;'");
+                ret = G_ERROR_PARAM;
+                break;
+              }
+            }
           } else {
-            if (h_exec_query_sqlite(config->conn, "PRAGMA foreign_keys = ON;") != H_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "Error executing sqlite3 query 'PRAGMA foreign_keys = ON;'");
-              config_destroy(&cfg);
+            fprintf(stderr, "Error - no sqlite database specified\n");
+            ret = G_ERROR_PARAM;
+            break;
+          }
+        } else if (0 == o_strcmp(str_value, "mariadb")) {
+          config_setting_lookup_string(database, "host", &str_value_2);
+          config_setting_lookup_string(database, "user", &str_value_3);
+          config_setting_lookup_string(database, "password", &str_value_4);
+          config_setting_lookup_string(database, "dbname", &str_value_5);
+          config_setting_lookup_int(database, "port", &int_value);
+          config->conn = h_connect_mariadb(str_value_2, str_value_3, str_value_4, str_value_5, int_value, NULL);
+          if (config->conn == NULL) {
+            fprintf(stderr, "Error opening mariadb database %s\n", str_value_5);
+            ret = G_ERROR_PARAM;
+            break;
+          } else {
+            if (h_execute_query_mariadb(config->conn, "SET sql_mode='PIPES_AS_CONCAT';", NULL) != H_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "Error executing mariadb query 'SET sql_mode='PIPES_AS_CONCAT';'");
               ret = G_ERROR_PARAM;
+              break;
             }
           }
-        } else {
-          config_destroy(&cfg);
-          fprintf(stderr, "Error - no sqlite database specified\n");
-          ret = G_ERROR_PARAM;
-        }
-      } else if (0 == o_strcmp(str_value, "mariadb")) {
-        config_setting_lookup_string(database, "host", &str_value_2);
-        config_setting_lookup_string(database, "user", &str_value_3);
-        config_setting_lookup_string(database, "password", &str_value_4);
-        config_setting_lookup_string(database, "dbname", &str_value_5);
-        config_setting_lookup_int(database, "port", &int_value);
-        config->conn = h_connect_mariadb(str_value_2, str_value_3, str_value_4, str_value_5, int_value, NULL);
-        if (config->conn == NULL) {
-          fprintf(stderr, "Error opening mariadb database %s\n", str_value_5);
-          config_destroy(&cfg);
-          ret = G_ERROR_PARAM;
-        } else {
-          if (h_execute_query_mariadb(config->conn, "SET sql_mode='PIPES_AS_CONCAT';", NULL) != H_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Error executing mariadb query 'SET sql_mode='PIPES_AS_CONCAT';'");
-            config_destroy(&cfg);
+        } else if (0 == o_strcmp(str_value, "postgre")) {
+          config_setting_lookup_string(database, "conninfo", &str_value_2);
+          config->conn = h_connect_pgsql(str_value_2);
+          if (config->conn == NULL) {
+            fprintf(stderr, "Error opening postgre database %s\n", str_value_2);
             ret = G_ERROR_PARAM;
+            break;
           }
-        }
-      } else if (0 == o_strcmp(str_value, "postgre")) {
-        config_setting_lookup_string(database, "conninfo", &str_value_2);
-        config->conn = h_connect_pgsql(str_value_2);
-        if (config->conn == NULL) {
-          fprintf(stderr, "Error opening postgre database %s\n", str_value_2);
-          config_destroy(&cfg);
+        } else {
+          fprintf(stderr, "Error - database type unknown\n");
           ret = G_ERROR_PARAM;
+          break;
         }
       } else {
-        config_destroy(&cfg);
-        fprintf(stderr, "Error - database type unknown\n");
+        fprintf(stderr, "Error - no database type found\n");
         ret = G_ERROR_PARAM;
+        break;
       }
     } else {
-      config_destroy(&cfg);
-      fprintf(stderr, "Error - no database type found\n");
+      fprintf(stderr, "Error - no database setting found\n");
       ret = G_ERROR_PARAM;
+      break;
     }
-  } else {
-    config_destroy(&cfg);
-    fprintf(stderr, "Error - no database setting found\n");
-    ret = G_ERROR_PARAM;
-  }
 
-  if (config_lookup_string(&cfg, "admin_scope", &str_value) == CONFIG_TRUE) {
-    o_free(config->admin_scope);
-    config->admin_scope = o_strdup(str_value);
-  }
-  
-  if (config_lookup_string(&cfg, "profile_scope", &str_value) == CONFIG_TRUE) {
-    o_free(config->profile_scope);
-    config->profile_scope = o_strdup(str_value);
-  }
-  
-  if (config_lookup_string(&cfg, "user_module_path", &str_value) == CONFIG_TRUE) {
-    o_free(config->user_module_path);
-    config->user_module_path = o_strdup(str_value);
-  }
-  
-  if (config_lookup_string(&cfg, "client_module_path", &str_value) == CONFIG_TRUE) {
-    o_free(config->client_module_path);
-    config->client_module_path = o_strdup(str_value);
-  }
-  
-  if (config_lookup_string(&cfg, "user_auth_scheme_module_path", &str_value) == CONFIG_TRUE) {
-    o_free(config->user_auth_scheme_module_path);
-    config->user_auth_scheme_module_path = o_strdup(str_value);
-  }
-  
-  if (config_lookup_string(&cfg, "plugin_module_path", &str_value) == CONFIG_TRUE) {
-    o_free(config->plugin_module_path);
-    config->plugin_module_path = o_strdup(str_value);
-  }
-  
+    if (config_lookup_string(&cfg, "admin_scope", &str_value) == CONFIG_TRUE) {
+      o_free(config->admin_scope);
+      config->admin_scope = o_strdup(str_value);
+    }
+    
+    if (config_lookup_string(&cfg, "profile_scope", &str_value) == CONFIG_TRUE) {
+      o_free(config->profile_scope);
+      config->profile_scope = o_strdup(str_value);
+    }
+    
+    if (config_lookup_string(&cfg, "user_module_path", &str_value) == CONFIG_TRUE) {
+      o_free(config->user_module_path);
+      config->user_module_path = o_strdup(str_value);
+    }
+    
+    if (config_lookup_string(&cfg, "client_module_path", &str_value) == CONFIG_TRUE) {
+      o_free(config->client_module_path);
+      config->client_module_path = o_strdup(str_value);
+    }
+    
+    if (config_lookup_string(&cfg, "user_auth_scheme_module_path", &str_value) == CONFIG_TRUE) {
+      o_free(config->user_auth_scheme_module_path);
+      config->user_auth_scheme_module_path = o_strdup(str_value);
+    }
+    
+    if (config_lookup_string(&cfg, "plugin_module_path", &str_value) == CONFIG_TRUE) {
+      o_free(config->plugin_module_path);
+      config->plugin_module_path = o_strdup(str_value);
+    }
+  } while (0);
   config_destroy(&cfg);
   return ret;
 }
