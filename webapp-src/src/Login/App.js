@@ -328,7 +328,7 @@ class App extends Component {
                        schemeListRequired={this.state.schemeListRequired} />
             </div>
           </div>
-          <Notification/>
+          <Notification loggedIn={true}/>
         </div>
       );
     } else {

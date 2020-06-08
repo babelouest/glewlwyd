@@ -8,6 +8,7 @@ class Notification extends Component {
     this.state = {
       message: [],
       counter: 0,
+      loggedIn: props.loggedIn
     }
 
     messageDispatcher.subscribe('Notification', (message) => {
@@ -24,6 +25,12 @@ class Notification extends Component {
     this.timeoutClose = this.timeoutClose.bind(this);
   }
   
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      loggedIn: nextProps.loggedIn
+    });
+  }
+
   timeoutClose(id) {
     setTimeout(() => {
       this.close(id);
@@ -42,7 +49,7 @@ class Notification extends Component {
   
   render() {
     var toast = [];
-    if (this.props.loggedIn) {
+    if (this.state.loggedIn) {
       this.state.message.forEach((message, index) => {
         var badge;
         if (message.type === "success") {

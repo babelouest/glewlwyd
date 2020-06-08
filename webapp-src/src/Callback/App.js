@@ -1,9 +1,6 @@
 import React, { Component } from 'react';
 import i18next from 'i18next';
 
-import apiManager from '../lib/APIManager';
-import Notification from '../lib/Notification';
-
 class App extends Component {
   constructor(props) {
     super(props);
