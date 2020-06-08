@@ -292,8 +292,19 @@ class App extends Component {
         userJsx = <UserDelegate config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} />
       } else if (this.state.config.params.register) {
         userJsx = <Register config={this.state.config} registerConfig={this.state.registerConfig} registerProfile={this.state.registerProfile} registerSchemes={this.state.registerSchemes} registerValid={this.state.registerValid} registerDefaultLang={this.state.registerDefaultLang} />
-      } else {
-        userJsx = <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false} profileUpdate={this.state.profileUpdate} loggedIn={this.state.loggedIn}/>
+      }
+      if (this.state.loggedIn) {
+        userJsx = <div>
+          <div className={"carousel-item" + (this.state.curNav==="profile"?" active":"")}>
+            <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false} profileUpdate={this.state.profileUpdate} loggedIn={this.state.loggedIn}/>
+          </div>
+          <div className={"carousel-item" + (this.state.curNav==="session"?" active":"")}>
+            <Session config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} loggedIn={this.state.loggedIn} />
+          </div>
+          <div className={"carousel-item" + (this.state.curNav!=="profile"&&this.state.curNav!=="session"?" active":"")}>
+            <SchemePage config={this.state.config} module={this.state.curNav} name={this.state.module} profile={(this.state.profileList?this.state.profileList[0]:false)}/>
+          </div>
+        </div>
       }
       return (
         <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
@@ -309,18 +320,11 @@ class App extends Component {
                       registering={this.state.registering}/>
             </div>
             {invalidMessage}
+
             <div className="card-body">
               <div id="carouselBody" className="carousel slide" data-ride="carousel">
-                <div className="carousel-inner">
-                  <div className={"carousel-item" + (this.state.curNav==="profile"?" active":"")}>
-                    {userJsx}
-                  </div>
-                  <div className={"carousel-item" + (this.state.curNav==="session"?" active":"")}>
-                    <Session config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} loggedIn={this.state.loggedIn} />
-                  </div>
-                  <div className={"carousel-item" + (this.state.curNav!=="profile"&&this.state.curNav!=="session"?" active":"")}>
-                    <SchemePage config={this.state.config} module={this.state.curNav} name={this.state.module} profile={(this.state.profileList?this.state.profileList[0]:false)}/>
-                  </div>
+                <div className="carousel-inner">           
+                  {userJsx}
                 </div>
               </div>
             </div>
