@@ -33,6 +33,9 @@
     - [User profile delegation](#user-profile-delegation)
     - [Add or update additional properties for users and clients](#add-or-update-additional-properties-for-users-and-clients)
     - [Non-password authentication](#non-password-authentication)
+- [Troubleshooting](#troubleshooting)
+    - [Impossible to log in as administrator - N-factor issue](#impossible-to-log-in-as-administrator-n-factor-issue)
+    - [Impossible to log in as administrator - Password lost](#impossible-to-log-in-as-administrator-password-lost)
 
 The installation comes with a default configuration that can be updated or overwritten via the administration page or the configuration file.
 
@@ -540,3 +543,36 @@ The option `defaultScheme` in the `config.json` file can be used to overwrite pa
 ```
 
 ![login-nopassword](screenshots/login-nopassword.png)
+
+## Troubleshooting
+
+### Impossible to log in as administrator - N-factor issue
+
+If for any reason, the n-factor(s) scheme(s) added to the scope `g_admin` can't be used anymore, you need to reset the scope `g_admin` to its original setup, i.e. password only, no n-factor authentication.
+
+- Step 1 (optionnal but recommended): to use Glewlwyd in a secured channel, you can disconnect Glewlwyd from the outside world, in order to avoid opportunity attacks when the security will be lowered. i.e.: disable the reverse proxy if you have one and access your Glewlwyd instance directly.
+- Step 2: Backup your database
+- Step 3: connect to your database and execute the following SQL queries:
+
+```SQL
+-- Remove all n-factor authentication to scope
+DELETE FROM g_scope_group_auth_scheme_module_instance WHERE gsg_id IN (SELECT gsg_id FROM g_scope_group WHERE gs_id IN (SELECT gs_id FROM g_scope WHERE gs_name='g_admin'));
+DELETE FROM g_scope_group WHERE gs_id IN (SELECT gs_id FROM g_scope WHERE gs_name='g_admin');
+-- Set scope settings to password required and 10 minutes session
+UPDATE g_scope SET gs_password_required=1, gs_password_max_age=600 WHERE gs_name='gs_admin';
+```
+
+### Impossible to log in as administrator - Password lost
+
+If you lost your administrator password, assuming you use the database backend, you can reset it with one of the following SQL queries, depending on your database type:
+
+```SQL
+-- MariaDB/MySQL
+UPDATE g_user SET gu_password=PASSWORD('password'), gu_enabled=1 WHERE gu_username='admin';
+
+-- SQlite3
+UPDATE g_user SET gu_password='fOfvZC/wR2cUSTWbW6YZueGyyDuFqwkoFlcNlRYWJscxYTVOVFJ3VWFHdVJQT0pU', gu_enabled=1 WHERE gu_username='admin';
+
+-- PostgreSQL
+UPDATE g_user SET gu_password=crypt('password', gen_salt('bf')), gu_enabled=1 WHERE gu_username='admin';
+```
