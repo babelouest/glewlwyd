@@ -325,7 +325,7 @@ class App extends Component {
               </div>
             </div>
           </div>
-          <Notification/>
+          <Notification loggedIn={this.state.loggedIn}/>
           <PasswordModal config={this.state.config} callback={this.closePasswordModal}/>
           <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
           <Message title={this.state.messageModal.title} message={this.state.messageModal.message} />
