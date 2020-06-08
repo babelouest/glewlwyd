@@ -10,6 +10,7 @@ class Clients extends Component {
     this.state = {
       config: props.config,
       clients: props.clients,
+      source: props.source,
       loggedIn: props.loggedIn
     }
 
@@ -28,6 +29,7 @@ class Clients extends Component {
   componentWillReceiveProps(nextProps) {
     this.setState({
       clients: nextProps.clients,
+      source: nextProps.source,
       loggedIn: nextProps.loggedIn
     });
   }
@@ -70,6 +72,12 @@ class Clients extends Component {
 	render() {
     var clients = [];
     this.state.clients.list.forEach((client, index) => {
+      var readonly = true;
+      this.state.source.forEach((source) => {
+        if (client.source === source.name) {
+          readonly = source.readonly;
+        }
+      });
       clients.push(<tr key={index} className={(!client.enabled?"table-danger":"")}>
         <td className="d-none d-lg-table-cell">{client.source}</td>
         <td>{client.client_id}</td>
@@ -80,7 +88,7 @@ class Clients extends Component {
             <button type="button" className="btn btn-secondary" onClick={(e) => this.editClient(e, client)} title={i18next.t("admin.edit")}>
               <i className="fas fa-edit"></i>
             </button>
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteClient(e, client)} title={i18next.t("admin.delete")}>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteClient(e, client)} title={i18next.t("admin.delete")} disabled={readonly}>
               <i className="fas fa-trash"></i>
             </button>
           </div>

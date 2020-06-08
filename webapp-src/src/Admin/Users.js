@@ -10,6 +10,7 @@ class Users extends Component {
     this.state = {
       config: props.config,
       users: props.users,
+      source: props.source,
       loggedIn: props.loggedIn
     }
 
@@ -29,6 +30,7 @@ class Users extends Component {
   componentWillReceiveProps(nextProps) {
     this.setState({
       users: nextProps.users,
+      source: nextProps.source,
       loggedIn: nextProps.loggedIn
     });
   }
@@ -81,6 +83,12 @@ class Users extends Component {
 	render() {
     var users = [];
     this.state.users.list.forEach((user, index) => {
+      var readonly = true;
+      this.state.source.forEach((source) => {
+        if (user.source === source.name) {
+          readonly = source.readonly;
+        }
+      });
       users.push(<tr key={index} className={(!user.enabled?"table-danger":"")}>
         <td className="d-none d-lg-table-cell">{user.source}</td>
         <td>{user.username}</td>
@@ -95,7 +103,7 @@ class Users extends Component {
             <button type="button" className="btn btn-secondary" onClick={(e) => this.editUser(e, user)} title={i18next.t("admin.edit")}>
               <i className="fas fa-edit"></i>
             </button>
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteUser(e, user)} title={i18next.t("admin.delete")}>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteUser(e, user)} title={i18next.t("admin.delete")} disabled={readonly}>
               <i className="fas fa-trash"></i>
             </button>
           </div>
@@ -112,7 +120,7 @@ class Users extends Component {
                 <i className="fas fa-edit btn-icon"></i>
                 {i18next.t("admin.edit")}
               </a>
-              <a className="dropdown-item" href="#" onClick={(e) => this.deleteUser(e, user)} alt={i18next.t("admin.delete")}>
+              <a className="dropdown-item" href="#" onClick={(e) => this.deleteUser(e, user)} alt={i18next.t("admin.delete")} disabled={readonly}>
                 <i className="fas fa-trash btn-icon"></i>
                 {i18next.t("admin.delete")}
               </a>

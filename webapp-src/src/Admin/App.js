@@ -1325,10 +1325,10 @@ class App extends Component {
               <div id="carouselBody" className="carousel slide" data-ride="carousel">
                 <div className="carousel-inner">
                   <div className={"carousel-item" + (this.state.curNav==="users"?" active":"")}>
-                    <Users config={this.state.config} users={this.state.users} loggedIn={this.state.loggedIn} />
+                    <Users config={this.state.config} users={this.state.users} source={this.state.modUsers} loggedIn={this.state.loggedIn} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="clients"?" active":"")}>
-                    <Clients config={this.state.config} clients={this.state.clients} loggedIn={this.state.loggedIn} />
+                    <Clients config={this.state.config} clients={this.state.clients} source={this.state.modClients} loggedIn={this.state.loggedIn} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="scopes"?" active":"")}>
                     <Scopes config={this.state.config} scopes={this.state.scopes} loggedIn={this.state.loggedIn} />

@@ -549,7 +549,9 @@ class EditRecord extends Component {
       if ((!curSource && !source.readonly) || source.name === this.state.data.source) {
         curSource = source.display_name;
       }
-      sourceLine.push(<a className="dropdown-item" key={index} href="#" onClick={(e) => this.changeSource(e, source.name)}>{source.display_name}</a>);
+      if (!source.readonly || source.name === this.state.data.source) {
+        sourceLine.push(<a className="dropdown-item" key={index} href="#" onClick={(e) => this.changeSource(e, source.name)}>{source.display_name||source.name}</a>);
+      }
     });
     if (this.state.hasError) {
       hasError = <span className="error-input text-right">{i18next.t("admin.error-input")}</span>;
@@ -560,7 +562,7 @@ class EditRecord extends Component {
           <label className="input-group-text" htmlFor="modal-source">{i18next.t("admin.source")}</label>
         </div>
         <div className="dropdown">
-          <button className="btn btn-secondary dropdown-toggle" type="button" id="modal-source" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <button className="btn btn-secondary dropdown-toggle" type="button" id="modal-source" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.add}>
            {curSource||i18next.t("admin.source-dropdown")}
           </button>
           <div className="dropdown-menu" aria-labelledby="modal-source">
@@ -588,7 +590,7 @@ class EditRecord extends Component {
           <div className="modal-footer">
             {hasError}
             <button type="button" className="btn btn-secondary" onClick={(e) => this.closeModal(e, false)}>{i18next.t("modal.close")}</button>
-            <button type="button" className="btn btn-primary " onClick={(e) => this.closeModal(e, true)}>{i18next.t("modal.ok")}</button>
+            <button type="button" className="btn btn-primary " onClick={(e) => this.closeModal(e, true)} disabled={this.state.data && this.state.data.source && !this.state.data.source.readonly && !this.state.add}>{i18next.t("modal.ok")}</button>
           </div>
         </div>
       </div>
