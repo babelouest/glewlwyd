@@ -1349,7 +1349,7 @@ class App extends Component {
               </div>
             </div>
           </div>
-          <Notification/>
+          <Notification loggedIn={this.state.loggedIn}/>
           <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
           <EditRecord title={this.state.editModal.title} pattern={this.state.editModal.pattern} source={this.state.editModal.source} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
           <ScopeEdit title={this.state.scopeModal.title} scope={this.state.scopeModal.data} add={this.state.scopeModal.add} modSchemes={this.state.modSchemes} callback={this.state.scopeModal.callback} />
