@@ -202,7 +202,7 @@ class OTPParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-otp-hotp-window">{i18next.t("admin.mod-otp-hotp-window")}</label>
             </div>
-            <input type="number" min="0" max="16" step="1" className={this.state.errorList["hotp-window"]?"form-control is-invalid":"form-control"} id="mod-otp-hotp-window" onChange={(e) => this.changeParam(e, "hotp-window", 1)} value={this.state.mod.parameters["hotp-window"]} placeholder={i18next.t("admin.mod-otp-hotp-window-ph")} disabled={!this.state.mod.parameters["hotp-allow"]}/>
+            <input type="number" min="0" step="1" className={this.state.errorList["hotp-window"]?"form-control is-invalid":"form-control"} id="mod-otp-hotp-window" onChange={(e) => this.changeParam(e, "hotp-window", 1)} value={this.state.mod.parameters["hotp-window"]} placeholder={i18next.t("admin.mod-otp-hotp-window-ph")} disabled={!this.state.mod.parameters["hotp-allow"]}/>
           </div>
           {this.state.errorList["hotp-window"]?<span className="error-input">{this.state.errorList["hotp-window"]}</span>:""}
         </div>
@@ -215,7 +215,7 @@ class OTPParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-otp-totp-window">{i18next.t("admin.mod-otp-totp-window")}</label>
             </div>
-            <input type="number" min="0" max="16" step="1" className={this.state.errorList["totp-window"]?"form-control is-invalid":"form-control"} id="mod-otp-totp-window" onChange={(e) => this.changeParam(e, "totp-window", 1)} value={this.state.mod.parameters["totp-window"]} placeholder={i18next.t("admin.mod-otp-totp-window-ph")} disabled={!this.state.mod.parameters["totp-allow"]}/>
+            <input type="number" min="0" step="1" className={this.state.errorList["totp-window"]?"form-control is-invalid":"form-control"} id="mod-otp-totp-window" onChange={(e) => this.changeParam(e, "totp-window", 1)} value={this.state.mod.parameters["totp-window"]} placeholder={i18next.t("admin.mod-otp-totp-window-ph")} disabled={!this.state.mod.parameters["totp-allow"]}/>
           </div>
           {this.state.errorList["totp-window"]?<span className="error-input">{this.state.errorList["totp-window"]}</span>:""}
         </div>
@@ -224,7 +224,7 @@ class OTPParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-otp-totp-start-offset">{i18next.t("admin.mod-otp-totp-start-offset")}</label>
             </div>
-            <input type="number" min="0" max="16" step="1" className={this.state.errorList["totp-start-offset"]?"form-control is-invalid":"form-control"} id="mod-otp-totp-start-offset" onChange={(e) => this.changeParam(e, "totp-window", 1)} value={this.state.mod.parameters["totp-window"]} placeholder={i18next.t("admin.mod-otp-totp-start-offset-ph")} disabled={!this.state.mod.parameters["totp-allow"]}/>
+            <input type="number" min="0" step="1" className={this.state.errorList["totp-start-offset"]?"form-control is-invalid":"form-control"} id="mod-otp-totp-start-offset" onChange={(e) => this.changeParam(e, "totp-offset", 1)} value={this.state.mod.parameters["totp-offset"]} placeholder={i18next.t("admin.mod-otp-totp-start-offset-ph")} disabled={!this.state.mod.parameters["totp-allow"]}/>
           </div>
           {this.state.errorList["totp-start-offset"]?<span className="error-input">{this.state.errorList["totp-start-offset"]}</span>:""}
         </div>
