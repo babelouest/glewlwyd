@@ -297,20 +297,25 @@ class App extends Component {
         <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
           <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
             <div className="card-header">
-              <div className="float-right">
-                <div className="dropdown">
-                  <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i className="fas fa-globe-africa"></i>
-                  </button>
-                  <div className="dropdown-menu" aria-labelledby="dropdownLang">
-                    {langList}
+              <nav className="navbar navbar-expand-lg navbar-dark">
+                <a className="navbar-brand" href="#" data-toggle="collapse">
+                  <img className="mr-3" src="img/logo-login.png" alt="logo"/>
+                  {i18next.t("login.menu-title")}
+                </a>
+                <div className="collapse navbar-collapse" id="navbarSupportedContent">
+                  <ul className="navbar-nav mr-auto">
+                    {/* Placeholder */}
+                  </ul>
+                  <div className="btn-group" role="group">
+                    <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      <i className="fas fa-globe-africa"></i>
+                    </button>
+                    <div className="dropdown-menu" aria-labelledby="dropdownLang">
+                      {langList}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <h2>
-                <img className="mr-3" src="img/logo-login.png" alt="logo"/>
-                {i18next.t("login.menu-title")}
-              </h2>
+              </nav>
             </div>
             {message}
             <div className="card-body">
