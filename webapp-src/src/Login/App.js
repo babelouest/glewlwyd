@@ -297,7 +297,7 @@ class App extends Component {
         <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
           <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
             <div className="card-header">
-              <nav className="navbar navbar-expand-lg navbar-dark">
+              <nav className="navbar navbar-expand-lg navbar-light">
                 <a className="navbar-brand" href="#" data-toggle="collapse">
                   <img className="mr-3" src="img/logo-login.png" alt="logo"/>
                   {i18next.t("login.menu-title")}
