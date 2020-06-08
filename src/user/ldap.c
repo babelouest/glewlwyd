@@ -200,18 +200,16 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params, int readonly) {
         }
       }
       if (readonly) {
-        if (json_object_get(j_params, "email-property") == NULL || !json_string_length(json_object_get(j_params, "email-property"))) {
-          json_array_append_new(j_error, json_string("email-property is optional and must be a non empty string"));
+        if (json_object_get(j_params, "email-property") == NULL || !json_is_string(json_object_get(j_params, "email-property"))) {
+          json_array_append_new(j_error, json_string("email-property is optional and must be a string"));
         }
       } else {
         if (json_object_get(j_params, "email-property") != NULL && !json_is_string(json_object_get(j_params, "email-property")) && !json_is_array(json_object_get(j_params, "email-property"))) {
-          json_array_append_new(j_error, json_string("email-property is optional and must be a non empty string or an array of non empty strings"));
-        } else if (json_is_string(json_object_get(j_params, "email-property")) && !json_string_length(json_object_get(j_params, "email-property"))) {
-          json_array_append_new(j_error, json_string("email-property is optional and must be a non empty string or an array of non empty strings"));
+          json_array_append_new(j_error, json_string("email-property is optional and must be a string or an array of strings"));
         } else if (json_is_array(json_object_get(j_params, "email-property"))) {
           json_array_foreach(json_object_get(j_params, "email-property"), index, j_element) {
-            if (!json_string_length(j_element)) {
-              json_array_append_new(j_error, json_string("email-property is optional and must be a non empty string or an array of non empty strings"));
+            if (!json_is_string(j_element)) {
+              json_array_append_new(j_error, json_string("email-property is optional and must be a string or an array of strings"));
             }
           }
         }

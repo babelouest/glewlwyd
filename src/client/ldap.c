@@ -137,18 +137,16 @@ static json_t * is_client_ldap_parameters_valid(json_t * j_params, int readonly)
         }
       }
       if (readonly) {
-        if (!json_string_length(json_object_get(j_params, "description-property"))) {
-          json_array_append_new(j_error, json_string("description-property is optional and must be a non empty string"));
+        if (!json_is_string(json_object_get(j_params, "description-property"))) {
+          json_array_append_new(j_error, json_string("description-property is optional and must be a string"));
         }
       } else {
         if (json_object_get(j_params, "description-property") != NULL && !json_is_string(json_object_get(j_params, "description-property")) && !json_is_array(json_object_get(j_params, "description-property"))) {
-          json_array_append_new(j_error, json_string("description-property is optional and must be a non empty string or an array of non empty strings"));
-        } else if (json_is_string(json_object_get(j_params, "description-property")) && !json_string_length(json_object_get(j_params, "description-property"))) {
-          json_array_append_new(j_error, json_string("description-property is optional and must be a non empty string or an array of non empty strings"));
+          json_array_append_new(j_error, json_string("description-property is optional and must be a string or an array of strings"));
         } else if (json_is_array(json_object_get(j_params, "description-property"))) {
           json_array_foreach(json_object_get(j_params, "description-property"), index, j_element) {
-            if (!json_string_length(j_element)) {
-              json_array_append_new(j_error, json_string("description-property is optional and must be a non empty string or an array of non empty strings"));
+            if (!json_is_string(j_element)) {
+              json_array_append_new(j_error, json_string("description-property is optional and must be a string or an array of strings"));
             }
           }
         }
@@ -1526,8 +1524,8 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
     if (json_object_get(j_client, "name") != NULL && (!json_is_string(json_object_get(j_client, "name")) || !json_string_length(json_object_get(j_client, "name")))) {
       json_array_append_new(j_result, json_string("name must be a non empty string"));
     }
-    if (json_object_get(j_client, "description") != NULL && (!json_is_string(json_object_get(j_client, "description")) || !json_string_length(json_object_get(j_client, "description")))) {
-      json_array_append_new(j_result, json_string("description must be a non empty string"));
+    if (json_object_get(j_client, "description") != NULL && !json_is_string(json_object_get(j_client, "description"))) {
+      json_array_append_new(j_result, json_string("description must be a string"));
     }
     if (json_object_get(j_client, "enabled") != NULL && !json_is_boolean(json_object_get(j_client, "enabled"))) {
       json_array_append_new(j_result, json_string("enabled must be a boolean"));

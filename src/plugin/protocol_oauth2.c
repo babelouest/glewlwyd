@@ -235,8 +235,8 @@ static json_t * check_parameters (json_t * j_params) {
         ret = G_ERROR_PARAM;
       } else {
         json_array_foreach(json_object_get(j_params, "introspection-revocation-auth-scope"), index, j_element) {
-          if (!json_string_length(j_element) || json_string_length(j_element) > 128) {
-            json_array_append_new(j_error, json_string("Property 'introspection-revocation-auth-scope' is optional and must be a non empty JSON array of strings, maximum 128 characters"));
+          if (!json_is_string(j_element) || json_string_length(j_element) > 128) {
+            json_array_append_new(j_error, json_string("Property 'introspection-revocation-auth-scope' is optional and must be a JSON array of strings, maximum 128 characters"));
             ret = G_ERROR_PARAM;
           }
         }

@@ -179,7 +179,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
         json_array_append_new(j_error, json_string("basicIntegrity is optional and must be an integer between -1 and 1"));
       }
       if (json_object_get(j_params, "google-root-ca-r2") != NULL && !json_is_string(json_object_get(j_params, "google-root-ca-r2"))) {
-        json_array_append_new(j_error, json_string("google-root-ca-r2 is optional and must be a non empty string"));
+        json_array_append_new(j_error, json_string("google-root-ca-r2 is optional and must be a string"));
       } else if (json_string_length(json_object_get(j_params, "google-root-ca-r2"))) {
         j_cert = get_cert_from_file_path(json_string_value(json_object_get(j_params, "google-root-ca-r2")));
         if (check_result_value(j_cert, G_OK)) {
@@ -193,12 +193,12 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
       }
       if (json_object_get(j_params, "root-ca-list") != NULL) {
         if (!json_is_array(json_object_get(j_params, "root-ca-list"))) {
-          json_array_append_new(j_error, json_string("root-ca-list is optional and must be an array of non empty strings"));
+          json_array_append_new(j_error, json_string("root-ca-list is optional and must be an array of strings"));
         } else {
           json_object_set_new(j_params, "root-ca-array", json_array());
           json_array_foreach(json_object_get(j_params, "root-ca-list"), index, j_element) {
             if (!json_string_length(j_element)) {
-              json_array_append_new(j_error, json_string("root-ca-list is optional and must be an array of non empty strings"));
+              json_array_append_new(j_error, json_string("root-ca-list is optional and must be an array of strings"));
             } else {
               j_cert = get_cert_from_file_path(json_string_value(j_element));
               if (check_result_value(j_cert, G_OK)) {
