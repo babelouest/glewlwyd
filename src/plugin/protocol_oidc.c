@@ -1191,7 +1191,7 @@ static char * generate_client_access_token(struct _oidc_config * config, json_t 
     r_jwt_set_claim_str_value(jwt, "aud", json_string_value(json_object_get(j_client, "client_id")));
     r_jwt_set_claim_str_value(jwt, "client_id", json_string_value(json_object_get(j_client, "client_id")));
     r_jwt_set_claim_int_value(jwt, "iat", now);
-    r_jwt_set_claim_int_value(jwt, "exp", (now + config->access_token_duration));
+    r_jwt_set_claim_int_value(jwt, "exp", (((json_int_t)now) + config->access_token_duration));
     r_jwt_set_claim_int_value(jwt, "nbf", now);
     r_jwt_set_claim_str_value(jwt, "jti", jti);
     r_jwt_set_claim_str_value(jwt, "type", "client_token");
@@ -1652,7 +1652,7 @@ static char * generate_id_token(struct _oidc_config * config, const char * usern
         if ((j_user_info = get_userinfo(config, sub, j_user, j_claims_request, scopes)) != NULL) {
           json_object_set(j_user_info, "iss", json_object_get(config->j_params, "iss"));
           json_object_set(j_user_info, "aud", json_object_get(j_client, "client_id"));
-          json_object_set_new(j_user_info, "exp", json_integer(now + config->access_token_duration));
+          json_object_set_new(j_user_info, "exp", json_integer(((json_int_t)now) + config->access_token_duration));
           json_object_set_new(j_user_info, "iat", json_integer(now));
           json_object_set_new(j_user_info, "auth_time", json_integer(auth_time));
           json_object_set(j_user_info, "azp", json_object_get(j_client, "client_id"));
@@ -1865,7 +1865,7 @@ static char * generate_access_token(struct _oidc_config * config, const char * u
       r_jwt_set_claim_str_value(jwt, "jti", jti);
       r_jwt_set_claim_str_value(jwt, "type", "access_token");
       r_jwt_set_claim_int_value(jwt, "iat", now);
-      r_jwt_set_claim_int_value(jwt, "exp", (now + config->access_token_duration));
+      r_jwt_set_claim_int_value(jwt, "exp", (((json_int_t)now) + config->access_token_duration));
       r_jwt_set_claim_int_value(jwt, "nbf", now);
       if (scope_list != NULL) {
         r_jwt_set_claim_str_value(jwt, "scope", scope_list);
@@ -4921,7 +4921,7 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
       if (res == H_OK) {
         if (json_array_size(j_result)) {
           time(&now);
-          if (json_integer_value(json_object_get(json_array_get(j_result, 0), "expires_at")) >= now) {
+          if ((time_t)json_integer_value(json_object_get(json_array_get(j_result, 0), "expires_at")) >= now) {
             if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpoda_status")) == 1) {
               j_query = json_pack("{sss[s]s{sOsi}}",
                                   "table",
@@ -6371,7 +6371,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
       l_max_age = strtol(max_age, &endptr, 10);
       if (!(*endptr) && l_max_age > 0) {
         time(&now);
-        if (l_max_age < (now - config->glewlwyd_config->glewlwyd_callback_get_session_age(config->glewlwyd_config, request, json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered"))))) {
+        if (l_max_age < (now - (time_t)config->glewlwyd_config->glewlwyd_callback_get_session_age(config->glewlwyd_config, request, json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered"))))) {
           // Redirect to login page
           u_map_put(&additional_parameters, "refresh_login", "true");
           redirect_url = get_login_url(config, request, "auth", client_id, scope, &additional_parameters);

@@ -434,7 +434,7 @@ static char * generate_client_access_token(struct _oauth2_config * config, const
     r_jwt_set_claim_str_value(jwt, "scope", scope_list);
     r_jwt_set_claim_int_value(jwt, "iat", now);
     r_jwt_set_claim_int_value(jwt, "expires_in", config->access_token_duration);
-    r_jwt_set_claim_int_value(jwt, "exp", (now+config->access_token_duration));
+    r_jwt_set_claim_int_value(jwt, "exp", (((json_int_t)now)+config->access_token_duration));
     r_jwt_set_claim_int_value(jwt, "nbf", now);
     token = r_jwt_serialize_signed(jwt, NULL, 0);
     if (token == NULL) {
@@ -461,7 +461,7 @@ static char * generate_access_token(struct _oauth2_config * config, const char *
     r_jwt_set_claim_str_value(jwt, "type", "access_token");
     r_jwt_set_claim_int_value(jwt, "iat", now);
     r_jwt_set_claim_int_value(jwt, "expires_in", config->access_token_duration);
-    r_jwt_set_claim_int_value(jwt, "exp", (now+config->access_token_duration));
+    r_jwt_set_claim_int_value(jwt, "exp", (((json_int_t)now)+config->access_token_duration));
     r_jwt_set_claim_int_value(jwt, "nbf", now);
     if (scope_list != NULL) {
       r_jwt_set_claim_str_value(jwt, "scope", scope_list);
@@ -1693,7 +1693,7 @@ static json_t * get_token_metadata(struct _oauth2_config * config, const char * 
       if (res == H_OK) {
         if (json_array_size(j_result)) {
           found_access = 1;
-          if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpga_enabled")) && json_integer_value(json_object_get(json_array_get(j_result, 0), "iat")) + json_integer_value(json_object_get(config->j_params, "access-token-duration")) > now) {
+          if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpga_enabled")) && json_integer_value(json_object_get(json_array_get(j_result, 0), "iat")) + json_integer_value(json_object_get(config->j_params, "access-token-duration")) > (json_int_t)now) {
             json_object_set_new(json_array_get(j_result, 0), "active", json_true());
             json_object_set_new(json_array_get(j_result, 0), "token_type", json_string("access_token"));
             json_object_set_new(json_array_get(j_result, 0), "exp", json_integer(json_integer_value(json_object_get(json_array_get(j_result, 0), "iat")) + json_integer_value(json_object_get(config->j_params, "access-token-duration"))));
@@ -2030,7 +2030,7 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
       if (res == H_OK) {
         if (json_array_size(j_result)) {
           time(&now);
-          if (json_integer_value(json_object_get(json_array_get(j_result, 0), "expires_at")) >= now) {
+          if (json_integer_value(json_object_get(json_array_get(j_result, 0), "expires_at")) >= (json_int_t)now) {
             if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpgda_status")) == 1) {
               j_query = json_pack("{sss[s]s{sOsi}}",
                                   "table",
@@ -2142,7 +2142,7 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
               res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
               json_decref(j_query);
               if (res == H_OK) {
-                if ((now - json_integer_value(json_object_get(json_array_get(j_result, 0), "last_check"))) >= json_integer_value(json_object_get(config->j_params, "device-authorization-interval"))) {
+                if (((json_int_t)now - json_integer_value(json_object_get(json_array_get(j_result, 0), "last_check"))) >= json_integer_value(json_object_get(config->j_params, "device-authorization-interval"))) {
                   // Wait for it!
                   j_body = json_pack("{ss}", "error", "authorization_pending");
                   ulfius_set_json_body_response(response, 400, j_body);
