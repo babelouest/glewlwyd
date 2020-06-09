@@ -525,18 +525,22 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
             if (user_session_delete(config, session_uid, u_map_get(request->map_url, "username")) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error user_session_delete");
               response->status = 500;
-            } else {
-              ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", config->cookie_secure, 0);
             }
           }
+        }
+        if (json_array_size(json_object_get(j_session, "session")) == 1) {
+          // Delete session cookie on the client browser
+          ulfius_add_cookie_to_response(response, config->session_key, "", expires, 0, config->cookie_domain, "/", config->cookie_secure, 0);
+        } else {
+          ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", config->cookie_secure, 0);
         }
       } else {
         if (user_session_delete(config, session_uid, NULL) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_session - Error user_session_delete");
           response->status = 500;
-        } else {
-          ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", config->cookie_secure, 0);
         }
+        // Delete session cookie on the client browser
+        ulfius_add_cookie_to_response(response, config->session_key, "", expires, 0, config->cookie_domain, "/", config->cookie_secure, 0);
       }
     }
     json_decref(j_session);
