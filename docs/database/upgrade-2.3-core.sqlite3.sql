@@ -4,7 +4,7 @@
 -- License: MIT                                          --
 -- ----------------------------------------------------- --
 
-ALTER TABLE gpg_access_token
+ALTER TABLE gpo_access_token
 ADD gpoa_jti TEXT;
 CREATE INDEX i_gpoa_jti ON gpo_access_token(gpoa_jti);
 
@@ -45,7 +45,7 @@ CREATE TABLE gpo_device_scheme (
   gpodh_id INTEGER PRIMARY KEY AUTOINCREMENT,
   gpoda_id INTEGER,
   gpodh_scheme_module TEXT NOT NULL,
-  FOREIGN KEY(gpoda_id) REFERENCES gpo_code(gpo_device_authorization) ON DELETE CASCADE
+  FOREIGN KEY(gpoda_id) REFERENCES gpo_device_authorization(gpoda_id) ON DELETE CASCADE
 );
 
 -- store device authorization requests
