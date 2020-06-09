@@ -32,13 +32,7 @@ class Password extends Component {
     this.setState({
       config: nextProps.config,
       passwordMinLength: nextProps.config.PasswordMinLength||8,
-      callback: nextProps.callback,
-      old_password: "",
-      password: "",
-      password_confirm: "",
-      oldPasswordInvalid: false,
-      passwordInvalid: false,
-      passwordConfirmInvalid: false
+      callback: nextProps.callback
     });
   }
   
@@ -47,36 +41,30 @@ class Password extends Component {
 
     if (result) {
       // Check whether the new password is well-formed.
-      this.checkPassword();
-
-      // Check whether the old password is true.
-      // The API does not provide a specialized call to this end, so we test by attempting to replace the old password with itself.
-      apiManager.glewlwydRequest("/profile/password", "PUT", {old_password: this.state.old_password, password: this.state.old_password})
-      .then(() => {
-        this.setState({oldPasswordInvalid: false, oldPasswordInvalidMessage: ""});
-        if (!this.state.passwordInvalid && !this.state.passwordConfirmInvalid && !apiError) {
-          apiManager.glewlwydRequest("/profile/password", "PUT", {old_password: this.state.old_password, password: this.state.password})
-          .then(() => {
+      if (this.checkPassword()) {
+        apiManager.glewlwydRequest("/profile/password", "PUT", {old_password: this.state.old_password, password: this.state.password})
+        .then(() => {
+          this.setState({old_password: "", 
+                         password: "", 
+                         password_confirm: "", 
+                         oldPasswordInvalid: false, 
+                         oldPasswordInvalidMessage: "",
+                         passwordInvalid: false, 
+                         passwordInvalidMessage: "", 
+                         passwordConfirmInvalid: false,
+                         passwordConfirmInvalidMessage: ""}, () => {
             this.state.callback(result);
-          })
-          .fail((err) => {
-            // if (err.status == 400) {
-            //   this.setState({oldPasswordInvalid: true, oldPasswordInvalidMessage: i18next.t("profile.password-invalid")});
-            // } else {
-              apiError = true;
-              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-            // }
           });
-        }
-      })
-      .fail((err) => {
-        if (err.status == 400) {
-          this.setState({oldPasswordInvalid: true, oldPasswordInvalidMessage: i18next.t("profile.password-invalid")});
-        } else {
-          apiError = true;
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-        }
-      });
+        })
+        .fail((err) => {
+           if (err.status == 400) {
+             this.setState({oldPasswordInvalid: true, oldPasswordInvalidMessage: i18next.t("profile.password-invalid")});
+           } else {
+            apiError = true;
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+           }
+        });
+      }
     } else {
       this.state.callback(result);
     }
@@ -104,7 +92,10 @@ class Password extends Component {
       passwordConfirmInvalid = true;
       passwordConfirmInvalidMessage = i18next.t("profile.password-not-match");
     }
-    this.setState({passwordInvalid: passwordInvalid, passwordConfirmInvalid: passwordConfirmInvalid, passwordInvalidMessage: passwordInvalidMessage, passwordConfirmInvalidMessage:passwordConfirmInvalidMessage});
+    this.setState({passwordInvalid: passwordInvalid, 
+                   passwordConfirmInvalid: passwordConfirmInvalid, 
+                   passwordInvalidMessage: passwordInvalidMessage, 
+                   passwordConfirmInvalidMessage:passwordConfirmInvalidMessage});
     return !passwordInvalid && !passwordConfirmInvalid;
   }
   
