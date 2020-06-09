@@ -19,6 +19,7 @@
 - Breaking change since 2.2: Client Registration input parameters are now conform to [OAuth 2.0 Dynamic Client Registration Protocol](https://tools.ietf.org/html/rfc7591)
 - Add [OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens](https://tools.ietf.org/html/rfc8705)
 - Allow multi-languages e-mails in [e-mail scheme](docs/EMAIL.md) and [registration plugin](docs/REGISTER.md)
+- Multiple bugfixes in UI and API
 
 ## 2.2.0
 
