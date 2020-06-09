@@ -10,7 +10,7 @@ import User from './User';
 import UserDelegate from './UserDelegate';
 import Register from './Register';
 import Session from './Session';
-import PasswordModal from './PasswordModal';
+import Password from './Password';
 import SchemePage from './SchemePage';
 import Confirm from '../Modal/Confirm';
 import Message from '../Modal/Message';
@@ -49,12 +49,11 @@ class App extends Component {
     };
     
     this.fetchProfile = this.fetchProfile.bind(this);
-    this.closePasswordModal = this.closePasswordModal.bind(this);
     
     messageDispatcher.subscribe('App', (message) => {
       if (message.type === 'nav') {
         if (message.page === "password") {
-          $("#passwordModal").modal({keyboard: false, show: true});
+          this.setState({curNav: "password"});
         } else if (message.page === "session") {
           this.setState({curNav: "session"});
         } else if (message.page === "profile") {
@@ -273,8 +272,7 @@ class App extends Component {
     });
   }
 
-  closePasswordModal(result, data) {
-    $("#passwordModal").modal("hide");
+  showPasswordChangeNotification(result, data) {
     if (result) {
       messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("profile.password-change-success")});
     }
@@ -318,7 +316,10 @@ class App extends Component {
                   <div className={"carousel-item" + (this.state.curNav==="session"?" active":"")}>
                     <Session config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} loggedIn={this.state.loggedIn} />
                   </div>
-                  <div className={"carousel-item" + (this.state.curNav!=="profile"&&this.state.curNav!=="session"?" active":"")}>
+                  <div className={"carousel-item" + (this.state.curNav==="password"?" active":"")}>
+                    <Password config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} loggedIn={this.state.loggedIn} callback={this.showPasswordChangeNotification} />
+                  </div>
+                  <div className={"carousel-item" + (this.state.curNav!=="profile"&&this.state.curNav!=="session"&&this.state.curNav!=="password"?" active":"")}>
                     <SchemePage config={this.state.config} module={this.state.curNav} name={this.state.module} profile={(this.state.profileList?this.state.profileList[0]:false)}/>
                   </div>
                 </div>
@@ -326,7 +327,6 @@ class App extends Component {
             </div>
           </div>
           <Notification loggedIn={this.state.loggedIn}/>
-          <PasswordModal config={this.state.config} callback={this.closePasswordModal}/>
           <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
           <Message title={this.state.messageModal.title} message={this.state.messageModal.message} />
         </div>
