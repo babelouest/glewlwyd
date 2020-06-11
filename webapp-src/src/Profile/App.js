@@ -187,7 +187,9 @@ class App extends Component {
     apiManager.glewlwydRequest("/" + this.state.config.params.register + "/config")
     .then((config) => {
       var defaultLang = false;
-      if (config.languages.length) {
+      if (this.state.lang) {
+        defaultLang = this.state.lang;
+      } else if (config.languages.length) {
         defaultLang = config.languages[0];
       }
       this.setState({registerValid: true, registerConfig: config, registerDefaultLang: defaultLang}, () => {
