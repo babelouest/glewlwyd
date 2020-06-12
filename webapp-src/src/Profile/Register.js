@@ -480,7 +480,7 @@ class Register extends Component {
             langList.push(<a key={index} className={"dropdown-item"+(this.state.registerDefaultLang===lang?" active":"")} href="#" onClick={(e) => this.changeLang(e, lang)}>{lang}</a>);
           });
           langListJsx = <div className="btn-group dropup" role="group">
-            <button className="btn btn-success dropdown-toggle" type="button" id="register-profile-lang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <button className="btn btn-success dropdown-toggle" type="button" id="register-profile-lang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.usernameValid || !this.state.email || !this.state.registerValid}>
               {this.state.registerDefaultLang}
             </button>
             <div className="dropdown-menu" aria-labelledby="register-profile-lang">

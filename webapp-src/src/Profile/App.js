@@ -70,7 +70,15 @@ class App extends Component {
           }
         });
       } else if (message.type === 'lang') {
-        this.setState({lang: i18next.language});
+        this.setState({lang: i18next.language}, () => {
+          if (this.state.config.params.register && this.state.registerConfig.languages.length) {
+            this.state.registerConfig.languages.forEach((lang) => {
+              if (lang === this.state.lang) {
+                this.setState({registerDefaultLang: lang});
+              }
+            });
+          }
+        });
       } else if (message.type === 'profile') {
         this.fetchProfile();
       } else if (message.type === 'confirm') {
@@ -188,8 +196,15 @@ class App extends Component {
     .then((config) => {
       var defaultLang = false;
       if (this.state.lang) {
-        defaultLang = this.state.lang;
-      } else if (config.languages.length) {
+        if (config.languages.length) {
+          config.languages.forEach((lang) => {
+            if (lang === this.state.lang) {
+              defaultLang = this.state.lang;
+            }
+          });
+        }
+      }
+      if (!defaultLang && config.languages.length) {
         defaultLang = config.languages[0];
       }
       this.setState({registerValid: true, registerConfig: config, registerDefaultLang: defaultLang}, () => {
@@ -328,7 +343,7 @@ class App extends Component {
               </div>
             </div>
           </div>
-          <Notification loggedIn={this.state.loggedIn}/>
+          <Notification loggedIn={this.state.loggedIn||this.state.config.params.register}/>
           <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
           <Message title={this.state.messageModal.title} message={this.state.messageModal.message} />
         </div>
