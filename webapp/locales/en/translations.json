@@ -681,7 +681,7 @@
     "mod-email-user-lang-property": "User lang property",
     "mod-email-user-lang-property-ph": "e.g. lang",
     "mod-email-user-lang-property-error": "User lang property is mandatory",
-    "mod-email-lang-default": "Default lang",
+    "mod-email-lang-default": "Fallback lang",
     "mod-email-subject": "E-mail subject",
     "mod-email-subject-ph": "e.g. Glewlwyd confirmation code",
     "mod-email-subject-error": "Subject is mandatory for language '{{lang}}' - ",
