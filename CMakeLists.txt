@@ -105,6 +105,13 @@ if (LIBCONFIG_FOUND)
 	include_directories(${LIBCONFIG_INCLUDE_DIRS})
 endif ()
 
+include(FindMHD)
+find_package(MHD REQUIRED)
+if (MHD_FOUND)
+	set(GLWD_LIBS ${GLWD_LIBS} ${MHD_LIBRARIES})
+	include_directories(${MHD_INCLUDE_DIRS})
+endif ()
+
 # build
 
 add_executable(glewlwyd ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.h
