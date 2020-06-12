@@ -1309,6 +1309,28 @@ class App extends Component {
   }
 
 	render() {
+    // Object deep-copy function culled from https://medium.com/javascript-in-plain-english/how-to-deep-copy-objects-and-arrays-in-javascript-7c911359b089
+    const deepCopyFunction = (inObject) => {
+      let outObject, value, key
+
+      if (typeof inObject !== "object" || inObject === null) {
+        return inObject // Return the value if inObject is not an object
+      }
+
+      // Create an array or object to hold the values
+      outObject = Array.isArray(inObject) ? [] : {}
+
+      for (key in inObject) {
+        value = inObject[key]
+
+        // Recursively (deep) copy for nested objects, including arrays
+        outObject[key] = deepCopyFunction(value)
+      }
+
+      return outObject
+    }
+    var dataCopy = deepCopyFunction(this.state.editModal.data);
+
     var invalidCredentialMessage;
     if (this.state.invalidCredentialMessage) {
       invalidCredentialMessage = <div className="alert alert-danger" role="alert">{i18next.t("admin.error-credential-message")}</div>
@@ -1351,7 +1373,7 @@ class App extends Component {
           </div>
           <Notification loggedIn={this.state.loggedIn}/>
           <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
-          <EditRecord title={this.state.editModal.title} pattern={this.state.editModal.pattern} source={this.state.editModal.source} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
+          <EditRecord title={this.state.editModal.title} pattern={this.state.editModal.pattern} source={this.state.editModal.source} data={dataCopy} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
           <ScopeEdit title={this.state.scopeModal.title} scope={this.state.scopeModal.data} add={this.state.scopeModal.add} modSchemes={this.state.modSchemes} callback={this.state.scopeModal.callback} />
           <ModEdit title={this.state.ModModal.title} role={this.state.ModModal.role} mod={this.state.ModModal.data} add={this.state.ModModal.add} types={this.state.ModModal.types} callback={this.state.ModModal.callback} config={this.state.config} />
           <PluginEdit title={this.state.PluginModal.title} mod={this.state.PluginModal.data} add={this.state.PluginModal.add} modSchemes={this.state.modSchemes} types={this.state.PluginModal.types} callback={this.state.PluginModal.callback} config={this.state.config} />
