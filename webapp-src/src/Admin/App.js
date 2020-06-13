@@ -48,7 +48,9 @@ class App extends Component {
       PluginModal: {title: "", data: {}, types: [], add: false, callback: false},
       modTypes: {user: [], client: [], scheme: [], plugin: []},
       profileList: false,
-      invalidCredentialMessage: false
+      invalidCredentialMessage: false,
+      savedRecord: false,
+      savedIndex: -1
     }
     
     this.fetchApi = this.fetchApi.bind(this);
@@ -182,7 +184,7 @@ class App extends Component {
             callback: this.confirmEditUser,
             validateCallback: this.validateUser
           }
-          this.setState({editModal: editModal}, () => {
+          this.setState({editModal: editModal, savedRecord: JSON.stringify(message.user), savedIndex: message.index}, () => {
             $("#editRecordModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'client') {
@@ -194,7 +196,7 @@ class App extends Component {
             callback: this.confirmEditClient,
             validateCallback: this.validateClient
           }
-          this.setState({editModal: editModal}, () => {
+          this.setState({editModal: editModal, savedRecord: JSON.stringify(message.client), savedIndex: message.index}, () => {
             $("#editRecordModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'scope') {
@@ -203,7 +205,7 @@ class App extends Component {
             data: message.scope,
             callback: this.confirmEditScope
           }
-          this.setState({scopeModal: scopeModal}, () => {
+          this.setState({scopeModal: scopeModal, savedRecord: JSON.stringify(message.scope), savedIndex: message.index}, () => {
             $("#editScopeModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'userMod') {
@@ -214,7 +216,7 @@ class App extends Component {
             types: this.state.modTypes.user,
             callback: this.confirmEditUserMod
           }
-          this.setState({ModModal: ModModal}, () => {
+          this.setState({ModModal: ModModal, savedRecord: JSON.stringify(message.mod), savedIndex: message.index}, () => {
             $("#editModModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'clientMod') {
@@ -225,7 +227,7 @@ class App extends Component {
             role: "client",
             callback: this.confirmEditClientMod
           }
-          this.setState({ModModal: ModModal}, () => {
+          this.setState({ModModal: ModModal, savedRecord: JSON.stringify(message.mod), savedIndex: message.index}, () => {
             $("#editModModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'schemeMod') {
@@ -236,7 +238,7 @@ class App extends Component {
             role: "scheme",
             callback: this.confirmEditSchemeMod
           }
-          this.setState({ModModal: ModModal}, () => {
+          this.setState({ModModal: ModModal, savedRecord: JSON.stringify(message.mod), savedIndex: message.index}, () => {
             $("#editModModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'plugin') {
@@ -246,7 +248,7 @@ class App extends Component {
             types: this.state.modTypes.plugin,
             callback: this.confirmEditPluginMod
           }
-          this.setState({PluginModal: PluginModal}, () => {
+          this.setState({PluginModal: PluginModal, savedRecord: JSON.stringify(message.mod), savedIndex: message.index}, () => {
             $("#editPluginModal").modal({keyboard: false, show: true});
           });
         }
@@ -770,13 +772,15 @@ class App extends Component {
       .always(() => {
         this.fetchUsers()
         .always(() => {
-          this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
+          this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, savedRecord: false, savedIndex: -1}}, () => {
             $("#editRecordModal").modal("hide");
           });
         });
       });
     } else {
-      this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
+      var users = this.state.users;
+      users.list[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, users: users, savedRecord: false, savedIndex: -1}}, () => {
         $("#editRecordModal").modal("hide");
       });
     }
@@ -794,13 +798,15 @@ class App extends Component {
       .always(() => {
         this.fetchClients()
         .always(() => {
-          this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
+          this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, savedRecord: false, savedIndex: -1}}, () => {
             $("#editRecordModal").modal("hide");
           });
         });
       });
     } else {
-      this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
+      var clients = this.state.clients;
+      clients.list[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, clients: clients, savedRecord: false, savedIndex: -1}}, () => {
         $("#editRecordModal").modal("hide");
       });
     }
@@ -818,13 +824,15 @@ class App extends Component {
       .always(() => {
         this.fetchScopes()
         .always(() => {
-          this.setState({scopeModal: {data: {}, callback: false}}, () => {
+          this.setState({scopeModal: {data: {}, callback: false, savedRecord: false, savedIndex: -1}}, () => {
             $("#editScopeModal").modal("hide");
           });
         });
       });
     } else {
-      this.setState({scopeModal: {data: {}, callback: false}}, () => {
+      var scopes = this.state.scopes;
+      scopes.list[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({scopeModal: {data: {}, callback: false, scopes: scopes, savedRecord: false, savedIndex: -1}}, () => {
         $("#editScopeModal").modal("hide");
       });
     }
@@ -1025,7 +1033,7 @@ class App extends Component {
         .always(() => {
           this.fetchUserMods()
           .always(() => {
-            this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            this.setState({ModModal: {data: {}, callback: false, types: [], savedRecord: false, savedIndex: -1}}, () => {
               $("#editModModal").modal("hide");
               this.fetchUsers();
             });
@@ -1036,7 +1044,11 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
       })
     } else {
-      $("#editModModal").modal("hide");
+      var modUsers = this.state.modUsers;
+      modUsers[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({modUsers: modUsers, savedRecord: false, savedIndex: -1}, () => {
+        $("#editModModal").modal("hide");
+      });
     }
   }
 
@@ -1108,7 +1120,7 @@ class App extends Component {
         .always(() => {
           this.fetchClientMods()
           .always(() => {
-            this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            this.setState({ModModal: {data: {}, callback: false, types: []}, savedRecord: false, savedIndex: -1}, () => {
               $("#editModModal").modal("hide");
               this.fetchClients();
             });
@@ -1119,7 +1131,11 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
       })
     } else {
-      $("#editModModal").modal("hide");
+      var modClients = this.state.modClients;
+      modClients[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({modClients: modClients, savedRecord: false, savedIndex: -1}, () => {
+        $("#editModModal").modal("hide");
+      });
     }
   }
 
@@ -1195,12 +1211,16 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
       })
       .always(() => {
-        this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+        this.setState({ModModal: {data: {}, callback: false, types: []}, savedRecord: false, savedIndex: -1}, () => {
           $("#editModModal").modal("hide");
         });
       });
     } else {
-      $("#editModModal").modal("hide");
+      var modSchemes = this.state.modSchemes;
+      modSchemes[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({modSchemes: modSchemes, savedRecord: false, savedIndex: -1}, () => {
+        $("#editModModal").modal("hide");
+      });
     }
   }
 
@@ -1270,7 +1290,7 @@ class App extends Component {
         .always(() => {
           this.fetchPlugins()
           .always(() => {
-            this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            this.setState({ModModal: {data: {}, callback: false, types: []}, savedRecord: false, savedIndex: -1}, () => {
               $("#editPluginModal").modal("hide");
             });
           });
@@ -1280,7 +1300,11 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
       })
     } else {
-      $("#editPluginModal").modal("hide");
+      var plugins = this.state.plugins;
+      plugins[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({plugins: plugins, savedRecord: false, savedIndex: -1}, () => {
+        $("#editPluginModal").modal("hide");
+      });
     }
   }
 

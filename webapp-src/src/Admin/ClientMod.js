@@ -35,8 +35,8 @@ class ClientMod extends Component {
     messageDispatcher.sendMessage('App', {type: "add", role: "clientMod"});
   }
 
-  editMod(e, mod) {
-    messageDispatcher.sendMessage('App', {type: "edit", role: "clientMod", mod: mod});
+  editMod(e, mod, index) {
+    messageDispatcher.sendMessage('App', {type: "edit", role: "clientMod", mod: mod, index: index});
   }
 
   deleteMod(e, mod) {
@@ -112,7 +112,7 @@ class ClientMod extends Component {
         <td>
           <div className="btn-group d-none d-lg-table-cell" role="group">
             {switchButton}
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.editMod(e, mod)} title={i18next.t("admin.edit")}>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.editMod(e, mod, index)} title={i18next.t("admin.edit")}>
               <i className="fas fa-edit"></i>
             </button>
             <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteMod(e, mod)} title={i18next.t("admin.delete")}>
@@ -126,7 +126,7 @@ class ClientMod extends Component {
             </button>
             <div className="dropdown-menu" aria-labelledby="dropdownMenuNav">
               {switchButtonSmall}
-              <a className="dropdown-item" href="#" onClick={(e) => this.editMod(e, mod)} alt={i18next.t("admin.edit")}>
+              <a className="dropdown-item" href="#" onClick={(e) => this.editMod(e, mod, index)} alt={i18next.t("admin.edit")}>
                 <i className="fas fa-edit btn-icon"></i>
                 {i18next.t("admin.edit")}
               </a>
