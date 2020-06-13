@@ -161,7 +161,7 @@ class EditRecord extends Component {
                 inputJsx = 
                 <div>
                   <div className="custom-file">
-                    <input type="file" className={"custom-file-input" + validInput} onChange={(e) => this.uploadImage(e, pattern.name, true)} id={"modal-image-" + pattern.name} />
+                    <input type="file" accept="image/*" className={"custom-file-input" + validInput} onChange={(e) => this.uploadImage(e, pattern.name, true)} id={"modal-image-" + pattern.name}/>
                     <label className="custom-file-label" htmlFor={"modal-image-" + pattern.name}>
                       {i18next.t("browse")}
                     </label>
@@ -252,7 +252,7 @@ class EditRecord extends Component {
             inputJsx = 
             <div>
               <div className="custom-file">
-                <input type="file" className={"custom-file-input" + validInput} onChange={(e) => this.uploadImage(e, pattern.name)} id={"modal-image-" + pattern.name} />
+                <input type="file" accept="image/*" className={"custom-file-input" + validInput} onChange={(e) => this.uploadImage(e, pattern.name)} id={"modal-image-" + pattern.name} />
                 <label className="custom-file-label" htmlFor={"modal-image-" + pattern.name}>
                   {i18next.t("browse")}
                 </label>
