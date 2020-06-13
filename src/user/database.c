@@ -458,11 +458,14 @@ static char * get_password_clause_check(struct mod_parameters * param, const cha
 static json_t * get_property_value_db(struct mod_parameters * param, const char * name, json_t * j_property, json_int_t gu_id) {
   if (param->conn->type == HOEL_DB_TYPE_MARIADB) {
     if (json_string_length(j_property) < 512) {
-      return json_pack("{sIsssO}", "gu_id", gu_id, "gup_name", name, "gup_value_tiny", j_property);
+      return json_pack("{sIsssOsOsO}", "gu_id", gu_id, "gup_name", name, "gup_value_tiny", j_property, "gup_value_small", json_null(), "gup_value_medium", json_null());
     } else if (json_string_length(j_property) < 16*1024) {
-      return json_pack("{sIsssO}", "gu_id", gu_id, "gup_name", name, "gup_value_small", j_property);
+      return json_pack("{sIsssOsOsO}", "gu_id", gu_id, "gup_name", name, "gup_value_tiny", json_null(), "gup_value_small", j_property, "gup_value_medium", json_null());
+    } else if (json_string_length(j_value) < 16*1024*1024) {
+      return json_pack("{sIsssOsOsO}", "gu_id", gu_id, "gup_name", name, "gup_value_tiny", json_null(), "gup_value_small", json_null(), "gup_value_medium", j_property);
     } else {
-      return json_pack("{sIsssO}", "gu_id", gu_id, "gup_name", name, "gup_value_medium", j_property);
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_property_value_db - Error value is too large");
+      return NULL;
     }
   } else {
     return json_pack("{sIsssO}", "gu_id", gu_id, "gup_name", name, "gup_value", j_property);;
