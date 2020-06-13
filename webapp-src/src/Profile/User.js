@@ -253,7 +253,12 @@ class User extends Component {
             var img = [];
             elt.forEach((curElt, index) => {
               img.push(
-                <a href="#" onClick={(e) => this.removeImage(e, pattern.name, index)} title={i18next.t("remove")} ><img key={index} className="btn-icon-right img-thumb" src={"data:"+pattern.type+";base64,"+curElt} alt={pattern.name+"-"+index} /></a>
+                <a href="#" onClick={(e) => this.removeImage(e, pattern.name, index)} title={i18next.t("remove")} >
+                  <img key={index} className="btn-icon-right img-thumb" src={"data:"+pattern.type+";base64,"+curElt} alt={pattern.name+"-"+index} />
+                  <span className="badge badge-secondary align-top">
+                    <i className="fas fa-trash"></i>
+                  </span>
+                </a>
               );
             });
             if (pattern.edit || this.state.add) {
@@ -374,7 +379,12 @@ class User extends Component {
       } else if (pattern.type && pattern.type.startsWith("image")) {
         var img;
         if (elt) {
-          img = <a href="#" onClick={(e) => this.removeImage(e, pattern.name, -1)} title={i18next.t("remove")} ><img className="btn-icon-right img-thumb" src={"data:"+pattern.type+";base64,"+elt} alt={pattern.name} /></a>
+          img = <a href="#" onClick={(e) => this.removeImage(e, pattern.name, -1)} title={i18next.t("remove")} >
+            <img className="btn-icon-right img-thumb" src={"data:"+pattern.type+";base64,"+elt} alt={pattern.name} />
+            <span className="badge badge-secondary align-top">
+              <i className="fas fa-trash"></i>
+            </span>
+          </a>
         }
         if (pattern.edit || this.state.add) {
           inputJsx = 
