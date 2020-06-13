@@ -48,7 +48,9 @@ class App extends Component {
       PluginModal: {title: "", data: {}, types: [], add: false, callback: false},
       modTypes: {user: [], client: [], scheme: [], plugin: []},
       profileList: false,
-      invalidCredentialMessage: false
+      invalidCredentialMessage: false,
+      savedRecord: false,
+      savedIndex: -1
     }
     
     this.fetchApi = this.fetchApi.bind(this);
@@ -182,7 +184,7 @@ class App extends Component {
             callback: this.confirmEditUser,
             validateCallback: this.validateUser
           }
-          this.setState({editModal: editModal}, () => {
+          this.setState({editModal: editModal, savedRecord: JSON.stringify(message.user), savedIndex: message.index}, () => {
             $("#editRecordModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'client') {
@@ -194,7 +196,7 @@ class App extends Component {
             callback: this.confirmEditClient,
             validateCallback: this.validateClient
           }
-          this.setState({editModal: editModal}, () => {
+          this.setState({editModal: editModal, savedRecord: JSON.stringify(message.client), savedIndex: message.index}, () => {
             $("#editRecordModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'scope') {
@@ -203,7 +205,7 @@ class App extends Component {
             data: message.scope,
             callback: this.confirmEditScope
           }
-          this.setState({scopeModal: scopeModal}, () => {
+          this.setState({scopeModal: scopeModal, savedRecord: JSON.stringify(message.scope), savedIndex: message.index}, () => {
             $("#editScopeModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'userMod') {
@@ -214,7 +216,7 @@ class App extends Component {
             types: this.state.modTypes.user,
             callback: this.confirmEditUserMod
           }
-          this.setState({ModModal: ModModal}, () => {
+          this.setState({ModModal: ModModal, savedRecord: JSON.stringify(message.mod), savedIndex: message.index}, () => {
             $("#editModModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'clientMod') {
@@ -225,7 +227,7 @@ class App extends Component {
             role: "client",
             callback: this.confirmEditClientMod
           }
-          this.setState({ModModal: ModModal}, () => {
+          this.setState({ModModal: ModModal, savedRecord: JSON.stringify(message.mod), savedIndex: message.index}, () => {
             $("#editModModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'schemeMod') {
@@ -236,7 +238,7 @@ class App extends Component {
             role: "scheme",
             callback: this.confirmEditSchemeMod
           }
-          this.setState({ModModal: ModModal}, () => {
+          this.setState({ModModal: ModModal, savedRecord: JSON.stringify(message.mod), savedIndex: message.index}, () => {
             $("#editModModal").modal({keyboard: false, show: true});
           });
         } else if (message.role === 'plugin') {
@@ -246,7 +248,7 @@ class App extends Component {
             types: this.state.modTypes.plugin,
             callback: this.confirmEditPluginMod
           }
-          this.setState({PluginModal: PluginModal}, () => {
+          this.setState({PluginModal: PluginModal, savedRecord: JSON.stringify(message.mod), savedIndex: message.index}, () => {
             $("#editPluginModal").modal({keyboard: false, show: true});
           });
         }
@@ -770,13 +772,15 @@ class App extends Component {
       .always(() => {
         this.fetchUsers()
         .always(() => {
-          this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
+          this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, savedRecord: false, savedIndex: -1}}, () => {
             $("#editRecordModal").modal("hide");
           });
         });
       });
     } else {
-      this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
+      var users = this.state.users;
+      users.list[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, users: users, savedRecord: false, savedIndex: -1}}, () => {
         $("#editRecordModal").modal("hide");
       });
     }
@@ -794,13 +798,15 @@ class App extends Component {
       .always(() => {
         this.fetchClients()
         .always(() => {
-          this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
+          this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, savedRecord: false, savedIndex: -1}}, () => {
             $("#editRecordModal").modal("hide");
           });
         });
       });
     } else {
-      this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false}}, () => {
+      var clients = this.state.clients;
+      clients.list[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({editModal: {title: "", pattern: [], source: [], data: {}, callback: false, clients: clients, savedRecord: false, savedIndex: -1}}, () => {
         $("#editRecordModal").modal("hide");
       });
     }
@@ -818,13 +824,15 @@ class App extends Component {
       .always(() => {
         this.fetchScopes()
         .always(() => {
-          this.setState({scopeModal: {data: {}, callback: false}}, () => {
+          this.setState({scopeModal: {data: {}, callback: false, savedRecord: false, savedIndex: -1}}, () => {
             $("#editScopeModal").modal("hide");
           });
         });
       });
     } else {
-      this.setState({scopeModal: {data: {}, callback: false}}, () => {
+      var scopes = this.state.scopes;
+      scopes.list[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({scopeModal: {data: {}, callback: false, scopes: scopes, savedRecord: false, savedIndex: -1}}, () => {
         $("#editScopeModal").modal("hide");
       });
     }
@@ -1025,7 +1033,7 @@ class App extends Component {
         .always(() => {
           this.fetchUserMods()
           .always(() => {
-            this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            this.setState({ModModal: {data: {}, callback: false, types: [], savedRecord: false, savedIndex: -1}}, () => {
               $("#editModModal").modal("hide");
               this.fetchUsers();
             });
@@ -1036,7 +1044,11 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
       })
     } else {
-      $("#editModModal").modal("hide");
+      var modUsers = this.state.modUsers;
+      modUsers[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({modUsers: modUsers, savedRecord: false, savedIndex: -1}, () => {
+        $("#editModModal").modal("hide");
+      });
     }
   }
 
@@ -1108,7 +1120,7 @@ class App extends Component {
         .always(() => {
           this.fetchClientMods()
           .always(() => {
-            this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            this.setState({ModModal: {data: {}, callback: false, types: []}, savedRecord: false, savedIndex: -1}, () => {
               $("#editModModal").modal("hide");
               this.fetchClients();
             });
@@ -1119,7 +1131,11 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
       })
     } else {
-      $("#editModModal").modal("hide");
+      var modClients = this.state.modClients;
+      modClients[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({modClients: modClients, savedRecord: false, savedIndex: -1}, () => {
+        $("#editModModal").modal("hide");
+      });
     }
   }
 
@@ -1195,12 +1211,16 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
       })
       .always(() => {
-        this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+        this.setState({ModModal: {data: {}, callback: false, types: []}, savedRecord: false, savedIndex: -1}, () => {
           $("#editModModal").modal("hide");
         });
       });
     } else {
-      $("#editModModal").modal("hide");
+      var modSchemes = this.state.modSchemes;
+      modSchemes[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({modSchemes: modSchemes, savedRecord: false, savedIndex: -1}, () => {
+        $("#editModModal").modal("hide");
+      });
     }
   }
 
@@ -1270,7 +1290,7 @@ class App extends Component {
         .always(() => {
           this.fetchPlugins()
           .always(() => {
-            this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            this.setState({ModModal: {data: {}, callback: false, types: []}, savedRecord: false, savedIndex: -1}, () => {
               $("#editPluginModal").modal("hide");
             });
           });
@@ -1280,7 +1300,11 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
       })
     } else {
-      $("#editPluginModal").modal("hide");
+      var plugins = this.state.plugins;
+      plugins[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({plugins: plugins, savedRecord: false, savedIndex: -1}, () => {
+        $("#editPluginModal").modal("hide");
+      });
     }
   }
 
@@ -1309,28 +1333,6 @@ class App extends Component {
   }
 
 	render() {
-    // Object deep-copy function culled from https://medium.com/javascript-in-plain-english/how-to-deep-copy-objects-and-arrays-in-javascript-7c911359b089
-    const deepCopyFunction = (inObject) => {
-      let outObject, value, key
-
-      if (typeof inObject !== "object" || inObject === null) {
-        return inObject // Return the value if inObject is not an object
-      }
-
-      // Create an array or object to hold the values
-      outObject = Array.isArray(inObject) ? [] : {}
-
-      for (key in inObject) {
-        value = inObject[key]
-
-        // Recursively (deep) copy for nested objects, including arrays
-        outObject[key] = deepCopyFunction(value)
-      }
-
-      return outObject
-    }
-    var dataCopy = deepCopyFunction(this.state.editModal.data);
-
     var invalidCredentialMessage;
     if (this.state.invalidCredentialMessage) {
       invalidCredentialMessage = <div className="alert alert-danger" role="alert">{i18next.t("admin.error-credential-message")}</div>
@@ -1373,7 +1375,7 @@ class App extends Component {
           </div>
           <Notification loggedIn={this.state.loggedIn}/>
           <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
-          <EditRecord title={this.state.editModal.title} pattern={this.state.editModal.pattern} source={this.state.editModal.source} data={dataCopy} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
+          <EditRecord title={this.state.editModal.title} pattern={this.state.editModal.pattern} source={this.state.editModal.source} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
           <ScopeEdit title={this.state.scopeModal.title} scope={this.state.scopeModal.data} add={this.state.scopeModal.add} modSchemes={this.state.modSchemes} callback={this.state.scopeModal.callback} />
           <ModEdit title={this.state.ModModal.title} role={this.state.ModModal.role} mod={this.state.ModModal.data} add={this.state.ModModal.add} types={this.state.ModModal.types} callback={this.state.ModModal.callback} config={this.state.config} />
           <PluginEdit title={this.state.PluginModal.title} mod={this.state.PluginModal.data} add={this.state.PluginModal.add} modSchemes={this.state.modSchemes} types={this.state.PluginModal.types} callback={this.state.PluginModal.callback} config={this.state.config} />

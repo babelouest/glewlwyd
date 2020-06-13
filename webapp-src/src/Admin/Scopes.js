@@ -38,8 +38,8 @@ class Scopes extends Component {
     messageDispatcher.sendMessage('App', {type: "add", role: "scope"});
   }
 
-  editScope(e, scope) {
-    messageDispatcher.sendMessage('App', {type: "edit", role: "scope", scope: scope});
+  editScope(e, scope, index) {
+    messageDispatcher.sendMessage('App', {type: "edit", role: "scope", scope: scope, index: index});
   }
 
   deleteScope(e, scope) {
@@ -76,7 +76,7 @@ class Scopes extends Component {
         <td className="d-none d-lg-table-cell">{scope.description||""}</td>
         <td>
           <div className="btn-group" role="group">
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.editScope(e, scope)} title={i18next.t("admin.edit")}>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.editScope(e, scope, index)} title={i18next.t("admin.edit")}>
               <i className="fas fa-edit"></i>
             </button>
             <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteScope(e, scope)} title={i18next.t("admin.delete")}>

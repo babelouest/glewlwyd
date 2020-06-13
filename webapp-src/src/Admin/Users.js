@@ -40,9 +40,9 @@ class Users extends Component {
     messageDispatcher.sendMessage('App', {type: "add", role: "user"});
   }
 
-  editUser(e, user) {
+  editUser(e, user, index) {
     e.preventDefault();
-    messageDispatcher.sendMessage('App', {type: "edit", role: "user", user: user});
+    messageDispatcher.sendMessage('App', {type: "edit", role: "user", user: user, index: index});
   }
 
   deleteUser(e, user) {
@@ -100,7 +100,7 @@ class Users extends Component {
             <button type="button" className="btn btn-secondary" onClick={(e) => this.delegateUser(e, user)} title={i18next.t("admin.delegate")}>
               <i className="fas fa-id-card"></i>
             </button>
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.editUser(e, user)} title={i18next.t("admin.edit")}>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.editUser(e, user, index)} title={i18next.t("admin.edit")}>
               <i className="fas fa-edit"></i>
             </button>
             <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteUser(e, user)} title={i18next.t("admin.delete")} disabled={readonly}>
@@ -116,7 +116,7 @@ class Users extends Component {
                 <i className="fas fa-id-card btn-icon"></i>
                 {i18next.t("admin.delegate")}
               </a>
-              <a className="dropdown-item" href="#" onClick={(e) => this.editUser(e, user)} alt={i18next.t("admin.edit")}>
+              <a className="dropdown-item" href="#" onClick={(e) => this.editUser(e, user, index)} alt={i18next.t("admin.edit")}>
                 <i className="fas fa-edit btn-icon"></i>
                 {i18next.t("admin.edit")}
               </a>
