@@ -97,6 +97,7 @@ class Navbar extends Component {
 
 	render() {
     var langList = [], profileList = [], profileDropdown, loginButton;
+    var profilePicture;
     this.state.config.lang.forEach((lang, i) => {
       if (lang === i18next.language) {
         langList.push(<a className="dropdown-item active" href="#" key={i}>{lang}</a>);
@@ -111,15 +112,40 @@ class Navbar extends Component {
     }
     profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
     profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeProfile(e, null)} key={profileList.length}>{i18next.t("profile.menu-session-new")}</a>);
-    profileDropdown = 
-    <div className="btn-group" role="group">
-      <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        <i className="fas fa-user"></i>
-      </button>
-      <div className="dropdown-menu" aria-labelledby="dropdownProfile">
-        {profileList}
+    if (this.state.profileList) {
+      if (this.state.config.profilePicture && this.state.profileList[0][this.state.config.profilePicture.property]) {
+        var picData = this.state.profileList[0][this.state.config.profilePicture.property];
+        if (Array.isArray(picData)) {
+          picData = picData[0];
+        }
+        profilePicture =
+        <div style={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>
+          <img className="img-medium" style={{maxWidth: "30px", maxHeight: "21px", objectFit: "scale-down"}} src={"data:*;base64,"+picData}/>
+          &nbsp;
+        {this.state.profileList[0].username}
+        </div>
+      } else {
+        profilePicture =
+        <div style={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>
+          <img class="img-medium" style={{maxWidth: "1px"}} src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" /> {/*1-pixel transparent image as spacer (Possible Bootstrap bug)*/}
+          <i className="fas fa-user">
+            &nbsp;
+          </i>
+          {this.state.profileList[0].username}
+        </div>
+      }
+      profileDropdown = 
+      <div className="btn-group" role="group">
+        <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <div style={{display: "block", float: "left"}}>
+            {profilePicture}
+          </div>
+        </button>
+        <div className="dropdown-menu" aria-labelledby="dropdownProfile">
+          {profileList}
+        </div>
       </div>
-    </div>
+    }
     if (this.state.loggedIn) {
       loginButton = <button type="button" className="btn btn-secondary" onClick={this.toggleLogin} title={i18next.t("title-logout")}>
         <i className="fas btn-icon fa-sign-out-alt"></i>
