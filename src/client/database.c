@@ -507,11 +507,11 @@ static json_t * get_property_value_db(struct mod_parameters * param, const char 
   }
   if (param->conn->type == HOEL_DB_TYPE_MARIADB) {
     if (json_string_length(j_value) < 512) {
-      return json_pack("{sIsssOsOsO}", "gu_id", gu_id, "gup_name", name, "gup_value_tiny", j_property, "gup_value_small", json_null(), "gup_value_medium", json_null());
+      return json_pack("{sIsssOsOsO}", "gc_id", gc_id, "gup_name", name, "gup_value_tiny", j_property, "gup_value_small", json_null(), "gup_value_medium", json_null());
     } else if (json_string_length(j_property) < 16*1024) {
-      return json_pack("{sIsssOsOsO}", "gu_id", gu_id, "gup_name", name, "gup_value_tiny", json_null(), "gup_value_small", j_property, "gup_value_medium", json_null());
+      return json_pack("{sIsssOsOsO}", "gc_id", gc_id, "gup_name", name, "gup_value_tiny", json_null(), "gup_value_small", j_property, "gup_value_medium", json_null());
     } else if (json_string_length(j_value) < 16*1024*1024) {
-      return json_pack("{sIsssOsOsO}", "gu_id", gu_id, "gup_name", name, "gup_value_tiny", json_null(), "gup_value_small", json_null(), "gup_value_medium", j_property);
+      return json_pack("{sIsssOsOsO}", "gc_id", gc_id, "gup_name", name, "gup_value_tiny", json_null(), "gup_value_small", json_null(), "gup_value_medium", j_property);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_property_value_db - Error value is too large");
       return NULL;
