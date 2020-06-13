@@ -546,7 +546,10 @@ class EditRecord extends Component {
       }
     });
     this.state.source.forEach((source, index) => {
-      if ((!curSource && !source.readonly) || source.name === this.state.data.source) {
+      if (!curSource && !source.readonly) {
+        curSource = '';
+      }
+      if (source.name === this.state.data.source) {
         curSource = source.display_name;
       }
       if (!source.readonly || source.name === this.state.data.source) {
@@ -590,7 +593,7 @@ class EditRecord extends Component {
           <div className="modal-footer">
             {hasError}
             <button type="button" className="btn btn-secondary" onClick={(e) => this.closeModal(e, false)}>{i18next.t("modal.close")}</button>
-            <button type="button" className="btn btn-primary " onClick={(e) => this.closeModal(e, true)} disabled={!this.state.data || !this.state.data.source || this.state.data.source.readonly || this.state.add}>{i18next.t("modal.ok")}</button>
+            <button type="button" className="btn btn-primary " onClick={(e) => this.closeModal(e, true)} disabled={!this.state.data || !this.state.data.source || this.state.data.source.readonly}>{i18next.t("modal.ok")}</button>
           </div>
         </div>
       </div>
