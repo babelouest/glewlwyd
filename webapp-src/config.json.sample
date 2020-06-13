@@ -48,7 +48,7 @@
     },{
       "name": "picture",
       "list": false,
-      "type": "image/jpeg",
+      "type": "image/image",
       "forceShow": true,
       "edit": true,
       "label": "admin.user-picture",
