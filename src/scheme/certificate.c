@@ -691,7 +691,7 @@ static json_t * parse_certificate(const char * x509_data, int der_format) {
         cert_dat.data = NULL;
         cert_dat.size = 0;
         if (o_base64_decode((const unsigned char *)x509_data, o_strlen(x509_data), NULL, &der_dec_len)) {
-          if ((der_dec = o_malloc(der_dec_len+1)) != NULL) {
+          if ((der_dec = o_malloc(der_dec_len+4)) != NULL) {
             if (o_base64_decode((const unsigned char *)x509_data, o_strlen(x509_data), der_dec, &der_dec_len)) {
               cert_dat.data = der_dec;
               cert_dat.size = der_dec_len;
