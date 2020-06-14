@@ -495,7 +495,7 @@ static char * get_password_clause_check(struct mod_parameters * param, const cha
 }
 
 static json_t * get_property_value_db(struct mod_parameters * param, const char * name, json_t * j_property, json_int_t gc_id) {
-  json_t * j_value;
+  json_t * j_value, * j_return;
   char * tmp;
   
   if (0 == o_strcmp("jwks", json_string_value(json_object_get(json_object_get(json_object_get(param->j_params, "data-format"), name), "convert")))) {
@@ -507,18 +507,20 @@ static json_t * get_property_value_db(struct mod_parameters * param, const char 
   }
   if (param->conn->type == HOEL_DB_TYPE_MARIADB) {
     if (json_string_length(j_value) < 512) {
-      return json_pack("{sIsssOsOsO}", "gc_id", gc_id, "gup_name", name, "gup_value_tiny", j_property, "gup_value_small", json_null(), "gup_value_medium", json_null());
-    } else if (json_string_length(j_property) < 16*1024) {
-      return json_pack("{sIsssOsOsO}", "gc_id", gc_id, "gup_name", name, "gup_value_tiny", json_null(), "gup_value_small", j_property, "gup_value_medium", json_null());
+      j_return = json_pack("{sIsssOsOsO}", "gc_id", gc_id, "gcp_name", name, "gcp_value_tiny", j_value, "gcp_value_small", json_null(), "gcp_value_medium", json_null());
+    } else if (json_string_length(j_value) < 16*1024) {
+      j_return = json_pack("{sIsssOsOsO}", "gc_id", gc_id, "gcp_name", name, "gcp_value_tiny", json_null(), "gcp_value_small", j_value, "gcp_value_medium", json_null());
     } else if (json_string_length(j_value) < 16*1024*1024) {
-      return json_pack("{sIsssOsOsO}", "gc_id", gc_id, "gup_name", name, "gup_value_tiny", json_null(), "gup_value_small", json_null(), "gup_value_medium", j_property);
+      j_return = json_pack("{sIsssOsOsO}", "gc_id", gc_id, "gcp_name", name, "gcp_value_tiny", json_null(), "gcp_value_small", json_null(), "gcp_value_medium", j_value);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_property_value_db - Error value is too large");
-      return NULL;
+      j_return = NULL;
     }
   } else {
-    return json_pack("{sIssso}", "gc_id", gc_id, "gcp_name", name, "gcp_value", j_value);
+    j_return = json_pack("{sIsssO}", "gc_id", gc_id, "gcp_name", name, "gcp_value", j_value);
   }
+  json_decref(j_value);
+  return j_return;
 }
 
 static int save_client_properties(struct mod_parameters * param, json_t * j_client, json_int_t gc_id) {
