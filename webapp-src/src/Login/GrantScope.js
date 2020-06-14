@@ -92,7 +92,7 @@ class GrantScope extends Component {
     <div>
       <div className="row">
         <div className="col-md-12">
-          <h4>{i18next.t("login.grant-title", {client: this.state.client.name})}</h4>
+          <b>{i18next.t("login.grant-title", {client: this.state.client.name})}</b>
         </div>
       </div>
       <div className="row">
@@ -112,7 +112,7 @@ class GrantScope extends Component {
           <button type="button" className="btn btn-primary" onClick={this.handleGrantScope}>{i18next.t("login.grant")}</button>
         </div>
       </div>
-      <hr/>
+      <hr style={{borderTop: "0px"}}/>
       <div className="row">
         <div className="col-md-12">
           <h5>

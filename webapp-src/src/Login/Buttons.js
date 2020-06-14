@@ -103,7 +103,7 @@ class Buttons extends Component {
 	render() {
     var bAnother = "", asterisk = "", bContinue = "", registerTable = [];
     if (this.state.canContinue) {
-      bContinue = <button type="button" className="btn btn-primary" onClick={this.clickContinue} title={i18next.t("login.continue-title")}>
+      bContinue = <button type="button" className="btn btn-success" onClick={this.clickContinue} title={i18next.t("login.continue-title")}>
         <i className="fas fa-play btn-icon"></i>{i18next.t("login.continue")}
       </button>;
     }
@@ -130,7 +130,7 @@ class Buttons extends Component {
         });
       }
       bAnother = <div className="btn-group" role="group">
-        <button className="btn btn-primary dropdown-toggle" type="button" id="selectNewUser" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <button className="btn btn-secondary dropdown-toggle" type="button" id="selectNewUser" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           <i className="fas fa-users btn-icon"></i>{i18next.t("login.login-another")}
         </button>
         <div className="dropdown-menu" aria-labelledby="selectNewUser">
@@ -142,10 +142,10 @@ class Buttons extends Component {
         </div>
       </div>;
   		return (
-        <div>
+        <div class="text-center">
           <div className="btn-group" role="group">
             {bContinue}
-            <button type="button" className="btn btn-primary" onClick={this.clickLogout}>
+            <button type="button" className="btn btn-danger" onClick={this.clickLogout}>
               <i className="fas fa-sign-out-alt btn-icon"></i>{i18next.t("login.logout")}
             </button>
           </div>
@@ -153,7 +153,7 @@ class Buttons extends Component {
             <hr/>
             <div className="btn-group" role="group">
               <div className="btn-group" role="group">
-                <button className="btn btn-primary dropdown-toggle" type="button" id="selectGrant" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <button className="btn btn-secondary dropdown-toggle" type="button" id="selectGrant" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                   <i className="fas fa-user-cog btn-icon"></i>{i18next.t("login.login-handle")}{asterisk}
                 </button>
                 <div className="dropdown-menu" aria-labelledby="selectGrant">
