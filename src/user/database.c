@@ -468,7 +468,7 @@ static json_t * get_property_value_db(struct mod_parameters * param, const char 
       return NULL;
     }
   } else {
-    return json_pack("{sIsssO}", "gu_id", gu_id, "gup_name", name, "gup_value", j_property);;
+    return json_pack("{sIsssO}", "gu_id", gu_id, "gup_name", name, "gup_value", j_property);
   }
 }
 
