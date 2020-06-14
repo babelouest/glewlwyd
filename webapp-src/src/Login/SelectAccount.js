@@ -63,39 +63,41 @@ class SelectAccount extends Component {
   }
   
   render() {
-    var userList = [];
+    var userList = [], userPicture;
     this.state.userList.forEach((user, index) => {
       var inputUser;
-      if (this.state.config.profilePicture && user[this.state.config.profilePicture.userProperty]) {
-        var picData = user[this.state.config.profilePicture.userProperty];
-        if (Array.isArray(picData)) {
-          picData = picData[0];
-        }
-        inputUser = 
-        <div>
-          <input type="radio" className="input-hidden" onChange={() => this.handleToggleGrantScope(user)} name="select-user" id={"select-user-" + user.username} checked={selected}/>
-          <label htmlFor={"select-user-" + user.username}>
-            <img className="img-thumb" src={"data:"+this.state.config.profilePicture.type+";base64,"+picData} alt={this.state.config.profilePicture.userProperty} />
+      if (user.picture) {
+        var picData = user.picture;
+        userPicture = <img style={{width: "30px", maxHeight: "21px", objectFit: "scale-down"}} className="img-thumb" src={"data:*;base64,"+picData} />
+      } else {
+        userPicture = <i className="fas fa-user" style={{fontSize: "24px"}}>&nbsp;</i>;
+      }
+      inputUser = 
+        <div className="input-group" id={"select-user-" + user.username}>
+          <label style={{width: "100%", marginBottom: "0", paddingLeft: "0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>
+            <div className="col input-group-prepend" style={{display: "inline"}}>
+              {userPicture}
+            </div>
+            <input type="radio" className="input-hidden" onChange={() => this.handleToggleGrantScope(user)} name="select-user" checked={selected} />
+            <div className="col input-group-append" style={{display: "inline", paddingLeft: "0", paddingLeft: "0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>
+              <div className="col btn-icon-left" style={{display: "inline", verticalAlign: "middle", paddingLeft: "0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>
+                {user.name||user.username}
+              </div>
+              {/* The following invisible button contains a transparent pixel and is a hack for vertical alignment ("middle"). Pure CSS solution not found.*/}
+              <button type="button" disabled={true} class="btn btn-secondary" style={{visibility: "hidden", paddingLeft: "0", paddingRight: "0"}}>
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z/C/HgAGgwJ/lK3Q6wAAAABJRU5ErkJggg=="/>
+              </button>
+            </div>
           </label>
         </div>
-      } else {
-        inputUser = <input type="radio" className="form-control" onChange={() => this.handleToggleGrantScope(user)} name="select-user" id={"select-user-" + user.username} checked={selected}/>
-      }
       var selected = (user.username===this.state.currentUser.username);
       userList.push(
         <li className={"list-group-item" + (selected?" active":"")} key={index}>
           <div className="row">
-            <div className="col">
-              <div className="input-group mb-3">
-                <div className="input-group-prepend">
-                  {inputUser}
-                </div>
-                <div className="btn-icon-right">
-                  <label className="form-check-label" htmlFor={"select-user-" + user.username}>{user.name||user.username}</label>
-                </div>
-              </div>
+            <div className="col" style={{paddingRight: "0"}}>
+              {inputUser}
             </div>
-            <div className="col text-right">
+            <div className="col-auto text-right" style={{paddingLeft: "0"}}>
               <button type="button" className="btn btn-secondary" onClick={() => this.handleLogoutAccount(user.username)}>{i18next.t("login.logout")}</button>
             </div>
           </div>
