@@ -66,6 +66,8 @@ class Body extends Component {
             <img className="btn-icon-right img-medium" src={"data:"+this.state.config.profilePicture.type+";base64,"+picData} alt={this.state.config.profilePicture.property} />
           </div>
         </div>
+    } else {
+      profilePicture = <div style={{textAlign: "center", fontSize: "48px"}}><i className="fas fa-user"></i></div>
     }
 		return (
       <div>
