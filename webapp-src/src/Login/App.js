@@ -333,7 +333,8 @@ class App extends Component {
                        newUser={this.state.newUser} 
                        newUserScheme={this.state.scheme} 
                        canContinue={this.state.canContinue} 
-                       schemeListRequired={this.state.schemeListRequired} />
+                       schemeListRequired={this.state.schemeListRequired}
+                       selectAccount={this.state.selectAccount} />
             </div>
           </div>
           <Notification loggedIn={true}/>

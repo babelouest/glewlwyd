@@ -18,7 +18,8 @@ class Buttons extends Component {
       schemeListRequired: props.schemeListRequired,
       bGrantTitle: props.showGrant?i18next.t("login.grant-auth-title"):i18next.t("login.grant-change-title"),
       bGrant: props.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change"),
-      showGrantAsterisk: props.showGrantAsterisk
+      showGrantAsterisk: props.showGrantAsterisk,
+      selectAccount: props.selectAccount
     };
 
     this.clickLogout = this.clickLogout.bind(this);
@@ -43,7 +44,8 @@ class Buttons extends Component {
       schemeListRequired: nextProps.schemeListRequired,
       bGrantTitle: nextProps.showGrant?i18next.t("login.grant-auth-title"):i18next.t("login.grant-change-title"),
       bGrant: nextProps.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change"),
-      showGrantAsterisk: nextProps.showGrantAsterisk
+      showGrantAsterisk: nextProps.showGrantAsterisk,
+      selectAccount: nextProps.selectAccount
     });
   }
 
@@ -111,7 +113,7 @@ class Buttons extends Component {
     if (this.state.showGrantAsterisk) {
       asterisk = <small><i className="fas fa-asterisk btn-icon-right"></i></small>;
     }
-    if (this.state.currentUser) {
+    if (this.state.currentUser && !this.state.selectAccount) {
       if (this.state.config.register) {
         this.state.config.register.forEach((register, index) => {
           registerTable.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.registerNewUser(e, register.name)}>{i18next.t(register.message)}</a>);
@@ -147,22 +149,24 @@ class Buttons extends Component {
               <i className="fas fa-sign-out-alt btn-icon"></i>{i18next.t("login.logout")}
             </button>
           </div>
-          <hr/>
-          <div className="btn-group" role="group">
+          <div>
+            <hr/>
             <div className="btn-group" role="group">
-              <button className="btn btn-primary dropdown-toggle" type="button" id="selectGrant" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i className="fas fa-user-cog btn-icon"></i>{i18next.t("login.login-handle")}{asterisk}
-              </button>
-              <div className="dropdown-menu" aria-labelledby="selectGrant">
-                <a className="dropdown-item" href="#" onClick={this.clickGrant} alt={this.state.bGrantTitle}>
-                  {this.state.bGrant}
-                  {asterisk}
-                </a>
-                <div className="dropdown-divider"></div>
-                <a className="dropdown-item" href={this.state.config.ProfileUrl||""} target="_blank">{i18next.t("login.update-profile")}</a>
+              <div className="btn-group" role="group">
+                <button className="btn btn-primary dropdown-toggle" type="button" id="selectGrant" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i className="fas fa-user-cog btn-icon"></i>{i18next.t("login.login-handle")}{asterisk}
+                </button>
+                <div className="dropdown-menu" aria-labelledby="selectGrant">
+                  <a className="dropdown-item" href="#" onClick={this.clickGrant} alt={this.state.bGrantTitle}>
+                    {this.state.bGrant}
+                    {asterisk}
+                  </a>
+                  <div className="dropdown-divider"></div>
+                  <a className="dropdown-item" href={this.state.config.ProfileUrl||""} target="_blank">{i18next.t("login.update-profile")}</a>
+                </div>
               </div>
+              {bAnother}
             </div>
-            {bAnother}
           </div>
         </div>
   		);
