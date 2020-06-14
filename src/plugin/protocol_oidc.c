@@ -5342,6 +5342,7 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
                         } else {
                           y_log_message(Y_LOG_LEVEL_ERROR, "check_client_certificate_valid - Error get_certificate_id (1)");
                         }
+                        gnutls_x509_crt_deinit(self_cert);
                       }
                       r_jwk_free(jwk);
                     }
@@ -5361,6 +5362,7 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
                         } else {
                           y_log_message(Y_LOG_LEVEL_ERROR, "check_client_certificate_valid - Error get_certificate_id (2)");
                         }
+                        gnutls_x509_crt_deinit(self_cert);
                       }
                       r_jwk_free(jwk);
                     }
