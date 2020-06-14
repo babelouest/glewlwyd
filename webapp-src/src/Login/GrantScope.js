@@ -89,10 +89,20 @@ class GrantScope extends Component {
       infoSomeScopeUnavailable = <div className="alert alert-info" role="alert">{i18next.t("login.info-some-scope-unavailable")}</div>
     }
     return (
+    (!Array.isArray(this.state.scope) || this.state.scope.length < 1)
+    ?
+    <div>
+      <div className="row">
+        <div className="col-md-12 text-center">
+          <h5>{i18next.t("login.grant-none-available")}</h5>
+        </div>
+      </div> 
+    </div>
+    :
     <div>
       <div className="row">
         <div className="col-md-12">
-          <b>{i18next.t("login.grant-title", {client: this.state.client.name})}</b>
+          <h5>{i18next.t("login.grant-title", {client: this.state.client.name})}</h5>
         </div>
       </div>
       <div className="row">
@@ -115,9 +125,9 @@ class GrantScope extends Component {
       <hr style={{borderTop: "0px"}}/>
       <div className="row">
         <div className="col-md-12">
-          <h5>
+          <b>
             {i18next.t("login.grant-info-message")}
-          </h5>
+          </b>
         </div>
       </div>
     </div>);
