@@ -420,7 +420,7 @@ int main (int argc, char ** argv) {
   u_map_put(config->instance->default_headers, "Cache-Control", "no-store");
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
 
-  y_log_message(Y_LOG_LEVEL_INFO, "Start glewlwyd on port %d, prefix: %s, secure: %s, bind address: %s", config->instance->port, config->api_prefix, config->use_secure_connection?"true":"false", config->bind_address!=NULL?config->bind_address:"no");
+  y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd started on port %d, prefix: %s, secure: %s, bind address: %s", config->instance->port, config->api_prefix, config->use_secure_connection?"true":"false", config->bind_address!=NULL?config->bind_address:"no");
 
   if (config->use_secure_connection) {
     char * key_file = get_file_content(config->secure_connection_key_file);
@@ -461,7 +461,7 @@ int main (int argc, char ** argv) {
       pthread_cond_destroy(&global_handler_close_cond)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error destroying global_handler_close_lock or global_handler_close_cond");
   }
-  exit_server(&config, GLEWLWYD_STOP);
+  exit_server(&config, 0);
   return 0;
 }
 
@@ -631,6 +631,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     // Cleaning data
     o_free((*config)->instance);
     
+    y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd stopped");
     
     o_free((*config)->config_file);
     o_free((*config)->api_prefix);
