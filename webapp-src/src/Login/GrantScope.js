@@ -112,7 +112,7 @@ class GrantScope extends Component {
           <button type="button" className="btn btn-primary" onClick={this.handleGrantScope}>{i18next.t("login.grant")}</button>
         </div>
       </div>
-      <hr style={{borderTop: "0px"}}/>
+      <hr className="glwd-hr-no-border"/>
       <div className="row">
         <div className="col-md-12">
           <b>

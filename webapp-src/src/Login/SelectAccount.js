@@ -68,23 +68,23 @@ class SelectAccount extends Component {
       var inputUser;
       if (user.picture) {
         var picData = user.picture;
-        userPicture = <img style={{width: "30px", maxHeight: "21px", objectFit: "scale-down"}} className="img-thumb" src={"data:*;base64,"+picData} />
+        userPicture = <img className="img-thumb glwd-select-user-picture" src={"data:*;base64,"+picData} />
       } else {
-        userPicture = <i className="fas fa-user" style={{fontSize: "24px"}}>&nbsp;</i>;
+        userPicture = <i className="fas fa-user glwd-select-user-picto"></i>;
       }
       inputUser = 
         <div className="input-group" id={"select-user-" + user.username}>
-          <label style={{width: "100%", marginBottom: "0", paddingLeft: "0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>
-            <div className="col input-group-prepend" style={{display: "inline"}}>
+          <label className="glwd-select-user-label">
+            <div className="col input-group-prepend glwd-select-user-col">
               {userPicture}
             </div>
             <input type="radio" className="input-hidden" onChange={() => this.handleToggleGrantScope(user)} name="select-user" checked={selected} />
-            <div className="col input-group-append" style={{display: "inline", paddingLeft: "0", paddingLeft: "0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>
-              <div className="col btn-icon-left" style={{display: "inline", verticalAlign: "middle", paddingLeft: "0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>
+            <div className="col input-group-append glwd-select-user-username">
+              <div className="col btn-icon-left glwd-select-user-username v-align-middle">
                 {user.name||user.username}
               </div>
               {/* The following invisible button contains a transparent pixel and is a hack for vertical alignment ("middle"). Pure CSS solution not found.*/}
-              <button type="button" disabled={true} class="btn btn-secondary" style={{visibility: "hidden", paddingLeft: "0", paddingRight: "0"}}>
+              <button type="button" disabled={true} className="glwd-select-user-hidden-button">
                 <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z/C/HgAGgwJ/lK3Q6wAAAABJRU5ErkJggg=="/>
               </button>
             </div>
@@ -94,10 +94,10 @@ class SelectAccount extends Component {
       userList.push(
         <li className={"list-group-item" + (selected?" active":"")} key={index}>
           <div className="row">
-            <div className="col" style={{paddingRight: "0"}}>
+            <div className="col glwd-no-padding-right">
               {inputUser}
             </div>
-            <div className="col-auto text-right" style={{paddingLeft: "0"}}>
+            <div className="col-auto text-right glwd-no-padding-left">
               <button type="button" className="btn btn-secondary" onClick={() => this.handleLogoutAccount(user.username)}>{i18next.t("login.logout")}</button>
             </div>
           </div>

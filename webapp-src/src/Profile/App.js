@@ -311,8 +311,8 @@ class App extends Component {
         userJsx = <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false} profileUpdate={this.state.profileUpdate} loggedIn={this.state.loggedIn}/>
       }
       return (
-        <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
-          <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
+        <div aria-live="polite" aria-atomic="true" className="glwd-container">
+          <div className="card center glwd-card" id="userCard" tabIndex="-1" role="dialog">
             <div className="card-header">
               <Navbar active={this.state.curNav} 
                       config={this.state.config} 
@@ -350,8 +350,8 @@ class App extends Component {
       );
     } else {
       return (
-        <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
-          <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
+        <div aria-live="polite" aria-atomic="true" className="glwd-container">
+          <div className="card center glwd-card" id="userCard" tabIndex="-1" role="dialog">
             <div className="card-header">
               <h4>
                 <span className="badge badge-danger">

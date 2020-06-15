@@ -294,8 +294,8 @@ class App extends Component {
         }
       });
       return (
-        <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
-          <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
+        <div aria-live="polite" aria-atomic="true" className="glwd-container">
+          <div className="card center glwd-card" id="userCard" tabIndex="-1" role="dialog">
             <div className="card-header">
               <nav className="navbar navbar-expand-lg navbar-light">
                 <a className="navbar-brand" href="#" data-toggle="collapse">
@@ -342,8 +342,8 @@ class App extends Component {
       );
     } else {
       return (
-        <div aria-live="polite" aria-atomic="true" style={{position: "relative", minHeight: "200px"}}>
-          <div className="card center" id="userCard" tabIndex="-1" role="dialog" style={{marginTop: 20 + 'px', marginBottom: 20 + 'px'}}>
+        <div aria-live="polite" aria-atomic="true" className="glwd-container">
+          <div className="card center glwd-card" id="userCard" tabIndex="-1" role="dialog">
             <div className="card-header">
               <h4>
                 <span className="badge badge-danger">

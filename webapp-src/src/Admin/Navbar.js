@@ -119,15 +119,14 @@ class Navbar extends Component {
           picData = picData[0];
         }
         profilePicture =
-        <div style={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>
-          <img className="img-medium" style={{maxWidth: "30px", maxHeight: "21px", objectFit: "scale-down"}} src={"data:*;base64,"+picData}/>
-          &nbsp;
-        {this.state.profileList[0].username}
+        <div className="glwd-nav-picture-div">
+          <img className="img-medium glwd-nav-picture-image" src={"data:image/*;base64,"+picData}/>
+          {this.state.profileList[0].username}
         </div>
       } else {
         profilePicture =
-        <div style={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>
-          <img class="img-medium" style={{maxWidth: "1px"}} src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" /> {/*1-pixel transparent image as spacer (Possible Bootstrap bug)*/}
+        <div className="glwd-nav-picture-div">
+          <img className="img-medium glwd-nav-picture-spacer" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" /> {/*1-pixel transparent image as spacer (Possible Bootstrap bug)*/}
           <i className="fas fa-user">
             &nbsp;
           </i>
@@ -137,7 +136,7 @@ class Navbar extends Component {
       profileDropdown = 
       <div className="btn-group" role="group">
         <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <div style={{display: "block", float: "left"}}>
+          <div className="glwd-nav-picture-container">
             {profilePicture}
           </div>
         </button>

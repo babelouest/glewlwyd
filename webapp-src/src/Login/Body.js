@@ -67,7 +67,7 @@ class Body extends Component {
           </div>
         </div>
     } else {
-      profilePicture = <div style={{textAlign: "center", fontSize: "48px"}}><i className="fas fa-user"></i></div>
+      profilePicture = <div className="glwd-profile-user-picto-large"><i className="fas fa-user"></i></div>
     }
 		return (
       <div>
