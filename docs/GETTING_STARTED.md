@@ -34,8 +34,8 @@
     - [Add or update additional properties for users and clients](#add-or-update-additional-properties-for-users-and-clients)
     - [Non-password authentication](#non-password-authentication)
 - [Troubleshooting](#troubleshooting)
-    - [Impossible to log in as administrator - N-factor issue](#impossible-to-log-in-as-administrator-n-factor-issue)
-    - [Impossible to log in as administrator - Password lost](#impossible-to-log-in-as-administrator-password-lost)
+    - [Impossible to log in as administrator - N-factor issue](#impossible-to-log-in-as-administrator---n-factor-issue)
+    - [Impossible to log in as administrator - Password lost](#impossible-to-log-in-as-administrator---password-lost)
 
 The installation comes with a default configuration that can be updated or overwritten via the administration page or the configuration file.
 
