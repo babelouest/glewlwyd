@@ -42,7 +42,6 @@
     "error-value-expected": "Value required",
     "grant-title": "{{- client}} requires access to the following scopes",
     "grant": "Grant access",
-    "no-scope-available": "No requested scope is available",
     "grant-change-title": "Change grant scope for client",
     "grant-change": "Grant",
     "grant-auth-title": "Authenticate all access for the client",

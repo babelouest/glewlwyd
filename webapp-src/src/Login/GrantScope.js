@@ -89,16 +89,6 @@ class GrantScope extends Component {
       infoSomeScopeUnavailable = <div className="alert alert-info" role="alert">{i18next.t("login.info-some-scope-unavailable")}</div>
     }
     return (
-    (!Array.isArray(this.state.scope) || this.state.scope.length < 1)
-    ?
-    <div>
-      <div className="row">
-        <div className="col-md-12 text-center">
-          <h5>{i18next.t("login.grant-none-available")}</h5>
-        </div>
-      </div> 
-    </div>
-    :
     <div>
       <div className="row">
         <div className="col-md-12">

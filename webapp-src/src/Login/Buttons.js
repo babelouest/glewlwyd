@@ -142,7 +142,7 @@ class Buttons extends Component {
         </div>
       </div>;
   		return (
-        <div class="text-center">
+        <div className="text-center">
           <div className="btn-group" role="group">
             {bContinue}
             <button type="button" className="btn btn-danger" onClick={this.clickLogout}>
