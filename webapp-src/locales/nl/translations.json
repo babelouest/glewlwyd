@@ -42,7 +42,6 @@
     "error-value-expected": "Waarde vereist",
     "grant-title": "{{- client}} vraagt de volgende toegangsrechten",
     "grant": "Toegang toestaan",
-    "grant-none-available": "No grants have been requested",
     "grant-change-title": "Verander toegangsrechten voor de client",
     "grant-change": "Toestaan",
     "grant-auth-title": "Bevestig volledige toegang voor de client",
