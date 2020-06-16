@@ -64,9 +64,8 @@ class App extends Component {
       } else if (message.type === 'loggedIn') {
         this.setState({loggedIn: message.message}, () => {
           if (!this.state.loggedIn) {
-            this.setState({curNav: "profile"});
-            this.setState({profileList: this.state.profileList.filter((e,i) => i !== 0)})
-            this.setState({schemeList: this.state.profileList.filter((e,i) => i !== 0)})  // Not sure about this line!
+            // Not sure about the zeroing-out of `schemeList` on this line!
+            this.setState({curNav: "profile", profileList: this.state.profileList.filter((e,i) => i !== 0), schemeList: []});
           } else {
             this.fetchProfile();
           }
