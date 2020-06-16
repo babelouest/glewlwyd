@@ -64,10 +64,10 @@ class App extends Component {
       } else if (message.type === 'loggedIn') {
         this.setState({loggedIn: message.message}, () => {
           if (!this.state.loggedIn) {
-            this.setState({profileList: false, schemeList: [], curNav: "profile"});
-          } else {
-            this.fetchProfile();
+            // Not sure about `schemeList` in the line below!
+            this.setState({curNav: "profile", profileList: this.state.profileList.filter((e,i) => i !== 0), schemeList: []});
           }
+          this.fetchProfile();
         });
       } else if (message.type === 'lang') {
         this.setState({lang: i18next.language}, () => {

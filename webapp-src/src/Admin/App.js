@@ -102,10 +102,10 @@ class App extends Component {
         this.fetchApi();
       } else if (message.type === 'loggedIn') {
         this.setState({loggedIn: message.message}, () => {
-          console.log("loggedIn", this.state.loggedIn);
           if (!this.state.loggedIn) {
-            this.fetchApi();
+            this.setState({curNav: "users",profileList: this.state.profileList.filter((e,i) => i !== 0)});
           }
+          this.fetchApi();
         });
       } else if (message.type === 'lang') {
         this.setState({lang: i18next.language});
