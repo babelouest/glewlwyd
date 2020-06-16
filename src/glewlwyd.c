@@ -677,17 +677,17 @@ void exit_server(struct config_elements ** config, int exit_value) {
  */
 int build_config_from_args(int argc, char ** argv, struct config_elements * config, int * use_config_file, int * use_config_env) {
   int next_option, ret = G_OK;
-  const char * short_options = "c::e::p::m::l::f::h::v::";
+  const char * short_options = "c:e::p:m:l:f:h::v::";
   char * tmp = NULL, * to_free = NULL, * one_log_mode = NULL;
   static const struct option long_options[]= {
-    {"config-file", optional_argument, NULL, 'c'},
-    {"env-variables", optional_argument, NULL, 'e'},
-    {"port", optional_argument, NULL, 'p'},
-    {"log-mode", optional_argument, NULL, 'm'},
-    {"log-level", optional_argument, NULL, 'l'},
-    {"log-file", optional_argument, NULL, 'f'},
-    {"help", optional_argument, NULL, 'h'},
-    {"version", optional_argument, NULL, 'v'},
+    {"config-file", required_argument, NULL, 'c'},
+    {"env-variables", no_argument, NULL, 'e'},
+    {"port", required_argument, NULL, 'p'},
+    {"log-mode", required_argument, NULL, 'm'},
+    {"log-level", required_argument, NULL, 'l'},
+    {"log-file", required_argument, NULL, 'f'},
+    {"help", no_argument, NULL, 'h'},
+    {"version", no_argument, NULL, 'v'},
     {NULL, 0, NULL, 0}
   };
   
