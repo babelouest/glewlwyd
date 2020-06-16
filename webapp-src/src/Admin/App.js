@@ -104,6 +104,9 @@ class App extends Component {
         this.setState({loggedIn: message.message}, () => {
           console.log("loggedIn", this.state.loggedIn);
           if (!this.state.loggedIn) {
+            this.setState({curNav: "users"});
+            this.setState({profileList: this.state.profileList.filter((e,i) => i !== 0)}) 
+          } else {
             this.fetchApi();
           }
         });
@@ -1333,6 +1336,9 @@ class App extends Component {
   }
 
 	render() {
+        console.log('Admin APP state');
+    console.log(this.state);
+    console.log(this.state.profileList);
     var invalidCredentialMessage;
     if (this.state.invalidCredentialMessage) {
       invalidCredentialMessage = <div className="alert alert-danger" role="alert">{i18next.t("admin.error-credential-message")}</div>

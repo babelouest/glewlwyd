@@ -112,7 +112,7 @@ class Navbar extends Component {
     }
     profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
     profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeProfile(e, null)} key={profileList.length}>{i18next.t("profile.menu-session-new")}</a>);
-    if (this.state.profileList) {
+    if (this.state.profileList && this.state.profileList[0]) {
       if (this.state.config.profilePicture && this.state.profileList[0][this.state.config.profilePicture.property]) {
         var picData = this.state.profileList[0][this.state.config.profilePicture.property];
         if (Array.isArray(picData)) {
@@ -154,6 +154,7 @@ class Navbar extends Component {
         <i className="fas btn-icon fa-sign-in-alt"></i>
       </button>
     }
+
 		return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light">
       <a className="navbar-brand" href="#">
