@@ -30,6 +30,15 @@ class Buttons extends Component {
     this.changeSessionScheme = this.changeSessionScheme.bind(this);
     this.registerNewUser = this.registerNewUser.bind(this);
 
+    apiManager.glewlwydRequest("/auth/", "POST", {username: this.state.currentUser.username})
+    .then(() => {
+      messageDispatcher.sendMessage('App', {type: 'InitProfile'});
+    })
+    .fail(() => {
+      // Commenting-out the following line because it otherwise triggers false-positive errors.
+      // The state flow in general is less than perfectly clear to me, so this warrants a review by @babelouest.
+      // messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
+    });
   }
 
   componentWillReceiveProps(nextProps) {
@@ -46,6 +55,16 @@ class Buttons extends Component {
       bGrant: nextProps.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change"),
       showGrantAsterisk: nextProps.showGrantAsterisk,
       selectAccount: nextProps.selectAccount
+    });
+
+    apiManager.glewlwydRequest("/auth/", "POST", {username: this.state.currentUser.username})
+    .then(() => {
+      messageDispatcher.sendMessage('App', {type: 'InitProfile'});
+    })
+    .fail(() => {
+      // Commenting-out the following line because it otherwise triggers false-positive errors.
+      // The state flow in general is less than perfectly clear to me, so this warrants a review by @babelouest.
+      // messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
     });
   }
 
@@ -106,15 +125,6 @@ class Buttons extends Component {
       bContinue = <button type="button" className="btn btn-success" onClick={this.clickContinue} title={i18next.t("login.continue-title")}>
         <i className="fas fa-play btn-icon"></i>{i18next.t("login.continue")}
       </button>;
-      apiManager.glewlwydRequest("/auth/", "POST", {username: this.state.currentUser.username})
-      .then(() => {
-        messageDispatcher.sendMessage('App', {type: 'InitProfile'});
-      })
-      .fail(() => {
-        // Commenting-out the following line because it otherwise triggers false-positive errors.
-        // The state flow in general is less than perfectly clear to me, so this warrants a review by @babelouest.
-        // messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
-      });
     }
     var bGrant = <button type="button" className="btn btn-primary" onClick={this.clickGrant} title={this.state.bGrantTitle||""}>
       <i className="fas fa-user-cog btn-icon"></i>{this.state.bGrant}
