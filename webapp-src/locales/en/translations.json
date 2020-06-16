@@ -90,6 +90,7 @@
     "password-title": "Password",
     "certificate-title": "TLS Certificate",
     "select": "Select",
+    "back": "Back",
     "select-acount-title": "Select the account to use",
     "manage-users": "Manage connected users",
     "certificate-scheme-title": "Client certificate authentification",

@@ -29,17 +29,19 @@ class SelectAccount extends Component {
   }
   
   handleSelectAccount() {
-    apiManager.glewlwydRequest("/auth/", "POST", {username: this.state.currentUser.username})
-    .then(() => {
-      messageDispatcher.sendMessage('App', {type: 'SelectAccountComplete'});
-    })
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
-    });
+    messageDispatcher.sendMessage('App', {type: 'SelectAccountComplete'});
   }
   
   handleToggleGrantScope(user) {
-    this.setState({currentUser: user});
+    this.setState({currentUser: user}, () =>
+      apiManager.glewlwydRequest("/auth/", "POST", {username: this.state.currentUser.username})
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: `${i18next.t("login.success-login")} (${this.state.currentUser.username})`});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
+      })
+    )
   }
   
   handleNewAccount() {
@@ -63,7 +65,16 @@ class SelectAccount extends Component {
   }
   
   render() {
-    var userList = [], userPicture;
+    var userList = [], userPicture, selected = -1;
+    this.state.userList.forEach((user, index) => {
+      if (user.username===this.state.currentUser.username) {
+        selected = index;
+      }
+    });
+    if (selected < 0 && this.state.userList[0]) {
+      selected = 0;
+      this.handleToggleGrantScope(this.state.userList[0]);
+    }
     this.state.userList.forEach((user, index) => {
       var inputUser;
       if (user.picture) {
@@ -90,9 +101,8 @@ class SelectAccount extends Component {
             </div>
           </label>
         </div>
-      var selected = (user.username===this.state.currentUser.username);
       userList.push(
-        <li className={"list-group-item" + (selected?" active":"")} key={index}>
+        <li className={"list-group-item" + (selected === index?" active":"")} key={index}>
           <div className="row">
             <div className="col glwd-no-padding-right">
               {inputUser}
@@ -126,7 +136,7 @@ class SelectAccount extends Component {
       <div className="row">
         <div className="col-md-12">
           <div className="btn-group" role="group">
-            <button type="button" className="btn btn-primary" onClick={this.handleSelectAccount}>{i18next.t("login.select")}</button>
+            <button type="button" className="btn btn-primary" onClick={this.handleSelectAccount}>{i18next.t("login.back")}</button>
             <button type="button" className="btn btn-primary" onClick={this.handleNewAccount}>{i18next.t("login.login-another-new")}</button>
           </div>
         </div>
