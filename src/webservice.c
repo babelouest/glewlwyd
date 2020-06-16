@@ -128,7 +128,7 @@ int callback_glewlwyd_check_admin_session (const struct _u_request * request, st
         ret = U_CALLBACK_CONTINUE;
       } else {
         if (res == G_ERROR) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_user_session - Error is_scope_list_valid_for_session");
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_admin_session - Error is_scope_list_valid_for_session");
         }
         ret = U_CALLBACK_UNAUTHORIZED;
       }
