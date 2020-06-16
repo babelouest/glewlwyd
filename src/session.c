@@ -563,15 +563,38 @@ int user_session_delete(struct config_elements * config, const char * session_ui
     if (username != NULL) {
       json_object_set_new(json_object_get(j_query, "where"), "gus_username", json_string(username));
     }
-    o_free(session_uid_hash);
     res = h_update(config->conn, j_query, NULL);
     json_decref(j_query);
     if (res == H_OK) {
-      ret = G_OK;
+      if (username != NULL) {
+        j_query = json_pack("{sss{si}s{siss}si}",
+                            "table",
+                            GLEWLWYD_TABLE_USER_SESSION,
+                            "set",
+                              "gus_current",
+                              1,
+                            "where",
+                              "gus_enabled",
+                              1,
+                              "gus_session_hash",
+                              session_uid_hash,
+                            "limit", 1);
+        res = h_update(config->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          ret = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_session_delete - Error executing j_query (2)");
+          ret = G_ERROR_DB;
+        }
+      } else {
+        ret = G_OK;
+      }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_session_delete - Error executing j_query");
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_session_delete - Error executing j_query (1)");
       ret = G_ERROR_DB;
     }
+    o_free(session_uid_hash);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_session_delete - Error generate_hash");
     ret = G_ERROR;
