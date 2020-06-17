@@ -881,7 +881,7 @@
     "menu-user": "Persoonlijke gegevens",
     "menu-password": "Wachtwoord",
     "menu-session": "Sessies",
-    "menu-session-new": "Nieuwe gebruiker",
+    "menu-session-new": "Toevoegen gebruiker",
     "hello": "Welkom {{- name}}",
     "hello-delegate": "Delegeren {{- name}}",
     "save": "Opslaan",

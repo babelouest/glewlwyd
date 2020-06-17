@@ -62,3 +62,79 @@
   max-width: 40px;
   max-height: 40px;
 }
+.glwd-container {
+  position: relative;
+  min-height: 200px;
+}
+.glwd-card {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+.glwd-select-user-picture {
+  width: 30px;
+  max-height: 21px;
+  object-fit: scale-down;
+}
+.glwd-select-user-picto {
+  font-size: 24px;
+}
+.glwd-select-user-label {
+  width: 100%;
+  margin-bottom: 0;
+  padding-left: 0; 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.glwd-select-user-col {
+  display: inline;
+}
+.glwd-select-user-username {
+  display: inline;
+  padding-left: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.v-align-middle {
+  vertical-align: middle;
+}
+.glwd-select-user-hidden-button {
+  visibility: hidden;
+  padding-left: 0;
+  padding-right: 0
+}
+.glwd-no-padding-right {
+  padding-right: 0;
+}
+.glwd-no-padding-left {
+  padding-left: 0;
+}
+.glwd-hr-no-border {
+  border: 0px;
+}
+.glwd-profile-user-picto-large {
+  text-align: center;
+  font-size: 48px;
+}
+.glwd-nav-picture-div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.glwd-nav-picture-image {
+  max-width: 30px; 
+  max-height: 21px;
+  object-fit: scale-down;
+  margin-right: 5px;
+}
+.glwd-nav-picture-spacer {
+  max-width: 1px; 
+}
+.glwd-nav-picture-container {
+  display: block;
+  float: left;
+}
+.glwd-group-card {
+  width: 18rem;
+}
