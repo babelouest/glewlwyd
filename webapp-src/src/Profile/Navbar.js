@@ -108,7 +108,7 @@ class Navbar extends Component {
           });
         }
       });
-      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURIComponent([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURIComponent(this.state.config.profile_scope) + (schemeDefault?("&scheme="+encodeURIComponent(schemeDefault)):"");
+      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURIComponent([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURIComponent(this.state.config.profile_scope) + (schemeDefault?("&scheme="+encodeURIComponent(schemeDefault)):"") + "&prompt=login";
     }
   }
 
@@ -116,6 +116,7 @@ class Navbar extends Component {
     var langList = [], schemeList = [], profileList = [], dataHighlight = "", completeAlert = "", complete = true;
     var profileDropdown, logoutButton;
     var passwordJsx, sessionJsx, profileJsx, userJsx;
+    var profilePicture;
     this.state.config.lang.forEach((lang, i) => {
       if (lang === i18next.language) {
         langList.push(<a className="dropdown-item active" href="#" key={i}>{lang}</a>);
@@ -159,11 +160,32 @@ class Navbar extends Component {
     }
     profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
     profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeProfile(e, null)} key={profileList.length}>{i18next.t("profile.menu-session-new")}</a>);
-    if (!this.state.config.params.register) {
-      profileDropdown = 
+    if (!this.state.config.params.register && this.state.profileList) {
+      if (this.state.config.profilePicture && this.state.profileList[0][this.state.config.profilePicture.property]) {
+        var picData = this.state.profileList[0][this.state.config.profilePicture.property];
+        if (Array.isArray(picData)) {
+          picData = picData[0];
+        }
+        profilePicture =
+        <div className="glwd-nav-picture-div">
+          <img className="img-medium glwd-nav-picture-image" src={"data:image/*;base64,"+picData} />
+          {this.state.profileList[0].username}
+        </div>
+      } else {
+        profilePicture =
+        <div className="glwd-nav-picture-div">
+          <img className="img-medium glwd-nav-picture-spacer" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" /> {/*1-pixel transparent image as spacer (Possible Bootstrap bug)*/}
+          <i className="fas fa-user">
+          </i>
+          {this.state.profileList[0].username}
+        </div>
+      }
+      profileDropdown =
       <div className="btn-group" role="group">
         <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <i className="fas fa-user"></i>
+          <div className="glwd-nav-picture-container">
+            {profilePicture}
+          </div>
         </button>
         <div className="dropdown-menu" aria-labelledby="dropdownProfile">
           {profileList}
@@ -173,6 +195,11 @@ class Navbar extends Component {
         <button type="button" className="btn btn-secondary" onClick={this.toggleLogin} title={i18next.t((this.state.loggedIn?"title-logout":"title-login"))}>
           <i className="fas fa-sign-in-alt btn-icon"></i>
         </button>;
+    } else if (!this.state.config.params.register) {
+      logoutButton = 
+      <button type="button" className="btn btn-secondary" onClick={this.toggleLogin} title={i18next.t((this.state.loggedIn?"title-logout":"title-login"))}>
+        <i className="fas fa-sign-in-alt btn-icon"></i>
+      </button>;
     } else if (this.state.dataHighlight) {
       complete = false;
       dataHighlight = " required-field";

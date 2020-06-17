@@ -191,7 +191,7 @@ class ScopeEdit extends Component {
           </div>
         );
       }
-      groupList.push(<div className="card" style={{width: 18 + 'rem'}} key={i++}>
+      groupList.push(<div className="card glwd-group-card" key={i++}>
         <div className="card-body">
           {schemeList}
         </div>

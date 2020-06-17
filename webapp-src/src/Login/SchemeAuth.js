@@ -83,13 +83,13 @@ class SchemeAuth extends Component {
       }
       return (
       <div>
-        <div className="row">
-          <div className="col-md-12">
+        <div className="row text-center">
+          <div className="col-md-12 ">
             <h3>{connectMessage}</h3>
           </div>
         </div>
         <hr/>
-        <div className="row">
+        <div className="row text-center">
           <div className="col-md-12">
             <h4>{i18next.t("login.wish-message")}</h4>
           </div>
