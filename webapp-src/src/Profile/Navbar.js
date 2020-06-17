@@ -197,7 +197,7 @@ class Navbar extends Component {
         </button>;
     } else if (!this.state.config.params.register) {
       logoutButton = 
-      <button type="button" className="btn btn-outline-primary" onClick={this.toggleLogin} title={i18next.t((this.state.loggedIn?"title-logout":"title-login"))}>
+      <button type="button" className="btn btn-secondary" onClick={this.toggleLogin} title={i18next.t((this.state.loggedIn?"title-logout":"title-login"))}>
         <i className="fas fa-sign-in-alt btn-icon"></i>
       </button>;
     } else if (this.state.dataHighlight) {
