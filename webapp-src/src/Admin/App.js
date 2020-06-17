@@ -101,11 +101,8 @@ class App extends Component {
       } else if (message.type === 'profile') {
         this.fetchApi();
       } else if (message.type === 'loggedIn') {
-        this.setState({loggedIn: message.message}, () => {
-          console.log("loggedIn", this.state.loggedIn);
-          if (!this.state.loggedIn) {
-            this.fetchApi();
-          }
+        this.setState({loggedIn: message.loggedIn}, () => {
+          this.fetchApi();
         });
       } else if (message.type === 'lang') {
         this.setState({lang: i18next.language});
@@ -442,7 +439,8 @@ class App extends Component {
             modClients: [],
             modSchemes: [],
             plugins: [],
-            invalidCredentialMessage: true
+            invalidCredentialMessage: true,
+            profileList: []
           });
         });
       });
@@ -457,7 +455,8 @@ class App extends Component {
           modUsers: [],
           modClients: [],
           modSchemes: [],
-          plugins: []
+          plugins: [],
+          profileList: []
         }, () => {
           if (error.status === 401) {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});

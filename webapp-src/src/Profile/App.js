@@ -62,12 +62,8 @@ class App extends Component {
           this.setState({curNav: message.module, module: message.page});
         }
       } else if (message.type === 'loggedIn') {
-        this.setState({loggedIn: message.message}, () => {
-          if (!this.state.loggedIn) {
-            this.setState({profileList: false, schemeList: [], curNav: "profile"});
-          } else {
-            this.fetchProfile();
-          }
+        this.setState({loggedIn: message.loggedIn}, () => {
+          this.fetchProfile();
         });
       } else if (message.type === 'lang') {
         this.setState({lang: i18next.language}, () => {
