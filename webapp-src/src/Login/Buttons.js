@@ -50,7 +50,7 @@ class Buttons extends Component {
   }
 
   clickLogout() {
-    apiManager.glewlwydRequest("/auth/", "DELETE")
+    apiManager.glewlwydRequest("/auth/?username=" + this.state.currentUser.username, "DELETE")
     .then(() => {
       messageDispatcher.sendMessage('App', {type: 'InitProfile'});
     })
