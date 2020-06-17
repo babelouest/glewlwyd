@@ -71,10 +71,6 @@ class SelectAccount extends Component {
         selected = index;
       }
     });
-    if (selected < 0 && this.state.userList[0]) {
-      selected = 0;
-      this.handleToggleGrantScope(this.state.userList[0]);
-    }
     this.state.userList.forEach((user, index) => {
       var inputUser;
       if (user.picture) {
@@ -89,7 +85,7 @@ class SelectAccount extends Component {
             <div className="col input-group-prepend glwd-select-user-col">
               {userPicture}
             </div>
-            <input type="radio" className="input-hidden" onChange={() => this.handleToggleGrantScope(user)} name="select-user" checked={selected} />
+            <input type="radio" className="input-hidden" onChange={() => this.handleToggleGrantScope(user)} name="select-user" />
             <div className="col input-group-append glwd-select-user-username">
               <div className="col btn-icon-left glwd-select-user-username v-align-middle">
                 {user.name||user.username}
