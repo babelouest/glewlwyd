@@ -14,7 +14,7 @@ class SelectAccount extends Component {
       currentUser: props.currentUser||[]
     };
     
-    this.handleSelectAccount = this.handleSelectAccount.bind(this);
+    this.handleBack = this.handleBack.bind(this);
     this.handleToggleGrantScope = this.handleToggleGrantScope.bind(this);
     this.handleNewAccount = this.handleNewAccount.bind(this);
     this.handleLogoutAccount = this.handleLogoutAccount.bind(this);
@@ -28,7 +28,7 @@ class SelectAccount extends Component {
     });
   }
   
-  handleSelectAccount() {
+  handleBack() {
     messageDispatcher.sendMessage('App', {type: 'SelectAccountComplete'});
   }
   
@@ -36,7 +36,7 @@ class SelectAccount extends Component {
     this.setState({currentUser: user}, () =>
       apiManager.glewlwydRequest("/auth/", "POST", {username: this.state.currentUser.username})
       .then(() => {
-        messageDispatcher.sendMessage('Notification', {type: "success", message: `${i18next.t("login.success-login")} (${this.state.currentUser.username})`});
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("login.select-login",  {username: this.state.currentUser.username})});
       })
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
@@ -136,7 +136,7 @@ class SelectAccount extends Component {
       <div className="row">
         <div className="col-md-12">
           <div className="btn-group" role="group">
-            <button type="button" className="btn btn-primary" onClick={this.handleSelectAccount}>{i18next.t("login.back")}</button>
+            <button type="button" className="btn btn-primary" onClick={this.handleBack}>{i18next.t("login.back")}</button>
             <button type="button" className="btn btn-primary" onClick={this.handleNewAccount}>{i18next.t("login.login-another-new")}</button>
           </div>
         </div>
