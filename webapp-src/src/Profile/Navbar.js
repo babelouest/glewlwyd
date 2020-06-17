@@ -23,6 +23,7 @@ class Navbar extends Component {
     this.toggleLogin = this.toggleLogin.bind(this);
     this.changeLang = this.changeLang.bind(this);
     this.changeProfile = this.changeProfile.bind(this);
+    this.gotoManageUsers = this.gotoManageUsers.bind(this);
     
     messageDispatcher.subscribe('Nav', (message) => {
       if (message.type === "profile") {
@@ -112,6 +113,11 @@ class Navbar extends Component {
     }
   }
 
+  gotoManageUsers(e) {
+    e.preventDefault();
+    document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURIComponent([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURIComponent(this.state.config.profile_scope) + "&prompt=select_account";
+  }
+
 	render() {
     var langList = [], schemeList = [], profileList = [], dataHighlight = "", completeAlert = "", complete = true;
     var profileDropdown, logoutButton;
@@ -160,6 +166,7 @@ class Navbar extends Component {
     }
     profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
     profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeProfile(e, null)} key={profileList.length}>{i18next.t("profile.menu-session-new")}</a>);
+    profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.gotoManageUsers(e)} key={profileList.length}>{i18next.t("login.manage-users")}</a>);
     if (!this.state.config.params.register && this.state.profileList && this.state.profileList[0]) {
       if (this.state.config.profilePicture && this.state.profileList[0][this.state.config.profilePicture.property]) {
         var picData = this.state.profileList[0][this.state.config.profilePicture.property];

@@ -51,13 +51,17 @@ class SelectAccount extends Component {
   handleLogoutAccount(username) {
     apiManager.glewlwydRequest("/auth/?username=" + username, "DELETE")
     .then(() => {
-      var userList = this.state.userList;
-      userList.forEach((user, index) => {
-        if (user.username === username) {
-          userList.splice(index, 1);
-        }
-      });
-      this.setState({userList: userList});
+      messageDispatcher.sendMessage('App', {type: 'InitProfile'});
+    })
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
+    });
+  }
+  
+  handleLogoutAll() {
+    apiManager.glewlwydRequest("/auth/", "DELETE")
+    .then(() => {
+      messageDispatcher.sendMessage('App', {type: 'InitProfile'});
     })
     .fail(() => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});
@@ -130,11 +134,14 @@ class SelectAccount extends Component {
         </div>
       </div>
       <div className="row">
-        <div className="col-md-12">
+        <div className="col-md-6">
           <div className="btn-group" role="group">
             <button type="button" className="btn btn-primary" onClick={this.handleBack}>{i18next.t("login.back")}</button>
             <button type="button" className="btn btn-primary" onClick={this.handleNewAccount}>{i18next.t("login.login-another-new")}</button>
           </div>
+        </div>
+        <div className="col-md-6 text-right">
+          <button type="button" className="btn btn-danger" onClick={this.handleLogoutAll}>{i18next.t("login.logout-all")}</button>
         </div>
       </div>
       <div className="row">
