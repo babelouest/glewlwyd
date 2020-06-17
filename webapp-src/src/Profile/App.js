@@ -62,11 +62,7 @@ class App extends Component {
           this.setState({curNav: message.module, module: message.page});
         }
       } else if (message.type === 'loggedIn') {
-        this.setState({loggedIn: message.message}, () => {
-          if (!this.state.loggedIn) {
-            // Not sure about `schemeList` in the line below!
-            this.setState({curNav: "profile", profileList: this.state.profileList.filter((e,i) => i !== 0), schemeList: []});
-          }
+        this.setState({loggedIn: message.loggedIn}, () => {
           this.fetchProfile();
         });
       } else if (message.type === 'lang') {
