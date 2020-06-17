@@ -160,7 +160,7 @@ class Navbar extends Component {
     }
     profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
     profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeProfile(e, null)} key={profileList.length}>{i18next.t("profile.menu-session-new")}</a>);
-    if (!this.state.config.params.register && this.state.profileList) {
+    if (!this.state.config.params.register && this.state.profileList && this.state.profileList[0]) {
       if (this.state.config.profilePicture && this.state.profileList[0][this.state.config.profilePicture.property]) {
         var picData = this.state.profileList[0][this.state.config.profilePicture.property];
         if (Array.isArray(picData)) {
@@ -176,6 +176,7 @@ class Navbar extends Component {
         <div className="glwd-nav-picture-div">
           <img className="img-medium glwd-nav-picture-spacer" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" /> {/*1-pixel transparent image as spacer (Possible Bootstrap bug)*/}
           <i className="fas fa-user">
+            &nbsp;
           </i>
           {this.state.profileList[0].username}
         </div>
@@ -193,12 +194,12 @@ class Navbar extends Component {
       </div>;
       logoutButton = 
         <button type="button" className="btn btn-secondary" onClick={this.toggleLogin} title={i18next.t((this.state.loggedIn?"title-logout":"title-login"))}>
-          <i className="fas fa-sign-in-alt btn-icon"></i>
+          {this.state.loggedIn ? <i className="fas fa-sign-out-alt btn-icon"></i> : <i className="fas fa-sign-in-alt btn-icon"></i>}
         </button>;
     } else if (!this.state.config.params.register) {
       logoutButton = 
       <button type="button" className="btn btn-secondary" onClick={this.toggleLogin} title={i18next.t((this.state.loggedIn?"title-logout":"title-login"))}>
-        <i className="fas fa-sign-in-alt btn-icon"></i>
+        {this.state.loggedIn ? <i className="fas fa-sign-out-alt btn-icon"></i> : <i className="fas fa-sign-in-alt btn-icon"></i>}
       </button>;
     } else if (this.state.dataHighlight) {
       complete = false;
