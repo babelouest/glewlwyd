@@ -112,7 +112,9 @@
     "device-auth-user-code-ph": "X1Y2-A3B4",
     "device-authorization-complete-message": "Autorisation complète, vous pouvez fermer cette fenêtre",
     "device-authorization-server-error-message": "Erreur du serveur",
-    "device-authorization-code-error-message": "Code invalide, veuillez réssayer"
+    "device-authorization-code-error-message": "Code invalide, veuillez réssayer",
+    "session-closed-title": "Session fermée",
+    "session-closed-message": "Vous n'êtes plus connecté"
   },
   "admin": {
     "error-credential-message": "Veuillez vous conncecter avec un utilisateur ayant les droits d'administration",

@@ -61,7 +61,7 @@ class SelectAccount extends Component {
   handleLogoutAll() {
     apiManager.glewlwydRequest("/auth/", "DELETE")
     .then(() => {
-      messageDispatcher.sendMessage('App', {type: 'InitProfile'});
+      messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
     })
     .fail(() => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-login")});

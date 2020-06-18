@@ -10,6 +10,7 @@ import PasswordForm from './PasswordForm';
 import NoPasswordForm from './NoPasswordForm';
 import SelectAccount from './SelectAccount';
 import EndSession from './EndSession';
+import SessionClosed from './SessionClosed';
 import DeviceAuth from './DeviceAuth';
 
 class App extends Component {
@@ -36,6 +37,7 @@ class App extends Component {
       forceShowGrant: false,
       selectAccount: false,
       endSession: false,
+      sessionClosed: false,
       deviceAuth: false,
       login_hint: props.config.params.login_hint||"",
       errorScopesUnavailable: false,
@@ -79,6 +81,8 @@ class App extends Component {
         this.setState({showGrant: !this.state.showGrant});
       } else if (message.type === "newUserScheme") {
         this.setState({scheme: message.scheme});
+      } else if (message.type === "SessionClosed") {
+        this.setState({endSession: false, sessionClosed: true});
       }
     });
   }
@@ -102,6 +106,7 @@ class App extends Component {
         newState.selectAccount = true;
       } else if (this.state.prompt === "end_session") {
         newState.endSession = true;
+        newState.sessionClosed = false;
         newState.newUser = false;
         newState.currentUser = false;
       } else if (this.state.prompt && this.state.prompt.substring(0, 6) === "device") {
@@ -258,6 +263,8 @@ class App extends Component {
       if (this.state.loaded) {
         if (this.state.endSession) {
           body = <EndSession config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
+        } else if (this.state.sessionClosed) {
+          body = <SessionClosed config={this.state.config}/>;
         } else if (this.state.deviceAuth) {
           body = <DeviceAuth config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
         } else {

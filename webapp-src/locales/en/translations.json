@@ -112,7 +112,9 @@
     "device-auth-user-code-ph": "X1Y2-A3B4",
     "device-authorization-complete-message": "Authorization complete, you may close this window",
     "device-authorization-server-error-message": "Server error",
-    "device-authorization-code-error-message": "Invalid code, please retry"
+    "device-authorization-code-error-message": "Invalid code, please retry",
+    "session-closed-title": "Session closed",
+    "session-closed-message": "You are disconnected"
   },
   "admin": {
     "error-credential-message": "Please connect with a user that has admin credentials",
