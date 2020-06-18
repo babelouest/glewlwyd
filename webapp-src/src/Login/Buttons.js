@@ -134,7 +134,7 @@ class Buttons extends Component {
           <i className="fas fa-users btn-icon"></i>{i18next.t("login.login-another")}
         </button>
         <div className="dropdown-menu" aria-labelledby="selectNewUser">
-          <a className="dropdown-item" href="#" onClick={(e) => this.newUser(e, false)}>{i18next.t("login.login-another-new")}</a>
+          <a className="dropdown-item" href="#" onClick={(e) => this.newUser(e, false)}>{i18next.t("profile.menu-session-new")}</a>
           <a className="dropdown-item" href="#" onClick={(e) => this.managerUsers(e)}>{i18next.t("login.manage-users")}</a>
           {registerTable}
           <div className="dropdown-divider"></div>
