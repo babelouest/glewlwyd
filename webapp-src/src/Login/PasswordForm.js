@@ -12,7 +12,8 @@ class PasswordForm extends Component {
       username: props.username,
       password: "",
       config: props.config,
-      currentUser: props.currentUser
+      currentUser: props.currentUser,
+      userList: props.userList
     };
 
     this.handleChangeUsername = this.handleChangeUsername.bind(this);
@@ -25,7 +26,8 @@ class PasswordForm extends Component {
       username: nextProps.username,
       password: "",
       config: nextProps.config,
-      currentUser: nextProps.currentUser
+      currentUser: nextProps.currentUser,
+      userList: nextProps.userList
     });
   }
   
@@ -55,12 +57,19 @@ class PasswordForm extends Component {
     }
   }
 
+  gotoManageUsers() {
+    messageDispatcher.sendMessage('App', {type: 'SelectAccount'});
+  }
+
 	render() {
-    var inputUsername;
+    var inputUsername, manageUsersButton;
     if (this.state.currentUser) {
       inputUsername = <input type="text" className="form-control" name="username" id="username" disabled={true} value={this.state.currentUser.username} />
     } else {
       inputUsername = <input type="text" className="form-control" name="username" id="username" required="" placeholder={i18next.t("login.login-placeholder")} value={this.state.username} onChange={this.handleChangeUsername} autoFocus={true}/>;
+    }
+    if (this.state.userList.length > 0) {
+      manageUsersButton = <button type="button" className="btn btn-secondary" onClick={this.gotoManageUsers}>{i18next.t("login.manage-users")}</button>
     }
 		return (
       <form action="#" id="passwordForm">
@@ -83,7 +92,14 @@ class PasswordForm extends Component {
             <input type="password" className="form-control" name="password" id="password" required="" placeholder={i18next.t("login.password-placeholder")} value={this.state.password} onChange={this.handleChangePassword} autoFocus={!!this.state.currentUser}/>
           </div>
         </div>
-        <button type="submit" name="loginbut" id="loginbut" className="btn btn-primary" onClick={(e) => this.validateLogin(e)} title={i18next.t("login.sign-in-title")}>{i18next.t("login.btn-ok")}</button>
+        <div className="row">
+          <div className="col-md-3">
+              <button type="submit" name="loginbut" id="loginbut" className="btn btn-primary btn-lg btn-block" onClick={(e) => this.validateLogin(e)} title={i18next.t("login.sign-in-title")}>{i18next.t("login.btn-ok")}</button>
+          </div>
+          <div className="col-md-9 text-right mt-2">
+            {manageUsersButton}
+          </div>
+        </div>
       </form>
 		);
 	}
