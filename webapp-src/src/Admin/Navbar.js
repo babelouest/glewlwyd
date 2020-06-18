@@ -93,13 +93,13 @@ class Navbar extends Component {
           });
         }
       });
-      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURIComponent([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURIComponent(this.state.config.profile_scope) + (schemeDefault?("&scheme="+encodeURIComponent(schemeDefault)):"") + "&prompt=login";
+      document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURIComponent([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURIComponent(this.state.config.admin_scope) + (schemeDefault?("&scheme="+encodeURIComponent(schemeDefault)):"") + "&prompt=login";
     }
   }
 
   gotoManageUsers(e) {
     e.preventDefault();
-    document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURIComponent([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURIComponent(this.state.config.profile_scope) + "&prompt=select_account";
+    document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURIComponent([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURIComponent(this.state.config.admin_scope) + "&prompt=select_account";
   }
 
 	render() {
@@ -141,18 +141,18 @@ class Navbar extends Component {
           {this.state.profileList[0].username}
         </div>
       }
-      profileDropdown = 
-      <div className="btn-group" role="group">
-        <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <div className="glwd-nav-picture-container">
-            {profilePicture}
-          </div>
-        </button>
-        <div className="dropdown-menu" aria-labelledby="dropdownProfile">
-          {profileList}
-        </div>
-      </div>
     }
+    profileDropdown = 
+    <div className="btn-group" role="group">
+      <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <div className="glwd-nav-picture-container">
+          {profilePicture}
+        </div>
+      </button>
+      <div className="dropdown-menu" aria-labelledby="dropdownProfile">
+        {profileList}
+      </div>
+    </div>
     if (this.state.loggedIn) {
       loginButton = <button type="button" className="btn btn-secondary" onClick={this.toggleLogin} title={i18next.t("title-logout")}>
         <i className="fas btn-icon fa-sign-out-alt"></i>

@@ -439,8 +439,7 @@ class App extends Component {
             modClients: [],
             modSchemes: [],
             plugins: [],
-            invalidCredentialMessage: true,
-            profileList: []
+            invalidCredentialMessage: true
           });
         });
       });
