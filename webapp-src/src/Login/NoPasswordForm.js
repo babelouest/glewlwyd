@@ -73,7 +73,7 @@ class NoPasswordForm extends Component {
           </div>
           <div className="row">
             <div className="col-md-3">
-              <button type="submit" name="usernamebut" id="usernamebut" className="btn btn-primary" onClick={(e) => this.validateUsername(e)} title={i18next.t("login.sign-in-title")}>{i18next.t("login.btn-ok")}</button>
+              <button type="submit" name="usernamebut" id="usernamebut" className="btn btn-primary btn-lg btn-block" onClick={(e) => this.validateUsername(e)} title={i18next.t("login.sign-in-title")}>{i18next.t("login.btn-ok")}</button>
             </div>
             <div className="col-md-9 text-right mt-2">
               {manageUsersButton}
