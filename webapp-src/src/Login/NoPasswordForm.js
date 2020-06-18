@@ -19,7 +19,8 @@ class NoPasswordForm extends Component {
       config: props.config,
       username: props.username,
       usernameValidated: false,
-      scheme: props.scheme
+      scheme: props.scheme,
+      userList: props.userList
     };
 
     this.handleChangeUsername = this.handleChangeUsername.bind(this);
@@ -30,7 +31,8 @@ class NoPasswordForm extends Component {
     this.setState({
       config: nextProps.config,
       username: nextProps.username,
-      scheme: nextProps.scheme
+      scheme: nextProps.scheme,
+      userList: nextProps.userList
     });
   }
 
@@ -45,7 +47,16 @@ class NoPasswordForm extends Component {
     }
   }
 
+  gotoManageUsers(e) {
+    e.preventDefault();
+    document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURIComponent([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURIComponent(this.state.config.profile_scope) + "&prompt=select_account";  
+  }
+
 	render() {
+    var manageUsersButton;
+    if (this.state.userList.length > 0) {
+      manageUsersButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.gotoManageUsers(e)}>{i18next.t("login.manage-users")}</button>
+    }
     if (!this.state.usernameValidated) {
       return (
         <form action="#" id="passwordForm">
@@ -60,7 +71,14 @@ class NoPasswordForm extends Component {
               <input type="text" className="form-control" name="username" id="username" autoFocus={true} required="" placeholder={i18next.t("login.login-placeholder")} value={this.state.username} onChange={this.handleChangeUsername} autoFocus/>
             </div>
           </div>
-          <button type="submit" name="usernamebut" id="usernamebut" className="btn btn-primary" onClick={(e) => this.validateUsername(e)} title={i18next.t("login.sign-in-title")}>{i18next.t("login.btn-ok")}</button>
+          <div className="row">
+            <div className="col-md-3">
+              <button type="submit" name="usernamebut" id="usernamebut" className="btn btn-primary btn-lg btn-block" onClick={(e) => this.validateUsername(e)} title={i18next.t("login.sign-in-title")}>{i18next.t("login.btn-ok")}</button>
+            </div>
+            <div className="col-md-9 text-right mt-2">
+              {manageUsersButton}
+            </div>
+          </div>
         </form>
       );
     } else {
@@ -95,6 +113,11 @@ class NoPasswordForm extends Component {
             {curScheme}
           </div>
           <div className="form-group">
+            <div className="row">
+              <div className="col-md-12 text-right mt-2">
+                {manageUsersButton}
+              </div>
+            </div>
           </div>
         </div>
       );
