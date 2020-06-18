@@ -88,41 +88,50 @@ class GrantScope extends Component {
     if (this.state.infoSomeScopeUnavailable) {
       infoSomeScopeUnavailable = <div className="alert alert-info" role="alert">{i18next.t("login.info-some-scope-unavailable")}</div>
     }
-    return (
-    <div>
-      <div className="row">
-        <div className="col-md-12">
-          <h5>{i18next.t("login.grant-title", {client: this.state.client.name})}</h5>
+    if (this.state.scope.length) {
+      return (
+      <div>
+        <div className="row">
+          <div className="col-md-12">
+            <h5>{i18next.t("login.grant-title", {client: this.state.client.name})}</h5>
+          </div>
         </div>
-      </div>
-      <div className="row">
-        <div className="col-md-12">
-          <ul className="list-group">
-            {scopeList}
-          </ul>
+        <div className="row">
+          <div className="col-md-12">
+            <ul className="list-group">
+              {scopeList}
+            </ul>
+          </div>
         </div>
-      </div>
-      <div className="row">
-        <div className="col-md-12">
-          {infoSomeScopeUnavailable}
+        <div className="row">
+          <div className="col-md-12">
+            {infoSomeScopeUnavailable}
+          </div>
         </div>
-      </div>
-      <div className="row">
-        <div className="col-md-12">
-          <button type="button" className="btn btn-primary" onClick={this.handleGrantScope}>{i18next.t("login.grant")}</button>
+        <div className="row">
+          <div className="col-md-12">
+            <button type="button" className="btn btn-primary" onClick={this.handleGrantScope}>{i18next.t("login.grant")}</button>
+          </div>
         </div>
-      </div>
-      <hr className="glwd-hr-no-border"/>
-      <div className="row">
-        <div className="col-md-12">
-          <b>
-            {i18next.t("login.grant-info-message")}
-          </b>
+        <hr className="glwd-hr-no-border"/>
+        <div className="row">
+          <div className="col-md-12">
+            <b>
+              {i18next.t("login.grant-info-message")}
+            </b>
+          </div>
         </div>
-      </div>
-    </div>);
+      </div>);
+    } else {
+      return (
+        <div className="row">
+          <div className="col-md-12">
+            <h5>{i18next.t("login.grant-none-available")}</h5>
+          </div>
+        </div>
+      );
+    }
   }
-
 }
 
 export default GrantScope;
