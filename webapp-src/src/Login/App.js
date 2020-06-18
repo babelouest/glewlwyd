@@ -273,9 +273,9 @@ class App extends Component {
           } else {
             if ((this.state.newUser || this.state.passwordRequired)) {
               if (!this.state.scheme) {
-                body = <PasswordForm config={this.state.config} username={this.state.login_hint} currentUser={this.state.currentUser} callbackInitProfile={this.initProfile}/>;
+                body = <PasswordForm config={this.state.config} username={this.state.login_hint} currentUser={this.state.currentUser} userList={this.state.userList} callbackInitProfile={this.initProfile}/>;
               } else {
-                body = <NoPasswordForm config={this.state.config} username={this.state.login_hint} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
+                body = <NoPasswordForm config={this.state.config} username={this.state.login_hint} userList={this.state.userList} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
               }
             } else if (this.state.selectAccount) {
               body = <SelectAccount config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
