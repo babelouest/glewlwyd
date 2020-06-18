@@ -57,9 +57,8 @@ class PasswordForm extends Component {
     }
   }
 
-  gotoManageUsers(e) {
-    e.preventDefault();
-    document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURIComponent([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURIComponent(this.state.config.profile_scope) + "&prompt=select_account";  
+  gotoManageUsers() {
+    messageDispatcher.sendMessage('App', {type: 'SelectAccount'});
   }
 
 	render() {
@@ -70,7 +69,7 @@ class PasswordForm extends Component {
       inputUsername = <input type="text" className="form-control" name="username" id="username" required="" placeholder={i18next.t("login.login-placeholder")} value={this.state.username} onChange={this.handleChangeUsername} autoFocus={true}/>;
     }
     if (this.state.userList.length > 0) {
-      manageUsersButton = <button type="button" className="btn btn-secondary" onClick={(e) => this.gotoManageUsers(e)}>{i18next.t("login.manage-users")}</button>
+      manageUsersButton = <button type="button" className="btn btn-secondary" onClick={this.gotoManageUsers}>{i18next.t("login.manage-users")}</button>
     }
 		return (
       <form action="#" id="passwordForm">
