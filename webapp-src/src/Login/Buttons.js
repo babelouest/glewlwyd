@@ -11,6 +11,7 @@ class Buttons extends Component {
       config: props.config,
       userList: props.userList,
       currentUser: props.currentUser,
+      client: props.client,
       newUser: props.newUser,
       newUserScheme: props.newUserScheme,
       canContinue: props.canContinue,
@@ -36,6 +37,7 @@ class Buttons extends Component {
     this.setState({
       userList: nextProps.userList,
       currentUser: nextProps.currentUser,
+      client: nextProps.client,
       config: nextProps.config,
       showGrant: nextProps.showGrant,
       newUser: nextProps.newUser,
@@ -101,17 +103,24 @@ class Buttons extends Component {
   }
 
 	render() {
-    var bAnother = "", asterisk = "", bContinue = "", registerTable = [];
+    var bAnother = "", asterisk = "", bContinue = "", bGrant = "", registerTable = [];
     if (this.state.canContinue) {
       bContinue = <button type="button" className="btn btn-success" onClick={this.clickContinue} title={i18next.t("login.continue-title")}>
         <i className="fas fa-play btn-icon"></i>{i18next.t("login.continue")}
       </button>;
     }
-    var bGrant = <button type="button" className="btn btn-primary" onClick={this.clickGrant} title={this.state.bGrantTitle||""}>
-      <i className="fas fa-user-cog btn-icon"></i>{this.state.bGrant}
-    </button>;
     if (this.state.showGrantAsterisk) {
       asterisk = <small><i className="fas fa-asterisk btn-icon-right"></i></small>;
+    }
+    if (this.state.client) {
+      bGrant = 
+      <div>
+        <a className="dropdown-item" href="#" onClick={this.clickGrant} alt={this.state.bGrantTitle}>
+          <i className="fas fa-user-cog btn-icon"></i>{this.state.bGrant}
+          {asterisk}
+        </a>
+        <div className="dropdown-divider"></div>
+      </div>;
     }
     if (this.state.currentUser && !this.state.selectAccount) {
       if (this.state.config.register) {
@@ -157,11 +166,7 @@ class Buttons extends Component {
                   <i className="fas fa-user-cog btn-icon"></i>{i18next.t("login.login-handle")}{asterisk}
                 </button>
                 <div className="dropdown-menu" aria-labelledby="selectGrant">
-                  <a className="dropdown-item" href="#" onClick={this.clickGrant} alt={this.state.bGrantTitle}>
-                    {this.state.bGrant}
-                    {asterisk}
-                  </a>
-                  <div className="dropdown-divider"></div>
+                  {bGrant}
                   <a className="dropdown-item" href={this.state.config.ProfileUrl||""} target="_blank">{i18next.t("login.update-profile")}</a>
                 </div>
               </div>

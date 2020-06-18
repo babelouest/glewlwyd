@@ -50,30 +50,30 @@ class App extends Component {
     this.parseSchemes = this.parseSchemes.bind(this);
 
     if (this.state.config) {
-      this.initProfile();
+      this.initProfile(true);
     }
 
     messageDispatcher.subscribe('App', (message) => {
       if (message.type === "InitProfile") {
-        this.initProfile();
+        this.initProfile(false);
       } else if (message.type === "loginSuccess") {
         this.setState({selectAccount: false, refresh_login: false, prompt: false}, () => {
-          this.initProfile();
+          this.initProfile(false);
         });
       } else if (message.type === "NewUser") {
         this.setState({selectAccount: false, newUser: true, currentUser: false, scheme: this.state.config.params.scheme}, () => {
         });
       } else if (message.type === "GrantComplete") {
         this.setState({selectAccount: false, showGrant: false, prompt: false, forceShowGrant: false}, () => {
-          this.initProfile();
+          this.initProfile(false);
         });
       } else if (message.type === "SelectAccount") {
-        this.setState({selectAccount: true}, () => {
-          this.initProfile();
+        this.setState({selectAccount: true, newUser: false}, () => {
+          this.initProfile(false);
         });
       } else if (message.type === "SelectAccountComplete") {
         this.setState({selectAccount: false, prompt: false}, () => {
-          this.initProfile();
+          this.initProfile(false);
         });
       } else if (message.type === "ToggleGrant") {
         this.setState({showGrant: !this.state.showGrant});
@@ -83,7 +83,7 @@ class App extends Component {
     });
   }
 
-  initProfile() {
+  initProfile(checkPrompt) {
     apiManager.glewlwydRequest("/profile_list")
     .then((res) => {
       var newState = {};
@@ -93,21 +93,23 @@ class App extends Component {
       }
       newState.userList = res;
       newState.loaded = true;
-      if (this.state.prompt === "login") {
-        newState.currentUser = false;
-        newState.newUser = true;
-      } else if (this.state.prompt === "consent") {
-        newState.forceShowGrant = true;
-      } else if (this.state.prompt === "select_account") {
-        newState.selectAccount = true;
-      } else if (this.state.prompt === "end_session") {
-        newState.endSession = true;
-        newState.newUser = false;
-        newState.currentUser = false;
-      } else if (this.state.prompt && this.state.prompt.substring(0, 6) === "device") {
-        newState.deviceAuth = true;
-      } else {
-        newState.newUser = false;
+      if (checkPrompt) {
+        if (this.state.prompt === "login") {
+          newState.currentUser = false;
+          newState.newUser = true;
+        } else if (this.state.prompt === "consent") {
+          newState.forceShowGrant = true;
+        } else if (this.state.prompt === "select_account") {
+          newState.selectAccount = true;
+        } else if (this.state.prompt === "end_session") {
+          newState.endSession = true;
+          newState.newUser = false;
+          newState.currentUser = false;
+        } else if (this.state.prompt && this.state.prompt.substring(0, 6) === "device") {
+          newState.deviceAuth = true;
+        } else {
+          newState.newUser = false;
+        }
       }
       this.setState(newState, () => {
         if (this.state.config.params.client_id && this.state.config.params.scope) {
@@ -327,7 +329,8 @@ class App extends Component {
             <div className="card-footer">
               <Buttons config={this.state.config} 
                        currentUser={this.state.currentUser} 
-                       userList={this.state.userList} 
+                       userList={this.state.userList}
+                       client={this.state.client}
                        showGrant={this.state.showGrant} 
                        showGrantAsterisk={this.state.showGrantAsterisk} 
                        newUser={this.state.newUser} 
