@@ -52,30 +52,30 @@ class App extends Component {
     this.parseSchemes = this.parseSchemes.bind(this);
 
     if (this.state.config) {
-      this.initProfile();
+      this.initProfile(true);
     }
 
     messageDispatcher.subscribe('App', (message) => {
       if (message.type === "InitProfile") {
-        this.initProfile();
+        this.initProfile(false);
       } else if (message.type === "loginSuccess") {
         this.setState({selectAccount: false, refresh_login: false, prompt: false}, () => {
-          this.initProfile();
+          this.initProfile(false);
         });
       } else if (message.type === "NewUser") {
         this.setState({selectAccount: false, newUser: true, currentUser: false, scheme: this.state.config.params.scheme}, () => {
         });
       } else if (message.type === "GrantComplete") {
         this.setState({selectAccount: false, showGrant: false, prompt: false, forceShowGrant: false}, () => {
-          this.initProfile();
+          this.initProfile(false);
         });
       } else if (message.type === "SelectAccount") {
-        this.setState({selectAccount: true}, () => {
-          this.initProfile();
+        this.setState({selectAccount: true, newUser: false}, () => {
+          this.initProfile(false);
         });
       } else if (message.type === "SelectAccountComplete") {
         this.setState({selectAccount: false, prompt: false}, () => {
-          this.initProfile();
+          this.initProfile(false);
         });
       } else if (message.type === "ToggleGrant") {
         this.setState({showGrant: !this.state.showGrant});
@@ -87,32 +87,34 @@ class App extends Component {
     });
   }
 
-  initProfile() {
+  initProfile(checkPrompt) {
     apiManager.glewlwydRequest("/profile_list")
     .then((res) => {
       var newState = {};
       if (res.length) {
         newState.currentUser = res[0];
         newState.login_hint = res[0].username;
+        newState.errorScopesUnavailable = !this.userHasScope(res[0], this.state.config.params.scope);
       }
       newState.userList = res;
       newState.loaded = true;
-      if (this.state.prompt === "login") {
-        newState.currentUser = false;
-        newState.newUser = true;
-      } else if (this.state.prompt === "consent") {
-        newState.forceShowGrant = true;
-      } else if (this.state.prompt === "select_account") {
-        newState.selectAccount = true;
-      } else if (this.state.prompt === "end_session") {
-        newState.endSession = true;
-        newState.sessionClosed = false;
-        newState.newUser = false;
-        newState.currentUser = false;
-      } else if (this.state.prompt && this.state.prompt.substring(0, 6) === "device") {
-        newState.deviceAuth = true;
-      } else {
-        newState.newUser = false;
+      if (checkPrompt) {
+        if (this.state.prompt === "login") {
+          newState.currentUser = false;
+          newState.newUser = true;
+        } else if (this.state.prompt === "consent") {
+          newState.forceShowGrant = true;
+        } else if (this.state.prompt === "select_account") {
+          newState.selectAccount = true;
+        } else if (this.state.prompt === "end_session") {
+          newState.endSession = true;
+          newState.newUser = false;
+          newState.currentUser = false;
+        } else if (this.state.prompt && this.state.prompt.substring(0, 6) === "device") {
+          newState.deviceAuth = true;
+        } else {
+          newState.newUser = false;
+        }
       }
       this.setState(newState, () => {
         if (this.state.config.params.client_id && this.state.config.params.scope) {
@@ -256,10 +258,20 @@ class App extends Component {
       this.setState({lang: lang});
     });
   }
+  
+  userHasScope(user, scope_list) {
+    var hasScope = false;
+    scope_list.split(" ").forEach(scope => {
+      if (user.scope.indexOf(scope) > -1) {
+        hasScope = true;
+      }
+    });
+    return hasScope;
+  }
 
 	render() {
     if (this.state.config) {
-      var body = "", message;
+      var body = "", message, scopeUnavailable;
       if (this.state.loaded) {
         if (this.state.endSession) {
           body = <EndSession config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
@@ -275,19 +287,18 @@ class App extends Component {
           } else if (!this.state.config.params.callback_url) {
             message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-no-callback-url")}</div>
           }
-          if (this.state.errorScopesUnavailable) {
-            body = <div className="alert alert-danger" role="alert">{i18next.t("login.error-scope-unavailable")}</div>
-          } else {
-            if ((this.state.newUser || this.state.passwordRequired)) {
-              if (!this.state.scheme) {
-                body = <PasswordForm config={this.state.config} username={this.state.login_hint} currentUser={this.state.currentUser} callbackInitProfile={this.initProfile}/>;
-              } else {
-                body = <NoPasswordForm config={this.state.config} username={this.state.login_hint} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
-              }
-            } else if (this.state.selectAccount) {
-              body = <SelectAccount config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
+          if ((this.state.newUser || this.state.passwordRequired)) {
+            if (!this.state.scheme) {
+              body = <PasswordForm config={this.state.config} username={this.state.login_hint} currentUser={this.state.currentUser} userList={this.state.userList} callbackInitProfile={this.initProfile}/>;
             } else {
-              body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} showGrant={this.state.showGrant} infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable}/>;
+              body = <NoPasswordForm config={this.state.config} username={this.state.login_hint} userList={this.state.userList} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
+            }
+          } else if (this.state.selectAccount) {
+            body = <SelectAccount config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
+          } else {
+            body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} showGrant={this.state.showGrant} infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable}/>;
+            if (this.state.errorScopesUnavailable) {
+              scopeUnavailable = <div className="alert alert-danger" role="alert">{i18next.t("login.error-scope-unavailable")}</div>
             }
           }
         }
@@ -329,17 +340,19 @@ class App extends Component {
             </div>
             {message}
             <div className="card-body">
+              {scopeUnavailable}
               {body}
             </div>
             <div className="card-footer">
               <Buttons config={this.state.config} 
                        currentUser={this.state.currentUser} 
-                       userList={this.state.userList} 
+                       userList={this.state.userList}
+                       client={this.state.client}
                        showGrant={this.state.showGrant} 
                        showGrantAsterisk={this.state.showGrantAsterisk} 
                        newUser={this.state.newUser} 
                        newUserScheme={this.state.scheme} 
-                       canContinue={this.state.canContinue} 
+                       canContinue={this.state.canContinue && !this.state.errorScopesUnavailable} 
                        schemeListRequired={this.state.schemeListRequired}
                        selectAccount={this.state.selectAccount} />
             </div>

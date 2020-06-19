@@ -98,7 +98,7 @@ class App extends Component {
         this.fetchRegistration();
       } else if (message.type === 'registrationComplete') {
         if (!this.state.config.params.register) {
-          this.setState({registerProfile: false, schemeList: [],profileList: false})
+          this.setState({registerProfile: false, schemeList: [], profileList: false})
           this.fetchRegistration();
         }
       }
@@ -123,12 +123,12 @@ class App extends Component {
     if (!this.state.config.params.delegate) {
       apiManager.glewlwydRequest("/profile_list")
       .then((res) => {
-        if (!res[0] || res[0].scope.indexOf(this.state.config.profile_scope) < 0) {
-          this.setState({loggedIn: false, profileList: false, schemeList: [], invalidDelegateMessage: true, profileUpdate: false}, () => {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
-          });
-        } else {
-          this.setState({profileList: res}, () => {
+        this.setState({profileList: res}, () => {
+          if (!res[0] || res[0].scope.indexOf(this.state.config.profile_scope) < 0) {
+            this.setState({loggedIn: false, schemeList: [], invalidDelegateMessage: false, invalidCredentialMessage: true, profileUpdate: false}, () => {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+            });
+          } else {
             apiManager.glewlwydRequest("/profile/scheme")
             .then((schemeList) => {
               this.setState({loggedIn: true, schemeList: schemeList, invalidDelegateMessage: false, invalidCredentialMessage: false, profileUpdate: true}, () => {
@@ -142,7 +142,7 @@ class App extends Component {
               });
             })
             .fail((error) => {
-              this.setState({loggedIn: false, profileList: false, schemeList: [], invalidDelegateMessage: false, invalidCredentialMessage: true, profileUpdate: false}, () => {
+              this.setState({loggedIn: false, schemeList: [], invalidDelegateMessage: false, invalidCredentialMessage: true, profileUpdate: false}, () => {
                 if (error.status === 401) {
                   messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
                 } else {
@@ -150,8 +150,8 @@ class App extends Component {
                 }
               });
             });
-          });
-        }
+          }
+        });
       })
       .fail((error) => {
         this.setState({loggedIn: false, profileList: false, schemeList: [], invalidDelegateMessage: false, invalidCredentialMessage: true}, () => {
@@ -178,7 +178,7 @@ class App extends Component {
       .fail((error) => {
         this.setState({invalidCredentialMessage: false, invalidDelegateMessage: true}, () => {
           if (error.status === 401) {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-admin-scope")});
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
           } else {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           }
