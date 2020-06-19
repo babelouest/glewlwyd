@@ -90,6 +90,7 @@ class App extends Component {
       if (res.length) {
         newState.currentUser = res[0];
         newState.login_hint = res[0].username;
+        newState.errorScopesUnavailable = !this.userHasScope(res[0], this.state.config.params.scope);
       }
       newState.userList = res;
       newState.loaded = true;
@@ -253,10 +254,20 @@ class App extends Component {
       this.setState({lang: lang});
     });
   }
+  
+  userHasScope(user, scope_list) {
+    var hasScope = false;
+    scope_list.split(" ").forEach(scope => {
+      if (user.scope.indexOf(scope) > -1) {
+        hasScope = true;
+      }
+    });
+    return hasScope;
+  }
 
 	render() {
     if (this.state.config) {
-      var body = "", message;
+      var body = "", message, scopeUnavailable;
       if (this.state.loaded) {
         if (this.state.endSession) {
           body = <EndSession config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
@@ -270,19 +281,18 @@ class App extends Component {
           } else if (!this.state.config.params.callback_url) {
             message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-no-callback-url")}</div>
           }
-          if (this.state.errorScopesUnavailable) {
-            body = <div className="alert alert-danger" role="alert">{i18next.t("login.error-scope-unavailable")}</div>
-          } else {
-            if ((this.state.newUser || this.state.passwordRequired)) {
-              if (!this.state.scheme) {
-                body = <PasswordForm config={this.state.config} username={this.state.login_hint} currentUser={this.state.currentUser} userList={this.state.userList} callbackInitProfile={this.initProfile}/>;
-              } else {
-                body = <NoPasswordForm config={this.state.config} username={this.state.login_hint} userList={this.state.userList} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
-              }
-            } else if (this.state.selectAccount) {
-              body = <SelectAccount config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
+          if ((this.state.newUser || this.state.passwordRequired)) {
+            if (!this.state.scheme) {
+              body = <PasswordForm config={this.state.config} username={this.state.login_hint} currentUser={this.state.currentUser} userList={this.state.userList} callbackInitProfile={this.initProfile}/>;
             } else {
-              body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} showGrant={this.state.showGrant} infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable}/>;
+              body = <NoPasswordForm config={this.state.config} username={this.state.login_hint} userList={this.state.userList} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
+            }
+          } else if (this.state.selectAccount) {
+            body = <SelectAccount config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
+          } else {
+            body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} showGrant={this.state.showGrant} infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable}/>;
+            if (this.state.errorScopesUnavailable) {
+              scopeUnavailable = <div className="alert alert-danger" role="alert">{i18next.t("login.error-scope-unavailable")}</div>
             }
           }
         }
@@ -324,6 +334,7 @@ class App extends Component {
             </div>
             {message}
             <div className="card-body">
+              {scopeUnavailable}
               {body}
             </div>
             <div className="card-footer">
@@ -335,7 +346,7 @@ class App extends Component {
                        showGrantAsterisk={this.state.showGrantAsterisk} 
                        newUser={this.state.newUser} 
                        newUserScheme={this.state.scheme} 
-                       canContinue={this.state.canContinue} 
+                       canContinue={this.state.canContinue && !this.state.errorScopesUnavailable} 
                        schemeListRequired={this.state.schemeListRequired}
                        selectAccount={this.state.selectAccount} />
             </div>
