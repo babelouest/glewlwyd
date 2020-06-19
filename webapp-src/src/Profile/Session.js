@@ -44,6 +44,12 @@ class Session extends Component {
       if (this.state.profile) {
         this.fetchLists();
       }
+      if (!this.state.loggedIn) {
+        this.setState({
+          profile: [],
+          sessionList: []
+        });
+      };
     });
   }
   
@@ -83,6 +89,8 @@ class Session extends Component {
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
       });
+    } else {
+      this.setState({sessionList: []});
     }
   }
   
