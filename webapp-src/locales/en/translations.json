@@ -11,7 +11,8 @@
     "menu-title": "Glewlwyd",
     "error-scope-unavailable": "Error, no required scope is available",
     "info-some-scope-unavailable": "Some scopes aren't available",
-    "warning-no-callback-url": "Warning, callback_url parameter is missing in the URL",
+    "warning-no-callback-url": "callback_url parameter is missing",
+    "warning-no-scope": "scope parameter is missing",
     "warning-error-scheme": "Scheme error",
     "warning-not-registered-scheme": "You must register a scheme in your profile before using it for connection",
     "hello": "Hello {{- name}}",
@@ -114,7 +115,8 @@
     "device-authorization-server-error-message": "Server error",
     "device-authorization-code-error-message": "Invalid code, please retry",
     "session-closed-title": "Session closed",
-    "session-closed-message": "You are disconnected"
+    "session-closed-message": "You are disconnected",
+    "error-invalid-url-parameters": "Invalid login URL"
   },
   "admin": {
     "error-credential-message": "Please connect with a user that has admin credentials",

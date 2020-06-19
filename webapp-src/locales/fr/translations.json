@@ -11,7 +11,8 @@
     "menu-title": "Glewlwyd",
     "error-scope-unavailable": "Erreur, aucun droit d'accès requis n'est accessible",
     "info-some-scope-unavailable": "Certains droits d'accès ne sont pas accessibles",
-    "warning-no-callback-url": "Attention, le paramètre callback_url est manquant dans l'URL",
+    "warning-no-callback-url": "Le paramètre callback_url est manquant",
+    "warning-no-scope": "Le paramètre scope est manquant",
     "warning-error-scheme": "Erreur de schéma",
     "warning-not-registered-scheme": "Vous devez enregistrer un schéma dans votre profil pour pouvoir vous connecter avec",
     "hello": "Bonjour {{- name}}",
@@ -114,7 +115,8 @@
     "device-authorization-server-error-message": "Erreur du serveur",
     "device-authorization-code-error-message": "Code invalide, veuillez réssayer",
     "session-closed-title": "Session fermée",
-    "session-closed-message": "Vous n'êtes plus connecté"
+    "session-closed-message": "Vous n'êtes plus connecté",
+    "error-invalid-url-parameters": "URL de connexion invalide"
   },
   "admin": {
     "error-credential-message": "Veuillez vous conncecter avec un utilisateur ayant les droits d'administration",

@@ -133,7 +133,7 @@ class App extends Component {
       if (this.state.prompt === "device") {
         this.setState({deviceAuth: true, currentUser: false, userList: [], loaded: true});
       } else {
-        this.setState({newUser: true, currentUser: false, userList: [], loaded: true});
+        this.setState({newUser: (!!this.state.config.params.callback_url && !!this.state.config.params.scope), showGrant: false, currentUser: false, userList: [], loaded: true});
       }
     });
   }
@@ -261,11 +261,13 @@ class App extends Component {
   
   userHasScope(user, scope_list) {
     var hasScope = false;
-    scope_list.split(" ").forEach(scope => {
-      if (user.scope.indexOf(scope) > -1) {
-        hasScope = true;
-      }
-    });
+    if (scope_list) {
+      scope_list.split(" ").forEach(scope => {
+        if (user.scope.indexOf(scope) > -1) {
+          hasScope = true;
+        }
+      });
+    }
     return hasScope;
   }
 
@@ -284,8 +286,15 @@ class App extends Component {
             message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-not-registered-scheme")}</div>
           } else if (this.state.errorScheme && !this.state.errorScopesUnavailable) {
             message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-error-scheme")}</div>
-          } else if (!this.state.config.params.callback_url) {
-            message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-no-callback-url")}</div>
+          } else {
+            var noCallback, noScope;
+            if (!this.state.config.params.callback_url) {
+              noCallback = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-no-callback-url")}</div>;
+            }
+            if (!this.state.config.params.scope) {
+              noScope = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-no-scope")}</div>;
+            }
+            message = <div>{noCallback}{noScope}</div>;
           }
           if ((this.state.newUser || this.state.passwordRequired)) {
             if (!this.state.scheme) {
@@ -296,7 +305,15 @@ class App extends Component {
           } else if (this.state.selectAccount) {
             body = <SelectAccount config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
           } else {
-            body = <Body config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} showGrant={this.state.showGrant} infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable}/>;
+            body = <Body config={this.state.config} 
+                         currentUser={this.state.currentUser} 
+                         client={this.state.client} 
+                         scope={this.state.scope} 
+                         scheme={this.state.scheme} 
+                         schemeListRequired={this.state.schemeListRequired} 
+                         showGrant={this.state.showGrant} 
+                         infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable}
+                         validLogin={(!!this.state.config.params.callback_url && !!this.state.config.params.scope)}/>;
             if (this.state.errorScopesUnavailable) {
               scopeUnavailable = <div className="alert alert-danger" role="alert">{i18next.t("login.error-scope-unavailable")}</div>
             }
