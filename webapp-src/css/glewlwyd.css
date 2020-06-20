@@ -139,6 +139,7 @@
   width: 18rem;
 }
 
-.glwg-bg-light-grey {
-  background-color: #c8c8c8 !important;  
+.glwd-nav-user-unavailable, .glwd-nav-user-unavailable:hover, .glwd-nav-user-unavailable:focus {
+  cursor: default;
+  color: #dcdcdc;
 }
