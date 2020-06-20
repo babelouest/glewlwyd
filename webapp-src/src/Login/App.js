@@ -59,7 +59,7 @@ class App extends Component {
       if (message.type === "InitProfile") {
         this.initProfile(false);
       } else if (message.type === "loginSuccess") {
-        this.setState({selectAccount: false, refresh_login: false, prompt: false}, () => {
+        this.setState({selectAccount: false, newUser: false, refresh_login: false, prompt: false}, () => {
           this.initProfile(false);
         });
       } else if (message.type === "NewUser") {
