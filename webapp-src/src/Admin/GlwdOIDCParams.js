@@ -1746,7 +1746,7 @@ class GlwdOIDCParams extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-glwd-jwt-request-maximum-exp">{i18next.t("admin.mod-glwd-jwt-request-maximum-exp")}</label>
                     </div>
-                    <input type="number" className="form-control" id="mod-glwd-jwt-request-maximum-exp" onChange={(e) => this.changeParam(e, "request-maximum-exp", 1)} value={this.state.mod.parameters["request-maximum-exp"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-maximum-exp-ph")} />
+                    <input type="number" min="1" step="1" className="form-control" id="mod-glwd-jwt-request-maximum-exp" onChange={(e) => this.changeNumberParam(e, "request-maximum-exp", 1)} value={this.state.mod.parameters["request-maximum-exp"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-maximum-exp-ph")} />
                   </div>
                 </div>
                 <div className="form-group">
