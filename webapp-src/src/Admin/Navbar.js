@@ -112,47 +112,47 @@ class Navbar extends Component {
         langList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeLang(e, lang)} key={i}>{lang}</a>);
       }
     });
-    if (this.state.profileList) {
+    if (this.state.profileList.length) {
       this.state.profileList.forEach((profile, index) => {
         profileList.push(<a className={"dropdown-item"+(!index?" active":"")} href="#" onClick={(e) => this.changeProfile(e, profile)} key={index}>{profile.name||profile.username}</a>);
       });
-    }
-    profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
-    profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeProfile(e, null)} key={profileList.length}>{i18next.t("profile.menu-session-new")}</a>);
-    profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.gotoManageUsers(e)} key={profileList.length}>{i18next.t("login.manage-users")}</a>);
-    if (this.state.profileList && this.state.profileList[0]) {
-      if (this.state.config.profilePicture && this.state.profileList[0][this.state.config.profilePicture.property]) {
-        var picData = this.state.profileList[0][this.state.config.profilePicture.property];
-        if (Array.isArray(picData)) {
-          picData = picData[0];
+      profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
+      profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeProfile(e, null)} key={profileList.length}>{i18next.t("profile.menu-session-new")}</a>);
+      profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.gotoManageUsers(e)} key={profileList.length}>{i18next.t("login.manage-users")}</a>);
+      if (this.state.profileList && this.state.profileList[0]) {
+        if (this.state.config.profilePicture && this.state.profileList[0][this.state.config.profilePicture.property]) {
+          var picData = this.state.profileList[0][this.state.config.profilePicture.property];
+          if (Array.isArray(picData)) {
+            picData = picData[0];
+          }
+          profilePicture =
+          <div className="glwd-nav-picture-div">
+            <img className="img-medium glwd-nav-picture-image" src={"data:image/*;base64,"+picData}/>
+            {this.state.profileList[0].username}
+          </div>
+        } else {
+          profilePicture =
+          <div className="glwd-nav-picture-div">
+            <img className="img-medium glwd-nav-picture-spacer" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" /> {/*1-pixel transparent image as spacer (Possible Bootstrap bug)*/}
+            <i className="fas fa-user">
+              &nbsp;
+            </i>
+            {this.state.profileList[0].username}
+          </div>
         }
-        profilePicture =
-        <div className="glwd-nav-picture-div">
-          <img className="img-medium glwd-nav-picture-image" src={"data:image/*;base64,"+picData}/>
-          {this.state.profileList[0].username}
-        </div>
-      } else {
-        profilePicture =
-        <div className="glwd-nav-picture-div">
-          <img className="img-medium glwd-nav-picture-spacer" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" /> {/*1-pixel transparent image as spacer (Possible Bootstrap bug)*/}
-          <i className="fas fa-user">
-            &nbsp;
-          </i>
-          {this.state.profileList[0].username}
-        </div>
       }
-    }
-    profileDropdown = 
-    <div className="btn-group" role="group">
-      <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        <div className="glwd-nav-picture-container">
-          {profilePicture}
+      profileDropdown = 
+      <div className="btn-group" role="group">
+        <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownProfile" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <div className="glwd-nav-picture-container">
+            {profilePicture}
+          </div>
+        </button>
+        <div className="dropdown-menu" aria-labelledby="dropdownProfile">
+          {profileList}
         </div>
-      </button>
-      <div className="dropdown-menu" aria-labelledby="dropdownProfile">
-        {profileList}
       </div>
-    </div>
+    }
     if (this.state.loggedIn) {
       loginButton = <button type="button" className="btn btn-secondary" onClick={this.toggleLogin} title={i18next.t("title-logout")}>
         <i className="fas btn-icon fa-sign-out-alt"></i>
