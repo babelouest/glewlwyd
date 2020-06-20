@@ -129,7 +129,7 @@ class Navbar extends Component {
         if (this.userHasScope(profile, this.state.config.admin_scope)) {
           profileList.push(<a className={"dropdown-item"+(!index?" active":"")} href="#" onClick={(e) => this.changeProfile(e, profile)} key={index}>{profile.name||profile.username}</a>);
         } else {
-          profileList.push(<a className={"dropdown-item font-italic text-danger glwg-bg-light-grey"+(!index?" active":"")} href="#" disabled={true}>{profile.name||profile.username}</a>);
+          profileList.push(<a className={"dropdown-item glwd-nav-user-unavailable"+(!index?" active":"")} href="#" disabled={true}>{profile.name||profile.username}</a>);
         }
       });
       profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
