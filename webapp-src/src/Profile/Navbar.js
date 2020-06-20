@@ -118,6 +118,18 @@ class Navbar extends Component {
     document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURIComponent([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURIComponent(this.state.config.profile_scope) + "&prompt=select_account";
   }
 
+  userHasScope(user, scope_list) {
+    var hasScope = false;
+    if (scope_list) {
+      scope_list.split(" ").forEach(scope => {
+        if (user.scope.indexOf(scope) > -1) {
+          hasScope = true;
+        }
+      });
+    }
+    return hasScope;
+  }
+
 	render() {
     var langList = [], schemeList = [], profileList = [], dataHighlight = "", completeAlert = "", complete = true;
     var profileDropdown, logoutButton;
@@ -156,7 +168,11 @@ class Navbar extends Component {
     }
     if (this.state.profileList) {
       this.state.profileList.forEach((profile, index) => {
-        profileList.push(<a className={"dropdown-item"+(!index?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.changeProfile(e, profile)} key={index}>{profile.name||profile.username}</a>);
+        if (this.userHasScope(profile, this.state.config.profile_scope)) {
+          profileList.push(<a className={"dropdown-item"+(!index?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.changeProfile(e, profile)} key={index}>{profile.name||profile.username}</a>);
+        } else {
+          profileList.push(<a className={"dropdown-item font-italic text-danger glwg-bg-light-grey"+(!index?" active":"")} href="#" disabled={true}>{profile.name||profile.username}</a>);
+        }
       });
     }
     if (this.state.loggedIn) {

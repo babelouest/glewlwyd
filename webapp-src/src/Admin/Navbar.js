@@ -102,6 +102,18 @@ class Navbar extends Component {
     document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURIComponent([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURIComponent(this.state.config.admin_scope) + "&prompt=select_account";
   }
 
+  userHasScope(user, scope_list) {
+    var hasScope = false;
+    if (scope_list) {
+      scope_list.split(" ").forEach(scope => {
+        if (user.scope.indexOf(scope) > -1) {
+          hasScope = true;
+        }
+      });
+    }
+    return hasScope;
+  }
+
 	render() {
     var langList = [], profileList = [], profileDropdown, loginButton;
     var profilePicture;
@@ -114,7 +126,11 @@ class Navbar extends Component {
     });
     if (this.state.profileList.length) {
       this.state.profileList.forEach((profile, index) => {
-        profileList.push(<a className={"dropdown-item"+(!index?" active":"")} href="#" onClick={(e) => this.changeProfile(e, profile)} key={index}>{profile.name||profile.username}</a>);
+        if (this.userHasScope(profile, this.state.config.admin_scope)) {
+          profileList.push(<a className={"dropdown-item"+(!index?" active":"")} href="#" onClick={(e) => this.changeProfile(e, profile)} key={index}>{profile.name||profile.username}</a>);
+        } else {
+          profileList.push(<a className={"dropdown-item font-italic text-danger glwg-bg-light-grey"+(!index?" active":"")} href="#" disabled={true}>{profile.name||profile.username}</a>);
+        }
       });
       profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
       profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeProfile(e, null)} key={profileList.length}>{i18next.t("profile.menu-session-new")}</a>);
