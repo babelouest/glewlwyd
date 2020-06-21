@@ -11,7 +11,8 @@
     "menu-title": "Glewlwyd",
     "error-scope-unavailable": "Erreur, aucun droit d'accès requis n'est accessible",
     "info-some-scope-unavailable": "Certains droits d'accès ne sont pas accessibles",
-    "warning-no-callback-url": "Attention, le paramètre callback_url est manquant dans l'URL",
+    "warning-no-callback-url": "Le paramètre callback_url est manquant",
+    "warning-no-scope": "Le paramètre scope est manquant",
     "warning-error-scheme": "Erreur de schéma",
     "warning-not-registered-scheme": "Vous devez enregistrer un schéma dans votre profil pour pouvoir vous connecter avec",
     "hello": "Bonjour {{- name}}",
@@ -112,7 +113,10 @@
     "device-auth-user-code-ph": "X1Y2-A3B4",
     "device-authorization-complete-message": "Autorisation complète, vous pouvez fermer cette fenêtre",
     "device-authorization-server-error-message": "Erreur du serveur",
-    "device-authorization-code-error-message": "Code invalide, veuillez réssayer"
+    "device-authorization-code-error-message": "Code invalide, veuillez réssayer",
+    "session-closed-title": "Session fermée",
+    "session-closed-message": "Vous êtes déconnecté",
+    "error-invalid-url-parameters": "URL de connexion invalide"
   },
   "admin": {
     "error-credential-message": "Veuillez vous conncecter avec un utilisateur ayant les droits d'administration",
@@ -552,8 +556,10 @@
     "mod-glwd-jwks-uri": "JWKS URI",
     "mod-glwd-jwks-uri-ph": "Ex: https://example.com/private_jwks",
     "mod-glwd-jwks": "JWKS à utiliser",
+    "mod-glwd-jwks-private-error": "Erreur, JWKS invalide",
     "mod-glwd-default-kid": "Identifiant de clé (KID) par défaut",
     "mod-glwd-default-kid-ph": "Ex: abcd1234",
+    "mod-glwd-default-kid-error": "Erreur, l'identifiant de clé n'est pas présent dans le JWKS",
     "mod-glwd-client-sign_kid-parameter": "Propriété sign_kid du client",
     "mod-glwd-client-sign_kid-parameter-ph": "Ex: sign_kid",
     "mod-glwd-jwt-request-client-enc-parameter": "Propriété enc",
