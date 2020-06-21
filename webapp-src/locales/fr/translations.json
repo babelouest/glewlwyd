@@ -115,7 +115,7 @@
     "device-authorization-server-error-message": "Erreur du serveur",
     "device-authorization-code-error-message": "Code invalide, veuillez réssayer",
     "session-closed-title": "Session fermée",
-    "session-closed-message": "Vous n'êtes plus connecté",
+    "session-closed-message": "Vous êtes déconnecté",
     "error-invalid-url-parameters": "URL de connexion invalide"
   },
   "admin": {
@@ -559,7 +559,7 @@
     "mod-glwd-jwks-private-error": "Erreur, JWKS invalide",
     "mod-glwd-default-kid": "Identifiant de clé (KID) par défaut",
     "mod-glwd-default-kid-ph": "Ex: abcd1234",
-    "mod-glwd-default-kid-error": "Erreur, Identifiant de clé n'est pas présent dans le JWKS",
+    "mod-glwd-default-kid-error": "Erreur, l'identifiant de clé n'est pas présent dans le JWKS",
     "mod-glwd-client-sign_kid-parameter": "Propriété sign_kid du client",
     "mod-glwd-client-sign_kid-parameter-ph": "Ex: sign_kid",
     "mod-glwd-jwt-request-client-enc-parameter": "Propriété enc",
