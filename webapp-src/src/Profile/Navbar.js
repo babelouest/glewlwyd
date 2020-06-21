@@ -171,7 +171,7 @@ class Navbar extends Component {
         if (this.userHasScope(profile, this.state.config.profile_scope)) {
           profileList.push(<a className={"dropdown-item"+(!index?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.changeProfile(e, profile)} key={index}>{profile.name||profile.username}</a>);
         } else {
-          profileList.push(<a className={"dropdown-item glwd-nav-user-unavailable"+(!index?" active":"")} href="#" disabled={true}>{profile.name||profile.username}</a>);
+          profileList.push(<a className={"dropdown-item glwd-nav-user-unavailable"+(!index?" active":"")} key={index} href="#" disabled={true}>{profile.name||profile.username}</a>);
         }
       });
     }
