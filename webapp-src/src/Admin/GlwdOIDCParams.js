@@ -9,7 +9,7 @@ class GlwdOIDCParams extends Component {
     
     props.mod.parameters?"":(props.mod.parameters = {});
     props.mod.parameters["jwt-type"]?"":(props.mod.parameters["jwt-type"] = "rsa");
-    props.mod.parameters["jwt-key-size"]?"":(props.mod.parameters["jwt-key-size"] = "256");
+    props.mod.parameters["jwt-key-size"]!==undefined?"":(props.mod.parameters["jwt-key-size"] = "256");
     props.mod.parameters["jwks-uri"]?"":(props.mod.parameters["jwks-uri"] = "");
     props.mod.parameters["jwks-private"]?"":(props.mod.parameters["jwks-private"] = "");
     props.mod.parameters["default-kid"]?"":(props.mod.parameters["default-kid"] = "");
@@ -17,9 +17,9 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["key"]?"":(props.mod.parameters["key"] = "");
     props.mod.parameters["cert"]?"":(props.mod.parameters["cert"] = "");
     props.mod.parameters["cert"]?"":(props.mod.parameters["cert"] = "");
-    props.mod.parameters["access-token-duration"]?"":(props.mod.parameters["access-token-duration"] = 3600);
-    props.mod.parameters["refresh-token-duration"]?"":(props.mod.parameters["refresh-token-duration"] = 1209600);
-    props.mod.parameters["code-duration"]?"":(props.mod.parameters["code-duration"] = 600);
+    props.mod.parameters["access-token-duration"]!==undefined?"":(props.mod.parameters["access-token-duration"] = 3600);
+    props.mod.parameters["refresh-token-duration"]!==undefined?"":(props.mod.parameters["refresh-token-duration"] = 1209600);
+    props.mod.parameters["code-duration"]!==undefined?"":(props.mod.parameters["code-duration"] = 600);
     props.mod.parameters["refresh-token-rolling"]!==undefined?"":(props.mod.parameters["refresh-token-rolling"] = true);
     props.mod.parameters["refresh-token-one-use"]!==undefined?"":(props.mod.parameters["refresh-token-one-use"] = "never");
     props.mod.parameters["client-refresh-token-one-use-parameter"]!==undefined?"":(props.mod.parameters["client-refresh-token-one-use-parameter"] = "refresh-token-one-use");
@@ -139,7 +139,7 @@ class GlwdOIDCParams extends Component {
     
     nextProps.mod.parameters?"":(nextProps.mod.parameters = {});
     nextProps.mod.parameters["jwt-type"]?"":(nextProps.mod.parameters["jwt-type"] = "rsa");
-    nextProps.mod.parameters["jwt-key-size"]?"":(nextProps.mod.parameters["jwt-key-size"] = "256");
+    nextProps.mod.parameters["jwt-key-size"]!==undefined?"":(nextProps.mod.parameters["jwt-key-size"] = "256");
     nextProps.mod.parameters["jwks-uri"]?"":(nextProps.mod.parameters["jwks-uri"] = "");
     nextProps.mod.parameters["jwks-private"]?"":(nextProps.mod.parameters["jwks-private"] = "");
     nextProps.mod.parameters["default-kid"]?"":(nextProps.mod.parameters["default-kid"] = "");
@@ -147,9 +147,9 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["key"]?"":(nextProps.mod.parameters["key"] = "");
     nextProps.mod.parameters["cert"]?"":(nextProps.mod.parameters["cert"] = "");
     nextProps.mod.parameters["cert"]?"":(nextProps.mod.parameters["cert"] = "");
-    nextProps.mod.parameters["access-token-duration"]?"":(nextProps.mod.parameters["access-token-duration"] = 3600);
-    nextProps.mod.parameters["refresh-token-duration"]?"":(nextProps.mod.parameters["refresh-token-duration"] = 1209600);
-    nextProps.mod.parameters["code-duration"]?"":(nextProps.mod.parameters["code-duration"] = 600);
+    nextProps.mod.parameters["access-token-duration"]!==undefined?"":(nextProps.mod.parameters["access-token-duration"] = 3600);
+    nextProps.mod.parameters["refresh-token-duration"]!==undefined?"":(nextProps.mod.parameters["refresh-token-duration"] = 1209600);
+    nextProps.mod.parameters["code-duration"]!==undefined?"":(nextProps.mod.parameters["code-duration"] = 600);
     nextProps.mod.parameters["refresh-token-rolling"]!==undefined?"":(nextProps.mod.parameters["refresh-token-rolling"] = true);
     nextProps.mod.parameters["refresh-token-one-use"]!==undefined?"":(nextProps.mod.parameters["refresh-token-one-use"] = "never");
     nextProps.mod.parameters["client-refresh-token-one-use-parameter"]!==undefined?"":(nextProps.mod.parameters["client-refresh-token-one-use-parameter"] = "refresh-token-one-use");
@@ -236,7 +236,9 @@ class GlwdOIDCParams extends Component {
   changeNumberParam(e, param) {
     var mod = this.state.mod;
     mod.parameters[param] = parseInt(e.target.value);
-    this.setState({mod: mod});
+    if (!isNaN(mod.parameters[param])) {
+      this.setState({mod: mod});
+    }
   }
   
   emptyParameter(param) {
@@ -566,34 +568,62 @@ class GlwdOIDCParams extends Component {
     var errorList = {}, hasError = false;
     if (!this.state.mod.parameters["iss"]) {
       hasError = true;
-      errorList["iss"] = "admin.mod-glwd-iss-error";
+      errorList["iss"] = i18next.t("admin.mod-glwd-iss-error");
       errorList["general"] = true;
     }
-    if (!this.state.mod.parameters["jwks-private"]) {
+    if (!this.state.mod.parameters["jwks-private"] && !this.state.mod.parameters["jwks-uri"]) {
       if (!this.state.mod.parameters["key"]) {
         hasError = true;
-        errorList["key"] = "admin.mod-glwd-key-error";
+        errorList["key"] = i18next.t("admin.mod-glwd-key-error");
         errorList["signature"] = true;
       }
       if (this.state.mod.parameters["jwt-type"] !== "sha" && !this.state.mod.parameters["cert"]) {
         hasError = true;
-        errorList["cert"] = "admin.mod-glwd-cert-error";
+        errorList["cert"] = i18next.t("admin.mod-glwd-cert-error");
         errorList["signature"] = true;
+      }
+    } else if (this.state.mod.parameters["jwks-private"]) {
+      var jwks = false;
+      try {
+        jwks = JSON.parse(this.state.mod.parameters["jwks-private"]);
+      } catch (e) {
+        hasError = true;
+        errorList["jwks-private"] = i18next.t("admin.mod-glwd-jwks-private-error");
+        errorList["signature"] = true;
+      }
+      if (jwks) {
+        if (!jwks.keys || !Array.isArray(jwks.keys)) {
+          hasError = true;
+          errorList["jwks-private"] = i18next.t("admin.mod-glwd-jwks-private-error");
+          errorList["signature"] = true;
+        } else if (this.state.mod.parameters["default-kid"]) {
+          var kidFound = false;
+          jwks.keys.forEach((key) => {
+            if (key.kid === this.state.mod.parameters["default-kid"]) {
+              kidFound = true;
+            }
+          });
+          if (!kidFound) {
+            hasError = true;
+            errorList["default-kid"] = i18next.t("admin.mod-glwd-default-kid-error");
+            errorList["signature"] = true;
+          }
+        }
       }
     }
     if (!this.state.mod.parameters["access-token-duration"]) {
       hasError = true;
-      errorList["access-token-duration"] = "admin.mod-glwd-access-token-duration-error";
+      errorList["access-token-duration"] = i18next.t("admin.mod-glwd-access-token-duration-error");
       errorList["token"] = true;
     }
     if (!this.state.mod.parameters["refresh-token-duration"]) {
       hasError = true;
-      errorList["refresh-token-duration"] = "admin.mod-glwd-refresh-token-duration-error";
+      errorList["refresh-token-duration"] = i18next.t("admin.mod-glwd-refresh-token-duration-error");
       errorList["token"] = true;
     }
     if (!this.state.mod.parameters["code-duration"]) {
       hasError = true;
-      errorList["code-duration"] = "admin.mod-glwd-code-duration-error";
+      errorList["code-duration"] = i18next.t("admin.mod-glwd-code-duration-error");
       errorList["token"] = true;
     }
     this.state.mod.parameters["additional-parameters"].forEach((addParam, index) => {
@@ -605,7 +635,7 @@ class GlwdOIDCParams extends Component {
         if (!errorList["additional-parameters"][index]) {
           errorList["additional-parameters"][index] = {};
         }
-        errorList["additional-parameters"][index]["user"] = "admin.mod-glwd-additional-parameter-user-parameter-error";
+        errorList["additional-parameters"][index]["user"] = i18next.t("admin.mod-glwd-additional-parameter-user-parameter-error");
       }
       if (!addParam["token-parameter"]) {
         hasError = true;
@@ -615,7 +645,7 @@ class GlwdOIDCParams extends Component {
         if (!errorList["additional-parameters"][index]) {
           errorList["additional-parameters"][index] = {};
         }
-        errorList["additional-parameters"][index]["token"] = "admin.mod-glwd-additional-parameter-token-parameter-error";
+        errorList["additional-parameters"][index]["token"] = i18next.t("admin.mod-glwd-additional-parameter-token-parameter-error");
       } else if (addParam["token-parameter"] === "username" || 
                  addParam["token-parameter"] === "salt" || 
                  addParam["token-parameter"] === "type" ||
@@ -629,7 +659,7 @@ class GlwdOIDCParams extends Component {
         if (!errorList["additional-parameters"][index]) {
           errorList["additional-parameters"][index] = {};
         }
-        errorList["additional-parameters"][index]["token"] = "admin.mod-glwd-additional-parameter-token-parameter-invalid-error";
+        errorList["additional-parameters"][index]["token"] = i18next.t("admin.mod-glwd-additional-parameter-token-parameter-invalid-error");
       }
     });
     this.state.mod.parameters["claims"].forEach((claimParam, index) => {
@@ -641,7 +671,7 @@ class GlwdOIDCParams extends Component {
         if (!errorList["claims"][index]) {
           errorList["claims"][index] = {};
         }
-        errorList["claims"][index]["name"] = "admin.mod-glwd-claims-name-error";
+        errorList["claims"][index]["name"] = i18next.t("admin.mod-glwd-claims-name-error");
       } else if (["iss","sub","aud","exp","iat","auth_time","nonce","acr","amr","azp","name","email","address"].indexOf(claimParam["name"]) > -1) {
         hasError = true;
         if (!errorList["claims"]) {
@@ -650,7 +680,7 @@ class GlwdOIDCParams extends Component {
         if (!errorList["claims"][index]) {
           errorList["claims"][index] = {};
         }
-        errorList["claims"][index]["name"] = "admin.mod-glwd-claims-name-forbidden-error";
+        errorList["claims"][index]["name"] = i18next.t("admin.mod-glwd-claims-name-forbidden-error");
       }
       if (claimParam["user-property"] === "") {
         hasError = true;
@@ -660,7 +690,7 @@ class GlwdOIDCParams extends Component {
         if (!errorList["claims"][index]) {
           errorList["claims"][index] = {};
         }
-        errorList["claims"][index]["user-property"] = "admin.mod-glwd-claims-user-property-error";
+        errorList["claims"][index]["user-property"] = i18next.t("admin.mod-glwd-claims-user-property-error");
       }
       if (claimParam["type"] === "boolean" && claimParam["boolean-value-true"] === "") {
         hasError = true;
@@ -670,7 +700,7 @@ class GlwdOIDCParams extends Component {
         if (!errorList["claims"][index]) {
           errorList["claims"][index] = {};
         }
-        errorList["claims"][index]["boolean-value-true"] = "admin.mod-glwd-claims-boolean-value-true-error";
+        errorList["claims"][index]["boolean-value-true"] = i18next.t("admin.mod-glwd-claims-boolean-value-true-error");
       }
       if (claimParam["type"] === "boolean" && claimParam["boolean-value-false"] === "") {
         hasError = true;
@@ -680,12 +710,12 @@ class GlwdOIDCParams extends Component {
         if (!errorList["claims"][index]) {
           errorList["claims"][index] = {};
         }
-        errorList["claims"][index]["boolean-value-false"] = "admin.mod-glwd-claims-boolean-value-false-error";
+        errorList["claims"][index]["boolean-value-false"] = i18next.t("admin.mod-glwd-claims-boolean-value-false-error");
       }
     });
     if (this.state.mod.parameters["introspection-revocation-allowed"] && !this.state.mod.parameters["introspection-revocation-allow-target-client"] && !this.state.mod.parameters["introspection-revocation-auth-scope"].length) {
       hasError = true;
-      errorList["introspection-revocation"] = "admin.mod-glwd-introspection-revocation-error";
+      errorList["introspection-revocation"] = i18next.t("admin.mod-glwd-introspection-revocation-error");
       errorList["token"] = true;
     }
     if (!hasError) {
@@ -1287,8 +1317,9 @@ class GlwdOIDCParams extends Component {
                 </div>
                 <div className="form-group">
                   <div className="input-group mb-3">
-                    <textarea className="form-control" id="mod-glwd-jwks-private" onChange={(e) => this.changeParam(e, "jwks-private")}>{this.state.mod.parameters["jwks-private"]}</textarea>
+                    <textarea className="form-control" id="mod-glwd-jwks-private" onChange={(e) => this.changeParam(e, "jwks-private")} value={this.state.mod.parameters["jwks-private"]}></textarea>
                   </div>
+                  {this.state.errorList["jwks-private"]?<span className="error-input">{this.state.errorList["jwks-private"]}</span>:""}
                 </div>
                 <div className="form-group">
                   <div className="input-group mb-3">
@@ -1297,6 +1328,7 @@ class GlwdOIDCParams extends Component {
                     </div>
                     <input type="text" className="form-control" id="mod-glwd-default-kid" onChange={(e) => this.changeParam(e, "default-kid")} value={this.state.mod.parameters["default-kid"]} placeholder={i18next.t("admin.mod-glwd-default-kid-ph")} />
                   </div>
+                  {this.state.errorList["default-kid"]?<span className="error-input">{this.state.errorList["default-kid"]}</span>:""}
                 </div>
                 <div className="form-group">
                   <div className="input-group mb-3">
@@ -1375,7 +1407,7 @@ class GlwdOIDCParams extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-glwd-access-token-duration">{i18next.t("admin.mod-glwd-access-token-duration")}</label>
                     </div>
-                    <input type="number" min="0" step="1" className={this.state.errorList["access-token-duration"]?"form-control is-invalid":"form-control"} id="mod-glwd-access-token-duration" onChange={(e) => this.changeNumberParam(e, "access-token-duration")} value={this.state.mod.parameters["access-token-duration"]} placeholder={i18next.t("admin.mod-glwd-access-token-duration-ph")} />
+                    <input type="number" min="1" step="1" className={this.state.errorList["access-token-duration"]?"form-control is-invalid":"form-control"} id="mod-glwd-access-token-duration" onChange={(e) => this.changeNumberParam(e, "access-token-duration")} value={this.state.mod.parameters["access-token-duration"]} placeholder={i18next.t("admin.mod-glwd-access-token-duration-ph")} />
                   </div>
                   {this.state.errorList["access-token-duration"]?<span className="error-input">{this.state.errorList["access-token-duration"]}</span>:""}
                 </div>
@@ -1384,7 +1416,7 @@ class GlwdOIDCParams extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-glwd-refresh-token-duration">{i18next.t("admin.mod-glwd-refresh-token-duration")}</label>
                     </div>
-                    <input type="number" min="0" step="1" className={this.state.errorList["refresh-token-duration"]?"form-control is-invalid":"form-control"} id="mod-glwd-refresh-token-duration" onChange={(e) => this.changeNumberParam(e, "refresh-token-duration")} value={this.state.mod.parameters["refresh-token-duration"]} placeholder={i18next.t("admin.mod-glwd-refresh-token-duration-ph")} />
+                    <input type="number" min="1" step="1" className={this.state.errorList["refresh-token-duration"]?"form-control is-invalid":"form-control"} id="mod-glwd-refresh-token-duration" onChange={(e) => this.changeNumberParam(e, "refresh-token-duration")} value={this.state.mod.parameters["refresh-token-duration"]} placeholder={i18next.t("admin.mod-glwd-refresh-token-duration-ph")} />
                   </div>
                   {this.state.errorList["refresh-token-duration"]?<span className="error-input">{this.state.errorList["refresh-token-duration"]}</span>:""}
                 </div>
@@ -1393,7 +1425,7 @@ class GlwdOIDCParams extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-glwd-code-duration">{i18next.t("admin.mod-glwd-code-duration")}</label>
                     </div>
-                    <input type="number" min="0" step="1" className={this.state.errorList["code-duration"]?"form-control is-invalid":"form-control"} id="mod-glwd-code-duration" onChange={(e) => this.changeNumberParam(e, "code-duration")} value={this.state.mod.parameters["code-duration"]} placeholder={i18next.t("admin.mod-glwd-code-duration-ph")} />
+                    <input type="number" min="1" step="1" className={this.state.errorList["code-duration"]?"form-control is-invalid":"form-control"} id="mod-glwd-code-duration" onChange={(e) => this.changeNumberParam(e, "code-duration")} value={this.state.mod.parameters["code-duration"]} placeholder={i18next.t("admin.mod-glwd-code-duration-ph")} />
                   </div>
                   {this.state.errorList["code-duration"]?<span className="error-input">{this.state.errorList["code-duration"]}</span>:""}
                 </div>
@@ -1746,7 +1778,7 @@ class GlwdOIDCParams extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-glwd-jwt-request-maximum-exp">{i18next.t("admin.mod-glwd-jwt-request-maximum-exp")}</label>
                     </div>
-                    <input type="number" className="form-control" id="mod-glwd-jwt-request-maximum-exp" onChange={(e) => this.changeParam(e, "request-maximum-exp", 1)} value={this.state.mod.parameters["request-maximum-exp"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-maximum-exp-ph")} />
+                    <input type="number" min="1" step="1" className="form-control" id="mod-glwd-jwt-request-maximum-exp" onChange={(e) => this.changeNumberParam(e, "request-maximum-exp", 1)} value={this.state.mod.parameters["request-maximum-exp"]} placeholder={i18next.t("admin.mod-glwd-jwt-request-maximum-exp-ph")} />
                   </div>
                 </div>
                 <div className="form-group">

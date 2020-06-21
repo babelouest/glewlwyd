@@ -11,7 +11,8 @@
     "menu-title": "Glewlwyd",
     "error-scope-unavailable": "Error, no required scope is available",
     "info-some-scope-unavailable": "Some scopes aren't available",
-    "warning-no-callback-url": "Warning, callback_url parameter is missing in the URL",
+    "warning-no-callback-url": "callback_url parameter is missing",
+    "warning-no-scope": "scope parameter is missing",
     "warning-error-scheme": "Scheme error",
     "warning-not-registered-scheme": "You must register a scheme in your profile before using it for connection",
     "hello": "Hello {{- name}}",
@@ -112,7 +113,10 @@
     "device-auth-user-code-ph": "X1Y2-A3B4",
     "device-authorization-complete-message": "Authorization complete, you may close this window",
     "device-authorization-server-error-message": "Server error",
-    "device-authorization-code-error-message": "Invalid code, please retry"
+    "device-authorization-code-error-message": "Invalid code, please retry",
+    "session-closed-title": "Session closed",
+    "session-closed-message": "You are disconnected",
+    "error-invalid-url-parameters": "Invalid login URL"
   },
   "admin": {
     "error-credential-message": "Please connect with a user that has admin credentials",
@@ -552,8 +556,10 @@
     "mod-glwd-jwks-uri": "JWKS URI",
     "mod-glwd-jwks-uri-ph": "e.g. https://example.com/private_jwks",
     "mod-glwd-jwks": "JWKS to use",
+    "mod-glwd-jwks-private-error": "Error parsing JWKS",
     "mod-glwd-default-kid": "Default Key ID (KID)",
     "mod-glwd-default-kid-ph": "e.g. abcd1234",
+    "mod-glwd-default-kid-error": "Error, kid not found in the JWKS",
     "mod-glwd-client-sign_kid-parameter": "Client sign_kid property",
     "mod-glwd-client-sign_kid-parameter-ph": "e.g. sign_kid",
     "mod-glwd-jwt-request-client-enc-parameter": "enc property",

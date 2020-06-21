@@ -138,3 +138,9 @@
 .glwd-group-card {
   width: 18rem;
 }
+
+.glwd-nav-user-unavailable, .glwd-nav-user-unavailable:hover, .glwd-nav-user-unavailable:focus {
+  cursor: default;
+  color: #dcdcdc;
+  pointer-events: none;
+}

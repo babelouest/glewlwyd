@@ -18,7 +18,8 @@ class Password extends Component {
       password_confirm: "",
       oldPasswordInvalid: false,
       passwordInvalid: false,
-      passwordConfirmInvalid: false
+      passwordConfirmInvalid: false,
+      loggedIn: false
     }
     
     this.passwordButtonHandler = this.passwordButtonHandler.bind(this);
@@ -32,7 +33,17 @@ class Password extends Component {
     this.setState({
       config: nextProps.config,
       passwordMinLength: nextProps.config.PasswordMinLength||8,
-      callback: nextProps.callback
+      callback: nextProps.callback,
+      loggedIn: nextProps.loggedIn
+    }, () => {
+      if (!this.state.loggedIn) {
+        this.setState({
+          password: '',
+          old_password: '',
+          password_confirm: '',
+          passwordMinLength: 0
+        });
+      };
     });
   }
   

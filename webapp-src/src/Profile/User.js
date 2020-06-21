@@ -49,6 +49,13 @@ class User extends Component {
       listAddValue: this.initListAdd(nextProps.pattern),
       listEltConfirm: this.initListConfirm(nextProps.pattern),
       listError: {}
+    }, () => {
+      if (!this.state.loggedIn) {
+        this.setState({
+          pattern: [],
+          profile: []
+        });
+      };
     });
   }
   

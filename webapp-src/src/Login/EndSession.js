@@ -34,6 +34,8 @@ class EndSession extends Component {
     .always(() => {
       if (this.state.config.params.callback_url) {
         document.location.href = this.state.config.params.callback_url;
+      } else {
+        messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
       }
     });
   }

@@ -112,7 +112,9 @@ class GlwdOauth2Params extends Component {
   changeNumberParam(e, param) {
     var mod = this.state.mod;
     mod.parameters[param] = parseInt(e.target.value);
-    this.setState({mod: mod});
+    if (!isNaN(mod.parameters[param])) {
+      this.setState({mod: mod});
+    }
   }
   
   toggleParam(e, param) {

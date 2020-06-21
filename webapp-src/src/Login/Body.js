@@ -18,7 +18,8 @@ class Body extends Component {
       scheme: props.scheme,
       schemeListRequired: props.schemeListRequired,
       showGrant: props.showGrant,
-      infoSomeScopeUnavailable: props.infoSomeScopeUnavailable
+      infoSomeScopeUnavailable: props.infoSomeScopeUnavailable,
+      validLogin: props.validLogin
     };
     
     messageDispatcher.subscribe('Body', (message) => {
@@ -34,7 +35,8 @@ class Body extends Component {
       scheme: nextProps.scheme,
       schemeListRequired: nextProps.schemeListRequired,
       showGrant: nextProps.showGrant,
-      infoSomeScopeUnavailable: nextProps.infoSomeScopeUnavailable
+      infoSomeScopeUnavailable: nextProps.infoSomeScopeUnavailable,
+      validLogin: nextProps.validLogin
     });
   }
 
@@ -69,22 +71,34 @@ class Body extends Component {
     } else {
       profilePicture = <div className="glwd-profile-user-picto-large"><i className="fas fa-user"></i></div>
     }
-		return (
-      <div>
-        {profilePicture}
-        <div className="row">
-          <div className="col-md-12 text-center">
-            <h4>{i18next.t("login.hello", {name: (this.state.currentUser.name || this.state.currentUser.username)})}</h4>
+    if (this.state.validLogin) {
+      return (
+        <div>
+          {profilePicture}
+          <div className="row">
+            <div className="col-md-12 text-center">
+              <h4>{i18next.t("login.hello", {name: (this.state.currentUser.name || this.state.currentUser.username)})}</h4>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-md-12">
+              <hr/>
+            </div>
+          </div>
+          {content}
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <div className="row">
+            <div className="col-md-12 text-center">
+              <h3>{i18next.t("login.error-invalid-url-parameters")}</h3>
+            </div>
           </div>
         </div>
-        <div className="row">
-          <div className="col-md-12">
-            <hr/>
-          </div>
-        </div>
-        {content}
-      </div>
-		);
+      );
+    }
 	}
 }
 
