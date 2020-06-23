@@ -132,12 +132,14 @@ set(SEARCH_ORCANIA OFF CACHE BOOL "Force to false") # Avoid to search and downlo
 set(SEARCH_YDER OFF CACHE BOOL "Force to false") # Avoid to search and download yder during ulfius and hoel search and download
 
 set(SEARCH_ORCANIA_U OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during ulfius search and download
+set(BUILD_UWSC OFF CACHE BOOL "Force to false") # Avoid to build uwsc during ulfius search and download
 
 set(SEARCH_ORCANIA_H OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during hoel search and download
 
 set(SEARCH_ORCANIA_R OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during hoel search and download
 set(SEARCH_YDER_R OFF CACHE BOOL "Force to false") # Avoid to search and download yder during ulfius and hoel search and download
 set(SEARCH_ULFIUS_R OFF CACHE BOOL "Force to false") # Avoid to search and download ulfius during rhonabwy search and download
+set(BUILD_RNBYC OFF CACHE BOOL "Force to false") # Avoid to build rnbyc during rhonabwy search and download
 
 set(SEARCH_ORCANIA_I OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during iddawc search and download
 set(SEARCH_YDER_I OFF CACHE BOOL "Force to false") # Avoid to search and download yder during iddawc search and download
@@ -460,6 +462,9 @@ if (WITH_SCHEME_WEBAUTHN)
 		include_directories(${rhonabwy_SOURCE_DIR}/include)
 		set(RHONABWY_LIBRARIES rhonabwy)
 		include_directories(${rhonabwy_BINARY_DIR})
+		add_dependencies(rhonabwy orcania)
+		add_dependencies(rhonabwy yder)
+		add_dependencies(rhonabwy ulfius)
 		set (RHONABWY_FOUND ON)
 	else ()
 		message( FATAL_ERROR "Rhonabwy not found")
@@ -521,10 +526,10 @@ if (WITH_SCHEME_OAUTH2)
 			include_directories(${rhonabwy_SOURCE_DIR}/include)
 			set(RHONABWY_LIBRARIES rhonabwy)
 			include_directories(${rhonabwy_BINARY_DIR})
-			set (RHONABWY_FOUND ON)
 			add_dependencies(rhonabwy orcania)
 			add_dependencies(rhonabwy yder)
 			add_dependencies(rhonabwy ulfius)
+			set (RHONABWY_FOUND ON)
 		else ()
 			message( FATAL_ERROR "Rhonabwy not found")
 		endif ()
@@ -595,6 +600,9 @@ if (WITH_PLUGIN_OAUTH2)
 			include_directories(${rhonabwy_SOURCE_DIR}/include)
 			set(RHONABWY_LIBRARIES rhonabwy)
 			include_directories(${rhonabwy_BINARY_DIR})
+			add_dependencies(rhonabwy orcania)
+			add_dependencies(rhonabwy yder)
+			add_dependencies(rhonabwy ulfius)
 			set (RHONABWY_FOUND ON)
 		else ()
 			message( FATAL_ERROR "Rhonabwy not found")
@@ -629,6 +637,9 @@ if (WITH_PLUGIN_OIDC)
 			include_directories(${rhonabwy_SOURCE_DIR}/include)
 			set(RHONABWY_LIBRARIES rhonabwy)
 			include_directories(${rhonabwy_BINARY_DIR})
+			add_dependencies(rhonabwy orcania)
+			add_dependencies(rhonabwy yder)
+			add_dependencies(rhonabwy ulfius)
 			set (RHONABWY_FOUND ON)
 		else ()
 			message( FATAL_ERROR "Rhonabwy not found")
@@ -663,6 +674,7 @@ endif ()
 option(BUILD_GLEWLWYD_TESTING "Build the testing tree" OFF)
 
 if (BUILD_GLEWLWYD_TESTING)
+	set(WITH_MOCK ON)
 	include(FindCheck)
 	find_package(Check REQUIRED)
 	if (CHECK_FOUND)
