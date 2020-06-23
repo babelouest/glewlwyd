@@ -151,7 +151,9 @@ class RegisterParams extends Component {
       mod: nextProps.mod,
       role: nextProps.role,
       check: nextProps.check,
-      hasError: false
+      hasError: false,
+      currentLang: i18next.language,
+      newLang: ""
     }, () => {
       if (this.state.check) {
         this.checkParameters();

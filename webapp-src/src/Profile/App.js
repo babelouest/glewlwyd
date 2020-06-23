@@ -95,11 +95,16 @@ class App extends Component {
       } else if (message.type === 'closeConfirm') {
         $("#confirmModal").modal("hide");
       } else if (message.type === 'registration') {
-        this.fetchRegistration();
+        this.setState({registerProfile: false, schemeList: [], profileList: false}, () => {
+          this.fetchRegistration();
+        });
       } else if (message.type === 'registrationComplete') {
         if (!this.state.config.params.register) {
-          this.setState({registerProfile: false, schemeList: [], profileList: false})
-          this.fetchRegistration();
+          this.setState({registerProfile: false, schemeList: [], profileList: false, registering: false}, () => {
+            this.fetchRegistration();
+          });
+        } else {
+          this.setState({registerProfile: false, schemeList: [], profileList: false, registering: false});
         }
       }
     });

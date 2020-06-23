@@ -120,7 +120,7 @@ class Navbar extends Component {
 
   userHasScope(user, scope_list) {
     var hasScope = false;
-    if (scope_list) {
+    if (scope_list && user.scope && user.scope.length) {
       scope_list.split(" ").forEach(scope => {
         if (user.scope.indexOf(scope) > -1) {
           hasScope = true;
@@ -175,7 +175,7 @@ class Navbar extends Component {
         }
       });
     }
-    if (this.state.loggedIn) {
+    if (this.state.loggedIn || (this.state.config.params.register && this.state.registering)) {
       userJsx = <li className={"nav-item" + (this.state.curNav==="profile"?" active":"")}>
         <a className={"nav-link"+dataHighlight} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "profile", null)}>{i18next.t("profile.menu-user")}</a>
       </li>
