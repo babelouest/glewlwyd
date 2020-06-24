@@ -148,6 +148,14 @@ static_files_mime_types =
     mime_type = "font/woff2"
   },
   {
+    extension = ".otf"
+    mime_type = "font/otf"
+  },
+  {
+    extension = ".eot"
+    mime_type = "application/vnd.ms-fontobject"
+  },
+  {
     extension = ".map"
     mime_type = "application/octet-stream"
   },
