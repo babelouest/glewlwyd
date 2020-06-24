@@ -44,8 +44,6 @@
 12. [Getting started with the application](#getting-started-with-the-application)
 13. [Running Glewlwyd in test mode for integration tests](#running-glewlwyd-in-test-mode-for-integration-tests)
 
-This document is intended for the future Glewlwyd 2.3. The documentation for current release 2.2 is available in the 2.2 tag: [https://github.com/babelouest/glewlwyd/blob/v2.2.0/docs/INSTALL.md](https://github.com/babelouest/glewlwyd/blob/v2.2.0/docs/INSTALL.md).
-
 ## Upgrade Glewlwyd
 
 Glewlwyd upgrades come with database changes. It is highly recommended to backup your database before performing the upgrade. You must perform the database upgrades in the correct order. i.e. if you upgrade from Glewlwyd 2.1 to Glewlwyd 2.3, you must first install the 2.2 upgrade, then the 2.3.
