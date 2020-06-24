@@ -2,6 +2,8 @@
 
 ## 2.3.0
 
+The `"Saint-Jean-Baptiste Release"`
+
 - Replace libjwt with Rhonabwy
 - Allow messages encryption (incoming and outcoming)
 - Allow OIDC plugin to use multiple signing or encryption keys via a JWKS
