@@ -1395,7 +1395,7 @@ class GlwdOIDCParams extends Component {
             <div className="card-header" id="addParamCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseToken" aria-expanded="true" aria-controls="collapseToken">
-                  {this.state.errorList["general"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
+                  {this.state.errorList["token"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-token-title")}
                 </button>
               </h2>
@@ -1458,6 +1458,7 @@ class GlwdOIDCParams extends Component {
                     <input type="text" className="form-control" id="mod-glwd-client-refresh-token-one-use-parameter-parameter" onChange={(e) => this.changeParam(e, "client-refresh-token-one-use-parameter")} value={this.state.mod.parameters["client-refresh-token-one-use-parameter"]} placeholder={i18next.t("admin.mod-glwd-client-refresh-token-one-use-parameter-ph")} disabled={this.state.mod.parameters["refresh-token-one-use"]!=="client-driven"} />
                   </div>
                 </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1477,7 +1478,6 @@ class GlwdOIDCParams extends Component {
                   <input type="checkbox" className="form-check-input" id="mod-glwd-allow-non-oidc" onChange={(e) => this.toggleParam(e, "allow-non-oidc")} checked={this.state.mod.parameters["allow-non-oidc"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-allow-non-oidc">{i18next.t("admin.mod-glwd-allow-non-oidc")}</label>
                 </div>
-              </div>
                 <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-auth-type-code-enabled" onChange={(e) => this.toggleParam(e, "auth-type-code-enabled")} checked={this.state.mod.parameters["auth-type-code-enabled"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-auth-type-code-enabled">{i18next.t("admin.mod-glwd-auth-type-code-enabled")}</label>
