@@ -86,8 +86,8 @@ class Notification extends Component {
             </strong>
         }
         toast.push(
-          <div className="toast-container" style={{top: (85 + (index * 90)), right: 5}} key={index}>
-            <div className="toast" role="alert" aria-live="assertive" aria-atomic="true">
+          <div className="toast-container" style={{top: (95 + (index * 90)), right: 5}} key={index}>
+            <div className="toast glwd-toast" role="alert" aria-live="assertive" aria-atomic="true">
               <div className="toast-header">
                 {badge}
                 <button type="button" className="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close" onClick={() => this.close(message.id)}>

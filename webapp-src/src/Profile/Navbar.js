@@ -180,9 +180,11 @@ class Navbar extends Component {
         <a className={"nav-link"+dataHighlight} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "profile", null)}>{i18next.t("profile.menu-user")}</a>
       </li>
     }
-    profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
-    profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeProfile(e, null)} key={profileList.length}>{i18next.t("profile.menu-session-new")}</a>);
-    profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.gotoManageUsers(e)} key={profileList.length}>{i18next.t("login.manage-users")}</a>);
+    if (!this.state.config.params.delegate) {
+      profileList.push(<div className="dropdown-divider" key={profileList.length}></div>);
+      profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.changeProfile(e, null)} key={profileList.length}>{i18next.t("profile.menu-session-new")}</a>);
+      profileList.push(<a className="dropdown-item" href="#" onClick={(e) => this.gotoManageUsers(e)} key={profileList.length}>{i18next.t("login.manage-users")}</a>);
+    }
     if (!this.state.config.params.register && this.state.profileList && this.state.profileList[0]) {
       if (this.state.config.profilePicture && this.state.profileList[0][this.state.config.profilePicture.property]) {
         var picData = this.state.profileList[0][this.state.config.profilePicture.property];
@@ -215,11 +217,13 @@ class Navbar extends Component {
           {profileList}
         </div>
       </div>;
-      logoutButton = 
-        <button type="button" className="btn btn-secondary" onClick={this.toggleLogin} title={i18next.t((this.state.loggedIn?"title-logout":"title-login"))}>
-          {this.state.loggedIn ? <i className="fas fa-sign-out-alt btn-icon"></i> : <i className="fas fa-sign-in-alt btn-icon"></i>}
-        </button>;
-    } else if (!this.state.config.params.register) {
+      if (!this.state.config.params.delegate) {
+        logoutButton = 
+          <button type="button" className="btn btn-secondary" onClick={this.toggleLogin} title={i18next.t((this.state.loggedIn?"title-logout":"title-login"))}>
+            {this.state.loggedIn ? <i className="fas fa-sign-out-alt btn-icon"></i> : <i className="fas fa-sign-in-alt btn-icon"></i>}
+          </button>;
+      }
+    } else if (!this.state.config.params.register && !this.state.config.params.delegate) {
       logoutButton = 
       <button type="button" className="btn btn-secondary" onClick={this.toggleLogin} title={i18next.t((this.state.loggedIn?"title-logout":"title-login"))}>
         {this.state.loggedIn ? <i className="fas fa-sign-out-alt btn-icon"></i> : <i className="fas fa-sign-in-alt btn-icon"></i>}
@@ -265,7 +269,7 @@ class Navbar extends Component {
           <div className="btn-group" role="group">
             <div className="btn-group" role="group">
               <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i className="fas fa-globe-africa"></i>
+                <i className="fas fa-language"></i>
               </button>
               <div className="dropdown-menu" aria-labelledby="dropdownLang">
                 {langList}

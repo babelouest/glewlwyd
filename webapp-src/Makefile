@@ -34,13 +34,13 @@ webapp: build-webapp install-webapp
 
 polyfill: build-polyfill-webapp install-webapp
 
-install-webapp:
-	find $(WEBAPP_DEST) ! -name config.json ! -name webapp ! -name .gitignore -delete
-	cp -R index.html login.html profile.html callback.html config.json.sample favicon.ico css/ js/ locales/ webfonts/ img/ $(WEBAPP_DEST)
-	cp output/*.js $(WEBAPP_DEST)
-
 build-webapp:
 	$(JSC) run build
 
 build-polyfill-webapp:
 	$(JSC) run polyfill
+
+install-webapp:
+	find $(WEBAPP_DEST) ! -name config.json ! -name webapp ! -name .gitignore -delete
+	cp -R index.html login.html profile.html callback.html config.json.sample favicon.ico css/ js/ locales/ fonts/ img/ $(WEBAPP_DEST)
+	cp output/*.js $(WEBAPP_DEST)
