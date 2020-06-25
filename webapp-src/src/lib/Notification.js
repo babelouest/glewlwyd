@@ -34,8 +34,7 @@ class Notification extends Component {
   timeoutClose(id) {
     setTimeout(() => {
       this.close(id);
-//    }, 5000);
-    }, 150000);
+    }, 5000);
   }
   
   close(id) {
@@ -87,8 +86,8 @@ class Notification extends Component {
             </strong>
         }
         toast.push(
-          <div className="toast-container" style={{top: (85 + (index * 90)), right: 5}} key={index}>
-            <div className="toast" role="alert" aria-live="assertive" aria-atomic="true">
+          <div className="toast-container" style={{top: (95 + (index * 90)), right: 5}} key={index}>
+            <div className="toast glwd-toast" role="alert" aria-live="assertive" aria-atomic="true">
               <div className="toast-header">
                 {badge}
                 <button type="button" className="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close" onClick={() => this.close(message.id)}>
@@ -103,42 +102,9 @@ class Notification extends Component {
         );
       });
     }
-    /*return (
+    return (
       <div>
         {toast}
-      </div>
-    );*/
-    return (
-      <div aria-live="polite" aria-atomic="true">
-        <div style={{position: "absolute", top: 0, right: 0}}>
-          <div className="toast" role="alert" aria-live="assertive" aria-atomic="true">
-            <div className="toast-header">
-              <img src="..." className="rounded mr-2" alt="..."/>
-              <strong className="mr-auto">Bootstrap</strong>
-              <small className="text-muted">just now</small>
-              <button type="button" className="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div className="toast-body">
-              See? Just like this.
-            </div>
-          </div>
-
-          <div className="toast" role="alert" aria-live="assertive" aria-atomic="true">
-            <div className="toast-header">
-              <img src="..." className="rounded mr-2" alt="..."/>
-              <strong className="mr-auto">Bootstrap</strong>
-              <small className="text-muted">2 seconds ago</small>
-              <button type="button" className="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-              </button>
-            </div>
-            <div className="toast-body">
-              Heads up, toasts will stack automatically
-            </div>
-          </div>
-        </div>
       </div>
     );
   }
