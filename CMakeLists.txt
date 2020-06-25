@@ -909,6 +909,8 @@ install(TARGETS ${PLUGIN_MODULES}
 		DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/plugin)
 install(DIRECTORY docs/database/
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/database/ COMPONENT runtime)
+install(DIRECTORY docs/fail2ban/
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/fail2ban/ COMPONENT runtime)
 install(FILES README.md
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/ COMPONENT runtime)
 install(FILES CHANGELOG.md
@@ -921,17 +923,25 @@ install(FILES docs/CLIENT_DATABASE.md
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 install(FILES docs/CLIENT_LDAP.md
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/EMAIL.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 install(FILES docs/GETTING_STARTED.md
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 install(FILES docs/INSTALL.md
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/HTTP.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 install(FILES docs/OAUTH2.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/OAUTH2_SCHEME.md
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 install(FILES docs/OIDC.md
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 install(FILES docs/OTP.md
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 install(FILES docs/README.md
+		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+install(FILES docs/REGISTER.md
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 install(FILES docs/SCOPE.md
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
