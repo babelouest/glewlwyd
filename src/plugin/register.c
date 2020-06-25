@@ -145,7 +145,7 @@ static json_t * register_generate_email_verification_code(struct _register_confi
                                                    json_string_length(json_object_get(config->j_parameters, "content-type"))?json_string_value(json_object_get(config->j_parameters, "content-type")):"text/plain; charset=utf-8",
                                                    get_template_property(config->j_parameters, lang, "subject"),
                                                    body) == G_OK) {
-                      y_log_message(Y_LOG_LEVEL_WARNING, "Security - register new user - code sent for email %s at IP Address %s", email, ip_source);
+                      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Register new user - code sent for email %s at IP Address %s", email, ip_source);
                       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
                         expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)json_integer_value(json_object_get(config->j_parameters, "verification-code-duration"))));
                       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
