@@ -1,5 +1,10 @@
 # Glewlwyd Changelog
 
+## 2.3.1
+
+- Upgrade Bootstrap to 4.5
+- Replace Font-Awesome 5 with [Fork-Awesome](https://forkaweso.me/)
+
 ## 2.3.0
 
 The `"Saint-Jean-Baptiste Release"`
