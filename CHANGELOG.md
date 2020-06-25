@@ -4,6 +4,7 @@
 
 - Upgrade Bootstrap to 4.5
 - Replace Font-Awesome 5 with [Fork-Awesome](https://forkaweso.me/)
+- Fix Mock scheme in profile page
 
 ## 2.3.0
 
