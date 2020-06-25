@@ -346,7 +346,7 @@ class App extends Component {
                   </ul>
                   <div className="btn-group" role="group">
                     <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      <i className="fas fa-globe-africa"></i>
+                      <i className="fas fa-language"></i>
                     </button>
                     <div className="dropdown-menu" aria-labelledby="dropdownLang">
                       {langList}

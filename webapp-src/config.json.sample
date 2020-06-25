@@ -281,7 +281,7 @@
     {
       "help_url": "https://docs.microsoft.com/en-us/azure/active-directory/develop/v1-protocols-oauth-code#register-your-application-with-your-ad-tenant",
       "name": "Microsoft",
-      "logo_fa": "fab fa-microsoft",
+      "logo_fa": "fab fa-windows",
       "provider_type": "oidc",
       "response_type": "code",
       "config_endpoint": "https://login.microsoftonline.com/{tenantid}/.well-known/openid-configuration"
