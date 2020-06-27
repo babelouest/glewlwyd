@@ -18,8 +18,8 @@ RUN apk add --no-cache \
     autoconf \
     automake \
     libtool && \
-    (cd /opt && wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor.tar.gz && \
-    tar xf libcbor.tar.gz && cd libcbor-0.5.0 && mkdir build && cd build && \
+    (cd /opt && wget https://github.com/PJK/libcbor/archive/v0.7.0.tar.gz -O libcbor.tar.gz && \
+    tar xf libcbor.tar.gz && cd libcbor-0.7.0 && mkdir build && cd build && \
     cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib .. && make && make install) && \
     cd /opt && \
     wget https://github.com/babelouest/glewlwyd/releases/download/v${GLEWLWYD_VERSION}/glewlwyd-full_${GLEWLWYD_VERSION}_alpine_${ALPINE_VERSION}_x86_64.tar.gz -O glewlwyd.tar.gz && \
