@@ -1,5 +1,10 @@
 # Glewlwyd Changelog
 
+## 2.3.2
+
+- Fix official docker image builder
+- Fix load module files on filesystems that don't fully support `readdir()`, closes #150
+
 ## 2.3.1
 
 - Upgrade Bootstrap to 4.5
