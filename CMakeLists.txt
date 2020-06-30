@@ -24,7 +24,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
 set(PROGRAM_VERSION_MAJOR "2")
 set(PROGRAM_VERSION_MINOR "3")
-set(PROGRAM_VERSION_PATCH "1")
+set(PROGRAM_VERSION_PATCH "2")
 set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, multiple factor authentication with, HOTP/TOTP, Webauthn, etc. extensible via plugins")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(ORCANIA_VERSION_REQUIRED "2.1.0")
@@ -959,6 +959,8 @@ install(FILES docs/glewlwyd.service
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 install(FILES docs/glewlwyd-init
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
+INSTALL(FILES docs/glewlwyd.8
+		DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man8 COMPONENT runtime)
 
 set(TARGETS glewlwyd)
 
