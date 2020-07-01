@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import i18next from 'i18next';
 
 import apiManager from '../lib/APIManager';
-import messageDispatcher from '../lib/MessageDispatcher';
 import GrantScope from './GrantScope';
 import SchemeAuth from './SchemeAuth';
 
@@ -21,9 +20,6 @@ class Body extends Component {
       infoSomeScopeUnavailable: props.infoSomeScopeUnavailable,
       validLogin: props.validLogin
     };
-    
-    messageDispatcher.subscribe('Body', (message) => {
-    });
   }
   
   componentWillReceiveProps(nextProps) {
