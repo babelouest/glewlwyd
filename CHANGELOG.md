@@ -4,6 +4,7 @@
 
 - Fix official docker image builder
 - Fix load module files on filesystems that don't fully support `readdir()`, closes #150
+- Fix Small UI bugs
 
 ## 2.3.1
 
