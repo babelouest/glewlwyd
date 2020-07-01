@@ -50,22 +50,11 @@ module.exports = {
 			"process.env": { 
 				NODE_ENV: JSON.stringify("production") 
 			}
-		}),
-		new UglifyJsPlugin({
-			test: /\.js($|\?)/i,
-			sourceMap: true,
-			uglifyOptions: {
-			mangle: {
-				keep_fnames: true
-			},
-			warnings: false,
-			output: {
-				beautify: false
-			}
-			}
 		})
 	],
 	optimization: {
+    minimize: true,
+    minimizer: [new TerserPlugin()],
 		splitChunks: {
 			chunks: 'all'
 		}

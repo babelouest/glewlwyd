@@ -9,7 +9,7 @@
 
 var path = require('path');
 var webpack = require('webpack');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
 	mode: 'production',
@@ -48,22 +48,11 @@ module.exports = {
 			"process.env": { 
 				NODE_ENV: JSON.stringify("production") 
 			}
-		}),
-		new UglifyJsPlugin({
-			test: /\.js($|\?)/i,
-			sourceMap: true,
-			uglifyOptions: {
-			mangle: {
-				keep_fnames: true
-			},
-			warnings: false,
-			output: {
-				beautify: false
-			}
-			}
 		})
 	],
 	optimization: {
+    minimize: true,
+    minimizer: [new TerserPlugin()],
 		splitChunks: {
 			chunks: 'all'
 		}
