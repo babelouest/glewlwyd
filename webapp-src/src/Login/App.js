@@ -142,29 +142,38 @@ class App extends Component {
     apiManager.glewlwydRequest("/auth/grant/" + encodeURIComponent(clientId) + "/" + encodeURIComponent(scopeList))
     .then((res) => {
       var scopeGranted = [];
-      var scopeGrantedDetails = {};
       var showGrant = true;
       var showGrantAsterisk = false;
       if (res.scope.length) {
         var infoSomeScopeUnavailable = (scopeList.split(" ").length > res.scope.length);
-        res.scope.forEach((scope) => {
-          if (scope.name === "openid") {
-            scope.granted = true;
-          }
-          if (scope.granted) {
-            if (scope.name !== "openid") {
-              showGrant = false || this.state.forceShowGrant;
+        if (scopeList === "openid") {
+          showGrant = false || this.state.forceShowGrant;
+          scopeGranted.push("openid");
+        } else {
+          res.scope.forEach((scope) => {
+            if (scope.name === "openid") {
+              scope.granted = true;
             }
-            scopeGranted.push(scope.name);
-            scopeGrantedDetails[scope.name] = scope;
-          } else {
-            showGrantAsterisk = true;
-          }
-        });
+            if (scope.granted) {
+              if (scope.name !== "openid") {
+                showGrant = false || this.state.forceShowGrant;
+              }
+              scopeGranted.push(scope.name);
+            } else {
+              showGrantAsterisk = true;
+            }
+          });
+        }
         if (scopeGranted.length) {
           apiManager.glewlwydRequest("/auth/scheme/?scope=" + encodeURIComponent(scopeGranted.join(" ")))
           .then((schemeRes) => {
-            this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk, infoSomeScopeUnavailable: infoSomeScopeUnavailable, errorScopesUnavailable: false}, () => {
+            this.setState({client: res.client, 
+                           scope: res.scope, 
+                           scheme: schemeRes, 
+                           showGrant: showGrant, 
+                           showGrantAsterisk: showGrantAsterisk, 
+                           infoSomeScopeUnavailable: infoSomeScopeUnavailable, 
+                           errorScopesUnavailable: false}, () => {
               this.parseSchemes();
             });
           })
@@ -172,7 +181,12 @@ class App extends Component {
             messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
           });
         } else {
-          this.setState({client: res.client, scope: res.scope, showGrant: true, showGrantAsterisk: true, errorScopesUnavailable: false, infoSomeScopeUnavailable: infoSomeScopeUnavailable});
+          this.setState({client: res.client, 
+                         scope: res.scope, 
+                         showGrant: true, 
+                         showGrantAsterisk: true, 
+                         errorScopesUnavailable: false, 
+                         infoSomeScopeUnavailable: infoSomeScopeUnavailable});
         }
       } else {
         this.setState({errorScopesUnavailable: true, infoSomeScopeUnavailable: false});
@@ -249,7 +263,12 @@ class App extends Component {
     if (canContinue) {
       scheme = false;
     }
-    this.setState({canContinue: canContinue, passwordRequired: passwordRequired, schemeListRequired: schemeListRequired, scheme: scheme, errorScheme: (!scheme && !canContinue), mustRegisterScheme: mustRegisterScheme});
+    this.setState({canContinue: canContinue, 
+                   passwordRequired: passwordRequired, 
+                   schemeListRequired: schemeListRequired, 
+                   scheme: scheme, 
+                   errorScheme: (!scheme && !canContinue), 
+                   mustRegisterScheme: mustRegisterScheme});
   }
 
   changeLang(e, lang) {
