@@ -110,6 +110,93 @@ If you want to use multiple keys for signatures, you need to setup the keys in J
 
 If the `'default-kid'` value is empty in the configuration, the first key in the JWKS will be the default signing key.
 
+### Genrate JWKS using rnbyc
+
+The library [rhonabwy](https://github.com/babelouest/rhonabwy), when fully installed comes with the command-line program [rnbyc](https://babelouest.github.io/rhonabwy/md_tools_rnbyc_README.html). This tool can be used to generate a random private key in JWKS format and/or parse a key in JWKS or PEM format.
+
+If you have installed Glewlwyd using the precompiled full package, rnbyc should be installed in your system.
+
+Check out [rnbyc documentation](https://babelouest.github.io/rhonabwy/md_tools_rnbyc_README.html) for more information about this tool.
+
+#### Example 1: Generate a JWKS with a single ECDSA 256 private key
+
+This simple example shows how to generate a ECDSA 256 private key.
+
+```shell
+$ rnbyc -j -g ecdsa256 -k key-1 -p /dev/null
+{
+  "keys": [
+    {
+      "kty": "EC",
+      "x": "AN64-jEEs_0zQfuUJI-9Rik6hkYMrIDHzSUfT3jlrA-q",
+      "y": "APmN2Hk4SxihpBzQAZRVHlpxJS6O_0q-k8JgCcN-hj88",
+      "d": "BvC2P98BQsYiMHqPqqfsguXe2Vl92JmZnB6Pj0jTHsM",
+      "crv": "P-256",
+      "kid": "key-1",
+      "alg": "ES256"
+    }
+  ]
+}
+```
+
+#### Example 2: Generate a JWKS with a ECDSA 256 private key and a 2048 bits RSA key
+
+```shell
+$ rnbyc -j -g ecdsa256 -k key-1 -p /dev/null -g rsa2048 -k key-2 -p /dev/null
+{
+  "keys": [
+    {
+      "kty": "EC",
+      "x": "AN64-jEEs_0zQfuUJI-9Rik6hkYMrIDHzSUfT3jlrA-q",
+      "y": "APmN2Hk4SxihpBzQAZRVHlpxJS6O_0q-k8JgCcN-hj88",
+      "d": "BvC2P98BQsYiMHqPqqfsguXe2Vl92JmZnB6Pj0jTHsM",
+      "crv": "P-256",
+      "kid": "key-1",
+      "alg": "ES256"
+    },
+    {
+      "kty": "RSA",
+      "n": "ANpN63DvHZKWlMEk94xq3vheqfSPMyrkvIDLoTeD_ONmZFfiJ9fjRKa8uZPIJ01woRGTMawVnqSCN8dusR79mv7lQn9jTMPMVUqD2ndGS6t5V2fW1YZO6TFjkFONvFB8U3G9JaB1apYSxZfx8oQwq6rQ3lLBDi07SlMbzl9cQGMceaFMC9mRquIh9svDdTzx9L7otRzET756i0whl7uKEfJ7wTR17LaeCf7eW_s7XVCgPRNSlR5FfQjoCM4AMGRbEn5HwVTds9jBxyFGLTj1sN570NIzg2bNtIdk4EDjAE5ZBrLn02nCH4B75Cx4R9zzZ4rhMV4UR39kpIt7gqjY9zs",
+      "e": "AQAB",
+      "d": "AI032LV-yVeZd3MWUdkRDVoICtN8izIVM-fxUkISbNZB12mOkA21JCTkcvwpf1s2H8u5t2lFtxFed2zYq1WL4uc_MWwstWz30rjYYMvFuo-beDJhJFG03F8ptCSIzKgYNPaf0CZjrmaUkCQBzMs8nOBsK1XHMz-JWkQ2-aJwj-pMQFBjXX02j-rokXVCsEflgFCjXgTGaC8wAOlF1omKU53heW8DzjpQgVHCKumIw2B8eLNOW4LlR_jxg-dqta4G-6Hqou5zdXnEeHbkXV-bnS2l3mIcqAt-Hp0EbpSBFzth3uUpgihwx1uiwCFoULNiZWGbnrUEuZBpJngleWUr-Fk",
+      "p": "APRew0zj8zGv7xoByRi41XqaH2ZfC_GrddAK3gYVdYWDAt3pHbUQofrT-yhF6CsQTz-L7iR4VHNf-j7S3knRUPf6hggB1sb4_6D8a2fH4rI1TrDwXf5Mm9PDfOjkx6ukgzgsbiICsS8kK4Vpy3IvbNqGtCribU5B0-kpHgHjsnvH",
+      "q": "AOSxltWZopKfA74DFSs4fjnq_P4jl58IRmMMtnzfy-xXxVCJ-VPmzABfKlrhqtIckdYLeJE5Xxt76Mcq3-4YBSwWUHSkejGUAaLGfJspIEx7l3xOiCwpP2jVtpYUrhEMTbRZMlc7E5Ko1R7tU_pviMfLZwK5JrakQcYhgbG2wKDt",
+      "qi": "XNkpOGrFesrOkdSteU7Ew-aaB4xxSLEE2xz50nbJ2ck8qR5u6C7r1F4AeaKxGABpT_HKcoZ7pD3NUnR_yzTwQTW8Sn3WWeeRazXXxXxTw6prgLRiA189RLLuzatPd7Lyl_mwWpmWHR6pA-iWIXDlByoNMVPTXKoCU3CBs-s1DS4",
+      "dp": "TFl_M3rU9OU_EyUTq4G0UUXuIZH4rV0gxgtfKw9xVHGGZ8b53SSBN1kb041j6HCEEhqqIQLnf9Sw3wgLI40eexvu3HmWnTwWwjmbZSVykrNNDsNK2rUcyqD9WdaA_AO-a8KV9lJZAZ2Pa3OOePKQVAZaLDvqYtT2XJbYJUb68Ok",
+      "dq": "AKox9APw-4lMqBdP6gApYd8un6tux5cGLIPoYSMb1oKEa4bdt90WBTo9mKLcESmfM3VtQgQqAzrMA1e987sYyzidPrEf-wRMls8SEofSmoPw8rMDKtpatCML8X9N0qFDW8zdGNbMU2uxFDKZAwd82_l8yaPAMSx5n62ZIBEm5cKd",
+      "kid": "key-2"
+    }
+  ]
+}
+```
+
+#### Example 3: Key rotation using rnbyc
+
+In this example, you need to generate a new key every week, and want to keep the previous key *alive* for compatibility reasons.
+
+In Glewlwyd's OIDC plugin, if you provide several private keys without specifying the default kid, the first one will be the default key to sign the JWTs. So in this example, the new key will be the first in the list, and the previous one will be the second one. Therefore clients and resource providers will be able to verify a token signature for valid tokens. Each private key generated will be stored in a file.
+
+First, generate an *week 0* private key:
+
+```shell
+$ # week 0: generate a first private key ECDSA256
+$ rnbyc -j -g ecdsa256 -k $(date +%Y-%V).jwks -p /dev/null
+$ # use the generated file content as the private key for token signature
+$ cp $(date +%Y-%V).jwks private.jwks
+```
+
+Then every other week, generate a new private key and concat last week's private key in the generated JWKS
+
+```shell
+$ # next weeks: generate a new private key ECDSA256 and concat this week and last week's private key in the generated JWKS
+$ rnbyc -j -g ecdsa256 -k $(date +%Y-%V).jwks -p /dev/null
+$ rnbyc -j -f $(date +%Y-%V).jwks -f $(date --date="last week" +%Y-%V).jwks -o private.jwks -p /dev/null
+```
+
+Then, after each key generation, you can use the content of the file `private.jwks` to update your OIDC plugin configuration.
+
+**Note**: You can make the whole task in full automatic mode using the REST API, see [here](https://github.com/babelouest/glewlwyd/blob/master/docs/API.md#user-authentication) for user authentication with the password and [here](https://github.com/babelouest/glewlwyd/blob/master/docs/API.md#update-an-existing-plugin-module-instance) for updating the plugin instance.
+
 ## Installation
 
 ![plugin-oidc](screenshots/plugin-oidc.png)
