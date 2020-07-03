@@ -241,6 +241,29 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("jwks-private is optional must be a string"));
       ret = G_ERROR_PARAM;
     }
+    if (json_object_get(j_params, "jwks-public-uri") != NULL && !json_is_string(json_object_get(j_params, "jwks-public-uri"))) {
+      json_array_append_new(j_error, json_string("jwks-public-uri is optional must be a string"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "jwks-public") != NULL && !json_is_string(json_object_get(j_params, "jwks-public"))) {
+      json_array_append_new(j_error, json_string("jwks-public is optional must be a string"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_string_length(json_object_get(j_params, "jwks-public-uri")) || json_string_length(json_object_get(j_params, "jwks-public"))) {
+      if (json_string_length(json_object_get(j_params, "jwks-public-uri"))) {
+        if (r_jwks_init(&jwks) != RHN_OK || r_jwks_import_from_uri(jwks, json_string_value(json_object_get(j_params, "jwks-public-uri")), R_FLAG_FOLLOW_REDIRECT|(json_object_get(j_params, "request-uri-allow-https-non-secure")==json_true()?R_FLAG_IGNORE_SERVER_CERTIFICATE:0)) != RHN_OK) {
+          json_array_append_new(j_error, json_string("jwks-public-uri leads to an invalid jwks"));
+          ret = G_ERROR_PARAM;
+        }
+        r_jwks_free(jwks);
+      } else {
+        if (r_jwks_init(&jwks) != RHN_OK || r_jwks_import_from_str(jwks, json_string_value(json_object_get(j_params, "jwks-public"))) != RHN_OK) {
+          json_array_append_new(j_error, json_string("jwks-public is an invalid jwks"));
+          ret = G_ERROR_PARAM;
+        }
+        r_jwks_free(jwks);
+      }
+    }
     if (json_string_length(json_object_get(j_params, "jwks-uri")) || json_string_length(json_object_get(j_params, "jwks-private"))) {
       if (json_object_get(j_params, "default-kid") != NULL && !json_is_string(json_object_get(j_params, "default-kid"))) {
         json_array_append_new(j_error, json_string("default-kid is optional must be a string"));
@@ -8763,7 +8786,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
   size_t index = 0;
   struct _oidc_config * p_config = NULL;
   jwk_t * jwk = NULL, * jwk_pub = NULL;
-  jwks_t * jwks_privkey = NULL, * jwks_pubkey = NULL, * jwks_published = NULL;
+  jwks_t * jwks_privkey = NULL, * jwks_pubkey = NULL, * jwks_published = NULL, * jwks_specified = NULL;
   const char * str_alg;
   int key_type;
   const unsigned char * key;
@@ -8935,6 +8958,26 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         }
       }
       
+      if (json_string_length(json_object_get(p_config->j_params, "jwks-public-uri")) || json_string_length(json_object_get(p_config->j_params, "jwks-public"))) {
+        if (json_string_length(json_object_get(p_config->j_params, "jwks-public-uri"))) {
+          if (r_jwks_init(&jwks_specified) != RHN_OK || r_jwks_import_from_uri(jwks_specified, json_string_value(json_object_get(p_config->j_params, "jwks-public-uri")), R_FLAG_FOLLOW_REDIRECT|(json_object_get(p_config->j_params, "request-uri-allow-https-non-secure")==json_true()?R_FLAG_IGNORE_SERVER_CERTIFICATE:0)) != RHN_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error importing jwks-public from uri");
+            j_return = json_pack("{si}", "result", G_ERROR);
+            break;
+          } else {
+            p_config->jwks_str = r_jwks_export_to_json_str(jwks_specified, 0);
+          }
+        } else {
+          if (r_jwks_init(&jwks_specified) != RHN_OK || r_jwks_import_from_str(jwks_specified, json_string_value(json_object_get(p_config->j_params, "jwks-public"))) != RHN_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error importing jwks-public from data");
+            j_return = json_pack("{si}", "result", G_ERROR);
+            break;
+          } else {
+            p_config->jwks_str = r_jwks_export_to_json_str(jwks_specified, 0);
+          }
+        }
+      }
+      
       if (json_string_length(json_object_get(p_config->j_params, "jwks-private")) || json_string_length(json_object_get(p_config->j_params, "jwks-uri"))) {
         // Extract keys from JWKS
         if (r_jwks_init(&jwks_pubkey) != RHN_OK) {
@@ -9073,7 +9116,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           r_jwk_free(jwk);
         }
         
-        if (r_jwks_size(jwks_published)) {
+        if (p_config->jwks_str == NULL) {
           p_config->jwks_str = r_jwks_export_to_json_str(jwks_published, 0);
         }
           
@@ -9418,6 +9461,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
     r_jwks_free(jwks_privkey);
     r_jwks_free(jwks_pubkey);
     r_jwks_free(jwks_published);
+    r_jwks_free(jwks_specified);
     if (j_return == NULL) {
       j_return = json_pack("{si}", "result", G_OK);
     } else {
