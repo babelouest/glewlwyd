@@ -297,6 +297,34 @@ const char jwks_privkey_kid_invalid[] =
 "id\":\"" KID_3 "\",\"alg\":\"ES384\"},{\"kty\":\"oct\",\"k\":\"Kt5w3prEDTYJn8IveV1JtjXvtlAX0WRSEcEHxmND"
 "bP3aY760nHjA4VlCvxJQCYTSE1C1KObMmEnwjHrJzBedP-rqjn0SlzovvYyYWJL7Ujukqg4lhQxkLO5FZ"
 "jBNy1_i1-J3jPbP-DccD31-Kbxxmudqzd9LFVobDGoNvf-DdkQ\",\"kid\":\"" KID_4 "\",\"alg\":\"HS256\"}]}";
+const char jwks_pubkey[] = 
+"{\"keys\":[{\"kty\":\"RSA\",\"n\":\"AOidO2hPJFDK-jHdQ6p-SDGNAS3SbTCq1DN7Yv4kmClva"
+"5FtgLFIG8VG0hvn8RKN2kpqmNOa30KsOlYW9GqUCy6esFn0yqyNC_01IVY67qPIU5SRbCD88UXSfqsnhN"
+"sFgwU76OmpamqBGXUenZRrewNleNfYLJ6fNQO5n1rOa_UCcOaFqNLjjAcS9Z6e6h4Edlhz6ecYEVW6ZYF"
+"ODRNmyq_Pf0nZGgUjKXuAzEb8GdhiO99TcsLoc7RxTbfsvqLGofPXhY5EfWksNyeqJtINUEtMC78nADM6"
+"J_jFyeqBE3Tsqk1M6aQFo-8xy8kQ_bT7pdL9xh9w1UZ_kFg5pBMsaPk\",\"e\":\"AQAB\",\"kid\":"
+"\"overruled-" KID_1 "\"},{\"kty\":\"RSA\",\"n\":\"AMZGRVyWHvHCkbGpGF6xdhKSjYwX1q5xtS-9_rATkpGyp"
+"5f-vCl9uUgdD0CZZIuuEvWsRvp1zt-JZVS9GrnoWBLZXzafHKO4pADMPPGlzaBsEmp4E5S7t6c4LGMgXE"
+"xDoBs8jbp3TwbUeiyIsHyQzlY5pfg8_2Stp-PtoOWBVpWvhp1uxVuvvIp5TfHK3q2q3Iziggvja-p_cLj"
+"i95AAXOLBEfaRklMLPM0aMm996-dX7Yq-cUO5ptCBEoRBcPlEJjFP9ZY_Hb0_3W8BIpkvf_zTcGsgIrcx"
+"17mIp9yRQcQ9pQNSa5kpk3nfv2BZ6tJHu8KfKsA3WesYOkMM_6VoFRk\",\"e\":\"AQAB\",\"kid\":"
+"\"overruled-" KID_2 "\"},{\"kty\":\"EC\",\"x\":\"AJ6TXabOS7Blc_BNQVqQgp1nEwmatr8g9_HlPaoP4MPe\""
+",\"y\":\"ALbKJWr4c4tksiv2IMWbfq09gghvuaR1pO2S_QjjXUtZ\",\"crv\":\"P-256\",\"kid\""
+":\"overruled-" KID_3 "\"}]}";
+const char jwks_pubkey_invalid_jwks[] = 
+"{\"keys\":[{\"kty\":\"RSA\",\"n\":\"AOidO2hPJFDK-jHdQ6p-SDGNAS3SbTCq1DN7Yv4kmClva"
+"5FtgLFIG8VG0hvn8RKN2kpqmNOa30KsOlYW9GqUCy6esFn0yqyNC_01IVY67qPIU5SRbCD88UXSfqsnhN"
+"sFgwU76OmpamqBGXUenZRrewNleNfYLJ6fNQO5n1rOa_UCcOaFqNLjjAcS9Z6e6h4Edlhz6ecYEVW6ZYF"
+"ODRNmyq_Pf0nZGgUjKXuAzEb8GdhiO99TcsLoc7RxTbfsvqLGofPXhY5EfWksNyeqJtINUEtMC78nADM6"
+"J_jFyeqBE3Tsqk1M6aQFo-8xy8kQ_bT7pdL9xh9w1UZ_kFg5pBMsaPk\",\"e\":\"AQAB\",\"kid\":"
+"\"overruled-" KID_1 "\"},{\"kty\":\"RSA\",\"n\":\"AMZGRVyWHvHCkbGpGF6xdhKSjYwX1q5xtS-9_rATkpGyp"
+"5f-vCl9uUgdD0CZZIuuEvWsRvp1zt-JZVS9GrnoWBLZXzafHKO4pADMPPGlzaBsEmp4E5S7t6c4LGMgXE"
+"xDoBs8jbp3TwbUeiyIsHyQzlY5pfg8_2Stp-PtoOWBVpWvhp1uxVuvvIp5TfHK3q2q3Iziggvja-p_cLj"
+"i95AAXOLBEfaRklMLPM0aMm996-dX7Yq-cUO5ptCBEoRBcPlEJjFP9ZY_Hb0_3W8BIpkvf_zTcGsgIrcx"
+"17mIp9yRQcQ9pQNSa5kpk3nfv2BZ6tJHu8KfKsA3WesYOkMM_6VoFRk\",\"e\":\"AQAB\",\"kid\":"
+"\"overruled-" KID_2 "\"},{\"kty\":\"EC\",\"x\":\"AJ6TXabOS7Blc_BNQVqQgp1nEwmatr8g9_HlPaoP4MPe\""
+",\"y\":\"ALbKJWr4c4tksiv2IMWbfq09gghvuaR1pO2S_QjjXUtZ\",\"crv\":\"P-256\",\"kid\""
+":\"overruled-" KID_3 "\"}]error";
 const char pubkey_1_pem[] = "-----BEGIN PUBLIC KEY-----\n"\
                             "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAxaF1egmmQ+0/AAEcv/Jd\n"\
                             "TCBxi7A05VvDvRgaYzOEWqJF3qv3b6ifD4E4C9+cir6tIyCOJ2WXE4TV9fCWBQjI\n"\
@@ -758,6 +786,96 @@ START_TEST(test_oidc_jwks_add_module_ok)
 }
 END_TEST
 
+START_TEST(test_oidc_jwks_add_module_public_jwks_invalid)
+{
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososososososisssssssossssssssssssssssss}}",
+                                "module", PLUGIN_MODULE,
+                                "name", PLUGIN_NAME,
+                                "display_name", PLUGIN_DISPLAY_NAME,
+                                "enabled", json_true(),
+                                "parameters",
+                                  "iss", PLUGIN_ISS,
+                                  "jwks-private", jwks_privkey,
+                                  "jwks-public", jwks_pubkey_invalid_jwks,
+                                  "default-kid", KID_1,
+                                  "code-duration", PLUGIN_CODE_DURATION,
+                                  "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
+                                  "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
+                                  "allow-non-oidc", json_true(),
+                                  "auth-type-client-enabled", json_true(),
+                                  "auth-type-code-enabled", json_true(),
+                                  "auth-type-token-enabled", json_true(),
+                                  "auth-type-implicit-enabled", json_true(),
+                                  "auth-type-password-enabled", json_true(),
+                                  "auth-type-refresh-enabled", json_true(),
+                                  "request-parameter-allow", json_true(),
+                                  "request-parameter-allow-encrypted", json_true(),
+                                  "request-uri-allow-https-non-secure", json_true(),
+                                  "request-maximum-exp", CLIENT_AUTH_TOKEN_MAX_AGE,
+                                  "client-pubkey-parameter", CLIENT_PUBKEY_PARAM,
+                                  "client-jwks-parameter", CLIENT_JWKS_PARAM,
+                                  "client-jwks_uri-parameter", CLIENT_JWKS_URI_PARAM,
+                                  "encrypt-out-token-allow", json_true(),
+                                  "client-enc-parameter", "enc",
+                                  "client-alg-parameter", "alg",
+                                  "client-alg_kid-parameter", "alg_kid",
+                                  "client-sign_kid-parameter", "sign_kid",
+                                  "client-encrypt_code-parameter", "encrypt_code",
+                                  "client-encrypt_at-parameter", "encrypt_at",
+                                  "client-encrypt_userinfo-parameter", "encrypt_userinfo",
+                                  "client-encrypt_id_token-parameter", "encrypt_id_token",
+                                  "client-encrypt_refresh_token-parameter", "encrypt_refresh_token");
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_oidc_jwks_add_module_public_jwks_ok)
+{
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososososososisssssssossssssssssssssssss}}",
+                                "module", PLUGIN_MODULE,
+                                "name", PLUGIN_NAME,
+                                "display_name", PLUGIN_DISPLAY_NAME,
+                                "enabled", json_true(),
+                                "parameters",
+                                  "iss", PLUGIN_ISS,
+                                  "jwks-private", jwks_privkey,
+                                  "jwks-public", jwks_pubkey,
+                                  "default-kid", KID_1,
+                                  "code-duration", PLUGIN_CODE_DURATION,
+                                  "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
+                                  "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
+                                  "allow-non-oidc", json_true(),
+                                  "auth-type-client-enabled", json_true(),
+                                  "auth-type-code-enabled", json_true(),
+                                  "auth-type-token-enabled", json_true(),
+                                  "auth-type-implicit-enabled", json_true(),
+                                  "auth-type-password-enabled", json_true(),
+                                  "auth-type-refresh-enabled", json_true(),
+                                  "request-parameter-allow", json_true(),
+                                  "request-parameter-allow-encrypted", json_true(),
+                                  "request-uri-allow-https-non-secure", json_true(),
+                                  "request-maximum-exp", CLIENT_AUTH_TOKEN_MAX_AGE,
+                                  "client-pubkey-parameter", CLIENT_PUBKEY_PARAM,
+                                  "client-jwks-parameter", CLIENT_JWKS_PARAM,
+                                  "client-jwks_uri-parameter", CLIENT_JWKS_URI_PARAM,
+                                  "encrypt-out-token-allow", json_true(),
+                                  "client-enc-parameter", "enc",
+                                  "client-alg-parameter", "alg",
+                                  "client-alg_kid-parameter", "alg_kid",
+                                  "client-sign_kid-parameter", "sign_kid",
+                                  "client-encrypt_code-parameter", "encrypt_code",
+                                  "client-encrypt_at-parameter", "encrypt_at",
+                                  "client-encrypt_userinfo-parameter", "encrypt_userinfo",
+                                  "client-encrypt_id_token-parameter", "encrypt_id_token",
+                                  "client-encrypt_refresh_token-parameter", "encrypt_refresh_token");
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
 START_TEST(test_oidc_jwks_delete_module)
 {
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/mod/plugin/" PLUGIN_NAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
@@ -780,6 +898,17 @@ START_TEST(test_oidc_jwks_discovery_valid)
   ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/" PLUGIN_NAME "/jwks", NULL, NULL, NULL, NULL, 200, j_key, NULL, NULL), 1);
   
   json_decref(j_result);
+  json_decref(j_key);
+}
+END_TEST
+
+START_TEST(test_oidc_jwks_discovery_public_jwks_valid)
+{
+  json_t * j_key = json_loads(jwks_pubkey, JSON_DECODE_ANY, NULL);
+  
+  ck_assert_ptr_ne(j_key, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/" PLUGIN_NAME "/jwks", NULL, NULL, NULL, NULL, 200, j_key, NULL, NULL), 1);
+  
   json_decref(j_key);
 }
 END_TEST
@@ -1366,6 +1495,11 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_jwks_add_module_uri_invalid);
   tcase_add_test(tc_core, test_oidc_jwks_delete_module);
   tcase_add_test(tc_core, test_oidc_jwks_add_module_uri_invalid_json);
+  tcase_add_test(tc_core, test_oidc_jwks_delete_module);
+  tcase_add_test(tc_core, test_oidc_jwks_add_module_public_jwks_invalid);
+  tcase_add_test(tc_core, test_oidc_jwks_delete_module);
+  tcase_add_test(tc_core, test_oidc_jwks_add_module_public_jwks_ok);
+  tcase_add_test(tc_core, test_oidc_jwks_discovery_public_jwks_valid);
   tcase_add_test(tc_core, test_oidc_jwks_delete_module);
   tcase_add_test(tc_core, test_oidc_jwks_add_module_ok);
   tcase_add_test(tc_core, test_oidc_jwks_discovery_valid);
