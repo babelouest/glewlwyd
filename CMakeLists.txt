@@ -27,12 +27,12 @@ set(PROGRAM_VERSION_MINOR "3")
 set(PROGRAM_VERSION_PATCH "2")
 set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, multiple factor authentication with, HOTP/TOTP, Webauthn, etc. extensible via plugins")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
-set(ORCANIA_VERSION_REQUIRED "2.1.0")
-set(YDER_VERSION_REQUIRED "1.4.10")
-set(ULFIUS_VERSION_REQUIRED "2.6.7")
+set(ORCANIA_VERSION_REQUIRED "2.1.1")
+set(YDER_VERSION_REQUIRED "1.4.11")
+set(ULFIUS_VERSION_REQUIRED "2.6.8")
 set(HOEL_VERSION_REQUIRED "1.4.16")
-set(RHONABWY_VERSION_REQUIRED "0.9.11")
-set(IDDAWC_VERSION_REQUIRED "0.9.5")
+set(RHONABWY_VERSION_REQUIRED "0.9.12")
+set(IDDAWC_VERSION_REQUIRED "0.9.6")
 set(LIBCBOR_VERSION_REQUIRED "0.5.0")
 set(JANSSON_VERSION_REQUIRED "2.11")
 
@@ -960,7 +960,7 @@ install(FILES docs/glewlwyd.service
 install(FILES docs/glewlwyd-init
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 INSTALL(FILES docs/glewlwyd.8
-		DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man8 COMPONENT runtime)
+		DESTINATION ${CMAKE_INSTALL_MANDIR}/man8 COMPONENT runtime)
 
 set(TARGETS glewlwyd)
 
