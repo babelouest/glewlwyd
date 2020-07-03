@@ -2,6 +2,7 @@
 
 ## 2.3.2
 
+- Allow to specify a public JWKS
 - Fix official docker image builder
 - Fix load module files on filesystems that don't fully support `readdir()`, closes #150
 - Fix Small UI bugs
