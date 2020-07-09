@@ -21,6 +21,7 @@
 
 GLEWLWYD_SOURCE=./src
 GLEWLWYD_TESTS=./test
+GLEWLWYD_DOCS=./docs
 
 all:
 	cd $(GLEWLWYD_SOURCE) && $(MAKE) $*
@@ -49,3 +50,7 @@ docker:
 
 docker-ci:
 	docker build --file=Dockerfile-ci -t babelouest/glewlwyd:ci .
+
+manpage:
+	cd $(GLEWLWYD_SOURCE) && $(MAKE) $*
+	help2man $(GLEWLWYD_SOURCE)/glewlwyd -s 8 -n "Single-Sign-On (SSO) server with multiple factor authentication" > $(GLEWLWYD_DOCS)/glewlwyd.8
