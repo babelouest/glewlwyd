@@ -33,16 +33,17 @@
     * [Database back-end initialisation](#database-back-end-initialisation)
 7.  [Initialise database](#initialise-database)
 8.  [Install as a service](#install-as-a-service)
-9.  [Fail2ban filter](#fail2ban-filter)
-10. [Front-end application](#front-end-application)
+9.  [Reverse proxy configuration](#reverse-proxy-configuration)
+10. [Fail2ban filter](#fail2ban-filter)
+11. [Front-end application](#front-end-application)
     * [webapp/config.json](#webappconfigjson)
     * [Internationalization](#internationalization)
     * [Login, Admin and Profile pages](#login-admin-and-profile-pages)
     * [Customize css](#customize-css)
     * [Customize titles and logos](#customize-titles-and-logos)
-11. [Run Glewlwyd](#run-glewlwyd)
-12. [Getting started with the application](#getting-started-with-the-application)
-13. [Running Glewlwyd in test mode for integration tests](#running-glewlwyd-in-test-mode-for-integration-tests)
+12. [Run Glewlwyd](#run-glewlwyd)
+13. [Getting started with the application](#getting-started-with-the-application)
+14. [Running Glewlwyd in test mode for integration tests](#running-glewlwyd-in-test-mode-for-integration-tests)
 
 ## Upgrade Glewlwyd
 
@@ -772,6 +773,50 @@ $ sudo service glewlwyd start
 $ sudo cp glewlwyd.service /etc/systemd/system
 $ sudo systemctl enable glewlwyd
 $ sudo systemctl start glewlwyd
+```
+
+## Reverse proxy configuration
+
+To install Glewlwyd behind a reverse proxy, you must check the following rules:
+- Forward HTTP methods `GET`, `POST`, `PUT`, `DELETE` and `OPTION`
+- Forward the entire url, including query parameters (I'm watching you Nginx!)
+- Forward the session cookies *-and optionaly the registration cookies-*, cookies default keys are `GLEWLWYD2_SESSION_ID` for session cookie and `G_REGISTER_SESSION` for registration cookie
+- Forward HTTP headers, including `Authorization`
+
+### Apache mod_proxy example
+
+To use Apache as reverse proxy, you must enable the mods `proxy` and `proxy_http`. If you want to use user or client certificate authentication behind a reverse proxy, you must enable the mods `ssl` and `headers`.
+
+The following example is a simple Apache reverse proxy configuration on a virtual host `https://glewlwyd.tld`, the glewlwyd instance is running on localhost.
+
+```config
+<VirtualHost *:443>
+  ServerName glewlwyd.tld
+
+  ProxyPass / http://localhost:4593/
+</VirtualHost>
+```
+
+The following example is an Apache reverse proxy configuration on a virtual host `https://glewlwyd.tld`, the glewlwyd instance is running on localhost and the proxy forwards the client TLS certificate to Glewlwyd in the header `SSL_CLIENT_CERT` if the client uses a valid TLS certificate.
+
+```config
+<VirtualHost *:443>
+  ServerName glewlwyd.tld
+  SSLEngine on
+  SSLCertificateFile /path/to/your_domain_name.crt
+  SSLCertificateKeyFile /path/to/your_private.key
+  SSLCertificateChainFile /path/to/your_chain_file.crt
+  SSLCACertificateFile /path/to/your_ca.crt
+  SSLVerifyClient optional
+
+  RequestHeader set SSL_CLIENT_CERT ""
+
+  ProxyPass / http://localhost:4593/
+
+  <Location /api/>
+    RequestHeader set SSL_CLIENT_CERT "%{SSL_CLIENT_CERT}s"
+  </Location>
+</VirtualHost>
 ```
 
 ## Fail2ban filter
