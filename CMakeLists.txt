@@ -139,7 +139,6 @@ set(SEARCH_ORCANIA_H OFF CACHE BOOL "Force to false") # Avoid to search and down
 set(SEARCH_ORCANIA_R OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during hoel search and download
 set(SEARCH_YDER_R OFF CACHE BOOL "Force to false") # Avoid to search and download yder during ulfius and hoel search and download
 set(SEARCH_ULFIUS_R OFF CACHE BOOL "Force to false") # Avoid to search and download ulfius during rhonabwy search and download
-set(BUILD_RNBYC OFF CACHE BOOL "Force to false") # Avoid to build rnbyc during rhonabwy search and download
 
 set(SEARCH_ORCANIA_I OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during iddawc search and download
 set(SEARCH_YDER_I OFF CACHE BOOL "Force to false") # Avoid to search and download yder during iddawc search and download
