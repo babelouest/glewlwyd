@@ -252,6 +252,18 @@ The default KID that will be used to sign tokens if the client does not specify 
 
 Client property that will hold the default kid. This option is used to specify a different KID than the default one for a specific client.
 
+### Public JWKS URI
+
+URI to fetch the public keys JWKS. This uri is loaded each time the plugin is enbled. If you want to update your server keys, you must restart the Glewlwyd server or call the api [Enable or disable an existing plugin module instance](API.md#enable-or-disable-an-existing-plugin-module-instance) with the action value `reset`.
+
+Note: This setting value is optional, if you omit this value, the public key will be extracted from your JWKS private key. Use this setting if you want to specify the public keys available in the public JWKS endpoint: `/api/<plugin_name>/jwks`
+
+### Public JWKS
+
+Enter the JWKS value directly or select the local file tat contains the private keys JWKS.
+
+Note: This setting value is optional, if you omit this value, the public key will be extracted from your JWKS private key. Use this setting if you want to specify the public keys available in the public JWKS endpoint: `/api/<plugin_name>/jwks`
+
 ### JWT Type
 
 Algorithm used to sign access tokens and ID Tokens.
