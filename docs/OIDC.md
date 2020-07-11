@@ -112,7 +112,9 @@ If the `'default-kid'` value is empty in the configuration, the first key in the
 
 ### Genrate JWKS using rnbyc
 
-The library [rhonabwy](https://github.com/babelouest/rhonabwy), when fully installed comes with the command-line program [rnbyc](https://babelouest.github.io/rhonabwy/md_tools_rnbyc_README.html). This tool can be used to generate a random private key in JWKS format and/or parse a key in JWKS or PEM format.
+The library [rhonabwy](https://github.com/babelouest/rhonabwy) comes with the command-line program [rnbyc](https://babelouest.github.io/rhonabwy/md_tools_rnbyc_README.html). You should have the program available if you installed Glewlwyd with the packages or using CMake.
+
+This tool can be used to generate a new private key or key pair in JWKS format and/or parse a key in JWKS or PEM format.
 
 Check out [rnbyc documentation](https://babelouest.github.io/rhonabwy/md_tools_rnbyc_README.html) for more information about this tool.
 
