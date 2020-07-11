@@ -46,29 +46,6 @@ If you don't use Glewlwyd behind a reverse proxy to forward the certificate in t
 
 If you set this value to `HTTP Header` or `both`, it allows to use Glewlwyd behind a reverse proxy such as Apache's mod `proxy`. You must then configure the proxy to validate the clients certificate and key using your CA certificate and if the client certificate is valid, the proxy must forward the X509 certificate to Glewlwyd in a specified header.
 
-Here is an example of configuration using Apache web server. In this example, the Glewlwyd service is hosted on the same host than the Apache server.
-You must have enabled the modules `ssl`, `proxy`, `proxy_http`, `headers`.
-
-```config
-<VirtualHost *:443>
-  ServerName glewlwyd.tld
-  SSLEngine on
-  SSLCertificateFile /path/to/your_domain_name.crt
-  SSLCertificateKeyFile /path/to/your_private.key
-  SSLCertificateChainFile /path/to/your_chain_file.crt
-  SSLCACertificateFile /path/to/your_ca.crt
-  SSLVerifyClient optional
-
-  RequestHeader set SSL_CLIENT_CERT ""
-
-  ProxyPass / http://localhost:4593/
-
-  <Location /api/>
-    RequestHeader set SSL_CLIENT_CERT "%{SSL_CLIENT_CERT}s"
-  </Location>
-</VirtualHost>
-```
-
 ### Corresponding header property
 
 This option will store tame of the header property that will contain the client certificate in PEM format without newlines.
