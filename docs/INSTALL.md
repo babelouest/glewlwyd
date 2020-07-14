@@ -177,71 +177,45 @@ libzlib
 
 ```shell
 $ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.0/glewlwyd-full_2.3.0_debian_buster_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.3.0_debian_buster_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.1.0_debian_buster_x86_64.deb
-$ sudo dpkg -i libyder_1.4.10_debian_buster_x86_64.deb
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.2/glewlwyd-full_2.3.2_debian_buster_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.3.2_debian_buster_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.1.1_debian_buster_x86_64.deb
+$ sudo dpkg -i libyder_1.4.11_debian_buster_x86_64.deb
 $ sudo dpkg -i libhoel_1.4.16_debian_buster_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.7_debian_buster_x86_64.deb
-$ sudo dpkg -i librhonabwy_0.9.10_debian_buster_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.8_debian_buster_x86_64.deb
+$ sudo dpkg -i librhonabwy_0.9.12_debian_buster_x86_64.deb
 $ sudo dpkg -i libiddawc_0.9.5_debian_buster_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.3.0_debian_buster_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.3.2_debian_buster_x86_64.deb
 ```
 
 ### Install Glewlwyd on Raspbian Buster for Raspberry Pi
 
 ```shell
 $ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.0/glewlwyd-full_2.3.0_raspbian_buster_armv6l.tar.gz
-$ tar xf glewlwyd-full_2.3.0_raspbian_buster_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.1.0_raspbian_buster_armv7l.deb
-$ sudo dpkg -i libyder_1.4.10_raspbian_buster_armv7l.deb
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.2/glewlwyd-full_2.3.2_raspbian_buster_armv6l.tar.gz
+$ tar xf glewlwyd-full_2.3.2_raspbian_buster_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.1.1_raspbian_buster_armv7l.deb
+$ sudo dpkg -i libyder_1.4.11_raspbian_buster_armv7l.deb
 $ sudo dpkg -i libhoel_1.4.16_raspbian_buster_armv7l.deb
-$ sudo dpkg -i libulfius_2.6.7_raspbian_buster_armv7l.deb
-$ sudo dpkg -i librhonabwy_0.9.10_raspbian_buster_armv7l.deb
+$ sudo dpkg -i libulfius_2.6.8_raspbian_buster_armv7l.deb
+$ sudo dpkg -i librhonabwy_0.9.12_raspbian_buster_armv7l.deb
 $ sudo dpkg -i libiddawc_0.9.5_raspbian_buster_armv7l.deb
-$ sudo dpkg -i glewlwyd_2.3.0_raspbian_buster_armv7l.deb
+$ sudo dpkg -i glewlwyd_2.3.2_raspbian_buster_armv7l.deb
 ```
 
 ### Install Glewlwyd on Ubuntu 20.04 LTS Focal
 
 ```shell
 $ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0.6 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.0/glewlwyd-full_2.3.0_ubuntu_focal_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.3.0_ubuntu_focal_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.1.0_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i libyder_1.4.10_ubuntu_focal_x86_64.deb
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.2/glewlwyd-full_2.3.2_ubuntu_focal_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.3.2_ubuntu_focal_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.1.1_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i libyder_1.4.11_ubuntu_focal_x86_64.deb
 $ sudo dpkg -i libhoel_1.4.16_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.7_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i librhonabwy_0.9.10_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.8_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i librhonabwy_0.9.12_ubuntu_focal_x86_64.deb
 $ sudo dpkg -i libiddawc_0.9.5_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.3.0_ubuntu_focal_x86_64.deb
-```
-
-### Install Glewlwyd on Ubuntu 18.04 LTS Bionic
-
-```shell
-$ # Note: jansson provided in Ubuntu 18.04 LTS Bionic is too old to work with Glewlwyd, here is the procedure to install them from the source
-$ # If you have installed jansson package, please uninstall first
-$ sudo apt remove libjansson4
-$ sudo apt install -y pkg-config autoconf automake make cmake libtool wget sqlite3 liboath0 libconfig9 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0.6 pkg-config
-$ wget https://github.com/akheron/jansson/archive/v2.13.1.tar.gz -O jansson.tar.gz
-$ tar xf jansson.tar.gz
-$ cd jansson-2.13.1
-$ autoreconf -i
-$ ./configure
-$ make
-$ sudo make install
-$ cd ..
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.0/glewlwyd-full_2.3.0_ubuntu_bionic_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.3.0_ubuntu_bionic_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.1.0_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libyder_1.4.10_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.16_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.7_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i librhonabwy_0.9.10_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libiddawc_0.9.5_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.3.0_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.3.2_ubuntu_focal_x86_64.deb
 ```
 
 If there's no package available for your distribution, you can compile it manually using `CMake` or `Makefile`.
@@ -783,6 +757,8 @@ To install Glewlwyd behind a reverse proxy, you must check the following rules:
 - Forward the session cookies *-and optionaly the registration cookies-*, cookies default keys are `GLEWLWYD2_SESSION_ID` for session cookie and `G_REGISTER_SESSION` for registration cookie
 - Forward HTTP headers, including `Authorization`
 
+You can have glewlwyd available at the root of the domain/subdomain, e.g. `https://glewlwyd.tld/` or host Glewlwyd in a subfolder of the domain/subdomain, e.g. `https://auth.tld/glewlwyd/`.
+
 ### Apache mod_proxy example
 
 To use Apache as reverse proxy, you must enable the mods `proxy` and `proxy_http`. If you want to use user or client certificate authentication behind a reverse proxy, you must enable the mods `ssl` and `headers`.
@@ -848,7 +824,7 @@ In this example, requests to the subfolder `/authsrv` will be sent to glewlwyd i
 
 Below is the URL configuration of `webapp/config.json` with Nginx serving glewlwyd in a subfolder named `/authsrv`.
 
-```
+```javascript
 {
   "GlewlwydUrl": "https://glewlwyd.tld/authsrv/",
   "ProfileUrl": "profile.html",
