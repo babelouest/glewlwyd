@@ -801,25 +801,23 @@ The following example is an Nginx reverse proxy configuration in which the glewl
 
 ```
 # Glewlwyd
-location / {
-  proxy_set_header Authorization $http_authorization;
-  proxy_set_header Host $host;
-  proxy_pass http://127.0.0.1:4593;
-}
+    location / {
+        proxy_set_header Host $host;
+        proxy_pass http://127.0.0.1:4593;
+    }
 ```
 
-By default, Nginx will only pass headers to a proxy service that are present in the *initial* request of a session. The glewlwyd admin web app uses Authorization headers *after* a user is logged in to maintain the user's session as the user navigates the application from page to page. Therefore, to make sure Nginx passes the Authorization header on all requests it must be explicitly declared in the proxy configuration.  Other headers which may be useful to define as `proxy_set_header` options here are `X-Forwarded-For` and/or `X-Real-IP`, to pass along the requesting client's IP rather than the proxy IP for logging purposes.  See [the Nginx proxy docs](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header) for further information.
+Other headers which may be useful to define as `proxy_set_header` options here besides `Host` are `X-Forwarded-For` and/or `X-Real-IP`, to pass along the requesting client's IP rather than the proxy IP for logging purposes.  See [the Nginx proxy docs](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header) for further information.
 
 It is also possible to use Nginx to serve glewlwyd from a subfolder, which would allow multiple services to share a single proxy listening for requests on a single domain name. Below is an example configuration for doing this with Nginx.
 
 ```
 # Glewlwyd
-location ^~ /authsrv/ {
-  rewrite ^\/authsrv(.*) /$1 break;
-  proxy_set_header Authorization $http_authorization;
-  proxy_set_header Host $host;
-  proxy_pass http://127.0.0.1:4593;
-}
+    location ^~ /authsrv/ {
+        rewrite ^\/authsrv(.*) /$1 break;
+        proxy_set_header Host $host;
+        proxy_pass http://127.0.0.1:4593;
+    }
 ```
 
 In this example, requests to the subfolder `/authsrv` will be sent to glewlwyd instance, and requests to the root domain or other folders can be sent to other applications and services on the same domain name. The `rewrite` regex in the second line extracts the part of the URL *after* `/authsrv` and sends that part of the URL on to the glewlwyd instance without the folder name. In this subfolder example, the `webapp/config.json` will need the main URL changed to account for the subfolder, while the rest of the config can be unchanged from defaults. The main glewlwyd.conf can also be unchanged from defaults, since the rewrite rule is removing the subfolder name from requests to `/api` endpoints before passing them to the glewlwyd instance.
