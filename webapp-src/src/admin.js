@@ -16,6 +16,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 import apiManager from './lib/APIManager';
 import App from './Admin/App';
+import ErrorConfig from './lib/ErrorConfig';
 
 var getParameterByName = function (name, url) {
   if (!url) url = window.location.href;
@@ -43,6 +44,9 @@ var initApp = () => {
     .fail((error) => {
       ReactDOM.render(<App config={false} />, document.getElementById('root'));
     });
+  })
+  .fail((error) => {
+    ReactDOM.render(<ErrorConfig/>, document.getElementById('root'));
   });
 }
 
