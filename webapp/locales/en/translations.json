@@ -1,5 +1,6 @@
 {
   "error-api-connect": "Error in Glewlwyd API",
+  "error-config": "Error in config file, contact your administrator",
   "title-login": "Log in",
   "title-logout": "Log out",
   "add": "Add",
