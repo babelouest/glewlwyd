@@ -794,6 +794,8 @@ static json_t * get_provider(struct _oauth2_config * oauth2_config, const char *
  */
 json_t * user_auth_scheme_module_load(struct config_module * config) {
   UNUSED(config);
+  r_global_init();
+  i_global_init();
   return json_pack("{sisssssss{s{ssso}s[{s{ssso}s{sss[sss]so}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}}]}}",
                    "result",
                    G_OK,
@@ -887,6 +889,8 @@ json_t * user_auth_scheme_module_load(struct config_module * config) {
  */
 int user_auth_scheme_module_unload(struct config_module * config) {
   UNUSED(config);
+  r_global_close();
+  i_global_close();
   return G_OK;
 }
 

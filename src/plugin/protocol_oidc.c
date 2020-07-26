@@ -8657,6 +8657,7 @@ static int jwt_autocheck(struct _oidc_config * config) {
 
 json_t * plugin_module_load(struct config_plugin * config) {
   UNUSED(config);
+  r_global_init();
   return json_pack("{si ss ss ss s{ s{sssos[sss]} s{sssos[sss]} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ss so s{ssso} s{ssso} }}}",
                    "result",
                    G_OK,
@@ -8776,6 +8777,7 @@ json_t * plugin_module_load(struct config_plugin * config) {
 
 int plugin_module_unload(struct config_plugin * config) {
   UNUSED(config);
+  r_global_close();
   return G_OK;
 }
 
