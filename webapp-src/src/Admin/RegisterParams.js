@@ -61,7 +61,12 @@ class RegisterParams extends Component {
 
     if (!props.mod.parameters["templates"]) {
       props.mod.parameters["templates"] = {};
-      props.mod.parameters["templates"][i18next.language] = {subject: props.mod.parameters.subject||"Confirm registration", "body-pattern": props.mod.parameters["body-pattern"]||"The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?register=<your_registration_plugin_name>&token={TOKEN}", defaultLang: true}
+      props.mod.parameters["templates"][i18next.language] = {subject: props.mod.parameters.subject||"Confirm registration", "body-pattern": props.mod.parameters["body-pattern"]||"The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?register=<your_registration_plugin_name>&token={TOKEN}", defaultLang: true};
+    }
+
+    if (!props.mod.parameters["templatesUpdateEmail"]) {
+      props.mod.parameters["templatesUpdateEmail"] = {};
+      props.mod.parameters["templatesUpdateEmail"][i18next.language] = {subject: props.mod.parameters.subject||"Update e-mail address", "body-pattern": props.mod.parameters["body-pattern"]||"Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/profile.html?updateEmail=<your_registration_plugin_name>&token={TOKEN}", defaultLang: true};
     }
 
     if (!props.mod.parameters["update-email"]) {
@@ -81,7 +86,9 @@ class RegisterParams extends Component {
       hasError: false,
       errorList: {},
       currentLang: i18next.language,
-      newLang: ""
+      newLang: "",
+      currentLangUpdateEmail: i18next.language,
+      newLangUpdateEmail: ""
     };
     
     if (this.state.check) {
@@ -150,7 +157,12 @@ class RegisterParams extends Component {
 
     if (!nextProps.mod.parameters["templates"]) {
       nextProps.mod.parameters["templates"] = {};
-      nextProps.mod.parameters["templates"][i18next.language] = {subject: nextProps.mod.parameters.subject||"Confirm registration", "body-pattern": nextProps.mod.parameters["body-pattern"]||"The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?register=<your_registration_plugin_name>&token={TOKEN}", defaultLang: true}
+      nextProps.mod.parameters["templates"][i18next.language] = {subject: nextProps.mod.parameters.subject||"Confirm registration", "body-pattern": nextProps.mod.parameters["body-pattern"]||"The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?register=<your_registration_plugin_name>&token={TOKEN}", defaultLang: true};
+    }
+
+    if (!nextProps.mod.parameters["templatesUpdateEmail"]) {
+      nextProps.mod.parameters["templatesUpdateEmail"] = {};
+      nextProps.mod.parameters["templatesUpdateEmail"][i18next.language] = {subject: props.mod.parameters.subject||"Update e-mail address", "body-pattern": props.mod.parameters["body-pattern"]||"Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/profile.html?updateEmail=<your_registration_plugin_name>&token={TOKEN}", defaultLang: true};
     }
 
     if (!nextProps.mod.parameters["update-email"]) {
@@ -169,7 +181,9 @@ class RegisterParams extends Component {
       check: nextProps.check,
       hasError: false,
       currentLang: i18next.language,
-      newLang: ""
+      newLang: "",
+      currentLangUpdateEmail: i18next.language,
+      newLangUpdateEmail: ""
     }, () => {
       if (this.state.check) {
         this.checkParameters();
@@ -263,58 +277,73 @@ class RegisterParams extends Component {
     this.setState({mod: mod});
   }
   
-  changeNewLang(e) {
-    this.setState({newLang: e.target.value});
+  changeNewLang(e, property = "") {
+    var newState = {};
+    newState["newLang"+property] = e.target.value;
+    this.setState(newState);
   }
   
-  addLang() {
+  addLang(e, property = "") {
     var mod = this.state.mod;
     var found = false;
-    Object.keys(mod.parameters.templates).forEach(lang => {
+    var templates = mod.parameters["templates"+property];
+    Object.keys(templates).forEach(lang => {
       if (lang === this.state.newLang) {
         found = true;
       }
     });
-    if (!found && this.state.newLang) {
-      mod.parameters.templates[this.state.newLang] = {subject: "", "body-pattern": "", defaultLang: false};
-      this.setState({mod: mod, newLang: "", currentLang: this.state.newLang});
+    if (!found && this.state["newLang"+property]) {
+      templates[this.state["newLang"+property]] = {subject: "", "body-pattern": "", defaultLang: false};
+      var newState = {mod: mod};
+      newState["newLang"+property] = "";
+      newState["currentLang"+property] = this.state["newLang"+property];
+      this.setState(newState);
     }
   }
   
-  removeLang(lang) {
+  removeLang(lang, property = "") {
     var mod = this.state.mod;
     var currentLang = false;
-    delete(mod.parameters.templates[lang]);
-    if (lang == this.state.currentLang) {
-      Object.keys(mod.parameters.templates).forEach(lang => {
+    var templates = mod.parameters["templates"+property];
+    delete(templates[lang]);
+    if (lang == this.state["currentLang"+property]) {
+      Object.keys(templates).forEach(lang => {
         if (!currentLang) {
           currentLang = lang;
         }
       });
-      this.setState({mod: mod, currentLang: currentLang});
+      var newState = {mod: mod};
+      newState["currentLang"+property] = currentLang;
+      this.setState(newState);
     } else {
       this.setState({mod: mod});
     }
   }
   
-  changeLang(e, lang) {
+  changeLang(e, lang, property = "") {
     var mod = this.state.mod;
-    if (!mod.parameters.templates[lang]) {
-      mod.parameters.templates[lang] = {subject: "", "body-pattern": "", defaultLang: false}
+    var templates = mod.parameters["templates"+property];
+    if (!templates[lang]) {
+      templates[lang] = {subject: "", "body-pattern": "", defaultLang: false}
     }
-    this.setState({currentLang: lang});
+    var newState = {};
+    newState["currentLang"+property] = lang;
+    console.log(newState);
+    this.setState(newState);
   }
   
-  changeTemplate(e, param) {
+  changeTemplate(e, param, property = "") {
     var mod = this.state.mod;
-    mod.parameters.templates[this.state.currentLang][param] = e.target.value;
+    var templates = mod.parameters["templates"+property];
+    templates[this.state["currentLang"+property]][param] = e.target.value;
     this.setState({mod: mod});
   }
   
-  toggleLangDefault() {
+  toggleLangDefault(property = "") {
     var mod = this.state.mod;
-    Object.keys(mod.parameters.templates).forEach(objKey => {
-      mod.parameters.templates[objKey].defaultLang = (objKey === this.state.currentLang);
+    var templates = mod.parameters["templates"+property];
+    Object.keys(templates).forEach(objKey => {
+      templates[objKey].defaultLang = (objKey === this.state["currentLang"+property]);
     });
     this.setState({mod: mod});
   }
@@ -388,13 +417,13 @@ class RegisterParams extends Component {
   }
   
   render() {
-    var langList = [];
+    var langList = [], langListUpdateEmail = [];
     langList.push(
     <div key={-2} className="form-group">
       <div className="input-group mb-3">
         <input type="text" className="form-control" id="mod-email-new-lang" placeholder={i18next.t("admin.mod-email-new-lang-ph")} value={this.state.newLang} onChange={(e) => this.changeNewLang(e)} />
         <div className="input-group-append">
-          <button type="button" onClick={this.addLang} className="btn btn-outline-primary">{i18next.t("admin.mod-email-new-lang-add")}</button>
+          <button type="button" onClick={(e) => this.addLang(e)} className="btn btn-outline-primary">{i18next.t("admin.mod-email-new-lang-add")}</button>
         </div>
       </div>
     </div>
@@ -409,6 +438,27 @@ class RegisterParams extends Component {
       </div>
       );
       langList.push(<div key={(index*2)+1} className="dropdown-divider"></div>);
+    });
+    langListUpdateEmail.push(
+    <div key={-2} className="form-group">
+      <div className="input-group mb-3">
+        <input type="text" className="form-control" id="mod-email-new-lang" placeholder={i18next.t("admin.mod-email-new-lang-ph")} value={this.state.newLangUpdateEmail} onChange={(e) => this.changeNewLang(e, "UpdateEmail")} />
+        <div className="input-group-append">
+          <button type="button" onClick={(e) => this.addLang(e, "UpdateEmail")} className="btn btn-outline-primary">{i18next.t("admin.mod-email-new-lang-add")}</button>
+        </div>
+      </div>
+    </div>
+    );
+    langListUpdateEmail.push(<div key={-1} className="dropdown-divider"></div>);
+    Object.keys(this.state.mod.parameters.templatesUpdateEmail).forEach((lang, index) => {
+      langListUpdateEmail.push(
+      <div key={index*2} className="btn-group btn-group-justified">
+        <button type="button" className="btn btn-primary" disabled={true}>{lang}</button>
+        <button type="button" onClick={(e) => this.removeLang(lang, "UpdateEmail")} className="btn btn-primary" disabled={this.state.mod.parameters.templatesUpdateEmail[lang].defaultLang}>{i18next.t("admin.mod-email-new-lang-remove")}</button>
+        <button type="button" onClick={(e) => this.changeLang(e, lang, "UpdateEmail")} className="btn btn-primary">{i18next.t("admin.mod-email-new-lang-select")}</button>
+      </div>
+      );
+      langListUpdateEmail.push(<div key={(index*2)+1} className="dropdown-divider"></div>);
     });
     var scopeList = [], defaultScopeList = [], schemeList = [];
     this.state.config.pattern.user.forEach((pattern) => {
@@ -477,6 +527,8 @@ class RegisterParams extends Component {
         </div>
       );
     });
+    //console.log(this.state.mod.parameters.templatesUpdateEmail, this.state.currentLangUpdateEmail);
+    console.log(this.state.currentLangUpdateEmail, this.state.mod.parameters.templatesUpdateEmail[this.state.currentLangUpdateEmail]);
 
     return (
       <div>
@@ -684,16 +736,16 @@ class RegisterParams extends Component {
                       </div>
                       <div className="dropdown">
                         <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-update-email-email-lang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                          {this.state.currentLang}
+                          {this.state.currentLangUpdateEmail}
                         </button>
                         <div className="dropdown-menu" aria-labelledby="mod-update-email-email-lang">
-                          {langList}
+                          {langListUpdateEmail}
                         </div>
                       </div>
                     </div>
                   </div>
                   <div className="form-group form-check">
-                    <input type="checkbox" className="form-check-input" id="mod-update-email-email-lang-default" onChange={(e) => this.toggleLangDefault()} checked={this.state.mod.parameters.templates[this.state.currentLang].defaultLang} />
+                    <input type="checkbox" className="form-check-input" id="mod-update-email-email-lang-default" onChange={(e) => this.toggleLangDefault("UpdateEmail")} checked={this.state.mod.parameters.templatesUpdateEmail[this.state.currentLangUpdateEmail].defaultLang} />
                     <label className="form-check-label" htmlFor="mod-update-email-email-lang-default">{i18next.t("admin.mod-email-lang-default")}</label>
                   </div>
                   <div className="form-group">
@@ -701,7 +753,7 @@ class RegisterParams extends Component {
                       <div className="input-group-prepend">
                         <label className="input-group-text" htmlFor="mod-update-email-email-subject">{i18next.t("admin.mod-email-subject")}</label>
                       </div>
-                      <input type="text" className={this.state.errorList["update-email-subject"]?"form-control is-invalid":"form-control"} id="mod-update-email-email-subject" onChange={(e) => this.changeTemplate(e, "subject")} value={this.state.mod.parameters.templates[this.state.currentLang]["update-email-subject"]} placeholder={i18next.t("admin.mod-update-email-subject-ph")} />
+                      <input type="text" className={this.state.errorList["update-email-subject"]?"form-control is-invalid":"form-control"} id="mod-update-email-email-subject" onChange={(e) => this.changeTemplate(e, "subject", "UpdateEmail")} value={this.state.mod.parameters.templatesUpdateEmail[this.state.currentLangUpdateEmail]["subject"]} placeholder={i18next.t("admin.mod-update-email-subject-ph")} />
                     </div>
                     {this.state.errorList["update-email-subject"]?<span className="error-input">{this.state.errorList["update-email-subject"]}</span>:""}
                   </div>
@@ -710,7 +762,7 @@ class RegisterParams extends Component {
                       <div className="input-group-prepend">
                         <span className="input-group-text" >{i18next.t("admin.mod-email-body-pattern")}</span>
                       </div>
-                      <textarea className={this.state.errorList["update-email-body-pattern"]?"form-control is-invalid":"form-control"} id="mod-update-email-body-pattern" onChange={(e) => this.changeTemplate(e, "body-pattern")} placeholder={i18next.t("admin.mod-email-body-pattern-ph")} value={this.state.mod.parameters.templates[this.state.currentLang]["update-email-body-pattern"]}></textarea>
+                      <textarea className={this.state.errorList["update-email-body-pattern"]?"form-control is-invalid":"form-control"} id="mod-update-email-body-pattern" onChange={(e) => this.changeTemplate(e, "body-pattern", "UpdateEmail")} placeholder={i18next.t("admin.mod-email-body-pattern-ph")} value={this.state.mod.parameters.templatesUpdateEmail[this.state.currentLangUpdateEmail]["body-pattern"]}></textarea>
                     </div>
                     {this.state.errorList["update-email-body-pattern"]?<span className="error-input">{this.state.errorList["update-email-body-pattern"]}</span>:""}
                   </div>
