@@ -47,6 +47,14 @@ jobs:
     #    uses a compiled language
 
     - run: |
+        sudo apt-get update
+        sudo apt-get install -y libconfig-dev libsystemd-dev libjansson-dev libcurl4-gnutls-dev libldap2-dev libmicrohttpd-dev libsqlite3-dev sqlite3 libpq-dev liboath-dev default-mysql-client default-libmysqlclient-dev cmake pkg-config check libsubunit-dev cppcheck gnutls-bin
+        wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor-0.5.0.tar.gz
+        tar xzf libcbor-0.5.0.tar.gz
+        mkdir libcbor-0.5.0/build
+        pushd libcbor-0.5.0/build && cmake .. && make && sudo make install && popd
+        sudo ldconfig
+        
         mkdir build
         cd build
         cmake -DBUILD_GLEWLWYD_TESTING=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib ..
