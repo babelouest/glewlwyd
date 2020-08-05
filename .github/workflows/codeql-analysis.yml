@@ -46,7 +46,12 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
-    #- run: |
+    - run: |
+        mkdir build
+        cd build
+        cmake -DBUILD_GLEWLWYD_TESTING=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib ..
+        make
+        sudo make install
     #   make bootstrap
     #   make release
 
