@@ -48,7 +48,7 @@ jobs:
 
     - run: |
         sudo apt-get update
-        sudo apt-get install -y libconfig-dev libsystemd-dev libjansson-dev libcurl4-gnutls-dev libldap2-dev libmicrohttpd-dev libsqlite3-dev sqlite3 libpq-dev liboath-dev default-mysql-client default-libmysqlclient-dev cmake pkg-config check libsubunit-dev cppcheck gnutls-bin
+        sudo apt-get install -y libconfig-dev libsystemd-dev libjansson-dev libcurl4-gnutls-dev libldap2-dev libmicrohttpd-dev libsqlite3-dev sqlite3 libpq-dev liboath-dev default-mysql-client default-libmysqlclient-dev cmake pkg-config gnutls-bin
         wget https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz -O libcbor-0.5.0.tar.gz
         tar xzf libcbor-0.5.0.tar.gz
         mkdir libcbor-0.5.0/build
@@ -57,11 +57,9 @@ jobs:
         
         mkdir build
         cd build
-        cmake -DBUILD_GLEWLWYD_TESTING=ON -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib ..
+        cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib ..
         make
         sudo make install
-    #   make bootstrap
-    #   make release
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
