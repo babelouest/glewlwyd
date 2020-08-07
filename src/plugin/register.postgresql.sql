@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS gpr_update_email;
 DROP TABLE IF EXISTS gpr_session;
 
 CREATE TABLE gpr_session (
@@ -18,3 +19,16 @@ CREATE TABLE gpr_session (
 CREATE INDEX i_gprs_session_hash ON gpr_session(gprs_session_hash);
 CREATE INDEX i_gprs_gprs_token_hash ON gpr_session(gprs_token_hash);
 CREATE INDEX i_gprs_gprs_gprs_code_hash ON gpr_session(gprs_code_hash);
+
+CREATE TABLE gpr_update_email (
+  gprue_id SERIAL PRIMARY KEY,
+  gprue_plugin_name VARCHAR(256) NOT NULL,
+  gprue_username VARCHAR(256) NOT NULL,
+  gprue_email VARCHAR(512),
+  gprue_token_hash VARCHAR(512),
+  gprue_expires_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gprue_issued_for VARCHAR(256), -- IP address or hostname
+  gprue_user_agent VARCHAR(256),
+  gprue_enabled SMALLINT DEFAULT 1
+);
+CREATE INDEX i_gprue_token_hash ON gpr_update_email(gprue_token_hash);
