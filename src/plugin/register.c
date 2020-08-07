@@ -1271,6 +1271,22 @@ static int callback_register_clean_session(const struct _u_request * request, st
   return U_CALLBACK_COMPLETE;
 }
 
+// TODO
+static int callback_register_update_email_trigger(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
+  UNUSED(user_data);
+  return U_CALLBACK_ERROR;
+}
+
+// TODO
+static int callback_register_update_email_verify(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
+  UNUSED(user_data);
+  return U_CALLBACK_ERROR;
+}
+
 json_t * is_plugin_parameters_valid(json_t * j_params) {
   json_t * j_return, * j_errors = json_array(), * j_element = NULL, * j_template = NULL;
   size_t index = 0, has_mandatory = 0;
@@ -1281,88 +1297,110 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
     if (!json_is_object(j_params)) {
       json_array_append_new(j_errors, json_string("parameters must be a JSON object"));
     } else {
-      if (!json_string_length(json_object_get(j_params, "session-key"))) {
-        json_array_append_new(j_errors, json_string("session-key is mandatory and must be a non empty string"));
-      }
-      if (json_integer_value(json_object_get(j_params, "session-duration")) <= 0) {
-        json_array_append_new(j_errors, json_string("session-duration is optional and must be a positive integer"));
-      }
-      if (json_object_get(j_params, "verify-email") != NULL && !json_is_boolean(json_object_get(j_params, "verify-email"))) {
-        json_array_append_new(j_errors, json_string("verify-email is optional and must be boolean"));
-      }
-      if (json_object_get(j_params, "email-is-username") != NULL && !json_is_boolean(json_object_get(j_params, "email-is-username"))) {
-        json_array_append_new(j_errors, json_string("email-is-username is optional and must be boolean"));
-      }
-      if (0 != o_strcmp(json_string_value(json_object_get(j_params, "set-password")), "always") && 0 != o_strcmp(json_string_value(json_object_get(j_params, "set-password")), "yes") && 0 != o_strcmp(json_string_value(json_object_get(j_params, "set-password")), "no")) {
-        json_array_append_new(j_errors, json_string("set-password is mandatory and must have one of the following string values: 'always', 'yes', 'no'"));
-      } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "set-password")), "always")) {
-        has_mandatory = 1;
-      }
-      if (!json_is_array(json_object_get(j_params, "scope")) || !json_array_size(json_object_get(j_params, "scope"))) {
-        json_array_append_new(j_errors, json_string("scope is mandatory and must be a non empty array of non empty strings"));
-      } else {
-        json_array_foreach(json_object_get(j_params, "scope"), index, j_element) {
-          if (!json_string_length(j_element)) {
-            json_array_append_new(j_errors, json_string("scope is mandatory and must be a non empty array of non empty strings"));
+      if (json_object_get(j_params, "registration") == json_true() || json_object_get(j_params, "registration") == NULL) {
+        if (!json_string_length(json_object_get(j_params, "session-key"))) {
+          json_array_append_new(j_errors, json_string("session-key is mandatory and must be a non empty string"));
+        }
+        if (json_integer_value(json_object_get(j_params, "session-duration")) <= 0) {
+          json_array_append_new(j_errors, json_string("session-duration is optional and must be a positive integer"));
+        }
+        if (json_object_get(j_params, "verify-email") != NULL && !json_is_boolean(json_object_get(j_params, "verify-email"))) {
+          json_array_append_new(j_errors, json_string("verify-email is optional and must be boolean"));
+        }
+        if (json_object_get(j_params, "email-is-username") != NULL && !json_is_boolean(json_object_get(j_params, "email-is-username"))) {
+          json_array_append_new(j_errors, json_string("email-is-username is optional and must be boolean"));
+        }
+        if (0 != o_strcmp(json_string_value(json_object_get(j_params, "set-password")), "always") && 0 != o_strcmp(json_string_value(json_object_get(j_params, "set-password")), "yes") && 0 != o_strcmp(json_string_value(json_object_get(j_params, "set-password")), "no")) {
+          json_array_append_new(j_errors, json_string("set-password is mandatory and must have one of the following string values: 'always', 'yes', 'no'"));
+        } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "set-password")), "always")) {
+          has_mandatory = 1;
+        }
+        if (!json_is_array(json_object_get(j_params, "scope")) || !json_array_size(json_object_get(j_params, "scope"))) {
+          json_array_append_new(j_errors, json_string("scope is mandatory and must be a non empty array of non empty strings"));
+        } else {
+          json_array_foreach(json_object_get(j_params, "scope"), index, j_element) {
+            if (!json_string_length(j_element)) {
+              json_array_append_new(j_errors, json_string("scope is mandatory and must be a non empty array of non empty strings"));
+            }
           }
         }
-      }
-      if (json_object_get(j_params, "schemes") != NULL && !json_is_array(json_object_get(j_params, "schemes"))) {
-        json_array_append_new(j_errors, json_string("schemes is optional and must be an array of objects"));
-      } else {
-        json_array_foreach(json_object_get(j_params, "schemes"), index, j_element) {
-          if (!json_string_length(json_object_get(j_element, "module"))) {
-            json_array_append_new(j_errors, json_string("scheme object must have a attribute 'module' with a non empty string value"));
-          }
-          if (!json_string_length(json_object_get(j_element, "name"))) {
-            json_array_append_new(j_errors, json_string("scheme object must have a attribute 'name' with a non empty string value"));
-          }
-          if (0 != o_strcmp("always", json_string_value(json_object_get(j_element, "register"))) && 0 != o_strcmp("yes", json_string_value(json_object_get(j_element, "register")))) {
-            json_array_append_new(j_errors, json_string("scheme object must have a attribute 'register' with one of the following values: 'yes', 'always'"));
-          }
-          if (0 == o_strcmp("always", json_string_value(json_object_get(j_element, "register")))) {
-            has_mandatory = 1;
+        if (json_object_get(j_params, "schemes") != NULL && !json_is_array(json_object_get(j_params, "schemes"))) {
+          json_array_append_new(j_errors, json_string("schemes is optional and must be an array of objects"));
+        } else {
+          json_array_foreach(json_object_get(j_params, "schemes"), index, j_element) {
+            if (!json_string_length(json_object_get(j_element, "module"))) {
+              json_array_append_new(j_errors, json_string("scheme object must have a attribute 'module' with a non empty string value"));
+            }
+            if (!json_string_length(json_object_get(j_element, "name"))) {
+              json_array_append_new(j_errors, json_string("scheme object must have a attribute 'name' with a non empty string value"));
+            }
+            if (0 != o_strcmp("always", json_string_value(json_object_get(j_element, "register"))) && 0 != o_strcmp("yes", json_string_value(json_object_get(j_element, "register")))) {
+              json_array_append_new(j_errors, json_string("scheme object must have a attribute 'register' with one of the following values: 'yes', 'always'"));
+            }
+            if (0 == o_strcmp("always", json_string_value(json_object_get(j_element, "register")))) {
+              has_mandatory = 1;
+            }
           }
         }
+        if (!has_mandatory) {
+          json_array_append_new(j_errors, json_string("At least one authentication method must be mandatory"));
+        }
       }
-      if (!has_mandatory) {
-        json_array_append_new(j_errors, json_string("At least one authentication method must be mandatory"));
+      if (json_object_get(j_params, "update-email") != NULL && !json_is_boolean(json_object_get(j_params, "update-email"))) {
+        json_array_append_new(j_errors, json_string("update-email is optional and must be a boolean"));
+      }
+      if (json_object_get(j_params, "update-email") == json_true()) {
+        if (json_integer_value(json_object_get(j_params, "update-email-code-duration")) <= 0) {
+          json_array_append_new(j_errors, json_string("update-email-code-duration is mandatory and must be a positive integer"));
+        }
+        if (json_object_get(j_params, "update-email-from") != NULL && !json_string_length(json_object_get(j_params, "update-email-from"))) {
+          json_array_append_new(j_errors, json_string("update-email-from is mandatory and must be a non empty string"));
+        }
+        if (json_object_get(j_params, "update-email-content-type") != NULL && !json_string_length(json_object_get(j_params, "update-email-content-type"))) {
+          json_array_append_new(j_errors, json_string("update-email-content-type is optional and must be a string"));
+        }
+        if (!json_is_object(json_object_get(j_params, "templatesUpdateEmail"))) {
+          json_array_append_new(j_errors, json_string("templatesUpdateEmail is mandatory and must be a JSON object"));
+        } else {
+          nb_default_lang = 0;
+          json_object_foreach(json_object_get(j_params, "templatesUpdateEmail"), lang, j_template) {
+            if (!json_is_object(j_template)) {
+              json_array_append_new(j_errors, json_string("templatesUpdateEmail content must be a JSON object"));
+            } else {
+              if (!json_is_boolean(json_object_get(j_template, "defaultLang"))) {
+                json_array_append_new(j_errors, json_string("defaultLang is madatory in a templatesUpdateEmail and must be a JSON object"));
+              }
+              if (json_object_get(j_template, "defaultLang") == json_true()) {
+                nb_default_lang++;
+                if (!json_string_length(json_object_get(j_template, "subject"))) {
+                  json_array_append_new(j_errors, json_string("subject is mandatory for default lang and must be a non empty string"));
+                }
+                if (json_object_get(j_template, "body") != NULL && !json_string_length(json_object_get(j_template, "body"))) {
+                  json_array_append_new(j_errors, json_string("body is mandatory for default lang and must be a non empty string"));
+                }
+              }
+            }
+          }
+          if (nb_default_lang != 1) {
+            json_array_append_new(j_errors, json_string("templatesUpdateEmail list must have only one defaultLang set to true"));
+          }
+        }
       }
       if (json_object_get(j_params, "verify-email") == json_true()) {
         if (json_integer_value(json_object_get(j_params, "verification-code-duration")) <= 0) {
-          json_array_append_new(j_errors, json_string("verification-code-duration is optional and must be a positive integer"));
+          json_array_append_new(j_errors, json_string("verification-code-duration is mandatory and must be a positive integer"));
         }
         if (json_integer_value(json_object_get(j_params, "verification-code-length")) <= 0) {
-          json_array_append_new(j_errors, json_string("verification-code-length is optional and must be a positive integer"));
+          json_array_append_new(j_errors, json_string("verification-code-length is mandatory and must be a positive integer"));
         }
         if (!json_is_boolean(json_object_get(j_params, "email-is-username"))) {
           json_array_append_new(j_errors, json_string("email-is-username is optional and must be boolean"));
         }
-        if (!json_string_length(json_object_get(j_params, "host"))) {
-          json_array_append_new(j_errors, json_string("host is mandatory and must be a non empty string"));
-        }
-        if (json_object_get(j_params, "port") != NULL && (!json_is_integer(json_object_get(j_params, "port")) || json_integer_value(json_object_get(j_params, "port")) < 0 || json_integer_value(json_object_get(j_params, "port")) > 65535)) {
-          json_array_append_new(j_errors, json_string("port is optional and must be a integer between 0 and 65535"));
-        } else if (json_object_get(j_params, "port") == NULL) {
-          json_object_set_new(j_params, "port", json_integer(0));
-        }
-        if (json_object_get(j_params, "use-tls") != NULL && !json_is_boolean(json_object_get(j_params, "use-tls"))) {
-          json_array_append_new(j_errors, json_string("use-tls is optional and must be a boolean"));
-        }
-        if (json_object_get(j_params, "check-certificate") != NULL && !json_is_boolean(json_object_get(j_params, "check-certificate"))) {
-          json_array_append_new(j_errors, json_string("check-certificate is optional and must be a boolean"));
-        }
-        if (json_object_get(j_params, "user") != NULL && !json_is_string(json_object_get(j_params, "user"))) {
-          json_array_append_new(j_errors, json_string("user is optional and must be a string"));
-        }
-        if (json_object_get(j_params, "password") != NULL && !json_is_string(json_object_get(j_params, "password"))) {
-          json_array_append_new(j_errors, json_string("password is optional and must be a string"));
+        if (json_object_get(j_params, "content-type") != NULL && !json_string_length(json_object_get(j_params, "content-type"))) {
+          json_array_append_new(j_errors, json_string("content-type is optional and must be a string"));
         }
         if (json_object_get(j_params, "from") != NULL && !json_string_length(json_object_get(j_params, "from"))) {
           json_array_append_new(j_errors, json_string("from is mandatory and must be a non empty string"));
-        }
-        if (json_object_get(j_params, "content-type") != NULL && !json_string_length(json_object_get(j_params, "content-type"))) {
-          json_array_append_new(j_errors, json_string("content-type is optional and must be a string"));
         }
         if (json_object_get(j_params, "templates") == NULL) {
           if (json_object_get(j_params, "subject") != NULL && !json_string_length(json_object_get(j_params, "subject"))) {
@@ -1375,6 +1413,7 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
           if (!json_is_object(json_object_get(j_params, "templates"))) {
             json_array_append_new(j_errors, json_string("templates is mandatory and must be a JSON object"));
           } else {
+            nb_default_lang = 0;
             json_object_foreach(json_object_get(j_params, "templates"), lang, j_template) {
               if (!json_is_object(j_template)) {
                 json_array_append_new(j_errors, json_string("template content must be a JSON object"));
@@ -1398,6 +1437,31 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
             }
           }
         }
+      }
+      if (json_object_get(j_params, "update-email") == json_true() || json_object_get(j_params, "verify-email") == json_true()) {
+        if (!json_string_length(json_object_get(j_params, "host"))) {
+          json_array_append_new(j_errors, json_string("host is mandatory and must be a non empty string"));
+        }
+        if (json_object_get(j_params, "port") != NULL && (!json_is_integer(json_object_get(j_params, "port")) || json_integer_value(json_object_get(j_params, "port")) < 0 || json_integer_value(json_object_get(j_params, "port")) > 65535)) {
+          json_array_append_new(j_errors, json_string("port is optional and must be a integer between 0 and 65535"));
+        } else if (json_object_get(j_params, "port") == NULL) {
+          json_object_set_new(j_params, "port", json_integer(0));
+        }
+        if (json_object_get(j_params, "use-tls") != NULL && !json_is_boolean(json_object_get(j_params, "use-tls"))) {
+          json_array_append_new(j_errors, json_string("use-tls is optional and must be a boolean"));
+        }
+        if (json_object_get(j_params, "check-certificate") != NULL && !json_is_boolean(json_object_get(j_params, "check-certificate"))) {
+          json_array_append_new(j_errors, json_string("check-certificate is optional and must be a boolean"));
+        }
+        if (json_object_get(j_params, "user") != NULL && !json_is_string(json_object_get(j_params, "user"))) {
+          json_array_append_new(j_errors, json_string("user is optional and must be a string"));
+        }
+        if (json_object_get(j_params, "password") != NULL && !json_is_string(json_object_get(j_params, "password"))) {
+          json_array_append_new(j_errors, json_string("password is optional and must be a string"));
+        }
+      }
+      if (json_object_get(j_params, "update-email") != json_true() && json_object_get(j_params, "registration") == json_false()) {
+        json_array_append_new(j_errors, json_string("At least one action must be enabled"));
       }
     }
     if (json_array_size(j_errors)) {
@@ -1460,7 +1524,7 @@ json_t * plugin_module_load(struct config_plugin * config) {
                    "name",
                    "register",
                    "display_name",
-                   "Register new user plugin",
+                   "Register/Update e-mail/Reset credentials plugin",
                    "description",
                    "Adds self registered users in the user backend",
                    "parameters",
@@ -1600,26 +1664,37 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         register_config->name = o_strdup(name);
         register_config->j_parameters = json_incref(j_parameters);
         *cls = (void*)register_config;
-        y_log_message(Y_LOG_LEVEL_INFO, "Add endpoints with plugin prefix %s", name);
-        if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "config", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_config, (void*)register_config) == G_OK &&
-            config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_check_username, (void*)register_config) == G_OK &&
-            config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "register", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_register_user, (void*)register_config) == G_OK &&
-            config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "verify", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_send_email_verification, (void*)register_config) == G_OK &&
-            config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "verify", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_verify_email, (void*)register_config) == G_OK &&
-            config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_register_verify_session, (void*)register_config) == G_OK &&
-            config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "profile/password", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_password, (void*)register_config) == G_OK &&
-            config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_get_data, (void*)register_config) == G_OK &&
-            config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_data, (void*)register_config) == G_OK &&
-            config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_cancel, (void*)register_config) == G_OK &&
-            config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "profile/scheme/register", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_get_scheme_registration, (void*)register_config) == G_OK &&
-            config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "profile/scheme/register", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_scheme_registration, (void*)register_config) == G_OK &&
-            config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "profile/scheme/register/canuse", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_canuse_scheme_registration, (void*)register_config) == G_OK &&
-            config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "profile/complete", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_complete_registration, (void*)register_config) == G_OK &&
-            config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "profile/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_register_clean_session, NULL) == G_OK) {
-          j_return = json_pack("{si}", "result", G_OK);
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init register - Error glewlwyd_callback_add_plugin_endpoint");
-          j_return = json_pack("{si}", "result", G_ERROR);
+        if (json_object_get(j_parameters, "registration") == json_true() || json_object_get(j_parameters, "registration") == NULL) {
+          y_log_message(Y_LOG_LEVEL_INFO, "Add registration endpoints with plugin prefix %s", name);
+          if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "config", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_config, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_check_username, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "register", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_register_user, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "verify", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_send_email_verification, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "verify", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_verify_email, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_register_verify_session, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "profile/password", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_password, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_get_data, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_data, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_cancel, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "profile/scheme/register", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_get_scheme_registration, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "profile/scheme/register", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_scheme_registration, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "profile/scheme/register/canuse", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_canuse_scheme_registration, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "profile/complete", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_complete_registration, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "profile/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_register_clean_session, NULL) == G_OK) {
+            j_return = json_pack("{si}", "result", G_OK);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init register - Error glewlwyd_callback_add_plugin_endpoint");
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
+        }
+        if (json_object_get(j_parameters, "update-email") == json_true()) {
+          if (config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "update-email", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_email_trigger, (void*)register_config) == G_OK &&
+              config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "update-email", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_email_verify, (void*)register_config) == G_OK) {
+            j_return = json_pack("{si}", "result", G_OK);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init register - Error glewlwyd_callback_add_plugin_endpoint");
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init register - Error pthread_mutex_init");
@@ -1655,20 +1730,26 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
 int plugin_module_close(struct config_plugin * config, const char * name, void * cls) {
   y_log_message(Y_LOG_LEVEL_INFO, "Close plugin Glewlwyd register '%s'", name);
   if (cls != NULL) {
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "config");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "username");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "register");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "verify");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "verify");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "profile/password");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "profile");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "profile");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "profile");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "profile/*");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "profile/scheme/register");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "profile/scheme/register");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "profile/scheme/register/canuse");
-    config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "profile/complete");
+    if (json_object_get(((struct _register_config *)cls)->j_parameters, "registration") == json_true() || json_object_get(((struct _register_config *)cls)->j_parameters, "registration") == NULL) {
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "config");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "username");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "register");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "verify");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "verify");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "profile/password");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "profile");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "profile");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "profile");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "profile/*");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "profile/scheme/register");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "profile/scheme/register");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "profile/scheme/register/canuse");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "profile/complete");
+    }
+    if (json_object_get(((struct _register_config *)cls)->j_parameters, "update-email") == json_true()) {
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "update-email");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "update-email");
+    }
     o_free(((struct _register_config *)cls)->name);
     pthread_mutex_destroy(&((struct _register_config *)cls)->insert_lock);
     json_decref(((struct _register_config *)cls)->j_parameters);
