@@ -99,8 +99,8 @@ class RegisterParams extends Component {
       props.mod.parameters["update-email"] = false;
     }
 
-    if (!props.mod.parameters["update-email-code-duration"]) {
-      props.mod.parameters["update-email-code-duration"] = 600;
+    if (!props.mod.parameters["update-email-token-duration"]) {
+      props.mod.parameters["update-email-token-duration"] = 600;
     }
     
     if (!props.mod.parameters["update-email-from"]) {
@@ -223,8 +223,8 @@ class RegisterParams extends Component {
       nextProps.mod.parameters["update-email"] = false;
     }
 
-    if (!nextProps.mod.parameters["update-email-code-duration"]) {
-      nextProps.mod.parameters["update-email-code-duration"] = 600;
+    if (!nextProps.mod.parameters["update-email-token-duration"]) {
+      nextProps.mod.parameters["update-email-token-duration"] = 600;
     }
     
     if (!nextProps.mod.parameters["update-email-from"]) {
@@ -477,9 +477,9 @@ class RegisterParams extends Component {
       }
     }
     if (this.state.mod.parameters["update-email"]) {
-      if (!this.state.mod.parameters["update-email-code-duration"]) {
+      if (!this.state.mod.parameters["update-email-token-duration"]) {
         hasError = true;
-        errorList["update-email-code-duration"] = i18next.t("admin.mod-register-update-email-code-duration-error");
+        errorList["update-email-token-duration"] = i18next.t("admin.mod-register-update-email-token-duration-error");
         errorList["update-email"] = true;
       }
       if (!this.state.mod.parameters["host"]) {
@@ -820,9 +820,9 @@ class RegisterParams extends Component {
                   <div className="form-group">
                     <div className="input-group mb-3">
                       <div className="input-group-prepend">
-                        <label className="input-group-text" htmlFor="mod-register-update-email-code-duration">{i18next.t("admin.mod-register-update-email-code-duration")}</label>
+                        <label className="input-group-text" htmlFor="mod-register-update-email-token-duration">{i18next.t("admin.mod-register-update-email-token-duration")}</label>
                       </div>
-                      <input type="number" min="0" max="65536" step="1" className="form-control" id="mod-register-update-email-code-duration" onChange={(e) => this.changeParam(e, "update-email-code-duration", true)} value={this.state.mod.parameters["update-email-code-duration"]} placeholder={i18next.t("admin.mod-register-update-email-code-duration-ph")}/>
+                      <input type="number" min="0" max="65536" step="1" className="form-control" id="mod-register-update-email-token-duration" onChange={(e) => this.changeParam(e, "update-email-token-duration", true)} value={this.state.mod.parameters["update-email-token-duration"]} placeholder={i18next.t("admin.mod-register-update-email-token-duration-ph")}/>
                     </div>
                   </div>
                   <hr/>

@@ -12,8 +12,10 @@ import Register from './Register';
 import Session from './Session';
 import Password from './Password';
 import SchemePage from './SchemePage';
+
 import Confirm from '../Modal/Confirm';
 import Message from '../Modal/Message';
+import Edit from '../Modal/Edit';
 
 class App extends Component {
   constructor(props) {
@@ -42,13 +44,30 @@ class App extends Component {
         title: "",
         message: ""
       },
+      editModal: {
+        title: "",
+        message: "",
+        value: "",
+        placeHolder: "",
+        callback: false
+      },
+      plugins: {
+        oauth2: {
+        },
+        oidc: {
+        }
+      },
       invalidCredentialMessage: false,
       invalidDelegateMessage: false,
       tokenParsed: false,
-      registerDefaultLang: false
+      registerDefaultLang: false,
+      updateEmail: [],
+      updateEmailModule: false,
+      register: false
     };
     
     this.fetchProfile = this.fetchProfile.bind(this);
+    this.updateEmailCallback = this.updateEmailCallback.bind(this);
     
     messageDispatcher.subscribe('App', (message) => {
       if (message.type === 'nav') {
@@ -108,14 +127,39 @@ class App extends Component {
         } else {
           this.setState({registerProfile: false, schemeList: [], profileList: false, registering: false});
         }
+      } else if (message.type === 'updateEmailAvailable') {
+        var updateEmail = this.state.updateEmail;
+        if (message.module) {
+          updateEmail.push(message.module);
+        }
+        this.setState({updateEmail: updateEmail, register: true});
+      } else if (message.type === 'updateEmail') {
+        if (message.module) {
+          var editModal = {
+            title: i18next.t("profile.update-email-modal-title"),
+            message : i18next.t("profile.update-email-modal-message"),
+            value : "",
+            placeHolder : i18next.t("profile.update-email-modal-ph"),
+            callback : this.updateEmailCallback,
+          }
+          this.setState({editModal: editModal, updateEmailModule: message.module}, () => {
+            $("#editModal").modal({keyboard: false, show: true});
+          });
+        }
       }
     });
     
     if (this.state.config) {
-      if (!this.state.config.params.register) {
-        this.fetchProfile();
-      } else {
+      if (this.state.config.params.register) {
         this.fetchRegistration();
+      } else if (this.state.config.params.updateEmail) {
+        this.updateEmailVerifyToken(this.state.config.params.updateEmail, this.state.config.params.updateEmailToken)
+        .then(() => {
+          messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("profile.update-email-success")});
+          this.fetchProfile();
+        });
+      } else {
+        this.fetchProfile();
       }
     }
   }
@@ -146,6 +190,50 @@ class App extends Component {
                     }
                   });
                 }
+                apiManager.glewlwydRequest("/profile/session")
+                .then((res) => {
+                  this.setState({sessionList: res});
+                })
+                .fail(() => {
+                  messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+                });
+                apiManager.glewlwydRequest("/profile/plugin")
+                .then((res) => {
+                  res.forEach((plugin) => {
+                    if (plugin.module === "oauth2-glewlwyd") {
+                      apiManager.glewlwydRequestSub("/" + plugin.name + "/profile/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
+                      .then((resPlugin) => {
+                        var plugins = this.state.plugins;
+                        plugins.oauth2[plugin.name] = resPlugin;
+                        this.setState({plugins: plugins});
+                      })
+                      .fail((err) => {
+                        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+                      });
+                    } else if (plugin.module === "oidc") {
+                      apiManager.glewlwydRequestSub("/" + plugin.name + "/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
+                      .then((resPlugin) => {
+                        var plugins = this.state.plugins;
+                        plugins.oidc[plugin.name] = resPlugin;
+                        this.setState({plugins: plugins});
+                      })
+                      .fail((err) => {
+                        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+                      });
+                    } else if (plugin.module === "register") {
+                      apiManager.glewlwydRequestSub("/" + plugin.name + "/update-email/")
+                      .then(() => {
+                        var updateEmail = this.state.updateEmail;
+                        updateEmail.push(plugin.name);
+                        this.setState({updateEmail: updateEmail});
+                      });
+                    }
+                  });
+                  messageDispatcher.sendMessage('App', {type: "sessionComplete"});
+                })
+                .fail(() => {
+                  messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+                });
               });
             })
             .fail((error) => {
@@ -292,9 +380,35 @@ class App extends Component {
     });
   }
 
+  updateEmailVerifyToken(module, token) {
+    return apiManager.glewlwydRequest("/" + module + "/update-email/" + encodeURIComponent(token), "PUT")
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    });
+  }
+  
   showPasswordChangeNotification(result, data) {
     if (result) {
       messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("profile.password-change-success")});
+    }
+  }
+  
+  updateEmailCallback(result, value) {
+    $("#editModal").modal("hide");
+    if (result) {
+      apiManager.glewlwydRequest("/" + this.state.updateEmailModule + "/update-email", "POST", {email: value})
+      .then((res) => {
+        var messageModal = {
+          title: i18next.t("profile.update-email-modal-title"),
+          message: [i18next.t("profile.update-email-modal-complete-message", {email: value})]
+        };
+        this.setState({messageModal: messageModal}, () => {
+          $("#messageModal").modal({keyboard: false, show: true});
+        });
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      });
     }
   }
   
@@ -311,7 +425,7 @@ class App extends Component {
       } else if (this.state.config.params.register) {
         userJsx = <Register config={this.state.config} registerConfig={this.state.registerConfig} registerProfile={this.state.registerProfile} registerSchemes={this.state.registerSchemes} registerValid={this.state.registerValid} registerDefaultLang={this.state.registerDefaultLang} />
       } else {
-        userJsx = <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false} profileUpdate={this.state.profileUpdate} loggedIn={this.state.loggedIn}/>
+        userJsx = <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false} profileUpdate={this.state.profileUpdate} loggedIn={this.state.loggedIn} updateEmail={this.state.updateEmail}/>
       }
       return (
         <div aria-live="polite" aria-atomic="true" className="glwd-container">
@@ -334,7 +448,7 @@ class App extends Component {
                     {userJsx}
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="session"?" active":"")}>
-                    <Session config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} loggedIn={this.state.loggedIn} />
+                    <Session config={this.state.config} plugins={this.state.plugins} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="password"?" active":"")}>
                     <Password config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} loggedIn={this.state.loggedIn} callback={this.showPasswordChangeNotification} />
@@ -349,6 +463,11 @@ class App extends Component {
           <Notification loggedIn={this.state.loggedIn||this.state.config.params.register}/>
           <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
           <Message title={this.state.messageModal.title} message={this.state.messageModal.message} />
+          <Edit title={this.state.editModal.title} 
+                message={this.state.editModal.message} 
+                value={this.state.editModal.value} 
+                placeHolder={this.state.editModal.placeHolder} 
+                callback={this.state.editModal.callback} />
         </div>
       );
     } else {

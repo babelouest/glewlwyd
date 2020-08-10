@@ -833,6 +833,13 @@
     "mod-register-verification-code-duration": "Verification code duration (seconds)",
     "mod-register-verification-code-duration-ph": "e.g. 600",
     "mod-register-verification-code-duration-error": "Verification code duration is mandatory and must be above 0",
+    "mod-register-title": "Register account",
+    "mod-register-update-email-title": "Update e-mail address",
+    "mod-register-reset-credentials-title": "Reset credential",
+    "mod-register-smtp-params-title": "SMTP parameters",
+    "mod-register-enabled": "Register account enabled",
+    "mod-register-update-email": "Update e-mail address enabled",
+    "mod-register-update-email-token-duration": "Token duration (seconds)",
     "mod-oauth2-redirect_uri": "Redirect URI",
     "mod-oauth2-redirect_uri-ph": "e.g. https://example.com/callback",
     "mod-oauth2-redirect_uri-error": "Redirect URI is mandatory",
@@ -1066,7 +1073,12 @@
     "scheme-oauth2-btn-add": "Add",
     "scheme-oauth2-confirm-title": "Remove an account",
     "scheme-oauth2-confirm-message": "Are you sure you want to remove the account {{provider}}?",
-    "scheme-oauth2-registration-invalid": "Registration invalid"
+    "scheme-oauth2-registration-invalid": "Registration invalid",
+    "update-email-modal-title": "Update e-mail address",
+    "update-email-modal-message": "Please enter new e-mail address",
+    "update-email-modal-ph": "e.g.: alice@rxample.com",
+    "update-email-modal-complete-message": "A message has been sent to {{email}}, please confirm by clicking on the link en the message",
+    "update-email-success": "E-maiol address has been updated"
   },
   "callback": {
     "button-login": "Back to login page",

@@ -11,15 +11,8 @@ class Session extends Component {
     
     this.state = {
       config: props.config,
-      profile: props.profile,
-      loggedIn: props.loggedIn,
       sessionList: [],
-      plugins: {
-        oauth2: {
-        },
-        oidc: {
-        }
-      },
+      plugins: props.plugins,
       disableObject: false
     };
     
@@ -30,68 +23,26 @@ class Session extends Component {
     this.disableToken = this.disableToken.bind(this);
     this.disableTokenConfirm = this.disableTokenConfirm.bind(this);
     
-    if (this.state.profile) {
-      this.fetchLists();
-    }
+    this.fetchLists();
   }
   
   componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
-      profile: nextProps.profile,
-      loggedIn: nextProps.loggedIn
+      plugins: nextProps.plugins
     }, () => {
-      if (this.state.profile) {
-        this.fetchLists();
-      }
-      if (!this.state.loggedIn) {
-        this.setState({
-          profile: [],
-          sessionList: []
-        });
-      };
+      this.fetchLists();
     });
   }
   
   fetchLists() {
-    if (this.state.loggedIn) {
-      apiManager.glewlwydRequest("/profile/session")
-      .then((res) => {
-        this.setState({sessionList: res});
-      })
-      .fail(() => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-      });
-      apiManager.glewlwydRequest("/profile/plugin")
-      .then((res) => {
-        res.forEach((plugin) => {
-          if (plugin.module === "oauth2-glewlwyd") {
-            apiManager.glewlwydRequestSub("/" + plugin.name + "/profile/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
-            .then((resPlugin) => {
-              var plugins = this.state.plugins;
-              plugins.oauth2[plugin.name] = resPlugin;
-              this.setState({plugins: plugins});
-            })
-            .fail((err) => {
-            });
-          } else if (plugin.module === "oidc") {
-            apiManager.glewlwydRequestSub("/" + plugin.name + "/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
-            .then((resPlugin) => {
-              var plugins = this.state.plugins;
-              plugins.oidc[plugin.name] = resPlugin;
-              this.setState({plugins: plugins});
-            })
-            .fail((err) => {
-            });
-          }
-        });
-      })
-      .fail(() => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-      });
-    } else {
-      this.setState({sessionList: []});
-    }
+    apiManager.glewlwydRequest("/profile/session")
+    .then((res) => {
+      this.setState({sessionList: res});
+    })
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    });
   }
   
   getTable(header, rows) {

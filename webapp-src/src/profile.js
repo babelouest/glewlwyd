@@ -51,6 +51,8 @@ var initApp = () => {
           callback_url: getParameterByName("callback_url"),
           delegate: getParameterByName("delegate")||false,
           register: getParameterByName("register")||false,
+          updateEmail: getParameterByName("updateEmail")||false,
+          updateEmailToken: getParameterByName("token")||false,
           token: getParameterByName("token")||false,
           scheme_name: getParameterByName("scheme_name")||false,
           provider: getParameterByName("provider")||false
