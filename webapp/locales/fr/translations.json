@@ -833,6 +833,14 @@
     "mod-register-verification-code-duration": "Durée de validité du code (secondes)",
     "mod-register-verification-code-duration-ph": "Ex: 600",
     "mod-register-verification-code-duration-error": "La durée de validité est obligatoire et doit être supérieure à 0",
+    "mod-register-title": "Création de compte",
+    "mod-register-update-email-title": "Mise à jour de l'adresse courriel",
+    "mod-register-reset-credentials-title": "Authentification perdue",
+    "mod-register-smtp-params-title": "Paramètres SMTP",
+    "mod-register-enabled": "Création de compte autorisé",
+    "mod-register-update-email": "Mise à jopur de l'adresse courriel autorisée",
+    "mod-register-update-email-token-duration": "Durée de vie du token (en secondes)",
+    "mod-register-update-email-token-duration-ph": "Ex: 600",
     "mod-oauth2-redirect_uri": "URI de redirection",
     "mod-oauth2-redirect_uri-ph": "Ex: https://example.com/callback",
     "mod-oauth2-redirect_uri-error": "L'URI de redirection est obligatoire",
@@ -1066,7 +1074,12 @@
     "scheme-oauth2-btn-add": "Ajouter",
     "scheme-oauth2-confirm-title": "Supprimer un compte",
     "scheme-oauth2-confirm-message": "Êtes-vous sûr de vouloir supprimer le compte {{provider}}?",
-    "scheme-oauth2-registration-invalid": "Enregistrement invalide"
+    "scheme-oauth2-registration-invalid": "Enregistrement invalide",
+    "update-email-modal-title": "Mettre à jour l'adresse courriel",
+    "update-email-modal-message": "Veuillez entrer la nouvelle adresse courriel",
+    "update-email-modal-ph": "Ex: alice@rxample.com",
+    "update-email-modal-complete-message": "Un message de conformation a été envoyé à l'adresse {{email}}, veuillez cliquer sur le lien pour confirmer",
+    "update-email-success": "L'adresse courriel a été mise à jour"
   },
   "callback": {
     "button-login": "Retourner à la page de connexion",
