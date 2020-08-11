@@ -862,7 +862,6 @@ static int register_update_email_trigger(struct _register_config * config, const
     if (rand_string(token, GLEWLWYD_TOKEN_LENGTH) != NULL) {
       if ((token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, token)) != NULL) {
         if ((body = str_replace(get_template_email_update_property(config->j_parameters, lang, "body-pattern"), "{TOKEN}", token)) != NULL) {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "body is %s", body);
           if (ulfius_send_smtp_rich_email(json_string_value(json_object_get(config->j_parameters, "host")),
                                          json_integer_value(json_object_get(config->j_parameters, "port")),
                                          json_object_get(config->j_parameters, "use-tls")==json_true()?1:0,
@@ -875,7 +874,7 @@ static int register_update_email_trigger(struct _register_config * config, const
                                          NULL,
                                          json_string_length(json_object_get(config->j_parameters, "update-email-content-type"))?json_string_value(json_object_get(config->j_parameters, "update-email-content-type")):"text/plain; charset=utf-8",
                                          get_template_email_update_property(config->j_parameters, lang, "subject"),
-                                         body) == U_OK || 1) {
+                                         body) == U_OK) {
             y_log_message(Y_LOG_LEVEL_WARNING, "Security - Update e-mail - token sent to email %s at IP Address %s", email, ip_source);
             if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
               expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)json_integer_value(json_object_get(config->j_parameters, "update-email-token-duration"))));
