@@ -252,7 +252,9 @@ class RegisterParams extends Component {
   changeParam(e, param, number) {
     var mod = this.state.mod;
     if (number) {
-      mod.parameters[param] = parseInt(e.target.value);
+      if (!isNaN(e.target.value)) {
+        mod.parameters[param] = parseInt(e.target.value);
+      }
     } else {
       mod.parameters[param] = e.target.value;
     }
