@@ -21,7 +21,9 @@
 #include "unit-tests.h"
 
 #define SERVER_URI "http://localhost:4593/api"
-#define USERNAME "admin"
+#define USERNAME_ADMIN "admin"
+#define USERNAME "user1"
+#define EMAIL "dev1@glewlwyd"
 #define PASSWORD "password"
 #define MOD_TYPE "register"
 #define MOD_NAME "register"
@@ -48,6 +50,8 @@
 #define MAIL_PORT_WITHOUT_USERNAME 2527
 #define MAIL_PORT_CODE_EXPIRED 2528
 #define MAIL_PORT_MULTILANG 2529
+#define MAIL_PORT_UPDATE_EMAIL_INVALID_TOKEN 2530
+#define MAIL_PORT_UPDATE_EMAIL_VALID_TOKEN 2531
 #define MAIL_FROM "glewlwyd"
 #define MAIL_SUBJECT "Authorization Code"
 #define MAIL_SUBJECT_FR "Code d'autorisation"
@@ -65,6 +69,7 @@ char * mail_host = NULL;
 #define STREQU(a,b)  (strcmp(a, b) == 0)
 
 struct _u_request admin_req;
+struct _u_request user_req;
 
 struct smtp_manager {
   char * mail_data;
@@ -539,6 +544,92 @@ START_TEST(test_glwd_register_add_mod_verify_multilang_without_username)
 }
 END_TEST
 
+START_TEST(test_glwd_register_add_mod_noverify_registration_enabled)
+{
+  json_t * j_body = json_pack("{ss ss ss s{so ss si s[s] ss s[{ss ss ss ss}] so} so}",
+                              "module", MOD_TYPE,
+                              "name", MOD_NAME,
+                              "display_name", MOD_DISPLAY_NAME,
+                              "parameters",
+                                "registration", json_true(),
+                                "session-key", SESSION_KEY,
+                                "session-duration", SESSION_DURATION,
+                                "scope",
+                                  SCOPE,
+                                "set-password", "always",
+                                "schemes",
+                                  "module", SCHEME_TYPE,
+                                  "name", SCHEME_NAME,
+                                  "register", "always",
+                                  "display_name", SCHEME_DISPLAY_NAME,
+                                "verify-email", json_false(),
+                              "enabled", json_true());
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+}
+END_TEST
+
+START_TEST(test_glwd_register_add_mod_registration_disabled_update_email_enabled_for_token_invalid)
+{
+  json_t * j_body = json_pack("{ss ss ss so s{so so si ss ss ss si s{s{sossss}s{sossss}}}}",
+                              "module", MOD_TYPE,
+                              "name", MOD_NAME,
+                              "display_name", MOD_DISPLAY_NAME,
+                              "enabled", json_true(),
+                              "parameters",
+                                "registration", json_false(),
+                                "update-email", json_true(),
+                                "update-email-token-duration", GLEWLWYD_TOKEN_LENGTH,
+                                "update-email-from", MAIL_FROM,
+                                "update-email-content-type", MAIL_CONTENT_TYPE,
+                                "host", MAIL_HOST,
+                                "port", MAIL_PORT_UPDATE_EMAIL_INVALID_TOKEN,
+                                "templatesUpdateEmail",
+                                  "en",
+                                    "defaultLang", json_true(),
+                                    "subject", MAIL_SUBJECT,
+                                    "body-pattern", MAIL_BODY_PATTERN MAIL_BODY_TOKEN,
+                                  "fr",
+                                    "defaultLang", json_false(),
+                                    "subject", MAIL_SUBJECT_FR,
+                                    "body-pattern", MAIL_BODY_PATTERN_FR MAIL_BODY_TOKEN);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+}
+END_TEST
+
+START_TEST(test_glwd_register_add_mod_registration_disabled_update_email_enabled_for_token_valid)
+{
+  json_t * j_body = json_pack("{ss ss ss so s{so so si ss ss ss si s{s{sossss}s{sossss}}}}",
+                              "module", MOD_TYPE,
+                              "name", MOD_NAME,
+                              "display_name", MOD_DISPLAY_NAME,
+                              "enabled", json_true(),
+                              "parameters",
+                                "registration", json_false(),
+                                "update-email", json_true(),
+                                "update-email-token-duration", GLEWLWYD_TOKEN_LENGTH,
+                                "update-email-from", MAIL_FROM,
+                                "update-email-content-type", MAIL_CONTENT_TYPE,
+                                "host", MAIL_HOST,
+                                "port", MAIL_PORT_UPDATE_EMAIL_VALID_TOKEN,
+                                "templatesUpdateEmail",
+                                  "en",
+                                    "defaultLang", json_true(),
+                                    "subject", MAIL_SUBJECT,
+                                    "body-pattern", MAIL_BODY_PATTERN MAIL_BODY_TOKEN,
+                                  "fr",
+                                    "defaultLang", json_false(),
+                                    "subject", MAIL_SUBJECT_FR,
+                                    "body-pattern", MAIL_BODY_PATTERN_FR MAIL_BODY_TOKEN);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+}
+END_TEST
+
 START_TEST(test_glwd_register_noverify_check_username)
 {
   json_t * j_body = json_pack("{}");
@@ -585,7 +676,7 @@ START_TEST(test_glwd_register_noverify_username_exists)
   
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/profile", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
 
-  j_body = json_pack("{ss}", "username", USERNAME);
+  j_body = json_pack("{ss}", "username", USERNAME_ADMIN);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/username", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_body);
@@ -1483,6 +1574,122 @@ START_TEST(test_glwd_register_verify_without_username_multilang_default_cancel_r
 }
 END_TEST
 
+START_TEST(test_glwd_register_noverify_registration_disabled)
+{
+  json_t * j_body;
+  struct _u_request req;
+  
+  ulfius_init_request(&req);
+
+  j_body = json_pack("{ss}", "username", NEW_USERNAME_CANCELLED);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/username", NULL, NULL, j_body, NULL, 404, NULL, NULL, NULL), 1);
+  
+  ulfius_clean_request(&req);
+  json_decref(j_body);
+}
+END_TEST
+
+START_TEST(test_glwd_update_email_invalid_params)
+{
+  json_t * j_body;
+  
+  j_body = json_pack("{si}", "email", 42);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" MOD_NAME "/update-email", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" MOD_NAME "/update-email", NULL, NULL, NULL, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  j_body = json_pack("{ss}", "emailerror", NEW_EMAIL);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" MOD_NAME "/update-email", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
+  
+  json_decref(j_body);
+}
+END_TEST
+
+START_TEST(test_glwd_update_email_invalid_token)
+{
+  json_t * j_body;
+  struct smtp_manager manager;
+  pthread_t thread;
+  char * url;
+
+  manager.mail_data = NULL;
+  manager.port = MAIL_PORT_UPDATE_EMAIL_INVALID_TOKEN;
+  manager.sockfd = 0;
+  manager.body_pattern = MAIL_BODY_PATTERN;
+  pthread_create(&thread, NULL, simple_smtp, &manager);
+  
+  j_body = json_pack("{ss}", "email", NEW_EMAIL);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" MOD_NAME "/update-email", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/" MOD_NAME "/update-email/error", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
+  url = msprintf(SERVER_URI "/" MOD_NAME "/update-email/%s", manager.mail_data);
+  url[o_strlen(url)-2] = '-';
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", url, NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
+  o_free(url);
+  
+  json_decref(j_body);
+  o_free(manager.mail_data);
+}
+END_TEST
+
+START_TEST(test_glwd_update_email_valid_token)
+{
+  json_t * j_body, * j_user;
+  struct smtp_manager manager;
+  pthread_t thread;
+  char * url;
+  struct _u_request req;
+  struct _u_response resp;
+
+  manager.mail_data = NULL;
+  manager.port = MAIL_PORT_UPDATE_EMAIL_VALID_TOKEN;
+  manager.sockfd = 0;
+  manager.body_pattern = MAIL_BODY_PATTERN;
+  pthread_create(&thread, NULL, simple_smtp, &manager);
+  
+  j_body = json_pack("{ss}", "email", NEW_EMAIL);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "/" MOD_NAME "/update-email", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  j_user = json_pack("{ssss}", "username", USERNAME, "email", EMAIL);
+  ck_assert_ptr_ne(j_user, NULL);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/user/" USERNAME, NULL, NULL, NULL, NULL, 200, j_user, NULL, NULL), 1);
+  json_decref(j_user);
+  
+  url = msprintf(SERVER_URI "/" MOD_NAME "/update-email/%s", manager.mail_data);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+  o_free(url);
+  
+  j_user = json_pack("{ssss}", "username", USERNAME, "email", NEW_EMAIL);
+  ck_assert_ptr_ne(j_user, NULL);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/user/" USERNAME, NULL, NULL, NULL, NULL, 200, j_user, NULL, NULL), 1);
+  json_decref(j_user);
+  
+  o_free(manager.mail_data);
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  ulfius_copy_request(&req, &admin_req);
+  ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET", U_OPT_HTTP_URL, SERVER_URI "/user/" USERNAME, U_OPT_NONE);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  j_user = ulfius_get_json_body_response(&resp, NULL);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  json_object_set_new(j_user, "email", json_string(EMAIL));
+  ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "PUT", U_OPT_JSON_BODY, j_user, U_OPT_NONE);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  y_log_message(Y_LOG_LEVEL_DEBUG, "resp %s", resp.binary_body);
+  ck_assert_int_eq(resp.status, 200);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -1520,6 +1727,17 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_register_verify_without_username_multilang_fr_cancel_registration);
   tcase_add_test(tc_core, test_glwd_register_verify_without_username_multilang_default_cancel_registration);
   tcase_add_test(tc_core, test_glwd_register_delete_mod);
+  tcase_add_test(tc_core, test_glwd_register_add_mod_noverify_registration_enabled);
+  tcase_add_test(tc_core, test_glwd_register_noverify_cancel_registration);
+  tcase_add_test(tc_core, test_glwd_register_delete_mod);
+  tcase_add_test(tc_core, test_glwd_register_add_mod_registration_disabled_update_email_enabled_for_token_invalid);
+  tcase_add_test(tc_core, test_glwd_register_noverify_registration_disabled);
+  tcase_add_test(tc_core, test_glwd_update_email_invalid_params);
+  tcase_add_test(tc_core, test_glwd_update_email_invalid_token);
+  tcase_add_test(tc_core, test_glwd_register_delete_mod);
+  tcase_add_test(tc_core, test_glwd_register_add_mod_registration_disabled_update_email_enabled_for_token_valid);
+  tcase_add_test(tc_core, test_glwd_update_email_valid_token);
+  tcase_add_test(tc_core, test_glwd_register_delete_mod);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
@@ -1541,6 +1759,30 @@ int main(int argc, char *argv[])
   // Getting a valid session id for authenticated http requests
   ulfius_init_request(&auth_req);
   ulfius_init_request(&admin_req);
+  ulfius_init_request(&user_req);
+  ulfius_init_response(&auth_resp);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{ssss}", "username", USERNAME_ADMIN, "password", PASSWORD);
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  res = ulfius_send_http_request(&auth_req, &auth_resp);
+  if (res == U_OK && auth_resp.status == 200) {
+    for (i=0; i<auth_resp.nb_cookies; i++) {
+      char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
+      u_map_put(admin_req.map_header, "Cookie", cookie);
+      o_free(cookie);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "User %s authenticated", USERNAME_ADMIN);
+      do_test = 1;
+    }
+    ulfius_clean_response(&auth_resp);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication %s (%d/%d/%d)", USERNAME_ADMIN, res, auth_resp.status, auth_resp.nb_cookies);
+  }
+  ulfius_clean_request(&auth_req);
+  
+  ulfius_init_request(&auth_req);
+  auth_req.check_server_certificate = 0;
   ulfius_init_response(&auth_resp);
   auth_req.http_verb = strdup("POST");
   auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
@@ -1551,14 +1793,16 @@ int main(int argc, char *argv[])
   if (res == U_OK && auth_resp.status == 200) {
     for (i=0; i<auth_resp.nb_cookies; i++) {
       char * cookie = msprintf("%s=%s", auth_resp.map_cookie[i].key, auth_resp.map_cookie[i].value);
-      u_map_put(admin_req.map_header, "Cookie", cookie);
+      u_map_put(user_req.map_header, "Cookie", cookie);
       o_free(cookie);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "User %s authenticated", USERNAME);
       do_test = 1;
     }
-    ulfius_clean_response(&auth_resp);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication");
+    do_test = 0;
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error authentication %s (%d/%d/%d)", USERNAME, res, auth_resp.status, auth_resp.nb_cookies);
   }
+  ulfius_clean_response(&auth_resp);
   ulfius_clean_request(&auth_req);
   
   if (do_test) {
@@ -1571,6 +1815,7 @@ int main(int argc, char *argv[])
   }
   
   ulfius_clean_request(&admin_req);
+  ulfius_clean_request(&user_req);
   
   return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
