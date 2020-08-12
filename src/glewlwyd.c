@@ -452,7 +452,10 @@ int main (int argc, char ** argv) {
   }
   
   if (res == U_OK) {
+// TODO: Enable when available
+#if 0
     ulfius_send_request_init();
+#endif
     // Wait until stop signal is broadcasted
     pthread_mutex_lock(&global_handler_close_lock);
     pthread_cond_wait(&global_handler_close_cond, &global_handler_close_lock);
@@ -631,7 +634,10 @@ void exit_server(struct config_elements ** config, int exit_value) {
     }
     h_close_db((*config)->conn);
     h_clean_connection((*config)->conn);
+// TODO: Enable when available
+#if 0
     ulfius_send_request_close();
+#endif
     
     // Cleaning data
     o_free((*config)->instance);
