@@ -701,6 +701,8 @@
     "mod-email-subject-error": "Le sujet est obligatoire pour la langue '{{lang}}' - ",
     "mod-email-body-pattern": "Corps du courriel, la chaîne {CODE} sera remplacée par le code",
     "mod-email-body-pattern-ph": "Ex: 'Le code de confirmation est {CODE}'",
+    "mod-email-body-pattern-token": "Corps du courriel, la chaîne {TOKEN} sera remplacée par le token",
+    "mod-email-body-pattern-token-ph": "Ex: 'Cliquez sur le lien suivant: https://glewlwyd.tld/?token={TOKEN}'",
     "mod-email-body-pattern-error": "Le corps du courriel est obligatoire pour la langue '{{lang}}', et doit contenir la chaine {CODE} - ",
     "mod-email-new-lang-ph": "xx",
     "mod-email-new-lang-add": "Ajouter",

@@ -701,6 +701,8 @@
     "mod-email-subject-error": "Subject is mandatory for language '{{lang}}' - ",
     "mod-email-body-pattern": "E-mail body, the pattern {CODE} will be replaced by the code",
     "mod-email-body-pattern-ph": "e.g. 'Confirmation code is {CODE}'",
+    "mod-email-body-pattern-token": "E-mail body, the pattern {TOKEN} will be replaced by the token",
+    "mod-email-body-pattern-token-ph": "e.g. 'Click on the following link: https://glewlwyd.tld/?token={TOKEN}'",
     "mod-email-body-pattern-error": "E-mail body is mandatory for language '{{lang}}' and must contain the pattern {CODE} - ",
     "mod-email-new-lang-ph": "xx",
     "mod-email-new-lang-add": "Add",
