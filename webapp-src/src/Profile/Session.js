@@ -11,37 +11,23 @@ class Session extends Component {
     
     this.state = {
       config: props.config,
-      sessionList: [],
+      sessionList: props.sessionList,
       plugins: props.plugins,
       disableObject: false
     };
     
-    this.fetchLists = this.fetchLists.bind(this);
     this.getTable = this.getTable.bind(this);
     this.disableSession = this.disableSession.bind(this);
     this.disableSessionConfirm = this.disableSessionConfirm.bind(this);
     this.disableToken = this.disableToken.bind(this);
     this.disableTokenConfirm = this.disableTokenConfirm.bind(this);
-    
-    this.fetchLists();
   }
   
   componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
-      plugins: nextProps.plugins
-    }, () => {
-      this.fetchLists();
-    });
-  }
-  
-  fetchLists() {
-    apiManager.glewlwydRequest("/profile/session")
-    .then((res) => {
-      this.setState({sessionList: res});
-    })
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      plugins: nextProps.plugins,
+      sessionList: nextProps.sessionList
     });
   }
   
@@ -74,7 +60,7 @@ class Session extends Component {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         })
         .always(() => {
-          this.fetchLists();
+          messageDispatcher.sendMessage('App', {type: "refreshSession"});
           this.setState({disableObject: false});
         });
       }
@@ -100,7 +86,7 @@ class Session extends Component {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           })
           .always(() => {
-            this.fetchLists();
+            messageDispatcher.sendMessage('App', {type: "refreshSession"});
             this.setState({disableObject: false});
             messageDispatcher.sendMessage('App', {type: "closeConfirm"});
           });
@@ -113,7 +99,7 @@ class Session extends Component {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           })
           .always(() => {
-            this.fetchLists();
+            messageDispatcher.sendMessage('App', {type: "refreshSession"});
             this.setState({disableObject: false});
           });
         }

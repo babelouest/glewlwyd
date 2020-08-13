@@ -57,6 +57,7 @@ class App extends Component {
         oidc: {
         }
       },
+      sessionList: [],
       invalidCredentialMessage: false,
       invalidDelegateMessage: false,
       tokenParsed: false,
@@ -68,6 +69,7 @@ class App extends Component {
     
     this.fetchProfile = this.fetchProfile.bind(this);
     this.updateEmailCallback = this.updateEmailCallback.bind(this);
+    this.refreshSession = this.refreshSession.bind(this);
     
     messageDispatcher.subscribe('App', (message) => {
       if (message.type === 'nav') {
@@ -146,6 +148,8 @@ class App extends Component {
             $("#editModal").modal({keyboard: false, show: true});
           });
         }
+      } else if (message.type === 'refreshSession') {
+        this.refreshSession();
       }
     });
     
@@ -190,51 +194,8 @@ class App extends Component {
                     }
                   });
                 }
-                apiManager.glewlwydRequest("/profile/session")
-                .then((res) => {
-                  this.setState({sessionList: res});
-                })
-                .fail(() => {
-                  messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-                });
-                apiManager.glewlwydRequest("/profile/plugin")
-                .then((res) => {
-                  res.forEach((plugin) => {
-                    if (plugin.module === "oauth2-glewlwyd") {
-                      apiManager.glewlwydRequestSub("/" + plugin.name + "/profile/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
-                      .then((resPlugin) => {
-                        var plugins = this.state.plugins;
-                        plugins.oauth2[plugin.name] = resPlugin;
-                        this.setState({plugins: plugins});
-                      })
-                      .fail((err) => {
-                        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-                      });
-                    } else if (plugin.module === "oidc") {
-                      apiManager.glewlwydRequestSub("/" + plugin.name + "/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
-                      .then((resPlugin) => {
-                        var plugins = this.state.plugins;
-                        plugins.oidc[plugin.name] = resPlugin;
-                        this.setState({plugins: plugins});
-                      })
-                      .fail((err) => {
-                        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-                      });
-                    } else if (plugin.module === "register") {
-                      apiManager.glewlwydRequestSub("/" + plugin.name + "/update-email/")
-                      .then(() => {
-                        var updateEmail = this.state.updateEmail;
-                        updateEmail.push(plugin.name);
-                        this.setState({updateEmail: updateEmail});
-                      });
-                    }
-                  });
-                  messageDispatcher.sendMessage('App', {type: "sessionComplete"});
-                })
-                .fail(() => {
-                  messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-                });
               });
+              this.refreshSession();
             })
             .fail((error) => {
               this.setState({loggedIn: false, schemeList: [], invalidDelegateMessage: false, invalidCredentialMessage: true, profileUpdate: false}, () => {
@@ -280,6 +241,53 @@ class App extends Component {
         });
       });
     }
+  }
+  
+  refreshSession() {
+    apiManager.glewlwydRequest("/profile/session")
+    .then((res) => {
+      this.setState({sessionList: res});
+    })
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    });
+    apiManager.glewlwydRequest("/profile/plugin")
+    .then((res) => {
+      res.forEach((plugin) => {
+        if (plugin.module === "oauth2-glewlwyd") {
+          apiManager.glewlwydRequestSub("/" + plugin.name + "/profile/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
+          .then((resPlugin) => {
+            var plugins = this.state.plugins;
+            plugins.oauth2[plugin.name] = resPlugin;
+            this.setState({plugins: plugins});
+          })
+          .fail((err) => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          });
+        } else if (plugin.module === "oidc") {
+          apiManager.glewlwydRequestSub("/" + plugin.name + "/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
+          .then((resPlugin) => {
+            var plugins = this.state.plugins;
+            plugins.oidc[plugin.name] = resPlugin;
+            this.setState({plugins: plugins});
+          })
+          .fail((err) => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          });
+        } else if (plugin.module === "register") {
+          apiManager.glewlwydRequestSub("/" + plugin.name + "/update-email/")
+          .then(() => {
+            var updateEmail = this.state.updateEmail;
+            updateEmail.push(plugin.name);
+            this.setState({updateEmail: updateEmail});
+          });
+        }
+      });
+      messageDispatcher.sendMessage('App', {type: "sessionComplete"});
+    })
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    });
   }
   
   fetchRegistration() {
@@ -414,7 +422,7 @@ class App extends Component {
   
 	render() {
     if (this.state.config) {
-      var userJsx = "", sessionJsx, invalidMessage;
+      var userJsx = "", invalidMessage;
       if (this.state.invalidCredentialMessage) {
         invalidMessage = <div className="alert alert-danger" role="alert">{i18next.t("profile.error-credential-message")}</div>
       } else if (this.state.invalidDelegateMessage) {
@@ -448,7 +456,7 @@ class App extends Component {
                     {userJsx}
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="session"?" active":"")}>
-                    <Session config={this.state.config} plugins={this.state.plugins} />
+                    <Session config={this.state.config} plugins={this.state.plugins} sessionList={this.state.sessionList}/>
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="password"?" active":"")}>
                     <Password config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} loggedIn={this.state.loggedIn} callback={this.showPasswordChangeNotification} />
