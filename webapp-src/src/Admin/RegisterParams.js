@@ -11,9 +11,9 @@ class RegisterParams extends Component {
       props.mod = {parameters: {}};
     }
     
-    if (!props.mod.parameters["registration"] && !props.mod.parameters["session-key"]) {
+    if (props.mod.parameters["registration"] === undefined && !props.mod.parameters["session-key"]) {
       props.mod.parameters["registration"] = false;
-    } else if (!props.mod.parameters["registration"] && props.mod.parameters["session-key"]) {
+    } else if (props.mod.parameters["registration"] === undefined && props.mod.parameters["session-key"]) {
       props.mod.parameters["registration"] = true;
     }
 
@@ -60,7 +60,7 @@ class RegisterParams extends Component {
     if (!props.mod.parameters["session-duration"]) {
       props.mod.parameters["session-duration"] = 3600;
     }
-    
+
     if (!props.mod.parameters["subject"]) {
       props.mod.parameters["subject"] = "Confirm registration";
     }
@@ -82,6 +82,10 @@ class RegisterParams extends Component {
       };
     }
 
+    if (props.mod.parameters["update-email"] === undefined) {
+      props.mod.parameters["update-email"] = false;
+    }
+
     if (!props.mod.parameters["update-email-content-type"]) {
       props.mod.parameters["update-email-content-type"] = "text/plain; charset=utf-8";
     }
@@ -95,16 +99,57 @@ class RegisterParams extends Component {
       };
     }
 
-    if (!props.mod.parameters["update-email"]) {
-      props.mod.parameters["update-email"] = false;
-    }
-
     if (!props.mod.parameters["update-email-token-duration"]) {
       props.mod.parameters["update-email-token-duration"] = 600;
     }
     
     if (!props.mod.parameters["update-email-from"]) {
       props.mod.parameters["update-email-from"] = "";
+    }
+
+    if (props.mod.parameters["reset-credentials"] === undefined) {
+      props.mod.parameters["reset-credentials"] = false;
+    }
+
+    if (!props.mod.parameters["reset-credentials-session-key"]) {
+      props.mod.parameters["reset-credentials-session-key"] = "G_CREDENTIALS_SESSION";
+    }
+
+    if (!props.mod.parameters["reset-credentials-session-duration"]) {
+      props.mod.parameters["reset-credentials-session-duration"] = 3600;
+    }
+
+    if (props.mod.parameters["reset-credentials-email"] === undefined) {
+      props.mod.parameters["reset-credentials-email"] = false;
+    }
+
+    if (!props.mod.parameters["reset-credentials-content-type"]) {
+      props.mod.parameters["reset-credentials-content-type"] = "text/plain; charset=utf-8";
+    }
+
+    if (!props.mod.parameters["templatesResetCredentials"]) {
+      props.mod.parameters["templatesResetCredentials"] = {};
+      props.mod.parameters["templatesResetCredentials"][i18next.language] = {
+        subject: "Lost credentials", 
+        "body-pattern": "Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/profile.html?resetCredentials=<your_registration_plugin_name>&token={TOKEN}", 
+        defaultLang: true
+      };
+    }
+
+    if (!props.mod.parameters["reset-credentials-token-duration"]) {
+      props.mod.parameters["reset-credentials-token-duration"] = 600;
+    }
+    
+    if (!props.mod.parameters["reset-credentials-from"]) {
+      props.mod.parameters["reset-credentials-from"] = "";
+    }
+
+    if (props.mod.parameters["reset-credentials-code"] === undefined) {
+      props.mod.parameters["reset-credentials-code"] = false;
+    }
+
+    if (!props.mod.parameters["reset-credentials-code-property"]) {
+      props.mod.parameters["reset-credentials-code-property"] = "reset-credentials-code";
     }
 
     this.state = {
@@ -118,7 +163,9 @@ class RegisterParams extends Component {
       currentLang: i18next.language,
       newLang: "",
       currentLangUpdateEmail: i18next.language,
-      newLangUpdateEmail: ""
+      newLangUpdateEmail: "",
+      currentLangResetCredentials: i18next.language,
+      newLangResetCredentials: ""
     };
     
     if (this.state.check) {
@@ -141,8 +188,10 @@ class RegisterParams extends Component {
       nextProps.mod = {parameters: {}};
     }
     
-    if (!nextProps.mod.parameters["registration"]) {
+    if (nextProps.mod.parameters["registration"] === undefined && !nextProps.mod.parameters["session-key"]) {
       nextProps.mod.parameters["registration"] = false;
+    } else if (nextProps.mod.parameters["registration"] === undefined && nextProps.mod.parameters["session-key"]) {
+      nextProps.mod.parameters["registration"] = true;
     }
 
     if (!nextProps.mod.parameters["verification-code-length"]) {
@@ -206,6 +255,10 @@ class RegisterParams extends Component {
       };
     }
 
+    if (nextProps.mod.parameters["update-email"] === undefined) {
+      nextProps.mod.parameters["update-email"] = false;
+    }
+
     if (!nextProps.mod.parameters["update-email-content-type"]) {
       nextProps.mod.parameters["update-email-content-type"] = "text/plain; charset=utf-8";
     }
@@ -219,16 +272,57 @@ class RegisterParams extends Component {
       };
     }
 
-    if (!nextProps.mod.parameters["update-email"]) {
-      nextProps.mod.parameters["update-email"] = false;
-    }
-
     if (!nextProps.mod.parameters["update-email-token-duration"]) {
       nextProps.mod.parameters["update-email-token-duration"] = 600;
     }
     
     if (!nextProps.mod.parameters["update-email-from"]) {
       nextProps.mod.parameters["update-email-from"] = "";
+    }
+
+    if (nextProps.mod.parameters["reset-credentials"] === undefined) {
+      nextProps.mod.parameters["reset-credentials"] = false;
+    }
+
+    if (!nextProps.mod.parameters["reset-credentials-session-key"]) {
+      nextProps.mod.parameters["reset-credentials-session-key"] = "G_CREDENTIALS_SESSION";
+    }
+
+    if (!nextProps.mod.parameters["reset-credentials-session-duration"]) {
+      nextProps.mod.parameters["reset-credentials-session-duration"] = 3600;
+    }
+
+    if (nextProps.mod.parameters["reset-credentials-email"] === undefined) {
+      nextProps.mod.parameters["reset-credentials-email"] = false;
+    }
+
+    if (!nextProps.mod.parameters["reset-credentials-content-type"]) {
+      nextProps.mod.parameters["reset-credentials-content-type"] = "text/plain; charset=utf-8";
+    }
+
+    if (!nextProps.mod.parameters["templatesResetCredentials"]) {
+      nextProps.mod.parameters["templatesResetCredentials"] = {};
+      nextProps.mod.parameters["templatesResetCredentials"][i18next.language] = {
+        subject: "Lost credentials", 
+        "body-pattern": "Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/profile.html?resetCredentials=<your_registration_plugin_name>&token={TOKEN}", 
+        defaultLang: true
+      };
+    }
+
+    if (!nextProps.mod.parameters["reset-credentials-token-duration"]) {
+      nextProps.mod.parameters["reset-credentials-token-duration"] = 600;
+    }
+    
+    if (!nextProps.mod.parameters["reset-credentials-from"]) {
+      nextProps.mod.parameters["reset-credentials-from"] = "";
+    }
+
+    if (nextProps.mod.parameters["reset-credentials-code"] === undefined) {
+      nextProps.mod.parameters["reset-credentials-code"] = false;
+    }
+
+    if (!nextProps.mod.parameters["reset-credentials-code-property"]) {
+      nextProps.mod.parameters["reset-credentials-code-property"] = "reset-credentials-code";
     }
 
     this.setState({
@@ -241,7 +335,9 @@ class RegisterParams extends Component {
       currentLang: i18next.language,
       newLang: "",
       currentLangUpdateEmail: i18next.language,
-      newLangUpdateEmail: ""
+      newLangUpdateEmail: "",
+      currentLangResetCredentials: i18next.language,
+      newLangResetCredentials: ""
     }, () => {
       if (this.state.check) {
         this.checkParameters();
@@ -491,8 +587,8 @@ class RegisterParams extends Component {
       }
       if (!this.state.mod.parameters["update-email-from"]) {
         hasError = true;
-        errorList["from"] = i18next.t("admin.mod-email-from-error");
-        errorList["smtp"] = true;
+        errorList["update-email-from"] = i18next.t("admin.mod-email-from-error");
+        errorList["update-email"] = true;
       }
       errorList["update-email-subject"] = "";
       errorList["update-email-body-pattern"] = "";
@@ -509,12 +605,69 @@ class RegisterParams extends Component {
         }
       });
     }
-    if (!this.state.mod.parameters["registration"] && !this.state.mod.parameters["update-email"]) {
+    if (this.state.mod.parameters["reset-credentials"]) {
+      if (!this.state.mod.parameters["reset-credentials-session-key"]) {
+        hasError = true;
+        errorList["reset-credentials-session-key"] = i18next.t("admin.mod-register-reset-credentials-session-key-error");
+        errorList["reset-credentials"] = true;
+      }
+      if (!this.state.mod.parameters["reset-credentials-session-duration"]) {
+        hasError = true;
+        errorList["reset-credentials-session-duration"] = i18next.t("admin.mod-register-reset-credentials-session-duration-error");
+        errorList["reset-credentials"] = true;
+      }
+      if (this.state.mod.parameters["reset-credentials-email"]) {
+        if (!this.state.mod.parameters["reset-credentials-token-duration"]) {
+          hasError = true;
+          errorList["reset-credentials-token-duration"] = i18next.t("admin.mod-register-reset-credentials-token-duration-error");
+          errorList["reset-credentials"] = true;
+        }
+        if (!this.state.mod.parameters["host"]) {
+          hasError = true;
+          errorList["host"] = i18next.t("admin.mod-email-host-error");
+          errorList["smtp"] = true;
+        }
+        if (!this.state.mod.parameters["reset-credentials-from"]) {
+          hasError = true;
+          errorList["reset-credentials-from"] = i18next.t("admin.mod-email-from-error");
+          errorList["reset-credentials"] = true;
+        }
+        errorList["reset-credentials-subject"] = "";
+        errorList["reset-credentials-body-pattern"] = "";
+        Object.keys(this.state.mod.parameters.templatesResetCredentials).forEach(lang => {
+          if (!this.state.mod.parameters.templatesResetCredentials[lang]["subject"]) {
+            hasError = true;
+            errorList["reset-credentials-subject"] += i18next.t("admin.mod-email-subject-error", {lang: lang});
+            errorList["reset-credentials"] = true;
+          }
+          if (!this.state.mod.parameters.templatesResetCredentials[lang]["body-pattern"] || !this.state.mod.parameters.templatesResetCredentials[lang]["body-pattern"].search("{TOKEN}")) {
+            hasError = true;
+            errorList["reset-credentials-body-pattern"] += i18next.t("admin.mod-email-body-pattern-error", {lang: lang});
+            errorList["reset-credentials"] = true;
+          }
+        });
+      }
+      if (this.state.mod.parameters["reset-credentials-code"]) {
+        if (!this.state.mod.parameters["reset-credentials-code-property"]) {
+          hasError = true;
+          errorList["reset-credentials-code-property"] = i18next.t("admin.reset-credentials-code-property-error");
+          errorList["reset-credentials"] = true;
+        }
+      }
+      if (!this.state.mod.parameters["reset-credentials-email"] && !this.state.mod.parameters["reset-credentials-code"]) {
+        hasError = true;
+        errorList["reset-credentials"] = true;
+        errorList["reset-credentials-option-check"] = i18next.t("admin.mod-register-option-error");
+      }
+    }
+    if (!this.state.mod.parameters["registration"] && !this.state.mod.parameters["update-email"] && !this.state.mod.parameters["reset-credentials"]) {
       hasError = true;
       errorList["registration"] = true;
       errorList["registration-check"] = i18next.t("admin.mod-register-option-error");
       errorList["update-email"] = true;
       errorList["update-email-check"] = i18next.t("admin.mod-register-option-error");
+      errorList["reset-credentials"] = true;
+      errorList["reset-credentials-check"] = i18next.t("admin.mod-register-option-error");
     }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
@@ -528,7 +681,7 @@ class RegisterParams extends Component {
   }
   
   render() {
-    var langList = [], langListUpdateEmail = [];
+    var langList = [], langListUpdateEmail = [], langListResetCredentials = [];
     langList.push(
     <div key={-2} className="form-group">
       <div className="input-group mb-3">
@@ -570,6 +723,27 @@ class RegisterParams extends Component {
       </div>
       );
       langListUpdateEmail.push(<div key={(index*2)+1} className="dropdown-divider"></div>);
+    });
+    langListResetCredentials.push(
+    <div key={-2} className="form-group">
+      <div className="input-group mb-3">
+        <input type="text" className="form-control" id="mod-email-new-lang" placeholder={i18next.t("admin.mod-email-new-lang-ph")} value={this.state.newLangResetCredentials} onChange={(e) => this.changeNewLang(e, "ResetCredentials")} />
+        <div className="input-group-append">
+          <button type="button" onClick={(e) => this.addLang(e, "ResetCredentials")} className="btn btn-outline-primary">{i18next.t("admin.mod-email-new-lang-add")}</button>
+        </div>
+      </div>
+    </div>
+    );
+    langListResetCredentials.push(<div key={-1} className="dropdown-divider"></div>);
+    Object.keys(this.state.mod.parameters.templatesResetCredentials).forEach((lang, index) => {
+      langListResetCredentials.push(
+      <div key={index*2} className="btn-group btn-group-justified">
+        <button type="button" className="btn btn-primary" disabled={true}>{lang}</button>
+        <button type="button" onClick={(e) => this.removeLang(lang, "ResetCredentials")} className="btn btn-primary" disabled={this.state.mod.parameters.templatesResetCredentials[lang].defaultLang}>{i18next.t("admin.mod-email-new-lang-remove")}</button>
+        <button type="button" onClick={(e) => this.changeLang(e, lang, "ResetCredentials")} className="btn btn-primary">{i18next.t("admin.mod-email-new-lang-select")}</button>
+      </div>
+      );
+      langListResetCredentials.push(<div key={(index*2)+1} className="dropdown-divider"></div>);
     });
     var scopeList = [], defaultScopeList = [], schemeList = [];
     this.state.config.pattern.user.forEach((pattern) => {
@@ -833,7 +1007,7 @@ class RegisterParams extends Component {
                       <div className="input-group-prepend">
                         <label className="input-group-text" htmlFor="mod-update-email-from">{i18next.t("admin.mod-email-from")}</label>
                       </div>
-                      <input type="text" className={this.state.errorList["from"]?"form-control is-invalid":"form-control"} id="mod-update-email-update-email-from" onChange={(e) => this.changeParam(e, "update-email-from")} value={this.state.mod.parameters["update-email-from"]} placeholder={i18next.t("admin.mod-update-email-email-from-ph")} />
+                      <input type="text" className={this.state.errorList["from"]?"form-control is-invalid":"form-control"} id="mod-update-email-update-email-from" onChange={(e) => this.changeParam(e, "update-email-from")} value={this.state.mod.parameters["update-email-from"]} placeholder={i18next.t("admin.mod-email-from-ph")} />
                     </div>
                     {this.state.errorList["update-email-from"]?<span className="error-input">{this.state.errorList["update-email-from"]}</span>:""}
                   </div>
@@ -877,9 +1051,9 @@ class RegisterParams extends Component {
                   <div className="form-group">
                     <div className="input-group mb-3">
                       <div className="input-group-prepend">
-                        <span className="input-group-text" >{i18next.t("admin.mod-email-body-pattern")}</span>
+                        <span className="input-group-text" >{i18next.t("admin.mod-email-body-pattern-token")}</span>
                       </div>
-                      <textarea className={this.state.errorList["update-email-body-pattern"]?"form-control is-invalid":"form-control"} id="mod-update-email-body-pattern" onChange={(e) => this.changeTemplate(e, "body-pattern", "UpdateEmail")} placeholder={i18next.t("admin.mod-email-body-pattern-ph")} value={this.state.mod.parameters.templatesUpdateEmail[this.state.currentLangUpdateEmail]["body-pattern"]}></textarea>
+                      <textarea className={this.state.errorList["update-email-body-pattern"]?"form-control is-invalid":"form-control"} id="mod-update-email-body-pattern" onChange={(e) => this.changeTemplate(e, "body-pattern", "UpdateEmail")} placeholder={i18next.t("admin.mod-email-body-pattern-token-ph")} value={this.state.mod.parameters.templatesUpdateEmail[this.state.currentLangUpdateEmail]["body-pattern"]}></textarea>
                     </div>
                     {this.state.errorList["update-email-body-pattern"]?<span className="error-input">{this.state.errorList["update-email-body-pattern"]}</span>:""}
                   </div>
@@ -900,6 +1074,118 @@ class RegisterParams extends Component {
             </div>
             <div id="collapseResetCredentials" className="collapse" aria-labelledby="resetCredentialsCard" data-parent="#accordionResetCredentials">
               <div className="card-body">
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-register-reset-credentials" onChange={(e) => this.toggleParam(e, "reset-credentials")} checked={this.state.mod.parameters["reset-credentials"]} />
+                  <label className="form-check-label" htmlFor="mod-register-reset-credentials">{i18next.t("admin.mod-register-reset-credentials")}</label>
+                  {this.state.errorList["reset-credentials-option-check"]?<div><span className="error-input">{this.state.errorList["reset-credentials-check"]}</span></div>:""}
+                </div>
+                <div className={"collapse"+(this.state.mod.parameters["reset-credentials"]?" show":"")} id="updateResetCredentials">
+                  <div className="form-group">
+                    <div className="input-group mb-3">
+                      <div className="input-group-prepend">
+                        <label className="input-group-text" htmlFor="mod-register-reset-credentials-session-key">{i18next.t("admin.mod-register-reset-credentials-session-key")}</label>
+                      </div>
+                      <input type="text" className={this.state.errorList["reset-credentials-session-key"]?"form-control is-invalid":"form-control"} id="mod-register-reset-credentials-session-key" onChange={(e) => this.changeParam(e, "reset-credentials-session-key")} value={this.state.mod.parameters["reset-credentials-session-key"]} placeholder={i18next.t("admin.mod-register-reset-credentials-session-key")} />
+                    </div>
+                    {this.state.errorList["reset-credentials-session-key"]?<span className="error-input">{this.state.errorList["reset-credentials-session-key"]}</span>:""}
+                  </div>
+                  <div className="form-group">
+                    <div className="input-group mb-3">
+                      <div className="input-group-prepend">
+                        <label className="input-group-text" htmlFor="mod-register-reset-credentials-session-duration">{i18next.t("admin.mod-register-reset-credentials-session-duration")}</label>
+                      </div>
+                      <input type="number" min="1" step="1" className={this.state.errorList["reset-credentials-session-duration"]?"form-control is-invalid":"form-control"} id="mod-register-reset-credentials-session-duration" onChange={(e) => this.changeParam(e, "reset-credentials-session-duration", true)} value={this.state.mod.parameters["reset-credentials-session-duration"]} placeholder={i18next.t("admin.mod-register-reset-credentials-session-duration-ph")} />
+                    </div>
+                    {this.state.errorList["reset-credentials-session-duration"]?<span className="error-input">{this.state.errorList["reset-credentials-session-duration"]}</span>:""}
+                  </div>
+                  <div className="form-group form-check">
+                    <input type="checkbox" className="form-check-input" id="mod-register-reset-credentials-email" onChange={(e) => this.toggleParam(e, "reset-credentials-email")} checked={this.state.mod.parameters["reset-credentials-email"]} />
+                    <label className="form-check-label" htmlFor="mod-register-reset-credentials-email">{i18next.t("admin.mod-register-reset-credentials-email")}</label>
+                    {this.state.errorList["reset-credentials-option-check"]?<div><span className="error-input">{this.state.errorList["reset-credentials-option-check"]}</span></div>:""}
+                  </div>
+                  <div className={"collapse"+(this.state.mod.parameters["reset-credentials-email"]?" show":"")} id="updateResetCredentialsEmail">
+                    <div className="form-group">
+                      <div className="input-group mb-3">
+                        <div className="input-group-prepend">
+                          <label className="input-group-text" htmlFor="mod-register-reset-credentials-token-duration">{i18next.t("admin.mod-register-reset-credentials-token-duration")}</label>
+                        </div>
+                        <input type="number" min="0" max="65536" step="1" className="form-control" id="mod-register-reset-credentials-token-duration" onChange={(e) => this.changeParam(e, "reset-credentials-token-duration", true)} value={this.state.mod.parameters["reset-credentials-token-duration"]} placeholder={i18next.t("admin.mod-register-reset-credentials-token-duration-ph")}/>
+                      </div>
+                    </div>
+                    <hr/>
+                    <div className="form-group">
+                      <div className="input-group mb-3">
+                        <div className="input-group-prepend">
+                          <label className="input-group-text" htmlFor="mod-reset-credentials-from">{i18next.t("admin.mod-email-from")}</label>
+                        </div>
+                        <input type="text" className={this.state.errorList["from"]?"form-control is-invalid":"form-control"} id="mod-reset-credentials-reset-credentials-from" onChange={(e) => this.changeParam(e, "reset-credentials-from")} value={this.state.mod.parameters["reset-credentials-from"]} placeholder={i18next.t("admin.mod-email-from-ph")} />
+                      </div>
+                      {this.state.errorList["reset-credentials-from"]?<span className="error-input">{this.state.errorList["reset-credentials-from"]}</span>:""}
+                    </div>
+                    <div className="form-group">
+                      <div className="input-group mb-3">
+                        <div className="input-group-prepend">
+                          <label className="input-group-text" htmlFor="mod-reset-credentials-content-type">{i18next.t("admin.mod-email-content-type")}</label>
+                        </div>
+                        <input type="text" className={this.state.errorList["reset-credentials-content-type"]?"form-control is-invalid":"form-control"} id="mod-reset-credentials-content-type" onChange={(e) => this.changeParam(e, "reset-credentials-content-type")} value={this.state.mod.parameters["reset-credentials-content-type"]||""} placeholder={i18next.t("admin.mod-email-content-type-ph")} />
+                      </div>
+                      {this.state.errorList["reset-credentials-content-type"]?<span className="error-input">{this.state.errorList["reset-credentials-content-type"]}</span>:""}
+                    </div>
+                    <div className="form-group">
+                      <div className="input-group mb-3">
+                        <div className="input-group-prepend">
+                          <label className="input-group-text" htmlFor="mod-reset-credentials-email-lang">{i18next.t("admin.mod-email-lang")}</label>
+                        </div>
+                        <div className="dropdown">
+                          <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-reset-credentials-email-lang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            {this.state.currentLangResetCredentials}
+                          </button>
+                          <div className="dropdown-menu" aria-labelledby="mod-reset-credentials-email-lang">
+                            {langListResetCredentials}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="form-group form-check">
+                      <input type="checkbox" className="form-check-input" id="mod-reset-credentials-email-lang-default" onChange={(e) => this.toggleLangDefault("ResetCredentials")} checked={this.state.mod.parameters.templatesResetCredentials[this.state.currentLangResetCredentials].defaultLang} />
+                      <label className="form-check-label" htmlFor="mod-reset-credentials-email-lang-default">{i18next.t("admin.mod-email-lang-default")}</label>
+                    </div>
+                    <div className="form-group">
+                      <div className="input-group mb-3">
+                        <div className="input-group-prepend">
+                          <label className="input-group-text" htmlFor="mod-reset-credentials-email-subject">{i18next.t("admin.mod-email-subject")}</label>
+                        </div>
+                        <input type="text" className={this.state.errorList["reset-credentials-subject"]?"form-control is-invalid":"form-control"} id="mod-reset-credentials-email-subject" onChange={(e) => this.changeTemplate(e, "subject", "ResetCredentials")} value={this.state.mod.parameters.templatesResetCredentials[this.state.currentLangResetCredentials]["subject"]} placeholder={i18next.t("admin.mod-reset-credentials-subject-ph")} />
+                      </div>
+                      {this.state.errorList["reset-credentials-subject"]?<span className="error-input">{this.state.errorList["reset-credentials-subject"]}</span>:""}
+                    </div>
+                    <div className="form-group">
+                      <div className="input-group mb-3">
+                        <div className="input-group-prepend">
+                          <span className="input-group-text" >{i18next.t("admin.mod-email-body-pattern-token")}</span>
+                        </div>
+                        <textarea className={this.state.errorList["reset-credentials-body-pattern"]?"form-control is-invalid":"form-control"} id="mod-reset-credentials-body-pattern" onChange={(e) => this.changeTemplate(e, "body-pattern", "ResetCredentials")} placeholder={i18next.t("admin.mod-email-body-pattern-token-ph")} value={this.state.mod.parameters.templatesResetCredentials[this.state.currentLangResetCredentials]["body-pattern"]}></textarea>
+                      </div>
+                      {this.state.errorList["reset-credentials-body-pattern"]?<span className="error-input">{this.state.errorList["reset-credentials-body-pattern"]}</span>:""}
+                    </div>
+                  </div>
+                  <div className="form-group form-check">
+                    <input type="checkbox" className="form-check-input" id="mod-register-reset-credentials-code" onChange={(e) => this.toggleParam(e, "reset-credentials-code")} checked={this.state.mod.parameters["reset-credentials-code"]} />
+                    <label className="form-check-label" htmlFor="mod-register-reset-credentials-code">{i18next.t("admin.mod-register-reset-credentials-code")}</label>
+                    {this.state.errorList["reset-credentials-option-check"]?<div><span className="error-input">{this.state.errorList["reset-credentials-option-check"]}</span></div>:""}
+                  </div>
+                  <div className={"collapse"+(this.state.mod.parameters["reset-credentials-code"]?" show":"")} id="updateResetCredentialsCode">
+                    <div className="form-group">
+                      <div className="input-group mb-3">
+                        <div className="input-group-prepend">
+                          <label className="input-group-text" htmlFor="mod-register-reset-credentials-code-property">{i18next.t("admin.mod-register-reset-credentials-code-property")}</label>
+                        </div>
+                        <input type="text" className={this.state.errorList["reset-credentials-code-property"]?"form-control is-invalid":"form-control"} id="mod-register-reset-credentials-code-property" onChange={(e) => this.changeParam(e, "reset-credentials-code-property")} value={this.state.mod.parameters["reset-credentials-code-property"]} placeholder={i18next.t("admin.mod-register-reset-credentials-code-property")} />
+                      </div>
+                      {this.state.errorList["reset-credentials-code-property"]?<span className="error-input">{this.state.errorList["reset-credentials-code-property"]}</span>:""}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
