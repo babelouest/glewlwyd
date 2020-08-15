@@ -265,6 +265,7 @@ json_t * glewlwyd_plugin_callback_is_client_valid(struct config_plugin * config,
 int glewlwyd_plugin_callback_add_client(struct config_plugin * config, json_t * j_client);
 int glewlwyd_plugin_callback_set_client(struct config_plugin * config, const char * client_id, json_t * j_client);
 int glewlwyd_plugin_callback_delete_client(struct config_plugin * config, const char * client_id);
+json_t * glewlwyd_plugin_callback_get_scheme_list(struct config_plugin * config, const char * username);
 json_t * glewlwyd_plugin_callback_scheme_register(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username, json_t * j_scheme_data);
 json_t * glewlwyd_plugin_callback_scheme_register_get(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username);
 int glewlwyd_plugin_callback_scheme_can_use(struct config_plugin * config, const char * mod_name, const char * username);

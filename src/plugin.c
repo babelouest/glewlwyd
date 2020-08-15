@@ -544,6 +544,10 @@ int glewlwyd_plugin_callback_delete_client(struct config_plugin * config, const 
   return delete_client(config->glewlwyd_config, client_id, NULL);
 }
 
+json_t * glewlwyd_plugin_callback_get_scheme_list(struct config_plugin * config, const char * username) {
+  return get_scheme_list_for_user(config->glewlwyd_config, username);
+}
+
 json_t * glewlwyd_plugin_callback_scheme_register(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username, json_t * j_scheme_data) {
   json_t * j_return;
   struct _user_auth_scheme_module_instance * scheme_instance = get_user_auth_scheme_module_instance(config->glewlwyd_config, mod_name);
