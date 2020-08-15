@@ -9,7 +9,7 @@ Single-Sign-On (SSO) server with multiple factor authentication.
 
 ![logged in](docs/screenshots/login-nopassword.png)
 
-Authentication processus supported:
+Authentication process supported:
 - OAuth2
 - OpenID Connect
 
@@ -34,7 +34,7 @@ Allows users to register a new account with the possibility to confirm their e-m
 
 See the [register documentation](docs/REGISTER.md) for more information on the registration features.
 
-Based on a plugin architecture to make it easier to add or update storing backends, authentication schemes or processus.
+Based on a plugin architecture to make it easier to add or update storing backends, authentication schemes or process.
 
 Allows passwordless authentication.
 
@@ -44,7 +44,7 @@ The backend API server is fully written in C and uses a small amount of resource
 
 Its plugin architecture makes it easy to add new modules or plugins, or modify existing ones with less risks to have unmaintainable code.
 
-Glewlwyd 2.3 [is released](https://github.com/babelouest/glewlwyd/releases/tag/v2.3.0). Feel free to [install](docs/INSTALL.md), test it, and [send feedbacks](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
+Glewlwyd 2.3 [is released](https://github.com/babelouest/glewlwyd/releases/tag/v2.3.0). Feel free to [install](docs/INSTALL.md), test it, and [send feedback](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
 
 Important! Due to a complete database reworking of the application, you can't upgrade an existing installation from Glewlwyd 1.x to Glewlwyd 2.x.
 
@@ -77,7 +77,7 @@ The [user documentation](docs/USER.md) will help Glewlwyd's users manage their p
 
 ## Core API
 
-The full core REST API documention is available in the [API documentation](docs/API.md)
+The full core REST API documentation is available in the [API documentation](docs/API.md)
 
 ## Plugins architecture
 

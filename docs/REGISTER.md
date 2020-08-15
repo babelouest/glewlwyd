@@ -20,7 +20,7 @@ You also need to set at least one scope to the new users, `g_profile` is recomme
 ![plugin-register](screenshots/plugin-register.png)
 
 In the administration page, go to `Parameters/Plugins` and add a new plugin by clicking on the `+` button. In the modal, enter a name and a display name (the name must be unique among all user backend instances).
-Select the type `Register new user plugin` in the Type dropdown button.
+Select the type `Register new user plugin` in the Type drop-down button.
 
 Below is the definition of all parameters.
 
@@ -67,11 +67,11 @@ Check this if you want the new users to verify their e-mail address during the r
 
 Check this if you want the new users to have their e-mail used as their username.
 
-### Verificiation code length
+### Verification code length
 
 Length of the code that will be sent to the user's e-mail address.
 
-### Verificiation code duration (seconds)
+### Verification code duration (seconds)
 
 Maximum lifetime of the code in seconds, default is 600 (10 minutes). If the new user didn't verify its e-mail address before this duration, the user will need to send another code.
 
@@ -109,7 +109,7 @@ Content-type for the e-mail content, default is `text/plain; charset=utf-8`
 
 ### Lang
 
-Dropdown value to select, add or remove lang templates for the e-mails.
+Drop-down value to select, add or remove lang templates for the e-mails.
 
 ### Default lang
 
@@ -121,7 +121,7 @@ Subject used on the e-mails for the current lang, required.
 
 ### E-mail body
 
-The pattern for the body on the e-mails for the current lang, You must use at least once the string `{CODE}` in the pattern to be replaced by the code. The pattern {TOKEN} will be replaced by the token used to build the url in the e-mail to get direct access to the validation step without entering the code.
+The pattern for the body on the e-mails for the current lang, You must use at least once the string `{CODE}` in the pattern to be replaced by the code. The pattern {TOKEN} will be replaced by the token used to build the URL in the e-mail to get direct access to the validation step without entering the code.
 
 Example, by using the following e-mail pattern:
 
@@ -141,7 +141,7 @@ https://hunbaut.babelouest.org/glewlwyd2app/?registration=<your_registration_plu
 
 ## Registration URL
 
-The url to access to the registration page has the following format:
+The URL to access to the registration page has the following format:
 
 ```
 https://<your_glewlwyd_url>/profile.html?register=<your_registration_instance_name>
@@ -335,7 +335,7 @@ Code 403
 
 The new user must verify its e-mail address.
 
-### Send e-mail verficiation code
+### Send e-mail verification code
 
 #### URL
 
@@ -648,7 +648,7 @@ Session invalid
 
 Code 200
 
-User has been succesfully created
+User has been successfully created
 
 Code 400
 

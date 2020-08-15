@@ -7,7 +7,7 @@ The database backend uses a LDAP service to store information and passwords for 
 ## Installation
 
 In the administration page, go to `Parameters/Clients data sources` and add a new client module by clicking on the `+` button. In the modal, enter a name and a display name (the name must be unique among all client backend instances).
-Select the type `LDAP backend client module` in the Type dropdown button.
+Select the type `LDAP backend client module` in the Type drop-down button.
 
 Below is the definition of all parameters.
 
@@ -29,7 +29,7 @@ URI to connect to the LDAP service, ex: ldaps://ldap.example.com/
 
 ### Connection DN
 
-DN used to acces the LDAP service. The DN must have write access if you want to use this backend in write mode.
+DN used to access the LDAP service. The DN must have write access if you want to use this backend in write mode.
 
 ### Connection password
 
@@ -92,7 +92,7 @@ You can specify multiple values by separating them with a comma `,`.
 
 ### Object class property for a new client
 
-This value will contain all the object class values when Glewlwyd will create new clients in the LDAP backend. Values must be separated with a comme `,`.
+This value will contain all the object class values when Glewlwyd will create new clients in the LDAP backend. Values must be separated with a comma `,`.
 
 ### Specific data format
 
@@ -116,7 +116,7 @@ If this option is set to `base64`, the property content will be converted to bas
 
 ### Scope field property
 
-This section allows to specify a correspondance between a Glewlwyd scope and a value in the scope property. The main goal is to use an existing LDAP service whose clients have property that can be related to scopes (group names, etc.). For example, the group name value `accounting` will correspond to the scope `mail`.
+This section allows to specify a correspondence between a Glewlwyd scope and a value in the scope property. The main goal is to use an existing LDAP service whose clients have property that can be related to scopes (group names, etc.). For example, the group name value `accounting` will correspond to the scope `mail`.
 
 #### LDAP value
 

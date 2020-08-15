@@ -2,12 +2,12 @@
 
 ![scheme-oauth2](screenshots/scheme-oauth2.png)
 
-The OAuth2 Schema implements authentification based on authentication via external OAuth2/OIDC services. The chain of trust is based on the Glewlwyd's administrator trusting the OAuth2/OIDC service to authenticate Glewlwyd's users. Therefore Glewlwyd's administrator must enter only trustable external providers. It is strongly suggested to test the providers authentication with your configuration before telling your users to do so.
+The OAuth2 Schema implements authentication based on authentication via external OAuth2/OIDC services. The chain of trust is based on the Glewlwyd's administrator trusting the OAuth2/OIDC service to authenticate Glewlwyd's users. Therefore Glewlwyd's administrator must enter only trustable external providers. It is strongly suggested to test the providers authentication with your configuration before telling your users to do so.
 
 ## Installation
 
 In the administration page, go to `Parameters/Authentication schemes` and add a new scheme by clicking on the `+` button. In the modal, enter a name and a display name (the name must be unique among all authentication scheme instances), and a scheme session expiration in seconds.
-Select the type `OAuth2` in the Type dropdown button.
+Select the type `OAuth2` in the Type drop-down button.
 
 Below is the definition of all parameters.
 
@@ -25,7 +25,7 @@ Number of seconds to expire a valid session.
 
 ### Max use per session (0: unlimited)
 
-Maximum number of times a valid authentification with this scheme is possible. This is an additional parameter used to enforce the security of the session and forbid to reuse this session for other authentications.
+Maximum number of times a valid authentication with this scheme is possible. This is an additional parameter used to enforce the security of the session and forbid to reuse this session for other authentications.
 
 ### Allow users to register
 
@@ -37,7 +37,7 @@ Callback URI that will be used in the OAuth2/OIDC flow. This option is filled by
 
 ### Session duration for authentication (seconds)
 
-Duration of the session for users to authenticate in the external provoder, i.e. the maximum time they can spend between their click on the `login with` button and when they get redirected to `callback.html` with a valid authentication.
+Duration of the session for users to authenticate in the external provider, i.e. the maximum time they can spend between their click on the `login with` button and when they get redirected to `callback.html` with a valid authentication.
 
 ### Authorized providers list
 
@@ -60,14 +60,14 @@ URI of the provider logo, this will be used as a graphical identity in the profi
 
 The Logo URI has the highest priority. If you have both Logo URI and Logo Font-Awesome for a provider, the Logo URI will be used in the Profile or Login page.
 
-### FontAwesome icon
+### Fork Awesome icon
 
-Name of the [Font-Awesome](https://fontawesome.com/?from=io) icon to be used as a graphical identity in the profile or login page. Glewlwyd uses Font-Awesome 5 free icons.
-For example, if you want to add the [following icon](https://fontawesome.com/icons/linux?style=brands) to your provider, you must enter the `fa-*` value specified in the HTML tag:
+Name of the [Fork Awesome](https://forkaweso.me/Fork-Awesome/) icon to be used as a graphical identity in the profile or login page. Glewlwyd uses Fork Awesome 1.1.7.
+For example, if you want to add the [following icon](https://forkaweso.me/Fork-Awesome/icon/debian/) to your provider, you must enter the `fa-*` value specified in the HTML tag:
 
-`<i class="fab fa-linux"></i>` => the logo value must be `fab fa-linux`.
+`<i class="fa fa-debian"></i>` => the logo value must be `fa fa-debian`.
 
-The Logo URI has the highest priority. If you have both Logo URI and Logo Font-Awesome for a provider, the Logo URI will be used in the Profile or Login page.
+The Logo URI has the highest priority. If you have both Logo URI and Logo Fork Awesome for a provider, the Logo URI will be used in the Profile or Login page.
 
 ### client_id
 
