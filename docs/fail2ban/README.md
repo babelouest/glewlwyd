@@ -24,9 +24,11 @@ failregex = ^.* - Glewlwyd WARNING: Security - Authorization invalid for usernam
             ^.* - Glewlwyd WARNING: Security - Token invalid at IP Address <HOST>
             ^.* - Glewlwyd WARNING: Security - Scheme email - code sent for username .* at IP Address <HOST>
             ^.* - Glewlwyd WARNING: Security - Register new user - code sent to email .* at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - verify e-mail code - code invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Verify e-mail - code invalid at IP Address <HOST>
             ^.* - Glewlwyd WARNING: Security - Update e-mail - token sent to email .* at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - update e-mail token - token invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Update e-mail - token invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Reset credentials - token invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Reset credentials - code invalid at IP Address <HOST>
 ignoreregex =
 ```
 
