@@ -26,6 +26,7 @@
  *
  */
 
+#include <ctype.h>
 #include <jansson.h>
 #include "../glewlwyd-common.h"
 
@@ -36,6 +37,7 @@
 #define GLEWLWYD_DATE_BUFFER 128
 #define GLEWLWYD_SESSION_ID_LENGTH 32
 #define GLEWLWYD_TOKEN_LENGTH 32
+#define GLEWLWYD_RESET_CREDENTIALS_CODE_LENGTH 16
 
 #define GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION "gpr_session"
 #define GLEWLWYD_PLUGIN_REGISTER_TABLE_UPDATE_EMAIL "gpr_update_email"
@@ -367,7 +369,7 @@ static json_t * register_verify_email_token(struct _register_config * config, co
         }
         json_decref(j_new_user);
       } else {
-        y_log_message(Y_LOG_LEVEL_WARNING, "Security - verify e-mail code - code invalid at IP Address %s", ip_source);
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Verify e-mail - code invalid at IP Address %s", ip_source);
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
       }
       json_decref(j_result);
@@ -476,7 +478,7 @@ static json_t * register_verify_email_code(struct _register_config * config, con
         }
         json_decref(j_new_user);
       } else {
-        y_log_message(Y_LOG_LEVEL_WARNING, "Security - verify e-mail code - code invalid to email %s at IP Address %s", email, ip_source);
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Verify e-mail - code invalid at IP Address %s", ip_source);
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
       }
       json_decref(j_result);
@@ -1031,7 +1033,7 @@ static int register_update_email_verify(struct _register_config * config, const 
           }
           json_decref(j_updated_user);
         } else {
-          y_log_message(Y_LOG_LEVEL_WARNING, "Security - update e-mail token - token invalid at IP Address %s", ip_source);
+          y_log_message(Y_LOG_LEVEL_WARNING, "Security - Update e-mail - token invalid at IP Address %s", ip_source);
           ret = G_ERROR_PARAM;
         }
         json_decref(j_result);
@@ -1045,7 +1047,7 @@ static int register_update_email_verify(struct _register_config * config, const 
     }
     o_free(token_hash);
   } else {
-    y_log_message(Y_LOG_LEVEL_WARNING, "Security - update e-mail token - token invalid at IP Address %s", ip_source);
+    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Update e-mail - token invalid at IP Address %s", ip_source);
     ret = G_ERROR_PARAM;
   }
   return ret;
@@ -1389,6 +1391,126 @@ static json_t * reset_credentials_create_session(struct _register_config * confi
     j_return = json_pack("{si}", "result", G_ERROR);
   }
   return j_return;
+}
+
+static json_t * reset_credentials_code_generate(struct _register_config * config, const char * username) {
+  json_t * j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username), * j_return, * j_code_list;
+  char code[GLEWLWYD_RESET_CREDENTIALS_CODE_LENGTH+1] = {}, code_formatted[GLEWLWYD_RESET_CREDENTIALS_CODE_LENGTH+(GLEWLWYD_RESET_CREDENTIALS_CODE_LENGTH/4)+1] = {}, * code_hash = NULL, * code_formatted_offset;
+  json_int_t i;
+  int res, j;
+  
+  if (check_result_value(j_user, G_OK)) {
+    res = G_OK;
+    if ((j_code_list = json_array()) != NULL) {
+      if (!json_is_array(json_object_get(json_object_get(j_user, "user"), json_string_value(json_object_get(config->j_parameters, "reset-credentials-code-property"))))) {
+        json_object_set_new(json_object_get(j_user, "user"), json_string_value(json_object_get(config->j_parameters, "reset-credentials-code-property")), json_array());
+      }
+      for (i=0; res == G_OK && i<json_integer_value(json_object_get(config->j_parameters, "reset-credentials-code-list-size")); i++) {
+        if (rand_string_from_charset(code, GLEWLWYD_RESET_CREDENTIALS_CODE_LENGTH, "abcdefghijklmnopqrstuvwxyz0123456789") != NULL) {
+          code_formatted_offset = code_formatted;
+          for (j=0; j<GLEWLWYD_RESET_CREDENTIALS_CODE_LENGTH; j++) {
+            if (j && j%4) {
+              *code_formatted_offset = '-';
+              code_formatted_offset++;
+            }
+            *code_formatted_offset = code[j];
+            code_formatted_offset++;
+          }
+          *code_formatted_offset = '\0';
+          if ((code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code)) != NULL) {
+            json_array_append_new(json_object_get(json_object_get(j_user, "user"), json_string_value(json_object_get(config->j_parameters, "reset-credentials-code-property"))), json_string(code_hash));
+            json_array_append_new(j_code_list, json_string(code_formatted));
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "reset_credentials_code_generate - Error glewlwyd_callback_generate_hash");
+            res = G_ERROR;
+          }
+          o_free(code_hash);
+          code_hash = NULL;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "reset_credentials_code_generate - Error rand_string_from_charset");
+          res = G_ERROR;
+        }
+      }
+      if (res == G_OK) {
+        if (config->glewlwyd_config->glewlwyd_plugin_callback_set_user(config->glewlwyd_config, username, json_object_get(j_user, "user")) == G_OK) {
+          j_return = json_pack("{sisO}", "result", G_OK, "code", j_code_list);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "reset_credentials_code_generate - Error glewlwyd_plugin_callback_set_user");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "reset_credentials_code_generate - Error generating or storing code");
+        j_return = json_pack("{si}", "result", res);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "reset_credentials_code_generate - Error allocating resources for j_code_list");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_code_list);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "reset_credentials_code_generate - Error glewlwyd_plugin_callback_get_user");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  json_decref(j_user);
+  
+  return j_return;
+}
+
+static int reset_credentials_code_verify(struct _register_config * config, const char * username, const char * code) {
+  int ret, found = 0;
+  json_t * j_user;
+  char * code_deformatted = NULL, * code_deformatted_offset, * code_hash = NULL;
+  size_t i, array_size;
+  const char * code_property = json_string_value(json_object_get(config->j_parameters, "reset-credentials-code-property"));
+  
+  if (o_strlen(username) && o_strlen(code)) {
+    j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username);
+    if (check_result_value(j_user, G_OK) && (array_size = json_array_size(json_object_get(json_object_get(j_user, "user"), code_property))) >= (size_t)json_integer_value(json_object_get(config->j_parameters, "reset-credentials-code-list-size"))) {
+      if ((code_deformatted = str_replace(code, "-", "")) != NULL) {
+        if (o_strlen(code_deformatted) == GLEWLWYD_RESET_CREDENTIALS_CODE_LENGTH) {
+          code_deformatted_offset = code_deformatted;
+          while (*code_deformatted_offset != '\0') {
+            *code_deformatted_offset = tolower(*code_deformatted_offset);
+            code_deformatted_offset++;
+          }
+          if ((code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code_deformatted_offset)) != NULL) {
+            for (i=(array_size - json_integer_value(json_object_get(config->j_parameters, "reset-credentials-code-list-size"))); !found && i<array_size; i++) {
+              if (0 == o_strcmp(json_string_value(json_array_get(json_object_get(json_object_get(j_user, "user"), code_property), i)), code_hash)) {
+                json_array_set_new(json_object_get(json_object_get(j_user, "user"), code_property), i, json_pack("s+", "**USED**", json_string_value(json_array_get(json_object_get(json_object_get(j_user, "user"), code_property), i))));
+                found = 1;
+              }
+            }
+            if (found) {
+              if (config->glewlwyd_config->glewlwyd_plugin_callback_set_user(config->glewlwyd_config, username, json_object_get(j_user, "user")) == G_OK) {
+                ret = G_OK;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "reset_credentials_code_verify - Error glewlwyd_plugin_callback_set_user");
+                ret = G_ERROR;
+              }
+            } else {
+              ret = G_ERROR_PARAM;
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "reset_credentials_code_verify - Error glewlwyd_callback_generate_hash");
+            ret = G_ERROR;
+          }
+          o_free(code_hash);
+        } else {
+          ret = G_ERROR_PARAM;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "reset_credentials_code_verify - Error str_replace");
+        ret = G_ERROR;
+      }
+      o_free(code_deformatted);
+    } else {
+      ret = G_ERROR_PARAM;
+    }
+    json_decref(j_user);
+  } else {
+    ret = G_ERROR_PARAM;
+  }
+  return ret;
 }
 
 static int callback_register_config(const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -2079,20 +2201,46 @@ static int callback_register_reset_credentials_email_check(const struct _u_reque
   return U_CALLBACK_CONTINUE;
 }
 
-// TODO
 static int callback_register_reset_credentials_code_verify(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  UNUSED(request);
-  UNUSED(response);
-  UNUSED(user_data);
-  return U_CALLBACK_ERROR;
+  struct _register_config * config = (struct _register_config *)user_data;
+  json_t * j_parameters = ulfius_get_json_body_request(request, NULL), * j_session;
+  time_t now;
+  struct tm ts;
+  char expires[GLEWLWYD_DATE_BUFFER+1], * issued_for;
+
+  if (reset_credentials_code_verify(config, json_string_value(json_object_get(j_parameters, "username")), json_string_value(json_object_get(j_parameters, "code"))) == G_OK) {
+    issued_for = get_client_hostname(request);
+    j_session = reset_credentials_create_session(config, json_string_value(json_object_get(j_parameters, "username")), issued_for, u_map_get_case(request->map_header, "user-agent"));
+    if (check_result_value(j_session, G_OK)) {
+      time(&now);
+      now += json_integer_value(json_object_get(config->j_parameters, "reset-credentials-session-duration"));
+      ts = *gmtime(&now);
+      strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
+      ulfius_add_cookie_to_response(response, json_string_value(json_object_get(config->j_parameters, "reset-credentials-session-key")), json_string_value(json_object_get(j_session, "session")), expires, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", config->glewlwyd_config->glewlwyd_config->cookie_secure, 0);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_reset_credentials_code_verify - Error reset_credentials_create_session");
+      response->status = 500;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Reset credentials - code invalid at IP Address %s", get_ip_source(request));
+    response->status = 403;
+  }
+  return U_CALLBACK_CONTINUE;
 }
 
-// TODO
 static int callback_register_reset_credentials_code_generate(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct _register_config * config = (struct _register_config *)user_data;
+  json_t * j_result = reset_credentials_code_generate(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")));
   UNUSED(request);
-  UNUSED(response);
-  UNUSED(user_data);
-  return U_CALLBACK_ERROR;
+  
+  if (check_result_value(j_result, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_result, "code"));
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_reset_credentials_code_generate - Error reset_credentials_code_generate");
+    response->status = 500;
+  }
+  json_decref(j_result);
+  return U_CALLBACK_CONTINUE;
 }
 
 static int callback_register_reset_credentials_code_check(const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -2309,6 +2457,9 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
         if (json_object_get(j_params, "reset-credentials-code") == json_true()) {
           if (!json_string_length(json_object_get(j_params, "reset-credentials-code-property"))) {
             json_array_append_new(j_errors, json_string("reset-credentials-code-property is mandatory and must be a non empty string"));
+          }
+          if (json_integer_value(json_object_get(j_params, "reset-credentials-code-list-size")) <= 0) {
+            json_array_append_new(j_errors, json_string("reset-credentials-code-list-size is optional and must be a positive integer"));
           }
         }
         if (json_object_get(j_params, "reset-credentials-email") != json_true() && json_object_get(j_params, "reset-credentials-code") != json_true()) {
@@ -2684,6 +2835,7 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
       }
       if (json_object_get(((struct _register_config *)cls)->j_parameters, "reset-credentials-code") == json_true()) {
         config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "reset-credentials-code");
+        config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "reset-credentials-code");
         config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "reset-credentials-code");
       }
     }
