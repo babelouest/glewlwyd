@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS gpr_update_email;
 DROP TABLE IF EXISTS gpr_reset_credentials_email;
 DROP TABLE IF EXISTS gpr_reset_credentials_session;
+DROP TABLE IF EXISTS gpr_update_email;
 DROP TABLE IF EXISTS gpr_session;
 
 CREATE TABLE gpr_session (
