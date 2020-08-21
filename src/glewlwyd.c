@@ -104,6 +104,7 @@ int main (int argc, char ** argv) {
   config->config_p->glewlwyd_plugin_callback_scheme_register_get = &glewlwyd_plugin_callback_scheme_register_get;
   config->config_p->glewlwyd_plugin_callback_scheme_deregister = &glewlwyd_plugin_callback_scheme_deregister;
   config->config_p->glewlwyd_plugin_callback_scheme_can_use = &glewlwyd_plugin_callback_scheme_can_use;
+  config->config_p->glewlwyd_plugin_callback_get_scheme_list = &glewlwyd_plugin_callback_get_scheme_list;
 
   // Init config structure with default values
   config->config_m->external_url = NULL;
