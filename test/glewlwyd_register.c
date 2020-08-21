@@ -1683,7 +1683,6 @@ START_TEST(test_glwd_update_email_valid_token)
   json_object_set_new(j_user, "email", json_string(EMAIL));
   ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "PUT", U_OPT_JSON_BODY, j_user, U_OPT_NONE);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
-  y_log_message(Y_LOG_LEVEL_DEBUG, "resp %s", resp.binary_body);
   ck_assert_int_eq(resp.status, 200);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
