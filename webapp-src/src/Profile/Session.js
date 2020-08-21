@@ -116,7 +116,7 @@ class Session extends Component {
         {i18next.t("profile.session-table-last-login")}
       </th>
       <th>
-        {i18next.t("profile.session-table-exiration")}
+        {i18next.t("profile.session-table-expiration")}
       </th>
       <th>
         {i18next.t("profile.session-table-issued-for")}
@@ -168,7 +168,7 @@ class Session extends Component {
           {i18next.t("profile.session-table-last-login")}
         </th>
         <th>
-          {i18next.t("profile.session-table-exiration")}
+          {i18next.t("profile.session-table-expiration")}
         </th>
         <th>
           {i18next.t("profile.session-table-client")}
@@ -242,7 +242,7 @@ class Session extends Component {
           {i18next.t("profile.session-table-last-login")}
         </th>
         <th>
-          {i18next.t("profile.session-table-exiration")}
+          {i18next.t("profile.session-table-expiration")}
         </th>
         <th>
           {i18next.t("profile.session-table-client")}

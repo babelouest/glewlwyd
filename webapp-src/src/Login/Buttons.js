@@ -20,7 +20,9 @@ class Buttons extends Component {
       bGrantTitle: props.showGrant?i18next.t("login.grant-auth-title"):i18next.t("login.grant-change-title"),
       bGrant: props.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change"),
       showGrantAsterisk: props.showGrantAsterisk,
-      selectAccount: props.selectAccount
+      selectAccount: props.selectAccount,
+      registration: props.registration,
+      resetCredentials: props.resetCredentials
     };
 
     this.clickLogout = this.clickLogout.bind(this);
@@ -47,7 +49,9 @@ class Buttons extends Component {
       bGrantTitle: nextProps.showGrant?i18next.t("login.grant-auth-title"):i18next.t("login.grant-change-title"),
       bGrant: nextProps.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change"),
       showGrantAsterisk: nextProps.showGrantAsterisk,
-      selectAccount: nextProps.selectAccount
+      selectAccount: nextProps.selectAccount,
+      registration: nextProps.registration,
+      resetCredentials: nextProps.resetCredentials
     });
   }
 
@@ -92,6 +96,11 @@ class Buttons extends Component {
     document.location.href = this.state.config.ProfileUrl + "?register=" + encodeURIComponent(plugin);
   }
   
+  resetCredentials(e, plugin) {
+    e.preventDefault();
+    messageDispatcher.sendMessage('App', {type: 'ResetCredentials'});
+  }
+  
   managerUsers(e) {
     e.preventDefault();
     messageDispatcher.sendMessage('App', {type: 'SelectAccount'});
@@ -123,11 +132,9 @@ class Buttons extends Component {
       </div>;
     }
     if (this.state.currentUser && !this.state.selectAccount) {
-      if (this.state.config.register) {
-        this.state.config.register.forEach((register, index) => {
-          registerTable.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.registerNewUser(e, register.name)}>{i18next.t(register.message)}</a>);
-        });
-      }
+      this.state.registration.forEach((register, index) => {
+        registerTable.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.registerNewUser(e, register.name)}>{i18next.t(register.message)}</a>);
+      });
       var userList = [];
       if (this.state.userList) {
         this.state.userList.forEach((user, index) => {
@@ -177,9 +184,16 @@ class Buttons extends Component {
   		);
     } else if (this.state.newUser) {
       if (this.state.config.register) {
+        this.state.resetCredentials.forEach((resetCred, index) => {
+          registerTable.push(
+            <button key={index+this.state.config.register.length} type="button" className="btn btn-danger" onClick={(e) => this.resetCredentials(e, resetCred.name)}>
+              {i18next.t(resetCred.message)}
+            </button>
+          );
+        });
         this.state.config.register.forEach((register, index) => {
           registerTable.push(
-            <button key={index} type="button" className="btn btn-primary" onClick={(e) => this.registerNewUser(e, register.name)}>
+            <button key={index} type="button" className="btn btn-success" onClick={(e) => this.registerNewUser(e, register.name)}>
               {i18next.t(register.message)}
             </button>
           );

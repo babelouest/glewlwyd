@@ -77,7 +77,7 @@ class RegisterParams extends Component {
       props.mod.parameters["templates"] = {};
       props.mod.parameters["templates"][i18next.language] = {
         subject: props.mod.parameters.subject||"Confirm registration", 
-        "body-pattern": props.mod.parameters["body-pattern"]||"The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?register=<your_registration_plugin_name>&token={TOKEN}", 
+        "body-pattern": props.mod.parameters["body-pattern"]||"The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/"+props.config.ProfileUrl+"?register=<your_registration_plugin_name>&token={TOKEN}", 
         defaultLang: true
       };
     }
@@ -94,7 +94,7 @@ class RegisterParams extends Component {
       props.mod.parameters["templatesUpdateEmail"] = {};
       props.mod.parameters["templatesUpdateEmail"][i18next.language] = {
         subject: "Update e-mail address", 
-        "body-pattern": "Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/profile.html?updateEmail=<your_registration_plugin_name>&token={TOKEN}", 
+        "body-pattern": "Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/"+props.config.ProfileUrl+"?updateEmail=<your_registration_plugin_name>&token={TOKEN}", 
         defaultLang: true
       };
     }
@@ -131,7 +131,7 @@ class RegisterParams extends Component {
       props.mod.parameters["templatesResetCredentials"] = {};
       props.mod.parameters["templatesResetCredentials"][i18next.language] = {
         subject: "Lost credentials", 
-        "body-pattern": "Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/profile.html?resetCredentials=<your_registration_plugin_name>&token={TOKEN}", 
+        "body-pattern": "Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/"+props.config.ProfileUrl+"?resetCredentials=<your_registration_plugin_name>&token={TOKEN}", 
         defaultLang: true
       };
     }
@@ -146,6 +146,10 @@ class RegisterParams extends Component {
 
     if (props.mod.parameters["reset-credentials-code"] === undefined) {
       props.mod.parameters["reset-credentials-code"] = false;
+    }
+    
+    if (!props.mod.parameters["reset-credentials-code-list-size"]) {
+      props.mod.parameters["reset-credentials-code-list-size"] = 4;
     }
 
     if (!props.mod.parameters["reset-credentials-code-property"]) {
@@ -250,7 +254,7 @@ class RegisterParams extends Component {
       nextProps.mod.parameters["templates"] = {};
       nextProps.mod.parameters["templates"][i18next.language] = {
         subject: nextProps.mod.parameters.subject||"Confirm registration", 
-        "body-pattern": nextProps.mod.parameters["body-pattern"]||"The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/profile.html?register=<your_registration_plugin_name>&token={TOKEN}", 
+        "body-pattern": nextProps.mod.parameters["body-pattern"]||"The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/"+this.state.config.ProfileUrl+"?register=<your_registration_plugin_name>&token={TOKEN}", 
         defaultLang: true
       };
     }
@@ -267,7 +271,7 @@ class RegisterParams extends Component {
       nextProps.mod.parameters["templatesUpdateEmail"] = {};
       nextProps.mod.parameters["templatesUpdateEmail"][i18next.language] = {
         subject: "Update e-mail address", 
-        "body-pattern": "Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/profile.html?updateEmail=<your_registration_plugin_name>&token={TOKEN}", 
+        "body-pattern": "Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/"+this.state.config.ProfileUrl+"?updateEmail=<your_registration_plugin_name>&token={TOKEN}", 
         defaultLang: true
       };
     }
@@ -304,7 +308,7 @@ class RegisterParams extends Component {
       nextProps.mod.parameters["templatesResetCredentials"] = {};
       nextProps.mod.parameters["templatesResetCredentials"][i18next.language] = {
         subject: "Lost credentials", 
-        "body-pattern": "Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/profile.html?resetCredentials=<your_registration_plugin_name>&token={TOKEN}", 
+        "body-pattern": "Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/"+this.state.config.ProfileUrl+"?resetCredentials=<your_registration_plugin_name>&token={TOKEN}", 
         defaultLang: true
       };
     }
@@ -319,6 +323,10 @@ class RegisterParams extends Component {
 
     if (nextProps.mod.parameters["reset-credentials-code"] === undefined) {
       nextProps.mod.parameters["reset-credentials-code"] = false;
+    }
+    
+    if (!nextProps.mod.parameters["reset-credentials-code-list-size"]) {
+      nextProps.mod.parameters["reset-credentials-code-list-size"] = 4;
     }
 
     if (!nextProps.mod.parameters["reset-credentials-code-property"]) {
@@ -838,7 +846,7 @@ class RegisterParams extends Component {
                       <div className="input-group-prepend">
                         <label className="input-group-text" htmlFor="mod-register-session-key">{i18next.t("admin.mod-register-session-key")}</label>
                       </div>
-                      <input type="text" className={this.state.errorList["session-key"]?"form-control is-invalid":"form-control"} id="mod-register-session-key" onChange={(e) => this.changeParam(e, "session-key")} value={this.state.mod.parameters["session-key"]} placeholder={i18next.t("admin.mod-register-session-key")} />
+                      <input type="text" className={this.state.errorList["session-key"]?"form-control is-invalid":"form-control"} id="mod-register-session-key" onChange={(e) => this.changeParam(e, "session-key")} value={this.state.mod.parameters["session-key"]} placeholder={i18next.t("admin.mod-register-session-key-ph")} />
                     </div>
                     {this.state.errorList["session-key"]?<span className="error-input">{this.state.errorList["session-key"]}</span>:""}
                   </div>
@@ -1183,6 +1191,14 @@ class RegisterParams extends Component {
                         <input type="text" className={this.state.errorList["reset-credentials-code-property"]?"form-control is-invalid":"form-control"} id="mod-register-reset-credentials-code-property" onChange={(e) => this.changeParam(e, "reset-credentials-code-property")} value={this.state.mod.parameters["reset-credentials-code-property"]} placeholder={i18next.t("admin.mod-register-reset-credentials-code-property")} />
                       </div>
                       {this.state.errorList["reset-credentials-code-property"]?<span className="error-input">{this.state.errorList["reset-credentials-code-property"]}</span>:""}
+                    </div>
+                    <div className="form-group">
+                      <div className="input-group mb-3">
+                        <div className="input-group-prepend">
+                          <label className="input-group-text" htmlFor="mod-reset-credentials-code-list-size">{i18next.t("admin.mod-reset-credentials-code-list-size")}</label>
+                        </div>
+                        <input type="number" min="1" max="65536" step="1" className="form-control" id="mod-reset-credentials-code-list-size" onChange={(e) => this.changeParam(e, "reset-credentials-code-list-size", true)} value={this.state.mod.parameters["reset-credentials-code-list-size"]} placeholder={i18next.t("admin.mod-reset-credentials-code-list-size-ph")}/>
+                      </div>
                     </div>
                   </div>
                 </div>

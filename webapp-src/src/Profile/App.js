@@ -8,6 +8,7 @@ import Notification from '../lib/Notification';
 import Navbar from './Navbar';
 import User from './User';
 import UserDelegate from './UserDelegate';
+import UserResetCredentials from './UserResetCredentials';
 import Register from './Register';
 import Session from './Session';
 import Password from './Password';
@@ -24,6 +25,7 @@ class App extends Component {
     this.state = {
       lang: i18next.language,
       config: props.config,
+      registerPlugin: [],
       registerConfig: false,
       registerProfile: false,
       registerSchemes: {},
@@ -42,6 +44,7 @@ class App extends Component {
       },
       messageModal: {
         title: "",
+        label: "",
         message: ""
       },
       editModal: {
@@ -64,7 +67,9 @@ class App extends Component {
       registerDefaultLang: false,
       updateEmail: [],
       updateEmailModule: false,
-      register: false
+      register: false,
+      schemePrefix: ((props.config && props.config.params.register)?"/" + props.config.params.register + "/profile":"/profile"),
+      resetCredentials: 0
     };
     
     this.fetchProfile = this.fetchProfile.bind(this);
@@ -79,6 +84,8 @@ class App extends Component {
           this.setState({curNav: "session"});
         } else if (message.page === "profile") {
           this.setState({curNav: "profile"});
+        } else if (message.page === "resetCredentialsCode") {
+          this.setState({curNav: "resetCredentialsCode"});
         } else {
           this.setState({curNav: message.module, module: message.page});
         }
@@ -109,6 +116,7 @@ class App extends Component {
       } else if (message.type === 'message') {
         var messageModal = this.state.messageModal;
         messageModal.title = message.title;
+        messageModal.label = message.label;
         messageModal.message = message.message;
         this.setState({messageModal: messageModal}, () => {
           $("#messageModal").modal({keyboard: false, show: true});
@@ -154,23 +162,78 @@ class App extends Component {
     });
     
     if (this.state.config) {
-      if (this.state.config.params.register) {
-        this.fetchRegistration();
-      } else if (this.state.config.params.updateEmail) {
-        this.updateEmailVerifyToken(this.state.config.params.updateEmail, this.state.config.params.updateEmailToken)
+      this.getRegisterConfig();
+      if (this.state.config.params.updateEmail) {
+        this.updateEmailVerifyToken(this.state.config.params.updateEmail, this.state.config.params.token)
         .then(() => {
           messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("profile.update-email-success")});
           this.fetchProfile();
         });
+      } else if (this.state.config.params.resetCredentials) {
+        if (this.state.config.register) {
+          if (this.state.config.params.token) {
+            apiManager.glewlwydRequest("/" + this.state.config.params.resetCredentials + "/reset-credentials-email/" + encodeURI(this.state.config.params.token), "PUT")
+            .then(() => {
+              this.getResetCredentialsConfig();
+            })
+            .fail((err) => {
+              if (err.status === 403) {
+                this.setState({resetCredentials: -1});
+                messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.reset-credentials-email-token-error")});
+              } else {
+                messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+              }
+            });
+          } else {
+            this.getResetCredentialsConfig();
+          }
+        }
       } else {
         this.fetchProfile();
       }
     }
   }
   
-  componentWillReceiveProps(nextProps) {
-    this.setState({
-      config: props.config
+  getRegisterConfig() {
+    if (this.state.config.register) {
+      this.state.config.register.forEach((register, index) => {
+        apiManager.glewlwydRequest("/" + register.name + "/config")
+        .then((config) => {
+          var registerPlugin = this.state.registerPlugin;
+          config.name = register.name;
+          registerPlugin.push(config);
+          this.setState({registerPlugin: registerPlugin}, () => {
+            if (this.state.config.params.register) {
+              this.fetchRegistration();
+            }
+            if (config["update-email"]) {
+              var updateEmail = this.state.updateEmail;
+              updateEmail.push(register.name);
+              this.setState({updateEmail: updateEmail});
+            }
+          });
+        })
+        .fail((err) => {
+          this.setState({registerValid: false, registering: false}, () => {
+            if (err.status === 404) {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-invalid-url")});
+            } else {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+            }
+          });
+        });
+      });
+    }
+  }
+  
+  getResetCredentialsConfig() {
+    apiManager.glewlwydRequest("/" + this.state.config.params.resetCredentials + "/reset-credentials/profile/")
+    .then((profile) => {
+      this.setState({profileList: [profile.user], loggedIn: true, schemeList: profile.scheme, schemePrefix: "/" + this.state.config.params.resetCredentials + "/reset-credentials/profile", resetCredentials: 1});
+    })
+    .fail((err) => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      this.setState({resetCredentials: -1});
     });
   }
   
@@ -274,13 +337,6 @@ class App extends Component {
           .fail((err) => {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           });
-        } else if (plugin.module === "register") {
-          apiManager.glewlwydRequestSub("/" + plugin.name + "/update-email/")
-          .then(() => {
-            var updateEmail = this.state.updateEmail;
-            updateEmail.push(plugin.name);
-            this.setState({updateEmail: updateEmail});
-          });
         }
       });
       messageDispatcher.sendMessage('App', {type: "sessionComplete"});
@@ -291,27 +347,26 @@ class App extends Component {
   }
   
   fetchRegistration() {
-    apiManager.glewlwydRequest("/" + this.state.config.params.register + "/config")
-    .then((config) => {
+    if (this.state.registerPlugin.registration) {
       var defaultLang = false;
       if (this.state.lang) {
-        if (config.languages.length) {
-          config.languages.forEach((lang) => {
+        if (this.state.registerPlugin.registration.languages.length) {
+          this.state.registerPlugin.registration.languages.forEach((lang) => {
             if (lang === this.state.lang) {
               defaultLang = this.state.lang;
             }
           });
         }
       }
-      if (!defaultLang && config.languages.length) {
-        defaultLang = config.languages[0];
+      if (!defaultLang && this.state.registerPlugin.registration.languages.length) {
+        defaultLang = this.state.registerPlugin.registration.languages[0];
       }
-      this.setState({registerValid: true, registerConfig: config, registerDefaultLang: defaultLang}, () => {
+      this.setState({registerValid: true, registerConfig: this.state.registerPlugin.registration, registerDefaultLang: defaultLang}, () => {
         if (!this.state.config.params.token || this.state.tokenParsed) {
           apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
           .then((profile) => {
-            this.setState({registerProfile: profile, schemeList: config.schemes, profile: profile, profileList: [profile], registering: true}, () => {
-              config.schemes.forEach(scheme => {
+            this.setState({registerProfile: profile, schemeList: this.state.registerPlugin.registration.schemes, profile: profile, profileList: [profile], registering: true}, () => {
+              this.state.registerPlugin.registration.schemes.forEach(scheme => {
                 apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/scheme/register/canuse", "PUT", {username: profile.username, scheme_type: scheme.module, scheme_name: scheme.name})
                 .then(() => {
                   var registerSchemes = this.state.registerSchemes;
@@ -343,8 +398,8 @@ class App extends Component {
           .then(() => {
             apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
             .then((profile) => {
-              this.setState({tokenParsed: true, registerProfile: profile, schemeList: config.schemes, profile: profile, profileList: [profile], registering: true}, () => {
-                config.schemes.forEach(scheme => {
+              this.setState({tokenParsed: true, registerProfile: profile, schemeList: this.state.registerPlugin.schemes, profile: profile, profileList: [profile], registering: true}, () => {
+                this.state.registerPlugin.registration.schemes.forEach(scheme => {
                   apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/scheme/register/canuse", "PUT", {username: profile.username, scheme_type: scheme.module, scheme_name: scheme.name})
                   .then(() => {
                     var registerSchemes = this.state.registerSchemes;
@@ -376,16 +431,12 @@ class App extends Component {
           });
         }
       });
-    })
-    .fail((err) => {
-      this.setState({registerValid: false, registering: false}, () => {
-        if (err.status === 404) {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-invalid-url")});
-        } else {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-        }
-      });
-    });
+    }
+    if (this.state.registerPlugin["update-email"]) {
+      var updateEmail = this.state.updateEmail;
+      updateEmail.push(this.state.config.params.register);
+      this.setState({updateEmail: updateEmail});
+    }
   }
 
   updateEmailVerifyToken(module, token) {
@@ -432,6 +483,8 @@ class App extends Component {
         userJsx = <UserDelegate config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} />
       } else if (this.state.config.params.register) {
         userJsx = <Register config={this.state.config} registerConfig={this.state.registerConfig} registerProfile={this.state.registerProfile} registerSchemes={this.state.registerSchemes} registerValid={this.state.registerValid} registerDefaultLang={this.state.registerDefaultLang} />
+      } else if (this.state.config.params.resetCredentials) {
+        userJsx = <UserResetCredentials config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} status={this.state.resetCredentials} />
       } else {
         userJsx = <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false} profileUpdate={this.state.profileUpdate} loggedIn={this.state.loggedIn} updateEmail={this.state.updateEmail}/>
       }
@@ -459,10 +512,18 @@ class App extends Component {
                     <Session config={this.state.config} plugins={this.state.plugins} sessionList={this.state.sessionList}/>
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="password"?" active":"")}>
-                    <Password config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} loggedIn={this.state.loggedIn} callback={this.showPasswordChangeNotification} />
+                    <Password config={this.state.config} 
+                              profile={(this.state.profileList?this.state.profileList[0]:false)} 
+                              loggedIn={this.state.loggedIn} 
+                              callback={this.showPasswordChangeNotification} 
+                              registerPlugin={this.state.registerPlugin} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav!=="profile"&&this.state.curNav!=="session"&&this.state.curNav!=="password"?" active":"")}>
-                    <SchemePage config={this.state.config} module={this.state.curNav} name={this.state.module} profile={(this.state.profileList?this.state.profileList[0]:false)}/>
+                    <SchemePage config={this.state.config} 
+                                module={this.state.curNav} 
+                                name={this.state.module} 
+                                profile={(this.state.profileList?this.state.profileList[0]:false)}
+                                schemePrefix={this.state.schemePrefix}/>
                   </div>
                 </div>
               </div>
@@ -470,7 +531,7 @@ class App extends Component {
           </div>
           <Notification loggedIn={this.state.loggedIn||this.state.config.params.register}/>
           <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
-          <Message title={this.state.messageModal.title} message={this.state.messageModal.message} />
+          <Message title={this.state.messageModal.title} label={this.state.messageModal.label} message={this.state.messageModal.message} />
           <Edit title={this.state.editModal.title} 
                 message={this.state.editModal.message} 
                 value={this.state.editModal.value} 

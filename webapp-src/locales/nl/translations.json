@@ -972,7 +972,7 @@
     "session-token-oauth2-table": "Tokens Oauth2 {{name}}",
     "session-token-oidc-table": "Tokens OIDC {{name}}",
     "session-table-last-login": "Laatste login",
-    "session-table-exiration": "Verloopt op",
+    "session-table-expiration": "Verloopt op",
     "session-table-client": "Client",
     "session-table-issued-for": "Bron adres",
     "session-table-user-agent": "Gebruikersagent",

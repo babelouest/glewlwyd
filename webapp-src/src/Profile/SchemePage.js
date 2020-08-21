@@ -15,7 +15,8 @@ class SchemePage extends Component {
       config: props.config,
       module: props.module,
       name: props.name,
-      profile: props.profile
+      profile: props.profile,
+      schemePrefix: props.schemePrefix
     }
   }
 
@@ -24,30 +25,31 @@ class SchemePage extends Component {
       config: nextProps.config,
       module: nextProps.module,
       name: nextProps.name,
-      profile: nextProps.profile
+      profile: nextProps.profile,
+      schemePrefix: nextProps.schemePrefix
     });
   }
   
   render() {
     if (this.state.module === "mock") {
       return (
-        <SchemeMock config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} />
+        <SchemeMock config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} schemePrefix={this.state.schemePrefix} />
       );
     } else if (this.state.module === "webauthn") {
       return (
-        <SchemeWebauthn config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} />
+        <SchemeWebauthn config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} schemePrefix={this.state.schemePrefix} />
       );
     } else if (this.state.module === "otp") {
       return (
-        <SchemeOTP config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} />
+        <SchemeOTP config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} schemePrefix={this.state.schemePrefix} />
       );
     } else if (this.state.module === "certificate") {
       return (
-        <SchemeCertificate config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} />
+        <SchemeCertificate config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} schemePrefix={this.state.schemePrefix} />
       );
     } else if (this.state.module === "oauth2") {
       return (
-        <SchemeOauth2 config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} />
+        <SchemeOauth2 config={this.state.config} module={this.state.module} name={this.state.name} profile={this.state.profile} schemePrefix={this.state.schemePrefix} />
       );
     } else {
       return (

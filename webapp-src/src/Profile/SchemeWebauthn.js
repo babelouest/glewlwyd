@@ -14,6 +14,7 @@ class SchemeWebauthn extends Component {
       module: props.module,
       name: props.name,
       profile: props.profile,
+      schemePrefix: props.schemePrefix,
       registered: false,
       registration: false,
       credentialList: [],
@@ -22,8 +23,7 @@ class SchemeWebauthn extends Component {
       editValue: "",
       removeIndex: -1,
       credAssertion: false,
-      webauthnEnabled: !!window.PublicKeyCredential,
-      registerUrl: (props.config.params.register?"/" + props.config.params.register + "/profile":"/profile")
+      webauthnEnabled: !!window.PublicKeyCredential
     };
     
     this.getCredentials = this.getCredentials.bind(this);
@@ -46,9 +46,9 @@ class SchemeWebauthn extends Component {
       module: nextProps.module,
       name: nextProps.name,
       profile: nextProps.profile,
+      schemePrefix: nextProps.schemePrefix,
       registered: false,
-      registration: false,
-      registerUrl: (nextProps.config.params.register?"/" + nextProps.config.params.register + "/profile":"/profile")
+      registration: false
     }, () => {
       this.getCredentials();
     });
@@ -66,7 +66,7 @@ class SchemeWebauthn extends Component {
   
   getCredentials() {
     if (this.state.profile) {
-      apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name}, true)
+      apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name}, true)
       .then((res) => {
         var credentialAvailable = false;
         res.forEach(cred => {
@@ -87,7 +87,7 @@ class SchemeWebauthn extends Component {
   }
   
   createCredential() {
-    apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", 
+    apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "POST", 
     {
       username: this.state.profile.username, 
       scheme_type: this.state.module, 
@@ -161,7 +161,7 @@ class SchemeWebauthn extends Component {
         }
 
         credential.response = response;
-        apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {
+        apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "POST", {
           username: this.state.profile.username, 
           scheme_type: this.state.module, 
           scheme_name: this.state.name, 
@@ -206,7 +206,7 @@ class SchemeWebauthn extends Component {
   }
   
   testAssertion(e) {
-    apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", 
+    apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "POST", 
     {
       username: this.state.profile.username, 
       scheme_type: this.state.module, 
@@ -256,7 +256,7 @@ class SchemeWebauthn extends Component {
           response.transports = assertion.response.getTransports();
         }
 
-        apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", 
+        apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "POST", 
         {
           username: this.state.profile.username, 
           scheme_type: this.state.module, 
@@ -307,7 +307,7 @@ class SchemeWebauthn extends Component {
   saveName(e, index) {
     e.preventDefault();
     
-    apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", 
+    apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "POST", 
       {
         username: this.state.profile.username, 
         scheme_type: this.state.module, 
@@ -333,7 +333,7 @@ class SchemeWebauthn extends Component {
   }
   
   switchCred(index) {
-    apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", 
+    apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "POST", 
       {
         username: this.state.profile.username, 
         scheme_type: this.state.module, 
@@ -367,7 +367,7 @@ class SchemeWebauthn extends Component {
   
   confirmRemoveCred(result) {
     if (result) {
-      apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", 
+      apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "POST", 
         {
           username: this.state.profile.username, 
           scheme_type: this.state.module, 

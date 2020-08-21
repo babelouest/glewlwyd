@@ -52,10 +52,10 @@ var initApp = () => {
           delegate: getParameterByName("delegate")||false,
           register: getParameterByName("register")||false,
           updateEmail: getParameterByName("updateEmail")||false,
-          updateEmailToken: getParameterByName("token")||false,
           token: getParameterByName("token")||false,
           scheme_name: getParameterByName("scheme_name")||false,
-          provider: getParameterByName("provider")||false
+          provider: getParameterByName("provider")||false,
+          resetCredentials: getParameterByName("resetCredentials")||false
         }
       }, frontEndConfig, serverConfig);
       ReactDOM.render(<App config={config} />, document.getElementById('root'));
