@@ -545,7 +545,11 @@ int glewlwyd_plugin_callback_delete_client(struct config_plugin * config, const 
 }
 
 json_t * glewlwyd_plugin_callback_get_scheme_list(struct config_plugin * config, const char * username) {
-  return get_scheme_list_for_user(config->glewlwyd_config, username);
+  if (o_strlen(username)) {
+    return get_scheme_list_for_user(config->glewlwyd_config, username);
+  } else {
+    return json_pack("{si}", "result", G_ERROR_PARAM);
+  }
 }
 
 json_t * glewlwyd_plugin_callback_scheme_register(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username, json_t * j_scheme_data) {
