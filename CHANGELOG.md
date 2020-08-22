@@ -1,5 +1,10 @@
 # Glewlwyd Changelog
 
+## 2.4.0
+
+- Allow user to update its e-mail
+- Allow user to reset its credentials
+
 ## 2.3.2
 
 - Allow to specify a public JWKS for OIDC plugin
