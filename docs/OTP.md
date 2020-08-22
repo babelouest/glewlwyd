@@ -2,12 +2,12 @@
 
 ![scheme-otp](screenshots/scheme-otp.png)
 
-The OTP Schema implements authentification based on One-Time-Password using OATH standard defined in [HOTP](https://tools.ietf.org/html/rfc4226) and [TOTP](https://tools.ietf.org/html/rfc6238).
+The OTP Schema implements authentication based on One-Time-Password using OATH standard defined in [HOTP](https://tools.ietf.org/html/rfc4226) and [TOTP](https://tools.ietf.org/html/rfc6238).
 
 ## Installation
 
 In the administration page, go to `Parameters/Authentication schemes` and add a new scheme by clicking on the `+` button. In the modal, enter a name and a display name (the name must be unique among all authentication scheme instances), and a scheme session expiration in seconds.
-Select the type `HOTP/TOTP` in the Type dropdown button.
+Select the type `HOTP/TOTP` in the Type drop-down button.
 
 Below is the definition of all parameters.
 
@@ -25,7 +25,7 @@ Number of seconds to expire a valid session.
 
 ### Max use per session (0: unlimited)
 
-Maximum number of times a valid authentification with this scheme is possible. This is an additional parameter used to enforce the security of the session and forbid to reuse this session for other authentications.
+Maximum number of times a valid authentication with this scheme is possible. This is an additional parameter used to enforce the security of the session and forbid to reuse this session for other authentications.
 
 ### Allow users to register
 

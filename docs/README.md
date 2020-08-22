@@ -1,6 +1,6 @@
 # Glewlwyd documentation
 
-Tis folder contains full documentation for Glewlwyd and additional resources.
+This folder contains full documentation for Glewlwyd and additional resources.
 
 ## Documentation
 
@@ -13,7 +13,7 @@ Tis folder contains full documentation for Glewlwyd and additional resources.
 
 ### Modules
 
-- [Install User Backend Dabatase](USER_DATABASE.md)
+- [Install User Backend Database](USER_DATABASE.md)
 - [Install User Backend LDAP](USER_LDAP.md)
 - [Install User Backend HTTP](USER_HTTP.md)
 - [Install Client Backend Database](CLIENT_DATABASE.md)
@@ -22,7 +22,7 @@ Tis folder contains full documentation for Glewlwyd and additional resources.
 - [Install Authentication Scheme Webauthn](WEBAUTHN.md)
 - [Install Authentication Scheme E-mail code](EMAIL.md)
 - [Install Authentication Scheme TLS certificate](CERTIFICATE.md)
-- [Install Authentication Scheme HTTP Basic Authentification](HTTP.md)
+- [Install Authentication Scheme HTTP Basic Authentication](HTTP.md)
 - [Install Authentication Scheme OAuth2/OIDC client](OAUTH2_SCHEME.md)
 
 ### Plugins

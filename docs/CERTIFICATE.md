@@ -2,16 +2,16 @@
 
 ![scheme-certificate](screenshots/scheme-certificate.png)
 
-The TLS Certificate Schema implements authentification based on the [Client-authenticated TLS handshake](https://en.wikipedia.org/wiki/Transport_Layer_Security#Client-authenticated_TLS_handshake) protocol.
+The TLS Certificate Schema implements authentication based on the [Client-authenticated TLS handshake](https://en.wikipedia.org/wiki/Transport_Layer_Security#Client-authenticated_TLS_handshake) protocol.
 
 !!!Full disclosure!!!
 This authentication scheme has been implemented based on the documentation and examples I could find. But there may be other and better ways to implement this type of authentication.
-If you find bugs, weird behaviours, or wish new features, please [open an issue](https://github.com/babelouest/glewlwyd/issues) in the github repository or send an e-mail.
+If you find bugs, weird behaviours, or wish new features, please [open an issue](https://github.com/babelouest/glewlwyd/issues) in the GitHub repository or send an e-mail.
 
 ## Installation
 
 In the administration page, go to `Parameters/Authentication schemes` and add a new scheme by clicking on the `+` button. In the modal, enter a name and a display name (the name must be unique among all authentication scheme instances), and a scheme session expiration in seconds.
-Select the type `Client certificate` in the Type dropdown button.
+Select the type `Client certificate` in the Type drop-down button.
 
 Below is the definition of all parameters.
 
@@ -29,7 +29,7 @@ Number of seconds to expire a valid session.
 
 ### Max use per session (0: unlimited)
 
-Maximum number of times a valid authentification with this scheme is possible. This is an additional parameter used to enforce the security of the session and forbid to reuse this session for other authentications.
+Maximum number of times a valid authentication with this scheme is possible. This is an additional parameter used to enforce the security of the session and forbid to reuse this session for other authentications.
 
 ### Allow users to register
 
@@ -53,7 +53,7 @@ Using the example config above, you must set this value to `SSL_CLIENT_CERT`.
 
 ### Use scheme storage
 
-If this option is set to `yes`, the registered certificates will be stored in the database, in a specific table for this scheme. If this option is set to `no`, the registered certificates will be extracted from the user properies.
+If this option is set to `yes`, the registered certificates will be stored in the database, in a specific table for this scheme. If this option is set to `no`, the registered certificates will be extracted from the user properties.
 
 ### Certificate property
 
@@ -67,13 +67,13 @@ Because Glewlwyd's internal format of the user properties is JSON, if the certif
 
 ### Allow to emit PKCS#12 certificates for the clients
 
-This options allows Glewlwyd to emit pairs of certificate and key in PKCS#12 format. The PKCS#12 will be signed by the provided certificate. The users must then request a certificate in the profile page and inmport this certificate in their browser using the given password. Every time a certificate is generated or requested, it will be registered in the user's certificate list.
+This options allows Glewlwyd to emit pairs of certificate and key in PKCS#12 format. The PKCS#12 will be signed by the provided certificate. The users must then request a certificate in the profile page and import this certificate in their browser using the given password. Every time a certificate is generated or requested, it will be registered in the user's certificate list.
 
 ### Issuer certificate X509 PEM
 
 Issuer certificate to sign the generated certificate. Must be a X509 file in PEM format.
 
-### Issuer prvate key X509 PEM
+### Issuer private key X509 PEM
 
 Issuer key to sign the generated certificates. Must be a X509 file in PEM format.
 
@@ -96,7 +96,7 @@ The variables `{name}` and `{username}` will be replaced by (for example) `Dave 
 
 If this option is set to `Yes`, each time a user will request a certificate, a new PKCS#12 certificate will be generated. Otherwise, a PKCS#12 certificate will be generated at the first request, then will be reused every time the user make the request.
 
-Security warning: If this option is set to `No`, then the generated PKCS#12 certificate and its password will be stored unencrypted in the database to make it available at each request.
+Security warning: If this option is set to `No`, then the generated PKCS#12 certificate and its password will be stored without enryption in the database to make it available at each request.
 
 ### CA Certificates
 

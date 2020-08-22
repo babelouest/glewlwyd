@@ -177,7 +177,7 @@ class Register extends Component {
     .then(() => {
       messageDispatcher.sendMessage('App', {type: "registration"});
     })
-    .fail(() => {
+    .fail((err) => {
       if (err.status !== 400) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
       }
@@ -213,7 +213,7 @@ class Register extends Component {
         messageDispatcher.sendMessage('App', {type: "registration"});
         messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-password-saved")});
       })
-      .fail(() => {
+      .fail((err) => {
         if (err.status !== 400) {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         }
@@ -418,7 +418,7 @@ class Register extends Component {
               <button className="btn btn-secondary btn-icon" 
                       type="button" 
                       onClick={(e) => this.savePassword(e)}
-                      disabled={this.state.invalidPassword}
+                      disabled={this.state.invalidPassword || (!this.state.modifyPassword && this.state.registerProfile.password_set)}
                       title={i18next.t("save")}>
                 {i18next.t("save")}
               </button>
@@ -480,7 +480,13 @@ class Register extends Component {
             langList.push(<a key={index} className={"dropdown-item"+(this.state.registerDefaultLang===lang?" active":"")} href="#" onClick={(e) => this.changeLang(e, lang)}>{lang}</a>);
           });
           langListJsx = <div className="btn-group dropup" role="group">
-            <button className="btn btn-success dropdown-toggle" type="button" id="register-profile-lang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.usernameValid || !this.state.email || !this.state.registerValid}>
+            <button className="btn btn-success dropdown-toggle" 
+                    type="button" 
+                    id="register-profile-lang" 
+                    data-toggle="dropdown" 
+                    aria-haspopup="true" 
+                    aria-expanded="false" 
+                    disabled={!this.state.usernameValid || !this.state.email || !this.state.registerValid}>
               {this.state.registerDefaultLang}
             </button>
             <div className="dropdown-menu" aria-labelledby="register-profile-lang">

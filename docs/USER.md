@@ -21,7 +21,7 @@ This documentation is intended to help Glewlwyd Users to manage their profile an
 
 ![profile-data](screenshots/profile-data.png)
 
-To access its profile page, the user must go to the profile url, typically `https://glewlwyd_server_url/profile.html`. The user may have to relogin, because for security reasons, the default session timeout is set to 10 minutes.
+To access its profile page, the user must go to the profile URL, typically `https://glewlwyd_server_url/profile.html`. The user may have to re-login, because for security reasons, the default session timeout is set to 10 minutes.
 
 ## Profile Personal data
 
@@ -76,7 +76,7 @@ You'll need to synchronize your OTP parameters with another device so you can au
 
 If you want to register a new OTP account, on the `OTP` tab, select the type: `HOTP` (increment based) or `TOTP` (time-based). Usually, TOTP is preferred over HOTP because it's easier to use, with a similar security level. If you want to disable this scheme for your account, select type `None`.
 
-You need to enter a shared secret. This must be a random number, large enough to make it difficult to guess, encoded in Base32 format. If your administrator have provided you a shared secret, type it, or copy/paste it in the textbox. If you don't have one, you can generate a random secret by clicking on the `Generate` button right to the textbox.
+You need to enter a shared secret. This must be a random number, large enough to make it difficult to guess, encoded in Base32 format. If your administrator have provided you a shared secret, type it, or copy/paste it in the text-box. If you don't have one, you can generate a random secret by clicking on the `Generate` button right to the text-box.
 
 ##### HOTP parameter
 
@@ -84,7 +84,7 @@ Moving factor: This option is the starting offset of the HOTP configuration. Usu
 
 ##### TOTP parameter
 
-Step size (seconds): This option is the time window specifying the duration of a one-time password. This duration must be long enough to vive time to the user to read and type it, but short enough to give an attacker enough time to reuse an already used password. The tipical duration is 30 seconds.
+Step size (seconds): This option is the time window specifying the duration of a one-time password. This duration must be long enough to give time to the user to read and type it, but short enough to give an attacker enough time to reuse an already used password. The typical duration is 30 seconds.
 
 ### TLS Certificates
 
@@ -102,7 +102,7 @@ Also, if you're currently browsing using your certificate, you can click on the 
 
 #### Test certificate
 
-If you already have registered at least one certificate and want to test the authentication with the current certificate you're using while browsinig, you can click on the `Test current certificate` button. If the authentication is successful, the certificate used to authenticate will be highlighted in the list.
+If you already have registered at least one certificate and want to test the authentication with the current certificate you're using while browsing, you can click on the `Test current certificate` button. If the authentication is successful, the certificate used to authenticate will be highlighted in the list.
 
 #### Request a certificate to the server
 
@@ -124,27 +124,27 @@ You need a valid login in one of the proposed external services. In the Profile 
 
 ![login-new-user](screenshots/login-new-user.png)
 
-When you're asked to login to an application that uses Glewlwyd as authenticator, you may need to enter credentials, depending on the access required and the server configuration.
+When you're asked to login to an application that uses Glewlwyd as authentication service, you may need to enter credentials, depending on the access required and the server configuration.
 
-During a login process, you may have to use multiple authentication schemes, and choose between them. When this happens, you have a `Scheme` dropdown button available on the bottom-left of the login window. There, you can choose between the schemes available.
+During a login process, you may have to use multiple authentication schemes, and choose between them. When this happens, you have a `Scheme` drop-down button available on the bottom-left of the login window. There, you can choose between the schemes available.
 
 ### Grant access
 
 ![login-grant](screenshots/login-grant.png)
 
-When you first login to an application via Glewlwyd, you'll be asked to grant access to the client. The client needs your permission to have access to scopes you're allowed to use. You need to grant at least one scope to the client, otherwise the client won't have access. At any time, you can go back to the login page and change the access granted to this client by clicking on the `Grant` menu available in the `Manage` dropdown button of the login page.
+When you first login to an application via Glewlwyd, you'll be asked to grant access to the client. The client needs your permission to have access to scopes you're allowed to use. You need to grant at least one scope to the client, otherwise the client won't have access. At any time, you can go back to the login page and change the access granted to this client by clicking on the `Grant` menu available in the `Manage` drop-down button of the login page.
 
 ### Multiple sessions
 
 ![login-multiple-session](screenshots/login-multiple-session.png)
 
-If you have multiple logins available on the Glewlwyd server, you can switch from one to another without having to logout every time. The login available are specific to a browser and a session. Use the dropdown button `Change user` on the bottom-left of the login page.
+If you have multiple logins available on the Glewlwyd server, you can switch from one to another without having to logout every time. The login available are specific to a browser and a session. Use the drop-down button `Change user` on the bottom-left of the login page.
 
 ### Authentication complete
 
 ![logged-in](screenshots/logged-in.png)
 
-If the authentication process is complete, you'll have a `Continue` butotn available. By clicking on this button, you'll be redirected to the client with credentials available to the client.
+If the authentication process is complete, you'll have a `Continue` button available. By clicking on this button, you'll be redirected to the client with credentials available to the client.
 
 ## Delete account
 

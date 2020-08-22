@@ -11,87 +11,24 @@ class Session extends Component {
     
     this.state = {
       config: props.config,
-      profile: props.profile,
-      loggedIn: props.loggedIn,
-      sessionList: [],
-      plugins: {
-        oauth2: {
-        },
-        oidc: {
-        }
-      },
+      sessionList: props.sessionList,
+      plugins: props.plugins,
       disableObject: false
     };
     
-    this.fetchLists = this.fetchLists.bind(this);
     this.getTable = this.getTable.bind(this);
     this.disableSession = this.disableSession.bind(this);
     this.disableSessionConfirm = this.disableSessionConfirm.bind(this);
     this.disableToken = this.disableToken.bind(this);
     this.disableTokenConfirm = this.disableTokenConfirm.bind(this);
-    
-    if (this.state.profile) {
-      this.fetchLists();
-    }
   }
   
   componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
-      profile: nextProps.profile,
-      loggedIn: nextProps.loggedIn
-    }, () => {
-      if (this.state.profile) {
-        this.fetchLists();
-      }
-      if (!this.state.loggedIn) {
-        this.setState({
-          profile: [],
-          sessionList: []
-        });
-      };
+      plugins: nextProps.plugins,
+      sessionList: nextProps.sessionList
     });
-  }
-  
-  fetchLists() {
-    if (this.state.loggedIn) {
-      apiManager.glewlwydRequest("/profile/session")
-      .then((res) => {
-        this.setState({sessionList: res});
-      })
-      .fail(() => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-      });
-      apiManager.glewlwydRequest("/profile/plugin")
-      .then((res) => {
-        res.forEach((plugin) => {
-          if (plugin.module === "oauth2-glewlwyd") {
-            apiManager.glewlwydRequestSub("/" + plugin.name + "/profile/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
-            .then((resPlugin) => {
-              var plugins = this.state.plugins;
-              plugins.oauth2[plugin.name] = resPlugin;
-              this.setState({plugins: plugins});
-            })
-            .fail((err) => {
-            });
-          } else if (plugin.module === "oidc") {
-            apiManager.glewlwydRequestSub("/" + plugin.name + "/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
-            .then((resPlugin) => {
-              var plugins = this.state.plugins;
-              plugins.oidc[plugin.name] = resPlugin;
-              this.setState({plugins: plugins});
-            })
-            .fail((err) => {
-            });
-          }
-        });
-      })
-      .fail(() => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-      });
-    } else {
-      this.setState({sessionList: []});
-    }
   }
   
   getTable(header, rows) {
@@ -123,7 +60,7 @@ class Session extends Component {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         })
         .always(() => {
-          this.fetchLists();
+          messageDispatcher.sendMessage('App', {type: "refreshSession"});
           this.setState({disableObject: false});
         });
       }
@@ -149,7 +86,7 @@ class Session extends Component {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           })
           .always(() => {
-            this.fetchLists();
+            messageDispatcher.sendMessage('App', {type: "refreshSession"});
             this.setState({disableObject: false});
             messageDispatcher.sendMessage('App', {type: "closeConfirm"});
           });
@@ -162,7 +99,7 @@ class Session extends Component {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           })
           .always(() => {
-            this.fetchLists();
+            messageDispatcher.sendMessage('App', {type: "refreshSession"});
             this.setState({disableObject: false});
           });
         }
@@ -179,7 +116,7 @@ class Session extends Component {
         {i18next.t("profile.session-table-last-login")}
       </th>
       <th>
-        {i18next.t("profile.session-table-exiration")}
+        {i18next.t("profile.session-table-expiration")}
       </th>
       <th>
         {i18next.t("profile.session-table-issued-for")}
@@ -231,7 +168,7 @@ class Session extends Component {
           {i18next.t("profile.session-table-last-login")}
         </th>
         <th>
-          {i18next.t("profile.session-table-exiration")}
+          {i18next.t("profile.session-table-expiration")}
         </th>
         <th>
           {i18next.t("profile.session-table-client")}
@@ -305,7 +242,7 @@ class Session extends Component {
           {i18next.t("profile.session-table-last-login")}
         </th>
         <th>
-          {i18next.t("profile.session-table-exiration")}
+          {i18next.t("profile.session-table-expiration")}
         </th>
         <th>
           {i18next.t("profile.session-table-client")}

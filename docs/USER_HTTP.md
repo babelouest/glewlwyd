@@ -22,7 +22,7 @@ The authentication method used is the Basic HTTP authentication.
 ## Installation
 
 In the administration page, go to `Parameters/Users data sources` and add a new user module by clicking on the `+` button. In the modal, enter a name and a display name (the name must be unique among all user backend instances).
-Select the type `LDAP backend user module` in the Type dropdown button.
+Select the type `LDAP backend user module` in the Type drop-down button.
 
 Below is the definition of all parameters.
 
