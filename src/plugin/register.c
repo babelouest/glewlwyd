@@ -121,7 +121,7 @@ static int can_register_scheme(struct _register_config * config, const struct _u
   json_t * j_element = NULL;
   size_t index = 0;
   
-  if (o_strstr(request->url_path, "profile/scheme/register/canuse") != NULL) {
+  if (o_strstr(request->url_path, "reset-credentials") == NULL) {
     if (json_object_get(config->j_parameters, "schemes") != NULL) {
       json_array_foreach(json_object_get(config->j_parameters, "schemes"), index, j_element) {
         if (0 == o_strcmp(json_string_value(json_object_get(j_element, "name")), scheme_name)) {
@@ -1864,6 +1864,7 @@ static int callback_register_get_scheme_registration(const struct _u_request * r
     }
     json_decref(j_response);
   } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "callback_register_get_scheme_registration - Invalid input parameters");
     response->status = 400;
   }
   
@@ -1920,7 +1921,6 @@ static int callback_register_canuse_scheme_registration(const struct _u_request 
       response->status = 500;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "username %s", json_string_value(json_object_get((json_t *)response->shared_data, "username")));
     response->status = 400;
   }
   
@@ -2102,7 +2102,7 @@ static int callback_register_get_profile(const struct _u_request * request, stru
   UNUSED(request);
   
   if (check_result_value(j_result, G_OK)) {
-    j_return = json_pack("{sOsO}", "user", (json_t *)response->shared_data, "scheme", json_object_get(j_result, "scheme"));
+    j_return = json_pack("{s{ss}sO}", "user", "username", json_string_value(json_object_get((json_t *)response->shared_data, "username")), "scheme", json_object_get(j_result, "scheme"));
     ulfius_set_response_properties(response, U_OPT_JSON_BODY, j_return);
     json_decref(j_return);
   } else {
@@ -2222,6 +2222,8 @@ static int callback_register_reset_credentials_code_verify(const struct _u_reque
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_reset_credentials_code_verify - Error reset_credentials_create_session");
       response->status = 500;
     }
+    json_decref(j_session);
+    o_free(issued_for);
   } else if (res == G_ERROR_UNAUTHORIZED) {
     y_log_message(Y_LOG_LEVEL_WARNING, "Security - Reset credentials - code invalid at IP Address %s", get_ip_source(request));
     response->status = 403;
@@ -2229,6 +2231,7 @@ static int callback_register_reset_credentials_code_verify(const struct _u_reque
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_reset_credentials_code_verify - Error reset_credentials_code_verify");
     response->status = 500;
   }
+  json_decref(j_parameters);
   return U_CALLBACK_CONTINUE;
 }
 
