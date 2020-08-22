@@ -75,6 +75,9 @@ class RegisterParams extends Component {
 
     if (!props.mod.parameters["templates"]) {
       props.mod.parameters["templates"] = {};
+    }
+
+    if (!props.mod.parameters["templates"][i18next.language]) {
       props.mod.parameters["templates"][i18next.language] = {
         subject: props.mod.parameters.subject||"Confirm registration", 
         "body-pattern": props.mod.parameters["body-pattern"]||"The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/"+props.config.ProfileUrl+"?register=<your_registration_plugin_name>&token={TOKEN}", 
@@ -92,6 +95,9 @@ class RegisterParams extends Component {
 
     if (!props.mod.parameters["templatesUpdateEmail"]) {
       props.mod.parameters["templatesUpdateEmail"] = {};
+    }
+
+    if (!props.mod.parameters["templatesUpdateEmail"][i18next.language]) {
       props.mod.parameters["templatesUpdateEmail"][i18next.language] = {
         subject: "Update e-mail address", 
         "body-pattern": "Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/"+props.config.ProfileUrl+"?updateEmail=<your_registration_plugin_name>&token={TOKEN}", 
@@ -129,6 +135,9 @@ class RegisterParams extends Component {
 
     if (!props.mod.parameters["templatesResetCredentials"]) {
       props.mod.parameters["templatesResetCredentials"] = {};
+    }
+
+    if (!props.mod.parameters["templatesResetCredentials"][i18next.language]) {
       props.mod.parameters["templatesResetCredentials"][i18next.language] = {
         subject: "Lost credentials", 
         "body-pattern": "Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/"+props.config.ProfileUrl+"?resetCredentials=<your_registration_plugin_name>&token={TOKEN}", 
@@ -252,6 +261,9 @@ class RegisterParams extends Component {
 
     if (!nextProps.mod.parameters["templates"]) {
       nextProps.mod.parameters["templates"] = {};
+    }
+
+    if (!nextProps.mod.parameters["templates"][i18next.language]) {
       nextProps.mod.parameters["templates"][i18next.language] = {
         subject: nextProps.mod.parameters.subject||"Confirm registration", 
         "body-pattern": nextProps.mod.parameters["body-pattern"]||"The code is {CODE}\n\n"+window.location.href.split('?')[0].split('#')[0]+"/"+this.state.config.ProfileUrl+"?register=<your_registration_plugin_name>&token={TOKEN}", 
@@ -269,6 +281,9 @@ class RegisterParams extends Component {
 
     if (!nextProps.mod.parameters["templatesUpdateEmail"]) {
       nextProps.mod.parameters["templatesUpdateEmail"] = {};
+    }
+
+    if (!nextProps.mod.parameters["templatesUpdateEmail"][i18next.language]) {
       nextProps.mod.parameters["templatesUpdateEmail"][i18next.language] = {
         subject: "Update e-mail address", 
         "body-pattern": "Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/"+this.state.config.ProfileUrl+"?updateEmail=<your_registration_plugin_name>&token={TOKEN}", 
@@ -306,6 +321,9 @@ class RegisterParams extends Component {
 
     if (!nextProps.mod.parameters["templatesResetCredentials"]) {
       nextProps.mod.parameters["templatesResetCredentials"] = {};
+    }
+
+    if (!nextProps.mod.parameters["templatesResetCredentials"][i18next.language]) {
       nextProps.mod.parameters["templatesResetCredentials"][i18next.language] = {
         subject: "Lost credentials", 
         "body-pattern": "Click on the following link: "+window.location.href.split('?')[0].split('#')[0]+"/"+this.state.config.ProfileUrl+"?resetCredentials=<your_registration_plugin_name>&token={TOKEN}", 

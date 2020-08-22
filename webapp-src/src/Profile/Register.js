@@ -177,7 +177,7 @@ class Register extends Component {
     .then(() => {
       messageDispatcher.sendMessage('App', {type: "registration"});
     })
-    .fail(() => {
+    .fail((err) => {
       if (err.status !== 400) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
       }

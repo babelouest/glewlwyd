@@ -188,7 +188,7 @@ class App extends Component {
             this.getResetCredentialsConfig();
           }
         }
-      } else {
+      } else if (!this.state.config.params.register) {
         this.fetchProfile();
       }
     }
@@ -347,69 +347,43 @@ class App extends Component {
   }
   
   fetchRegistration() {
-    if (this.state.registerPlugin.registration) {
-      var defaultLang = false;
-      if (this.state.lang) {
-        if (this.state.registerPlugin.registration.languages.length) {
-          this.state.registerPlugin.registration.languages.forEach((lang) => {
-            if (lang === this.state.lang) {
-              defaultLang = this.state.lang;
-            }
-          });
-        }
-      }
-      if (!defaultLang && this.state.registerPlugin.registration.languages.length) {
-        defaultLang = this.state.registerPlugin.registration.languages[0];
-      }
-      this.setState({registerValid: true, registerConfig: this.state.registerPlugin.registration, registerDefaultLang: defaultLang}, () => {
-        if (!this.state.config.params.token || this.state.tokenParsed) {
-          apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
-          .then((profile) => {
-            this.setState({registerProfile: profile, schemeList: this.state.registerPlugin.registration.schemes, profile: profile, profileList: [profile], registering: true}, () => {
-              this.state.registerPlugin.registration.schemes.forEach(scheme => {
-                apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/scheme/register/canuse", "PUT", {username: profile.username, scheme_type: scheme.module, scheme_name: scheme.name})
-                .then(() => {
-                  var registerSchemes = this.state.registerSchemes;
-                  var schemeHighlight = this.state.schemeHighlight;
-                  schemeHighlight[scheme.name] = false;
-                  registerSchemes[scheme.name] = true;
-                  this.setState({registerSchemes: registerSchemes, schemeHighlight: schemeHighlight});
-                })
-                .fail(() => {
-                  var registerSchemes = this.state.registerSchemes;
-                  var schemeHighlight = this.state.schemeHighlight;
-                  registerSchemes[scheme.name] = false;
-                  if (scheme.register == "always") {
-                    schemeHighlight[scheme.name] = true;
-                  }
-                  this.setState({registerSchemes: registerSchemes, schemeHighlight: schemeHighlight});
-                });
-              });
+    this.state.registerPlugin.forEach((registerPlugin) => {
+      if (registerPlugin.registration) {
+        var defaultLang = false;
+        if (this.state.lang) {
+          if (registerPlugin.registration.languages.length) {
+            registerPlugin.registration.languages.forEach((lang) => {
+              if (lang === this.state.lang) {
+                defaultLang = this.state.lang;
+              }
             });
-          })
-          .fail((err) => {
-            if (err.status != 401) {
-              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-            }
-            this.setState({registerProfile: false, registering: false});
-          });
-        } else {
-          apiManager.glewlwydRequest("/" + this.state.config.params.register + "/verify", "POST", {token: this.state.config.params.token})
-          .then(() => {
+          }
+        }
+        if (!defaultLang && registerPlugin.registration.languages.length) {
+          defaultLang = registerPlugin.registration.languages[0];
+        }
+        this.setState({registerValid: true, registerConfig: registerPlugin.registration, registerDefaultLang: defaultLang}, () => {
+          if (!this.state.config.params.token || this.state.tokenParsed) {
             apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
             .then((profile) => {
-              this.setState({tokenParsed: true, registerProfile: profile, schemeList: this.state.registerPlugin.schemes, profile: profile, profileList: [profile], registering: true}, () => {
-                this.state.registerPlugin.registration.schemes.forEach(scheme => {
+              this.setState({registerProfile: profile, schemeList: registerPlugin.registration.schemes, profile: profile, profileList: [profile], registering: true}, () => {
+                registerPlugin.registration.schemes.forEach(scheme => {
                   apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/scheme/register/canuse", "PUT", {username: profile.username, scheme_type: scheme.module, scheme_name: scheme.name})
                   .then(() => {
                     var registerSchemes = this.state.registerSchemes;
+                    var schemeHighlight = this.state.schemeHighlight;
+                    schemeHighlight[scheme.name] = false;
                     registerSchemes[scheme.name] = true;
-                    this.setState({registerSchemes: registerSchemes});
+                    this.setState({registerSchemes: registerSchemes, schemeHighlight: schemeHighlight});
                   })
                   .fail(() => {
                     var registerSchemes = this.state.registerSchemes;
+                    var schemeHighlight = this.state.schemeHighlight;
                     registerSchemes[scheme.name] = false;
-                    this.setState({registerSchemes: registerSchemes});
+                    if (scheme.register == "always") {
+                      schemeHighlight[scheme.name] = true;
+                    }
+                    this.setState({registerSchemes: registerSchemes, schemeHighlight: schemeHighlight});
                   });
                 });
               });
@@ -420,23 +394,51 @@ class App extends Component {
               }
               this.setState({registerProfile: false, registering: false});
             });
-          })
-          .fail((err) => {
-            if (err.status != 401) {
-              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-            } else {
-              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-token-invalid")});
-            }
-            this.setState({registerProfile: false, registering: false});
-          });
-        }
-      });
-    }
-    if (this.state.registerPlugin["update-email"]) {
-      var updateEmail = this.state.updateEmail;
-      updateEmail.push(this.state.config.params.register);
-      this.setState({updateEmail: updateEmail});
-    }
+          } else {
+            apiManager.glewlwydRequest("/" + this.state.config.params.register + "/verify", "POST", {token: this.state.config.params.token})
+            .then(() => {
+              apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile")
+              .then((profile) => {
+                this.setState({tokenParsed: true, registerProfile: profile, schemeList: registerPlugin.schemes, profile: profile, profileList: [profile], registering: true}, () => {
+                  registerPlugin.registration.schemes.forEach(scheme => {
+                    apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/scheme/register/canuse", "PUT", {username: profile.username, scheme_type: scheme.module, scheme_name: scheme.name})
+                    .then(() => {
+                      var registerSchemes = this.state.registerSchemes;
+                      registerSchemes[scheme.name] = true;
+                      this.setState({registerSchemes: registerSchemes});
+                    })
+                    .fail(() => {
+                      var registerSchemes = this.state.registerSchemes;
+                      registerSchemes[scheme.name] = false;
+                      this.setState({registerSchemes: registerSchemes});
+                    });
+                  });
+                });
+              })
+              .fail((err) => {
+                if (err.status != 401) {
+                  messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+                }
+                this.setState({registerProfile: false, registering: false});
+              });
+            })
+            .fail((err) => {
+              if (err.status != 401) {
+                messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+              } else {
+                messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-token-invalid")});
+              }
+              this.setState({registerProfile: false, registering: false});
+            });
+          }
+        });
+      }
+      if (registerPlugin["update-email"]) {
+        var updateEmail = this.state.updateEmail;
+        updateEmail.push(this.state.config.params.register);
+        this.setState({updateEmail: updateEmail});
+      }
+    });
   }
 
   updateEmailVerifyToken(module, token) {
