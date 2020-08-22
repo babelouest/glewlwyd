@@ -694,9 +694,12 @@ START_TEST(test_glwd_scheme_oauth2_irl_register_get_oauth2)
                                     "scheme_name", MODULE_NAME,
                                     "last_session", json_null()),
          * j_result = json_pack("{ssssss}", "provider", PROVIDER_NAME, "logo_uri", PROVIDER_LOGO_URI, "logo_fa", PROVIDER_LOGO_FA);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_parameters);
   json_decref(j_result);
+  json_decref(j_canuse);
 }
 END_TEST
 

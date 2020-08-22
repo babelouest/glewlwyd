@@ -124,10 +124,12 @@ END_TEST
 START_TEST(test_glwd_scheme_otp_irl_register)
 {
   json_t * j_params = json_pack("{sssssss{so}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "generate-secret", json_true());
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
 
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
   j_params = json_pack("{sssssss{sssssi}}", 
                        "username", USERNAME, 
                        "scheme_type", MODULE_MODULE, 
@@ -158,6 +160,7 @@ START_TEST(test_glwd_scheme_otp_irl_register)
                                   "type", "NONE");
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_params);
+  json_decref(j_canuse);
 }
 END_TEST
 

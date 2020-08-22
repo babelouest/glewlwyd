@@ -358,6 +358,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_new_credential)
          * j_result, * j_result2;
   struct _u_response resp;
   size_t challenge_len;
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
   
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, jwt_response, NULL, NULL), 1);
   
@@ -386,6 +389,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_new_credential)
   ck_assert_str_ne(json_string_value(json_object_get(j_result, "session")), "");
   ck_assert_str_ne(json_string_value(json_object_get(j_result, "session")), json_string_value(json_object_get(j_result2, "session")));
   ck_assert_str_ne(json_string_value(json_object_get(j_result, "challenge")), json_string_value(json_object_get(j_result2, "challenge")));
+  json_decref(j_canuse);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_result2);

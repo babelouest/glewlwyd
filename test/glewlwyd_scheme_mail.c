@@ -325,6 +325,7 @@ START_TEST(test_glwd_scheme_mail_irl_trigger)
 {
   struct smtp_manager manager;
   json_t * j_params = json_pack("{sssssss{}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value");
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
   pthread_t thread;
 
   manager.mail_data = NULL;
@@ -332,10 +333,13 @@ START_TEST(test_glwd_scheme_mail_irl_trigger)
   manager.sockfd = 0;
   manager.body_pattern = MAIL_BODY_PATTERN;
   pthread_create(&thread, NULL, simple_smtp, &manager);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   pthread_join(thread, NULL);
   o_free(manager.mail_data);
   json_decref(j_params);
+  
+  json_decref(j_canuse);
 }
 END_TEST
 

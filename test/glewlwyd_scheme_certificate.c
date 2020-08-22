@@ -141,9 +141,11 @@ END_TEST
 START_TEST(test_glwd_scheme_certificate_register_scheme_backend_use_cert)
 {
   json_t * j_parameters = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "register", "use-certificate");
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
   user_req.client_cert_file = o_strdup(CLIENT_CERT_1_PATH);
   user_req.client_key_file = o_strdup(CLIENT_KEY_1_PATH);
   user_req.client_key_password = o_strdup(CLIENT_KEY_1_PASSWORD);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   o_free(user_req.client_cert_file);
@@ -152,6 +154,8 @@ START_TEST(test_glwd_scheme_certificate_register_scheme_backend_use_cert)
   user_req.client_cert_file = NULL;
   user_req.client_key_file = NULL;
   user_req.client_key_password = NULL;
+
+  json_decref(j_canuse);
 }
 END_TEST
 

@@ -78,7 +78,12 @@ START_TEST(test_glwd_scheme_retype_password_irl_authenticate_success)
                                 "scheme_name", MODULE_NAME, 
                                 "value", 
                                  "password", PASSWORD);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
+
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+
+  json_decref(j_canuse);
   json_decref(j_params);
 }
 END_TEST

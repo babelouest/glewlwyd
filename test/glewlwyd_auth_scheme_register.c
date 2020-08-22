@@ -59,6 +59,9 @@ START_TEST(test_glwd_auth_scheme_register_success)
 {
   json_t * j_body, * j_expected;
   struct _u_response resp;
+  json_t * j_canuse = json_pack("{ssss}", "module", SCHEME_TYPE, "name", SCHEME_NAME);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
   
   ulfius_init_response(&resp);
   o_free(user_req.http_verb);
@@ -110,6 +113,7 @@ START_TEST(test_glwd_auth_scheme_register_success)
   ck_assert_ptr_ne(json_search(json_array_get(json_object_get(json_object_get(json_object_get(j_body, "scope1"), "schemes"), "0"), 0), j_expected), NULL);
   json_decref(j_body);
   json_decref(j_expected);
+  json_decref(j_canuse);
   
 }
 END_TEST
