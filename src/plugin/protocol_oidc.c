@@ -8473,50 +8473,60 @@ static int callback_oidc_device_authorization(const struct _u_request * request,
     client_secret = u_map_get(request->map_post_body, "client_secret");
     client_auth_method = GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_BASIC;
   }
-  if (result == U_CALLBACK_CONTINUE && o_strlen(u_map_get(request->map_post_body, "scope"))) {
-    if (j_assertion_client != NULL) {
-      j_client = json_pack("{sisO}", "result", G_OK, "client", j_assertion_client);
-    } else {
-      j_client = check_client_valid(config, 
-                                   client_id, 
-                                   client_secret, 
-                                   NULL, 
-                                   GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION_FLAG, 
-                                   0, 
-                                   ip_source);
-    }
-    if (check_result_value(j_client, G_OK) && is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
-      client_id = json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id"));
-      j_result = generate_device_authorization(config, client_id, u_map_get(request->map_post_body, "scope"), ip_source);
-      if (check_result_value(j_result, G_OK)) {
-          verification_uri = msprintf("%s/device", plugin_url);
-          verification_uri_complete = msprintf("%s/device?code=%s", plugin_url, json_string_value(json_object_get(json_object_get(j_result, "authorization"), "user_code"))); 
-          j_body = json_pack("{sOsOsssssOsO}", 
-                             "device_code", json_object_get(json_object_get(j_result, "authorization"), "device_code"),
-                             "user_code", json_object_get(json_object_get(j_result, "authorization"), "user_code"),
-                             "verification_uri", verification_uri,
-                             "verification_uri_complete", verification_uri_complete,
-                             "expires_in", json_object_get(config->j_params, "device-authorization-expiration"),
-                             "interval", json_object_get(config->j_params, "device-authorization-interval"));
-          ulfius_set_json_body_response(response, 200, j_body);
-          json_decref(j_body);
-          o_free(verification_uri);
-          o_free(verification_uri_complete);
+  if (result == U_CALLBACK_CONTINUE) {
+    if (o_strlen(u_map_get(request->map_post_body, "scope"))) {
+      if (j_assertion_client != NULL) {
+        j_client = json_pack("{sisO}", "result", G_OK, "client", j_assertion_client);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_authorization oidc - Error generate_device_authorization");
-        j_body = json_pack("{ss}", "error", "server_error");
-        ulfius_set_json_body_response(response, 500, j_body);
+        j_client = check_client_valid(config, 
+                                     client_id, 
+                                     client_secret, 
+                                     NULL, 
+                                     GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION_FLAG, 
+                                     0, 
+                                     ip_source);
+      }
+      if (check_result_value(j_client, G_OK) && is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
+        client_id = json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id"));
+        j_result = generate_device_authorization(config, client_id, u_map_get(request->map_post_body, "scope"), ip_source);
+        if (check_result_value(j_result, G_OK)) {
+            verification_uri = msprintf("%s/device", plugin_url);
+            verification_uri_complete = msprintf("%s/device?code=%s", plugin_url, json_string_value(json_object_get(json_object_get(j_result, "authorization"), "user_code"))); 
+            j_body = json_pack("{sOsOsssssOsO}", 
+                               "device_code", json_object_get(json_object_get(j_result, "authorization"), "device_code"),
+                               "user_code", json_object_get(json_object_get(j_result, "authorization"), "user_code"),
+                               "verification_uri", verification_uri,
+                               "verification_uri_complete", verification_uri_complete,
+                               "expires_in", json_object_get(config->j_params, "device-authorization-expiration"),
+                               "interval", json_object_get(config->j_params, "device-authorization-interval"));
+            ulfius_set_json_body_response(response, 200, j_body);
+            json_decref(j_body);
+            o_free(verification_uri);
+            o_free(verification_uri_complete);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_authorization oidc - Error generate_device_authorization");
+          j_body = json_pack("{ss}", "error", "server_error");
+          ulfius_set_json_body_response(response, 500, j_body);
+          json_decref(j_body);
+        }
+        json_decref(j_result);
+      } else {
+        j_body = json_pack("{ss}", "error", "unauthorized_client");
+        ulfius_set_json_body_response(response, 403, j_body);
         json_decref(j_body);
       }
-      json_decref(j_result);
+      json_decref(j_client);
     } else {
-      j_body = json_pack("{ss}", "error", "unauthorized_client");
-      ulfius_set_json_body_response(response, 403, j_body);
+      j_body = json_pack("{ss}", "error", "invalid_scope");
+      ulfius_set_json_body_response(response, 400, j_body);
       json_decref(j_body);
     }
-    json_decref(j_client);
+  } else if (result == U_CALLBACK_UNAUTHORIZED) {
+    j_body = json_pack("{ss}", "error", "unauthorized_client");
+    ulfius_set_json_body_response(response, 400, j_body);
+    json_decref(j_body);
   } else {
-    j_body = json_pack("{ss}", "error", "invalid_scope");
+    j_body = json_pack("{ss}", "error", "server_error");
     ulfius_set_json_body_response(response, 400, j_body);
     json_decref(j_body);
   }
