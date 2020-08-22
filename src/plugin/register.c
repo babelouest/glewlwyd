@@ -2188,6 +2188,8 @@ static int callback_register_reset_credentials_email_verify(const struct _u_requ
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_reset_credentials_email_verify - Error reset_credentials_create_session");
       response->status = 500;
     }
+    json_decref(j_session);
+    o_free(issued_for);
   } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
     y_log_message(Y_LOG_LEVEL_WARNING, "Security - Reset credentials - token invalid at IP Address %s", get_ip_source(request));
     response->status = 403;
@@ -2818,10 +2820,10 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
     if (json_object_get(((struct _register_config *)cls)->j_parameters, "reset-credentials") == json_true()) {
       config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "reset-credentials/profile/*");
       config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "reset-credentials/profile/password");
-      config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "reset-credentials/profile/scheme/");
-      config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "reset-credentials/profile/scheme");
-      config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "reset-credentials/profile/scheme");
-      config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "reset-credentials/profile/scheme/canuse");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "reset-credentials/profile/");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "reset-credentials/profile/scheme/register");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "reset-credentials/profile/scheme/register");
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "reset-credentials/profile/scheme/register/canuse");
       config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "reset-credentials/profile/complete");
       if (json_object_get(((struct _register_config *)cls)->j_parameters, "reset-credentials-email") == json_true()) {
         config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "reset-credentials-email");
