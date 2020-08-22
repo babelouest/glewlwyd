@@ -1077,6 +1077,7 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
     y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use - Error get_registration_for_user");
     ret = GLEWLWYD_IS_NOT_AVAILABLE;
   }
+  json_decref(j_registration);
   return ret;
 }
 
