@@ -4,6 +4,7 @@
 
 - Allow user to update its e-mail
 - Allow user to reset its credentials
+- Handle callback url for registration and reset credentials
 
 ## 2.3.2
 
