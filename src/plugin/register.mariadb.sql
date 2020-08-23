@@ -10,6 +10,7 @@ CREATE TABLE gpr_session (
   gprs_name VARCHAR(512),
   gprs_email VARCHAR(512),
   gprs_code_hash VARCHAR(512),
+  gprs_callback_url BLOB DEFAULT NULL,
   gprs_password_set TINYINT(1) DEFAULT 0,
   gprs_session_hash VARCHAR(512),
   gprs_token_hash VARCHAR(512),
@@ -40,6 +41,7 @@ CREATE TABLE gpr_reset_credentials_session (
   gprrcs_plugin_name VARCHAR(256) NOT NULL,
   gprrcs_username VARCHAR(256) NOT NULL,
   gprrcs_session_hash VARCHAR(512),
+  gprrcs_callback_url BLOB DEFAULT NULL,
   gprrcs_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gprrcs_issued_for VARCHAR(256), -- IP address or hostname
   gprrcs_user_agent VARCHAR(256),
@@ -52,6 +54,7 @@ CREATE TABLE gpr_reset_credentials_email (
   gprrct_plugin_name VARCHAR(256) NOT NULL,
   gprrct_username VARCHAR(256) NOT NULL,
   gprrct_token_hash VARCHAR(512),
+  gprrct_callback_url BLOB DEFAULT NULL,
   gprrct_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gprrct_issued_for VARCHAR(256), -- IP address or hostname
   gprrct_user_agent VARCHAR(256),
