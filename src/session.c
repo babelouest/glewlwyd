@@ -743,7 +743,7 @@ json_t * get_scheme_list_for_user(struct config_elements * config, const char * 
         if (instance != NULL) {
           can_use = instance->module->user_auth_scheme_module_can_use(config->config_m, username, instance->cls);
           if (can_use != GLEWLWYD_IS_NOT_AVAILABLE) {
-            json_array_append_new(j_module_array, json_pack("{sOsO}", "module", json_object_get(j_element, "module"), "name", json_object_get(j_element, "name")));
+            json_array_append_new(j_module_array, json_pack("{sOsOsO}", "module", json_object_get(j_element, "module"), "name", json_object_get(j_element, "name"), "display_name", json_object_get(j_element, "display_name")));
           }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_scheme_list_for_user - Error instance %s/%s not found", json_string_value(json_object_get(j_element, "module")), json_string_value(json_object_get(j_element, "name")));
