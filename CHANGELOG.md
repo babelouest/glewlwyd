@@ -1,5 +1,9 @@
 # Glewlwyd Changelog
 
+## 2.3.3
+
+- Limit scheme available output
+
 ## 2.3.2
 
 - Allow to specify a public JWKS for OIDC plugin
