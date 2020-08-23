@@ -26,7 +26,7 @@ class ResetCredentials extends Component {
   
   sendEmail(e, resetCred) {
     e.preventDefault();
-    apiManager.glewlwydRequest("/" + resetCred.name + "/reset-credentials-email", "POST", {username: this.state.username["email-"+resetCred.name]})
+    apiManager.glewlwydRequest("/" + resetCred.name + "/reset-credentials-email", "POST", {username: this.state.username["email-"+resetCred.name], callback_url: encodeURIComponent(document.location.href)})
     .then(() => {
       messageDispatcher.sendMessage('App', {
         type: 'message',
@@ -44,7 +44,7 @@ class ResetCredentials extends Component {
     e.preventDefault();
     apiManager.glewlwydRequest("/" + resetCred.name + "/reset-credentials-code", "POST", {username: this.state.username["code-"+resetCred.name], code: this.state.code[resetCred.name]})
     .then(() => {
-      window.location.href = this.state.config.ProfileUrl+"?resetCredentials="+resetCred.name;
+      document.location.href = this.state.config.ProfileUrl + "?resetCredentials=" + resetCred.name + "&callback_url=" + encodeURIComponent(document.location.href);
     })
     .fail((err) => {
       if (err.status == 403) {
@@ -74,13 +74,13 @@ class ResetCredentials extends Component {
       if (resetCred.code) {
         if (codeBox.length) {
           codeBox.push(
-            <div className="col-4 text-center" key={codeBox.length}>
+            <div className="col-12 col-md-4 text-center" key={codeBox.length}>
               <h4>{i18next.t("admin.or")}</h4>
             </div>
           );
         }
         codeBox.push(
-          <div className="col-4 card" key={codeBox.length}>
+          <div className="col-12 col-md-4 card" key={codeBox.length}>
             <div className="card-body">
               <h5 className="card-title">{i18next.t("login.reset-credentials-code-title")}</h5>
               <form noValidate onSubmit={(e) => this.sendCode(e, resetCred)}>
@@ -101,13 +101,13 @@ class ResetCredentials extends Component {
       if (resetCred.email) {
         if (codeBox.length || emailBox.length) {
           emailBox.push(
-            <div className="col-4 text-center" key={codeBox.length+emailBox.length}>
+            <div className="col-12 col-md-4 text-center" key={codeBox.length+emailBox.length}>
               <h4>{i18next.t("admin.or")}</h4>
             </div>
           );
         }
         emailBox.push(
-          <div className="col-4 card" key={codeBox.length+emailBox.length}>
+          <div className="col-12 col-md-4 card" key={codeBox.length+emailBox.length}>
             <div className="card-body">
               <h5 className="card-title">{i18next.t("login.reset-credentials-email-title")}</h5>
               <form noValidate onSubmit={(e) => this.sendEmail(e, resetCred)}>
@@ -126,7 +126,7 @@ class ResetCredentials extends Component {
       <div>
         <h3>{i18next.t("login.reset-credentials-title")}</h3>
         <hr/>
-        <div className="d-flex justify-content-around">
+        <div className="row d-flex justify-content-around">
           {codeBox}
           {emailBox}
         </div>

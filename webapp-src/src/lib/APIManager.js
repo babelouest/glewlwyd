@@ -50,6 +50,7 @@ class APIManager {
   glewlwydRequestSub(url, method="GET", data=false) {
     return this.request(this.GlewlwydApiPrefixSub + url, method, data);
   }
+  
 }
 
 let apiManager = new APIManager();

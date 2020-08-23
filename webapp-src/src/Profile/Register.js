@@ -227,7 +227,13 @@ class Register extends Component {
   }
   
   sendVerificationEmail() {
-    apiManager.glewlwydRequest("/" + this.state.config.params.register + "/verify", "PUT", {username: this.state.username, email: this.state.email, lang: this.state.registerDefaultLang})
+    var callback_url;
+    if (this.state.config.params.callback_url) {
+      callback_url = encodeURIComponent(this.state.config.params.callback_url);
+    } else {
+      callback_url = false;
+    }
+    apiManager.glewlwydRequest("/" + this.state.config.params.register + "/verify", "PUT", {username: this.state.username, email: this.state.email, lang: this.state.registerDefaultLang, callback_url: callback_url})
     .then(() => {
       messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-profile-email-sent", {email: this.state.email})});
       this.setState({verificationSent: true});
@@ -303,12 +309,21 @@ class Register extends Component {
     var formJsx, completeMessageJsx, passwordJsx, emailJsx;
     if (this.state.registerComplete) {
       var completeLink = [];
-      if (this.state.config["register-complete"]) {
-        for (var i=0; i<this.state.config["register-complete"].length; i++) {
-          if (this.state.config["register-complete"][i]["complete-link"] && this.state.config["register-complete"][i].name === this.state.config.params.register) {
-            completeLink.push(<a key={i} className="btn btn-primary btn-icon-right" href={this.state.config["register-complete"][i]["complete-link"]}>{i18next.t(this.state.config["register-complete"][i]["complete-link-label"])}</a>);
-          }
-        }
+      if (this.state.config["register-complete"] && this.state.config["register-complete"].length) {
+        this.state.config["register-complete"].forEach((complete, index) => {
+          completeLink.push(<a key={index} className="btn btn-primary btn-icon-right" href={complete["complete-link"]}>{i18next.t(complete["complete-link-label"])}</a>);
+        });
+      }
+      if (this.state.config.params.callback_url) {
+        completeLink.push(<a key={completeLink.length} className="btn btn-primary btn-icon-right" href={decodeURI(this.state.config.params.callback_url)}>{i18next.t("callback.button-login")}</a>);
+      } else if (this.state.registerProfile.callback_url) {
+        completeLink.push(<a key={completeLink.length} className="btn btn-primary btn-icon-right" href={decodeURI(this.state.registerProfile.callback_url)}>{i18next.t("callback.button-login")}</a>);
+      }
+      
+      if (!completeLink.length) {
+        completeLink.push(
+        <a key={completeLink.length} className="btn btn-primary" href={this.state.config.ProfileUrl}>{i18next.t("profile.register-profile-complete-link")}</a>
+        );
       }
       
       completeMessageJsx = 
@@ -317,7 +332,6 @@ class Register extends Component {
           {i18next.t("profile.register-profile-complete-message")}
         </div>
         <div>
-          <a className="btn btn-primary" href={this.state.config.ProfileUrl}>{i18next.t("profile.register-profile-complete-link")}</a>
           {completeLink}
         </div>
       </div>

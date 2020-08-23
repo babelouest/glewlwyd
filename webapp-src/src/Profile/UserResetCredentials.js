@@ -100,6 +100,23 @@ class UserResetCredentials extends Component {
   }
   
   render() {
+    var callbackButton
+    if (this.state.config.params.callback_url) {
+      callbackButton =
+        <a className="btn btn-success" href={decodeURI(this.state.config.params.callback_url)}>
+          {i18next.t("callback.button-login")}
+        </a>
+    } else if (this.state.profile.callback_url) {
+      callbackButton =
+        <a className="btn btn-success" href={decodeURI(this.state.profile.callback_url)}>
+          {i18next.t("callback.button-login")}
+        </a>
+    } else {
+      callbackButton =
+        <a className="btn btn-success" href="#" onClick={(e) => this.navigateProfile(e)}>
+          {i18next.t("callback.button-profile")}
+        </a>
+    }
     if (this.state.status === 1) {
       return (
         <div>
@@ -148,9 +165,7 @@ class UserResetCredentials extends Component {
           </div>
           <hr/>
           <h5>{i18next.t("profile.reset-credentials-complete-message")}</h5>
-          <a className="btn btn-success" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigateProfile(e)}>
-            {i18next.t("callback.button-profile")}
-          </a>
+          {callbackButton}
         </div>
       );
     } else if (this.state.status === -1) {

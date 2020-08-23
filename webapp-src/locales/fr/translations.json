@@ -19,6 +19,7 @@
     "hello": "Bonjour {{- name}}",
     "btn-ok": "Valider",
     "btn-reload": "Recharger",
+    "btn-cancel": "Annuler",
     "enter-login-password": "Veuillez entrer votre nom d'utilisateur et votre mot de passe",
     "enter-login": "Veuillez entrer votre nom d'utilisateur",
     "welcome-login": "Bienvenue {{- username}}",

@@ -408,9 +408,6 @@ class App extends Component {
                   <span className="navbar-toggler-icon"></span>
                 </button>
                 <div className="collapse navbar-collapse" id="navbarSupportedContent">
-                  <ul className="navbar-nav mr-auto">
-                    {/* Placeholder */}
-                  </ul>
                   <div className="btn-group" role="group">
                     <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                       <i className="fas fa-language"></i>
@@ -440,7 +437,8 @@ class App extends Component {
                        schemeListRequired={this.state.schemeListRequired}
                        selectAccount={this.state.selectAccount} 
                        registration={this.state.registration}
-                       resetCredentials={this.state.resetCredentials}/>
+                       resetCredentials={this.state.resetCredentials}
+                       resetCredentialsShow={this.state.resetCredentialsShow} />
             </div>
           </div>
           <Notification loggedIn={true}/>

@@ -22,7 +22,8 @@ class Buttons extends Component {
       showGrantAsterisk: props.showGrantAsterisk,
       selectAccount: props.selectAccount,
       registration: props.registration,
-      resetCredentials: props.resetCredentials
+      resetCredentials: props.resetCredentials,
+      resetCredentialsShow: props.resetCredentialsShow
     };
 
     this.clickLogout = this.clickLogout.bind(this);
@@ -51,7 +52,8 @@ class Buttons extends Component {
       showGrantAsterisk: nextProps.showGrantAsterisk,
       selectAccount: nextProps.selectAccount,
       registration: nextProps.registration,
-      resetCredentials: nextProps.resetCredentials
+      resetCredentials: nextProps.resetCredentials,
+      resetCredentialsShow: nextProps.resetCredentialsShow
     });
   }
 
@@ -93,7 +95,7 @@ class Buttons extends Component {
   
   registerNewUser(e, plugin) {
     e.preventDefault();
-    document.location.href = this.state.config.ProfileUrl + "?register=" + encodeURIComponent(plugin);
+    document.location.href = this.state.config.ProfileUrl + "?register=" + encodeURIComponent(plugin) + "&callback_url=" + encodeURIComponent(document.location.href);
   }
   
   resetCredentials(e, plugin) {
@@ -109,6 +111,10 @@ class Buttons extends Component {
   changeSessionScheme(e, scheme) {
     e.preventDefault();
     messageDispatcher.sendMessage('App', {type: 'newUserScheme', scheme: scheme});
+  }
+  
+  cancelResetCredentials() {
+    messageDispatcher.sendMessage('App', {type: 'NewUser'});
   }
 
 	render() {
@@ -252,6 +258,12 @@ class Buttons extends Component {
         </div>
         );
       }
+    } else if (this.state.resetCredentialsShow) {
+      return (
+        <button type="button" className="btn btn-secondary" onClick={this.cancelResetCredentials}>
+          {i18next.t("login.btn-cancel")}
+        </button>
+      );
     } else {
       return ("");
     }
