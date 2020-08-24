@@ -185,6 +185,7 @@ json_t * get_scheme_list_for_user(struct config_elements * config, const char * 
 
 // User
 int user_has_scope(json_t * j_user, const char * scope);
+int user_has_scheme(struct config_elements * config, const char * username, const char * scheme_name);
 
 // Client
 json_t * auth_check_client_credentials(struct config_elements * config, const char * client_id, const char * password);

@@ -73,7 +73,7 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL, * j_user;
   int res;
-  
+
   j_user = get_user(config, username, NULL);
   if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
     scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
@@ -98,7 +98,7 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
 json_t * auth_trigger_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * j_trigger_parameters, const struct _u_request * request) {
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL, * j_response = NULL;
-  
+
   scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
   if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
     j_response = scheme_instance->module->user_auth_scheme_module_trigger(config->config_m, request, username, j_trigger_parameters, scheme_instance->cls);
@@ -124,37 +124,45 @@ json_t * auth_trigger_user_scheme(struct config_elements * config, const char * 
 json_t * auth_register_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, int delegate, json_t * j_register_parameters, const struct _u_request * request) {
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL, * j_response = NULL;
+  int res;
   
-  if (json_is_object(j_register_parameters)) {
-    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
-    if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
-      if (delegate || scheme_instance->guasmi_allow_user_register) {
-        j_response = scheme_instance->module->user_auth_scheme_module_register(config->config_m, request, username, j_register_parameters, scheme_instance->cls);
-        if (check_result_value(j_response, G_OK)) {
-          if (json_object_get(j_response, "response") != NULL) {
-            j_return = json_pack("{sisO}", "result", G_OK, "register", json_object_get(j_response, "response"));
+  if ((res = user_has_scheme(config, username, scheme_name)) == G_OK) {
+    if (json_is_object(j_register_parameters)) {
+      scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
+      if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
+        if (delegate || scheme_instance->guasmi_allow_user_register) {
+          j_response = scheme_instance->module->user_auth_scheme_module_register(config->config_m, request, username, j_register_parameters, scheme_instance->cls);
+          if (check_result_value(j_response, G_OK)) {
+            if (json_object_get(j_response, "response") != NULL) {
+              j_return = json_pack("{sisO}", "result", G_OK, "register", json_object_get(j_response, "response"));
+            } else {
+              j_return = json_pack("{si}", "result", G_OK);
+            }
+          } else if (j_response != NULL && !check_result_value(j_response, G_ERROR)) {
+            if (json_object_get(j_response, "response") != NULL) {
+              j_return = json_pack("{sIsO}", "result", json_integer_value(json_object_get(j_response, "result")), "register", json_object_get(j_response, "response"));
+            } else {
+              j_return = json_pack("{sI}", "result", json_integer_value(json_object_get(j_response, "result")));
+            }
           } else {
-            j_return = json_pack("{si}", "result", G_OK);
+            y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_user_scheme - Error user_auth_scheme_module_register");
+            j_return = json_pack("{si}", "result", G_ERROR);
           }
-        } else if (j_response != NULL && !check_result_value(j_response, G_ERROR)) {
-          if (json_object_get(j_response, "response") != NULL) {
-            j_return = json_pack("{sIsO}", "result", json_integer_value(json_object_get(j_response, "result")), "register", json_object_get(j_response, "response"));
-          } else {
-            j_return = json_pack("{sI}", "result", json_integer_value(json_object_get(j_response, "result")));
-          }
+          json_decref(j_response);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_user_scheme - Error user_auth_scheme_module_register");
-          j_return = json_pack("{si}", "result", G_ERROR);
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
-        json_decref(j_response);
       } else {
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       }
     } else {
-      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     }
+  } else if (res != G_ERROR_NOT_FOUND) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_user_scheme - Error user_has_scheme");
+    j_return = json_pack("{si}", "result", G_ERROR);
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   return j_return;
 }
@@ -162,23 +170,31 @@ json_t * auth_register_user_scheme(struct config_elements * config, const char *
 json_t * auth_register_get_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, const struct _u_request * request) {
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL, * j_response = NULL;
+  int res;
   
-  scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
-  if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
-    j_response = scheme_instance->module->user_auth_scheme_module_register_get(config->config_m, request, username, scheme_instance->cls);
-    if (check_result_value(j_response, G_OK)) {
-      if (json_object_get(j_response, "response") != NULL) {
-        j_return = json_pack("{sisO}", "result", G_OK, "register", json_object_get(j_response, "response"));
+  if ((res = user_has_scheme(config, username, scheme_name)) == G_OK) {
+    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
+    if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
+      j_response = scheme_instance->module->user_auth_scheme_module_register_get(config->config_m, request, username, scheme_instance->cls);
+      if (check_result_value(j_response, G_OK)) {
+        if (json_object_get(j_response, "response") != NULL) {
+          j_return = json_pack("{sisO}", "result", G_OK, "register", json_object_get(j_response, "response"));
+        } else {
+          j_return = json_pack("{si}", "result", G_OK);
+        }
+      } else if (!check_result_value(j_response, G_ERROR)) {
+        j_return = json_incref(j_response);
       } else {
-        j_return = json_pack("{si}", "result", G_OK);
+        y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_get_user_scheme - Error user_auth_scheme_module_register_get");
+        j_return = json_pack("{si}", "result", G_ERROR);
       }
-    } else if (!check_result_value(j_response, G_ERROR)) {
-      j_return = json_incref(j_response);
+      json_decref(j_response);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_get_user_scheme - Error user_auth_scheme_module_register_get");
-      j_return = json_pack("{si}", "result", G_ERROR);
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
-    json_decref(j_response);
+  } else if (res != G_ERROR_NOT_FOUND) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_get_user_scheme - Error user_has_scheme");
+    j_return = json_pack("{si}", "result", G_ERROR);
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
@@ -195,6 +211,37 @@ int user_has_scope(json_t * j_user, const char * scope) {
     }
   }
   return 0;
+}
+
+int user_has_scheme(struct config_elements * config, const char * username, const char * scheme_name) {
+  json_t * j_user, * j_element = NULL, * j_group = NULL, * j_scheme = NULL, * j_scope = NULL;
+  size_t index = 0, index_s = 0;
+  const char * group = NULL;
+  int ret = G_ERROR_NOT_FOUND;
+  
+  j_user = get_user(config, username, NULL);
+  if (check_result_value(j_user, G_OK)) {
+    json_array_foreach(json_object_get(json_object_get(j_user, "user"), "scope"), index, j_element) {
+      j_scope = get_scope(config, json_string_value(j_element));
+      if (check_result_value(j_scope, G_OK)) {
+        json_object_foreach(json_object_get(json_object_get(j_scope, "scope"), "scheme"), group, j_group) {
+          json_array_foreach(j_group, index_s, j_scheme) {
+            if (0 == o_strcmp(json_string_value(json_object_get(j_scheme, "scheme_name")), scheme_name)) {
+              ret = G_OK;
+            }
+          }
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_has_scheme - Error get_scope '%s'", json_string_value(j_element));
+      }
+      json_decref(j_scope);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_has_scheme - Error get_user");
+    ret = G_ERROR;
+  }
+  json_decref(j_user);
+  return ret;
 }
 
 json_t * get_user(struct config_elements * config, const char * username, const char * source) {
