@@ -2883,10 +2883,6 @@ Content
     "module": string, module name of the scheme
     "name": string, module instance name
     "display_name": string, module instance display name
-    "expiration": number, duration of an authentication with this scheme
-    "max_use": number, number of thime this scheme authenticated can be used in a plugin
-    "allow_user_register": boolean, wether the user can register this scheme
-    "enabled": boolean
   }
 ]
 ```
