@@ -3,6 +3,12 @@
 ## 2.3.3
 
 - Limit scheme available output
+This is a security release, please upgrade your Glewlwyd version.
+To mitigate server configuration leaks, I recommend the following actions:
+  - If you use the TLS Certificate Scheme with [Allow to emit PKCS#12 certificates for the clients](https://github.com/babelouest/glewlwyd/blob/2.3/docs/CERTIFICATE.md#allow-to-emit-pkcs12-certificates-for-the-clients) enabled, please revoke the issuer certificate and use new ones
+  - If you use the Webauthn Scheme, it's reommended to regenerate the [Random seed used to mitigate intrusion](https://github.com/babelouest/glewlwyd/blob/2.3/docs/WEBAUTHN.md#random-seed-used-to-mitigate-intrusion)
+  - If you use the Oauth2 Scheme, please change the [clients secrets](https://github.com/babelouest/glewlwyd/blob/2.3/docs/OAUTH2_SCHEME.md#secret)
+  - If yout use the Email code scheme and use a [SMTP password](https://github.com/babelouest/glewlwyd/blob/2.3/docs/EMAIL.md#smtp-password-if-required), please to change this password
 
 ## 2.3.2
 
