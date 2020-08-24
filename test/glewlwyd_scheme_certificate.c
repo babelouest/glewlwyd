@@ -59,6 +59,13 @@
 #define CLIENT_KEY_3_PATH "cert/user3.key"
 #define CLIENT_KEY_3_PASSWORD ""
 
+#define SCOPE_NAME "scope2"
+#define SCOPE_DISPLAY_NAME "Glewlwyd mock scope without password"
+#define SCOPE_DESCRIPTION "Glewlwyd scope 2 scope description"
+#define SCOPE_PASSWORD_MAX_AGE 0
+#define SCOPE_SCHEME_1_TYPE "mock"
+#define SCOPE_SCHEME_1_NAME "mock_scheme_95"
+
 char client_cert_1_id[128];
 char client_cert_2_id[128];
 char client_cert_3_id[128];
@@ -120,6 +127,93 @@ static int get_certificate_id(const char * file_path, unsigned char * certificat
 
 struct _u_request admin_req;
 struct _u_request user_req;
+
+START_TEST(test_glwd_scheme_certificate_scope_set)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_NAME);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+  json_decref(j_canuse);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_certificate_scope_2_set)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_NAME_2);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME_2);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+  json_decref(j_canuse);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_certificate_scope_3_set)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_NAME_3);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME_3);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+  json_decref(j_canuse);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_certificate_scope_unset)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+}
+END_TEST
 
 START_TEST(test_glwd_scheme_certificate_module_add_scheme_backend)
 {
@@ -1489,6 +1583,7 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd scheme certificate");
   tc_core = tcase_create("test_glwd_scheme_certificate");
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_scheme_backend);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_scheme_backend_use_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_get_register_scheme_backend);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_deregister_scheme_backend);
@@ -1509,39 +1604,51 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_invalid_ca_scheme_backend_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_scheme_backend_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_deregister_scheme_backend_multiple_cert);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_scheme_backend);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_user_properties_pem);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_2_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_get_register_user_properties_pem);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_test_register_user_properties_pem);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_no_certificate_user_properties_pem);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_unregistered_certificate_user_properties_pem);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_user_properties_pem);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_user_properties_pem);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_user_properties_pem_multiple_cert);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_2_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_get_register_user_properties_pem_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_test_register_user_properties_pem_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_no_certificate_user_properties_pem_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_unregistered_certificate_user_properties_pem_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_invalid_ca_user_properties_pem_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_user_properties_pem_multiple_cert);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_user_properties_pem_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_user_properties_der);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_2_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_get_register_user_properties_der);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_no_certificate_user_properties_der);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_unregistered_certificate_user_properties_der);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_user_properties_der);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_user_properties_der);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_scheme_backend_ca_chain);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_3_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_scheme_backend_ca_chain);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_scheme_backend_ca_chain);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_deregister_scheme_backend_ca_chain);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_scheme_backend_ca_chain);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_scheme_backend_invalid_ca_chain);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_3_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_scheme_backend_invalid_ca_chain);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_scheme_backend_invalid_ca_chain);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_deregister_scheme_backend_invalid_ca_chain);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_scheme_backend_invalid_ca_chain);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_scheme_backend_proxyfied);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_test_register_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_no_certificate_scheme_backend_proxyfied);
@@ -1549,16 +1656,21 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_cert_disabled_enabled_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_deregister_scheme_backend_proxyfied);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_scheme_backend_request_multiple);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_request_certificate_auth_success_request_multiple);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_request_certificate_get_register_request_multiple);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_request_certificate_deregister_request_multiple);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_scheme_backend_request_multiple);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_scheme_backend_request_single);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_request_certificate_auth_success_request_single);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_request_certificate_get_register_request_single);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_request_certificate_deregister_request_single);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_scheme_backend_request_single);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);

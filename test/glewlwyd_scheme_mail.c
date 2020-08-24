@@ -25,7 +25,7 @@
 #define NAME_LANG "Dave Lopper with e-mails"
 #define EMAIL "user_lang@glewlwyd.tld"
 #define PASSWORD "password"
-#define SCOPE_LIST "scope1"
+#define SCOPE_LIST "scope2"
 #define CLIENT "client1_id"
 #define ADMIN_USERNAME "admin"
 #define ADMIN_PASSWORD "password"
@@ -48,6 +48,13 @@
 #define MAIL_BODY_PATTERN "The code is "
 #define MAIL_BODY_PATTERN_FR "Le code en français est "
 #define MAIL_BODY_CODE "{CODE}"
+
+#define SCOPE_NAME "scope2"
+#define SCOPE_DISPLAY_NAME "Glewlwyd mock scope without password"
+#define SCOPE_DESCRIPTION "Glewlwyd scope 2 scope description"
+#define SCOPE_PASSWORD_MAX_AGE 0
+#define SCOPE_SCHEME_1_TYPE "mock"
+#define SCOPE_SCHEME_1_NAME "mock_scheme_95"
 
 struct _u_request user_req;
 struct _u_request admin_req;
@@ -243,6 +250,70 @@ static void * simple_smtp(void * args) {
 
   pthread_exit(NULL);
 }
+
+START_TEST(test_glwd_scheme_mail_scope_set)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_NAME);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+  json_decref(j_canuse);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_mail_multilang_scope_set)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_LANG_NAME);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_LANG_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+  json_decref(j_canuse);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_mail_scope_unset)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+}
+END_TEST
 
 START_TEST(test_glwd_scheme_mail_irl_module_add)
 {
@@ -491,18 +562,22 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd scheme e-mail");
   tc_core = tcase_create("test_glwd_scheme_mail_irl");
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_module_add);
+  tcase_add_test(tc_core, test_glwd_scheme_mail_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_trigger);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_validate_error);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_validate_ok);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_validate_not_valid);
+  tcase_add_test(tc_core, test_glwd_scheme_mail_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_module_remove);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_module_multilang_add);
+  tcase_add_test(tc_core, test_glwd_scheme_mail_multilang_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_user_fr_add);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_validate_lang_fr_ok);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_user_remove);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_user_de_add);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_validate_lang_default_ok);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_user_remove);
+  tcase_add_test(tc_core, test_glwd_scheme_mail_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_mail_irl_module_multilang_remove);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);

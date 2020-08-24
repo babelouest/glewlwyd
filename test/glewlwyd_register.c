@@ -33,9 +33,10 @@
 #define SESSION_RESET_CREDENTIALS_KEY "G_CREDENTIALS_SESSION"
 #define SESSION_DURATION 3600
 #define SCOPE "g_profile"
+#define SCOPE_SCHEME "scope2"
 #define SCHEME_TYPE "mock"
-#define SCHEME_NAME "mock_scheme_42"
-#define SCHEME_DISPLAY_NAME "Mock 42"
+#define SCHEME_NAME "mock_scheme_95"
+#define SCHEME_DISPLAY_NAME "Mock 95"
 
 #define NEW_USERNAME "semias"
 #define NEW_USERNAME_CANCELLED "esras"
@@ -268,7 +269,7 @@ static void * simple_smtp(void * args) {
 
 START_TEST(test_glwd_register_add_mod_error)
 {
-  json_t * j_body = json_pack("{ss ss ss s{si si s[s] ss s[{ss ss ss ss}] so} so}",
+  json_t * j_body = json_pack("{ss ss ss s{si si s[ss] ss s[{ss ss ss ss}] so} so}",
                               "module", MOD_TYPE,
                               "name", MOD_NAME,
                               "display_name", MOD_DISPLAY_NAME,
@@ -277,6 +278,7 @@ START_TEST(test_glwd_register_add_mod_error)
                                 "session-duration", SESSION_DURATION,
                                 "scope",
                                   SCOPE,
+                                  SCOPE_SCHEME,
                                 "set-password", "always",
                                 "schemes",
                                   "module", SCHEME_TYPE,
@@ -327,7 +329,7 @@ START_TEST(test_glwd_register_add_mod_noverify)
     },
     "enabled":true
   }*/
-  json_t * j_body = json_pack("{ss ss ss s{ss si s[s] ss s[{ss ss ss ss}] so} so}",
+  json_t * j_body = json_pack("{ss ss ss s{ss si s[ss] ss s[{ss ss ss ss}] so} so}",
                               "module", MOD_TYPE,
                               "name", MOD_NAME,
                               "display_name", MOD_DISPLAY_NAME,
@@ -336,6 +338,7 @@ START_TEST(test_glwd_register_add_mod_noverify)
                                 "session-duration", SESSION_DURATION,
                                 "scope",
                                   SCOPE,
+                                  SCOPE_SCHEME,
                                 "set-password", "always",
                                 "schemes",
                                   "module", SCHEME_TYPE,
@@ -352,7 +355,7 @@ END_TEST
 
 START_TEST(test_glwd_register_add_mod_verify_with_username)
 {
-  json_t * j_body = json_pack("{ss ss ss s{ss si s[s] ss s[{ss ss ss ss}] so so si si ss si ss ss ss ss} so}",
+  json_t * j_body = json_pack("{ss ss ss s{ss si s[ss] ss s[{ss ss ss ss}] so so si si ss si ss ss ss ss} so}",
                               "module", MOD_TYPE,
                               "name", MOD_NAME,
                               "display_name", MOD_DISPLAY_NAME,
@@ -361,6 +364,7 @@ START_TEST(test_glwd_register_add_mod_verify_with_username)
                                 "session-duration", SESSION_DURATION,
                                 "scope",
                                   SCOPE,
+                                  SCOPE_SCHEME,
                                 "set-password", "always",
                                 "schemes",
                                   "module", SCHEME_TYPE,
@@ -386,7 +390,7 @@ END_TEST
 
 START_TEST(test_glwd_register_add_mod_verify_without_username)
 {
-  json_t * j_body = json_pack("{ss ss ss s{ss si s[s] ss s[{ss ss ss ss}] so so si si ss si ss ss ss ss} so}",
+  json_t * j_body = json_pack("{ss ss ss s{ss si s[ss] ss s[{ss ss ss ss}] so so si si ss si ss ss ss ss} so}",
                               "module", MOD_TYPE,
                               "name", MOD_NAME,
                               "display_name", MOD_DISPLAY_NAME,
@@ -395,6 +399,7 @@ START_TEST(test_glwd_register_add_mod_verify_without_username)
                                 "session-duration", SESSION_DURATION,
                                 "scope",
                                   SCOPE,
+                                  SCOPE_SCHEME,
                                 "set-password", "always",
                                 "schemes",
                                   "module", SCHEME_TYPE,
@@ -420,7 +425,7 @@ END_TEST
 
 START_TEST(test_glwd_register_add_mod_verify_with_username_token)
 {
-  json_t * j_body = json_pack("{ss ss ss s{ss si s[s] ss s[{ss ss ss ss}] so so si si ss si ss ss ss ss} so}",
+  json_t * j_body = json_pack("{ss ss ss s{ss si s[ss] ss s[{ss ss ss ss}] so so si si ss si ss ss ss ss} so}",
                               "module", MOD_TYPE,
                               "name", MOD_NAME,
                               "display_name", MOD_DISPLAY_NAME,
@@ -429,6 +434,7 @@ START_TEST(test_glwd_register_add_mod_verify_with_username_token)
                                 "session-duration", SESSION_DURATION,
                                 "scope",
                                   SCOPE,
+                                  SCOPE_SCHEME,
                                 "set-password", "always",
                                 "schemes",
                                   "module", SCHEME_TYPE,
@@ -454,7 +460,7 @@ END_TEST
 
 START_TEST(test_glwd_register_add_mod_noverify_session_expired)
 {
-  json_t * j_body = json_pack("{ss ss ss s{ss si s[s] ss s[{ss ss ss ss}] so} so}",
+  json_t * j_body = json_pack("{ss ss ss s{ss si s[ss] ss s[{ss ss ss ss}] so} so}",
                               "module", MOD_TYPE,
                               "name", MOD_NAME,
                               "display_name", MOD_DISPLAY_NAME,
@@ -463,6 +469,7 @@ START_TEST(test_glwd_register_add_mod_noverify_session_expired)
                                 "session-duration", 1,
                                 "scope",
                                   SCOPE,
+                                  SCOPE_SCHEME,
                                 "set-password", "always",
                                 "schemes",
                                   "module", SCHEME_TYPE,
@@ -479,7 +486,7 @@ END_TEST
 
 START_TEST(test_glwd_register_add_mod_verify_without_username_code_expired)
 {
-  json_t * j_body = json_pack("{ss ss ss s{ss si s[s] ss s[{ss ss ss ss}] so so si si ss si ss ss ss ss} so}",
+  json_t * j_body = json_pack("{ss ss ss s{ss si s[ss] ss s[{ss ss ss ss}] so so si si ss si ss ss ss ss} so}",
                               "module", MOD_TYPE,
                               "name", MOD_NAME,
                               "display_name", MOD_DISPLAY_NAME,
@@ -488,6 +495,7 @@ START_TEST(test_glwd_register_add_mod_verify_without_username_code_expired)
                                 "session-duration", SESSION_DURATION,
                                 "scope",
                                   SCOPE,
+                                  SCOPE_SCHEME,
                                 "set-password", "always",
                                 "schemes",
                                   "module", SCHEME_TYPE,
@@ -513,7 +521,7 @@ END_TEST
 
 START_TEST(test_glwd_register_add_mod_verify_multilang_without_username)
 {
-  json_t * j_body = json_pack("{ss ss ss so s{ss si s[s] ss s[{ss ss ss ss}] so so si si ss si ss ss s{s{sossss}s{sossss}}}}",
+  json_t * j_body = json_pack("{ss ss ss so s{ss si s[ss] ss s[{ss ss ss ss}] so so si si ss si ss ss s{s{sossss}s{sossss}}}}",
                               "module", MOD_TYPE,
                               "name", MOD_NAME,
                               "display_name", MOD_DISPLAY_NAME,
@@ -523,6 +531,7 @@ START_TEST(test_glwd_register_add_mod_verify_multilang_without_username)
                                 "session-duration", SESSION_DURATION,
                                 "scope",
                                   SCOPE,
+                                  SCOPE_SCHEME,
                                 "set-password", "always",
                                 "schemes",
                                   "module", SCHEME_TYPE,
@@ -554,7 +563,7 @@ END_TEST
 
 START_TEST(test_glwd_register_add_mod_noverify_registration_enabled)
 {
-  json_t * j_body = json_pack("{ss ss ss s{so ss si s[s] ss s[{ss ss ss ss}] so} so}",
+  json_t * j_body = json_pack("{ss ss ss s{so ss si s[ss] ss s[{ss ss ss ss}] so} so}",
                               "module", MOD_TYPE,
                               "name", MOD_NAME,
                               "display_name", MOD_DISPLAY_NAME,
@@ -564,6 +573,7 @@ START_TEST(test_glwd_register_add_mod_noverify_registration_enabled)
                                 "session-duration", SESSION_DURATION,
                                 "scope",
                                   SCOPE,
+                                  SCOPE_SCHEME,
                                 "set-password", "always",
                                 "schemes",
                                   "module", SCHEME_TYPE,

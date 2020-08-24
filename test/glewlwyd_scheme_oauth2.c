@@ -96,6 +96,13 @@
 #define REQUIRE_REQUEST_REGIS "false"
 #define SUBJECT_TYPE "public"
 
+#define SCOPE_NAME "scope2"
+#define SCOPE_DISPLAY_NAME "Glewlwyd mock scope without password"
+#define SCOPE_DESCRIPTION "Glewlwyd scope 2 scope description"
+#define SCOPE_PASSWORD_MAX_AGE 0
+#define SCOPE_SCHEME_1_TYPE "mock"
+#define SCOPE_SCHEME_1_NAME "mock_scheme_95"
+
 const char openid_configuration_valid[] = "{\
   \"issuer\":\"" ISSUER "\",\
   \"authorization_endpoint\":\"" AUTH_ENDPOINT "\",\
@@ -351,6 +358,72 @@ static int callback_openid_jwks_valid (const struct _u_request * request, struct
   json_decref(j_response);
   return U_CALLBACK_CONTINUE;
 }
+
+START_TEST(test_glwd_scheme_oauth2_scope_set)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_NAME);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+  json_decref(j_canuse);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_oauth2_scope_collision_set)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}{ssss}{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_NAME_2);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+  json_decref(j_canuse);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_oauth2_scope_unset)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+}
+END_TEST
 
 START_TEST(test_glwd_scheme_oauth2_irl_module_add_provider_error_parameters)
 {
@@ -3703,6 +3776,7 @@ static Suite *glewlwyd_suite(void)
   tc_core = tcase_create("test_glwd_scheme_oauth2_irl");
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_module_add_provider_error_parameters);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_module_add_provider_oauth2_code);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_get_oauth2);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_invalid_parameters);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_twice_forbidden);
@@ -3727,8 +3801,10 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_oauth2_code_error_format);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_oauth2_code_ok);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_delete);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_module_remove);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_module_add_provider_oauth2_token);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_server_callback_response_error_client);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_server_callback_oauth2_token_response_error_client);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_server_callback_oauth2_token_response_error_format);
@@ -3743,8 +3819,10 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_oauth2_token_token_error_format);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_oauth2_token_ok);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_delete);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_module_remove);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_module_add_provider_oidc_code);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_server_callback_error_state);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_server_callback_error_redirect_to);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_server_callback_response_error_scope);
@@ -3763,8 +3841,10 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_oauth2_oidc_code_error_invalid_userid);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_oauth2_oidc_code_ok);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_delete);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_module_remove);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_module_add_provider_oidc_id_token);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_server_callback_response_error_client);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_server_callback_oauth2_token_response_error_client);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_server_callback_oauth2_token_response_error_format);
@@ -3779,15 +3859,18 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_oauth2_id_token_error_userid);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_oauth2_id_token_ok);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_delete);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_module_remove);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_module_add_provider_oauth2_code);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_module_add_provider_oauth2_code_collision);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_scope_collision_set);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_oauth2_code_ok);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_oauth2_code_ok_collision);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_oauth2_code_ok);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_auth_oauth2_code_error_collision);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_delete);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_register_delete_collision);
+  tcase_add_test(tc_core, test_glwd_scheme_oauth2_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_module_remove);
   tcase_add_test(tc_core, test_glwd_scheme_oauth2_irl_module_remove_collision);
   tcase_set_timeout(tc_core, 30);
