@@ -208,7 +208,7 @@ START_TEST(test_glwd_profile_delete_delete_profile_disable)
   
   ulfius_clean_request(&req);
 
-  j_body = json_pack("{sssssssos[s]}", "username", NEW_USERNAME, "name", NEW_NAME, "email", NEW_EMAIL, "enabled", json_false(), "scope", NEW_SCOPE, NEW_SCOPE_2);
+  j_body = json_pack("{sssssssos[ss]}", "username", NEW_USERNAME, "name", NEW_NAME, "email", NEW_EMAIL, "enabled", json_false(), "scope", NEW_SCOPE, NEW_SCOPE_2);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/user/" NEW_USERNAME, NULL, NULL, NULL, NULL, 200, j_body, NULL, NULL), 1);
   json_decref(j_body);
 }
