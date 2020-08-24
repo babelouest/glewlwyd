@@ -44,7 +44,7 @@ The backend API server is fully written in C and uses a small amount of resource
 
 Its plugin architecture makes it easy to add new modules or plugins, or modify existing ones with less risks to have unmaintainable code.
 
-Glewlwyd 2.3 [is released](https://github.com/babelouest/glewlwyd/releases/tag/v2.3.0). Feel free to [install](docs/INSTALL.md), test it, and [send feedbacks](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
+Glewlwyd 2.3.3 [is released](https://github.com/babelouest/glewlwyd/releases/tag/v2.3.3). Feel free to [install](docs/INSTALL.md), test it, and [send feedbacks](https://github.com/babelouest/glewlwyd/issues) if you feel like it. If you upgrade an existing Glewlwyd instance, please follow the security guidelines in the [Install documentation](https://github.com/babelouest/glewlwyd/blob/2.3/docs/INSTALL.md#upgrade-to-glewlwyd-233)
 
 Important! Due to a complete database reworking of the application, you can't upgrade an existing installation from Glewlwyd 1.x to Glewlwyd 2.x.
 
