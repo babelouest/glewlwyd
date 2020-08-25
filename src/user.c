@@ -73,25 +73,32 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL, * j_user;
   int res;
-
-  j_user = get_user(config, username, NULL);
-  if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
-    scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
-    if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
-      res = scheme_instance->module->user_auth_scheme_module_validate(config->config_m, request, username, j_scheme_value, scheme_instance->cls);
-      if (res == G_OK || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM || res == G_ERROR_NOT_FOUND || res == G_ERROR) {
-        j_return = json_pack("{si}", "result", res);
+  
+  if ((res = user_has_scheme(config, username, scheme_name)) == G_OK) {
+    j_user = get_user(config, username, NULL);
+    if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
+      scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
+      if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
+        res = scheme_instance->module->user_auth_scheme_module_validate(config->config_m, request, username, j_scheme_value, scheme_instance->cls);
+        if (res == G_OK || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM || res == G_ERROR_NOT_FOUND || res == G_ERROR) {
+          j_return = json_pack("{si}", "result", res);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_scheme - Error unrecognize return value for user_auth_scheme_module_validate: %d", res);
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_scheme - Error unrecognize return value for user_auth_scheme_module_validate: %d", res);
-        j_return = json_pack("{si}", "result", G_ERROR);
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       }
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
+    json_decref(j_user);
+  } else if (res != G_ERROR_NOT_FOUND) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_user_scheme - Error user_has_scheme");
+    j_return = json_pack("{si}", "result", G_ERROR);
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
-  json_decref(j_user);
   return j_return;
 }
 
