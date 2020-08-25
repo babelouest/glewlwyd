@@ -130,6 +130,8 @@ Read the full [documentation](CLIENT_LDAP.md).
 
 When an authentication scheme needs to store specific data for a user, it will use the database rather than the user backend. So a user will be able to register a scheme even if the user backend is in read-only mode.
 
+Please note that a user won't be able to register nor authenticate wih a scheme if the scheme isn't required to authenticate one of the user's scope.
+
 Go to `parameters/schemes` menu in the navigation tab. Click on the `+` button to add a new scheme instance. The scheme modules available are:
 
 - E-mail code scheme
