@@ -294,7 +294,7 @@ class SchemeCertificate extends Component {
       <div>
         <div className="row">
           <div className="col-md-3">
-            <a className="btn btn-primary" download="cert.p12" href={"data:application/x-pkcs12;base64,"+this.state.downloadCert.p12} target="_blank">{i18next.t("profile.scheme-certificate-p12-file-save")}</a>
+            <a className="btn btn-primary" download="cert.p12" rel="noopener noreferrer" href={"data:application/x-pkcs12;base64,"+this.state.downloadCert.p12} target="_blank">{i18next.t("profile.scheme-certificate-p12-file-save")}</a>
           </div>
           <div className="col-md-4">
             <h5>

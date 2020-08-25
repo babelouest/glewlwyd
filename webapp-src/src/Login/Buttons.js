@@ -180,7 +180,7 @@ class Buttons extends Component {
                 </button>
                 <div className="dropdown-menu" aria-labelledby="selectGrant">
                   {bGrant}
-                  <a className="dropdown-item" href={this.state.config.ProfileUrl||""} target="_blank">{i18next.t("login.update-profile")}</a>
+                  <a className="dropdown-item" href={this.state.config.ProfileUrl||""} target="_blank" rel="noopener noreferrer">{i18next.t("login.update-profile")}</a>
                 </div>
               </div>
               {bAnother}
