@@ -243,7 +243,7 @@ int user_has_scheme(struct config_elements * config, const char * username, cons
       }
       json_decref(j_scope);
     }
-  } else {
+  } else if (!check_result_value(j_user, G_ERROR_NOT_FOUND)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_has_scheme - Error get_user");
     ret = G_ERROR;
   }
