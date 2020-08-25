@@ -1627,7 +1627,7 @@ static int callback_register_register_user(const struct _u_request * request, st
   
   time(&now);
   now += json_integer_value(json_object_get(config->j_parameters, "session-duration"));
-  ts = *gmtime(&now);
+  gmtime_r(&now, &ts);
   strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
   
   if (json_object_get(config->j_parameters, "verify-email") != json_true()) {
@@ -1728,7 +1728,7 @@ static int callback_register_check_email(const struct _u_request * request, stru
       if (check_result_value(j_result, G_OK)) {
         time(&now);
         now += json_integer_value(json_object_get(config->j_parameters, "session-duration"));
-        ts = *gmtime(&now);
+        gmtime_r(&now, &ts);
         strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
         ulfius_add_cookie_to_response(response, 
                                       json_string_value(json_object_get(config->j_parameters, "session-key")),
@@ -1756,7 +1756,7 @@ static int callback_register_check_email(const struct _u_request * request, stru
         if (check_result_value(j_result, G_OK)) {
           time(&now);
           now += json_integer_value(json_object_get(config->j_parameters, "session-duration"));
-          ts = *gmtime(&now);
+          gmtime_r(&now, &ts);
           strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
           ulfius_add_cookie_to_response(response, 
                                         json_string_value(json_object_get(config->j_parameters, "session-key")),
@@ -2157,7 +2157,7 @@ static int callback_reset_credentials_complete_registration(const struct _u_requ
   if ((res = reset_credentials_remove_session(config, u_map_get(request->map_cookie, json_string_value(json_object_get(config->j_parameters, "reset-credentials-session-key"))))) == G_OK) {
     time(&now);
     now -= 3600;
-    ts = *gmtime(&now);
+    gmtime_r(&now, &ts);
     strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
     ulfius_add_cookie_to_response(response, 
                                   json_string_value(json_object_get(config->j_parameters, "reset-credentials-session-key")),
@@ -2214,7 +2214,7 @@ static int callback_register_reset_credentials_email_verify(const struct _u_requ
     if (check_result_value(j_session, G_OK)) {
       time(&now);
       now += json_integer_value(json_object_get(config->j_parameters, "reset-credentials-session-duration"));
-      ts = *gmtime(&now);
+      gmtime_r(&now, &ts);
       strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
       ulfius_add_cookie_to_response(response, 
                                     json_string_value(json_object_get(config->j_parameters, "reset-credentials-session-key")), 
@@ -2256,7 +2256,7 @@ static int callback_register_reset_credentials_code_verify(const struct _u_reque
     if (check_result_value(j_session, G_OK)) {
       time(&now);
       now += json_integer_value(json_object_get(config->j_parameters, "reset-credentials-session-duration"));
-      ts = *gmtime(&now);
+      gmtime_r(&now, &ts);
       strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
       ulfius_add_cookie_to_response(response, 
                                     json_string_value(json_object_get(config->j_parameters, "reset-credentials-session-key")), 
