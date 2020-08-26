@@ -1,5 +1,7 @@
 # Glewlwyd API description
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 This document is intended to describe Glewlwyd's core API endpoints. Glewlwyd's core API endpoints are used to manage core functionalities data.
 
 - [Endpoints authentication](#endpoints-authentication)

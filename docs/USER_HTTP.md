@@ -1,5 +1,7 @@
 # Glewlwyd User Module HTTP Backend documentation
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 ![mod-user-http](screenshots/mod-user-http.png)
 
 The http backend uses a HTTP service to authenticate users via Basic Auth.

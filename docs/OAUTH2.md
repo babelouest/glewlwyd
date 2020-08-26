@@ -1,5 +1,7 @@
 # Glewlwyd OAuth2 Plugin documentation
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 This plugin is based on the [OAuth 2 RFC document](https://tools.ietf.org/html/rfc6749) and allows Glewlwyd to act as an OAuth2 Provider.
 
 ## Functionalities summary

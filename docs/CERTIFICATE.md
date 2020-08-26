@@ -1,5 +1,7 @@
 # Glewlwyd TLS Certificate Schema documentation
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 ![scheme-certificate](screenshots/scheme-certificate.png)
 
 The TLS Certificate Schema implements authentication based on the [Client-authenticated TLS handshake](https://en.wikipedia.org/wiki/Transport_Layer_Security#Client-authenticated_TLS_handshake) protocol.

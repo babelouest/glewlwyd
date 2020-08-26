@@ -1,5 +1,7 @@
 # Glewlwyd OAuth2 Schema documentation
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 ![scheme-oauth2](screenshots/scheme-oauth2.png)
 
 The OAuth2 Schema implements authentication based on authentication via external OAuth2/OIDC services. The chain of trust is based on the Glewlwyd's administrator trusting the OAuth2/OIDC service to authenticate Glewlwyd's users. Therefore Glewlwyd's administrator must enter only trustable external providers. It is strongly suggested to test the providers authentication with your configuration before telling your users to do so.

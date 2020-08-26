@@ -1,5 +1,7 @@
 # Glewlwyd Scopes Management
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 ![scope-add](screenshots/scope-add.png)
 
 A scope in Glewlwyd is an access level that the user, if it has the scope available, can or not grant access to clients.

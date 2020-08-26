@@ -1,6 +1,9 @@
 # Installation
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 1.  [Upgrade Glewlwyd](#upgrade-glewlwyid)
+    * [Upgrade to Glewlwyd 2.3.3](#upgrade-to-glewlwyd-233)
     * [Upgrade to Glewlwyd 2.3.x](#upgrade-to-glewlwyd-23x)
     * [Upgrade to Glewlwyd 2.2.x](#upgrade-to-glewlwyd-22x)
     * [Upgrade to Glewlwyd 2.1.x](#upgrade-to-glewlwyd-21x)
@@ -48,6 +51,15 @@
 ## Upgrade Glewlwyd
 
 Glewlwyd upgrades usually come with database changes. It is highly recommended to backup your database before performing the upgrade. You must perform the database upgrades in the correct order. i.e. if you upgrade from Glewlwyd 2.1 to Glewlwyd 2.3, you must first install the 2.2 upgrade, then the 2.3.
+
+### Upgrade to Glewlwyd 2.3.3
+
+This is a security release, please upgrade your Glewlwyd version.
+To mitigate server configuration leaks, I recommend the following actions:
+  - If you use the TLS Certificate Scheme with [Allow to emit PKCS#12 certificates for the clients](https://github.com/babelouest/glewlwyd/blob/2.3/docs/CERTIFICATE.md#allow-to-emit-pkcs12-certificates-for-the-clients) enabled, please revoke the issuer certificate and use new ones
+  - If you use the Webauthn Scheme, it's reommended to regenerate the [Random seed used to mitigate intrusion](https://github.com/babelouest/glewlwyd/blob/2.3/docs/WEBAUTHN.md#random-seed-used-to-mitigate-intrusion)
+  - If you use the Oauth2 Scheme, please change the [clients secrets](https://github.com/babelouest/glewlwyd/blob/2.3/docs/OAUTH2_SCHEME.md#secret)
+  - If yout use the Email code scheme and use a [SMTP password](https://github.com/babelouest/glewlwyd/blob/2.3/docs/EMAIL.md#smtp-password-if-required), please to change this password
 
 ### Upgrade to Glewlwyd 2.3.x
 

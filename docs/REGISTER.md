@@ -1,5 +1,7 @@
 # Glewlwyd register new user plugin documentation
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 This plugin allows to register new users in your Glewlwyd instance.
 
 You have 3 different modes of user registration:

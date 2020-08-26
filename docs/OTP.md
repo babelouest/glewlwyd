@@ -1,5 +1,7 @@
 # Glewlwyd OTP Schema documentation
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 ![scheme-otp](screenshots/scheme-otp.png)
 
 The OTP Schema implements authentication based on One-Time-Password using OATH standard defined in [HOTP](https://tools.ietf.org/html/rfc4226) and [TOTP](https://tools.ietf.org/html/rfc6238).

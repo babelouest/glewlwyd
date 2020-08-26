@@ -1,5 +1,7 @@
 # Glewlwyd Client Module Database Backend documentation
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 ![mod-client-database](screenshots/mod-user-database.png)
 
 The database backend uses a database to store information and passwords for clients. The database can be the same one as the Glewlwyd database or another database of another supported type.
