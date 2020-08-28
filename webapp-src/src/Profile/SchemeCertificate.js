@@ -25,8 +25,7 @@ class SchemeCertificate extends Component {
       activeCert: false,
       downloadCert: false,
       showPassword: false,
-      canAddCert: false,
-      canRequestCert: false
+      canAddCert: false
     };
     
     this.getRegister = this.getRegister.bind(this);
@@ -60,8 +59,7 @@ class SchemeCertificate extends Component {
       activeCert: false,
       downloadCert: false,
       showPassword: false,
-      canAddCert: false,
-      canRequestCert: false
+      canAddCert: false
     });
   }
   
@@ -69,10 +67,10 @@ class SchemeCertificate extends Component {
     if (this.state.profile) {
       return apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
       .then((res) => {
-        this.setState({certificateList: res.certificate, canAddCert: res["add-certificate"], certFile: false, canRequestCert: res["request-certificate"], fileName: false, activeCert: false, downloadCert: false});
+        this.setState({certificateList: res.certificate, canAddCert: res["add-certificate"], certFile: false, fileName: false, activeCert: false, downloadCert: false});
       })
       .fail((err) => {
-        this.setState({certificateList: [], canAddCert: false, canRequestCert: false, certFile: false, fileName: false, downloadCert: false}, () => {
+        this.setState({certificateList: [], canAddCert: false, certFile: false, fileName: false, downloadCert: false}, () => {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         });
       });
@@ -109,43 +107,6 @@ class SchemeCertificate extends Component {
         }
       });
     }
-  }
-  
-  addCertificateFromRequest() {
-    apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "use-certificate"}})
-    .then((res) => {
-      this.getRegister();
-      if (this.state.config.params.register) {
-        messageDispatcher.sendMessage('App', {type: "registration"});
-      }
-    })
-    .fail((err) => {
-      if (err.status === 400) {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-certificate-invalid")});
-      } else {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-      }
-    });
-  }
-  
-  requestNewCertificate() {
-    apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "request-certificate"}})
-    .then((res) => {
-      this.getRegister()
-      .then(() => {
-        if (this.state.config.params.register) {
-          messageDispatcher.sendMessage('App', {type: "registration"});
-        }
-        this.setState({downloadCert: res, showPassword: false});
-      });
-    })
-    .fail((err) => {
-      if (err.status === 400) {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-certificate-invalid")});
-      } else {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-      }
-    });
   }
   
   switchCertStatus(cert) {
@@ -209,20 +170,8 @@ class SchemeCertificate extends Component {
     });
   }
   
-  showPassword() {
-    this.setState({showPassword: !this.state.showPassword});
-  }
-  
-  copyPassword() {
-    navigator.clipboard.writeText(this.state.downloadCert.password).then(function() {
-      messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-certificate-p12-file-copy-password-success")});
-    }, function(err) {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-certificate-p12-file-copy-password-error")});
-    });
-  }
-  
 	render() {
-    var certificateList = [], downloadCertJsx;
+    var certificateList = [];
     this.state.certificateList.forEach((cert, index) => {
       var expiration = new Date(cert.expiration * 1000), lastUsed = new Date(cert.last_used * 1000);
       var buttons, checked;
@@ -285,38 +234,6 @@ class SchemeCertificate extends Component {
         </tr>
       );
     });
-    if (this.state.downloadCert) {
-      var password = "********";
-      if (this.state.showPassword) {
-        password = this.state.downloadCert.password;
-      }
-      downloadCertJsx =
-      <div>
-        <div className="row">
-          <div className="col-md-3">
-            <a className="btn btn-primary" download="cert.p12" rel="noopener noreferrer" href={"data:application/x-pkcs12;base64,"+this.state.downloadCert.p12} target="_blank">{i18next.t("profile.scheme-certificate-p12-file-save")}</a>
-          </div>
-          <div className="col-md-4">
-            <h5>
-              {i18next.t("profile.scheme-certificate-p12-file-password")}
-              <code className="btn-icon-right">
-                {password}
-              </code>
-            </h5>
-          </div>
-          <div className="col-md-2">
-            <div className="btn-group" role="group" aria-label="current-certificate">
-              <button type="button" className="btn btn-outline-secondary" onClick={this.showPassword} title={i18next.t("profile.scheme-certificate-p12-file-"+(this.state.showPassword?"hide-password":"show-password"))}>
-                <i className={"fas "+(this.state.showPassword?"fa-eye-slash":"fa-eye")}></i>
-              </button>
-              <button type="button" className="btn btn-outline-secondary" onClick={this.copyPassword} title={i18next.t("profile.scheme-certificate-p12-file-copy-password")}>
-                <i className="fas fa-copy"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    }
     return (
       <div>
         <div className="row">
@@ -347,9 +264,6 @@ class SchemeCertificate extends Component {
               </button>
               <button type="button" className="btn btn-outline-secondary" onClick={this.testCertificate} title={i18next.t("profile.scheme-certificate-test")}>
                 <i className="fas fa-question-circle"></i>
-              </button>
-              <button type="button" className="btn btn-outline-secondary" disabled={!this.state.canRequestCert} onClick={this.requestNewCertificate} title={i18next.t("profile.scheme-certificate-request-new")}>
-                <i className="fas fa-external-link-alt"></i>
               </button>
               <button type="button" className="btn btn-outline-secondary" onClick={this.getRegister} title={i18next.t("profile.scheme-certificate-refresh")}>
                 <i className="fas fa-sync"></i>
@@ -389,7 +303,6 @@ class SchemeCertificate extends Component {
             <hr/>
           </div>
         </div>
-        {downloadCertJsx}
       </div>
     );
   }
