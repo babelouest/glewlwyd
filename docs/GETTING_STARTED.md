@@ -47,6 +47,7 @@ The following plugins are available but must be instantiated and configured eith
 
 - Glewlwyd OAuth2 plugin
 - Glewlwyd OpenID Connect Core plugin
+- Register new user/Update e-mail/Reset credentials plugin
 
 ## Installation
 
