@@ -2,7 +2,12 @@
 
 [![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
 
-This plugin allows to register new users in your Glewlwyd instance.
+This plugin has the following functionalities:
+- Allow to register new users in your Glewlwyd instance
+- Allow a user to update its e-mail address with a verification phase
+- Reset a user credentials (lost password, lost scheme properties)
+
+### User registration
 
 You have 3 different modes of user registration:
 - The user can register without e-mail confirmation, it will need to use an available username
@@ -13,9 +18,20 @@ During the registration process, the new user can register schemes and/or set a 
 
 You also need to set at least one scope to the new users, `g_profile` is recommended for the users to be able to connect to their profile page, you can also add any other scheme you may find relevant for your self-registered users.
 
+### Update e-mail
+
+With this option on, the user can update its e-mail address in its profile page.
+
+### Reset credentials
+
+With this option on, a user that has lost its password or its authentication scheme properties like OTP shared secret or webauthn device can reset its credentials using either a link sent to the user's e-mail or a recovery code previously generated.
+
 - [Installation](#installation)
 - [Registration URL](#registration-url)
 - [Registration process for new users](#registration-process-for-new-users)
+- [Update e-mail process](#update-e-mail-process)
+- [Reset credentials process](#reset-credentials-process)
+- [Register endpoints specifications](#register-endpoints-specifications)
 
 ## Installation
 
