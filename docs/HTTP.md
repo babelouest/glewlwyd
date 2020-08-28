@@ -1,5 +1,7 @@
 # Glewlwyd HTTP Basic Authentication Schema documentation
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 ![scheme-http](screenshots/scheme-http.png)
 
 The HTTP Basic Authentication performs a login/password authentication against a specified webservice that requires HTTP Basic Authentication. This scheme is similar to [HTTP authentication backend](#http-authentication) but requires users to be already added to any backend (Database or LDAP). The advantage is that you can specify different scopes for each users and add any other additional data for the users.
@@ -7,7 +9,7 @@ The HTTP Basic Authentication performs a login/password authentication against a
 ## Installation
 
 In the administration page, go to `Parameters/Authentication schemes` and add a new scheme by clicking on the `+` button. In the modal, enter a name and a display name (the name must be unique among all authentication scheme instances), and a scheme session expiration in seconds.
-Select the type `HTTP Basic Authentication` in the Type dropdown button.
+Select the type `HTTP Basic Authentication` in the Type drop-down button.
 
 Below is the definition of all parameters.
 
@@ -25,7 +27,7 @@ Number of seconds to expire a valid session.
 
 ### Max use per session (0: unlimited)
 
-Maximum number of times a valid authentification with this scheme is possible. This is an additional parameter used to enforce the security of the session and forbid to reuse this session for other authentications.
+Maximum number of times a valid authentication with this scheme is possible. This is an additional parameter used to enforce the security of the session and forbid to reuse this session for other authentications.
 
 ### Allow users to register
 

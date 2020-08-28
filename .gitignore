@@ -7,6 +7,7 @@
 *.crl
 *.pem
 *.der
+*.jwks
 *.log
 *.err
 *.so

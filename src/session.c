@@ -730,10 +730,13 @@ int delete_user_session_from_hash(struct config_elements * config, const char * 
 }
 
 json_t * get_scheme_list_for_user(struct config_elements * config, const char * username) {
-  json_t * j_scheme_modules = get_user_auth_scheme_module_list(config), * j_return, * j_module_array, * j_element;
-  size_t index;
+  json_t * j_scheme_modules = get_user_auth_scheme_module_list(config), 
+         * j_return, 
+         * j_module_array = NULL, 
+         * j_element = NULL;
+  size_t index = 0;
   struct _user_auth_scheme_module_instance * instance = NULL;
-  int can_use;
+  int can_use, has_scheme;
   
   if (check_result_value(j_scheme_modules, G_OK)) {
     j_module_array = json_array();
@@ -743,7 +746,11 @@ json_t * get_scheme_list_for_user(struct config_elements * config, const char * 
         if (instance != NULL) {
           can_use = instance->module->user_auth_scheme_module_can_use(config->config_m, username, instance->cls);
           if (can_use != GLEWLWYD_IS_NOT_AVAILABLE) {
-            json_array_append(j_module_array, j_element);
+            if ((has_scheme = user_has_scheme(config, username, json_string_value(json_object_get(j_element, "name")))) == G_OK) {
+              json_array_append_new(j_module_array, json_pack("{sOsOsO}", "module", json_object_get(j_element, "module"), "name", json_object_get(j_element, "name"), "display_name", json_object_get(j_element, "display_name")));
+            } else if (has_scheme != G_ERROR_NOT_FOUND) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_scheme_list_for_user - Error user_has_scheme");
+            }
           }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_scheme_list_for_user - Error instance %s/%s not found", json_string_value(json_object_get(j_element, "module")), json_string_value(json_object_get(j_element, "name")));

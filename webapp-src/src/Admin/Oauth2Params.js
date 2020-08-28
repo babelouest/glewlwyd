@@ -453,7 +453,7 @@ class Oauth2Params extends Component {
     var helpUrl;
     this.state.config.providerMainstreamList && this.state.config.providerMainstreamList.forEach((provider, index) => {
       if (index === this.state.curMainstream && provider.help_url) {
-        helpUrl = <a href={provider.help_url} alt={provider.name} className="badge badge-primary" target="_blank">{i18next.t("admin.mod-oauth2-help_url")}</a>
+        helpUrl = <a href={provider.help_url} alt={provider.name} className="badge badge-primary" target="_blank" rel="noopener noreferrer">{i18next.t("admin.mod-oauth2-help_url")}</a>
       }
       mainstreamProviders.push(
         <a key={index} className={"dropdown-item"+(this.state.curMainstream===index?" active":"")} href="#" onClick={(e) => this.changeMainstreamProvider(e, index)}>{provider.name}</a>

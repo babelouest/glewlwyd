@@ -14,8 +14,8 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["jwks-private"]?"":(props.mod.parameters["jwks-private"] = "");
     props.mod.parameters["default-kid"]?"":(props.mod.parameters["default-kid"] = "");
     props.mod.parameters["client-sign_kid-parameter"]?"":(props.mod.parameters["client-sign_kid-parameter"] = "");
+    props.mod.parameters["jwks-public"]?"":(props.mod.parameters["jwks-public"] = "");
     props.mod.parameters["key"]?"":(props.mod.parameters["key"] = "");
-    props.mod.parameters["cert"]?"":(props.mod.parameters["cert"] = "");
     props.mod.parameters["cert"]?"":(props.mod.parameters["cert"] = "");
     props.mod.parameters["access-token-duration"]!==undefined?"":(props.mod.parameters["access-token-duration"] = 3600);
     props.mod.parameters["refresh-token-duration"]!==undefined?"":(props.mod.parameters["refresh-token-duration"] = 1209600);
@@ -144,8 +144,9 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["jwks-private"]?"":(nextProps.mod.parameters["jwks-private"] = "");
     nextProps.mod.parameters["default-kid"]?"":(nextProps.mod.parameters["default-kid"] = "");
     nextProps.mod.parameters["client-sign_kid-parameter"]?"":(nextProps.mod.parameters["client-sign_kid-parameter"] = "");
+    nextProps.mod.parameters["jwks-public-uri"]?"":(nextProps.mod.parameters["jwks-public-uri"] = "");
+    nextProps.mod.parameters["jwks-public"]?"":(nextProps.mod.parameters["jwks-public"] = "");
     nextProps.mod.parameters["key"]?"":(nextProps.mod.parameters["key"] = "");
-    nextProps.mod.parameters["cert"]?"":(nextProps.mod.parameters["cert"] = "");
     nextProps.mod.parameters["cert"]?"":(nextProps.mod.parameters["cert"] = "");
     nextProps.mod.parameters["access-token-duration"]!==undefined?"":(nextProps.mod.parameters["access-token-duration"] = 3600);
     nextProps.mod.parameters["refresh-token-duration"]!==undefined?"":(nextProps.mod.parameters["refresh-token-duration"] = 1209600);
@@ -588,13 +589,13 @@ class GlwdOIDCParams extends Component {
         jwks = JSON.parse(this.state.mod.parameters["jwks-private"]);
       } catch (e) {
         hasError = true;
-        errorList["jwks-private"] = i18next.t("admin.mod-glwd-jwks-private-error");
+        errorList["jwks-private"] = i18next.t("admin.mod-glwd-jwks-error");
         errorList["signature"] = true;
       }
       if (jwks) {
         if (!jwks.keys || !Array.isArray(jwks.keys)) {
           hasError = true;
-          errorList["jwks-private"] = i18next.t("admin.mod-glwd-jwks-private-error");
+          errorList["jwks-private"] = i18next.t("admin.mod-glwd-jwks-error");
           errorList["signature"] = true;
         } else if (this.state.mod.parameters["default-kid"]) {
           var kidFound = false;
@@ -611,6 +612,24 @@ class GlwdOIDCParams extends Component {
         }
       }
     }
+    if (this.state.mod.parameters["jwks-public"]) {
+      var jwks = false;
+      try {
+        jwks = JSON.parse(this.state.mod.parameters["jwks-public"]);
+      } catch (e) {
+        hasError = true;
+        errorList["jwks-public"] = i18next.t("admin.mod-glwd-jwks-error");
+        errorList["signature"] = true;
+      }
+      if (jwks) {
+        if (!jwks.keys || !Array.isArray(jwks.keys)) {
+          hasError = true;
+          errorList["jwks-public"] = i18next.t("admin.mod-glwd-jwks-error");
+          errorList["signature"] = true;
+        }
+      }
+    }
+
     if (!this.state.mod.parameters["access-token-duration"]) {
       hasError = true;
       errorList["access-token-duration"] = i18next.t("admin.mod-glwd-access-token-duration-error");
@@ -1320,6 +1339,31 @@ class GlwdOIDCParams extends Component {
                     <textarea className="form-control" id="mod-glwd-jwks-private" onChange={(e) => this.changeParam(e, "jwks-private")} value={this.state.mod.parameters["jwks-private"]}></textarea>
                   </div>
                   {this.state.errorList["jwks-private"]?<span className="error-input">{this.state.errorList["jwks-private"]}</span>:""}
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwks-public-uri">{i18next.t("admin.mod-glwd-jwks-public-uri")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-jwks-public-uri" onChange={(e) => this.changeParam(e, "jwks-public-uri")} value={this.state.mod.parameters["jwks-public-uri"]} placeholder={i18next.t("admin.mod-glwd-jwks-public-uri-ph")} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-jwks-public">{i18next.t("admin.mod-glwd-jwks-public")}</label>
+                    </div>
+                    <div className="custom-file">
+                      <input type="file" id="mod-glwd-jwks-public" className="custom-file-input" onChange={(e) => this.uploadFile(e, "jwks-public")} />
+                      <label className="custom-file-label" htmlFor="mod-glwd-jwks-public">{i18next.t("admin.choose-file")}</label>
+                    </div>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <textarea className="form-control" id="mod-glwd-jwks-public" onChange={(e) => this.changeParam(e, "jwks-public")} value={this.state.mod.parameters["jwks-public"]} placeholder={i18next.t("admin.mod-glwd-jwks-public-ph")}></textarea>
+                  </div>
+                  {this.state.errorList["jwks-public"]?<span className="error-input">{this.state.errorList["jwks-public"]}</span>:""}
                 </div>
                 <div className="form-group">
                   <div className="input-group mb-3">

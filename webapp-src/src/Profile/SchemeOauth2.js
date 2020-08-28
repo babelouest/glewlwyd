@@ -14,8 +14,8 @@ class SchemeOauth2 extends Component {
       module: props.module,
       name: props.name,
       profile: props.profile,
+      schemePrefix: props.schemePrefix,
       registerList: [],
-      registerUrl: (props.config.params.register?"/" + props.config.params.register + "/profile":"/profile"),
       removeProvdier: false
     };
     
@@ -31,7 +31,7 @@ class SchemeOauth2 extends Component {
       module: nextProps.module,
       name: nextProps.name,
       profile: nextProps.profile,
-      registerUrl: (nextProps.config.params.register?"/" + nextProps.config.params.register + "/profile":"/profile")
+      schemePrefix: nextProps.schemePrefix
     }, () => {
       this.getRegister();
     });
@@ -39,7 +39,7 @@ class SchemeOauth2 extends Component {
   
   getRegister() {
     if (this.state.profile) {
-      apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name}, true)
+      apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name}, true)
       .then((res) => {
         this.setState({registerList: res});
       })
@@ -54,7 +54,7 @@ class SchemeOauth2 extends Component {
   
   addRegistration(provider) {
     if (this.state.profile) {
-      apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {provider: provider, action: "new", register_url: (this.state.config.params.register?apiManager.getConfig()+"/"+this.state.config.params.register:apiManager.getConfig()), complete_url: window.location.href}}, true)
+      apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {provider: provider, action: "new", register_url: (this.state.config.params.register?apiManager.getConfig()+"/"+this.state.config.params.register:apiManager.getConfig()), complete_url: window.location.href}}, true)
       .then((res) => {
         document.location = res.redirect_to;
       })
@@ -80,7 +80,7 @@ class SchemeOauth2 extends Component {
   
   confirmRemoveRegistration(provider) {
     if (this.state.profile) {
-      apiManager.glewlwydRequest(this.state.registerUrl+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {provider: this.state.removeProvdier, action: "delete"}}, true)
+      apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {provider: this.state.removeProvdier, action: "delete"}}, true)
       .then((res) => {
         this.getRegister();
       })

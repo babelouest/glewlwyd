@@ -198,7 +198,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
   
   time(&now);
   now += GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE;
-  ts = *gmtime(&now);
+  gmtime_r(&now, &ts);
   strftime(expires, 128, "%a, %d %b %Y %T %Z", &ts);
   if (j_param != NULL) {
     if (json_string_length(json_object_get(j_param, "username"))) {
@@ -509,7 +509,7 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
   
   time(&now);
   now += GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE;
-  ts = *gmtime(&now);
+  gmtime_r(&now, &ts);
   strftime(expires, 128, "%a, %d %b %Y %T %Z", &ts);
   if (session_uid != NULL && o_strlen(session_uid)) {
     j_session = get_users_for_session(config, session_uid);
@@ -1902,7 +1902,7 @@ int callback_glewlwyd_user_get_profile (const struct _u_request * request, struc
   
   time(&now);
   now += GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE;
-  ts = *gmtime(&now);
+  gmtime_r(&now, &ts);
   strftime(expires, 128, "%a, %d %b %Y %T %Z", &ts);
   if (!o_strlen(u_map_get(request->map_url, "username"))) {
     session_uid = get_session_id(config, request);

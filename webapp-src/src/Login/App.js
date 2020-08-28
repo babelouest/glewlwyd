@@ -12,6 +12,9 @@ import SelectAccount from './SelectAccount';
 import EndSession from './EndSession';
 import SessionClosed from './SessionClosed';
 import DeviceAuth from './DeviceAuth';
+import ResetCredentials from './ResetCredentials';
+
+import Message from '../Modal/Message';
 
 class App extends Component {
   constructor(props) {
@@ -42,7 +45,15 @@ class App extends Component {
       login_hint: props.config.params.login_hint||"",
       errorScopesUnavailable: false,
       infoSomeScopeUnavailable: false,
-      errorScheme: false
+      errorScheme: false,
+      registration: [],
+      resetCredentials: [],
+      resetCredentialsShow: false,
+      messageModal: {
+        title: "",
+        label: "",
+        message: ""
+      }
     };
 
     this.initProfile = this.initProfile.bind(this);
@@ -59,14 +70,14 @@ class App extends Component {
       if (message.type === "InitProfile") {
         this.initProfile(false);
       } else if (message.type === "loginSuccess") {
-        this.setState({selectAccount: false, newUser: false, refresh_login: false, prompt: false}, () => {
+        this.setState({selectAccount: false, newUser: false, refresh_login: false, prompt: false, resetCredentialsShow: false}, () => {
           this.initProfile(false);
         });
       } else if (message.type === "NewUser") {
-        this.setState({selectAccount: false, newUser: true, currentUser: false, scheme: this.state.config.params.scheme}, () => {
+        this.setState({selectAccount: false, newUser: true, currentUser: false, scheme: this.state.config.params.scheme, resetCredentialsShow: false}, () => {
         });
       } else if (message.type === "GrantComplete") {
-        this.setState({selectAccount: false, showGrant: false, prompt: false, forceShowGrant: false}, () => {
+        this.setState({selectAccount: false, showGrant: false, prompt: false, forceShowGrant: false, resetCredentialsShow: false}, () => {
           this.initProfile(false);
         });
       } else if (message.type === "SelectAccount") {
@@ -83,11 +94,46 @@ class App extends Component {
         this.setState({scheme: message.scheme});
       } else if (message.type === "SessionClosed") {
         this.setState({endSession: false, sessionClosed: true});
+      } else if (message.type === "ResetCredentials") {
+        this.setState({selectAccount: false, newUser: false, refresh_login: false, prompt: false, resetCredentialsShow: true});
+      } else if (message.type === 'message') {
+        var messageModal = this.state.messageModal;
+        messageModal.title = message.title;
+        messageModal.label = message.label;
+        messageModal.message = message.message;
+        this.setState({messageModal: messageModal}, () => {
+          $("#messageModal").modal({keyboard: false, show: true});
+        });
       }
     });
   }
 
   initProfile(checkPrompt) {
+    if (this.state.config.register) {
+      var registration = [];
+      var resetCredentials = [];
+      this.state.config.register.forEach((register, index) => {
+        apiManager.glewlwydRequest("/" + register.name + "/config")
+        .then((config) => {
+          if (config.registration) {
+            registration.push({name: register.name, message: register.message});
+          }
+          if (config["reset-credentials"].email || config["reset-credentials"].code) {
+            resetCredentials.push({name: register.name, message: register["reset-credentials-message"], email: config["reset-credentials"].email, code: config["reset-credentials"].code});
+          }
+          this.setState({registration: registration, resetCredentials: resetCredentials});
+        })
+        .fail((err) => {
+          this.setState({registerValid: false, registering: false}, () => {
+            if (err.status === 404) {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-invalid-url")});
+            } else {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+            }
+          });
+        });
+      });
+    }
     apiManager.glewlwydRequest("/profile_list")
     .then((res) => {
       var newState = {};
@@ -142,29 +188,38 @@ class App extends Component {
     apiManager.glewlwydRequest("/auth/grant/" + encodeURIComponent(clientId) + "/" + encodeURIComponent(scopeList))
     .then((res) => {
       var scopeGranted = [];
-      var scopeGrantedDetails = {};
       var showGrant = true;
       var showGrantAsterisk = false;
       if (res.scope.length) {
         var infoSomeScopeUnavailable = (scopeList.split(" ").length > res.scope.length);
-        res.scope.forEach((scope) => {
-          if (scope.name === "openid") {
-            scope.granted = true;
-          }
-          if (scope.granted) {
-            if (scope.name !== "openid") {
-              showGrant = false || this.state.forceShowGrant;
+        if (scopeList === "openid") {
+          showGrant = false || this.state.forceShowGrant;
+          scopeGranted.push("openid");
+        } else {
+          res.scope.forEach((scope) => {
+            if (scope.name === "openid") {
+              scope.granted = true;
             }
-            scopeGranted.push(scope.name);
-            scopeGrantedDetails[scope.name] = scope;
-          } else {
-            showGrantAsterisk = true;
-          }
-        });
+            if (scope.granted) {
+              if (scope.name !== "openid") {
+                showGrant = false || this.state.forceShowGrant;
+              }
+              scopeGranted.push(scope.name);
+            } else {
+              showGrantAsterisk = true;
+            }
+          });
+        }
         if (scopeGranted.length) {
           apiManager.glewlwydRequest("/auth/scheme/?scope=" + encodeURIComponent(scopeGranted.join(" ")))
           .then((schemeRes) => {
-            this.setState({client: res.client, scope: res.scope, scheme: schemeRes, showGrant: showGrant, showGrantAsterisk: showGrantAsterisk, infoSomeScopeUnavailable: infoSomeScopeUnavailable, errorScopesUnavailable: false}, () => {
+            this.setState({client: res.client, 
+                           scope: res.scope, 
+                           scheme: schemeRes, 
+                           showGrant: showGrant, 
+                           showGrantAsterisk: showGrantAsterisk, 
+                           infoSomeScopeUnavailable: infoSomeScopeUnavailable, 
+                           errorScopesUnavailable: false}, () => {
               this.parseSchemes();
             });
           })
@@ -172,7 +227,12 @@ class App extends Component {
             messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
           });
         } else {
-          this.setState({client: res.client, scope: res.scope, showGrant: true, showGrantAsterisk: true, errorScopesUnavailable: false, infoSomeScopeUnavailable: infoSomeScopeUnavailable});
+          this.setState({client: res.client, 
+                         scope: res.scope, 
+                         showGrant: true, 
+                         showGrantAsterisk: true, 
+                         errorScopesUnavailable: false, 
+                         infoSomeScopeUnavailable: infoSomeScopeUnavailable});
         }
       } else {
         this.setState({errorScopesUnavailable: true, infoSomeScopeUnavailable: false});
@@ -249,7 +309,12 @@ class App extends Component {
     if (canContinue) {
       scheme = false;
     }
-    this.setState({canContinue: canContinue, passwordRequired: passwordRequired, schemeListRequired: schemeListRequired, scheme: scheme, errorScheme: (!scheme && !canContinue), mustRegisterScheme: mustRegisterScheme});
+    this.setState({canContinue: canContinue, 
+                   passwordRequired: passwordRequired, 
+                   schemeListRequired: schemeListRequired, 
+                   scheme: scheme, 
+                   errorScheme: (!scheme && !canContinue), 
+                   mustRegisterScheme: mustRegisterScheme});
   }
 
   changeLang(e, lang) {
@@ -275,7 +340,9 @@ class App extends Component {
     if (this.state.config) {
       var body = "", message, scopeUnavailable;
       if (this.state.loaded) {
-        if (this.state.endSession) {
+        if (this.state.resetCredentialsShow) {
+          body = <ResetCredentials config={this.state.config} resetCredentials={this.state.resetCredentials}/>;
+        } else if (this.state.endSession) {
           body = <EndSession config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
         } else if (this.state.sessionClosed) {
           body = <SessionClosed config={this.state.config}/>;
@@ -341,9 +408,6 @@ class App extends Component {
                   <span className="navbar-toggler-icon"></span>
                 </button>
                 <div className="collapse navbar-collapse" id="navbarSupportedContent">
-                  <ul className="navbar-nav mr-auto">
-                    {/* Placeholder */}
-                  </ul>
                   <div className="btn-group" role="group">
                     <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                       <i className="fas fa-language"></i>
@@ -371,10 +435,14 @@ class App extends Component {
                        newUserScheme={this.state.scheme} 
                        canContinue={this.state.canContinue && !this.state.errorScopesUnavailable} 
                        schemeListRequired={this.state.schemeListRequired}
-                       selectAccount={this.state.selectAccount} />
+                       selectAccount={this.state.selectAccount} 
+                       registration={this.state.registration}
+                       resetCredentials={this.state.resetCredentials}
+                       resetCredentialsShow={this.state.resetCredentialsShow} />
             </div>
           </div>
           <Notification loggedIn={true}/>
+          <Message title={this.state.messageModal.title} label={this.state.messageModal.label} message={this.state.messageModal.message} />
         </div>
       );
     } else {

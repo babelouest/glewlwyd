@@ -1,5 +1,7 @@
 # Glewlwyd OAuth2 Plugin documentation
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 This plugin is based on the [OAuth 2 RFC document](https://tools.ietf.org/html/rfc6749) and allows Glewlwyd to act as an OAuth2 Provider.
 
 ## Functionalities summary
@@ -57,7 +59,7 @@ For more information on keys generation, see [OpenSSL Documentation](https://www
 ![plugin-oauth2](screenshots/plugin-oauth2.png)
 
 In the administration page, go to `Parameters/Plugins` and add a new plugin by clicking on the `+` button. In the modal, enter a name and a display name (the name must be unique among all user backend instances).
-Select the type `Glewlwyd OAuth2 plugin` in the Type dropdown button.
+Select the type `Glewlwyd OAuth2 plugin` in the Type drop-down button.
 
 Below is the definition of all parameters.
 
@@ -98,7 +100,7 @@ Duration of validity of each refresh tokens. Default value is 1209600 (14 days).
 
 ### Code duration (seconds)
 
-Duration of validity of each code sent to the client befire requesting a refresh token. Default value is 600 (10 minutes).
+Duration of validity of each code sent to the client before requesting a refresh token. Default value is 600 (10 minutes).
 
 ### Refresh token rolling
 
@@ -132,19 +134,19 @@ The settings that you can override are `Refresh token duration` and/or `Rolling 
 
 Please note that a specific scope parameter has a higher priority than the plugin settings, and if have multiple scopes in a request that have specific settings, the settings will follow the following algorithm:
 - Refresh token duration: The duration provided will be the lowest duration among all the specific scope parameters.
-- Roling refresh: The value `No`has higher priority, therefore rolling refresh provided will be `No` if one scope has the value `No`, `Yes` otherwise
+- Rolling refresh: The value `No`has higher priority, therefore rolling refresh provided will be `No` if one scope has the value `No`, `Yes` otherwise
 
 ### Additional token values
 
 This section allows to add specific values to the access_tokens that will be taken from the user property values.
 
-You can add as many additional values as you want. If the property isn't present in the user data, it will be ignored. If the value is mutiple, all values will be present, separated by a comma `,`.
+You can add as many additional values as you want. If the property isn't present in the user data, it will be ignored. If the value is multiplier, all values will be present, separated by a comma `,`.
 
-## PKCE - Code challenge (RFC 7636)
+## PCS - Code challenge (RFC 7636)
 
 This section is used to configure [Proof Key for Code Exchange by OAuth Public Clients](https://tools.ietf.org/html/rfc7636).
 
-### PKCE allowed
+### PUCE allowed
 
 Enable this feature if you want to support code challenge.
 
@@ -717,13 +719,13 @@ Refresh token hash not found for this user
 
 ### Token introspection and revocation
 
-The endpoints `POST` `/introspect` and `POST` `/revoke` are implentations of the corresponding RFCs [Token introspection and revocation](https://tools.ietf.org/html/rfc7662) and [OAuth 2.0 Token Revocation](https://tools.ietf.org/html/rfc7009).
+The endpoints `POST` `/introspect` and `POST` `/revoke` are implementations of the corresponding RFCs [Token introspection and revocation](https://tools.ietf.org/html/rfc7662) and [OAuth 2.0 Token Revocation](https://tools.ietf.org/html/rfc7009).
 
 Both of them rely on 2 distinct ways to authenticate:
 - HTTP Basic Auth corresponding to the client credentials whose client the token was submitted
 - Authorized Access Token that includes the required scopes for those endpoints
 
-Both authentication methods are non eclusive and the administrator may enable or disable each of them.
+Both authentication methods are non exclusive and the administrator may enable or disable each of them.
 
 #### Token introspection
 

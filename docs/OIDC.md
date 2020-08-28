@@ -1,5 +1,7 @@
 # Glewlwyd OpenID Connect Plugin documentation
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 This plugin is based on the [OpenID Connect Core 1.0 specification](https://openid.net/specs/openid-connect-core-1_0.html) and allows Glewlwyd to act as an OpenID Provider (OP).
 
 ## Functionalities summary
@@ -110,12 +112,99 @@ If you want to use multiple keys for signatures, you need to setup the keys in J
 
 If the `'default-kid'` value is empty in the configuration, the first key in the JWKS will be the default signing key.
 
+### Generate JWKS using rnbyc
+
+The library [Rhonabwy](https://github.com/babelouest/rhonabwy) comes with the command-line program [rnbyc](https://babelouest.github.io/rhonabwy/md_tools_rnbyc_README.html). You should have the program available if you installed Glewlwyd with the packages or using CMake.
+
+This tool can be used to generate a new private key or key pair in JWKS format and/or parse a key in JWKS or PEM format.
+
+Check out [rnbyc documentation](https://babelouest.github.io/rhonabwy/md_tools_rnbyc_README.html) for more information about this tool.
+
+#### Example 1: Generate a JWKS with a single ECDSA 256 private key
+
+This simple example shows how to generate a ECDSA 256 private key.
+
+```shell
+$ rnbyc -j -g ecdsa256 -k key-1 -p /dev/null
+{
+  "keys": [
+    {
+      "kty": "EC",
+      "x": "AN64-jEEs_0zQfuUJI-9Rik6hkYMrIDHzSUfT3jlrA-q",
+      "y": "APmN2Hk4SxihpBzQAZRVHlpxJS6O_0q-k8JgCcN-hj88",
+      "d": "BvC2P98BQsYiMHqPqqfsguXe2Vl92JmZnB6Pj0jTHsM",
+      "crv": "P-256",
+      "kid": "key-1",
+      "alg": "ES256"
+    }
+  ]
+}
+```
+
+#### Example 2: Generate a JWKS with a ECDSA 256 private key and a 2048 bits RSA key
+
+```shell
+$ rnbyc -j -g ecdsa256 -k key-1 -p /dev/null -g rsa2048 -k key-2 -p /dev/null
+{
+  "keys": [
+    {
+      "kty": "EC",
+      "x": "AN64-jEEs_0zQfuUJI-9Rik6hkYMrIDHzSUfT3jlrA-q",
+      "y": "APmN2Hk4SxihpBzQAZRVHlpxJS6O_0q-k8JgCcN-hj88",
+      "d": "BvC2P98BQsYiMHqPqqfsguXe2Vl92JmZnB6Pj0jTHsM",
+      "crv": "P-256",
+      "kid": "key-1",
+      "alg": "ES256"
+    },
+    {
+      "kty": "RSA",
+      "n": "ANpN63DvHZKWlMEk94xq3vheqfSPMyrkvIDLoTeD_ONmZFfiJ9fjRKa8uZPIJ01woRGTMawVnqSCN8dusR79mv7lQn9jTMPMVUqD2ndGS6t5V2fW1YZO6TFjkFONvFB8U3G9JaB1apYSxZfx8oQwq6rQ3lLBDi07SlMbzl9cQGMceaFMC9mRquIh9svDdTzx9L7otRzET756i0whl7uKEfJ7wTR17LaeCf7eW_s7XVCgPRNSlR5FfQjoCM4AMGRbEn5HwVTds9jBxyFGLTj1sN570NIzg2bNtIdk4EDjAE5ZBrLn02nCH4B75Cx4R9zzZ4rhMV4UR39kpIt7gqjY9zs",
+      "e": "AQAB",
+      "d": "AI032LV-yVeZd3MWUdkRDVoICtN8izIVM-fxUkISbNZB12mOkA21JCTkcvwpf1s2H8u5t2lFtxFed2zYq1WL4uc_MWwstWz30rjYYMvFuo-beDJhJFG03F8ptCSIzKgYNPaf0CZjrmaUkCQBzMs8nOBsK1XHMz-JWkQ2-aJwj-pMQFBjXX02j-rokXVCsEflgFCjXgTGaC8wAOlF1omKU53heW8DzjpQgVHCKumIw2B8eLNOW4LlR_jxg-dqta4G-6Hqou5zdXnEeHbkXV-bnS2l3mIcqAt-Hp0EbpSBFzth3uUpgihwx1uiwCFoULNiZWGbnrUEuZBpJngleWUr-Fk",
+      "p": "APRew0zj8zGv7xoByRi41XqaH2ZfC_GrddAK3gYVdYWDAt3pHbUQofrT-yhF6CsQTz-L7iR4VHNf-j7S3knRUPf6hggB1sb4_6D8a2fH4rI1TrDwXf5Mm9PDfOjkx6ukgzgsbiICsS8kK4Vpy3IvbNqGtCribU5B0-kpHgHjsnvH",
+      "q": "AOSxltWZopKfA74DFSs4fjnq_P4jl58IRmMMtnzfy-xXxVCJ-VPmzABfKlrhqtIckdYLeJE5Xxt76Mcq3-4YBSwWUHSkejGUAaLGfJspIEx7l3xOiCwpP2jVtpYUrhEMTbRZMlc7E5Ko1R7tU_pviMfLZwK5JrakQcYhgbG2wKDt",
+      "qi": "XNkpOGrFesrOkdSteU7Ew-aaB4xxSLEE2xz50nbJ2ck8qR5u6C7r1F4AeaKxGABpT_HKcoZ7pD3NUnR_yzTwQTW8Sn3WWeeRazXXxXxTw6prgLRiA189RLLuzatPd7Lyl_mwWpmWHR6pA-iWIXDlByoNMVPTXKoCU3CBs-s1DS4",
+      "dp": "TFl_M3rU9OU_EyUTq4G0UUXuIZH4rV0gxgtfKw9xVHGGZ8b53SSBN1kb041j6HCEEhqqIQLnf9Sw3wgLI40eexvu3HmWnTwWwjmbZSVykrNNDsNK2rUcyqD9WdaA_AO-a8KV9lJZAZ2Pa3OOePKQVAZaLDvqYtT2XJbYJUb68Ok",
+      "dq": "AKox9APw-4lMqBdP6gApYd8un6tux5cGLIPoYSMb1oKEa4bdt90WBTo9mKLcESmfM3VtQgQqAzrMA1e987sYyzidPrEf-wRMls8SEofSmoPw8rMDKtpatCML8X9N0qFDW8zdGNbMU2uxFDKZAwd82_l8yaPAMSx5n62ZIBEm5cKd",
+      "kid": "key-2"
+    }
+  ]
+}
+```
+
+#### Example 3: Key rotation using rnbyc
+
+In this example, you need to generate a new key every week, and want to keep the previous key *alive* for compatibility reasons.
+
+In Glewlwyd's OIDC plugin, if you provide several private keys without specifying the default kid, the first one will be the default key to sign the JWTs. So in this example, the new key will be the first in the list, and the previous one will be the second one. Therefore clients and resource providers will be able to verify a token signature for valid tokens. Each private key generated will be stored in a file.
+
+First, generate an *week 0* private key:
+
+```shell
+$ # week 0: generate a first private key ECDSA256
+$ rnbyc -j -g ecdsa256 -k $(date +%Y-%V).jwks -p /dev/null
+$ # use the generated file content as the private key for token signature
+$ cp $(date +%Y-%V).jwks private.jwks
+```
+
+Then every other week, generate a new private key and concat last week's private key in the generated JWKS
+
+```shell
+$ # next weeks: generate a new private key ECDSA256 and concat this week and last week's private key in the generated JWKS
+$ rnbyc -j -g ecdsa256 -k $(date +%Y-%V).jwks -p /dev/null
+$ rnbyc -j -f $(date +%Y-%V).jwks -f $(date --date="last week" +%Y-%V).jwks -o private.jwks -p /dev/null
+```
+
+Then, after each key generation, you can use the content of the file `private.jwks` to update your OIDC plugin configuration.
+
+**Note**: You can make the whole task in full automatic mode using the REST API, see [here](https://github.com/babelouest/glewlwyd/blob/master/docs/API.md#user-authentication) for user authentication with the password and [here](https://github.com/babelouest/glewlwyd/blob/master/docs/API.md#update-an-existing-plugin-module-instance) for updating the plugin instance.
+
 ## Installation
 
 ![plugin-oidc](screenshots/plugin-oidc.png)
 
 In the administration page, go to `Parameters/Plugins` and add a new plugin by clicking on the `+` button. In the modal, enter a name and a display name (the name must be unique among all user backend instances).
-Select the type `Glewlwyd OpenID Connect plugin` in the Type dropdown button.
+Select the type `Glewlwyd OpenID Connect plugin` in the Type drop-down button.
 
 Below is the definition of all parameters.
 
@@ -137,13 +226,13 @@ Specify the way to identify subjects.
 
 If the selected value is `public`, the `sub` value in access tokens and id tokens will always have the same value.
 
-If the selected value is `pairwise`, the `sub` value in access tokens and id tokens will have a different values for clients of differents `sector_identifier_uri` or if the `sector_identifier_uri` is empty, for different clients.
+If the selected value is `pairwise`, the `sub` value in access tokens and id tokens will have a different values for clients of different `sector_identifier_uri` or if the `sector_identifier_uri` is empty, for different clients.
 
 ### Supported scopes
 
 Specify the list of scopes available in the property `scopes_supported` in the discovery endpoint.
 
-Important note: This list has no effect on what scopes are actually allowed by users for clients in the plugin instance, because by design, all scopes are available fo use. The availability of a scope for a user to a client depends on the configuration of those 3 items, and you can't restrict the use of some socpes in the OpenID Connect plugin.
+Important note: This list has no effect on what scopes are actually allowed by users for clients in the plugin instance, because by design, all scopes are available for use. The availability of a scope for a user to a client depends on the configuration of those 3 items, and you can't restrict the use of some scopes in the OpenID Connect plugin.
 
 The meaning of existence of this list is to allow the administrator to choose which scopes will be shown on the discovery endpoint.
 
@@ -151,7 +240,7 @@ Therefore, the administrator can chose to show in the discovery endpoint all sco
 
 ### JWKS URI
 
-URI to fetch the private keys JWKS. This uri is loaded each time the plugin is enbled. If you want to update your server keys, you must restart the Glewlwyd server or call the api [Enable or disable an existing plugin module instance](API.md#enable-or-disable-an-existing-plugin-module-instance) with the action value `reset`.
+URI to fetch the private keys JWKS. This uri is loaded each time the plugin is enabled. If you want to update your server keys, you must restart the Glewlwyd server or call the API [Enable or disable an existing plugin module instance](API.md#enable-or-disable-an-existing-plugin-module-instance) with the action value `reset`.
 
 ### JWKS to use
 
@@ -164,6 +253,18 @@ The default KID that will be used to sign tokens if the client does not specify 
 ### Client sign_kid property
 
 Client property that will hold the default kid. This option is used to specify a different KID than the default one for a specific client.
+
+### Public JWKS URI
+
+URI to fetch the public keys JWKS. This uri is loaded each time the plugin is enabled. If you want to update your server keys, you must restart the Glewlwyd server or call the API [Enable or disable an existing plugin module instance](API.md#enable-or-disable-an-existing-plugin-module-instance) with the action value `reset`.
+
+Note: This setting value is optional, if you omit this value, the public key will be extracted from your JWKS private key. Use this setting if you want to specify the public keys available in the public JWKS endpoint: `/api/<plugin_name>/jwks`
+
+### Public JWKS
+
+Enter the JWKS value directly or select the local file tat contains the private keys JWKS.
+
+Note: This setting value is optional, if you omit this value, the public key will be extracted from your JWKS private key. Use this setting if you want to specify the public keys available in the public JWKS endpoint: `/api/<plugin_name>/jwks`
 
 ### JWT Type
 
@@ -194,7 +295,7 @@ Duration of validity of each refresh tokens. Default value is 1209600 (14 days).
 
 ### Code duration (seconds)
 
-Duration of validity of each code sent to the client befire requesting a refresh token. Default value is 600 (10 minutes).
+Duration of validity of each code sent to the client before requesting a refresh token. Default value is 600 (10 minutes).
 
 ### Refresh token rolling
 
@@ -209,7 +310,7 @@ Values available are
 - `Always`: The one-time use is always on
 - `Client-driven`: The one-time use is enabled only for clients who allow it with a specified property
 
-A one-time use refresh token will be disabled after succesfully getting an access token from it, but then a new refresh token will be available along with the new access token in the JSON response. A chain of refresh token will be created, adding a new and enabled refresh token and disablong the previous one on each refresh.
+A one-time use refresh token will be disabled after successfully getting an access token from it, but then a new refresh token will be available along with the new access token in the JSON response. A chain of refresh token will be created, adding a new and enabled refresh token and disabling the previous one on each refresh.
 
 However, if a refresh token is used twice, the chain will be considered broken (i.e. a refresh token has been stolen), therefore the last refresh token of the chain will be disabled.
 
@@ -219,7 +320,7 @@ Enter the client property that will hold the `refresh-token-one-use` flag of the
 
 ### Allow non OIDC but valid OAuth2 requests
 
-If this option is checked, the plugin instance will allow requests that are not allowed in the OIDC standard but valid in the OAuth2 standard, such as response_type: `token` (alone), `password` or `client_credential`. In those cases, the request will be trated as a normal OAuth2 but the response will not have an ID Token.
+If this option is checked, the plugin instance will allow requests that are not allowed in the OIDC standard but valid in the OAuth2 standard, such as response_type: `token` (alone), `password` or `client_credential`. In those cases, the request will be treated as a normal OAuth2 but the response will not have an ID Token.
 
 ### Authentication type code enabled
 
@@ -277,13 +378,13 @@ The settings that you can override are `Refresh token duration` and/or `Rolling 
 
 Please note that a specific scope parameter has a higher priority than the plugin settings, and if have multiple scopes in a request that have specific settings, the settings will follow the following algorithm:
 - Refresh token duration: The duration provided will be the lowest duration among all the specific scope parameters.
-- Roling refresh: The value `No`has higher priority, therefore rolling refresh provided will be `No` if one scope has the value `No`, `Yes` otherwise
+- Rolling refresh: The value `No`has higher priority, therefore rolling refresh provided will be `No` if one scope has the value `No`, `Yes` otherwise
 
 ### Additional token values
 
 This section allows to add specific values to the access_tokens that will be taken from the user property values.
 
-You can add as many additional values as you want. If the property isn't present in the user data, it will be ignored. If the value is mutiple, all values will be present, separated by a comma `,`.
+You can add as many additional values as you want. If the property isn't present in the user data, it will be ignored. If the value is multiple, all values will be present, separated by a comma `,`.
 
 ### Additional claims in the ID Token or the /userinfo endpoint
 
@@ -291,7 +392,7 @@ This section allows to add specific claims in ID Tokens or userinfo results and 
 
 `Name claim` and `E-mail claim` properties can have one of the following values:
 - No: The value will never be available on ID Tokens or userinfo results
-- On demand: The value will be available if specificly asked in the `claims` parameter
+- On demand: The value will be available if specifically asked in the `claims` parameter
 - Mandatory: The value will always be available on ID Tokens or userinfo results
 
 In addition, you can add these claims as scope claims.
@@ -310,15 +411,15 @@ Finally, you add scopes to additional claims.
 
 This section allows to specify how to handle address claim.
 
-If the dropdown button `Use claim address` is set to `No`, the claim address isn't available for any user.
+If the drop-down button `Use claim address` is set to `No`, the claim address isn't available for any user.
 
-If the dropdown button `Use claim address` is set to `On demand` or 'Mandatory', you must specify which properties available in the user profile will match the address claim properties.
+If the drop-down button `Use claim address` is set to `On demand` or 'Mandatory', you must specify which properties available in the user profile will match the address claim properties.
 
 If an address claim property is empty or its corresponding property value in the user profile is empty or unavailable, the value will not be present in the address claim. If the address claim is empty, it will not be present in the result.
 
 ## Claims request
 
-You can specify claims in your request according to the ["claims" request parameter](https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims). The claims request parameter can be present in the url in JSON format url-encoded if the HTTP method is `GET`, in the post body parameter in JSON format url-encoded if the HTTP method is `POST`, or in the JWT payload if you use JWT request parameter.
+You can specify claims in your request according to the ["claims" request parameter](https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims). The claims request parameter can be present in the URL in JSON format url-encoded if the HTTP method is `GET`, in the post body parameter in JSON format url-encoded if the HTTP method is `POST`, or in the JWT payload if you use JWT request parameter.
 
 The supported options for a claim are `null`, `value` and `values`. Option `essential` isn't supported.
 
@@ -348,11 +449,11 @@ To have a claim available in the claim request, it must be set to `on-demand` in
 
 Allow using request parameters as JWT with `request` objects or `request_uri` links.
 
-### Allow request_uri and jwks_uri to a unsecure https:// uri
+### Allow request_uri and jwks_uri to a unsecured https:// uri
 
-If the specified `request_uri` link points to an unsecure https:// page with invalid certificate or hostname, allow it anyway.
+If the specified `request_uri` link points to an insecure https:// page with invalid certificate or hostname, allow it anyway.
 
-Warning! This may lead to unsecure connections or MITM attacks.
+Warning! This may lead to unsecured connections or MITM attacks.
 
 ### Maximum expiration time authorized for JWT requests
 
@@ -455,7 +556,7 @@ This section is used to parameter client registration as defined in [OpenID Conn
 
 How this `acces_token` is provided is out of scope of this documentation.
 
-### Allow client regisration via API /register
+### Allow client registration via API /register
 
 Enable this feature if you want to enable client registration endpoint `/register`.
 
@@ -495,7 +596,7 @@ The `client secret` can also be used to authenticate a client using the method `
 
 !!!Full disclosure!!!
 This authentication scheme has been implemented based on the documentation and examples I could find. But there may be other and better ways to implement this type of authentication.
-If you find bugs, weird behaviours, or wish new features, please [open an issue](https://github.com/babelouest/glewlwyd/issues) in the github repository or send an e-mail.
+If you find bugs, weird behaviours, or wish new features, please [open an issue](https://github.com/babelouest/glewlwyd/issues) in the GitHub repository or send an e-mail.
 
 If you intent to use Glewlwyd directly, set this option to `TLS Session`. You must also configure Glewlwyd in secure mode with the proper `secure_connection_ca_file` value. This configuration value must be set to your CA certificate or your CA chain certificate in order to validate clients certificates provided.
 
@@ -513,29 +614,6 @@ Important security warning!
 If you don't use Glewlwyd behind a reverse proxy to forward the certificate in the header, this option MUST be set to `TLS Session` only, otherwise, an attacker could manually change the header value, to fake any valid user without having to know its certificate key.
 
 If you set this value to `HTTP Header` or `both`, it allows to use Glewlwyd behind a reverse proxy such as Apache's mod `proxy`. You must then configure the proxy to validate the clients certificate and key using your CA certificate and if the client certificate is valid, the proxy must forward the X509 certificate to Glewlwyd in a specified header.
-
-Here is an example of configuration using Apache web server. In this example, the Glewlwyd service is hosted on the same host than the Apache server.
-You must have enabled the modules `ssl`, `proxy`, `proxy_http`, `headers`.
-
-```config
-<VirtualHost *:443>
-  ServerName glewlwyd.tld
-  SSLEngine on
-  SSLCertificateFile /path/to/your_domain_name.crt
-  SSLCertificateKeyFile /path/to/your_private.key
-  SSLCertificateChainFile /path/to/your_chain_file.crt
-  SSLCACertificateFile /path/to/your_ca.crt
-  SSLVerifyClient optional
-
-  RequestHeader set SSL_CLIENT_CERT ""
-
-  ProxyPass / http://localhost:4593/
-
-  <Location /api/>
-    RequestHeader set SSL_CLIENT_CERT "%{SSL_CLIENT_CERT}s"
-  </Location>
-</VirtualHost>
-```
 
 ### Corresponding header property
 
@@ -556,7 +634,7 @@ If this is set to true, clients will be allowed to use self-signed certificates 
 Glewlwyd is conform to [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252) best current practice considering the following configuration:
 
 - Any `redirect_uri` is allowed if the client is manually added by an admin in the admin app
-- Any `https://` is allowed url or unsecure loopback (locahost/127.0.0.1/[::1]) url when the client uses the client registration encdpoint. `redirect_uris` accepted in the client registration endpoint **MUST NOT** contain username attribute (`https://username@domain.tld`)
+- Any `https://` is allowed URL or unsecured loopback (locahost/127.0.0.1/[::1]) URL when the client uses the client registration endpoint. `redirect_uris` accepted in the client registration endpoint **MUST NOT** contain username attribute (`https://username@domain.tld`)
 - [PKCE](https://tools.ietf.org/html/rfc7636) extension is supported
 - A client can be specified as public (i.e. not confidential), without secret or public key
 
@@ -1095,7 +1173,7 @@ This endpoint is defined in the OpenID Connect core: [Userinfo Endpoint](https:/
 
 #### Security
 
-A valid access token is required to access tis endpoint. The user shown in this endpoint result will be the one the access token was created for.
+A valid access token is required to access this endpoint. The user shown in this endpoint result will be the one the access token was created for.
 
 #### URL or POST body Parameters
 
@@ -1365,13 +1443,13 @@ Refresh token hash not found for this user
 
 ### Token introspection and revocation
 
-The endpoints `POST` `/introspect` and `POST` `/revoke` are implentations of the corresponding RFCs [Token introspection and revocation](https://tools.ietf.org/html/rfc7662) and [OAuth 2.0 Token Revocation](https://tools.ietf.org/html/rfc7009).
+The endpoints `POST` `/introspect` and `POST` `/revoke` are implementations of the corresponding RFCs [Token introspection and revocation](https://tools.ietf.org/html/rfc7662) and [OAuth 2.0 Token Revocation](https://tools.ietf.org/html/rfc7009).
 
 Both of them rely on 2 distinct ways to authenticate:
 - HTTP Basic Auth corresponding to the client credentials whose client the token was submitted
 - Authorized Access Token that includes the required scopes for those endpoints
 
-Both authentication methods are non eclusive and the administrator may enable or disable each of them.
+Both authentication methods are non exclusive and the administrator may enable or disable each of them.
 
 #### Token introspection
 
@@ -1536,7 +1614,7 @@ Invalid parameters
 
 #### Check Session iframe
 
-This is the iframe content to be used by th client to verify if the user status has changed. Due to Glewlwyd's design, the iframe only checks if the user associated to the id_token is still connected to Glewlwyd and the active user via its session cookie. No other check is performed. Therefore, the advantage of `check_session_iframe` in Glewlwyd is limited.
+This is the iframe content to be used by the client to verify if the user status has changed. Due to Glewlwyd's design, the iframe only checks if the user associated to the id_token is still connected to Glewlwyd and the active user via its session cookie. No other check is performed. Therefore, the advantage of `check_session_iframe` in Glewlwyd is limited.
 
 ##### URL
 

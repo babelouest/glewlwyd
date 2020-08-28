@@ -28,7 +28,7 @@
 #ifndef __GLEWLWYD_H_
 #define __GLEWLWYD_H_
 
-#define _GLEWLWYD_VERSION_ "2.3.2"
+#define _GLEWLWYD_VERSION_ "2.4.0"
 
 #include <jansson.h>
 
@@ -185,6 +185,7 @@ json_t * get_scheme_list_for_user(struct config_elements * config, const char * 
 
 // User
 int user_has_scope(json_t * j_user, const char * scope);
+int user_has_scheme(struct config_elements * config, const char * username, const char * scheme_name);
 
 // Client
 json_t * auth_check_client_credentials(struct config_elements * config, const char * client_id, const char * password);
@@ -265,6 +266,7 @@ json_t * glewlwyd_plugin_callback_is_client_valid(struct config_plugin * config,
 int glewlwyd_plugin_callback_add_client(struct config_plugin * config, json_t * j_client);
 int glewlwyd_plugin_callback_set_client(struct config_plugin * config, const char * client_id, json_t * j_client);
 int glewlwyd_plugin_callback_delete_client(struct config_plugin * config, const char * client_id);
+json_t * glewlwyd_plugin_callback_get_scheme_list(struct config_plugin * config, const char * username);
 json_t * glewlwyd_plugin_callback_scheme_register(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username, json_t * j_scheme_data);
 json_t * glewlwyd_plugin_callback_scheme_register_get(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username);
 int glewlwyd_plugin_callback_scheme_can_use(struct config_plugin * config, const char * mod_name, const char * username);

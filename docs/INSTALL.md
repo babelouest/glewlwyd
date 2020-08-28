@@ -1,6 +1,9 @@
 # Installation
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 1.  [Upgrade Glewlwyd](#upgrade-glewlwyid)
+    * [Upgrade to Glewlwyd 2.3.3](#upgrade-to-glewlwyd-233)
     * [Upgrade to Glewlwyd 2.3.x](#upgrade-to-glewlwyd-23x)
     * [Upgrade to Glewlwyd 2.2.x](#upgrade-to-glewlwyd-22x)
     * [Upgrade to Glewlwyd 2.1.x](#upgrade-to-glewlwyd-21x)
@@ -33,20 +36,30 @@
     * [Database back-end initialisation](#database-back-end-initialisation)
 7.  [Initialise database](#initialise-database)
 8.  [Install as a service](#install-as-a-service)
-9.  [Fail2ban filter](#fail2ban-filter)
-10. [Front-end application](#front-end-application)
+9.  [Reverse proxy configuration](#reverse-proxy-configuration)
+10. [Fail2ban filter](#fail2ban-filter)
+11. [Front-end application](#front-end-application)
     * [webapp/config.json](#webappconfigjson)
     * [Internationalization](#internationalization)
     * [Login, Admin and Profile pages](#login-admin-and-profile-pages)
-    * [Customize css](#customize-css)
+    * [Customize CSS](#customize-css)
     * [Customize titles and logos](#customize-titles-and-logos)
-11. [Run Glewlwyd](#run-glewlwyd)
-12. [Getting started with the application](#getting-started-with-the-application)
-13. [Running Glewlwyd in test mode for integration tests](#running-glewlwyd-in-test-mode-for-integration-tests)
+12. [Run Glewlwyd](#run-glewlwyd)
+13. [Getting started with the application](#getting-started-with-the-application)
+14. [Running Glewlwyd in test mode for integration tests](#running-glewlwyd-in-test-mode-for-integration-tests)
 
 ## Upgrade Glewlwyd
 
-Glewlwyd upgrades come with database changes. It is highly recommended to backup your database before performing the upgrade. You must perform the database upgrades in the correct order. i.e. if you upgrade from Glewlwyd 2.1 to Glewlwyd 2.3, you must first install the 2.2 upgrade, then the 2.3.
+Glewlwyd upgrades usually come with database changes. It is highly recommended to backup your database before performing the upgrade. You must perform the database upgrades in the correct order. i.e. if you upgrade from Glewlwyd 2.1 to Glewlwyd 2.3, you must first install the 2.2 upgrade, then the 2.3.
+
+### Upgrade to Glewlwyd 2.3.3
+
+This is a security release, please upgrade your Glewlwyd version.
+To mitigate server configuration leaks, I recommend the following actions:
+  - If you use the TLS Certificate Scheme with [Allow to emit PKCS#12 certificates for the clients](https://github.com/babelouest/glewlwyd/blob/2.3/docs/CERTIFICATE.md#allow-to-emit-pkcs12-certificates-for-the-clients) enabled, please revoke the issuer certificate and use new ones
+  - If you use the Webauthn Scheme, it's reommended to regenerate the [Random seed used to mitigate intrusion](https://github.com/babelouest/glewlwyd/blob/2.3/docs/WEBAUTHN.md#random-seed-used-to-mitigate-intrusion)
+  - If you use the Oauth2 Scheme, please change the [clients secrets](https://github.com/babelouest/glewlwyd/blob/2.3/docs/OAUTH2_SCHEME.md#secret)
+  - If yout use the Email code scheme and use a [SMTP password](https://github.com/babelouest/glewlwyd/blob/2.3/docs/EMAIL.md#smtp-password-if-required), please to change this password
 
 ### Upgrade to Glewlwyd 2.3.x
 
@@ -54,13 +67,13 @@ Glewlwyd upgrades come with database changes. It is highly recommended to backup
 
 Small changes were added to the core tables. You must execute the script depending on your database backend:
 
-- Mariadb: [upgrade-2.3-core.mariadb.sql](database/upgrade-2.3-core.mariadb.sql)
+- MariaDB: [upgrade-2.3-core.mariadb.sql](database/upgrade-2.3-core.mariadb.sql)
 
 ```shell
 $ mysql glewlwyd < docs/database/upgrade-2.3-core.mariadb.sql
 ```
 
-- SQlite3: [upgrade-2.3-core.sqlite3.sql](database/upgrade-2.3-core.sqlite3.sql)
+- SQLite3: [upgrade-2.3-core.sqlite3.sql](database/upgrade-2.3-core.sqlite3.sql)
 
 ```shell
 $ sqlite3 /path/to/glewlwyd.db < docs/database/upgrade-2.3-core.sqlite3.sql
@@ -78,13 +91,13 @@ $ psql glewlwyd < docs/database/upgrade-2.3-core.postgresql.sql
 
 Small changes were added to the core tables. You must execute the script depending on your database backend:
 
-- Mariadb: [upgrade-2.2-core.mariadb.sql](database/upgrade-2.2-core.mariadb.sql)
+- MariaDB: [upgrade-2.2-core.mariadb.sql](database/upgrade-2.2-core.mariadb.sql)
 
 ```shell
 $ mysql glewlwyd < docs/database/upgrade-2.2-core.mariadb.sql
 ```
 
-- SQlite3: [upgrade-2.2-core.sqlite3.sql](database/upgrade-2.2-core.sqlite3.sql)
+- SQLite3: [upgrade-2.2-core.sqlite3.sql](database/upgrade-2.2-core.sqlite3.sql)
 
 ```shell
 $ sqlite3 /path/to/glewlwyd.db < docs/database/upgrade-2.2-core.sqlite3.sql
@@ -100,13 +113,13 @@ $ psql glewlwyd < docs/database/upgrade-2.2-core.postgresql.sql
 
 In Glewlwyd 2.2, the new scheme [OAuth2/OIDC external login](OAUTH2_SCHEME.md) was introduced. To use this module, you must create its required tables by executing the script depending on your database backend:
 
-- Mariadb: [oauth2.mariadb.sql](../src/scheme/oauth2.mariadb.sql)
+- MariaDB: [oauth2.mariadb.sql](../src/scheme/oauth2.mariadb.sql)
 
 ```shell
 $ mysql glewlwyd < src/scheme/oauth2.mariadb.sql
 ```
 
-- SQlite3: [oauth2.sqlite3.sql](../src/scheme/oauth2.sqlite3.sql)
+- SQLite3: [oauth2.sqlite3.sql](../src/scheme/oauth2.sqlite3.sql)
 
 ```shell
 $ sqlite3 /path/to/glewlwyd.db < src/scheme/oauth2.sqlite3.sql
@@ -123,13 +136,13 @@ $ psql glewlwyd < src/scheme/oauth2.postgresql.sql
 
 In Glewlwyd 2.1, the plugin module [register](REGITSER.md) has appear. In order to use this module, you must add its tables by executing the script depending on your database backend:
 
-- Mariadb: [register.mariadb.sql](../src/plugin/register.mariadb.sql)
+- MariaDB: [register.mariadb.sql](../src/plugin/register.mariadb.sql)
 
 ```shell
 $ mysql glewlwyd < src/plugin/register.mariadb.sql
 ```
 
-- SQlite3: [register.sqlite3.sql](../src/plugin/register.sqlite3.sql)
+- SQLite3: [register.sqlite3.sql](../src/plugin/register.sqlite3.sql)
 
 ```shell
 $ sqlite3 /path/to/glewlwyd.db < src/plugin/register.sqlite3.sql
@@ -176,71 +189,45 @@ libzlib
 
 ```shell
 $ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.0/glewlwyd-full_2.3.0_debian_buster_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.3.0_debian_buster_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.1.0_debian_buster_x86_64.deb
-$ sudo dpkg -i libyder_1.4.10_debian_buster_x86_64.deb
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.2/glewlwyd-full_2.3.2_debian_buster_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.3.2_debian_buster_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.1.1_debian_buster_x86_64.deb
+$ sudo dpkg -i libyder_1.4.11_debian_buster_x86_64.deb
 $ sudo dpkg -i libhoel_1.4.16_debian_buster_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.7_debian_buster_x86_64.deb
-$ sudo dpkg -i librhonabwy_0.9.10_debian_buster_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.8_debian_buster_x86_64.deb
+$ sudo dpkg -i librhonabwy_0.9.12_debian_buster_x86_64.deb
 $ sudo dpkg -i libiddawc_0.9.5_debian_buster_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.3.0_debian_buster_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.3.2_debian_buster_x86_64.deb
 ```
 
 ### Install Glewlwyd on Raspbian Buster for Raspberry Pi
 
 ```shell
 $ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.0/glewlwyd-full_2.3.0_raspbian_buster_armv6l.tar.gz
-$ tar xf glewlwyd-full_2.3.0_raspbian_buster_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.1.0_raspbian_buster_armv7l.deb
-$ sudo dpkg -i libyder_1.4.10_raspbian_buster_armv7l.deb
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.2/glewlwyd-full_2.3.2_raspbian_buster_armv6l.tar.gz
+$ tar xf glewlwyd-full_2.3.2_raspbian_buster_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.1.1_raspbian_buster_armv7l.deb
+$ sudo dpkg -i libyder_1.4.11_raspbian_buster_armv7l.deb
 $ sudo dpkg -i libhoel_1.4.16_raspbian_buster_armv7l.deb
-$ sudo dpkg -i libulfius_2.6.7_raspbian_buster_armv7l.deb
-$ sudo dpkg -i librhonabwy_0.9.10_raspbian_buster_armv7l.deb
+$ sudo dpkg -i libulfius_2.6.8_raspbian_buster_armv7l.deb
+$ sudo dpkg -i librhonabwy_0.9.12_raspbian_buster_armv7l.deb
 $ sudo dpkg -i libiddawc_0.9.5_raspbian_buster_armv7l.deb
-$ sudo dpkg -i glewlwyd_2.3.0_raspbian_buster_armv7l.deb
+$ sudo dpkg -i glewlwyd_2.3.2_raspbian_buster_armv7l.deb
 ```
 
 ### Install Glewlwyd on Ubuntu 20.04 LTS Focal
 
 ```shell
 $ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0.6 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.0/glewlwyd-full_2.3.0_ubuntu_focal_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.3.0_ubuntu_focal_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.1.0_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i libyder_1.4.10_ubuntu_focal_x86_64.deb
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.2/glewlwyd-full_2.3.2_ubuntu_focal_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.3.2_ubuntu_focal_x86_64.tar.gz
+$ sudo dpkg -i liborcania_2.1.1_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i libyder_1.4.11_ubuntu_focal_x86_64.deb
 $ sudo dpkg -i libhoel_1.4.16_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.7_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i librhonabwy_0.9.10_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.8_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i librhonabwy_0.9.12_ubuntu_focal_x86_64.deb
 $ sudo dpkg -i libiddawc_0.9.5_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.3.0_ubuntu_focal_x86_64.deb
-```
-
-### Install Glewlwyd on Ubuntu 18.04 LTS Bionic
-
-```shell
-$ # Note: jansson provided in Ubuntu 18.04 LTS Bionic is too old to work with Glewlwyd, here is the procedure to install them from the source
-$ # If you have installed jansson package, please uninstall first
-$ sudo apt remove libjansson4
-$ sudo apt install -y pkg-config autoconf automake make cmake libtool wget sqlite3 liboath0 libconfig9 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0.6 pkg-config
-$ wget https://github.com/akheron/jansson/archive/v2.13.1.tar.gz -O jansson.tar.gz
-$ tar xf jansson.tar.gz
-$ cd jansson-2.13.1
-$ autoreconf -i
-$ ./configure
-$ make
-$ sudo make install
-$ cd ..
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.0/glewlwyd-full_2.3.0_ubuntu_bionic_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.3.0_ubuntu_bionic_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.1.0_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libyder_1.4.10_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.16_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.7_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i librhonabwy_0.9.10_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i libiddawc_0.9.5_ubuntu_bionic_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.3.0_ubuntu_bionic_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.3.2_ubuntu_focal_x86_64.deb
 ```
 
 If there's no package available for your distribution, you can compile it manually using `CMake` or `Makefile`.
@@ -249,7 +236,7 @@ If there's no package available for your distribution, you can compile it manual
 
 The docker page is available at the following address: [https://hub.docker.com/r/babelouest/glewlwyd](https://hub.docker.com/r/babelouest/glewlwyd)
 
-### Quickstart for tests only
+### Quick start for tests only
 
 Run the official docker image `babelouest/glewlwyd` hosted on docker cloud, example:
 
@@ -260,9 +247,9 @@ docker run --rm -it -p 4593:4593 babelouest/glewlwyd
 - User: `admin`
 - Password : `password`
 
-This image configuration uses a sqlite3 database hosted inside the docker instance, so all data will be lost when the docker instance will be stopped. Also, this docker instance can be accessible vie the address [http://localhost:4593/](http://localhost:4593).
+This image configuration uses a SQLite3 database hosted inside the docker instance, so all data will be lost when the docker instance will be stopped. Also, this docker instance can be accessible vie the address [http://localhost:4593/](http://localhost:4593).
 
-In this instance, both configuration files `glewlwyd.conf` (backend) and `config.json` (frontend) are stored in `/etc/glewlwyd`.
+In this instance, both configuration files `glewlwyd.conf` (backend) and `config.json` (front-end) are stored in `/etc/glewlwyd`.
 
 If you need to make the docker instance available in a network, you must update the configuration files as explained below by updating at least the configuration variable `external_url`.
 
@@ -289,7 +276,7 @@ You can use the same options and configuration than in the official docker image
 
 ## Manual install from source
 
-Glewlwyd has been successfuly compiled for the folowing distribtions:
+Glewlwyd has been successfully compiled for the following distributions:
 
 - Fedora 29+
 - OpenSuse Leap 15
@@ -335,13 +322,13 @@ $ make
 $ sudo make install
 ```
 
-The available options for cmake are:
+The available options for CMake are:
 - `-DDOWNLOAD_DEPENDENCIES=[on|off]` (default `on`): Download some dependencies if missing or using an old version: `Orcania`, `Yder`, `Ulfius`, `Rhonabwy`, `Iddawc` and `Hoel`
 - `-DWITH_JOURNALD=[on|off]` (default `on`): Build with journald (SystemD) support
 - `-DCMAKE_BUILD_TYPE=[Debug|Release]` (default `Release`): Compile with debugging symbols or not
-- `-DWITH_SQLITE3=[on|off]` (default `on`): Enable/disabe SQLite3 database backend: This option is passed to Hoel library builder
-- `-DWITH_MARIADB=[on|off]` (default `on`): Enable/disabe MariaDB/Mysql database backend: This option is passed to Hoel library builder
-- `-DWITH_PGSQL=[on|off]` (default `on`): Enable/disabe PostgreSQL database backend: This option is passed to Hoel library builder
+- `-DWITH_SQLITE3=[on|off]` (default `on`): Enable/disable SQLite3 database backend: This option is passed to Hoel library builder
+- `-DWITH_MARIADB=[on|off]` (default `on`): Enable/disable MariaDB/MySQL database backend: This option is passed to Hoel library builder
+- `-DWITH_PGSQL=[on|off]` (default `on`): Enable/disable PostgreSQL database backend: This option is passed to Hoel library builder
 - `-DWITH_JOURNALD=[on|off]` (default `on`): Build with journald (SystemD) support for logging: This option is passed to Yder library builder
 - `-DBUILD_GLEWLWYD_TESTING=[on|off]` (default `off`): Build testing tree
 - `-DWITH_MOCK=[on|off]` (default `off`): Build mock modules, for development use only!
@@ -424,28 +411,28 @@ When you change the configuration file or the environment variables values, you 
 - Config file variable: `port`
 - Environment variable: `GLWD_PORT`
 
-Optional, The TCP port the service will listen to incoming connections. The port number must be available to the user running Glewlwd process. Default value is 4593.
+Optional, The TCP port the service will listen to incoming connections. The port number must be available to the user running Glewlwyd process. Default value is 4593.
 
 ### Bind address
 
 - config file variable: `bind_address`
 - Environment variable: `GLWD_BIND_ADDRESS`
 
-Optional, use this address to bind incoming connections, can be use to restrict glewlwyd service to listen to a specific network, or localhost. Must be an IPV4 address. If not set or empty, all addresses will be able to connect to Glewlwyd. Note: this is NOT a `listen` option, this setting means that Glewlyd will accept connection sent to this address only, not from it.
+Optional, use this address to bind incoming connections, can be use to restrict glewlwyd service to listen to a specific network, or localhost. Must be an IPV4 address. If not set or empty, all addresses will be able to connect to Glewlwyd. Note: this is NOT a `listen` option, this setting means that Glewlwyd will accept connection sent to this address only, not from it.
 
 ### External URL
 
 - Config file variable: `external_url`
 - Environment variable: `GLWD_EXTERNAL_URL`
 
-Mandatory, exact value of the external url where this instance will be accessible to users, ex `https://glewlwyd.tld`
+Mandatory, exact value of the external URL where this instance will be accessible to users, ex `https://glewlwyd.tld`
 
 ### API Prefix
 
 - Config file variable: `api_prefix`
 - Environment variable: `GLWD_API_PREFIX`
 
-Optional, the url prefix where Glewlwyd's APIs will be available. Default value is `/api`.
+Optional, the URL prefix where Glewlwyd's APIs will be available. Default value is `/api`.
 
 ### Login URL
 
@@ -459,7 +446,7 @@ Optional, name of the login page. Default value is `login.html`
 - Config file variable: `delete_profile`
 - Environment variable: `GLWD_PROFILE_DELETE`
 
-Optional, wether the user can remove its own account or not. Values available are:
+Optional, whether the user can remove its own account or not. Values available are:
 - `no`: The user can't remove its own account
 - `disable`: If the user removes its own account, the account will be disabled but not removed
 - `delete`: If the user removes its own account, the account and the schemes registration will be completely removed
@@ -649,7 +636,7 @@ If this option is set, users can still connect to Glewlwyd without TLS certifica
 
 OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avoid data and token to be stolen, or Man-In-The-Middle attacks. Glewlwyd supports starting a secure connection with a private/public key certificate, but it also can be with a classic non-secure HTTP connection, and be available to users behind a HTTPS proxy for example. Glewlwyd won't check that you use it in a secure connection, but you should.
 
-These configuration variables are optionnal. Default is no secure connection.
+These configuration variables are optional. Default is no secure connection.
 
 ### Database back-end initialisation
 
@@ -756,7 +743,7 @@ An administrator in the LDAP back-end is a user who has the `admin_scope` (defau
 
 ## Install as a service
 
-The files `docs/glewlwyd-init` (SysV init) and `docs/glewlwyd.service` (Systemd) can be used to run glewlwyd as a daemon. They are fitted for a Raspbian distribution, but can easily be changed for other systems. It's highly recommended to run Glewlwyd as a user without root access. Glewlwyd requires to be able to open a TCP port connection, a full access to the glewlwyd database, read access to the config file `glewlwyd.conf` and the installed `webapp/` folder (typically `/usr/share/glewlwyd/webapp`.
+The files `docs/glewlwyd-init` (SysV init) and `docs/glewlwyd.service` (SystemD) can be used to run glewlwyd as a daemon. They are fitted for a Raspbian distribution, but can easily be changed for other systems. It's highly recommended to run Glewlwyd as a user without root access. Glewlwyd requires to be able to open a TCP port connection, a full access to the glewlwyd database, read access to the config file `glewlwyd.conf` and the installed `webapp/` folder (typically `/usr/share/glewlwyd/webapp`.
 
 ### Install as a SysV init daemon and run
 
@@ -766,13 +753,102 @@ $ sudo update-rc.d glewlwyd defaults
 $ sudo service glewlwyd start
 ```
 
-### Install as a Systemd daemon and run
+### Install as a SystemD daemon and run
 
 ```shell
 $ sudo cp glewlwyd.service /etc/systemd/system
 $ sudo systemctl enable glewlwyd
 $ sudo systemctl start glewlwyd
 ```
+
+## Reverse proxy configuration
+
+To install Glewlwyd behind a reverse proxy, you must check the following rules:
+- Forward HTTP methods `GET`, `POST`, `PUT`, `DELETE` and `OPTION`
+- Forward the entire URL, including query parameters (I'm watching you Nginx!)
+- Forward the session cookies *-and optionally the registration cookies-*, cookies default keys are `GLEWLWYD2_SESSION_ID` for session cookie and `G_REGISTER_SESSION` for registration cookie
+- Forward HTTP headers, including `Authorization`
+
+You can have glewlwyd available at the root of the domain/subdomain, e.g. `https://glewlwyd.tld/` or host Glewlwyd in a sub-folder of the domain/subdomain, e.g. `https://auth.tld/glewlwyd/`.
+
+### Apache mod_proxy example
+
+To use Apache as reverse proxy, you must enable the mods `proxy` and `proxy_http`. If you want to use user or client certificate authentication behind a reverse proxy, you must enable the mods `ssl` and `headers`.
+
+The following example is a simple Apache reverse proxy configuration on a virtual host `https://glewlwyd.tld`, the glewlwyd instance is running on localhost.
+
+```config
+<VirtualHost *:443>
+  ServerName glewlwyd.tld
+
+  ProxyPass / http://localhost:4593/
+</VirtualHost>
+```
+
+The following example is an Apache reverse proxy configuration on a virtual host `https://glewlwyd.tld`, the glewlwyd instance is running on localhost and the proxy forwards the client TLS certificate to Glewlwyd in the header `SSL_CLIENT_CERT` if the client uses a valid TLS certificate.
+
+```config
+<VirtualHost *:443>
+  ServerName glewlwyd.tld
+  SSLEngine on
+  SSLCertificateFile /path/to/your_domain_name.crt
+  SSLCertificateKeyFile /path/to/your_private.key
+  SSLCertificateChainFile /path/to/your_chain_file.crt
+  SSLCACertificateFile /path/to/your_ca.crt
+  SSLVerifyClient optional
+
+  RequestHeader set SSL_CLIENT_CERT ""
+
+  ProxyPass / http://localhost:4593/
+
+  <Location /api/>
+    RequestHeader set SSL_CLIENT_CERT "%{SSL_CLIENT_CERT}s"
+  </Location>
+</VirtualHost>
+```
+
+## Nginx reverse proxy examples
+
+The following example is an Nginx reverse proxy configuration in which the glewlwyd instance is at the root of the domain that Nginx listens to requests for.
+
+```
+# Glewlwyd
+location / {
+  proxy_set_header Host $host;
+  proxy_pass http://127.0.0.1:4593;
+}
+```
+
+Other headers which may be useful to define as `proxy_set_header` options here besides `Host` are `X-Forwarded-For` and/or `X-Real-IP`, to pass along the requesting client's IP rather than the proxy IP for logging purposes.  See [the Nginx proxy docs](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header) for further information.
+
+It is also possible to use Nginx to serve glewlwyd from a sub-folder, which would allow multiple services to share a single proxy listening for requests on a single domain name. Below is an example configuration for doing this with Nginx.
+
+```
+# Glewlwyd
+location ^~ /authsrv/ {
+  rewrite ^\/authsrv(.*) /$1 break;
+  proxy_set_header Host $host;
+  proxy_pass http://127.0.0.1:4593;
+}
+```
+
+In this example, requests to the sub-folder `/authsrv` will be sent to glewlwyd instance, and requests to the root domain or other folders can be sent to other applications and services on the same domain name. The `rewrite` regex in the second line extracts the part of the URL *after* `/authsrv` and sends that part of the URL on to the glewlwyd instance without the folder name. In this sub-folder example, the `webapp/config.json` will need the main URL changed to account for the sub-folder, while the rest of the config can be unchanged from defaults. The main glewlwyd.conf can also be unchanged from defaults, since the rewrite rule is removing the sub-folder name from requests to `/api` endpoints before passing them to the glewlwyd instance.
+
+Below is the URL configuration of `webapp/config.json` with Nginx serving glewlwyd in a sub-folder named `/authsrv`.
+
+```javascript
+{
+  "GlewlwydUrl": "https://glewlwyd.tld/authsrv/",
+  "ProfileUrl": "profile.html",
+  "AdminUrl": "index.html",
+  "LoginUrl": "login.html",
+  "CallbackPage": "callback.html",
+...
+```
+
+In both of the above examples, SSL terminates at the proxy, and Nginx passes unencrypted http traffic on to the glewlwyd instance on the internal/private network. This is not suitable for a proxy which passes traffic across the public internet to the eventual server that the glewlwyd instance lives on. For SSL pass through configurations in which SSL is preserved rather than terminated at the proxy, Nginx users should consider using the `ssl_preread` stream module for the simplest configuration. The `ssl_preread` module allows Nginx to read the address from encrypted traffic without decrypting it, and pass along traffic in whatever load balancing scenarios that may be necessary, without having to maintain certificates and encryption settings on the proxy.
+
+Documentation on the `ssl_preread` module is [available here](http://nginx.org/en/docs/stream/ngx_stream_ssl_preread_module.html).
 
 ## Fail2ban filter
 
@@ -841,7 +917,7 @@ The built front-end files are located in the webapp/ directory.
 
 The front-end configuration file must be available under `webapp/config.json` you can copy the file `webapp/config.json.sample`.
 
-You should update the urls of the API and the html page to match your configuration:
+You should update the URLs of the API and the HTML page to match your configuration:
 
 Example:
 
@@ -854,13 +930,13 @@ Example:
 }
 ```
 
-The front-end application is written in Javascript using mostly ReactJS and JQuery, ES6 minimum is required. Recent versions of browsers like Firefox, Chrom[e|ium], Edge or Safari work fine.
+The front-end application is written in JavaScript using mostly ReactJS and JQuery, ES6 minimum is required. Recent versions of browsers like Firefox, Chrom[e|ium], Edge or Safari work fine.
 
-By choice, Glewlwyd isn't available for Internet Explorer or browser with a poor javascript engine. If you really need it you can build the front-end application with `babel-polyfill`. Check out the [webapp-src documentation](../webapp-src/README.md).
+By choice, Glewlwyd isn't available for Internet Explorer or browser with a poor JavaScript engine. If you really need it you can build the front-end application with `babel-polyfill`. Check out the [webapp-src documentation](../webapp-src/README.md).
 
 ### Internationalization
 
-The languages available in the front-end are English, French and Dutch. If you make a language file for another lang, you can add it in your Glewlwyd installation by adding the file in  `webapp/{lang}/translation.json` where `{lang}` is the translation language in ISO 639-1 format (2 letters). Then, add your new language 2-letters code in the `webapp/config.json` file in the `lang` key, example for adding korean language:
+The languages available in the front-end are English, French and Dutch. If you make a language file for another lang, you can add it in your Glewlwyd installation by adding the file in  `webapp/{lang}/translation.json` where `{lang}` is the translation language in ISO 639-1 format (2 letters). Then, add your new language 2-letters code in the `webapp/config.json` file in the `lang` key, example for adding Korean language:
 
 ```json
 "lang": ["en","fr","nl","ko"],
@@ -870,11 +946,11 @@ Also, feel free to send your new language file if you want to add it in the offi
 
 ### Login, Admin and Profile pages
 
-These pages are used when a user requires some access to Glewlwyd. They are simple html pages with a small JavaScript/JQuery/ReactJS application in it to provide the expected behavior, and vanilla bootstrap 4 for the visual consistency. Glewlwyd front-end source code is under MIT license. Fell free to update them to fit your needs or to adapt the front-end to your identity.
+These pages are used when a user requires some access to Glewlwyd. They are simple HTML pages with a small JavaScript/JQuery/ReactJS application in it to provide the expected behavior, and vanilla bootstrap 4 for the visual consistency. Glewlwyd front-end source code is under MIT license. Fell free to update them to fit your needs or to adapt the front-end to your identity.
 
-### Customize css
+### Customize CSS
 
-If you need to customize the css only, you can update the following files:
+If you need to customize the CSS only, you can update the following files:
 - [webapp/css/glewlwyd-custom.css](../webapp/css/glewlwyd-custom.css): update the css for the 3 applications (admin, login, profile)
 - [webapp/css/profile-custom.css](../webapp/css/profile-custom.css) : update the css for the profile application only
 - [webapp/css/admin-custom.css](../webapp/css/admin-custom.css) : update the css for the admin application only
@@ -997,18 +1073,18 @@ $ docker run --rm -it -p 4593:4593 babelouest/glewlwyd:ci
 
 ### Glewlwyd in test mode configuration
 
-When you run Glewlwyd in test mode, the Glewlwyd instance uses the mdules mock for client and user backend. These backends come with built-in users and clients. The instance also comes with preconfigured OAuth2 and OIDC plugins installed.
+When you run Glewlwyd in test mode, the Glewlwyd instance uses the modules mock for client and user backend. These backends come with built-in users and clients. The instance also comes with pre configured OAuth2 and OIDC plugins installed.
 
-- The external url for this instance is: `http://localhost:4593`
-- 3 mock schemes are instaciated:
+- The external URL for this instance is: `http://localhost:4593`
+- 3 mock schemes are instantiated:
   - `mock_scheme_42`, expected value to authenticate: `42`
   - `mock_scheme_88`, expected value to authenticate: `88`
   - `mock_scheme_95`, expected value to authenticate: `95`
 - The scopes available are:
-  - `g_admin`: access to administraiton page, available using password only, session timeout 600 seconds
+  - `g_admin`: access to administration page, available using password only, session timeout 600 seconds
   - `g_profile`: access to profile page, available using password only, session timeout 600 seconds
   - `openid`: available using any authentication, no session timeout
-  - `scope1`: available using password and schemse (`mock_scheme_42` OR `mock_scheme_88`) AND `mock_scheme_95`, no session timeout
+  - `scope1`: available using password and scheme (`mock_scheme_42` OR `mock_scheme_88`) AND `mock_scheme_95`, no session timeout
   - `scope2`: available using password and scheme `mock_scheme_95`, no session timeout
   - `scope3`: available using password and scheme `mock_scheme_88`, no session timeout
 

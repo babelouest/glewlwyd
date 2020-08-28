@@ -17,19 +17,10 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 import apiManager from './lib/APIManager';
 import App from './Profile/App';
-
-var getParameterByName = function (name, url) {
-  if (!url) url = window.location.href;
-  name = name.replace(/[\[\]]/g, '\\$&');
-  var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'), results = regex.exec(url);
-  if (!results)
-    return null;
-  if (!results[2])
-    return '';
-  return decodeURIComponent(results[2].replace(/\+/g, ' '));
-};
+import ErrorConfig from './lib/ErrorConfig';
 
 var initApp = () => {
+  const urlParams = new URLSearchParams(window.location.search);
   apiManager.request("config.json")
   .then((frontEndConfig) => {
     if (!frontEndConfig.lang) {
@@ -37,22 +28,24 @@ var initApp = () => {
     }
     apiManager.request(frontEndConfig.GlewlwydUrl + "config/")
     .then((serverConfig) => {
-      if (getParameterByName("delegate")) {
-        apiManager.setConfig(frontEndConfig.GlewlwydUrl + serverConfig.api_prefix + "/delegate/" + getParameterByName("delegate"));
+      if (urlParams.get("delegate")) {
+        apiManager.setConfig(frontEndConfig.GlewlwydUrl + serverConfig.api_prefix + "/delegate/" + urlParams.get("delegate"));
       } else {
         apiManager.setConfig(frontEndConfig.GlewlwydUrl + serverConfig.api_prefix);
       }
       apiManager.setConfigSub(frontEndConfig.GlewlwydUrl + serverConfig.api_prefix);
       var config = Object.assign({
         params: {
-          scope: getParameterByName("scope"), 
-          client_id: getParameterByName("client_id"), 
-          callback_url: getParameterByName("callback_url"),
-          delegate: getParameterByName("delegate")||false,
-          register: getParameterByName("register")||false,
-          token: getParameterByName("token")||false,
-          scheme_name: getParameterByName("scheme_name")||false,
-          provider: getParameterByName("provider")||false
+          scope: urlParams.get("scope"), 
+          client_id: urlParams.get("client_id"), 
+          callback_url: urlParams.get("callback_url"),
+          delegate: urlParams.get("delegate")||false,
+          register: urlParams.get("register")||false,
+          updateEmail: urlParams.get("updateEmail")||false,
+          token: urlParams.get("token")||false,
+          scheme_name: urlParams.get("scheme_name")||false,
+          provider: urlParams.get("provider")||false,
+          resetCredentials: urlParams.get("resetCredentials")||false
         }
       }, frontEndConfig, serverConfig);
       ReactDOM.render(<App config={config} />, document.getElementById('root'));
@@ -60,6 +53,9 @@ var initApp = () => {
     .fail((error) => {
       ReactDOM.render(<App config={false} />, document.getElementById('root'));
     });
+  })
+  .fail((error) => {
+    ReactDOM.render(<ErrorConfig/>, document.getElementById('root'));
   });
 }
 

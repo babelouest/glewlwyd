@@ -20,7 +20,10 @@ class Buttons extends Component {
       bGrantTitle: props.showGrant?i18next.t("login.grant-auth-title"):i18next.t("login.grant-change-title"),
       bGrant: props.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change"),
       showGrantAsterisk: props.showGrantAsterisk,
-      selectAccount: props.selectAccount
+      selectAccount: props.selectAccount,
+      registration: props.registration,
+      resetCredentials: props.resetCredentials,
+      resetCredentialsShow: props.resetCredentialsShow
     };
 
     this.clickLogout = this.clickLogout.bind(this);
@@ -47,7 +50,10 @@ class Buttons extends Component {
       bGrantTitle: nextProps.showGrant?i18next.t("login.grant-auth-title"):i18next.t("login.grant-change-title"),
       bGrant: nextProps.showGrant?i18next.t("login.grant-auth"):i18next.t("login.grant-change"),
       showGrantAsterisk: nextProps.showGrantAsterisk,
-      selectAccount: nextProps.selectAccount
+      selectAccount: nextProps.selectAccount,
+      registration: nextProps.registration,
+      resetCredentials: nextProps.resetCredentials,
+      resetCredentialsShow: nextProps.resetCredentialsShow
     });
   }
 
@@ -89,7 +95,12 @@ class Buttons extends Component {
   
   registerNewUser(e, plugin) {
     e.preventDefault();
-    document.location.href = this.state.config.ProfileUrl + "?register=" + encodeURIComponent(plugin);
+    document.location.href = this.state.config.ProfileUrl + "?register=" + encodeURIComponent(plugin) + "&callback_url=" + encodeURIComponent(document.location.href);
+  }
+  
+  resetCredentials(e, plugin) {
+    e.preventDefault();
+    messageDispatcher.sendMessage('App', {type: 'ResetCredentials'});
   }
   
   managerUsers(e) {
@@ -100,6 +111,10 @@ class Buttons extends Component {
   changeSessionScheme(e, scheme) {
     e.preventDefault();
     messageDispatcher.sendMessage('App', {type: 'newUserScheme', scheme: scheme});
+  }
+  
+  cancelResetCredentials() {
+    messageDispatcher.sendMessage('App', {type: 'NewUser'});
   }
 
 	render() {
@@ -123,11 +138,9 @@ class Buttons extends Component {
       </div>;
     }
     if (this.state.currentUser && !this.state.selectAccount) {
-      if (this.state.config.register) {
-        this.state.config.register.forEach((register, index) => {
-          registerTable.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.registerNewUser(e, register.name)}>{i18next.t(register.message)}</a>);
-        });
-      }
+      this.state.registration.forEach((register, index) => {
+        registerTable.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.registerNewUser(e, register.name)}>{i18next.t(register.message)}</a>);
+      });
       var userList = [];
       if (this.state.userList) {
         this.state.userList.forEach((user, index) => {
@@ -167,7 +180,7 @@ class Buttons extends Component {
                 </button>
                 <div className="dropdown-menu" aria-labelledby="selectGrant">
                   {bGrant}
-                  <a className="dropdown-item" href={this.state.config.ProfileUrl||""} target="_blank">{i18next.t("login.update-profile")}</a>
+                  <a className="dropdown-item" href={this.state.config.ProfileUrl||""} target="_blank" rel="noopener noreferrer">{i18next.t("login.update-profile")}</a>
                 </div>
               </div>
               {bAnother}
@@ -177,9 +190,16 @@ class Buttons extends Component {
   		);
     } else if (this.state.newUser) {
       if (this.state.config.register) {
+        this.state.resetCredentials.forEach((resetCred, index) => {
+          registerTable.push(
+            <button key={index+this.state.config.register.length} type="button" className="btn btn-danger" onClick={(e) => this.resetCredentials(e, resetCred.name)}>
+              {i18next.t(resetCred.message)}
+            </button>
+          );
+        });
         this.state.config.register.forEach((register, index) => {
           registerTable.push(
-            <button key={index} type="button" className="btn btn-primary" onClick={(e) => this.registerNewUser(e, register.name)}>
+            <button key={index} type="button" className="btn btn-success" onClick={(e) => this.registerNewUser(e, register.name)}>
               {i18next.t(register.message)}
             </button>
           );
@@ -238,6 +258,12 @@ class Buttons extends Component {
         </div>
         );
       }
+    } else if (this.state.resetCredentialsShow) {
+      return (
+        <button type="button" className="btn btn-secondary" onClick={this.cancelResetCredentials}>
+          {i18next.t("login.btn-cancel")}
+        </button>
+      );
     } else {
       return ("");
     }

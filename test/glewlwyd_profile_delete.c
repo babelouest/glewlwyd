@@ -29,6 +29,7 @@
 #define NEW_PASSWORD "password"
 #define NEW_EMAIL "esras@glewlwyd.tld"
 #define NEW_SCOPE "g_profile"
+#define NEW_SCOPE_2 "scope1"
 #define SCHEME_TYPE "mock"
 #define SCHEME_NAME_42 "mock_scheme_42"
 #define SCHEME_NAME_88 "mock_scheme_88"
@@ -39,7 +40,7 @@ struct _u_request admin_req;
 
 START_TEST(test_glwd_profile_delete_add_user)
 {
-  json_t * j_parameters = json_pack("{sssssssos[s]}", "username", NEW_USERNAME, "name", NEW_NAME, "email", NEW_EMAIL, "enabled", json_true(), "scope", NEW_SCOPE);
+  json_t * j_parameters = json_pack("{sssssssos[ss]}", "username", NEW_USERNAME, "name", NEW_NAME, "email", NEW_EMAIL, "enabled", json_true(), "scope", NEW_SCOPE, NEW_SCOPE_2);
   ck_assert_ptr_ne(j_parameters, NULL);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/user/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
@@ -207,7 +208,7 @@ START_TEST(test_glwd_profile_delete_delete_profile_disable)
   
   ulfius_clean_request(&req);
 
-  j_body = json_pack("{sssssssos[s]}", "username", NEW_USERNAME, "name", NEW_NAME, "email", NEW_EMAIL, "enabled", json_false(), "scope", NEW_SCOPE);
+  j_body = json_pack("{sssssssos[ss]}", "username", NEW_USERNAME, "name", NEW_NAME, "email", NEW_EMAIL, "enabled", json_false(), "scope", NEW_SCOPE, NEW_SCOPE_2);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/user/" NEW_USERNAME, NULL, NULL, NULL, NULL, 200, j_body, NULL, NULL), 1);
   json_decref(j_body);
 }

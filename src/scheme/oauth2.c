@@ -794,6 +794,11 @@ static json_t * get_provider(struct _oauth2_config * oauth2_config, const char *
  */
 json_t * user_auth_scheme_module_load(struct config_module * config) {
   UNUSED(config);
+// TODO: Enable when available
+#if 0
+  r_global_init();
+  i_global_init();
+#endif
   return json_pack("{sisssssss{s{ssso}s[{s{ssso}s{sss[sss]so}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}}]}}",
                    "result",
                    G_OK,
@@ -887,6 +892,11 @@ json_t * user_auth_scheme_module_load(struct config_module * config) {
  */
 int user_auth_scheme_module_unload(struct config_module * config) {
   UNUSED(config);
+// TODO: Enable when available
+#if 0
+  r_global_close();
+  i_global_close();
+#endif
   return G_OK;
 }
 
@@ -1067,6 +1077,7 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
     y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use - Error get_registration_for_user");
     ret = GLEWLWYD_IS_NOT_AVAILABLE;
   }
+  json_decref(j_registration);
   return ret;
 }
 

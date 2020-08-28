@@ -241,6 +241,29 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("jwks-private is optional must be a string"));
       ret = G_ERROR_PARAM;
     }
+    if (json_object_get(j_params, "jwks-public-uri") != NULL && !json_is_string(json_object_get(j_params, "jwks-public-uri"))) {
+      json_array_append_new(j_error, json_string("jwks-public-uri is optional must be a string"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "jwks-public") != NULL && !json_is_string(json_object_get(j_params, "jwks-public"))) {
+      json_array_append_new(j_error, json_string("jwks-public is optional must be a string"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_string_length(json_object_get(j_params, "jwks-public-uri")) || json_string_length(json_object_get(j_params, "jwks-public"))) {
+      if (json_string_length(json_object_get(j_params, "jwks-public-uri"))) {
+        if (r_jwks_init(&jwks) != RHN_OK || r_jwks_import_from_uri(jwks, json_string_value(json_object_get(j_params, "jwks-public-uri")), R_FLAG_FOLLOW_REDIRECT|(json_object_get(j_params, "request-uri-allow-https-non-secure")==json_true()?R_FLAG_IGNORE_SERVER_CERTIFICATE:0)) != RHN_OK) {
+          json_array_append_new(j_error, json_string("jwks-public-uri leads to an invalid jwks"));
+          ret = G_ERROR_PARAM;
+        }
+        r_jwks_free(jwks);
+      } else {
+        if (r_jwks_init(&jwks) != RHN_OK || r_jwks_import_from_str(jwks, json_string_value(json_object_get(j_params, "jwks-public"))) != RHN_OK) {
+          json_array_append_new(j_error, json_string("jwks-public is an invalid jwks"));
+          ret = G_ERROR_PARAM;
+        }
+        r_jwks_free(jwks);
+      }
+    }
     if (json_string_length(json_object_get(j_params, "jwks-uri")) || json_string_length(json_object_get(j_params, "jwks-private"))) {
       if (json_object_get(j_params, "default-kid") != NULL && !json_is_string(json_object_get(j_params, "default-kid"))) {
         json_array_append_new(j_error, json_string("default-kid is optional must be a string"));
@@ -4579,7 +4602,7 @@ static void build_form_post_response(const char * redirect_uri, struct _u_map * 
 }
 
 static int generate_check_session_iframe(struct _oidc_config * config) {
-  if ((config->check_session_iframe = msprintf("<html> <head> <meta charset=\"utf-8\"> <title>Glewlwydcheck_session_iframe</title> </head> <body> iframe </body> <script>function receiveMessage(e){var client_id=e.data.split(' ')[0]; var session_state=e.data.split(' ')[1]; var salt=session_state.split('.')[1]; var request=new XMLHttpRequest(); request.open(\"GET\", \"%s/%s/profile_list/\", true); request.onload=function(){if (this.status===200){var profile_list=JSON.parse(this.response); if (profile_list && profile_list[0]){const encoder=new TextEncoder(); var intermediate=(client_id + \" \" + e.origin + \" \" + profile_list[0].username + \" \" + salt); const data=encoder.encode(intermediate); crypto.subtle.digest('SHA-256', data).then((value)=>{if (session_state==(btoa(new Uint8Array(value).reduce((s, b)=> s + String.fromCharCode(b), ''))+ \".\" + salt)){e.source.postMessage(\"unchanged\", e.origin);}else{e.source.postMessage(\"changed\", e.origin);}})}else{e.source.postMessage(\"error\", e.origin);}}else if (this.status===401){e.source.postMessage(\"changed\", e.origin);}else{e.source.postMessage(\"error\", e.origin);}}; request.onerror=function(){e.source.postMessage(\"error\", e.origin);}; request.send();}; window.addEventListener('message', receiveMessage, false); </script></html>", config->glewlwyd_config->glewlwyd_config->external_url, config->glewlwyd_config->glewlwyd_config->api_prefix)) == NULL) {
+  if ((config->check_session_iframe = msprintf("<html> <head> <meta charset=\"utf-8\"> <title>Glewlwydcheck_session_iframe</title> </head> <body> iframe </body> <script>function receiveMessage(e){var client_id=e.data.split(' ')[0]; var session_state=e.data.split(' ')[1]; var salt=session_state.split('.')[1]; var origin=e.origin.toLowerCase(); var host=window.location.host; if (origin.indexOf(host) !==-1){var request=new XMLHttpRequest(); request.open(\"GET\", \"%s/%s/profile_list/\", true); request.onload=function(){if (this.status===200){var profile_list=JSON.parse(this.response); if (profile_list && profile_list[0]){const encoder=new TextEncoder(); var intermediate=(client_id + \" \" + origin + \" \" + profile_list[0].username + \" \" + salt); const data=encoder.encode(intermediate); crypto.subtle.digest('SHA-256', data).then((value)=>{if (session_state==(btoa(new Uint8Array(value).reduce((s, b)=> s + String.fromCharCode(b), ''))+ \".\" + salt)){e.source.postMessage(\"unchanged\", origin);}else{e.source.postMessage(\"changed\", origin);}})}else{e.source.postMessage(\"error\", origin);}}else if (this.status===401){e.source.postMessage(\"changed\", origin);}else{e.source.postMessage(\"error\", origin);}}; request.onerror=function(){e.source.postMessage(\"error\", origin);}; request.send();}}; window.addEventListener('message', receiveMessage, false); </script></html>", config->glewlwyd_config->glewlwyd_config->external_url, config->glewlwyd_config->glewlwyd_config->api_prefix)) == NULL) {
     y_log_message(Y_LOG_LEVEL_ERROR, "generate_check_session_iframe oidc - Error generating check_session_iframe");
     return G_ERROR;
   } else {
@@ -8450,50 +8473,60 @@ static int callback_oidc_device_authorization(const struct _u_request * request,
     client_secret = u_map_get(request->map_post_body, "client_secret");
     client_auth_method = GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_BASIC;
   }
-  if (result == U_CALLBACK_CONTINUE && o_strlen(u_map_get(request->map_post_body, "scope"))) {
-    if (j_assertion_client != NULL) {
-      j_client = json_pack("{sisO}", "result", G_OK, "client", j_assertion_client);
-    } else {
-      j_client = check_client_valid(config, 
-                                   client_id, 
-                                   client_secret, 
-                                   NULL, 
-                                   GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION_FLAG, 
-                                   0, 
-                                   ip_source);
-    }
-    if (check_result_value(j_client, G_OK) && is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
-      client_id = json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id"));
-      j_result = generate_device_authorization(config, client_id, u_map_get(request->map_post_body, "scope"), ip_source);
-      if (check_result_value(j_result, G_OK)) {
-          verification_uri = msprintf("%s/device", plugin_url);
-          verification_uri_complete = msprintf("%s/device?code=%s", plugin_url, json_string_value(json_object_get(json_object_get(j_result, "authorization"), "user_code"))); 
-          j_body = json_pack("{sOsOsssssOsO}", 
-                             "device_code", json_object_get(json_object_get(j_result, "authorization"), "device_code"),
-                             "user_code", json_object_get(json_object_get(j_result, "authorization"), "user_code"),
-                             "verification_uri", verification_uri,
-                             "verification_uri_complete", verification_uri_complete,
-                             "expires_in", json_object_get(config->j_params, "device-authorization-expiration"),
-                             "interval", json_object_get(config->j_params, "device-authorization-interval"));
-          ulfius_set_json_body_response(response, 200, j_body);
-          json_decref(j_body);
-          o_free(verification_uri);
-          o_free(verification_uri_complete);
+  if (result == U_CALLBACK_CONTINUE) {
+    if (o_strlen(u_map_get(request->map_post_body, "scope"))) {
+      if (j_assertion_client != NULL) {
+        j_client = json_pack("{sisO}", "result", G_OK, "client", j_assertion_client);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_authorization oidc - Error generate_device_authorization");
-        j_body = json_pack("{ss}", "error", "server_error");
-        ulfius_set_json_body_response(response, 500, j_body);
+        j_client = check_client_valid(config, 
+                                     client_id, 
+                                     client_secret, 
+                                     NULL, 
+                                     GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION_FLAG, 
+                                     0, 
+                                     ip_source);
+      }
+      if (check_result_value(j_client, G_OK) && is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
+        client_id = json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id"));
+        j_result = generate_device_authorization(config, client_id, u_map_get(request->map_post_body, "scope"), ip_source);
+        if (check_result_value(j_result, G_OK)) {
+            verification_uri = msprintf("%s/device", plugin_url);
+            verification_uri_complete = msprintf("%s/device?code=%s", plugin_url, json_string_value(json_object_get(json_object_get(j_result, "authorization"), "user_code"))); 
+            j_body = json_pack("{sOsOsssssOsO}", 
+                               "device_code", json_object_get(json_object_get(j_result, "authorization"), "device_code"),
+                               "user_code", json_object_get(json_object_get(j_result, "authorization"), "user_code"),
+                               "verification_uri", verification_uri,
+                               "verification_uri_complete", verification_uri_complete,
+                               "expires_in", json_object_get(config->j_params, "device-authorization-expiration"),
+                               "interval", json_object_get(config->j_params, "device-authorization-interval"));
+            ulfius_set_json_body_response(response, 200, j_body);
+            json_decref(j_body);
+            o_free(verification_uri);
+            o_free(verification_uri_complete);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_authorization oidc - Error generate_device_authorization");
+          j_body = json_pack("{ss}", "error", "server_error");
+          ulfius_set_json_body_response(response, 500, j_body);
+          json_decref(j_body);
+        }
+        json_decref(j_result);
+      } else {
+        j_body = json_pack("{ss}", "error", "unauthorized_client");
+        ulfius_set_json_body_response(response, 403, j_body);
         json_decref(j_body);
       }
-      json_decref(j_result);
+      json_decref(j_client);
     } else {
-      j_body = json_pack("{ss}", "error", "unauthorized_client");
-      ulfius_set_json_body_response(response, 403, j_body);
+      j_body = json_pack("{ss}", "error", "invalid_scope");
+      ulfius_set_json_body_response(response, 400, j_body);
       json_decref(j_body);
     }
-    json_decref(j_client);
+  } else if (result == U_CALLBACK_UNAUTHORIZED) {
+    j_body = json_pack("{ss}", "error", "unauthorized_client");
+    ulfius_set_json_body_response(response, 400, j_body);
+    json_decref(j_body);
   } else {
-    j_body = json_pack("{ss}", "error", "invalid_scope");
+    j_body = json_pack("{ss}", "error", "server_error");
     ulfius_set_json_body_response(response, 400, j_body);
     json_decref(j_body);
   }
@@ -8634,6 +8667,10 @@ static int jwt_autocheck(struct _oidc_config * config) {
 
 json_t * plugin_module_load(struct config_plugin * config) {
   UNUSED(config);
+// TODO: Enable when available
+#if 0
+  r_global_init();
+#endif
   return json_pack("{si ss ss ss s{ s{sssos[sss]} s{sssos[sss]} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ss so s{ssso} s{ssso} }}}",
                    "result",
                    G_OK,
@@ -8753,6 +8790,10 @@ json_t * plugin_module_load(struct config_plugin * config) {
 
 int plugin_module_unload(struct config_plugin * config) {
   UNUSED(config);
+// TODO: Enable when available
+#if 0
+  r_global_close();
+#endif
   return G_OK;
 }
 
@@ -8763,7 +8804,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
   size_t index = 0;
   struct _oidc_config * p_config = NULL;
   jwk_t * jwk = NULL, * jwk_pub = NULL;
-  jwks_t * jwks_privkey = NULL, * jwks_pubkey = NULL, * jwks_published = NULL;
+  jwks_t * jwks_privkey = NULL, * jwks_pubkey = NULL, * jwks_published = NULL, * jwks_specified = NULL;
   const char * str_alg;
   int key_type;
   const unsigned char * key;
@@ -8935,6 +8976,26 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         }
       }
       
+      if (json_string_length(json_object_get(p_config->j_params, "jwks-public-uri")) || json_string_length(json_object_get(p_config->j_params, "jwks-public"))) {
+        if (json_string_length(json_object_get(p_config->j_params, "jwks-public-uri"))) {
+          if (r_jwks_init(&jwks_specified) != RHN_OK || r_jwks_import_from_uri(jwks_specified, json_string_value(json_object_get(p_config->j_params, "jwks-public-uri")), R_FLAG_FOLLOW_REDIRECT|(json_object_get(p_config->j_params, "request-uri-allow-https-non-secure")==json_true()?R_FLAG_IGNORE_SERVER_CERTIFICATE:0)) != RHN_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error importing jwks-public from uri");
+            j_return = json_pack("{si}", "result", G_ERROR);
+            break;
+          } else {
+            p_config->jwks_str = r_jwks_export_to_json_str(jwks_specified, 0);
+          }
+        } else {
+          if (r_jwks_init(&jwks_specified) != RHN_OK || r_jwks_import_from_str(jwks_specified, json_string_value(json_object_get(p_config->j_params, "jwks-public"))) != RHN_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error importing jwks-public from data");
+            j_return = json_pack("{si}", "result", G_ERROR);
+            break;
+          } else {
+            p_config->jwks_str = r_jwks_export_to_json_str(jwks_specified, 0);
+          }
+        }
+      }
+      
       if (json_string_length(json_object_get(p_config->j_params, "jwks-private")) || json_string_length(json_object_get(p_config->j_params, "jwks-uri"))) {
         // Extract keys from JWKS
         if (r_jwks_init(&jwks_pubkey) != RHN_OK) {
@@ -9073,7 +9134,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           r_jwk_free(jwk);
         }
         
-        if (r_jwks_size(jwks_published)) {
+        if (p_config->jwks_str == NULL) {
           p_config->jwks_str = r_jwks_export_to_json_str(jwks_published, 0);
         }
           
@@ -9418,6 +9479,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
     r_jwks_free(jwks_privkey);
     r_jwks_free(jwks_pubkey);
     r_jwks_free(jwks_published);
+    r_jwks_free(jwks_specified);
     if (j_return == NULL) {
       j_return = json_pack("{si}", "result", G_OK);
     } else {

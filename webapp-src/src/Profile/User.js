@@ -17,6 +17,7 @@ class User extends Component {
       loggedIn: props.loggedIn,
       listAddValue: this.initListAdd(props.pattern),
       listEltConfirm: this.initListConfirm(props.pattern),
+      updateEmail: props.updateEmail,
       listError: {}
     };
     
@@ -48,6 +49,7 @@ class User extends Component {
       loggedIn: nextProps.loggedIn,
       listAddValue: this.initListAdd(nextProps.pattern),
       listEltConfirm: this.initListConfirm(nextProps.pattern),
+      updateEmail: nextProps.updateEmail,
       listError: {}
     }, () => {
       if (!this.state.loggedIn) {
@@ -233,6 +235,10 @@ class User extends Component {
     messageDispatcher.sendMessage('App', {type: "closeConfirm"});
   }
   
+  updateEmailModal(module) {
+    messageDispatcher.sendMessage('App', {type: "updateEmail", module: module});
+  }
+  
   editElt(pattern, elt, key) {
     var labelJsx, inputJsx, listJsx = [], checkboxJsx = false;
     if ((elt !== undefined || pattern.type === "password" || pattern.forceShow) && pattern["profile-read"]) {
@@ -409,12 +415,35 @@ class User extends Component {
         }
       } else {
         if (pattern["profile-write"] !== true && !this.state.add) {
-          inputJsx = <input disabled={true} 
-                            type={(pattern.type||"text")} 
-                            className={"form-control" + validInput} 
-                            id={"modal-edit-" + pattern.name} 
-                            placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} 
-                            value={elt}/>
+          if (pattern.name === "email") {
+            var editButtons = [];
+            this.state.updateEmail.forEach((module, index) => {
+              editButtons.push(
+                <button key={index} className="btn btn-outline-secondary" type="button" onClick={(e) => this.updateEmailModal(module)} title={i18next.t("profile.update-email-modal-title")}>
+                  <i className="fas fa-edit"></i>
+                </button>
+              );
+            });
+            inputJsx = 
+            <div className="input-group">
+              <input disabled={true} 
+                     type="text"
+                     className={"form-control" + validInput} 
+                     id={"modal-edit-" + pattern.name} 
+                     placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} 
+                     value={elt}/>
+              <div className="input-group-append">
+                {editButtons}
+              </div>
+            </div>
+          } else {
+            inputJsx = <input disabled={true} 
+                              type={(pattern.type||"text")} 
+                              className={"form-control" + validInput} 
+                              id={"modal-edit-" + pattern.name} 
+                              placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} 
+                              value={elt}/>
+          }
         } else {
           if (pattern.type === "password") {
             inputJsx = 

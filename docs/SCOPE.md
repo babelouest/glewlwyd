@@ -1,10 +1,12 @@
 # Glewlwyd Scopes Management
 
+[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 ![scope-add](screenshots/scope-add.png)
 
 A scope in Glewlwyd is an access level that the user, if it has the scope available, can or not grant access to clients.
 
-From the administrator point-of-view, the scope can require more or less authenticator factors. The first authentication factor is the password, which is required by default when you create a new scope. You can add n-factor authentication to this scope and setup password session max age to enhance security access.
+From the administrator point-of-view, the scope can require more or less authentication factors. The first authentication factor is the password, which is required by default when you create a new scope. You can add n-factor authentication to this scope and setup password session max age to enhance security access.
 
 Here is the documentation of the options available when you create or edit a scope:
 

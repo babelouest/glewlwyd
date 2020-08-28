@@ -55,7 +55,7 @@ test-register: $(TARGET_REGISTER) test_glewlwyd_register
 
 test-profile-delete: $(TARGET_PROFILE_DELETE) test_glewlwyd_profile_delete
 
-test-irl: $(TARGET_IRL) test_glewlwyd_mod_user_http test_glewlwyd_scheme_mail test_glewlwyd_scheme_otp test_glewlwyd_scheme_webauthn test_glewlwyd_scheme_retype_password test_glewlwyd_scheme_oauth2
+test-irl: $(TARGET_IRL) test_glewlwyd_mod_user_http test_glewlwyd_scheme_http test_glewlwyd_scheme_mail test_glewlwyd_scheme_otp test_glewlwyd_scheme_webauthn test_glewlwyd_scheme_retype_password test_glewlwyd_scheme_oauth2
 	@for JSON_FILE in mod_user_*.json; \
 		do $(MAKE) test_glewlwyd_mod_user_irl PARAM_FILE=$$JSON_FILE $*; \
 	done

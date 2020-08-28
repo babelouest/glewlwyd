@@ -33,8 +33,56 @@
 #define MODULE_EXPIRATION 600
 #define MODULE_MAX_USE 0
 
+#define SCOPE_NAME "scope2"
+#define SCOPE_DISPLAY_NAME "Glewlwyd mock scope without password"
+#define SCOPE_DESCRIPTION "Glewlwyd scope 2 scope description"
+#define SCOPE_PASSWORD_MAX_AGE 0
+#define SCOPE_SCHEME_1_TYPE "mock"
+#define SCOPE_SCHEME_1_NAME "mock_scheme_95"
+
 struct _u_request user_req;
 struct _u_request admin_req;
+
+START_TEST(test_glwd_scheme_retype_password_scope_set)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_NAME);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+  json_decref(j_canuse);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_retype_password_scope_unset)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+}
+END_TEST
 
 START_TEST(test_glwd_scheme_retype_password_irl_module_add)
 {
@@ -78,7 +126,12 @@ START_TEST(test_glwd_scheme_retype_password_irl_authenticate_success)
                                 "scheme_name", MODULE_NAME, 
                                 "value", 
                                  "password", PASSWORD);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
+
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+
+  json_decref(j_canuse);
   json_decref(j_params);
 }
 END_TEST
@@ -100,8 +153,10 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd scheme retype password");
   tc_core = tcase_create("test_glwd_scheme_retype_password_irl");
   tcase_add_test(tc_core, test_glwd_scheme_retype_password_irl_module_add);
+  tcase_add_test(tc_core, test_glwd_scheme_retype_password_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_retype_password_irl_authenticate_error);
   tcase_add_test(tc_core, test_glwd_scheme_retype_password_irl_authenticate_success);
+  tcase_add_test(tc_core, test_glwd_scheme_retype_password_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_retype_password_irl_module_remove);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);

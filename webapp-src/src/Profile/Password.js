@@ -13,13 +13,14 @@ class Password extends Component {
       config: props.config,
       passwordMinLength: props.config.PasswordMinLength||8,
       callback: props.callback,
+      loggedIn: props.loggedIn,
+      registerPlugin: props.registerPlugin,
       old_password: "",
       password: "",
       password_confirm: "",
       oldPasswordInvalid: false,
       passwordInvalid: false,
-      passwordConfirmInvalid: false,
-      loggedIn: false
+      passwordConfirmInvalid: false
     }
     
     this.passwordButtonHandler = this.passwordButtonHandler.bind(this);
@@ -27,6 +28,7 @@ class Password extends Component {
     this.changeNewPassword = this.changeNewPassword.bind(this);
     this.changeNewPasswordConfirm = this.changeNewPasswordConfirm.bind(this);
     this.checkPassword = this.checkPassword.bind(this);
+    this.resetCredentialsCodeReset = this.resetCredentialsCodeReset.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -34,7 +36,8 @@ class Password extends Component {
       config: nextProps.config,
       passwordMinLength: nextProps.config.PasswordMinLength||8,
       callback: nextProps.callback,
-      loggedIn: nextProps.loggedIn
+      loggedIn: nextProps.loggedIn,
+      registerPlugin: nextProps.registerPlugin
     }, () => {
       if (!this.state.loggedIn) {
         this.setState({
@@ -110,7 +113,41 @@ class Password extends Component {
     return !passwordInvalid && !passwordConfirmInvalid;
   }
   
+  resetCredentialsCodeReset(plugin) {
+    apiManager.glewlwydRequest("/" + plugin + "/reset-credentials-code", "PUT")
+    .then((codes) => {
+      messageDispatcher.sendMessage('App', {type: "message", title: i18next.t("profile.reset-credentials-code-reset-title"), label: i18next.t("profile.reset-credentials-code-reset-label-modal"), message: codes});
+    })
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    });
+  }
+  
   render() {
+    var resetCredentialsCodeJsx = [];
+    this.state.registerPlugin.forEach((plugin, index) => {
+      if (plugin["reset-credentials"].code) {
+        resetCredentialsCodeJsx.push(
+          <div className="card" key={index}>
+            <div className="card-header" id={"headingResetCredCode"+plugin.name}>
+              <h2 className="mb-0">
+                <button className="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target={"#collapseResetCredCode"+plugin.name} aria-expanded="false" aria-controls={"collapseResetCredCode"+plugin.name}>
+                  {i18next.t("profile.reset-credentials-code-reset-title")}
+                </button>
+              </h2>
+            </div>
+            <div id={"collapseResetCredCode"+plugin.name} className="collapse" aria-labelledby={"headingResetCredCode"+plugin.name} data-parent="#accordionResetCredCode">
+              <div className="card-body">
+                <p>{i18next.t("profile.reset-credentials-code-reset-label")}</p>
+                <button type="button" className="btn btn-primary" onClick={() => this.resetCredentialsCodeReset(plugin.name)}>
+                  {i18next.t("profile.reset-credentials-code-reset-button")}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+    });
     return (
       <div>
         <div className="row" id="password">
@@ -173,6 +210,10 @@ class Password extends Component {
           <div className="col-md-12 text-right">
               <button type="button" className="btn btn-primary" onClick={(e) => this.passwordButtonHandler(e, true)}>{i18next.t("profile.save")}</button>
           </div>
+        </div>
+        <hr/>
+        <div className="accordion" id="accordionResetCredCode">
+          {resetCredentialsCodeJsx}
         </div>
       </div>
     );

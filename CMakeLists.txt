@@ -23,16 +23,16 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 # library info
 
 set(PROGRAM_VERSION_MAJOR "2")
-set(PROGRAM_VERSION_MINOR "3")
-set(PROGRAM_VERSION_PATCH "2")
-set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, multiple factor authentication with, HOTP/TOTP, Webauthn, etc. extensible via plugins")
+set(PROGRAM_VERSION_MINOR "4")
+set(PROGRAM_VERSION_PATCH "0")
+set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, Openid Connect, multiple factor authentication with, HOTP/TOTP, FIDO2, TLS Certificates, etc. extensible via plugins ")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
-set(ORCANIA_VERSION_REQUIRED "2.1.0")
-set(YDER_VERSION_REQUIRED "1.4.10")
-set(ULFIUS_VERSION_REQUIRED "2.6.7")
+set(ORCANIA_VERSION_REQUIRED "2.1.1")
+set(YDER_VERSION_REQUIRED "1.4.12")
+set(ULFIUS_VERSION_REQUIRED "2.6.9")
 set(HOEL_VERSION_REQUIRED "1.4.16")
-set(RHONABWY_VERSION_REQUIRED "0.9.11")
-set(IDDAWC_VERSION_REQUIRED "0.9.5")
+set(RHONABWY_VERSION_REQUIRED "0.9.12")
+set(IDDAWC_VERSION_REQUIRED "0.9.6")
 set(LIBCBOR_VERSION_REQUIRED "0.5.0")
 set(JANSSON_VERSION_REQUIRED "2.11")
 
@@ -139,7 +139,6 @@ set(SEARCH_ORCANIA_H OFF CACHE BOOL "Force to false") # Avoid to search and down
 set(SEARCH_ORCANIA_R OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during hoel search and download
 set(SEARCH_YDER_R OFF CACHE BOOL "Force to false") # Avoid to search and download yder during ulfius and hoel search and download
 set(SEARCH_ULFIUS_R OFF CACHE BOOL "Force to false") # Avoid to search and download ulfius during rhonabwy search and download
-set(BUILD_RNBYC OFF CACHE BOOL "Force to false") # Avoid to build rnbyc during rhonabwy search and download
 
 set(SEARCH_ORCANIA_I OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during iddawc search and download
 set(SEARCH_YDER_I OFF CACHE BOOL "Force to false") # Avoid to search and download yder during iddawc search and download
@@ -960,7 +959,7 @@ install(FILES docs/glewlwyd.service
 install(FILES docs/glewlwyd-init
 		DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 INSTALL(FILES docs/glewlwyd.8
-		DESTINATION ${CMAKE_INSTALL_PREFIX}/man/man8 COMPONENT runtime)
+		DESTINATION ${CMAKE_INSTALL_MANDIR}/man8 COMPONENT runtime)
 
 set(TARGETS glewlwyd)
 
