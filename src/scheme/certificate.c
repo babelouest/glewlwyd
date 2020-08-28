@@ -371,53 +371,57 @@ static json_t * get_user_certificate_from_id_user_property(struct config_module 
 }
 
 static json_t * get_user_certificate_list_user_property(struct config_module * config, json_t * j_parameters, const char * username) {
-  json_t * j_user, * j_user_certificate, * j_parsed_certificate = NULL, * j_return = NULL, * j_element = NULL, * j_user_dn;
+  json_t * j_user, * j_user_certificate, * j_parsed_certificate = NULL, * j_certificate_array = NULL, * j_return = NULL, * j_element = NULL, * j_user_dn = NULL;
   size_t index = 0;
   
   j_user = config->glewlwyd_module_callback_get_user(config, username);
   if (check_result_value(j_user, G_OK)) {
     if (json_string_length(json_object_get(j_parameters, "user-certificate-property"))) {
-      j_user_certificate = json_object_get(json_object_get(j_user, "user"), json_string_value(json_object_get(j_parameters, "user-certificate-property")));
-      if (json_is_string(j_user_certificate)) {
-        j_parsed_certificate = parse_certificate(json_string_value(j_user_certificate), (0 == o_strcmp("DER", json_string_value(json_object_get(j_parameters, "user-certificate-format")))));
-        if (check_result_value(j_parsed_certificate, G_OK)) {
-          json_object_del(json_object_get(j_parsed_certificate, "certificate"), "x509");
-          j_return = json_pack("{sis[O]}", "result", G_OK, "certificate", json_object_get(j_parsed_certificate, "certificate"));
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use certificate - Error parse_certificate (1)");
-          j_return = json_pack("{si}", "result", G_ERROR);
-        }
-        json_decref(j_parsed_certificate);
-      } else if (json_is_array(j_user_certificate)) {
-        if ((j_return = json_pack("{sis[]}", "result", G_OK, "certificate")) != NULL) {
+      if ((j_certificate_array = json_array()) != NULL) {
+        j_user_certificate = json_object_get(json_object_get(j_user, "user"), json_string_value(json_object_get(j_parameters, "user-certificate-property")));
+        if (json_is_string(j_user_certificate)) {
+          j_parsed_certificate = parse_certificate(json_string_value(j_user_certificate), (0 == o_strcmp("DER", json_string_value(json_object_get(j_parameters, "user-certificate-format")))));
+          if (check_result_value(j_parsed_certificate, G_OK)) {
+            json_object_del(json_object_get(j_parsed_certificate, "certificate"), "x509");
+            json_array_append(j_certificate_array, json_object_get(j_parsed_certificate, "certificate"));
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use certificate - Error parse_certificate (1)");
+          }
+          json_decref(j_parsed_certificate);
+        } else if (json_is_array(j_user_certificate)) {
           json_array_foreach(j_user_certificate, index, j_element) {
             j_parsed_certificate = parse_certificate(json_string_value(j_element), (0 == o_strcmp("DER", json_string_value(json_object_get(j_parameters, "user-certificate-format")))));
             if (check_result_value(j_parsed_certificate, G_OK)) {
               json_object_del(json_object_get(j_parsed_certificate, "certificate"), "x509");
-              json_array_append(json_object_get(j_return, "certificate"), json_object_get(j_parsed_certificate, "certificate"));
+              json_array_append(j_certificate_array, json_object_get(j_parsed_certificate, "certificate"));
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use certificate - Error parse_certificate (2)");
             }
             json_decref(j_parsed_certificate);
           }
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use certificate - Error allocating resources for j_return");
-          j_return = json_pack("{si}", "result", G_ERROR);
         }
       } else {
-        j_return = json_pack("{sis[]}", "result", G_OK, "certificate");
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use certificate - Error allocating resources for j_certificate_array");
       }
     }
     if (json_string_length(json_object_get(j_parameters, "user-dn-property"))) {
       j_user_dn = json_object_get(json_object_get(j_user, "user"), json_string_value(json_object_get(j_parameters, "user-dn-property")));
-      if (json_string_length(j_user_dn)) {
-        if (j_return != NULL) {
-          json_object_set_new(j_return, "dn", j_user_dn);
-        } else {
-          j_return = json_pack("{siso}", "result", G_OK, "dn", j_user_dn);
-        }
+      if (!json_string_length(j_user_dn)) {
+        j_user_dn = NULL;
       }
     }
+    if (json_array_size(j_certificate_array) || json_string_length(j_user_dn)) {
+      j_return = json_pack("{si}", "result", G_OK);
+      if (json_array_size(j_certificate_array)) {
+        json_object_set(j_return, "certificate", j_certificate_array);
+      }
+      if (json_string_length(j_user_dn)) {
+        json_object_set(j_return, "dn", j_user_dn);
+      }
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    }
+    json_decref(j_certificate_array);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use certificate - Error glewlwyd_module_callback_get_user");
     j_return = json_pack("{si}", "result", G_ERROR);
@@ -1561,7 +1565,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
           }
         }
       }
-    } else if (res == G_ERROR_UNAUTHORIZED) {
+    } else if (res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_validate certificate - is_user_certificate_valid unauthorized");
       ret = G_ERROR_UNAUTHORIZED;
     } else {
