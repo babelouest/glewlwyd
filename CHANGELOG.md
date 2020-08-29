@@ -7,6 +7,7 @@
 - Handle callback url for registration and reset credentials
 - Update certificate scheme management: remove online certiticate generation and add certificate validation via DN
 - Implement revoke tokens on code replay for oeuth2 and oidc plugins
+- Show `client_id` and `redirect_uri` on grant scope
 
 ## 2.3.2
 
