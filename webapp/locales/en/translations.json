@@ -484,6 +484,7 @@
     "mod-glwd-client-refresh-token-one-use-parameter": "refresh-token-one-use property",
     "mod-glwd-client-refresh-token-one-use-parameter-ph": "e.g. refresh-token-one-use",
     "mod-glwd-auth-type-code-enabled": "Authentication type code enabled",
+    "mod-glwd-auth-type-code-revoke-replayed": "Revoke all tokens if a client tries to replay a code",
     "mod-glwd-auth-type-implicit-enabled": "Authentication type implicit enabled",
     "mod-glwd-auth-type-password-enabled": "Authentication type password enabled",
     "mod-glwd-auth-type-client-enabled": "Authentication type client enabled",
