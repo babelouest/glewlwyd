@@ -2740,11 +2740,11 @@ static int revoke_tokens_from_code(struct _oidc_config * config, json_int_t gpoc
     if (res == H_OK) {
       ret = G_OK;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "revoke_tokens_from_code - Error executing query (2)");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc revoke_tokens_from_code - Error executing query (2)");
       ret = G_ERROR_DB;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "revoke_tokens_from_code - Error executing query (1)");
+    y_log_message(Y_LOG_LEVEL_ERROR, "oidc revoke_tokens_from_code - Error executing query (1)");
     ret = G_ERROR_DB;
   }
   return ret;
