@@ -742,6 +742,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oauth2_token_introspection
 							glewlwyd_oauth2_token_revocation
 							glewlwyd_oauth2_device_authorization
+              glewlwyd_oauth2_code_replay
 							)
 		endif ()
 		
