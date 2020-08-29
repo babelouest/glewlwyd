@@ -326,6 +326,10 @@ If this option is checked, the plugin instance will allow requests that are not 
 
 Enable response type `code`.
 
+### Revoke all tokens if a client tries to replay a code
+
+If this option is set, when a code is replayed to gain a refresh token, all the refresh and access tokens delivered for this code will be revoked. This option can be used to mitigate replay attacks and enforce tokens security.
+
 ### Authentication type token enabled
 
 Enable response type `token`.
