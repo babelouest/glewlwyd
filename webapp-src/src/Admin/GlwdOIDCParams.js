@@ -25,6 +25,7 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["client-refresh-token-one-use-parameter"]!==undefined?"":(props.mod.parameters["client-refresh-token-one-use-parameter"] = "refresh-token-one-use");
     props.mod.parameters["allow-non-oidc"]!==undefined?"":(props.mod.parameters["allow-non-oidc"] = false);
     props.mod.parameters["auth-type-code-enabled"]!==undefined?"":(props.mod.parameters["auth-type-code-enabled"] = true);
+    props.mod.parameters["auth-type-code-revoke-replayed"]!==undefined?"":(props.mod.parameters["auth-type-code-revoke-replayed"] = false);
     props.mod.parameters["auth-type-token-enabled"]!==undefined?"":(props.mod.parameters["auth-type-token-enabled"] = true);
     props.mod.parameters["auth-type-id-token-enabled"] = true;
     props.mod.parameters["auth-type-none-enabled"]!==undefined?"":(props.mod.parameters["auth-type-none-enabled"] = true);
@@ -156,6 +157,7 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["client-refresh-token-one-use-parameter"]!==undefined?"":(nextProps.mod.parameters["client-refresh-token-one-use-parameter"] = "refresh-token-one-use");
     nextProps.mod.parameters["allow-non-oidc"]!==undefined?"":(nextProps.mod.parameters["allow-non-oidc"] = false);
     nextProps.mod.parameters["auth-type-code-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-code-enabled"] = true);
+    nextProps.mod.parameters["auth-type-code-revoke-replayed"]!==undefined?"":(nextProps.mod.parameters["auth-type-code-revoke-replayed"] = false);
     nextProps.mod.parameters["auth-type-token-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-token-enabled"] = true);
     nextProps.mod.parameters["auth-type-id-token-enabled"] = true;
     nextProps.mod.parameters["auth-type-none-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-none-enabled"] = true);
@@ -1525,6 +1527,16 @@ class GlwdOIDCParams extends Component {
                 <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-auth-type-code-enabled" onChange={(e) => this.toggleParam(e, "auth-type-code-enabled")} checked={this.state.mod.parameters["auth-type-code-enabled"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-auth-type-code-enabled">{i18next.t("admin.mod-glwd-auth-type-code-enabled")}</label>
+                </div>
+                <div className="form-group row">
+                  <div className="col-sm-1">
+                  </div>
+                  <div className="col-sm-11">
+                    <div className="form-check">
+                      <input type="checkbox" className="form-check-input" id="mod-glwd-auth-type-code-revoke-replayed" onChange={(e) => this.toggleParam(e, "auth-type-code-revoke-replayed")} disabled={!this.state.mod.parameters["auth-type-code-enabled"]} checked={this.state.mod.parameters["auth-type-code-revoke-replayed"]} />
+                      <label className="form-check-label" htmlFor="mod-glwd-auth-type-code-revoke-replayed">{i18next.t("admin.mod-glwd-auth-type-code-revoke-replayed")}</label>
+                    </div>
+                  </div>
                 </div>
                 <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-auth-type-token-enabled" onChange={(e) => this.toggleParam(e, "auth-type-token-enabled")} checked={this.state.mod.parameters["auth-type-token-enabled"]} />
