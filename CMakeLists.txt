@@ -789,6 +789,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oidc_device_authorization
 							glewlwyd_oidc_refresh_token_one_use
 							glewlwyd_oidc_client_registration_management
+              glewlwyd_oidc_code_replay
 							)
 			set(TESTS_SSL ${TESTS_SSL} glewlwyd_oidc_client_certificate)
 		endif ()
