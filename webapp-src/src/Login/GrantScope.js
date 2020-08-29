@@ -92,7 +92,13 @@ class GrantScope extends Component {
     <div>
       <div className="row">
         <div className="col-md-12">
-          <h5>{i18next.t("login.grant-title", {client: this.state.client.name})}</h5>
+          <h3>{i18next.t("login.grant-title")}</h3>
+        </div>
+      </div>
+      <hr/>
+      <div className="row">
+        <div className="col-md-12">
+          <h5>{i18next.t("login.grant-client-title", {client: this.state.client.name})}</h5>
         </div>
       </div>
       <div className="row">
@@ -102,11 +108,29 @@ class GrantScope extends Component {
           </ul>
         </div>
       </div>
+      <hr className="glwd-hr-no-border"/>
+      <div className="row">
+        <div className="col-md-2">
+          <h5>{i18next.t("login.grant-client-id")}</h5>
+        </div>
+        <div className="col-md-10">
+          <h5><span className="badge badge-secondary">{this.state.client.client_id}</span></h5>
+        </div>
+      </div>
+      <div className="row">
+        <div className="col-md-2">
+          <h5>{i18next.t("login.grant-client-redirect-uri")}</h5>
+        </div>
+        <div className="col-md-10">
+          <h5><span className="badge badge-secondary">{this.state.client.redirect_uri}</span></h5>
+        </div>
+      </div>
       <div className="row">
         <div className="col-md-12">
           {infoSomeScopeUnavailable}
         </div>
       </div>
+      <hr/>
       <div className="row">
         <div className="col-md-12">
           <button type="button" className="btn btn-primary" onClick={this.handleGrantScope}>{i18next.t("login.grant")}</button>
