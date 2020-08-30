@@ -14,7 +14,7 @@ Authentication process supported:
 - OAuth2
 - OpenID Connect
 
-Allows users to authenticate via multiple factors:
+Allows users authentication via multiple factors:
 - Password
 - One-time password (TOTP/HOTP)
 - Webauthn (Yubikey, Android devices)
@@ -27,13 +27,19 @@ Users and clients can be stored and managed from various backends:
 - LDAP service
 - HTTP Backend service providing Basic Authentication
 
-Allows users to register a new account with the possibility to confirm their e-mail address or not. During the registration process, the new user may be expected to register their passwords, as well as other authentication factors:
+New users can register a new account with the possibility to confirm their e-mail address or not. During the registration process, the new user may be expected to register their passwords, as well as other authentication factors:
 - One-time password (TOTP/HOTP)
 - Webauthn (Yubikey, Android devices)
 - TLS Certificate
 - External OAuth2/OIDC providers
 
-See the [register documentation](docs/REGISTER.md) for more information on the registration features.
+Existing users can update their e-mail by sending a confirmation link to the new e-mail.
+
+Existing users can reset their credentials if their password or authentication schemes are lost or unavailable. Credentials can be reset by different factors:
+- A link sent to the user's e-mail
+- A one-time use secret code
+
+See the [register/update e-mail/reset credentials documentation](docs/REGISTER.md) for more information on the registration, update e-mail or reset credentials features.
 
 Based on a plugin architecture to make it easier to add or update storing backends, authentication schemes or process.
 
