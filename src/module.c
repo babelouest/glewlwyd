@@ -40,11 +40,10 @@ json_t * get_module_type_list(struct config_elements * config) {
     for (i=0; i<pointer_list_size(config->user_module_list); i++) {
       user_module = (struct _user_module *)pointer_list_get_at(config->user_module_list, i);
       if (user_module != NULL) {
-        json_array_append_new(json_object_get(json_object_get(j_return, "module"), "user"), json_pack("{sssssssO}",
+        json_array_append_new(json_object_get(json_object_get(j_return, "module"), "user"), json_pack("{ssssss}",
                                                                                                       "name", user_module->name,
                                                                                                       "display_name", user_module->display_name,
-                                                                                                      "description", user_module->description,
-                                                                                                      "parameters", user_module->parameters));
+                                                                                                      "description", user_module->description));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for user module at index %d", i);
       }
@@ -53,11 +52,10 @@ json_t * get_module_type_list(struct config_elements * config) {
     for (i=0; i<pointer_list_size(config->client_module_list); i++) {
       client_module = (struct _client_module *)pointer_list_get_at(config->client_module_list, i);
       if (client_module != NULL) {
-        json_array_append_new(json_object_get(json_object_get(j_return, "module"), "client"), json_pack("{sssssssO}",
+        json_array_append_new(json_object_get(json_object_get(j_return, "module"), "client"), json_pack("{ssssss}",
                                                                                                         "name", client_module->name,
                                                                                                         "display_name", client_module->display_name,
-                                                                                                        "description", client_module->description,
-                                                                                                        "parameters", client_module->parameters));
+                                                                                                        "description", client_module->description));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for client module at index %d", i);
       }
@@ -66,11 +64,10 @@ json_t * get_module_type_list(struct config_elements * config) {
     for (i=0; i<pointer_list_size(config->user_auth_scheme_module_list); i++) {
       scheme_module = (struct _user_auth_scheme_module *)pointer_list_get_at(config->user_auth_scheme_module_list, i);
       if (scheme_module != NULL) {
-        json_array_append_new(json_object_get(json_object_get(j_return, "module"), "scheme"), json_pack("{sssssssO}",
+        json_array_append_new(json_object_get(json_object_get(j_return, "module"), "scheme"), json_pack("{ssssss}",
                                                                                                         "name", scheme_module->name,
                                                                                                         "display_name", scheme_module->display_name,
-                                                                                                        "description", scheme_module->description,
-                                                                                                        "parameters", scheme_module->parameters));
+                                                                                                        "description", scheme_module->description));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for user auth scheme module at index %d", i);
       }
@@ -79,11 +76,10 @@ json_t * get_module_type_list(struct config_elements * config) {
     for (i=0; i<pointer_list_size(config->plugin_module_list); i++) {
       plugin_module = (struct _plugin_module *)pointer_list_get_at(config->plugin_module_list, i);
       if (plugin_module != NULL) {
-        json_array_append_new(json_object_get(json_object_get(j_return, "module"), "plugin"), json_pack("{sssssssO}",
+        json_array_append_new(json_object_get(json_object_get(j_return, "module"), "plugin"), json_pack("{ssssss}",
                                                                                                         "name", plugin_module->name,
                                                                                                         "display_name", plugin_module->display_name,
-                                                                                                        "description", plugin_module->description,
-                                                                                                        "parameters", plugin_module->parameters));
+                                                                                                        "description", plugin_module->description));
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for plugin module at index %d", i);
       }
