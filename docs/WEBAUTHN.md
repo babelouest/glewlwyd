@@ -48,7 +48,7 @@ Force all registration to Glewlwyd without a certificate (attestation set to 'no
 ### User must have a valid session to connect
 
 This options allows or forbid users to authenticate via webauthn if they already have a valid session.
-If you uncheck this option, you can use webauthn for a no-password authentication.
+If you disable this option, you can use webauthn for a no-password authentication.
 
 ### Random seed used to mitigate intrusion
 
