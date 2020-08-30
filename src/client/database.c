@@ -681,97 +681,11 @@ static int save_client_scope(struct mod_parameters * param, json_t * j_scope, js
 
 json_t * client_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{si ss ss ss s{s{ssso} s{sss[sss]so} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{s{s{ssso} s{ssso} s{ssso} }}}}",
-                   "result",
-                   G_OK,
-                   
-                   "name",
-                   "database",
-                   
-                   "display_name",
-                   "Database backend client module",
-                   
-                   "description",
-                   "Module to store clients in the database",
-                   
-                   "parameters",
-                     "use-glewlwyd-connection",
-                       "type",
-                       "boolean",
-                       "mandatory",
-                       json_true(),
-                       
-                     "connection-type",
-                       "type",
-                       "list",
-                       "values",
-                         "sqlite",
-                         "mariadb",
-                         "postgre",
-                       "mandatory",
-                       json_false(),
-                       
-                     "sqlite-dbpath",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_false(),
-                       
-                     "mariadb-host",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_false(),
-                       
-                     "mariadb-client",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_false(),
-                       
-                     "mariadb-password",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_false(),
-                       
-                     "mariadb-dbname",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_false(),
-                       
-                     "mariadb-port",
-                       "type",
-                       "number",
-                       "mandatory",
-                       json_false(),
-                       
-                     "postgre-conninfo",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_false(),
-                       
-                     "data-format",
-                       "field-name",
-                         "multiple",
-                           "type",
-                           "boolean",
-                           "default",
-                           json_false(),
-                           
-                         "read",
-                           "type",
-                           "boolean",
-                           "default",
-                           json_true(),
-                           
-                         "write",
-                           "type",
-                           "boolean",
-                           "default",
-                           json_true());
+  return json_pack("{si ss ss ss}",
+                   "result", G_OK,
+                   "name", "database",
+                   "display_name", "Database backend client module",
+                   "description", "Module to store clients in the database");
 }
 
 int client_module_unload(struct config_module * config) {

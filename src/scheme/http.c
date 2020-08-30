@@ -133,33 +133,11 @@ static char * format_auth_basic_user(const char * format, json_t * j_user) {
  */
 json_t * user_auth_scheme_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{sisssssss{s{ssso}s{sssoso}s{ssso}}}",
-                   "result",
-                   G_OK,
-                   "name",
-                   "http",
-                   "display_name",
-                   "HTTP Basic Authentication",
-                   "description",
-                   "Authenticate users against a HTTP webservice that uses HTTP Basic Authentication",
-                   "parameters",
-                     "url",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_true(),
-                     "check-server-certificate",
-                       "type",
-                       "boolean",
-                       "mandatory",
-                       json_false(),
-                       "default",
-                       json_true(),
-                     "username-format",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_false());
+  return json_pack("{sissssss}",
+                   "result", G_OK,
+                   "name", "http",
+                   "display_name", "HTTP Basic Authentication",
+                   "description", "Authenticate users against a HTTP webservice that uses HTTP Basic Authentication");
 }
 
 /**

@@ -1012,21 +1012,11 @@ static json_t * is_certificate_parameters_valid(json_t * j_parameters) {
  */
 json_t * user_auth_scheme_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{sisssssss{s{ssso}}}",
-                   "result",
-                   G_OK,
-                   "name",
-                   "certificate",
-                   "display_name",
-                   "Client certificate",
-                   "description",
-                   "Client certificate scheme module",
-                   "parameters",
-                     "cert-chain",
-                       "type",
-                       "list",
-                       "mandatory",
-                       json_true());
+  return json_pack("{si ss ss ss}",
+                   "result", G_OK,
+                   "name", "certificate",
+                   "display_name", "Client certificate",
+                   "description", "Client certificate scheme module");
 }
 
 /**
