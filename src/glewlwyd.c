@@ -1919,7 +1919,6 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
           cur_user_auth_scheme_module->user_auth_scheme_module_trigger != NULL &&
           cur_user_auth_scheme_module->user_auth_scheme_module_can_use != NULL) {
         j_module = cur_user_auth_scheme_module->user_auth_scheme_module_load(config->config_m);
-        y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s", json_dumps(j_module, JSON_ENCODE_ANY));
         if (check_result_value(j_module, G_OK)) {
           cur_user_auth_scheme_module->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
           cur_user_auth_scheme_module->display_name = o_strdup(json_string_value(json_object_get(j_module, "display_name")));
