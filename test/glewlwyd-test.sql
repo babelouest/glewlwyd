@@ -1,4 +1,5 @@
-
+DELETE FROM g_user_session_scheme;
+DELETE FROM g_user_session;
 DELETE FROM g_scope_group_auth_scheme_module_instance;
 DELETE FROM g_scope_group;
 DELETE FROM g_scope;
