@@ -453,10 +453,7 @@ int main (int argc, char ** argv) {
   }
   
   if (res == U_OK) {
-// TODO: Enable when available
-#if 0
     ulfius_global_init();
-#endif
     // Wait until stop signal is broadcasted
     pthread_mutex_lock(&global_handler_close_lock);
     pthread_cond_wait(&global_handler_close_cond, &global_handler_close_lock);
@@ -514,7 +511,6 @@ void exit_server(struct config_elements ** config, int exit_value) {
         o_free(module->name);
         o_free(module->display_name);
         o_free(module->description);
-        json_decref(module->parameters);
         o_free(module);
       }
     }
@@ -553,7 +549,6 @@ void exit_server(struct config_elements ** config, int exit_value) {
         o_free(module->name);
         o_free(module->display_name);
         o_free(module->description);
-        json_decref(module->parameters);
         o_free(module);
       }
     }
@@ -587,7 +582,6 @@ void exit_server(struct config_elements ** config, int exit_value) {
         o_free(module->name);
         o_free(module->display_name);
         o_free(module->description);
-        json_decref(module->parameters);
         o_free(module);
       }
     }
@@ -621,7 +615,6 @@ void exit_server(struct config_elements ** config, int exit_value) {
         o_free(module->name);
         o_free(module->display_name);
         o_free(module->description);
-        json_decref(module->parameters);
         o_free(module);
       }
     }
@@ -635,10 +628,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     }
     h_close_db((*config)->conn);
     h_clean_connection((*config)->conn);
-// TODO: Enable when available
-#if 0
     ulfius_global_close();
-#endif
     
     // Cleaning data
     o_free((*config)->instance);
@@ -1629,7 +1619,6 @@ static int load_user_module_file(struct config_elements * config, const char * f
     cur_user_module = o_malloc(sizeof(struct _user_module));
     if (cur_user_module != NULL) {
       cur_user_module->name = NULL;
-      cur_user_module->parameters = NULL;
       cur_user_module->file_handle = file_handle;
       *(void **) (&cur_user_module->user_module_load) = dlsym(file_handle, "user_module_load");
       *(void **) (&cur_user_module->user_module_unload) = dlsym(file_handle, "user_module_unload");
@@ -1667,7 +1656,6 @@ static int load_user_module_file(struct config_elements * config, const char * f
           cur_user_module->name = o_strdup(json_string_value(json_object_get(j_parameters, "name")));
           cur_user_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
           cur_user_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
-          cur_user_module->parameters = json_deep_copy(json_object_get(j_parameters, "parameters"));
           if (o_strlen(cur_user_module->name) && get_user_module_lib(config, cur_user_module->name) == NULL) {
             if (pointer_list_append(config->user_module_list, (void*)cur_user_module)) {
               y_log_message(Y_LOG_LEVEL_INFO, "Loading user module %s - %s", file_path, cur_user_module->name);
@@ -1678,7 +1666,6 @@ static int load_user_module_file(struct config_elements * config, const char * f
               o_free(cur_user_module->name);
               o_free(cur_user_module->display_name);
               o_free(cur_user_module->description);
-              json_decref(cur_user_module->parameters);
               o_free(cur_user_module);
               y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_file - Error pointer_list_append");
               ret = G_ERROR;
@@ -1690,7 +1677,6 @@ static int load_user_module_file(struct config_elements * config, const char * f
             o_free(cur_user_module->name);
             o_free(cur_user_module->display_name);
             o_free(cur_user_module->description);
-            json_decref(cur_user_module->parameters);
             o_free(cur_user_module);
             ret = G_ERROR_PARAM;
           }
@@ -1937,7 +1923,6 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
           cur_user_auth_scheme_module->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
           cur_user_auth_scheme_module->display_name = o_strdup(json_string_value(json_object_get(j_module, "display_name")));
           cur_user_auth_scheme_module->description = o_strdup(json_string_value(json_object_get(j_module, "description")));
-          cur_user_auth_scheme_module->parameters = json_deep_copy(json_object_get(j_module, "parameters"));
           if (o_strlen(cur_user_auth_scheme_module->name) && get_user_auth_scheme_module_lib(config, cur_user_auth_scheme_module->name) == NULL) {
             if (pointer_list_append(config->user_auth_scheme_module_list, cur_user_auth_scheme_module)) {
               y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s - %s", file_path, cur_user_auth_scheme_module->name);
@@ -1948,7 +1933,6 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
               o_free(cur_user_auth_scheme_module->name);
               o_free(cur_user_auth_scheme_module->display_name);
               o_free(cur_user_auth_scheme_module->description);
-              json_decref(cur_user_auth_scheme_module->parameters);
               o_free(cur_user_auth_scheme_module);
               y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_file - Error reallocating resources for user_auth_scheme_module_list");
               ret = G_ERROR_MEMORY;
@@ -1960,7 +1944,6 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
             o_free(cur_user_auth_scheme_module->name);
             o_free(cur_user_auth_scheme_module->display_name);
             o_free(cur_user_auth_scheme_module->description);
-            json_decref(cur_user_auth_scheme_module->parameters);
             o_free(cur_user_auth_scheme_module);
             ret = G_ERROR;
           }
@@ -2211,7 +2194,6 @@ static int load_client_module_file(struct config_elements * config, const char *
           cur_client_module->name = o_strdup(json_string_value(json_object_get(j_parameters, "name")));
           cur_client_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
           cur_client_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
-          cur_client_module->parameters = json_deep_copy(json_object_get(j_parameters, "parameters"));
           if (o_strlen(cur_client_module->name) && get_client_module_lib(config, cur_client_module->name) == NULL) {
             if (pointer_list_append(config->client_module_list, cur_client_module)) {
               y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_client_module->name);
@@ -2222,7 +2204,6 @@ static int load_client_module_file(struct config_elements * config, const char *
               o_free(cur_client_module->name);
               o_free(cur_client_module->display_name);
               o_free(cur_client_module->description);
-              json_decref(cur_client_module->parameters);
               o_free(cur_client_module);
               y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_file - Error reallocating resources for client_module_list");
               ret = G_ERROR_MEMORY;
@@ -2234,7 +2215,6 @@ static int load_client_module_file(struct config_elements * config, const char *
             o_free(cur_client_module->name);
             o_free(cur_client_module->display_name);
             o_free(cur_client_module->description);
-            json_decref(cur_client_module->parameters);
             o_free(cur_client_module);
             ret = G_ERROR;
           }
@@ -2461,7 +2441,6 @@ static int load_plugin_module_file(struct config_elements * config, const char *
           cur_plugin_module->name = o_strdup(json_string_value(json_object_get(j_result, "name")));
           cur_plugin_module->display_name = o_strdup(json_string_value(json_object_get(j_result, "display_name")));
           cur_plugin_module->description = o_strdup(json_string_value(json_object_get(j_result, "description")));
-          cur_plugin_module->parameters = json_deep_copy(json_object_get(j_result, "parameters"));
           if (o_strlen(cur_plugin_module->name) && get_plugin_module_lib(config, cur_plugin_module->name) == NULL) {
             if (pointer_list_append(config->plugin_module_list, cur_plugin_module)) {
               y_log_message(Y_LOG_LEVEL_INFO, "Loading plugin module %s - %s", file_path, cur_plugin_module->name);
@@ -2472,7 +2451,6 @@ static int load_plugin_module_file(struct config_elements * config, const char *
               o_free(cur_plugin_module->name);
               o_free(cur_plugin_module->display_name);
               o_free(cur_plugin_module->description);
-              json_decref(cur_plugin_module->parameters);
               o_free(cur_plugin_module);
               y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_file - Error reallocating resources for client_module_list");
               ret = G_ERROR_MEMORY;
@@ -2484,7 +2462,6 @@ static int load_plugin_module_file(struct config_elements * config, const char *
             o_free(cur_plugin_module->name);
             o_free(cur_plugin_module->display_name);
             o_free(cur_plugin_module->description);
-            json_decref(cur_plugin_module->parameters);
             o_free(cur_plugin_module);
             ret = G_ERROR;
           }
@@ -2493,7 +2470,6 @@ static int load_plugin_module_file(struct config_elements * config, const char *
           o_free(cur_plugin_module->name);
           o_free(cur_plugin_module->display_name);
           o_free(cur_plugin_module->description);
-          json_decref(cur_plugin_module->parameters);
           o_free(cur_plugin_module);
           y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_file - Error client_module_init for module %s", file_path);
           ret = G_ERROR_MEMORY;

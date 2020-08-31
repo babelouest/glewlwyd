@@ -100,16 +100,11 @@
  */
 json_t * user_auth_scheme_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{sisssssss{}}",
-                   "result",
-                   G_OK,
-                   "name",
-                   "retype-password",
-                   "display_name",
-                   "Short session password",
-                   "description",
-                   "Glewlwyd authentication via user password with a short session duration",
-                   "parameters");
+  return json_pack("{sissssss}",
+                   "result", G_OK,
+                   "name", "retype-password",
+                   "display_name", "Short session password",
+                   "description", "Glewlwyd authentication via user password with a short session duration");
 }
 
 /**

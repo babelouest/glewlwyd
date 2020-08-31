@@ -190,6 +190,11 @@ class App extends Component {
       var scopeGranted = [];
       var showGrant = true;
       var showGrantAsterisk = false;
+      var callback_url = decodeURIComponent(this.state.config.params.callback_url);
+      if (callback_url) {
+        const urlParams = new URLSearchParams(callback_url);
+        res.client.redirect_uri = urlParams.get("redirect_uri");
+      }
       if (res.scope.length) {
         var infoSomeScopeUnavailable = (scopeList.split(" ").length > res.scope.length);
         if (scopeList === "openid") {

@@ -103,16 +103,11 @@
  */
 json_t * plugin_module_load(struct config_plugin * config) {
   UNUSED(config);
-  return json_pack("{sisssssss{}}",
-                   "result",
-                   G_OK,
-                   "name",
-                   "mock",
-                   "display_name",
-                   "Mock plugin",
-                   "description",
-                   "Mock plugin description",
-                   "parameters");
+  return json_pack("{sissssss}",
+                   "result", G_OK,
+                   "name", "mock",
+                   "display_name", "Mock plugin",
+                   "description", "Mock plugin description");
 }
 
 /**

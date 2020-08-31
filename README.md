@@ -14,7 +14,7 @@ Authentication process supported:
 - OAuth2
 - OpenID Connect
 
-Allows users to authenticate via multiple factors:
+Allows users authentication via multiple factors:
 - Password
 - One-time password (TOTP/HOTP)
 - Webauthn (Yubikey, Android devices)
@@ -27,13 +27,19 @@ Users and clients can be stored and managed from various backends:
 - LDAP service
 - HTTP Backend service providing Basic Authentication
 
-Allows users to register a new account with the possibility to confirm their e-mail address or not. During the registration process, the new user may be expected to register their passwords, as well as other authentication factors:
+New users can register a new account with the possibility to confirm their e-mail address or not. During the registration process, the new user may be expected to register their passwords, as well as other authentication factors:
 - One-time password (TOTP/HOTP)
 - Webauthn (Yubikey, Android devices)
 - TLS Certificate
 - External OAuth2/OIDC providers
 
-See the [register documentation](docs/REGISTER.md) for more information on the registration features.
+Existing users can update their e-mail by sending a confirmation link to the new e-mail.
+
+Existing users can reset their credentials if their password or authentication schemes are lost or unavailable. Credentials can be reset by different factors:
+- A link sent to the user's e-mail
+- A one-time use secret code
+
+See the [register/update e-mail/reset credentials documentation](docs/REGISTER.md) for more information on the registration, update e-mail or reset credentials features.
 
 Based on a plugin architecture to make it easier to add or update storing backends, authentication schemes or process.
 
@@ -45,7 +51,7 @@ The backend API server is fully written in C and uses a small amount of resource
 
 Its plugin architecture makes it easy to add new modules or plugins, or modify existing ones with less risks to have unmaintainable code.
 
-Glewlwyd 2.3 [is released](https://github.com/babelouest/glewlwyd/releases/tag/v2.3.0). Feel free to [install](docs/INSTALL.md), test it, and [send feedback](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
+Glewlwyd 2.3 [is released](https://github.com/babelouest/glewlwyd/releases/latest). Feel free to [install](docs/INSTALL.md), test it, and [send feedback](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
 
 Important! Due to a complete database reworking of the application, you can't upgrade an existing installation from Glewlwyd 1.x to Glewlwyd 2.x.
 

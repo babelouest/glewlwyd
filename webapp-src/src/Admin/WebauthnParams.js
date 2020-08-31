@@ -50,7 +50,7 @@ class WebauthnParams extends Component {
         "android-key": false,
         "android-safetynet": true,
         "fido-u2f": true,
-        "none": true
+        "none": false
       };
     }
     

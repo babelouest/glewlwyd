@@ -34,40 +34,11 @@
 
 json_t * user_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{sisssssss{s{ssso}s{sssoso}s{sssos[s]}s{ssso}}}",
-                   "result",
-                   G_OK,
-                   "name",
-                   "http",
-                   "display_name",
-                   "HTTP auth backend user module",
-                   "description",
-                   "Module to store users in the database",
-                   "parameters",
-                     "url",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_true(),
-                     "check-server-certificate",
-                       "type",
-                       "boolean",
-                       "mandatory",
-                       json_false(),
-                       "default",
-                       json_true(),
-                     "default-scope",
-                       "type",
-                       "array",
-                       "mandatory",
-                       json_true(),
-                       "values",
-                        "string",
-                     "username-format",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_false());
+  return json_pack("{sissssss}",
+                   "result", G_OK,
+                   "name", "http",
+                   "display_name", "HTTP auth backend user module",
+                   "description", "Module to store users in the database");
 }
 
 int user_module_unload(struct config_module * config) {

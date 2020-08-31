@@ -48,7 +48,7 @@ Force all registration to Glewlwyd without a certificate (attestation set to 'no
 ### User must have a valid session to connect
 
 This options allows or forbid users to authenticate via webauthn if they already have a valid session.
-If you uncheck this option, you can use webauthn for a no-password authentication.
+If you disable this option, you can use webauthn for a no-password authentication.
 
 ### Random seed used to mitigate intrusion
 
@@ -74,13 +74,17 @@ Value of the relying party that will be used and compared to during the registra
 
 Select the formats you want your Webauthn scheme to support. You must select at least one format. Format TPM and Android Key are not supported yet.
 
+**Security warning**: To avoid man in the middle attacks, it's **recommended** to disable format `none`, because it's impossible to verify if a trusted device created the credentials without certificate validation.
+
 ### Signature algorithm
 
 Signature algorithms supported. Currently, only ECDSA signatures are supported.
 
 ### Certificate file path on the server
 
-These are the certificates provided by the security key manufacturers used to validate the full chain. If you enter no certificate, then no chain trust will be checked when a FIDO2 device will register, which can lead to man in the middle attack. Therefore you're strongly suggested to specify the manufacturers you support.
+These are the certificates provided by the security key manufacturers used to validate the full chain.
+
+**Security warning**: If you enter no certificate, then no chain trust will be checked when a FIDO2 or Packed device will register, which can lead to man in the middle attacks. Therefore it's **recommended** to specify the manufacturers you support.
 
 ### Android Safetynet integrity: Expected ctsProfileMatch value and Expected basicIntegrity value
 

@@ -932,6 +932,29 @@ static int validate_code_challenge(json_t * j_result_code, const char * code_ver
   return ret;
 }
 
+static int revoke_tokens_from_code(struct _oauth2_config * config, json_int_t gpgc_id) {
+  int ret, res;
+  char * query = msprintf("UPDATE " GLEWLWYD_PLUGIN_OAUTH2_TABLE_ACCESS_TOKEN " SET gpga_enabled='0' WHERE gpgr_id IN (SELECT gpgr_id FROM " GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN " WHERE gpgc_id=%" JSON_INTEGER_FORMAT ")", gpgc_id);
+
+  res = h_execute_query(config->glewlwyd_config->glewlwyd_config->conn, query, NULL, H_OPTION_EXEC);
+  o_free(query);
+  if (res == H_OK) {
+    query = msprintf("UPDATE " GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN " SET gpgr_enabled='0' WHERE gpgc_id=%" JSON_INTEGER_FORMAT, gpgc_id);
+    res = h_execute_query(config->glewlwyd_config->glewlwyd_config->conn, query, NULL, H_OPTION_EXEC);
+    o_free(query);
+    if (res == H_OK) {
+      ret = G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 revoke_tokens_from_code - Error executing query (2)");
+      ret = G_ERROR_DB;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 revoke_tokens_from_code - Error executing query (1)");
+    ret = G_ERROR_DB;
+  }
+  return ret;
+}
+
 static json_t * validate_authorization_code(struct _oauth2_config * config, const char * code, const char * client_id, const char * redirect_uri, const char * code_verifier) {
   char * code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code), * expiration_clause = NULL, * scope_list = NULL, * tmp;
   json_t * j_query, * j_result = NULL, * j_result_scope = NULL, * j_return, * j_element = NULL, * j_scope_param;
@@ -948,13 +971,14 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
     } else { // HOEL_DB_TYPE_SQLITE
       expiration_clause = o_strdup("> (strftime('%s','now'))");
     }
-    j_query = json_pack("{sss[sss]s{sssssssssis{ssss}}}",
+    j_query = json_pack("{sss[ssss]s{sssssssss{ssss}}}",
                         "table",
                         GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE,
                         "columns",
                           "gpgc_username AS username",
                           "gpgc_id",
                           "gpgc_code_challenge AS code_challenge",
+                          "gpgc_enabled AS enabled",
                         "where",
                           "gpgc_plugin_name",
                           config->name,
@@ -964,8 +988,6 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
                           redirect_uri,
                           "gpgc_code_hash",
                           code_hash,
-                          "gpgc_enabled",
-                          1,
                           "gpgc_expires_at",
                             "operator",
                             "raw",
@@ -976,66 +998,75 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
     json_decref(j_query);
     if (res == H_OK) {
       if (json_array_size(j_result)) {
-        if ((res = validate_code_challenge(json_array_get(j_result, 0), code_verifier)) == G_OK) {
-          j_query = json_pack("{sss[s]s{sO}}",
-                              "table",
-                              GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE_SCOPE,
-                              "columns",
-                                "gpgcs_scope AS name",
-                              "where",
-                                "gpgc_id",
-                                json_object_get(json_array_get(j_result, 0), "gpgc_id"));
-          res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result_scope, NULL);
-          json_decref(j_query);
-          if (res == H_OK && json_array_size(j_result_scope) > 0) {
-            if (!json_object_set_new(json_array_get(j_result, 0), "scope", json_array())) {
-              json_array_foreach(j_result_scope, index, j_element) {
-                if (scope_list == NULL) {
-                  scope_list = o_strdup(json_string_value(json_object_get(j_element, "name")));
-                } else {
-                  tmp = msprintf("%s %s", scope_list, json_string_value(json_object_get(j_element, "name")));
-                  o_free(scope_list);
-                  scope_list = tmp;
+        if (json_integer_value(json_object_get(json_array_get(j_result, 0), "enabled"))) {
+          if ((res = validate_code_challenge(json_array_get(j_result, 0), code_verifier)) == G_OK) {
+            j_query = json_pack("{sss[s]s{sO}}",
+                                "table",
+                                GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE_SCOPE,
+                                "columns",
+                                  "gpgcs_scope AS name",
+                                "where",
+                                  "gpgc_id",
+                                  json_object_get(json_array_get(j_result, 0), "gpgc_id"));
+            res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result_scope, NULL);
+            json_decref(j_query);
+            if (res == H_OK && json_array_size(j_result_scope) > 0) {
+              if (!json_object_set_new(json_array_get(j_result, 0), "scope", json_array())) {
+                json_array_foreach(j_result_scope, index, j_element) {
+                  if (scope_list == NULL) {
+                    scope_list = o_strdup(json_string_value(json_object_get(j_element, "name")));
+                  } else {
+                    tmp = msprintf("%s %s", scope_list, json_string_value(json_object_get(j_element, "name")));
+                    o_free(scope_list);
+                    scope_list = tmp;
+                  }
+                  if ((j_scope_param = get_scope_parameters(config, json_string_value(json_object_get(j_element, "name")))) != NULL) {
+                    json_object_update(j_element, j_scope_param);
+                    json_decref(j_scope_param);
+                  }
+                  if (json_object_get(j_element, "refresh-token-rolling") != NULL && rolling_refresh_override != 0) {
+                    rolling_refresh_override = json_object_get(j_element, "refresh-token-rolling")==json_true();
+                  }
+                  if (json_integer_value(json_object_get(j_element, "refresh-token-duration")) && (json_integer_value(json_object_get(j_element, "refresh-token-duration")) < maximum_duration_override || maximum_duration_override == -1)) {
+                    maximum_duration_override = json_integer_value(json_object_get(j_element, "refresh-token-duration"));
+                  }
+                  json_array_append(json_object_get(json_array_get(j_result, 0), "scope"), j_element);
                 }
-                if ((j_scope_param = get_scope_parameters(config, json_string_value(json_object_get(j_element, "name")))) != NULL) {
-                  json_object_update(j_element, j_scope_param);
-                  json_decref(j_scope_param);
+                if (rolling_refresh_override > -1) {
+                  rolling_refresh = rolling_refresh_override;
                 }
-                if (json_object_get(j_element, "refresh-token-rolling") != NULL && rolling_refresh_override != 0) {
-                  rolling_refresh_override = json_object_get(j_element, "refresh-token-rolling")==json_true();
+                if (maximum_duration_override > -1) {
+                  maximum_duration = maximum_duration_override;
                 }
-                if (json_integer_value(json_object_get(j_element, "refresh-token-duration")) && (json_integer_value(json_object_get(j_element, "refresh-token-duration")) < maximum_duration_override || maximum_duration_override == -1)) {
-                  maximum_duration_override = json_integer_value(json_object_get(j_element, "refresh-token-duration"));
-                }
-                json_array_append(json_object_get(json_array_get(j_result, 0), "scope"), j_element);
+                json_object_set_new(json_array_get(j_result, 0), "scope_list", json_string(scope_list));
+                json_object_set_new(json_array_get(j_result, 0), "refresh-token-rolling", rolling_refresh?json_true():json_false());
+                json_object_set_new(json_array_get(j_result, 0), "refresh-token-duration", json_integer(maximum_duration));
+                j_return = json_pack("{sisO}", "result", G_OK, "code", json_array_get(j_result, 0));
+                o_free(scope_list);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error allocating resources for json_array()");
+                j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
               }
-              if (rolling_refresh_override > -1) {
-                rolling_refresh = rolling_refresh_override;
-              }
-              if (maximum_duration_override > -1) {
-                maximum_duration = maximum_duration_override;
-              }
-              json_object_set_new(json_array_get(j_result, 0), "scope_list", json_string(scope_list));
-              json_object_set_new(json_array_get(j_result, 0), "refresh-token-rolling", rolling_refresh?json_true():json_false());
-              json_object_set_new(json_array_get(j_result, 0), "refresh-token-duration", json_integer(maximum_duration));
-              j_return = json_pack("{sisO}", "result", G_OK, "code", json_array_get(j_result, 0));
-              o_free(scope_list);
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error allocating resources for json_array()");
-              j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error executing j_query (2)");
+              j_return = json_pack("{si}", "result", G_ERROR_DB);
             }
+            json_decref(j_result_scope);
+          } else if (res == G_ERROR_UNAUTHORIZED) {
+            j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          } else if (res == G_ERROR_PARAM) {
+            j_return = json_pack("{si}", "result", G_ERROR_PARAM);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error executing j_query (2)");
-            j_return = json_pack("{si}", "result", G_ERROR_DB);
+            y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error validate_code_challenge");
+            j_return = json_pack("{si}", "result", G_ERROR);
           }
-          json_decref(j_result_scope);
-        } else if (res == G_ERROR_UNAUTHORIZED) {
-          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-        } else if (res == G_ERROR_PARAM) {
-          j_return = json_pack("{si}", "result", G_ERROR_PARAM);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error validate_code_challenge");
-          j_return = json_pack("{si}", "result", G_ERROR);
+          if (json_true() == json_object_get(config->j_params, "auth-type-code-revoke-replayed")) {
+            if (revoke_tokens_from_code(config, json_integer_value(json_object_get(json_array_get(j_result, 0), "gpgc_id"))) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_authorization_code - Error revoke_tokens_from_code");
+            }
+          }
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
       } else {
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
@@ -3431,123 +3462,11 @@ static int jwt_autocheck(struct _oauth2_config * config) {
 
 json_t * plugin_module_load(struct config_plugin * config) {
   UNUSED(config);
-  return json_pack("{si ss ss ss s{ s{sssos[sssss]} s{sssos[sss]} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ssso} s{ss so s{ssso} s{ssso} }}}",
-                   "result",
-                   G_OK,
-                   
-                   "name",
-                   "oauth2-glewlwyd",
-                   
-                   "display_name",
-                   "Glewlwyd OAuth2 plugin",
-                   
-                   "description",
-                   "Plugin for legacy Glewlwyd OAuth2 workflow",
-                   
-                   "parameters",
-                     "jwt-type",
-                       "type",
-                       "list",
-                       "mandatory",
-                       json_true(),
-                       "values",
-                         "rsa",
-                         "ecdsa",
-                         "sha",
-                         "rsa-pss",
-                         "eddsa",
-                         
-                     "jwt-key-size",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_true(),
-                       "values",
-                         "256",
-                         "384",
-                         "512",
-                         
-                     "key",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_true(),
-                       
-                     "cert",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_true(),
-                       
-                     "access-token-duration",
-                       "type",
-                       "number",
-                       "mandatory",
-                       json_true(),
-                       
-                     "refresh-token-duration",
-                       "type",
-                       "number",
-                       "mandatory",
-                       json_true(),
-                       
-                     "code-token-duration",
-                       "type",
-                       "number",
-                       "mandatory",
-                       json_true(),
-                       
-                     "refresh-token-rolling",
-                       "type",
-                       "boolean",
-                       "default",
-                       json_false(),
-                       
-                     "auth-type-code-enabled",
-                       "type",
-                       "boolean",
-                       "mandatory",
-                       json_true(),
-                       
-                     "auth-type-implicit-enabled",
-                       "type",
-                       "boolean",
-                       "mandatory",
-                       json_true(),
-                       
-                     "auth-type-password-enabled",
-                       "type",
-                       "boolean",
-                       "mandatory",
-                       json_true(),
-                       
-                     "auth-type-client-enabled",
-                       "type",
-                       "boolean",
-                       "mandatory",
-                       json_true(),
-                       
-                     "auth-type-refresh-enabled",
-                       "type",
-                       "boolean",
-                       "mandatory",
-                       json_true(),
-                       
-                     "scope",
-                       "type",
-                       "array",
-                       "mandatory",
-                       json_false(),
-                       "format",
-                         "type",
-                         "string",
-                         "mandatory",
-                         json_true(),
-                       "rolling-refresh",
-                         "type",
-                         "boolean",
-                         "mandatory",
-                         json_false());
+  return json_pack("{si ss ss ss}",
+                   "result", G_OK,
+                   "name", "oauth2-glewlwyd",
+                   "display_name", "Glewlwyd OAuth2 plugin",
+                   "description", "Plugin for legacy Glewlwyd OAuth2 workflow");
 }
 
 int plugin_module_unload(struct config_plugin * config) {
@@ -3568,6 +3487,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
   *cls = o_malloc(sizeof(struct _oauth2_config));
   if (*cls != NULL) {
     p_config = (struct _oauth2_config *)*cls;
+    p_config->glewlwyd_resource_config = NULL;
     
     do {
       pthread_mutexattr_init ( &mutexattr );

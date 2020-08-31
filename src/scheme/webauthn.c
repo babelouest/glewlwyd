@@ -38,12 +38,12 @@
 #include "../glewlwyd-common.h"
 
 const char * iso_3166_list[] = {"AF", "AX", "AL", "DZ", "AS", "AD", "AO", "AI", "AQ", "AG", "AR", "AM", "AW", "AU", "AT", "AZ", "BH", "BS", "BD", "BB", "BY", "BE", "BZ", "BJ", "BM", "BT", "BO", "BQ", "BA", "BW", "BV", "BR", "IO", "BN", "BG", "BF", "BI", "KH", "CM", "CA", "CV", "KY", "CF", "TD", "CL", "CN", "CX", "CC", "CO", "KM", "CG", "CD", "CK", "CR", "CI", "HR", "CU", "CW", "CY", "CZ", "DK", "DJ", "DM", "DO", "EC", "EG", "SV", "GQ", "ER", "EE", "ET", "FK", "FO", "FJ", "FI", "FR", "GF", "PF", "TF", "GA", "GM", "GE", "DE", "GH", "GI", "GR", "GL", "GD", "GP", "GU", "GT", "GG", "GN", "GW", "GY", "HT", "HM", "VA", "HN", "HK", "HU", "IS", "IN", "ID", "IR", "IQ", "IE", "IM", "IL", "IT", "JM", "JP", "JE", "JO", "KZ", "KE", "KI", "KP", "KR", "KW", "KG", "LA", "LV", "LB", "LS", "LR", "LY", "LI", "LT", "LU", "MO", "MK", "MG", "MW", "MY", "MV", "ML", "MT", "MH", "MQ", "MR", "MU", "YT", "MX", "FM", "MD", "MC", "MN", "ME", "MS", "MA", "MZ", "MM", "NA", "NR", "NP", "NL", "NC", "NZ", "NI", "NE", "NG", "NU", "NF", "MP", "NO", "OM", "PK", "PW", "PS", "PA", "PG", "PY", "PE", "PH", "PN", "PL", "PT", "PR", "QA", "RE", "RO", "RU", "RW", "BL", "SH", "KN", "LC", "MF", "PM", "VC", "WS", "SM", "ST", "SA", "SN", "RS", "SC", "SL", "SG", "SX", "SK", "SI", "SB", "SO", "ZA", "GS", "SS", "ES", "LK", "SD", "SR", "SJ", "SZ", "SE", "CH", "SY", "TW", "TJ", "TZ", "TH", "TL", "TG", "TK", "TO", "TT", "TN", "TR", "TM", "TC", "TV", "UG", "UA", "AE", "GB", "US", "UM", "UY", "UZ", "VU", "VE", "VN", "VG", "VI", "WF", "EH", "YE", "ZM", "ZW", NULL};
-#define G_PACKED_CERT_O_KEY "O="
-#define G_PACKED_CERT_OU_KEY "OU="
-#define G_PACKED_CERT_C_KEY "C="
-#define G_PACKED_CERT_CN_KEY "CN="
+#define G_PACKED_CERT_O_KEY    "O="
+#define G_PACKED_CERT_OU_KEY   "OU="
+#define G_PACKED_CERT_C_KEY    "C="
+#define G_PACKED_CERT_CN_KEY   "CN="
 #define G_PACKED_CERT_OU_VALUE "Authenticator Attestation"
-#define G_PACKED_OID_AAGUID "1.3.6.1.4.1.45724.1.1.4"
+#define G_PACKED_OID_AAGUID    "1.3.6.1.4.1.45724.1.1.4"
 
 #define G_TABLE_WEBAUTHN_USER       "gs_webauthn_user"
 #define G_TABLE_WEBAUTHN_CREDENTIAL "gs_webauthn_credential"
@@ -53,12 +53,12 @@ const char * iso_3166_list[] = {"AF", "AX", "AL", "DZ", "AS", "AD", "AO", "AI", 
 #define USER_ID_LENGTH 32
 
 #define FLAG_USER_PRESENT 0x01
-#define FLAG_USER_VERIFY 0x04
-#define FLAG_AT 0x40
-#define FLAG_ED 0x80
+#define FLAG_USER_VERIFY  0x04
+#define FLAG_AT           0x40
+#define FLAG_ED           0x80
 
-#define COUNTER_LEN 4
-#define AAGUID_LEN 16
+#define COUNTER_LEN   4
+#define AAGUID_LEN    16
 #define CRED_ID_L_LEN 2
 
 #define FLAGS_OFFSET 32
@@ -2643,71 +2643,11 @@ static int generate_fake_user_id(json_t * j_params, const char * username, unsig
  */
 json_t * user_auth_scheme_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{sisssssss{s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}}}",
-                   "result",
-                   G_OK,
-                   "name",
-                   "webauthn",
-                   "display_name",
-                   "Webauthn",
-                   "description",
-                   "Webauthn scheme module",
-                   "parameters",
-                     "challenge-length",
-                       "type",
-                       "number",
-                       "mandatory",
-                       json_true(),
-                     "credential-expiration",
-                       "type",
-                       "number",
-                       "mandatory",
-                       json_true(),
-                     "credential-assertion",
-                       "type",
-                       "number",
-                       "mandatory",
-                       json_true(),
-                     "rp-origin",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_true(),
-                     "pubKey-cred-params",
-                       "type",
-                       "array",
-                       "mandatory",
-                       json_true(),
-                     "ctsProfileMatch",
-                       "type",
-                       "boolean",
-                       "mandatory",
-                       json_false(),
-                     "basicIntegrity",
-                       "type",
-                       "boolean",
-                       "mandatory",
-                       json_false(),
-                     "google-root-ca-r2",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_false(),
-                     "root-ca-list",
-                       "type",
-                       "list",
-                       "mandatory",
-                       json_false(),
-                     "force-fmt-none",
-                       "type",
-                       "boolean",
-                       "mandatory",
-                       json_false(),
-                     "fmt",
-                       "type",
-                       "object",
-                       "mandatory",
-                       json_false());
+  return json_pack("{si ss ss ss }",
+                   "result", G_OK,
+                   "name", "webauthn",
+                   "display_name", "Webauthn",
+                   "description", "Webauthn scheme module");
 }
 
 /**
