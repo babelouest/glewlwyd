@@ -392,9 +392,9 @@ You can add as many additional values as you want. If the property isn't present
 
 ### Additional claims in the ID Token or the /userinfo endpoint
 
-This section allows to add specific claims in ID Tokens or userinfo results and to specify name and e-mail claim handling.
+This section allows to add specific claims in ID Tokens or userinfo results and to specify name, e-mail and granted scope claim handling.
 
-`Name claim` and `E-mail claim` properties can have one of the following values:
+`Name claim`, `E-mail claim` and `Scope` properties can have one of the following values:
 - No: The value will never be available on ID Tokens or userinfo results
 - On demand: The value will be available if specifically asked in the `claims` parameter
 - Mandatory: The value will always be available on ID Tokens or userinfo results
