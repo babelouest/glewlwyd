@@ -1431,19 +1431,19 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
   if (j_claims_request != NULL) {
     json_object_foreach(j_claims_request, claim, j_claim_request) {
       // Append name if on demand
-      if (0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "name-claim")))) {
+      if (0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "name-claim"))) && json_null() == j_claim_request && 0 == o_strcmp("name", claim)) {
         if (json_object_get(j_user, "name") != NULL) {
           json_object_set(j_userinfo, "name", json_object_get(j_user, "name"));
         }
       }
       // Append e-mail if on demand
-      if (0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "email-claim")))) {
+      if (0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "email-claim"))) && json_null() == j_claim_request && 0 == o_strcmp("email", claim)) {
         if (json_object_get(j_user, "email") != NULL) {
           json_object_set(j_userinfo, "email", json_object_get(j_user, "email"));
         }
       }
       // Append scope if on demand
-      if (0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "scope-claim")))) {
+      if (0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "scope-claim"))) && json_null() == j_claim_request && 0 == o_strcmp("scope", claim)) {
         if (json_object_get(j_user, "scope") != NULL) {
           json_object_set_new(j_userinfo, "scope", json_array());
           for (index=0; scopes_array[index] != NULL; index++) {
