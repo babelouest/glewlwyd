@@ -23,6 +23,8 @@
 #define USER_PASSWORD "password"
 #define PLUGIN_NAME "oidc_claims"
 #define SCOPE_LIST "g_profile openid"
+#define SCOPE_1 "g_profile"
+#define SCOPE_2 "openid"
 #define CLIENT "client1_id"
 #define RESPONSE_TYPE "id_token token"
 
@@ -39,7 +41,7 @@ struct _u_request user_req;
 
 START_TEST(test_oidc_userinfo_add_plugin)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssisisisososososososososssss[{sssoss}{sssossss}{sssossssssss}{sssoss}{sssossss}{sssossssssss}{ssssso}]}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssisisisososososososososssssss[{sssoss}{sssossss}{sssossssssss}{sssoss}{sssossss}{sssossssssss}{ssssso}]}}",
                                 "module",
                                 "oidc",
                                 "name",
@@ -80,6 +82,8 @@ START_TEST(test_oidc_userinfo_add_plugin)
                                   "name-claim",
                                   "mandatory",
                                   "email-claim",
+                                  "mandatory",
+                                  "scope-claim",
                                   "mandatory",
                                   "claims",
                                     "name",
@@ -180,7 +184,7 @@ START_TEST(test_oidc_userinfo)
   bearer = msprintf("Bearer %s", access_token);
   u_map_put(req.map_header, "Authorization", bearer);
 
-  j_result = json_pack("{sssssssisosss[ss]s[ii]s[oo]}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", CLAIM_STR, "claim-number", 42, "claim-bool", json_true(), "claim-mandatory", CLAIM_MANDATORY, "claim-array-str", CLAIM_STR, CLAIM_STR_2, "claim-array-number", 42, 43, "claim-array-bool", json_true(), json_false());
+  j_result = json_pack("{sssssssisosss[ss]s[ii]s[oo]s[ss]}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", CLAIM_STR, "claim-number", 42, "claim-bool", json_true(), "claim-mandatory", CLAIM_MANDATORY, "claim-array-str", CLAIM_STR, CLAIM_STR_2, "claim-array-number", 42, 43, "claim-array-bool", json_true(), json_false(), "scope", SCOPE_1, SCOPE_2);
   ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
@@ -216,7 +220,7 @@ START_TEST(test_oidc_userinfo_jwt)
   bearer = msprintf("Bearer %s", access_token);
   u_map_put(req.map_header, "Authorization", bearer);
 
-  j_result = json_pack("{sssssssisosss[ss]s[ii]s[oo]}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", CLAIM_STR, "claim-number", 42, "claim-bool", json_true(), "claim-mandatory", CLAIM_MANDATORY, "claim-array-str", CLAIM_STR, CLAIM_STR_2, "claim-array-number", 42, 43, "claim-array-bool", json_true(), json_false());
+  j_result = json_pack("{sssssssisosss[ss]s[ii]s[oo]s[ss]}", "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "claim-str", CLAIM_STR, "claim-number", 42, "claim-bool", json_true(), "claim-mandatory", CLAIM_MANDATORY, "claim-array-str", CLAIM_STR, CLAIM_STR_2, "claim-array-number", 42, 43, "claim-array-bool", json_true(), json_false(), "scope", SCOPE_1, SCOPE_2);
 
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
   req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/userinfo/?format=jwt");
