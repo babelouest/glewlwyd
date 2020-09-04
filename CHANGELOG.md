@@ -10,6 +10,7 @@
 - Show `client_id` and `redirect_uri` on grant scope
 - Remove `parameters` object on `*_load()` functions result
 - Scheme Webauthn: disable fmt `none` by default
+- Allow to add granted scope list in id_token and /userinfo
 
 ## 2.3.2
 
