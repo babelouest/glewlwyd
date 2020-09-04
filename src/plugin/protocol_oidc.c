@@ -630,6 +630,21 @@ static json_t * check_parameters (json_t * j_params) {
         }
       }
     }
+    if (json_object_get(j_params, "scope-claim") != NULL && 0 != o_strcmp("no", json_string_value(json_object_get(j_params, "scope-claim"))) && 0 != o_strcmp("on-demand", json_string_value(json_object_get(j_params, "scope-claim"))) && 0 != o_strcmp("mandatory", json_string_value(json_object_get(j_params, "scope-claim")))) {
+      json_array_append_new(j_error, json_string("Property 'scope-claim' is optional and must have one of the following values: 'no', 'on-demand' or 'mandatory'"));
+      ret = G_ERROR_PARAM;
+    }
+    if (json_object_get(j_params, "scope-claim-scope") != NULL && !json_is_array(json_object_get(j_params, "scope-claim-scope"))) {
+      json_array_append_new(j_error, json_string("Property 'scope-claim-scope' is optional and must be an array of strings"));
+      ret = G_ERROR_PARAM;
+    } else if (json_object_get(j_params, "scope-claim-scope") != NULL) {
+      json_array_foreach(json_object_get(j_params, "scope-claim-scope"), indexScope, j_scope) {
+        if (!json_string_length(j_scope)) {
+          json_array_append_new(j_error, json_string("Property 'scope-claim-scope' is optional and must be an array of strings"));
+          ret = G_ERROR_PARAM;
+        }
+      }
+    }
     if (json_object_get(j_params, "address-claim") != NULL) {
       if (!json_is_object(json_object_get(j_params, "address-claim"))) {
         json_array_append_new(j_error, json_string("Property 'address-claim' is optional and must be a JSON object"));
@@ -1375,6 +1390,10 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
   long int lvalue;
   size_t index = 0, index_scope = 0, index_value = 0;
   
+  if (scopes != NULL && !split_string(scopes, " ", &scopes_array)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_userinfo - Error split_string scopes");
+  }
+
   // Append name if mandatory
   if (0 == o_strcmp("mandatory", json_string_value(json_object_get(config->j_params, "name-claim")))) {
     if (json_object_get(j_user, "name") != NULL) {
@@ -1385,6 +1404,15 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
   if (0 == o_strcmp("mandatory", json_string_value(json_object_get(config->j_params, "email-claim")))) {
     if (json_object_get(j_user, "email") != NULL) {
       json_object_set(j_userinfo, "email", json_object_get(j_user, "email"));
+    }
+  }
+  // Append scope if mandatory
+  if (0 == o_strcmp("mandatory", json_string_value(json_object_get(config->j_params, "scope-claim")))) {
+    if (json_object_get(j_user, "scope") != NULL) {
+      json_object_set_new(j_userinfo, "scope", json_array());
+      for (index=0; scopes_array[index] != NULL; index++) {
+        json_array_append_new(json_object_get(j_userinfo, "scope"), json_string(scopes_array[index]));
+      }
     }
   }
   
@@ -1414,6 +1442,15 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
           json_object_set(j_userinfo, "email", json_object_get(j_user, "email"));
         }
       }
+      // Append scope if on demand
+      if (0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "scope-claim")))) {
+        if (json_object_get(j_user, "scope") != NULL) {
+          json_object_set_new(j_userinfo, "scope", json_array());
+          for (index=0; scopes_array[index] != NULL; index++) {
+            json_array_append_new(json_object_get(j_userinfo, "scope"), json_string(scopes_array[index]));
+          }
+        }
+      }
       if (0 == o_strcmp("address", claim)) {
         if (0 == o_strcmp("on-demand", json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "type")))) {
           j_address = get_address_claim(config, j_user);
@@ -1435,7 +1472,7 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
   }
   
   // Append scopes claims
-  if (scopes == NULL || split_string(scopes, " ", &scopes_array)) {
+  if (scopes_array != NULL) {
     json_array_foreach(json_object_get(config->j_params, "name-claim-scope"), index, j_scope) {
       if (string_array_has_value((const char **)scopes_array, json_string_value(j_scope))) {
         if (json_object_get(j_user, "name") != NULL) {
@@ -1495,8 +1532,6 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
         }
       }
     }
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_userinfo - Error split_string scopes");
   }
   
   // Append mandatory claims
@@ -5562,6 +5597,9 @@ static int generate_discovery_content(struct _oidc_config * config) {
     }
     if (0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "email-claim"))) || 0 == o_strcmp("mandatory", json_string_value(json_object_get(config->j_params, "email-claim")))) {
       json_array_append_new(json_object_get(j_discovery, "claims_supported"), json_string("email"));
+    }
+    if (0 == o_strcmp("on-demand", json_string_value(json_object_get(config->j_params, "scope-claim"))) || 0 == o_strcmp("mandatory", json_string_value(json_object_get(config->j_params, "scope-claim")))) {
+      json_array_append_new(json_object_get(j_discovery, "claims_supported"), json_string("scope"));
     }
     if (0 == o_strcmp("on-demand", json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "type"))) || 0 == o_strcmp("mandatory", json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "type")))) {
       json_array_append_new(json_object_get(j_discovery, "claims_supported"), json_string("address"));
