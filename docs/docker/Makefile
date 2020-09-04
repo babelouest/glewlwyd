@@ -6,7 +6,7 @@ build:
 	docker tag babelouest/glewlwyd:$(GLEWLWYD_VERSION) babelouest/glewlwyd:latest
 
 run:
-	docker run --rm -it -p 4593:4593 babelouest/glewlwyd
+	docker run --rm -it -p 4593:4593 babelouest/glewlwyd:latest
 
 my-config:
 	docker run --rm -it -p 4593:4593 -v $(shell pwd)/config:/etc/glewlwyd babelouest/glewlwyd
