@@ -1,6 +1,6 @@
 # Getting started with Glewlwyd 2.0
 
-[![License: CC BY-SA 4.0](https://licensebuttons.net/l/by-sa/4.0/80x15.png)](https://creativecommons.org/licenses/by-sa/4.0/)
+[![License: CC BY 4.0](https://licensebuttons.net/l/by/4.0/80x15.png)](https://creativecommons.org/licenses/by/4.0/)
 
 - [Installation](#installation)
 - [First connection to the administration page](#first-connection-to-the-administration-page)
