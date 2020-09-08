@@ -11,8 +11,8 @@
 	"author": "",
 	"license": "MIT",
 	"dependencies": {
-		"i18next": "^19.4.4",
-		"i18next-browser-languagedetector": "^4.0.1",
+		"i18next": "^19.7.0",
+		"i18next-browser-languagedetector": "^6.0.1",
 		"i18next-http-backend": "^1.0.15",
 		"qrcode-generator": "^1.4.4",
 		"react": "^16.13.1",
