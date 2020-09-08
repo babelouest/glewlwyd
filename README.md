@@ -21,6 +21,7 @@ Allows users authentication via multiple factors:
 - One-time password sent via e-mail
 - TLS Certificate
 - External OAuth2/OIDC providers
+- HTTP Backend service providing Basic Authentication
 
 Users and clients can be stored and managed from various backends:
 - Database
@@ -41,9 +42,9 @@ Existing users can reset their credentials if their password or authentication s
 
 See the [register/update e-mail/reset credentials documentation](docs/REGISTER.md) for more information on the registration, update e-mail or reset credentials features.
 
-Based on a plugin architecture to make it easier to add or update storing backends, authentication schemes or process.
+Based on a plugin architecture to make it easier to add or update storage backends, authentication schemes or process.
 
-Allows passwordless authentication.
+**Allows passwordless authentication.**
 
 Adding new authentication schemes or backend storage for users and clients is possible via the plugin architecture.
 
@@ -64,7 +65,7 @@ The full installation documentation is available in the [install documentation](
 A docker image is available for tests on localhost, run the following command:
 
 ```shell
-$ docker run --rm -it -p 4593:4593 babelouest/glewlwyd
+$ docker run --rm -it -p 4593:4593 babelouest/glewlwyd:latest
 ```
 
 And open the address [http://localhost:4593/](http://localhost:4593/) on your browser.
@@ -72,7 +73,7 @@ And open the address [http://localhost:4593/](http://localhost:4593/) on your br
 - User: `admin`
 - Password: `password`
 
-More information in the [install documentation](docs/INSTALL.md#docker).
+This Docker image can be used for tests or for real use by changing the configuration files. More information in the [install documentation](docs/INSTALL.md#docker).
 
 ## Getting started
 
