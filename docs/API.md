@@ -12,6 +12,7 @@ This document is intended to describe Glewlwyd's core API endpoints. Glewlwyd's 
   - [Get server configuration](#get-server-configuration)
 - [Plugins and modules management](#plugins-and-modules-management)
   - [Get all modules available](#get-all-modules-available)
+  - [Reload all modules](#reload-all-modules)
   - [Get all user module instances available](#get-all-user-module-instances-available)
   - [Get a user module instance](#get-a-user-module-instance)
   - [Add a new user module instance](#add-a-new-user-module-instance)
@@ -438,6 +439,28 @@ Example
   ]
 }
 ```
+
+### Reload all modules
+
+Reload all the modules and instances, useful if you have multiple Glewlwyd instances connected to the same database
+
+#### URL
+
+`/api/mod/reload/`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+#### Success response
+
+Code 200
 
 ### Get all user module instances available
 
