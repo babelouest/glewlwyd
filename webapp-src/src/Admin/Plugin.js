@@ -17,6 +17,7 @@ class Plugin extends Component {
     }
 
     this.addMod = this.addMod.bind(this);
+    this.reloadMods = this.reloadMods.bind(this);
     this.editMod = this.editMod.bind(this);
     this.deleteMod = this.deleteMod.bind(this);
     this.switchModStatus = this.switchModStatus.bind(this);
@@ -32,6 +33,10 @@ class Plugin extends Component {
 
   addMod(e) {
     messageDispatcher.sendMessage('App', {type: "add", role: "plugin"});
+  }
+
+  reloadMods(e) {
+    messageDispatcher.sendMessage('App', {type: "reloadMods"});
   }
 
   editMod(e, mod, index) {
@@ -127,9 +132,14 @@ class Plugin extends Component {
             <h4>{i18next.t("admin.plugin-mod-list-title")}</h4>
           </th>
           <th colSpan="1">
-            <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.addMod(e)} title={i18next.t("admin.add")}>
-              <i className="fas fa-plus"></i>
-            </button>
+            <div className="btn-group" role="group">
+              <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.addMod(e)} title={i18next.t("admin.add")}>
+                <i className="fas fa-plus"></i>
+              </button>
+              <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.reloadMods(e)} title={i18next.t("login.btn-reload")}>
+                <i className="fas fa-refresh"></i>
+              </button>
+            </div>
           </th>
         </tr>
         <tr>
