@@ -21,11 +21,13 @@ struct _u_request admin_req;
 
 START_TEST(test_glwd_admin_get_mod_types)
 {
-  char * url = msprintf("%s/mod/type/", SERVER_URI);
-  
-  int res = run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
-  o_free(url);
-  ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/mod/type/", NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+}
+END_TEST
+
+START_TEST(test_glwd_admin_reload_mods)
+{
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/mod/reload/", NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
 }
 END_TEST
 
@@ -37,6 +39,7 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd admin module types");
   tc_core = tcase_create("test_glwd_admin_mod_types");
   tcase_add_test(tc_core, test_glwd_admin_get_mod_types);
+  tcase_add_test(tc_core, test_glwd_admin_reload_mods);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
