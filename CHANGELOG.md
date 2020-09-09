@@ -12,6 +12,7 @@
 - Scheme Webauthn: disable fmt `none` by default
 - Allow to add granted scope list in `id_token` and `/userinfo`
 - Fix last login refresh without authentication bug
+- Add endpoint `/mod/reload/` to reload modules lists
 
 ## 2.3.2
 
