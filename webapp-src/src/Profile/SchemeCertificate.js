@@ -18,27 +18,25 @@ class SchemeCertificate extends Component {
       registered: false,
       registration: false,
       certificateList: [],
+      dn: false,
       addModal: false,
       certFile: false,
       curCert: false,
       fileName: false,
       activeCert: false,
       downloadCert: false,
-      showPassword: false,
-      canAddCert: false
+      canAddCert: false,
+      canRequestCert: false
     };
     
     this.getRegister = this.getRegister.bind(this);
     this.selectCertFile = this.selectCertFile.bind(this);
     this.addCertificateFile = this.addCertificateFile.bind(this);
     this.addCertificateFromRequest = this.addCertificateFromRequest.bind(this);
-    this.requestNewCertificate = this.requestNewCertificate.bind(this);
     this.switchCertStatus = this.switchCertStatus.bind(this);
     this.deleteCert = this.deleteCert.bind(this);
     this.confirmDeleteCert = this.confirmDeleteCert.bind(this);
     this.testCertificate = this.testCertificate.bind(this);
-    this.showPassword = this.showPassword.bind(this);
-    this.copyPassword = this.copyPassword.bind(this);
     
     this.getRegister();
   }
@@ -53,13 +51,14 @@ class SchemeCertificate extends Component {
       registered: false,
       registration: false,
       certificateList: [],
+      dn: false,
       addModal: false,
       certFile: false,
       fileName: false,
       activeCert: false,
       downloadCert: false,
-      showPassword: false,
-      canAddCert: false
+      canAddCert: false,
+      canRequestCert: false
     });
   }
   
@@ -67,10 +66,10 @@ class SchemeCertificate extends Component {
     if (this.state.profile) {
       return apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
       .then((res) => {
-        this.setState({certificateList: res.certificate, canAddCert: res["add-certificate"], certFile: false, fileName: false, activeCert: false, downloadCert: false});
+        this.setState({certificateList: res.certificate||[], dn: res.dn||false, canAddCert: res["add-certificate"], certFile: false, canRequestCert: res["request-certificate"], fileName: false, activeCert: false, downloadCert: false});
       })
       .fail((err) => {
-        this.setState({certificateList: [], canAddCert: false, certFile: false, fileName: false, downloadCert: false}, () => {
+        this.setState({certificateList: [], dn: false, canAddCert: false, canRequestCert: false, certFile: false, fileName: false, downloadCert: false}, () => {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         });
       });
@@ -107,6 +106,23 @@ class SchemeCertificate extends Component {
         }
       });
     }
+  }
+  
+  addCertificateFromRequest() {
+    apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "POST", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, value: {register: "use-certificate"}})
+    .then((res) => {
+      this.getRegister();
+      if (this.state.config.params.register) {
+        messageDispatcher.sendMessage('App', {type: "registration"});
+      }
+    })
+    .fail((err) => {
+      if (err.status === 400) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-certificate-invalid")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
+    });
   }
   
   switchCertStatus(cert) {
@@ -234,6 +250,27 @@ class SchemeCertificate extends Component {
         </tr>
       );
     });
+    if (this.state.dn) {
+      certificateList.push(
+        <tr key={certificateList.length}>
+          <td>
+            <span className="d-inline-block" tabIndex="0" data-toggle="tooltip" title={this.state.dn}>
+              {this.state.dn.substring(0, 8)}[...]
+            </span>
+          </td>
+          <td className="d-none d-lg-table-cell">
+            <span className="d-inline-block" tabIndex="1" data-toggle="tooltip">
+            </span>
+          </td>
+          <td className="d-none d-lg-table-cell">
+          </td>
+          <td className="d-none d-lg-table-cell">
+          </td>
+          <td>
+          </td>
+        </tr>
+      );
+    }
     return (
       <div>
         <div className="row">
@@ -260,7 +297,7 @@ class SchemeCertificate extends Component {
           <div className="col-md-6">
             <div className="btn-group" role="group" aria-label="current-certificate">
               <button type="button" className="btn btn-outline-secondary" disabled={!this.state.canAddCert} onClick={this.addCertificateFromRequest} title={i18next.t("profile.scheme-certificate-add-from-request")}>
-                <i className="fas fa-file-contract"></i>
+                <i className="fas fa-file-code-o"></i>
               </button>
               <button type="button" className="btn btn-outline-secondary" onClick={this.testCertificate} title={i18next.t("profile.scheme-certificate-test")}>
                 <i className="fas fa-question-circle"></i>
