@@ -1385,7 +1385,9 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
   } else {
     j_result = get_user_certificate_list_user_property(config, ((struct _cert_param *)cls)->j_parameters, username);
     if (check_result_value(j_result, G_OK)) {
-      j_return = json_pack("{sis{sOso}}", "result", G_OK, "response", "certificate", json_object_get(j_result, "certificate"), "add-certificate", (json_object_get(((struct _cert_param *)cls)->j_parameters, "use-scheme-storage")==json_true()?json_true():json_false()));
+      json_object_del(j_result, "result");
+      json_object_set(j_result, "add-certificate", (json_object_get(((struct _cert_param *)cls)->j_parameters, "use-scheme-storage")==json_true()?json_true():json_false()));
+      j_return = json_pack("{sisO}", "result", G_OK, "response", j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register_get certificate - Error get_user_certificate_list_user_property");
       j_return = json_pack("{si}", "result", G_ERROR);
