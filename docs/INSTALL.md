@@ -45,8 +45,9 @@
     * [Customize CSS](#customize-css)
     * [Customize titles and logos](#customize-titles-and-logos)
 12. [Run Glewlwyd](#run-glewlwyd)
-13. [Getting started with the application](#getting-started-with-the-application)
-14. [Running Glewlwyd in test mode for integration tests](#running-glewlwyd-in-test-mode-for-integration-tests)
+13. [Event logs triggered](#event-logs-triggered)
+14. [Getting started with the application](#getting-started-with-the-application)
+15. [Running Glewlwyd in test mode for integration tests](#running-glewlwyd-in-test-mode-for-integration-tests)
 
 ## Upgrade Glewlwyd
 
@@ -1014,6 +1015,74 @@ Change the tag content value `<title>` in the following HTML pages:
 - [webapp/index.html](../webapp/index.html): Admin page
 - [webapp/login.html](../webapp/login.html): Login page
 - [webapp/profile.html](../webapp/profile.html): Profile page
+
+## Event logs triggered
+
+Glewlwyd now logs event messages. These messages can be parsed and used to trigger external actions such as webhooks or message broadcasting to other Glewlwyd instances for example.
+
+Event log messages have the following format:
+
+```
+<date_timestamp> - Glewlwyd INFO: Event - <event message>
+```
+
+### List of events logged
+
+#### Core events
+
+```
+<date_timestamp> - Glewlwyd INFO: Event - User '<username>' authenticated with password
+<date_timestamp> - Glewlwyd INFO: Event - User '<username>' authenticated with sheme '<scheme_type>/<scheme_name>'
+<date_timestamp> - Glewlwyd INFO: Event - User '<username>' registered sheme '<scheme_type>/<scheme_name>'
+<date_timestamp> - Glewlwyd INFO: Event - User '<username>' registered sheme '<scheme_type>/<scheme_name>' (delegation)
+<date_timestamp> - Glewlwyd INFO: Event - User backend module '<module_name>' added (<module_type>)
+<date_timestamp> - Glewlwyd INFO: Event - User backend module '<module_name>' updated
+<date_timestamp> - Glewlwyd INFO: Event - User backend module '<module_name>' removed
+<date_timestamp> - Glewlwyd INFO: Event - User auth scheme module '<module_name>' added (<module_type>)
+<date_timestamp> - Glewlwyd INFO: Event - User auth scheme module '<module_name>' updated
+<date_timestamp> - Glewlwyd INFO: Event - User auth scheme module '<module_name>' removed
+<date_timestamp> - Glewlwyd INFO: Event - Client backend module '<module_name>' added (<module_type>)
+<date_timestamp> - Glewlwyd INFO: Event - Client backend module '<module_name>' updated
+<date_timestamp> - Glewlwyd INFO: Event - Client backend module '<module_name>' removed
+<date_timestamp> - Glewlwyd INFO: Event - Plugin module '<plugin_name>' added (<plugin_type>)
+<date_timestamp> - Glewlwyd INFO: Event - Plugin module '<plugin_name>' updated
+<date_timestamp> - Glewlwyd INFO: Event - Plugin module '<plugin_name>' removed
+<date_timestamp> - Glewlwyd INFO: Event - User '<username>' added
+<date_timestamp> - Glewlwyd INFO: Event - User '<username>' updated
+<date_timestamp> - Glewlwyd INFO: Event - User '<username>' removed
+<date_timestamp> - Glewlwyd INFO: Event - Client '<client_id>' added
+<date_timestamp> - Glewlwyd INFO: Event - Client '<client_id>' updated
+<date_timestamp> - Glewlwyd INFO: Event - Client '<client_id>' removed
+<date_timestamp> - Glewlwyd INFO: Event - Scope '<scope>' added
+<date_timestamp> - Glewlwyd INFO: Event - Scope '<scope>' updated
+<date_timestamp> - Glewlwyd INFO: Event - Scope '<scope>' removed
+<date_timestamp> - Glewlwyd INFO: Event - User '<username>' updated (profile)
+<date_timestamp> - Glewlwyd INFO: Event - User '<username>' removed (profile)
+```
+
+#### OAuth2 plugin events
+
+```
+<date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Refresh token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
+```
+
+#### OIDC plugin events
+
+```
+<date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Refresh token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
+<date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - client '<client_id>' registration updated with redirect_uri <redirect_uri_list>
+<date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - client '<client_id>' registered with redirect_uri <redirect_uri_list>
+<date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - client '<client_id>' deleted
+```
+
+#### Register plugin events
+
+```
+<date_timestamp> - Glewlwyd INFO: Event register - Plugin '<plugin_name>' - user '<username>' registered
+<date_timestamp> - Glewlwyd INFO: Event register - Plugin '<plugin_name>' - user '<username>' updated its e-mail address to '<e-mail>'
+<date_timestamp> - Glewlwyd INFO: Event register - Plugin '<plugin_name>' - user '<username>' opened a reset credential session with e-mail token
+<date_timestamp> - Glewlwyd INFO: Event register - Plugin '<plugin_name>' - user '<username>' opened a reset credential session with code
+```
 
 ## Run Glewlwyd
 
