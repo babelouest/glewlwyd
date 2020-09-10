@@ -6,7 +6,7 @@
  * Users are authenticated via various backend available: database, ldap
  * Using various authentication methods available: password, OTP, send code, etc.
  * 
- * OpenID Connect Core plugin
+ * OpenID Connect plugin
  * 
  * Copyright 2019-2020 Nicolas Mora <mail@babelouest.org>
  *
@@ -5059,6 +5059,7 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
                       if (check_result_value(j_user, G_OK)) {
                         time(&now);
                         if ((refresh_token = generate_refresh_token()) != NULL) {
+                          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Refresh token generated for client '%s' granted by user '%s' with scope list '%s'", client_id, username, scope);
                           j_refresh_token = serialize_refresh_token(config, 
                                                                     GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION, 
                                                                     0, 
@@ -5703,12 +5704,16 @@ static int callback_client_registration_management_read(const struct _u_request 
 static int callback_client_registration_management_update(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   json_t * j_result_check, * j_result, * j_registration = ulfius_get_json_body_request(request, NULL);
-  
+  char * redirect_uri;
+
   j_result_check = is_client_registration_valid(config, j_registration, u_map_get(request->map_url, "client_id"));
   if (check_result_value(j_result_check, G_OK)) {
     j_result = client_register(config, request, j_registration, 1);
     if (check_result_value(j_result, G_OK)) {
       ulfius_set_json_body_response(response, 200, json_object_get(j_result, "client"));
+      redirect_uri = json_dumps(json_object_get(json_object_get(j_result, "client"), "redirect_uris"), JSON_COMPACT);
+      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - client '%s' registration updated with redirect_uri %s", u_map_get(request->map_url, "client_id"), redirect_uri);
+      o_free(redirect_uri);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_client_registration_management_update - Error client_register");
       response->status = 500;
@@ -5732,6 +5737,8 @@ static int callback_client_registration_management_delete(const struct _u_reques
   if (clent_registration_management_delete(config, json_integer_value(json_object_get((json_t *)response->shared_data, "gpocr_id")), json_object_get((json_t *)response->shared_data, "client")) != G_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_client_registration_management_read - Error registration_management_delete");
     response->status = 500;
+  } else {
+    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - client '%s' deleted", u_map_get(request->map_url, "client_id"));
   }
   return U_CALLBACK_CONTINUE;
 }
@@ -5767,12 +5774,16 @@ static int callback_check_registration_management(const struct _u_request * requ
 static int callback_client_registration(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   json_t * j_result_check, * j_result, * j_registration = ulfius_get_json_body_request(request, NULL);
-  
+  char * redirect_uri;
+
   j_result_check = is_client_registration_valid(config, j_registration, NULL);
   if (check_result_value(j_result_check, G_OK)) {
     j_result = client_register(config, request, j_registration, 0);
     if (check_result_value(j_result, G_OK)) {
       ulfius_set_json_body_response(response, 200, json_object_get(j_result, "client"));
+      redirect_uri = json_dumps(json_object_get(json_object_get(j_result, "client"), "redirect_uris"), JSON_COMPACT);
+      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - client '%s' registered with redirect_uri %s", json_string_value(json_object_get(json_object_get(j_result, "client"), "client_id")), redirect_uri);
+      o_free(redirect_uri);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_client_registration - Error client_register");
       response->status = 500;
@@ -6575,6 +6586,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
         if (check_result_value(j_user, G_OK)) {
           time(&now);
           if ((refresh_token = generate_refresh_token()) != NULL) {
+            y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Refresh token generated for client '%s' granted by user '%s' with scope list '%s'", client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")));
             j_refresh_token = serialize_refresh_token(config, 
                                                       GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE, 
                                                       json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpoc_id")), 
@@ -6869,6 +6881,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
           time(&now);
           if (check_result_value(j_refresh, G_OK)) {
             if ((refresh_token = generate_refresh_token()) != NULL) {
+              y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Refresh token generated for client '%s' granted by user '%s' with scope list '%s'", client_id, username, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")));
               j_refresh_token = serialize_refresh_token(config, 
                                                         GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS, 
                                                         0, 
@@ -7310,6 +7323,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
           y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh oidc - Error generate_refresh_token");
           has_error = 1;
         } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Refresh token generated for client '%s' granted by user '%s' with scope list '%s'", json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), json_string_value(json_object_get(json_object_get(j_refresh, "token"), "username")), scope_joined);
           j_refresh_scope = get_refresh_token_duration_rolling(config, scope_joined);
           if (check_result_value(j_refresh_scope, G_OK)) {
             j_refresh_serialize = serialize_refresh_token(config, 

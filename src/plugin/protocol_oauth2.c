@@ -634,6 +634,8 @@ static char * generate_refresh_token(struct _oauth2_config * config, const char 
     token = r_jwt_serialize_signed(jwt, NULL, 0);
     if (token == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_refresh_token - generating token");
+    } else {
+      y_log_message(Y_LOG_LEVEL_INFO, "Event oauth2 - Refresh token generated for client '%s' granted by user '%s' with scope list '%s'", client_id, username, scope_list);
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 generate_refresh_token - Error cloning jwt");

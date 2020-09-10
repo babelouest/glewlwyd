@@ -214,6 +214,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               response->status = 500;
             } else {
               ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", config->cookie_secure, 0);
+              y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' authenticated with password", json_string_value(json_object_get(j_param, "username")));
             }
             o_free(session_uid);
           } else {
@@ -268,6 +269,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               response->status = 500;
             } else {
               ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", config->cookie_secure, 0);
+              y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' authenticated with sheme '%s'", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_name")));
             }
             o_free(session_uid);
           } else {
@@ -350,6 +352,7 @@ int callback_glewlwyd_user_auth_register (const struct _u_request * request, str
             if (json_object_get(j_result, "register") != NULL) {
               ulfius_set_json_body_response(response, 200, json_object_get(j_result, "register"));
             }
+            y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' registered sheme '%s'", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_name")));
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth_register - Error auth_check_user_scheme");
             response->status = 500;
@@ -438,6 +441,7 @@ int callback_glewlwyd_user_auth_register_delegate (const struct _u_request * req
             if (json_object_get(j_result, "register") != NULL) {
               ulfius_set_json_body_response(response, 200, json_object_get(j_result, "register"));
             }
+            y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' registered sheme '%s' (delegation)", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_name")));
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth_register_delegate - Error auth_check_user_scheme");
             response->status = 500;
@@ -763,6 +767,8 @@ int callback_glewlwyd_add_user_module (const struct _u_request * request, struct
       } else if (!check_result_value(j_result, G_OK)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user_module - Error add_user_module");
         response->status = 500;
+      } else {
+        y_log_message(Y_LOG_LEVEL_INFO, "Event - User backend module '%s' added (%s)", json_string_value(json_object_get(j_module, "name")), json_string_value(json_object_get(j_module, "module")));
       }
       json_decref(j_result);
     } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
@@ -797,6 +803,8 @@ int callback_glewlwyd_set_user_module (const struct _u_request * request, struct
         if (set_user_module(config, u_map_get(request->map_url, "name"), j_module) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_module - Error set_user_module");
           response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event - User backend module '%s' updated", u_map_get(request->map_url, "name"));
         }
       } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
         if (json_object_get(j_module_valid, "error") != NULL) {
@@ -832,6 +840,8 @@ int callback_glewlwyd_delete_user_module (const struct _u_request * request, str
     if (delete_user_module(config, u_map_get(request->map_url, "name")) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_user_module - Error delete_user_module");
       response->status = 500;
+    } else {
+      y_log_message(Y_LOG_LEVEL_INFO, "Event - User backend module '%s' removed", u_map_get(request->map_url, "name"));
     }
   } else if (check_result_value(j_search_module, G_ERROR_NOT_FOUND)) {
     response->status = 404;
@@ -965,6 +975,8 @@ int callback_glewlwyd_add_user_auth_scheme_module (const struct _u_request * req
       } else if (!check_result_value(j_result, G_OK)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user_auth_scheme_module - Error add_user_auth_scheme_module");
         response->status = 500;
+      } else {
+        y_log_message(Y_LOG_LEVEL_INFO, "Event - User auth scheme module '%s' added (%s)", json_string_value(json_object_get(j_module, "name")), json_string_value(json_object_get(j_module, "module")));
       }
       json_decref(j_result);
     } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
@@ -999,6 +1011,8 @@ int callback_glewlwyd_set_user_auth_scheme_module (const struct _u_request * req
         if (set_user_auth_scheme_module(config, u_map_get(request->map_url, "name"), j_module) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_auth_scheme_module - Error set_user_auth_scheme_module");
           response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event - User auth scheme module '%s' updated", u_map_get(request->map_url, "name"));
         }
       } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
         if (json_object_get(j_module_valid, "error") != NULL) {
@@ -1034,6 +1048,8 @@ int callback_glewlwyd_delete_user_auth_scheme_module (const struct _u_request * 
     if (delete_user_auth_scheme_module(config, u_map_get(request->map_url, "name")) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_user_auth_scheme_module - Error delete_user_auth_scheme_module");
       response->status = 500;
+    } else {
+      y_log_message(Y_LOG_LEVEL_INFO, "Event - User auth scheme module '%s' removed", u_map_get(request->map_url, "name"));
     }
   } else if (check_result_value(j_search_module, G_ERROR_NOT_FOUND)) {
     response->status = 404;
@@ -1167,6 +1183,8 @@ int callback_glewlwyd_add_client_module (const struct _u_request * request, stru
       } else if (!check_result_value(j_result, G_OK)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_client_module - Error add_client_module");
         response->status = 500;
+      } else {
+        y_log_message(Y_LOG_LEVEL_INFO, "Event - Client backend module '%s' added (%s)", json_string_value(json_object_get(j_module, "name")), json_string_value(json_object_get(j_module, "module")));
       }
       json_decref(j_result);
     } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
@@ -1201,6 +1219,8 @@ int callback_glewlwyd_set_client_module (const struct _u_request * request, stru
         if (set_client_module(config, u_map_get(request->map_url, "name"), j_module) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client_module - Error set_client_module");
           response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event - Client backend module '%s' updated", u_map_get(request->map_url, "name"));
         }
       } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
         if (json_object_get(j_module_valid, "error") != NULL) {
@@ -1236,6 +1256,8 @@ int callback_glewlwyd_delete_client_module (const struct _u_request * request, s
     if (delete_client_module(config, u_map_get(request->map_url, "name")) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_client_module - Error delete_client_module");
       response->status = 500;
+    } else {
+      y_log_message(Y_LOG_LEVEL_INFO, "Event - Client backend module '%s' removed", u_map_get(request->map_url, "name"));
     }
   } else if (check_result_value(j_search_module, G_ERROR_NOT_FOUND)) {
     response->status = 404;
@@ -1369,6 +1391,8 @@ int callback_glewlwyd_add_plugin_module (const struct _u_request * request, stru
       } else if (!check_result_value(j_result, G_OK)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_plugin_module - Error add_plugin_module");
         response->status = 500;
+      } else {
+        y_log_message(Y_LOG_LEVEL_INFO, "Event - Plugin module '%s' added", json_string_value(json_object_get(j_module, "name")), json_string_value(json_object_get(j_module, "module")));
       }
       json_decref(j_result);
     } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
@@ -1403,6 +1427,8 @@ int callback_glewlwyd_set_plugin_module (const struct _u_request * request, stru
         if (set_plugin_module(config, u_map_get(request->map_url, "name"), j_module) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_plugin_module - Error set_plugin_module");
           response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event - Plugin module '%s' updated", u_map_get(request->map_url, "name"));
         }
       } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
         if (json_object_get(j_module_valid, "error") != NULL) {
@@ -1438,6 +1464,8 @@ int callback_glewlwyd_delete_plugin_module (const struct _u_request * request, s
     if (delete_plugin_module(config, u_map_get(request->map_url, "name")) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_plugin_module - Error delete_plugin_module");
       response->status = 500;
+    } else {
+      y_log_message(Y_LOG_LEVEL_INFO, "Event - Plugin module '%s' removed", u_map_get(request->map_url, "name"));
     }
   } else if (check_result_value(j_search_module, G_ERROR_NOT_FOUND)) {
     response->status = 404;
@@ -1580,6 +1608,8 @@ int callback_glewlwyd_add_user (const struct _u_request * request, struct _u_res
         if (add_user(config, j_user, u_map_get(request->map_url, "source")) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user - Error add_user");
           response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' added", json_string_value(json_object_get(j_user, "username")));
         }
       } else if (check_result_value(j_search_user, G_OK)) {
         j_body = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "username already exists");
@@ -1621,6 +1651,8 @@ int callback_glewlwyd_set_user (const struct _u_request * request, struct _u_res
         if (set_user(config, u_map_get(request->map_url, "username"), j_user, json_string_value(json_object_get(json_object_get(j_search_user, "user"), "source"))) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user - Error set_user");
           response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' updated", u_map_get(request->map_url, "username"));
         }
       } else if (check_result_value(j_user_valid, G_ERROR_PARAM)) {
         if (json_object_get(j_user_valid, "error") != NULL) {
@@ -1656,6 +1688,8 @@ int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_
     if (delete_user(config, u_map_get(request->map_url, "username"), json_string_value(json_object_get(json_object_get(j_search_user, "user"), "source"))) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_user - Error delete_user");
       response->status = 500;
+    } else {
+      y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' removed", u_map_get(request->map_url, "username"));
     }
   } else if (check_result_value(j_search_user, G_ERROR_NOT_FOUND)) {
     response->status = 404;
@@ -1727,6 +1761,8 @@ int callback_glewlwyd_add_client (const struct _u_request * request, struct _u_r
         if (add_client(config, j_client, u_map_get(request->map_url, "source")) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_client - Error add_client");
           response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event - Client '%s' added", json_string_value(json_object_get(j_client, "client_id")));
         }
       } else if (check_result_value(j_search_client, G_OK)) {
         j_body = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "client_id already exists");
@@ -1768,6 +1804,8 @@ int callback_glewlwyd_set_client (const struct _u_request * request, struct _u_r
         if (set_client(config, u_map_get(request->map_url, "client_id"), j_client, json_string_value(json_object_get(json_object_get(j_search_client, "client"), "source"))) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_client - Error set_client");
           response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event - Client '%s' updated", u_map_get(request->map_url, "client_id"));
         }
       } else if (check_result_value(j_client_valid, G_ERROR_PARAM)) {
         if (json_object_get(j_client_valid, "error") != NULL) {
@@ -1803,6 +1841,8 @@ int callback_glewlwyd_delete_client (const struct _u_request * request, struct _
     if (delete_client(config, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(json_object_get(j_search_client, "client"), "source"))) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_client - Error delete_client");
       response->status = 500;
+    } else {
+      y_log_message(Y_LOG_LEVEL_INFO, "Event - Client '%s' removed", u_map_get(request->map_url, "client_id"));
     }
   } else if (check_result_value(j_search_client, G_ERROR_NOT_FOUND)) {
     response->status = 404;
@@ -1874,6 +1914,8 @@ int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_re
         if (add_scope(config, j_scope) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_scope - Error add_scope");
           response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event - Scope '%s' added", json_string_value(json_object_get(j_scope, "name")));
         }
       } else if (check_result_value(j_search_scope, G_OK)) {
         j_body = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "scope already exists");
@@ -1911,6 +1953,8 @@ int callback_glewlwyd_set_scope (const struct _u_request * request, struct _u_re
         if (set_scope(config, u_map_get(request->map_url, "scope"), j_scope) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_scope - Error set_scope");
           response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event - Scope '%s' updated", u_map_get(request->map_url, "scope"));
         }
       } else if (check_result_value(j_scope_valid, G_ERROR_PARAM)) {
         ulfius_set_json_body_response(response, 400, json_object_get(j_scope_valid, "error"));
@@ -1942,6 +1986,8 @@ int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u
     if (delete_scope(config, u_map_get(request->map_url, "scope")) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_scope - Error delete_scope");
       response->status = 500;
+    } else {
+      y_log_message(Y_LOG_LEVEL_INFO, "Event - Scope '%s' removed", u_map_get(request->map_url, "scope"));
     }
   } else if (check_result_value(j_search_scope, G_ERROR_NOT_FOUND)) {
     response->status = 404;
@@ -2006,6 +2052,8 @@ int callback_glewlwyd_user_update_profile (const struct _u_request * request, st
     } else if (!check_result_value(j_result, G_OK)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_update_profile - Error user_set_profile");
       response->status = 500;
+    } else {
+      y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' updated (profile)", json_string_value(json_object_get((json_t *)response->shared_data, "username")));
     }
     json_decref(j_result);
   } else {
@@ -2037,6 +2085,8 @@ int callback_glewlwyd_user_delete_profile (const struct _u_request * request, st
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_profile - Error user_session_delete");
           response->status = 500;
           ret = G_ERROR;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' removed (profile)", json_string_value(json_object_get((json_t *)response->shared_data, "username")));
         }
       }
     }
