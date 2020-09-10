@@ -425,7 +425,7 @@ int main (int argc, char ** argv) {
   u_map_put(config->instance->default_headers, "Cache-Control", "no-store");
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
 
-  y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd started on port %d, prefix: %s, secure: %s, bind address: %s", config->instance->port, config->api_prefix, config->use_secure_connection?"true":"false", config->bind_address!=NULL?config->bind_address:"no");
+  y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd started on port %d, prefix: %s, secure: %s, bind address: %s, external URL: %s", config->instance->port, config->api_prefix, config->use_secure_connection?"true":"false", config->bind_address!=NULL?config->bind_address:"no", config->external_url);
 
   if (config->use_secure_connection) {
     char * key_file = get_file_content(config->secure_connection_key_file);
