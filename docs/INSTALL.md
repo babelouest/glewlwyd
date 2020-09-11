@@ -3,6 +3,7 @@
 [![License: CC BY 4.0](https://licensebuttons.net/l/by/4.0/80x15.png)](https://creativecommons.org/licenses/by/4.0/)
 
 1.  [Upgrade Glewlwyd](#upgrade-glewlwyid)
+    * [Upgrade to Glewlwyd 2.4.x](#upgrade-to-glewlwyd-24x)
     * [Upgrade to Glewlwyd 2.3.3](#upgrade-to-glewlwyd-233)
     * [Upgrade to Glewlwyd 2.3.x](#upgrade-to-glewlwyd-23x)
     * [Upgrade to Glewlwyd 2.2.x](#upgrade-to-glewlwyd-22x)
@@ -52,6 +53,32 @@
 ## Upgrade Glewlwyd
 
 Glewlwyd upgrades usually come with database changes. It is highly recommended to backup your database before performing the upgrade. You must perform the database upgrades in the correct order. i.e. if you upgrade from Glewlwyd 2.1 to Glewlwyd 2.3, you must first install the 2.2 upgrade, then the 2.3.
+
+### Upgrade to Glewlwyd 2.4.x
+
+If your current version is prior to 2.3.3, first follow the security instructions in the paragraph [Upgrade to Glewlwyd 2.3.3](#upgrade-to-glewlwyd-233).
+
+#### Mandatory core tables upgrade
+
+Small changes were added to the core tables. You must execute the script depending on your database backend:
+
+- MariaDB: [upgrade-2.4-core.mariadb.sql](database/upgrade-2.4-core.mariadb.sql)
+
+```shell
+$ mysql glewlwyd < docs/database/upgrade-2.4-core.mariadb.sql
+```
+
+- SQLite3: [upgrade-2.4-core.sqlite3.sql](database/upgrade-2.4-core.sqlite3.sql)
+
+```shell
+$ sqlite3 /path/to/glewlwyd.db < docs/database/upgrade-2.3-core.sqlite3.sql
+```
+
+- PostgreSQL: [upgrade-2.4-core.postgresql.sql](database/upgrade-2.4-core.postgresql.sql)
+
+```shell
+$ psql glewlwyd < docs/database/upgrade-2.4-core.postgresql.sql
+```
 
 ### Upgrade to Glewlwyd 2.3.3
 
@@ -190,45 +217,45 @@ libzlib
 
 ```shell
 $ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.2/glewlwyd-full_2.3.2_debian_buster_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.3.2_debian_buster_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.4.0/glewlwyd-full_2.4.0_debian_buster_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.4.0_debian_buster_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.1.1_debian_buster_x86_64.deb
-$ sudo dpkg -i libyder_1.4.11_debian_buster_x86_64.deb
+$ sudo dpkg -i libyder_1.4.12_debian_buster_x86_64.deb
 $ sudo dpkg -i libhoel_1.4.16_debian_buster_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.8_debian_buster_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.9_debian_buster_x86_64.deb
 $ sudo dpkg -i librhonabwy_0.9.12_debian_buster_x86_64.deb
-$ sudo dpkg -i libiddawc_0.9.5_debian_buster_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.3.2_debian_buster_x86_64.deb
+$ sudo dpkg -i libiddawc_0.9.6_debian_buster_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.4.0_debian_buster_x86_64.deb
 ```
 
 ### Install Glewlwyd on Raspbian Buster for Raspberry Pi
 
 ```shell
 $ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.2/glewlwyd-full_2.3.2_raspbian_buster_armv6l.tar.gz
-$ tar xf glewlwyd-full_2.3.2_raspbian_buster_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.4.0/glewlwyd-full_2.4.0_raspbian_buster_armv6l.tar.gz
+$ tar xf glewlwyd-full_2.4.0_raspbian_buster_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.1.1_raspbian_buster_armv7l.deb
-$ sudo dpkg -i libyder_1.4.11_raspbian_buster_armv7l.deb
+$ sudo dpkg -i libyder_1.4.12_raspbian_buster_armv7l.deb
 $ sudo dpkg -i libhoel_1.4.16_raspbian_buster_armv7l.deb
-$ sudo dpkg -i libulfius_2.6.8_raspbian_buster_armv7l.deb
+$ sudo dpkg -i libulfius_2.6.9_raspbian_buster_armv7l.deb
 $ sudo dpkg -i librhonabwy_0.9.12_raspbian_buster_armv7l.deb
-$ sudo dpkg -i libiddawc_0.9.5_raspbian_buster_armv7l.deb
-$ sudo dpkg -i glewlwyd_2.3.2_raspbian_buster_armv7l.deb
+$ sudo dpkg -i libiddawc_0.9.6_raspbian_buster_armv7l.deb
+$ sudo dpkg -i glewlwyd_2.4.0_raspbian_buster_armv7l.deb
 ```
 
 ### Install Glewlwyd on Ubuntu 20.04 LTS Focal
 
 ```shell
 $ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0.6 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.3.2/glewlwyd-full_2.3.2_ubuntu_focal_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.3.2_ubuntu_focal_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.4.0/glewlwyd-full_2.4.0_ubuntu_focal_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.4.0_ubuntu_focal_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.1.1_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i libyder_1.4.11_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i libyder_1.4.12_ubuntu_focal_x86_64.deb
 $ sudo dpkg -i libhoel_1.4.16_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.8_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i libulfius_2.6.9_ubuntu_focal_x86_64.deb
 $ sudo dpkg -i librhonabwy_0.9.12_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i libiddawc_0.9.5_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.3.2_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i libiddawc_0.9.6_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i glewlwyd_2.4.0_ubuntu_focal_x86_64.deb
 ```
 
 If there's no package available for your distribution, you can compile it manually using `CMake` or `Makefile`.
