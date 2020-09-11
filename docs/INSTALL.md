@@ -281,14 +281,23 @@ In this instance, both configuration files `glewlwyd.conf` (backend) and `config
 
 If you need to make the docker instance available in a network, you must update the configuration files as explained below by updating at least the configuration variable `external_url`.
 
-**Customize configuration files without rebuilding the docker image**
+**Customize configuration without rebuilding the docker image**
 
 You can overwrite the configuration files `glewlwyd.conf` and `config.json` by mounting a volume on `/etc/glewlwyd` when you run the docker image. Point this volume to a local directory on the host.
 
 You can use the files [docker/config/glewlwyd.conf](docker/config/glewlwyd.conf) and [docker/config/config.json](docker/config/config.json) as a starting point to build your config files for docker.
 
+You can also use environment variables to override config file values.
+
+See [Configure Glewlwyd](#configure-glewlwyd) for a complete list of configuration variables.
+
 ```shell
-$ docker run --rm -it -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd babelouest/glewlwyd
+$ # Run docker instance with a new set of config files
+$ docker run -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd -e GLWD_EXTERNAL_URL=https://glewlwyd.tld babelouest/glewlwyd
+$ # Run docker instance with default config files but override external url and dsatabase connexion using env variables
+$ docker run -p 4593:4593 -e GLWD_EXTERNAL_URL=https://glewlwyd.tld -e GLWD_DATABASE_TYPE=postgre -e GLWD_DATABASE_POSTGRE_CONNINFO="host=dbhost port=5432 dbname=glewlwyd user=glewlwyd password=secret" babelouest/glewlwyd
+$ # Run docker instance with a new set of config files and an overwritten external url using env variables
+$ docker run -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd -e GLWD_EXTERNAL_URL=https://glewlwyd.tld babelouest/glewlwyd -e GLWD_EXTERNAL_URL=https://glewlwyd.tld
 ```
 
 ### Docker image builder
@@ -300,7 +309,7 @@ $ make docker
 $ docker run --rm -it -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd babelouest/glewlwyd:src
 ```
 
-You can use the same options and configuration than in the official docker image, including customized configuration files.
+You can use the same options than in the official docker image, including customized configuration.
 
 ## Manual install from source
 
