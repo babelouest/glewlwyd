@@ -853,23 +853,42 @@ The `glewlwyd.conf` has the following content:
 ```config
 # Fail2Ban filter for Glewlwyd
 #
-# Author: Nicolas Mora, modified by Neal Clayton to also work with syslog logging on Ubuntu 20.04
+# Author: Nicolas Mora, modifications for syslog logging with common.conf prefixes by Neal Clayton
 #
 [INCLUDES]
-
+#
+# load the 'common.conf' list of fail2ban upstream maintained prefixes
+#
 before = common.conf
 
 [Definition]
-
+#
+# declare the daemon name so common.conf variables will match
+#
 _daemon = Glewlwyd
+
 failregex = ^.* - Glewlwyd WARNING: Security - Authorization invalid for username .* at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Authorization invalid for client_id .* at IP Address <HOST>
             ^.* - Glewlwyd WARNING: Security - Code invalid at IP Address <HOST>
             ^.* - Glewlwyd WARNING: Security - Token invalid at IP Address <HOST>
             ^.* - Glewlwyd WARNING: Security - Scheme email - code sent for username .* at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Register new user - code sent to email .* at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Verify e-mail - code invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Update e-mail - token sent to email .* at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Update e-mail - token invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Reset credentials - token invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Reset credentials - code invalid at IP Address <HOST>
             ^.* %(__prefix_line)sSecurity - Authorization invalid for username .* at IP Address <HOST>
+            ^.* %(__prefix_line)sSecurity - Authorization invalid for client_id .* at IP Address <HOST>
             ^.* %(__prefix_line)sSecurity - Code invalid at IP Address <HOST>
             ^.* %(__prefix_line)sSecurity - Token invalid at IP Address <HOST>
             ^.* %(__prefix_line)sSecurity - Scheme email - code sent for username .* at IP Address <HOST>
+            ^.* %(__prefix_line)sSecurity - Register new user - code sent to email .* at IP Address <HOST>
+            ^.* %(__prefix_line)sSecurity - Verify e-mail - code invalid at IP Address <HOST>
+            ^.* %(__prefix_line)sSecurity - Update e-mail - token sent to email .* at IP Address <HOST>
+            ^.* %(__prefix_line)sSecurity - Update e-mail - token invalid at IP Address <HOST>
+            ^.* %(__prefix_line)sSecurity - Reset credentials - token invalid at IP Address <HOST>
+            ^.* %(__prefix_line)sSecurity - Reset credentials - code invalid at IP Address <HOST>
 ignoreregex =
 ```
 
