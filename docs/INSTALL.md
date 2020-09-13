@@ -862,10 +862,10 @@ before = common.conf
 [Definition]
 
 _daemon = Glewlwyd
-failregex = ^.* Glewlwyd(?:%(__pid_re)s?:\s+%(__daemon_re)s|%(__daemon_re)s%(__pid_re)s?:?): Security - Authorization invalid for username .* at IP Address <HOST>
-            ^.* Glewlwyd(?:%(__pid_re)s?:\s+%(__daemon_re)s|%(__daemon_re)s%(__pid_re)s?:?): Security - Code invalid at IP Address <HOST>
-            ^.* Glewlwyd(?:%(__pid_re)s?:\s+%(__daemon_re)s|%(__daemon_re)s%(__pid_re)s?:?): Security - Token invalid at IP Address <HOST>
-            ^.* Glewlwyd(?:%(__pid_re)s?:\s+%(__daemon_re)s|%(__daemon_re)s%(__pid_re)s?:?): Security - Scheme email - code sent for username .* at IP Address <HOST>
+failregex = ^.* - Glewlwyd WARNING: Security - Authorization invalid for username .* at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Code invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Token invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Scheme email - code sent for username .* at IP Address <HOST>
             ^.* %(__prefix_line)sSecurity - Authorization invalid for username .* at IP Address <HOST>
             ^.* %(__prefix_line)sSecurity - Code invalid at IP Address <HOST>
             ^.* %(__prefix_line)sSecurity - Token invalid at IP Address <HOST>
