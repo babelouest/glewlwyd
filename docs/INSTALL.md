@@ -853,15 +853,23 @@ The `glewlwyd.conf` has the following content:
 ```config
 # Fail2Ban filter for Glewlwyd
 #
-# Author: Nicolas Mora
+# Author: Nicolas Mora, modified by Neal Clayton to also work with syslog logging on Ubuntu 20.04
 #
+[INCLUDES]
+
+before = common.conf
 
 [Definition]
 
-failregex = ^.* - Glewlwyd WARNING: Security - Authorization invalid for username .* at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Code invalid at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Token invalid at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Scheme email - code sent for username .* at IP Address <HOST>
+_daemon = Glewlwyd
+failregex = ^.* Glewlwyd(?:%(__pid_re)s?:\s+%(__daemon_re)s|%(__daemon_re)s%(__pid_re)s?:?): Security - Authorization invalid for username .* at IP Address <HOST>
+            ^.* Glewlwyd(?:%(__pid_re)s?:\s+%(__daemon_re)s|%(__daemon_re)s%(__pid_re)s?:?): Security - Code invalid at IP Address <HOST>
+            ^.* Glewlwyd(?:%(__pid_re)s?:\s+%(__daemon_re)s|%(__daemon_re)s%(__pid_re)s?:?): Security - Token invalid at IP Address <HOST>
+            ^.* Glewlwyd(?:%(__pid_re)s?:\s+%(__daemon_re)s|%(__daemon_re)s%(__pid_re)s?:?): Security - Scheme email - code sent for username .* at IP Address <HOST>
+            ^.* %(__prefix_line)sSecurity - Authorization invalid for username .* at IP Address <HOST>
+            ^.* %(__prefix_line)sSecurity - Code invalid at IP Address <HOST>
+            ^.* %(__prefix_line)sSecurity - Token invalid at IP Address <HOST>
+            ^.* %(__prefix_line)sSecurity - Scheme email - code sent for username .* at IP Address <HOST>
 ignoreregex =
 ```
 
