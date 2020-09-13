@@ -43,6 +43,7 @@
     * [webapp/config.json](#webappconfigjson)
     * [Internationalization](#internationalization)
     * [Login, Admin and Profile pages](#login-admin-and-profile-pages)
+
     * [Customize CSS](#customize-css)
     * [Customize titles and logos](#customize-titles-and-logos)
 12. [Run Glewlwyd](#run-glewlwyd)
@@ -897,7 +898,7 @@ The `glewlwyd.conf` file is available in [fail2ban/glewlwyd.conf](fail2ban/glewl
 - `Token invalid` - on invalid token refresh or token delete in OAuth2 or OIDC
 - `Scheme email - code sent` - when an OTP code is sent via e-mail, to mitigate users spam
 
-The `glewlwyd.conf` has the following content if you log to a user-defined log file:
+The filter.d/glewlwyd config file has the following content if you log to a user-defined log file:
 
 ```config
 # Fail2Ban filter for Glewlwyd
@@ -921,7 +922,7 @@ failregex = ^.* - Glewlwyd WARNING: Security - Authorization invalid for usernam
 ignoreregex =
 ```
 
-The `glewlwyd.conf` has the following content if you log to syslog:
+The filter.d/glewlwyd config file has the following content if you log to syslog:
 
 ```config
 # Fail2Ban filter for Glewlwyd
@@ -954,15 +955,25 @@ failregex = ^.* %(__prefix_line)sSecurity - Authorization invalid for username .
 ignoreregex =
 ```
 
-You must place the file `glewlwyd.conf` under the fail2ban `filter.d` directory (On Debian-based distrib it's located in `/etc/fail2ban/filter.d/`).
+You must place the file `glewlwyd-log.conf` or `glewlwyd-syslog.conf` under the fail2ban `filter.d` directory (On Debian-based distrib it's located in `/etc/fail2ban/filter.d/`).
 
-Then, you must update your `jail.local` file (On Debian-based distrib it's located in `/etc/fail2ban/jail.local`) by adding the following paragraph:
+Then, you must update your `jail.local` file (On Debian-based distrib it's located in `/etc/fail2ban/jail.local`) by adding the following paragraph if you log to a user-defined log:
 
 ```config
 [glewlwyd]
 enabled  = true
-filter   = glewlwyd
+filter   = glewlwyd-log
 logpath  = /var/log/glewlwyd.log
+port     = https,4593 # the TCP port where Glewlwyd is available
+```
+
+...or the following paragraph if you log to syslog:
+
+```config
+[glewlwyd]
+enabled  = true
+filter   = glewlwyd-syslog
+logpath  = /var/log/syslog
 port     = https,4593 # the TCP port where Glewlwyd is available
 ```
 
