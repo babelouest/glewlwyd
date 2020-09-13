@@ -83,7 +83,7 @@ port     = http,https
 [glewlwyd]
 enabled  = true
 filter   = glewlwyd-syslog
-logpath  = /var/log/glewlwyd.log
+logpath  = /var/log/syslog
 port     = http,https
 ```
 
