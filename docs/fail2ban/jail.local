@@ -2,4 +2,4 @@
 enabled  = true
 filter   = glewlwyd-log # (change to glewlwyd-syslog if you use the syslog filter/logging)
 logpath  = /var/log/glewlwyd.log # (change to /var/log/syslog if you use the syslog filter/logging)
-port     = http,https
+port     = https,4593 # the TCP port where Glewlwyd is available from outside

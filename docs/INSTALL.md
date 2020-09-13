@@ -893,12 +893,18 @@ Documentation on the `ssl_preread` module is [available here](http://nginx.org/e
 You can add specific filter for fail2ban to ban potential attackers.
 
 The `glewlwyd.conf` file is available in [fail2ban/glewlwyd.conf](fail2ban/glewlwyd.conf). It will ban the IP addresses using the following rules:
-- `Authorization invalid` - on a failed auth
-- `Code invalid` - on invalid code in OAuth2 or OIDC
-- `Token invalid` - on invalid token refresh or token delete in OAuth2 or OIDC
-- `Scheme email - code sent` - when an OTP code is sent via e-mail, to mitigate users spam
+- `Authorization invalid` - on a failed auth (user or client)
+- `Code invalid` - on a invalid code in OAuth2 or OIDC
+- `Token invalid` - on a invalid token in OAuth2 or OIDC
+- `Scheme email - code sent` - when an OTP code is sent via e-mail, to avoid spamming users
+- `Register new user - code sent to email` - when an e-mail verification is sent, to avoid spamming users
+- `Verify e-mail - code invalid` - when an e-mail verification is invalid
+- `Update e-mail - token sent to email` - when an e-mail update verification is sent, to avoid spamming users
+- `Update e-mail - token invalid` - on a invalid update e-mail verification token
+- `Reset credentials - token invalid` - on a invalid reset credentials e-mail verification token
+- `Reset credentials - code invalid` - on a invalid reset credentials code
 
-The filter.d/glewlwyd config file has the following content if you log to a user-defined log file:
+The `filter.d/glewlwyd-log.conf` config file has the following content if you log to a user-defined log file:
 
 ```config
 # Fail2Ban filter for Glewlwyd
@@ -922,13 +928,16 @@ failregex = ^.* - Glewlwyd WARNING: Security - Authorization invalid for usernam
 ignoreregex =
 ```
 
-The filter.d/glewlwyd config file has the following content if you log to syslog:
+You can download this file [here](fail2ban/glewlwyd-log.conf).
+
+The `filter.d/glewlwyd-syslog.conf` config file has the following content if you log to syslog:
 
 ```config
 # Fail2Ban filter for Glewlwyd
 #
+# Author: Nicolas Mora, Robert Clayton
 #
-#
+
 [INCLUDES]
 #
 # load the 'common.conf' list of fail2ban upstream maintained prefixes
@@ -955,16 +964,18 @@ failregex = ^.* %(__prefix_line)sSecurity - Authorization invalid for username .
 ignoreregex =
 ```
 
+You can download this file [here](fail2ban/glewlwyd-syslog.conf).
+
 You must place the file `glewlwyd-log.conf` or `glewlwyd-syslog.conf` under the fail2ban `filter.d` directory (On Debian-based distrib it's located in `/etc/fail2ban/filter.d/`).
 
-Then, you must update your `jail.local` file (On Debian-based distrib it's located in `/etc/fail2ban/jail.local`) by adding the following paragraph if you log to a user-defined log:
+Then, you must update your `jail.local` file (On Debian-based distrib it's located in `/etc/fail2ban/jail.local`) by adding the following paragraph if you log to a user-defined log file:
 
 ```config
 [glewlwyd]
 enabled  = true
 filter   = glewlwyd-log
 logpath  = /var/log/glewlwyd.log
-port     = https,4593 # the TCP port where Glewlwyd is available
+port     = https,4593 # the TCP port where Glewlwyd is available from outside
 ```
 
 ...or the following paragraph if you log to syslog:
@@ -974,8 +985,10 @@ port     = https,4593 # the TCP port where Glewlwyd is available
 enabled  = true
 filter   = glewlwyd-syslog
 logpath  = /var/log/syslog
-port     = https,4593 # the TCP port where Glewlwyd is available
+port     = https,4593 # the TCP port where Glewlwyd is available from outside
 ```
+
+You can download this file [here](fail2ban/jail.local).
 
 Check out [Fail2ban](https://www.fail2ban.org/) documentation for more information.
 
