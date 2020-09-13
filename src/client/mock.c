@@ -130,26 +130,11 @@ static int json_has_str_pattern_case(json_t * j_source, const char * pattern) {
  */
 json_t * client_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{sisssssss{s{ssso}s{ssso}}}",
-                   "result",
-                   G_OK,
-                   "name",
-                   "mock",
-                   "display_name",
-                   "Mock scheme module",
-                   "description",
-                   "Mock scheme module for glewlwyd tests",
-                   "parameters",
-                     "username-prefix",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_false(),
-                     "password",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_false());
+  return json_pack("{sissssss}",
+                   "result", G_OK,
+                   "name", "mock",
+                   "display_name", "Mock scheme module",
+                   "description", "Mock scheme module for glewlwyd tests");
 }
 
 /**

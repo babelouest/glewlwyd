@@ -38,9 +38,31 @@ END_TEST
 
 START_TEST(test_glwd_auth_profile_impersonate_profile_get_scheme_available_success)
 {
-  json_t * j_expected = json_pack("{ssssssso}", "module", "mock", "name", "mock_scheme_42", "display_name", "Mock 42", "enabled", json_true());
+  json_t * j_expected = json_pack("{ssssss}", "module", "mock", "name", "mock_scheme_42", "display_name", "Mock 42");
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME_IMPERSONATE "/profile/scheme", NULL, NULL, NULL, NULL, 200, j_expected, NULL, NULL), 1);
   json_decref(j_expected);
+}
+END_TEST
+
+START_TEST(test_glwd_auth_profile_admin_profile_get_scheme_available_empty_success)
+{
+  json_t * j_response;
+  struct _u_request req;
+  struct _u_response resp;
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  
+  ck_assert_int_eq(ulfius_copy_request(&req, &admin_req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET", U_OPT_HTTP_URL, SERVER_URI "/profile/scheme", U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(200, resp.status);
+  ck_assert_ptr_ne(j_response = ulfius_get_json_body_response(&resp, NULL), NULL);
+  ck_assert_int_eq(0, json_array_size(j_response));
+  
+  json_decref(j_response);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -59,6 +81,7 @@ static Suite *glewlwyd_suite(void)
   tc_core = tcase_create("test_glwd_auth_profile_impersonate");
   tcase_add_test(tc_core, test_glwd_auth_profile_impersonate_update_ok);
   tcase_add_test(tc_core, test_glwd_auth_profile_impersonate_profile_get_scheme_available_success);
+  tcase_add_test(tc_core, test_glwd_auth_profile_admin_profile_get_scheme_available_empty_success);
   tcase_add_test(tc_core, test_glwd_auth_profile_impersonate_session_manage_list);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);

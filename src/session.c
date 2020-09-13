@@ -282,7 +282,7 @@ json_t * get_current_user_for_session(struct config_elements * config, const cha
   return j_return;
 }
 
-int user_session_update(struct config_elements * config, const char * session_uid, const char * user_agent, const char * issued_for, const char * username, const char * scheme_name) {
+int user_session_update(struct config_elements * config, const char * session_uid, const char * user_agent, const char * issued_for, const char * username, const char * scheme_name, int update_login) {
   json_t * j_query, * j_session = get_session_for_username(config, session_uid, username);
   struct _user_auth_scheme_module_instance * scheme_instance = NULL;
   int res, ret;
@@ -306,21 +306,7 @@ int user_session_update(struct config_elements * config, const char * session_ui
       json_decref(j_query);
       if (res == H_OK) {
         // Create session for user if not exist
-        if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-          expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
-        } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-          expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
-        } else { // HOEL_DB_TYPE_SQLITE
-          expiration_clause = msprintf("%u", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
-        }
-        if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-          last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
-        } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-          last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
-        } else { // HOEL_DB_TYPE_SQLITE
-          last_login_clause = msprintf("%u", (now));
-        }
-        j_query = json_pack("{sss{sssssssss{ss}s{ss}si}}",
+        j_query = json_pack("{sss{sssssssssi}}",
                             "table",
                             GLEWLWYD_TABLE_USER_SESSION,
                             "values",
@@ -332,16 +318,28 @@ int user_session_update(struct config_elements * config, const char * session_ui
                               user_agent!=NULL?user_agent:"",
                               "gus_issued_for",
                               issued_for!=NULL?issued_for:"",
-                              "gus_expiration",
-                                "raw",
-                                expiration_clause,
-                              "gus_last_login",
-                                "raw",
-                                last_login_clause,
                               "gus_current",
                               1);
-        o_free(expiration_clause);
-        o_free(last_login_clause);
+        if (update_login) {
+          if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+            expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
+          } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+            expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
+          } else { // HOEL_DB_TYPE_SQLITE
+            expiration_clause = msprintf("%u", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
+          }
+          if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+            last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+          } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+            last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
+          } else { // HOEL_DB_TYPE_SQLITE
+            last_login_clause = msprintf("%u", (now));
+          }
+          json_object_set_new(json_object_get(j_query, "values"), "gus_last_login", json_pack("{ss}", "raw", last_login_clause));
+          json_object_set_new(json_object_get(j_query, "values"), "gus_expiration", json_pack("{ss}", "raw", expiration_clause));
+          o_free(last_login_clause);
+          o_free(expiration_clause);
+        }
         res = h_insert(config->conn, j_query, NULL);
         json_decref(j_query);
         json_decref(j_session);
@@ -368,21 +366,10 @@ int user_session_update(struct config_elements * config, const char * session_ui
       res = h_update(config->conn, j_query, NULL);
       json_decref(j_query);
       if (res == H_OK) {
-        // Refresh session for user
-        if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-          last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
-        } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-          last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
-        } else { // HOEL_DB_TYPE_SQLITE
-          last_login_clause = msprintf("%u", (now));
-        }
-        j_query = json_pack("{sss{s{ss}sssi}s{ssss}}",
+        j_query = json_pack("{sss{sssi}s{ssss}}",
                             "table",
                             GLEWLWYD_TABLE_USER_SESSION,
                             "set",
-                              "gus_last_login",
-                                "raw",
-                                last_login_clause,
                               "gus_user_agent",
                               user_agent!=NULL?user_agent:"",
                               "gus_current",
@@ -392,7 +379,18 @@ int user_session_update(struct config_elements * config, const char * session_ui
                               session_uid_hash,
                               "gus_username",
                               username);
-        o_free(last_login_clause);
+        if (update_login) {
+          // Refresh session for user
+          if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+            last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+          } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+            last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
+          } else { // HOEL_DB_TYPE_SQLITE
+            last_login_clause = msprintf("%u", (now));
+          }
+          json_object_set_new(json_object_get(j_query, "values"), "gus_last_login", json_pack("{ss}", "raw", last_login_clause));
+          o_free(last_login_clause);
+        }
         res = h_update(config->conn, j_query, NULL);
         json_decref(j_query);
         json_decref(j_session);
@@ -408,11 +406,74 @@ int user_session_update(struct config_elements * config, const char * session_ui
       }
     }
     if (check_result_value(j_session, G_OK)) {
-      if (scheme_name != NULL) {
-        scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
-        if (scheme_instance != NULL && scheme_instance->enabled) {
-          // Disable all session schemes with this scheme instance
-          j_query = json_pack("{sss{si}s{sOsI}}",
+      if (update_login) {
+        if (scheme_name != NULL) {
+          scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
+          if (scheme_instance != NULL && scheme_instance->enabled) {
+            // Disable all session schemes with this scheme instance
+            j_query = json_pack("{sss{si}s{sOsI}}",
+                                "table",
+                                GLEWLWYD_TABLE_USER_SESSION_SCHEME,
+                                "set",
+                                  "guss_enabled",
+                                  0,
+                                "where",
+                                  "gus_id",
+                                  json_object_get(json_object_get(j_session, "session"), "gus_id"),
+                                  "guasmi_id",
+                                  scheme_instance->guasmi_id);
+            res = h_update(config->conn, j_query, NULL);
+            json_decref(j_query);
+            if (res == H_OK) {
+              // Set session scheme for this scheme with the timeout
+              if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+                expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)scheme_instance->guasmi_expiration));
+              } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+                expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)scheme_instance->guasmi_expiration));
+              } else { // HOEL_DB_TYPE_SQLITE
+                expiration_clause = msprintf("%u", (now + (unsigned int)scheme_instance->guasmi_expiration));
+              }
+              j_query = json_pack("{sss{sOsIs{ss}}}",
+                                  "table",
+                                  GLEWLWYD_TABLE_USER_SESSION_SCHEME,
+                                  "values",
+                                    "gus_id",
+                                    json_object_get(json_object_get(j_session, "session"), "gus_id"),
+                                    "guasmi_id",
+                                    scheme_instance->guasmi_id,
+                                    "guss_expiration",
+                                      "raw",
+                                      expiration_clause);
+              if (update_login) {
+                if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+                  last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+                } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+                  last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
+                } else { // HOEL_DB_TYPE_SQLITE
+                  last_login_clause = msprintf("%u", (now));
+                }
+                json_object_set_new(json_object_get(j_query, "values"), "guss_last_login", json_pack("{ss}", "raw", last_login_clause));
+                o_free(last_login_clause);
+              }
+              o_free(expiration_clause);
+              res = h_insert(config->conn, j_query, NULL);
+              json_decref(j_query);
+              if (res == H_OK) {
+                ret = G_OK;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error executing j_query (1)");
+                ret = G_ERROR_DB;
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error executing j_query (2)");
+              ret = G_ERROR_DB;
+            }
+          } else {
+            ret = G_ERROR_PARAM;
+          }
+        } else {
+          // Disable all session schemes with the scheme password
+          j_query = json_pack("{sss{si}s{sOsn}}",
                               "table",
                               GLEWLWYD_TABLE_USER_SESSION_SCHEME,
                               "set",
@@ -421,114 +482,55 @@ int user_session_update(struct config_elements * config, const char * session_ui
                               "where",
                                 "gus_id",
                                 json_object_get(json_object_get(j_session, "session"), "gus_id"),
-                                "guasmi_id",
-                                scheme_instance->guasmi_id);
+                                "guasmi_id");
           res = h_update(config->conn, j_query, NULL);
           json_decref(j_query);
           if (res == H_OK) {
-            // Set session scheme for this scheme with the timeout
+            // Set session scheme password with the timeout
             if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-              expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)scheme_instance->guasmi_expiration));
+              expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION));
             } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-              expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)scheme_instance->guasmi_expiration));
+              expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION));
             } else { // HOEL_DB_TYPE_SQLITE
-              expiration_clause = msprintf("%u", (now + (unsigned int)scheme_instance->guasmi_expiration));
+              expiration_clause = msprintf("%u", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION));
             }
-            if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-              last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
-            } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-              last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
-            } else { // HOEL_DB_TYPE_SQLITE
-              last_login_clause = msprintf("%u", (now));
-            }
-            j_query = json_pack("{sss{sOsIs{ss}s{ss}}}",
+            j_query = json_pack("{sss{sOsns{ss}}}",
                                 "table",
                                 GLEWLWYD_TABLE_USER_SESSION_SCHEME,
                                 "values",
                                   "gus_id",
                                   json_object_get(json_object_get(j_session, "session"), "gus_id"),
                                   "guasmi_id",
-                                  scheme_instance->guasmi_id,
                                   "guss_expiration",
                                     "raw",
-                                    expiration_clause,
-                                  "guss_last_login",
-                                    "raw",
-                                    last_login_clause);
+                                    expiration_clause);
+            if (update_login) {
+              if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+                last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+              } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+                last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
+              } else { // HOEL_DB_TYPE_SQLITE
+                last_login_clause = msprintf("%u", (now));
+              }
+              json_object_set_new(json_object_get(j_query, "values"), "guss_last_login", json_pack("{ss}", "raw", last_login_clause));
+              o_free(last_login_clause);
+            }
             o_free(expiration_clause);
-            o_free(last_login_clause);
             res = h_insert(config->conn, j_query, NULL);
             json_decref(j_query);
             if (res == H_OK) {
               ret = G_OK;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error executing j_query (1)");
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error executing j_query (3)");
               ret = G_ERROR_DB;
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error executing j_query (2)");
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error executing j_query (4)");
             ret = G_ERROR_DB;
           }
-        } else {
-          ret = G_ERROR_PARAM;
         }
       } else {
-        // Disable all session schemes with the scheme password
-        j_query = json_pack("{sss{si}s{sOsn}}",
-                            "table",
-                            GLEWLWYD_TABLE_USER_SESSION_SCHEME,
-                            "set",
-                              "guss_enabled",
-                              0,
-                            "where",
-                              "gus_id",
-                              json_object_get(json_object_get(j_session, "session"), "gus_id"),
-                              "guasmi_id");
-        res = h_update(config->conn, j_query, NULL);
-        json_decref(j_query);
-        if (res == H_OK) {
-          // Set session scheme password with the timeout
-          if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-            expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION));
-          } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-            expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION));
-          } else { // HOEL_DB_TYPE_SQLITE
-            expiration_clause = msprintf("%u", (now + GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION));
-          }
-          if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-            last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
-          } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-            last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
-          } else { // HOEL_DB_TYPE_SQLITE
-            last_login_clause = msprintf("%u", (now));
-          }
-          j_query = json_pack("{sss{sOsns{ss}s{ss}}}",
-                              "table",
-                              GLEWLWYD_TABLE_USER_SESSION_SCHEME,
-                              "values",
-                                "gus_id",
-                                json_object_get(json_object_get(j_session, "session"), "gus_id"),
-                                "guasmi_id",
-                                "guss_expiration",
-                                  "raw",
-                                  expiration_clause,
-                                "guss_last_login",
-                                  "raw",
-                                  last_login_clause);
-          o_free(expiration_clause);
-          o_free(last_login_clause);
-          res = h_insert(config->conn, j_query, NULL);
-          json_decref(j_query);
-          if (res == H_OK) {
-            ret = G_OK;
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error executing j_query (3)");
-            ret = G_ERROR_DB;
-          }
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error executing j_query (4)");
-          ret = G_ERROR_DB;
-        }
+        ret = G_OK;
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error get_session_for_username");
@@ -730,10 +732,13 @@ int delete_user_session_from_hash(struct config_elements * config, const char * 
 }
 
 json_t * get_scheme_list_for_user(struct config_elements * config, const char * username) {
-  json_t * j_scheme_modules = get_user_auth_scheme_module_list(config), * j_return, * j_module_array, * j_element;
-  size_t index;
+  json_t * j_scheme_modules = get_user_auth_scheme_module_list(config), 
+         * j_return, 
+         * j_module_array = NULL, 
+         * j_element = NULL;
+  size_t index = 0;
   struct _user_auth_scheme_module_instance * instance = NULL;
-  int can_use;
+  int can_use, has_scheme;
   
   if (check_result_value(j_scheme_modules, G_OK)) {
     j_module_array = json_array();
@@ -743,7 +748,11 @@ json_t * get_scheme_list_for_user(struct config_elements * config, const char * 
         if (instance != NULL) {
           can_use = instance->module->user_auth_scheme_module_can_use(config->config_m, username, instance->cls);
           if (can_use != GLEWLWYD_IS_NOT_AVAILABLE) {
-            json_array_append(j_module_array, j_element);
+            if ((has_scheme = user_has_scheme(config, username, json_string_value(json_object_get(j_element, "name")))) == G_OK) {
+              json_array_append_new(j_module_array, json_pack("{sOsOsO}", "module", json_object_get(j_element, "module"), "name", json_object_get(j_element, "name"), "display_name", json_object_get(j_element, "display_name")));
+            } else if (has_scheme != G_ERROR_NOT_FOUND) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_scheme_list_for_user - Error user_has_scheme");
+            }
           }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_scheme_list_for_user - Error instance %s/%s not found", json_string_value(json_object_get(j_element, "module")), json_string_value(json_object_get(j_element, "name")));

@@ -188,6 +188,13 @@ tH8bQpT9ojrUnc/hKSm9h1ANH5JHglHCQphHQPPNjFZxhIamqn7RuYEIBA==\
 #define CREDENTIAL_PACKED_PRIVATE_KEY_INVALID_AAGUID_PATH "cert/client-p-ia.key"
 #define CREDENTIAL_PACKED_PUBLIC_CERT_INVALID_AAGUID_PATH "cert/client-p-ia.crt"
 
+#define SCOPE_NAME "scope2"
+#define SCOPE_DISPLAY_NAME "Glewlwyd mock scope without password"
+#define SCOPE_DESCRIPTION "Glewlwyd scope 2 scope description"
+#define SCOPE_PASSWORD_MAX_AGE 0
+#define SCOPE_SCHEME_1_TYPE "mock"
+#define SCOPE_SCHEME_1_NAME "mock_scheme_95"
+
 struct _u_request user_req;
 struct _u_request admin_req;
 
@@ -217,6 +224,72 @@ static char * get_file_content(const char * file_path) {
   
   return buffer;
 }
+
+START_TEST(test_glwd_scheme_webauthn_irl_scope_set)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_NAME);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+  json_decref(j_canuse);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_webauthn_irl_scope_collision_set)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}{ssss}{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_NAME_2);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+  json_decref(j_canuse);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_webauthn_irl_scope_unset)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+}
+END_TEST
 
 START_TEST(test_glwd_scheme_webauthn_irl_module_add)
 {
@@ -358,6 +431,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_new_credential)
          * j_result, * j_result2;
   struct _u_response resp;
   size_t challenge_len;
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
+  
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
   
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, jwt_response, NULL, NULL), 1);
   
@@ -386,6 +462,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_new_credential)
   ck_assert_str_ne(json_string_value(json_object_get(j_result, "session")), "");
   ck_assert_str_ne(json_string_value(json_object_get(j_result, "session")), json_string_value(json_object_get(j_result2, "session")));
   ck_assert_str_ne(json_string_value(json_object_get(j_result, "challenge")), json_string_value(json_object_get(j_result2, "challenge")));
+  json_decref(j_canuse);
   json_decref(j_params);
   json_decref(j_result);
   json_decref(j_result2);
@@ -18596,6 +18673,7 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd scheme webauthn");
   tc_core = tcase_create("test_glwd_scheme_webauthn_irl");
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_error);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_new_credential);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_error_bad_formed_response);
@@ -18683,8 +18761,10 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_self_signed_invalid_signature);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_self_signed_invalid_pubkey);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_remove_credential_success);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_remove);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add_with_ca);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_remove_credential_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_ui);
@@ -18696,12 +18776,16 @@ static Suite *glewlwyd_suite(void)
 #if GNUTLS_VERSION_NUMBER >= 0x030503
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_aaguid);
 #endif
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_remove);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add_with_ca_2);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_packed_x5c_unregistered_ca);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_remove);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add_2);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_scope_collision_set);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_u2f_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_u2f_2_collision_error);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_u2f_2_in_2_success);
@@ -18713,10 +18797,13 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_none_error_format);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_register_none_success);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_remove_credential_none_success);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_remove);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_remove_2);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_add_3);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_trigger_not_flaggerbasted);
+  tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_webauthn_irl_module_remove);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);

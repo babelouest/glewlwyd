@@ -1,5 +1,7 @@
 # Glewlwyd User Module LDAP Backend documentation
 
+[![License: CC BY 4.0](https://licensebuttons.net/l/by/4.0/80x15.png)](https://creativecommons.org/licenses/by/4.0/)
+
 ![mod-user-ldap](screenshots/mod-user-ldap.png)
 
 The database backend uses a LDAP service to store information and passwords for users.
@@ -7,7 +9,7 @@ The database backend uses a LDAP service to store information and passwords for 
 ## Installation
 
 In the administration page, go to `Parameters/Users data sources` and add a new user module by clicking on the `+` button. In the modal, enter a name and a display name (the name must be unique among all user backend instances).
-Select the type `LDAP backend user module` in the Type dropdown button.
+Select the type `LDAP backend user module` in the Type drop-down button.
 
 Below is the definition of all parameters.
 
@@ -29,7 +31,7 @@ URI to connect to the LDAP service, ex: ldaps://ldap.example.com/
 
 ### Connection DN
 
-DN used to acces the LDAP service. The DN must have write access if you want to use this backend in write mode.
+DN used to access the LDAP service. The DN must have write access if you want to use this backend in write mode.
 
 ### Connection password
 
@@ -87,7 +89,7 @@ You can specify multiple values by separating them with a comma `,`.
 
 ### Object class property for a new user
 
-This value will contain all the object class values when Glewlwyd will create new users in the LDAP backend. Values must be separated with a comme `,`.
+This value will contain all the object class values when Glewlwyd will create new users in the LDAP backend. Values must be separated with a comma `,`.
 
 ### Specific data format
 
@@ -127,7 +129,7 @@ If this option is checked, the user can have access to this property in write mo
 
 ### Scope field property
 
-This section allows to specify a correspondance between a Glewlwyd scope and a value in the scope property. The main goal is to use an existing LDAP service whose users have property that can be related to scopes (group names, etc.). For example, the group name value `accounting` will correspond to the scope `mail`.
+This section allows to specify a correspondence between a Glewlwyd scope and a value in the scope property. The main goal is to use an existing LDAP service whose users have property that can be related to scopes (group names, etc.). For example, the group name value `accounting` will correspond to the scope `mail`.
 
 #### LDAP value
 

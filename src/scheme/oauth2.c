@@ -794,81 +794,16 @@ static json_t * get_provider(struct _oauth2_config * oauth2_config, const char *
  */
 json_t * user_auth_scheme_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{sisssssss{s{ssso}s[{s{ssso}s{sss[sss]so}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}}]}}",
-                   "result",
-                   G_OK,
-                   "name",
-                   "oauth2",
-                   "display_name",
-                   "OAuth2 Client",
-                   "description",
-                   "OAuth2 Client scheme",
-                   "parameters",
-                     "redirect_uri",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_true(),
-                     "provider_list",
-                       "name",
-                         "type",
-                         "string",
-                         "mandatory",
-                         json_true(),
-                       "response_type",
-                         "type",
-                         "list",
-                         "values",
-                           "code",
-                           "token",
-                           "id_token",
-                         "mandatory",
-                         json_false(),
-                       "client_id",
-                         "type",
-                         "string",
-                         "mandatory",
-                         json_true(),
-                       "client_secret",
-                         "type",
-                         "string",
-                         "mandatory",
-                         json_false(),
-                       "config_endpoint",
-                         "type",
-                         "string",
-                         "mandatory",
-                         json_false(),
-                       "auth_endpoint",
-                         "type",
-                         "string",
-                         "mandatory",
-                         json_false(),
-                       "token_endpoint",
-                         "type",
-                         "string",
-                         "mandatory",
-                         json_false(),
-                       "userinfo_endpoint",
-                         "type",
-                         "string",
-                         "mandatory",
-                         json_false(),
-                       "scope",
-                         "type",
-                         "string",
-                         "mandatory",
-                         json_false(),
-                       "userid_property",
-                         "type",
-                         "string",
-                         "mandatory",
-                         json_true(),
-                       "enabled",
-                         "type",
-                         "boolean",
-                         "mandatory",
-                         json_false());
+// TODO: Enable when available
+#if 0
+  r_global_init();
+  i_global_init();
+#endif
+  return json_pack("{sissssss}",
+                   "result", G_OK,
+                   "name", "oauth2",
+                   "display_name", "OAuth2 Client",
+                   "description", "OAuth2 Client scheme");
 }
 
 /**
@@ -887,6 +822,11 @@ json_t * user_auth_scheme_module_load(struct config_module * config) {
  */
 int user_auth_scheme_module_unload(struct config_module * config) {
   UNUSED(config);
+// TODO: Enable when available
+#if 0
+  r_global_close();
+  i_global_close();
+#endif
   return G_OK;
 }
 
@@ -1067,6 +1007,7 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
     y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use - Error get_registration_for_user");
     ret = GLEWLWYD_IS_NOT_AVAILABLE;
   }
+  json_decref(j_registration);
   return ret;
 }
 

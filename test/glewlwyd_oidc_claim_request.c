@@ -25,6 +25,8 @@
 #define USER2_PASSWORD "password"
 #define PLUGIN_NAME "oidc_claims"
 #define SCOPE_LIST "g_profile openid"
+#define SCOPE_1 "g_profile"
+#define SCOPE_2 "openid"
 #define CLIENT "client1_id"
 #define CLIENT_REDIRECT_URI "../../test-oidc.html?param=client1_cb1"
 #define RESPONSE_TYPE "id_token token"
@@ -47,7 +49,7 @@ struct _u_request user_req, user2_req;
 
 START_TEST(test_oidc_claim_request_add_plugin)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssisisisososososososososssss[{sssoss}{sssossss}{sssossssssss}{ssssso}{sssoss}{sssossss}{sssossssssss}]s{ssssssssssssss}}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssisisisososososososososssssss[{sssoss}{sssossss}{sssossssssss}{ssssso}{sssoss}{sssossss}{sssossssssss}]s{ssssssssssssss}}}",
                                 "module",
                                 "oidc",
                                 "name",
@@ -88,6 +90,8 @@ START_TEST(test_oidc_claim_request_add_plugin)
                                   "name-claim",
                                   "on-demand",
                                   "email-claim",
+                                  "on-demand",
+                                  "scope-claim",
                                   "on-demand",
                                   "claims",
                                     "name",
@@ -196,6 +200,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_no_claim)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "formatted")), ADDR_FORMATTED);
@@ -207,6 +212,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_no_claim)
   ck_assert_ptr_eq(json_object_get(j_result, "claim-str"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-number"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "scope"), NULL);
   
   free_string_array(id_token_split);
   o_free(id_token);
@@ -238,12 +244,14 @@ START_TEST(test_oidc_claim_request_user2_id_token_no_claim)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-mandatory"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-str"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-number"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "address"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "scope"), NULL);
   
   free_string_array(id_token_split);
   o_free(id_token);
@@ -382,6 +390,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_str_null)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-str")), CLAIM_STR);
@@ -393,6 +402,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_str_null)
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "region")), ADDR_REGION);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-number"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "scope"), NULL);
   
   free_string_array(id_token_split);
   o_free(id_token);
@@ -431,12 +441,14 @@ START_TEST(test_oidc_claim_request_user2_id_token_claim_str_null)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-mandatory"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-str"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-number"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "address"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "scope"), NULL);
   
   free_string_array(id_token_split);
   o_free(id_token);
@@ -475,6 +487,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_str_value_found)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-str")), CLAIM_STR);
@@ -486,6 +499,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_str_value_found)
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "region")), ADDR_REGION);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-number"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "scope"), NULL);
   
   free_string_array(id_token_split);
   o_free(id_token);
@@ -524,6 +538,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_str_value_not_found)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "formatted")), ADDR_FORMATTED);
@@ -535,6 +550,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_str_value_not_found)
   ck_assert_ptr_eq(json_object_get(j_result, "claim-str"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-number"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "scope"), NULL);
   
   free_string_array(id_token_split);
   o_free(id_token);
@@ -573,6 +589,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_str_values_found)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-str")), CLAIM_STR);
@@ -584,6 +601,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_str_values_found)
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "region")), ADDR_REGION);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-number"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "scope"), NULL);
   
   free_string_array(id_token_split);
   o_free(id_token);
@@ -622,6 +640,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_str_values_not_found)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "formatted")), ADDR_FORMATTED);
@@ -633,6 +652,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_str_values_not_found)
   ck_assert_ptr_eq(json_object_get(j_result, "claim-str"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-number"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "scope"), NULL);
   
   free_string_array(id_token_split);
   o_free(id_token);
@@ -671,6 +691,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_number_value_found)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_int_eq(json_integer_value(json_object_get(j_result, "claim-number")), 42);
@@ -682,6 +703,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_number_value_found)
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "region")), ADDR_REGION);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-str"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "scope"), NULL);
   
   free_string_array(id_token_split);
   o_free(id_token);
@@ -720,6 +742,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_number_values_found)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_int_eq(json_integer_value(json_object_get(j_result, "claim-number")), 42);
@@ -731,6 +754,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_number_values_found)
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "region")), ADDR_REGION);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-str"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "scope"), NULL);
   
   free_string_array(id_token_split);
   o_free(id_token);
@@ -769,6 +793,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_boolean_value_found)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), json_true());
@@ -818,6 +843,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_boolean_values_found)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), json_true());
@@ -846,7 +872,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_full)
   size_t str_payload_len;
   json_t * j_result, * j_claims;
   
-  ck_assert_ptr_ne((j_claims = json_pack("{s{sosososososo}}", "id_token", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "claim-array-str", json_null(), "claim-array-number", json_null(), "claim-array-bool", json_null(), "name", json_null(), "email", json_null())), NULL);
+  ck_assert_ptr_ne((j_claims = json_pack("{s{sososososososososo}}", "id_token", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "claim-array-str", json_null(), "claim-array-number", json_null(), "claim-array-bool", json_null(), "name", json_null(), "email", json_null(), "scope", json_null())), NULL);
   ck_assert_ptr_ne((claims_str = json_dumps(j_claims, JSON_COMPACT)), NULL);
   ck_assert_ptr_ne((claims_str_enc = ulfius_url_encode(claims_str)), NULL);
   
@@ -867,6 +893,7 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_full)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-str")), CLAIM_STR);
@@ -883,6 +910,9 @@ START_TEST(test_oidc_claim_request_user1_id_token_claim_full)
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "region")), ADDR_REGION);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "name")), "Dave Lopper 1");
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "email")), "dev1@glewlwyd");
+  ck_assert_int_eq(json_array_size(json_object_get(j_result, "scope")), 2);
+  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "scope"), 0)), SCOPE_1);
+  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "scope"), 1)), SCOPE_2);
   
   free_string_array(id_token_split);
   o_free(id_token);
@@ -941,7 +971,7 @@ START_TEST(test_oidc_claim_request_user1_token_userinfo_claim_full)
   char * access_token, * claims_str, * claims_str_enc, * bearer;
   json_t * j_result, * j_claims;
   
-  ck_assert_ptr_ne((j_claims = json_pack("{s{sososososo}}", "userinfo", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "name", json_null(), "email", json_null())), NULL);
+  ck_assert_ptr_ne((j_claims = json_pack("{s{sosososososo}}", "userinfo", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "name", json_null(), "email", json_null(), "scope", json_null())), NULL);
   ck_assert_ptr_ne((claims_str = json_dumps(j_claims, JSON_COMPACT)), NULL);
   ck_assert_ptr_ne((claims_str_enc = ulfius_url_encode(claims_str)), NULL);
   
@@ -962,7 +992,7 @@ START_TEST(test_oidc_claim_request_user1_token_userinfo_claim_full)
   bearer = msprintf("Bearer %s", access_token);
   u_map_put(req.map_header, "Authorization", bearer);
 
-  j_result = json_pack("{sssss{ssssssssssss}sisossss}", "claim-mandatory", CLAIM_MANDATORY, "claim-str", CLAIM_STR, "address", "formatted", ADDR_FORMATTED, "street_address", ADDR_STREET_ADDRESS, "locality", ADDR_LOCALITY, "country", ADDR_COUNTRY, "postal_code", ADDR_POSTAL_CODE, "region", ADDR_REGION, "claim-number", 42, "claim-bool", json_true(), "name", "Dave Lopper 1", "email", "dev1@glewlwyd");
+  j_result = json_pack("{sssss{ssssssssssss}sisosssss[ss]}", "claim-mandatory", CLAIM_MANDATORY, "claim-str", CLAIM_STR, "address", "formatted", ADDR_FORMATTED, "street_address", ADDR_STREET_ADDRESS, "locality", ADDR_LOCALITY, "country", ADDR_COUNTRY, "postal_code", ADDR_POSTAL_CODE, "region", ADDR_REGION, "claim-number", 42, "claim-bool", json_true(), "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "scope", SCOPE_1, SCOPE_2);
   ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
 
@@ -1017,6 +1047,7 @@ START_TEST(test_oidc_claim_request_user1_code_id_token_userinfo_claim_str_null)
 
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-str")), CLAIM_STR);
@@ -1028,6 +1059,7 @@ START_TEST(test_oidc_claim_request_user1_code_id_token_userinfo_claim_str_null)
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "region")), ADDR_REGION);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-number"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "scope"), NULL);
   
   bearer = msprintf("Bearer %s", access_token);
   u_map_put(req.map_header, "Authorization", bearer);
@@ -1059,7 +1091,7 @@ START_TEST(test_oidc_claim_request_user1_code_id_token_userinfo_claim_full)
   size_t str_payload_len;
   
   ulfius_init_response(&resp);
-  ck_assert_ptr_ne((j_claims = json_pack("{s{sososososo}s{sososososo}}", "userinfo", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "name", json_null(), "email", json_null(), "id_token", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "name", json_null(), "email", json_null())), NULL);
+  ck_assert_ptr_ne((j_claims = json_pack("{s{sosososososo}s{sosososososo}}", "userinfo", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "name", json_null(), "email", json_null(), "scope", json_null(), "id_token", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "name", json_null(), "email", json_null(), "scope", json_null())), NULL);
   ck_assert_ptr_ne((claims_str = json_dumps(j_claims, JSON_COMPACT)), NULL);
   ck_assert_ptr_ne((claims_str_enc = ulfius_url_encode(claims_str)), NULL);
   o_free(user_req.http_url);
@@ -1091,6 +1123,7 @@ START_TEST(test_oidc_claim_request_user1_code_id_token_userinfo_claim_full)
 
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-str")), CLAIM_STR);
@@ -1104,12 +1137,15 @@ START_TEST(test_oidc_claim_request_user1_code_id_token_userinfo_claim_full)
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "region")), ADDR_REGION);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "name")), "Dave Lopper 1");
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "email")), "dev1@glewlwyd");
+  ck_assert_int_eq(json_array_size(json_object_get(j_result, "scope")), 2);
+  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "scope"), 0)), SCOPE_1);
+  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "scope"), 1)), SCOPE_2);
   
   bearer = msprintf("Bearer %s", access_token);
   u_map_put(req.map_header, "Authorization", bearer);
 
   json_decref(j_result);
-  j_result = json_pack("{sssss{ssssssssssss}sisossss}", "claim-mandatory", CLAIM_MANDATORY, "claim-str", CLAIM_STR, "address", "formatted", ADDR_FORMATTED, "street_address", ADDR_STREET_ADDRESS, "locality", ADDR_LOCALITY, "country", ADDR_COUNTRY, "postal_code", ADDR_POSTAL_CODE, "region", ADDR_REGION, "claim-number", 42, "claim-bool", json_true(), "name", "Dave Lopper 1", "email", "dev1@glewlwyd");
+  j_result = json_pack("{sssss{ssssssssssss}sisosssss[ss]}", "claim-mandatory", CLAIM_MANDATORY, "claim-str", CLAIM_STR, "address", "formatted", ADDR_FORMATTED, "street_address", ADDR_STREET_ADDRESS, "locality", ADDR_LOCALITY, "country", ADDR_COUNTRY, "postal_code", ADDR_POSTAL_CODE, "region", ADDR_REGION, "claim-number", 42, "claim-bool", json_true(), "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "scope", SCOPE_1, SCOPE_2);
   ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
   
@@ -1202,7 +1238,7 @@ START_TEST(test_oidc_claim_request_user1_refresh_token_userinfo_claim_full)
   json_t * j_result, * j_claims, * j_body;
   
   ulfius_init_response(&resp);
-  ck_assert_ptr_ne((j_claims = json_pack("{s{sososososo}}", "userinfo", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "name", json_null(), "email", json_null())), NULL);
+  ck_assert_ptr_ne((j_claims = json_pack("{s{sosososososo}}", "userinfo", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "name", json_null(), "email", json_null(), "scope", json_null())), NULL);
   ck_assert_ptr_ne((claims_str = json_dumps(j_claims, JSON_COMPACT)), NULL);
   ck_assert_ptr_ne((claims_str_enc = ulfius_url_encode(claims_str)), NULL);
   o_free(user_req.http_url);
@@ -1247,7 +1283,7 @@ START_TEST(test_oidc_claim_request_user1_refresh_token_userinfo_claim_full)
   bearer = msprintf("Bearer %s", access_token);
   u_map_put(req.map_header, "Authorization", bearer);
 
-  j_result = json_pack("{sssss{ssssssssssss}sisossss}", "claim-mandatory", CLAIM_MANDATORY, "claim-str", CLAIM_STR, "address", "formatted", ADDR_FORMATTED, "street_address", ADDR_STREET_ADDRESS, "locality", ADDR_LOCALITY, "country", ADDR_COUNTRY, "postal_code", ADDR_POSTAL_CODE, "region", ADDR_REGION, "claim-number", 42, "claim-bool", json_true(), "name", "Dave Lopper 1", "email", "dev1@glewlwyd");
+  j_result = json_pack("{sssss{ssssssssssss}sisosssss[ss]}", "claim-mandatory", CLAIM_MANDATORY, "claim-str", CLAIM_STR, "address", "formatted", ADDR_FORMATTED, "street_address", ADDR_STREET_ADDRESS, "locality", ADDR_LOCALITY, "country", ADDR_COUNTRY, "postal_code", ADDR_POSTAL_CODE, "region", ADDR_REGION, "claim-number", 42, "claim-bool", json_true(), "name", "Dave Lopper 1", "email", "dev1@glewlwyd", "scope", SCOPE_1, SCOPE_2);
   ck_assert_int_eq(run_simple_test(&req, "GET", SERVER_URI "/" PLUGIN_NAME "/userinfo/", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
   json_decref(j_result);
   
@@ -1301,6 +1337,7 @@ START_TEST(test_oidc_claim_request_user1_request_jwt_id_token_claim_str_null)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_int_eq(json_integer_value(json_object_get(j_result, "claim-number")), 42);
@@ -1312,6 +1349,7 @@ START_TEST(test_oidc_claim_request_user1_request_jwt_id_token_claim_str_null)
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "region")), ADDR_REGION);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-str"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result, "claim-bool"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_result, "scope"), NULL);
   
   o_free(request);
   o_free(id_token);
@@ -1334,7 +1372,7 @@ START_TEST(test_oidc_claim_request_user1_request_jwt_id_token_claim_full)
   r_jwt_init(&jwt_request);
   ck_assert_ptr_ne(jwt_request, NULL);
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_request, R_JWA_ALG_NONE), RHN_OK);
-  ck_assert_ptr_ne((j_claims = json_pack("{s{s{sososososo}}}", "claims", "id_token", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "name", json_null(), "email", json_null())), NULL);
+  ck_assert_ptr_ne((j_claims = json_pack("{s{s{sosososososo}}}", "claims", "id_token", "claim-str", json_null(), "claim-number", json_null(), "claim-bool", json_null(), "name", json_null(), "email", json_null(), "scope", json_null())), NULL);
   r_jwt_set_full_claims_json_t(jwt_request, j_claims);
   r_jwt_set_claim_str_value(jwt_request, "aud", CLIENT_REDIRECT_URI);
   r_jwt_set_claim_str_value(jwt_request, "response_type", "id_token");
@@ -1362,6 +1400,7 @@ START_TEST(test_oidc_claim_request_user1_request_jwt_id_token_claim_full)
   
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
+  str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_result = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-mandatory")), CLAIM_MANDATORY);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "claim-str")), CLAIM_STR);
@@ -1375,6 +1414,9 @@ START_TEST(test_oidc_claim_request_user1_request_jwt_id_token_claim_full)
   ck_assert_str_eq(json_string_value(json_object_get(json_object_get(j_result, "address"), "region")), ADDR_REGION);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "name")), "Dave Lopper 1");
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "email")), "dev1@glewlwyd");
+  ck_assert_int_eq(json_array_size(json_object_get(j_result, "scope")), 2);
+  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "scope"), 0)), SCOPE_1);
+  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "scope"), 1)), SCOPE_2);
   
   o_free(request);
   o_free(id_token);

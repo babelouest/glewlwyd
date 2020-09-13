@@ -59,6 +59,15 @@
 #define CLIENT_KEY_3_PATH "cert/user3.key"
 #define CLIENT_KEY_3_PASSWORD ""
 
+#define CLIENT_CERT_DN "cn=Dave Lopper,o=babelouest"
+
+#define SCOPE_NAME "scope2"
+#define SCOPE_DISPLAY_NAME "Glewlwyd mock scope without password"
+#define SCOPE_DESCRIPTION "Glewlwyd scope 2 scope description"
+#define SCOPE_PASSWORD_MAX_AGE 0
+#define SCOPE_SCHEME_1_TYPE "mock"
+#define SCOPE_SCHEME_1_NAME "mock_scheme_95"
+
 char client_cert_1_id[128];
 char client_cert_2_id[128];
 char client_cert_3_id[128];
@@ -121,6 +130,93 @@ static int get_certificate_id(const char * file_path, unsigned char * certificat
 struct _u_request admin_req;
 struct _u_request user_req;
 
+START_TEST(test_glwd_scheme_certificate_scope_set)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_NAME);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+  json_decref(j_canuse);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_certificate_scope_2_set)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_NAME_2);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME_2);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+  json_decref(j_canuse);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_certificate_scope_3_set)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME,
+                                        "scheme_type", MODULE_MODULE,
+                                        "scheme_name", MODULE_NAME_3);
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME_3);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/delegate/" USERNAME "/profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+  json_decref(j_canuse);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_certificate_scope_unset)
+{
+  json_t * j_parameters = json_pack("{sssssisos{s[{ssss}]}}", 
+                                    "display_name", SCOPE_DISPLAY_NAME,
+                                    "description", SCOPE_DESCRIPTION,
+                                    "password_max_age", SCOPE_PASSWORD_MAX_AGE,
+                                    "password_required", json_false(),
+                                    "scheme",
+                                      "2",
+                                        "scheme_type", SCOPE_SCHEME_1_TYPE,
+                                        "scheme_name", SCOPE_SCHEME_1_NAME);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/scope/" SCOPE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  
+  json_decref(j_parameters);
+}
+END_TEST
+
 START_TEST(test_glwd_scheme_certificate_module_add_scheme_backend)
 {
   json_t * j_parameters = json_pack("{sssssssisis{so}}", 
@@ -130,8 +226,7 @@ START_TEST(test_glwd_scheme_certificate_module_add_scheme_backend)
                                     "expiration", MODULE_EXPIRATION, 
                                     "max_use", MODULE_MAX_USE, 
                                     "parameters",
-                                      "use-scheme-storage",
-                                      json_true());
+                                      "use-scheme-storage", json_true());
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -141,9 +236,11 @@ END_TEST
 START_TEST(test_glwd_scheme_certificate_register_scheme_backend_use_cert)
 {
   json_t * j_parameters = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "register", "use-certificate");
+  json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
   user_req.client_cert_file = o_strdup(CLIENT_CERT_1_PATH);
   user_req.client_key_file = o_strdup(CLIENT_KEY_1_PATH);
   user_req.client_key_password = o_strdup(CLIENT_KEY_1_PASSWORD);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   o_free(user_req.client_cert_file);
@@ -152,6 +249,8 @@ START_TEST(test_glwd_scheme_certificate_register_scheme_backend_use_cert)
   user_req.client_cert_file = NULL;
   user_req.client_key_file = NULL;
   user_req.client_key_password = NULL;
+
+  json_decref(j_canuse);
 }
 END_TEST
 
@@ -476,12 +575,9 @@ START_TEST(test_glwd_scheme_certificate_module_add_user_properties_pem)
                                     "expiration", MODULE_EXPIRATION, 
                                     "max_use", MODULE_MAX_USE, 
                                     "parameters",
-                                      "use-scheme-storage",
-                                      json_false(),
-                                      "user-certificate-property",
-                                      "cert",
-                                      "user-certificate-format",
-                                      "PEM");
+                                      "use-scheme-storage", json_false(),
+                                      "user-certificate-property", "cert",
+                                      "user-certificate-format", "PEM");
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -598,12 +694,9 @@ START_TEST(test_glwd_scheme_certificate_module_add_user_properties_pem_multiple_
                                     "expiration", MODULE_EXPIRATION, 
                                     "max_use", MODULE_MAX_USE, 
                                     "parameters",
-                                      "use-scheme-storage",
-                                      json_false(),
-                                      "user-certificate-property",
-                                      "cert",
-                                      "user-certificate-format",
-                                      "PEM");
+                                      "use-scheme-storage", json_false(),
+                                      "user-certificate-property", "cert",
+                                      "user-certificate-format", "PEM");
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -742,12 +835,9 @@ START_TEST(test_glwd_scheme_certificate_module_add_user_properties_der)
                                     "expiration", MODULE_EXPIRATION, 
                                     "max_use", MODULE_MAX_USE, 
                                     "parameters",
-                                      "use-scheme-storage",
-                                      json_false(),
-                                      "user-certificate-property",
-                                      "cert",
-                                      "user-certificate-format",
-                                      "DER");
+                                      "use-scheme-storage", json_false(),
+                                      "user-certificate-property", "cert",
+                                      "user-certificate-format", "DER");
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -844,13 +934,10 @@ START_TEST(test_glwd_scheme_certificate_module_add_scheme_backend_ca_chain)
                                     "expiration", MODULE_EXPIRATION, 
                                     "max_use", MODULE_MAX_USE, 
                                     "parameters",
-                                      "use-scheme-storage",
-                                      json_true(),
+                                      "use-scheme-storage", json_true(),
                                       "ca-chain",
-                                        "file-name",
-                                        ROOT_CA_CERT_1_PATH,
-                                        "cert-file",
-                                        content);
+                                        "file-name", ROOT_CA_CERT_1_PATH,
+                                        "cert-file", content);
   o_free(content);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
@@ -911,13 +998,10 @@ START_TEST(test_glwd_scheme_certificate_module_add_scheme_backend_invalid_ca_cha
                                     "expiration", MODULE_EXPIRATION, 
                                     "max_use", MODULE_MAX_USE, 
                                     "parameters",
-                                      "use-scheme-storage",
-                                      json_true(),
+                                      "use-scheme-storage", json_true(),
                                       "ca-chain",
-                                        "file-name",
-                                        ROOT_CA_CERT_1_PATH,
-                                        "cert-file",
-                                        content);
+                                        "file-name", ROOT_CA_CERT_1_PATH,
+                                        "cert-file", content);
   o_free(content);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
@@ -977,12 +1061,9 @@ START_TEST(test_glwd_scheme_certificate_module_add_scheme_backend_proxyfied)
                                     "expiration", MODULE_EXPIRATION, 
                                     "max_use", MODULE_MAX_USE, 
                                     "parameters",
-                                      "use-scheme-storage",
-                                      json_true(),
-                                      "cert-source",
-                                      "both",
-                                      "header-name",
-                                      MODULE_HEADER_NAME);
+                                      "use-scheme-storage", json_true(),
+                                      "cert-source", "both",
+                                      "header-name", MODULE_HEADER_NAME);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -1131,349 +1212,134 @@ START_TEST(test_glwd_scheme_certificate_module_remove_scheme_backend_proxyfied)
 }
 END_TEST
 
-START_TEST(test_glwd_scheme_certificate_module_add_scheme_backend_request_multiple)
+START_TEST(test_glwd_scheme_certificate_module_add_user_properties_dn)
 {
-  char * ca_key = get_file_content(ROOT_CA_KEY_1_PATH), * ca_cert = get_file_content(ROOT_CA_CERT_1_PATH);
-  json_t * j_parameters = json_pack("{sssssssisis{sos{s{ssss}s{ssss}sissso}}}", 
+  json_t * j_parameters = json_pack("{sssssssisis{soss}}", 
                                     "module", MODULE_MODULE, 
                                     "name", MODULE_NAME, 
                                     "display_name", MODULE_DISPLAY_NAME, 
                                     "expiration", MODULE_EXPIRATION, 
                                     "max_use", MODULE_MAX_USE, 
                                     "parameters",
-                                      "use-scheme-storage",
-                                      json_true(),
-                                      "request-certificate",
-                                        "issuer-cert",
-                                          "file-name",
-                                          ROOT_CA_CERT_1_PATH,
-                                          "cert-file",
-                                          ca_cert,
-                                        "issuer-key",
-                                          "file-name",
-                                          ROOT_CA_KEY_1_PATH,
-                                          "cert-file",
-                                          ca_key,
-                                      "expiration",
-                                      60*60*24*365,
-                                      "dn-format",
-                                      "cn={username},o=user,ou=glewlwyd",
-                                      "allow-multiple",
-                                      json_true());
+                                      "use-scheme-storage", json_false(),
+                                      "user-dn-property", "dn");
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
-  o_free(ca_key);
-  o_free(ca_cert);
+  
+  j_parameters = json_pack("{ss}", "dn", CLIENT_CERT_DN);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USERNAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
 }
 END_TEST
 
-START_TEST(test_glwd_scheme_certificate_register_request_certificate_auth_success_request_multiple)
+START_TEST(test_glwd_scheme_certificate_authenticate_success_user_properties_dn)
 {
-  struct _u_response resp;
-  json_t * j_parameters = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "register", "request-certificate"), * j_response, * j_response2;
   struct _u_request req;
   json_t * j_params = json_pack("{sssssss{}}", 
                                 "username", USERNAME, 
                                 "scheme_type", MODULE_MODULE, 
                                 "scheme_name", MODULE_NAME,
                                 "value");
-  unsigned char * p12_dec;
-  size_t p12_dec_len;
-  gnutls_pkcs12_t pkcs12 = NULL;
-  gnutls_datum_t dat, dat_key, dat_cert;
-  gnutls_x509_privkey_t key = NULL;
-  gnutls_x509_crt_t *chain = NULL;
-  unsigned int chain_len = 0, i;
-  char tmp_key[] = "key_file_XXXXXX", tmp_cert[] = "cert_file_XXXXXX";
-  int fd_key, fd_cert;
-  
-  user_req.http_verb = o_strdup("POST");
-  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
-  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_parameters), U_OK);
-  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
-  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 200);
-  j_response = ulfius_get_json_body_response(&resp, NULL);
-  ulfius_clean_response(&resp);
-  ck_assert_ptr_ne(j_response, NULL);
-  ck_assert_int_eq(o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_response, "p12")), json_string_length(json_object_get(j_response, "p12")), NULL, &p12_dec_len), 1);
-  p12_dec = o_malloc(p12_dec_len+4);
-  ck_assert_ptr_ne(p12_dec, NULL);
-  ck_assert_int_eq(o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_response, "p12")), json_string_length(json_object_get(j_response, "p12")), p12_dec, &p12_dec_len), 1);
-  ck_assert_int_ge(gnutls_pkcs12_init(&pkcs12), 0);
-  dat.data = p12_dec;
-  dat.size = p12_dec_len;
-  ck_assert_int_ge(gnutls_pkcs12_import(pkcs12, &dat, GNUTLS_X509_FMT_DER, GNUTLS_PKCS_USE_PBES2_AES_128), 0);
-  ck_assert_int_ge(gnutls_pkcs12_verify_mac(pkcs12, json_string_value(json_object_get(j_response, "password"))), 0);
-  ck_assert_int_ge(gnutls_pkcs12_simple_parse(pkcs12, json_string_value(json_object_get(j_response, "password")), &key, &chain, &chain_len, NULL, NULL, NULL, GNUTLS_PKCS12_SP_INCLUDE_SELF_SIGNED), 0);
-  ck_assert_int_eq(chain_len, 1);
-  ck_assert_int_ge(gnutls_x509_privkey_export2(key, GNUTLS_X509_FMT_PEM, &dat_key), 0);
-  ck_assert_int_ge(gnutls_x509_crt_export2(chain[0], GNUTLS_X509_FMT_PEM, &dat_cert), 0);
-  ck_assert_int_gt((fd_key = mkstemp(tmp_key)), -1);
-  ck_assert_int_gt((fd_cert = mkstemp(tmp_cert)), -1);
-  ck_assert_int_gt(write(fd_key, dat_key.data, dat_key.size), 0);
-  ck_assert_int_gt(write(fd_cert, dat_cert.data, dat_cert.size), 0);
-  close(fd_key);
-  close(fd_cert);
-
-  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_parameters), U_OK);
-  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
-  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 200);
-  j_response2 = ulfius_get_json_body_response(&resp, NULL);
-  ulfius_clean_response(&resp);
-  
-  ck_assert_str_ne(json_string_value(json_object_get(j_response, "p12")), json_string_value(json_object_get(j_response2, "p12")));
-  ck_assert_str_ne(json_string_value(json_object_get(j_response, "password")), json_string_value(json_object_get(j_response2, "password")));
-
   ulfius_init_request(&req);
   req.check_server_certificate = 0;
-  req.client_cert_file = o_strdup(tmp_cert);
-  req.client_key_file = o_strdup(tmp_key);
+  req.client_cert_file = o_strdup(CLIENT_CERT_1_PATH);
+  req.client_key_file = o_strdup(CLIENT_KEY_1_PATH);
   req.client_key_password = o_strdup(CLIENT_KEY_1_PASSWORD);
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_params);
   ulfius_clean_request(&req);
-  
-  ck_assert_int_eq(remove(tmp_cert), 0);
-  ck_assert_int_eq(remove(tmp_key), 0);
-  gnutls_pkcs12_deinit(pkcs12);
-  gnutls_x509_privkey_deinit(key);
-  for (i=0; i<chain_len; i++) {
-    gnutls_x509_crt_deinit(chain[i]);
-  }
-  gnutls_free(dat_key.data);
-  gnutls_free(dat_cert.data);
-  json_decref(j_parameters);
-  json_decref(j_response);
-  json_decref(j_response2);
-  o_free(p12_dec);
 }
 END_TEST
 
-START_TEST(test_glwd_scheme_certificate_register_request_certificate_get_register_request_multiple)
+START_TEST(test_glwd_scheme_certificate_authenticate_fail_user_properties_dn)
 {
-  json_t * j_parameters = json_pack("{ssssss}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME), * j_result;
-  struct _u_response resp;
-  user_req.http_verb = o_strdup("PUT");
-  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
-  ulfius_set_json_body_request(&user_req, j_parameters);
-  ulfius_init_response(&resp);
-  
-  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 200);
-  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
-  ck_assert_int_ge(json_array_size(json_object_get(j_result, "certificate")), 2);
+  struct _u_request req;
+  json_t * j_params = json_pack("{sssssss{}}", 
+                                "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME,
+                                "value");
+  ulfius_init_request(&req);
+  req.check_server_certificate = 0;
+  req.client_cert_file = o_strdup(CLIENT_CERT_1_PATH);
+  req.client_key_file = o_strdup(CLIENT_KEY_1_PATH);
+  req.client_key_password = o_strdup(CLIENT_KEY_1_PASSWORD);
 
+  json_t * j_parameters = json_pack("{ss}", "dn", "error");
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USERNAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
-  json_decref(j_result);
-  ulfius_clean_response(&resp);
+
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  ulfius_clean_request(&req);
 }
 END_TEST
 
-START_TEST(test_glwd_scheme_certificate_register_request_certificate_deregister_request_multiple)
-{
-  json_t * j_parameters = json_pack("{ssssss}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME), * j_result, * j_element = NULL;
-  struct _u_response resp;
-  size_t index = 0;
-  
-  user_req.http_verb = o_strdup("PUT");
-  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
-  ulfius_set_json_body_request(&user_req, j_parameters);
-  ulfius_init_response(&resp);
-  
-  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
-  json_decref(j_parameters);
-  ck_assert_int_eq(resp.status, 200);
-  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
-  
-  json_array_foreach(json_object_get(j_result, "certificate"), index, j_element) {
-    j_parameters = json_pack("{sssssss{sssO}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "register", "delete-certificate", "certificate_id", json_object_get(j_element, "certificate_id"));
-    ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
-    json_decref(j_parameters);
-  }
-  json_decref(j_result);
-  ulfius_clean_response(&resp);
-}
-END_TEST
-
-START_TEST(test_glwd_scheme_certificate_module_remove_scheme_backend_request_multiple)
+START_TEST(test_glwd_scheme_certificate_module_remove_user_properties_dn)
 {
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/mod/scheme/" MODULE_NAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+  
+  json_t * j_parameters = json_pack("{so}", "dn", json_null());
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USERNAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
 }
 END_TEST
 
-START_TEST(test_glwd_scheme_certificate_module_add_scheme_backend_request_single)
+START_TEST(test_glwd_scheme_certificate_module_add_user_properties_dn_certificate)
 {
-  char * ca_key = get_file_content(ROOT_CA_KEY_1_PATH), * ca_cert = get_file_content(ROOT_CA_CERT_1_PATH);
-  json_t * j_parameters = json_pack("{sssssssisis{sos{s{ssss}s{ssss}sissso}}}", 
+  json_t * j_parameters = json_pack("{sssssssisis{sossssss}}", 
                                     "module", MODULE_MODULE, 
                                     "name", MODULE_NAME, 
                                     "display_name", MODULE_DISPLAY_NAME, 
                                     "expiration", MODULE_EXPIRATION, 
                                     "max_use", MODULE_MAX_USE, 
                                     "parameters",
-                                      "use-scheme-storage",
-                                      json_true(),
-                                      "request-certificate",
-                                        "issuer-cert",
-                                          "file-name",
-                                          ROOT_CA_CERT_1_PATH,
-                                          "cert-file",
-                                          ca_cert,
-                                        "issuer-key",
-                                          "file-name",
-                                          ROOT_CA_KEY_1_PATH,
-                                          "cert-file",
-                                          ca_key,
-                                      "expiration",
-                                      60*60*24*365,
-                                      "dn-format",
-                                      "cn={username},o=user,ou=glewlwyd",
-                                      "allow-multiple",
-                                      json_false());
+                                      "use-scheme-storage", json_false(),
+                                      "user-dn-property", "dn",
+                                      "user-certificate-property", "cert",
+                                      "user-certificate-format", "PEM");
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/scheme/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
-  o_free(ca_key);
-  o_free(ca_cert);
+  
+  j_parameters = json_pack("{ss}", "dn", CLIENT_CERT_DN);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USERNAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
 }
 END_TEST
 
-START_TEST(test_glwd_scheme_certificate_register_request_certificate_auth_success_request_single)
+START_TEST(test_glwd_scheme_certificate_authenticate_success_user_properties_dn_cert_invalid)
 {
-  struct _u_response resp;
-  json_t * j_parameters = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "register", "request-certificate"), * j_response, * j_response2;
   struct _u_request req;
   json_t * j_params = json_pack("{sssssss{}}", 
                                 "username", USERNAME, 
                                 "scheme_type", MODULE_MODULE, 
                                 "scheme_name", MODULE_NAME,
                                 "value");
-  unsigned char * p12_dec;
-  size_t p12_dec_len = 0;
-  gnutls_pkcs12_t pkcs12 = NULL;
-  gnutls_datum_t dat, dat_key, dat_cert;
-  gnutls_x509_privkey_t key = NULL;
-  gnutls_x509_crt_t *chain = NULL;
-  unsigned int chain_len = 0, i;
-  char tmp_key[] = "key_file_XXXXXX", tmp_cert[] = "cert_file_XXXXXX";
-  int fd_key, fd_cert;
-  
-  user_req.http_verb = o_strdup("POST");
-  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
-  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_parameters), U_OK);
-  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
-  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 200);
-  j_response = ulfius_get_json_body_response(&resp, NULL);
-  ulfius_clean_response(&resp);
-  ck_assert_ptr_ne(j_response, NULL);
-  ck_assert_int_eq(o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_response, "p12")), json_string_length(json_object_get(j_response, "p12")), NULL, &p12_dec_len), 1);
-  p12_dec = o_malloc(p12_dec_len+4);
-  ck_assert_ptr_ne(p12_dec, NULL);
-  ck_assert_int_eq(o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_response, "p12")), json_string_length(json_object_get(j_response, "p12")), p12_dec, &p12_dec_len), 1);
-  ck_assert_int_ge(gnutls_pkcs12_init(&pkcs12), 0);
-  dat.data = p12_dec;
-  dat.size = p12_dec_len;
-  ck_assert_int_ge(gnutls_pkcs12_import(pkcs12, &dat, GNUTLS_X509_FMT_DER, GNUTLS_PKCS_USE_PBES2_AES_128), 0);
-  ck_assert_int_ge(gnutls_pkcs12_verify_mac(pkcs12, json_string_value(json_object_get(j_response, "password"))), 0);
-  ck_assert_int_ge(gnutls_pkcs12_simple_parse(pkcs12, json_string_value(json_object_get(j_response, "password")), &key, &chain, &chain_len, NULL, NULL, NULL, GNUTLS_PKCS12_SP_INCLUDE_SELF_SIGNED), 0);
-  ck_assert_int_eq(chain_len, 1);
-  ck_assert_int_ge(gnutls_x509_privkey_export2(key, GNUTLS_X509_FMT_PEM, &dat_key), 0);
-  ck_assert_int_ge(gnutls_x509_crt_export2(chain[0], GNUTLS_X509_FMT_PEM, &dat_cert), 0);
-  ck_assert_int_gt((fd_key = mkstemp(tmp_key)), -1);
-  ck_assert_int_gt((fd_cert = mkstemp(tmp_cert)), -1);
-  ck_assert_int_gt(write(fd_key, dat_key.data, dat_key.size), 0);
-  ck_assert_int_gt(write(fd_cert, dat_cert.data, dat_cert.size), 0);
-  close(fd_key);
-  close(fd_cert);
-
-  ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_parameters), U_OK);
-  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
-  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 200);
-  j_response2 = ulfius_get_json_body_response(&resp, NULL);
-  ulfius_clean_response(&resp);
-  
-  ck_assert_str_eq(json_string_value(json_object_get(j_response, "p12")), json_string_value(json_object_get(j_response2, "p12")));
-  ck_assert_str_eq(json_string_value(json_object_get(j_response, "password")), json_string_value(json_object_get(j_response2, "password")));
-
   ulfius_init_request(&req);
   req.check_server_certificate = 0;
-  req.client_cert_file = o_strdup(tmp_cert);
-  req.client_key_file = o_strdup(tmp_key);
+  req.client_cert_file = o_strdup(CLIENT_CERT_1_PATH);
+  req.client_key_file = o_strdup(CLIENT_KEY_1_PATH);
   req.client_key_password = o_strdup(CLIENT_KEY_1_PASSWORD);
+
+  char * cert_content = get_file_content(CLIENT_CERT_2_PATH);
+  json_t * j_parameters = json_pack("{ssss}", "dn", CLIENT_CERT_DN, "cert", cert_content);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USERNAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  o_free(cert_content);
+
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+
+  cert_content = get_file_content(CLIENT_CERT_1_PATH);
+  j_parameters = json_pack("{ss}", "cert", cert_content);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USERNAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  o_free(cert_content);
+
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_params);
   ulfius_clean_request(&req);
-  
-  ck_assert_int_eq(remove(tmp_cert), 0);
-  ck_assert_int_eq(remove(tmp_key), 0);
-  gnutls_pkcs12_deinit(pkcs12);
-  gnutls_x509_privkey_deinit(key);
-  for (i=0; i<chain_len; i++) {
-    gnutls_x509_crt_deinit(chain[i]);
-  }
-  gnutls_free(dat_key.data);
-  gnutls_free(dat_cert.data);
-  json_decref(j_parameters);
-  json_decref(j_response);
-  json_decref(j_response2);
-  o_free(p12_dec);
-}
-END_TEST
-
-START_TEST(test_glwd_scheme_certificate_register_request_certificate_get_register_request_single)
-{
-  json_t * j_parameters = json_pack("{ssssss}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME), * j_result;
-  struct _u_response resp;
-  user_req.http_verb = o_strdup("PUT");
-  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
-  ulfius_set_json_body_request(&user_req, j_parameters);
-  ulfius_init_response(&resp);
-  
-  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 200);
-  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
-  ck_assert_int_eq(json_array_size(json_object_get(j_result, "certificate")), 1);
-
-  json_decref(j_parameters);
-  json_decref(j_result);
-  ulfius_clean_response(&resp);
-}
-END_TEST
-
-START_TEST(test_glwd_scheme_certificate_register_request_certificate_deregister_request_single)
-{
-  json_t * j_parameters = json_pack("{ssssss}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME), * j_result, * j_element = NULL;
-  struct _u_response resp;
-  size_t index = 0;
-  
-  user_req.http_verb = o_strdup("PUT");
-  user_req.http_url = o_strdup(SERVER_URI "profile/scheme/register/");
-  ulfius_set_json_body_request(&user_req, j_parameters);
-  ulfius_init_response(&resp);
-  
-  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
-  json_decref(j_parameters);
-  ck_assert_int_eq(resp.status, 200);
-  ck_assert_ptr_ne((j_result = ulfius_get_json_body_response(&resp, NULL)), NULL);
-  
-  json_array_foreach(json_object_get(j_result, "certificate"), index, j_element) {
-    j_parameters = json_pack("{sssssss{sssO}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "register", "delete-certificate", "certificate_id", json_object_get(j_element, "certificate_id"));
-    ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
-    json_decref(j_parameters);
-  }
-  json_decref(j_result);
-  ulfius_clean_response(&resp);
-}
-END_TEST
-
-START_TEST(test_glwd_scheme_certificate_module_remove_scheme_backend_request_single)
-{
-  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/mod/scheme/" MODULE_NAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
 }
 END_TEST
 
@@ -1485,6 +1351,7 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd scheme certificate");
   tc_core = tcase_create("test_glwd_scheme_certificate");
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_scheme_backend);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_scheme_backend_use_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_get_register_scheme_backend);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_deregister_scheme_backend);
@@ -1505,39 +1372,51 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_invalid_ca_scheme_backend_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_scheme_backend_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_deregister_scheme_backend_multiple_cert);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_scheme_backend);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_user_properties_pem);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_2_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_get_register_user_properties_pem);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_test_register_user_properties_pem);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_no_certificate_user_properties_pem);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_unregistered_certificate_user_properties_pem);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_user_properties_pem);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_user_properties_pem);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_user_properties_pem_multiple_cert);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_2_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_get_register_user_properties_pem_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_test_register_user_properties_pem_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_no_certificate_user_properties_pem_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_unregistered_certificate_user_properties_pem_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_invalid_ca_user_properties_pem_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_user_properties_pem_multiple_cert);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_user_properties_pem_multiple_cert);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_user_properties_der);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_2_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_get_register_user_properties_der);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_no_certificate_user_properties_der);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_unregistered_certificate_user_properties_der);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_user_properties_der);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_user_properties_der);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_scheme_backend_ca_chain);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_3_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_scheme_backend_ca_chain);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_scheme_backend_ca_chain);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_deregister_scheme_backend_ca_chain);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_scheme_backend_ca_chain);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_scheme_backend_invalid_ca_chain);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_3_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_scheme_backend_invalid_ca_chain);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_scheme_backend_invalid_ca_chain);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_deregister_scheme_backend_invalid_ca_chain);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_scheme_backend_invalid_ca_chain);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_scheme_backend_proxyfied);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_test_register_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_no_certificate_scheme_backend_proxyfied);
@@ -1545,17 +1424,21 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_cert_disabled_enabled_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_deregister_scheme_backend_proxyfied);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_scheme_backend_proxyfied);
-  tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_scheme_backend_request_multiple);
-  tcase_add_test(tc_core, test_glwd_scheme_certificate_register_request_certificate_auth_success_request_multiple);
-  tcase_add_test(tc_core, test_glwd_scheme_certificate_register_request_certificate_get_register_request_multiple);
-  tcase_add_test(tc_core, test_glwd_scheme_certificate_register_request_certificate_deregister_request_multiple);
-  tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_scheme_backend_request_multiple);
-  tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_scheme_backend_request_single);
-  tcase_add_test(tc_core, test_glwd_scheme_certificate_register_request_certificate_auth_success_request_single);
-  tcase_add_test(tc_core, test_glwd_scheme_certificate_register_request_certificate_get_register_request_single);
-  tcase_add_test(tc_core, test_glwd_scheme_certificate_register_request_certificate_deregister_request_single);
-  tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_scheme_backend_request_single);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_user_properties_dn);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_set);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_user_properties_dn);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_fail_user_properties_dn);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_user_properties_dn);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_module_add_user_properties_dn_certificate);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_set);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_user_properties_dn);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_fail_user_properties_dn);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_user_properties_dn_cert_invalid);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_unset);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_module_remove_user_properties_dn);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 

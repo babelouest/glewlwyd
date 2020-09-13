@@ -23,16 +23,16 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 # library info
 
 set(PROGRAM_VERSION_MAJOR "2")
-set(PROGRAM_VERSION_MINOR "3")
-set(PROGRAM_VERSION_PATCH "2")
-set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, multiple factor authentication with, HOTP/TOTP, Webauthn, etc. extensible via plugins")
+set(PROGRAM_VERSION_MINOR "4")
+set(PROGRAM_VERSION_PATCH "0")
+set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, Openid Connect, multiple factor authentication with, HOTP/TOTP, FIDO2, TLS Certificates, etc. extensible via plugins ")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(ORCANIA_VERSION_REQUIRED "2.1.1")
-set(YDER_VERSION_REQUIRED "1.4.11")
-set(ULFIUS_VERSION_REQUIRED "2.6.8")
+set(YDER_VERSION_REQUIRED "1.4.12")
+set(ULFIUS_VERSION_REQUIRED "2.6.9")
 set(HOEL_VERSION_REQUIRED "1.4.16")
 set(RHONABWY_VERSION_REQUIRED "0.9.12")
-set(IDDAWC_VERSION_REQUIRED "0.9.5")
+set(IDDAWC_VERSION_REQUIRED "0.9.6")
 set(LIBCBOR_VERSION_REQUIRED "0.5.0")
 set(JANSSON_VERSION_REQUIRED "2.11")
 
@@ -742,6 +742,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oauth2_token_introspection
 							glewlwyd_oauth2_token_revocation
 							glewlwyd_oauth2_device_authorization
+              glewlwyd_oauth2_code_replay
 							)
 		endif ()
 		
@@ -789,6 +790,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oidc_device_authorization
 							glewlwyd_oidc_refresh_token_one_use
 							glewlwyd_oidc_client_registration_management
+              glewlwyd_oidc_code_replay
 							)
 			set(TESTS_SSL ${TESTS_SSL} glewlwyd_oidc_client_certificate)
 		endif ()

@@ -11,24 +11,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import i18next from 'i18next';
-import Backend from 'i18next-xhr-backend';
+import Backend from 'i18next-http-backend';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
 import apiManager from './lib/APIManager';
 import App from './Admin/App';
-
-var getParameterByName = function (name, url) {
-  if (!url) url = window.location.href;
-  name = name.replace(/[\[\]]/g, '\\$&');
-  var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'), results = regex.exec(url);
-  if (!results)
-    return null;
-  if (!results[2])
-    return '';
-  return decodeURIComponent(results[2].replace(/\+/g, ' '));
-};
+import ErrorConfig from './lib/ErrorConfig';
 
 var initApp = () => {
+  const urlParams = new URLSearchParams(window.location.search);
   apiManager.request("config.json")
   .then((frontEndConfig) => {
     if (!frontEndConfig.lang) {
@@ -37,12 +28,25 @@ var initApp = () => {
     apiManager.request(frontEndConfig.GlewlwydUrl + "config/")
     .then((serverConfig) => {
       apiManager.setConfig(frontEndConfig.GlewlwydUrl + serverConfig.api_prefix);
-      var config = Object.assign({params: {scope: getParameterByName("scope"), client_id: getParameterByName("client_id"), callback_url: getParameterByName("callback_url")}, scopes: []}, frontEndConfig, serverConfig);
+      var config = Object.assign(
+        {
+          params: {
+            scope: urlParams.get("scope"), 
+            client_id: urlParams.get("client_id"), 
+            callback_url: urlParams.get("callback_url")
+          }, 
+          scopes: []
+        }, 
+        frontEndConfig, 
+        serverConfig);
       ReactDOM.render(<App config={config} />, document.getElementById('root'));
     })
     .fail((error) => {
       ReactDOM.render(<App config={false} />, document.getElementById('root'));
     });
+  })
+  .fail((error) => {
+    ReactDOM.render(<ErrorConfig/>, document.getElementById('root'));
   });
 }
 

@@ -52,7 +52,9 @@ DROP TABLE IF EXISTS gs_webauthn_credential;
 DROP TABLE IF EXISTS gs_webauthn_user;
 DROP TABLE IF EXISTS gs_otp;
 DROP TABLE IF EXISTS gs_user_certificate;
-DROP TABLE IF EXISTS gs_user_pkcs12;
+DROP TABLE IF EXISTS gpr_reset_credentials_email;
+DROP TABLE IF EXISTS gpr_reset_credentials_session;
+DROP TABLE IF EXISTS gpr_update_email;
 DROP TABLE IF EXISTS gpr_session;
 DROP TABLE IF EXISTS gs_oauth2_session;
 DROP TABLE IF EXISTS gs_oauth2_registration;
@@ -584,20 +586,6 @@ CREATE TABLE gs_user_certificate (
 CREATE INDEX i_gsuc_username ON gs_user_certificate(gsuc_username);
 CREATE INDEX i_gsuc_x509_certificate_id ON gs_user_certificate(gsuc_x509_certificate_id);
 
-CREATE TABLE gs_user_pkcs12 (
-  gsup_id INT(11) PRIMARY KEY AUTO_INCREMENT,
-  gsup_mod_name VARCHAR(128) NOT NULL,
-  gsup_username VARCHAR(128) NOT NULL,
-  gsup_x509_certificate_content BLOB DEFAULT NULL,
-  gsup_pkcs12_content BLOB DEFAULT NULL,
-  gsup_pkcs12_password VARCHAR(32) DEFAULT NULL,
-  gsup_activation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  gsup_expiration TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  gsup_host VARCHAR(512) DEFAULT NULL,
-  gsup_user_agent VARCHAR(512) DEFAULT NULL
-);
-CREATE INDEX i_gsup_username ON gs_user_pkcs12(gsup_username);
-
 CREATE TABLE gpr_session (
   gprs_id INT(11) PRIMARY KEY AUTO_INCREMENT,
   gprs_plugin_name VARCHAR(256) NOT NULL,
@@ -605,6 +593,7 @@ CREATE TABLE gpr_session (
   gprs_name VARCHAR(512),
   gprs_email VARCHAR(512),
   gprs_code_hash VARCHAR(512),
+  gprs_callback_url BLOB DEFAULT NULL,
   gprs_password_set TINYINT(1) DEFAULT 0,
   gprs_session_hash VARCHAR(512),
   gprs_token_hash VARCHAR(512),
@@ -616,6 +605,45 @@ CREATE TABLE gpr_session (
 CREATE INDEX i_gprs_session_hash ON gpr_session(gprs_session_hash);
 CREATE INDEX i_gprs_gprs_token_hash ON gpr_session(gprs_token_hash);
 CREATE INDEX i_gprs_gprs_gprs_code_hash ON gpr_session(gprs_code_hash);
+
+CREATE TABLE gpr_update_email (
+  gprue_id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  gprue_plugin_name VARCHAR(256) NOT NULL,
+  gprue_username VARCHAR(256) NOT NULL,
+  gprue_email VARCHAR(512),
+  gprue_token_hash VARCHAR(512),
+  gprue_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gprue_issued_for VARCHAR(256), -- IP address or hostname
+  gprue_user_agent VARCHAR(256),
+  gprue_enabled TINYINT(1) DEFAULT 1
+);
+CREATE INDEX i_gprue_token_hash ON gpr_update_email(gprue_token_hash);
+
+CREATE TABLE gpr_reset_credentials_session (
+  gprrcs_id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  gprrcs_plugin_name VARCHAR(256) NOT NULL,
+  gprrcs_username VARCHAR(256) NOT NULL,
+  gprrcs_session_hash VARCHAR(512),
+  gprrcs_callback_url BLOB DEFAULT NULL,
+  gprrcs_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gprrcs_issued_for VARCHAR(256), -- IP address or hostname
+  gprrcs_user_agent VARCHAR(256),
+  gprrcs_enabled TINYINT(1) DEFAULT 1
+);
+CREATE INDEX i_gprrcs_session_hash ON gpr_reset_credentials_session(gprrcs_session_hash);
+
+CREATE TABLE gpr_reset_credentials_email (
+  gprrct_id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  gprrct_plugin_name VARCHAR(256) NOT NULL,
+  gprrct_username VARCHAR(256) NOT NULL,
+  gprrct_token_hash VARCHAR(512),
+  gprrct_callback_url BLOB DEFAULT NULL,
+  gprrct_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gprrct_issued_for VARCHAR(256), -- IP address or hostname
+  gprrct_user_agent VARCHAR(256),
+  gprrct_enabled TINYINT(1) DEFAULT 1
+);
+CREATE INDEX i_gprrct_token_hash ON gpr_reset_credentials_email(gprrct_token_hash);
 
 CREATE TABLE gs_oauth2_registration (
   gsor_id INT(11) PRIMARY KEY AUTO_INCREMENT,
@@ -641,7 +669,7 @@ CREATE TABLE gs_oauth2_session (
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_admin', 'Glewlwyd administration', 'Access to Glewlwyd''s administration API', 1, 600);
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 1, 600);
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('openid', 'Open ID', 'Open ID Connect scope', 0, 0);
-INSERT INTO g_user_module_instance (gumi_module, gumi_order, gumi_name, gumi_display_name, gumi_parameters, gumi_readonly) VALUES ('database', 0, 'database', 'Database backend', '{"use-glewlwyd-connection":true,"data-format":{"picture":{"multiple":false,"read":true,"write":true,"profile-read":true,"profile-write":true}}}', 0);
+INSERT INTO g_user_module_instance (gumi_module, gumi_order, gumi_name, gumi_display_name, gumi_parameters, gumi_readonly) VALUES ('database', 0, 'database', 'Database backend', '{"use-glewlwyd-connection":true,"data-format":{"picture":{"multiple":false,"read":true,"write":true,"profile-read":true,"profile-write":true},"reset-credentials-code":{"multiple":false,"read":true,"write":true,"profile-read":false,"profile-write":false}}}', 0);
 INSERT INTO g_client_module_instance (gcmi_module, gcmi_order, gcmi_name, gcmi_display_name, gcmi_parameters, gcmi_readonly) VALUES ('database', 0, 'database', 'Database backend', '{"use-glewlwyd-connection":true,"data-format":{"redirect_uri":{"multiple":true,"read":true,"write":true},"authorization_type":{"multiple":true,"read":true,"write":true},"client_secret":{"read":true,"write":true},"pubkey":{"read":true,"write":true},"jwks":{"convert":"jwks","read":true,"write":true},"jwks_uri":{"read":true,"write":true},"post_logout_redirect_uris":{"multiple":true,"read":true,"write":true},"token_endpoint_auth_method":{"multiple":false,"read":true,"write":true}}}', 0);
 INSERT INTO g_user (gu_username, gu_name, gu_password, gu_email, gu_enabled) VALUES ('admin', 'The Administrator', PASSWORD('password'), '', 1);
 INSERT INTO g_user_scope (gus_name) VALUES ('g_admin');

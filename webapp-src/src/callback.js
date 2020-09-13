@@ -12,11 +12,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import i18next from 'i18next';
-import Backend from 'i18next-xhr-backend';
+import Backend from 'i18next-http-backend';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
 import apiManager from './lib/APIManager';
 import App from './Callback/App';
+import ErrorConfig from './lib/ErrorConfig';
 
 function getUrlParams(search) {
   if (search) {
@@ -51,6 +52,9 @@ var initApp = () => {
     .fail((error) => {
       ReactDOM.render(<App config={false}/>, document.getElementById('root'));
     });
+  })
+  .fail((error) => {
+    ReactDOM.render(<ErrorConfig/>, document.getElementById('root'));
   });
 }
 

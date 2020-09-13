@@ -373,41 +373,11 @@ static int set_otp(struct config_module * config, json_t * j_params, const char 
  */
 json_t * user_auth_scheme_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{sisssssss{s{ssso}s{ssso}s{ssso}s{ssso}s{ssso}}}",
-                   "result",
-                   G_OK,
-                   "name",
-                   "otp",
-                   "display_name",
-                   "HOTP/TOTP",
-                   "description",
-                   "HOTP/TOTP scheme module for glewlwyd",
-                   "parameters",
-                     "otp-length",
-                       "type",
-                       "number",
-                       "mandatory",
-                       json_true(),
-                     "hotp-allow",
-                       "type",
-                       "boolean",
-                       "mandatory",
-                       json_false(),
-                     "hotp-window",
-                       "type",
-                       "number",
-                       "mandatory",
-                       json_false(),
-                     "totp-allow",
-                       "type",
-                       "boolean",
-                       "mandatory",
-                       json_false(),
-                     "totp-window",
-                       "type",
-                       "number",
-                       "mandatory",
-                       json_false());
+  return json_pack("{sissssss}",
+                   "result", G_OK,
+                   "name", "otp",
+                   "display_name", "HOTP/TOTP",
+                   "description", "HOTP/TOTP scheme module for glewlwyd");
 }
 
 /**

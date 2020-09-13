@@ -7,6 +7,7 @@ class Message extends Component {
 
     this.state = {
       title: props.title,
+      label: props.label,
       message: props.message
     }
 
@@ -16,6 +17,7 @@ class Message extends Component {
   componentWillReceiveProps(nextProps) {
     this.setState({
       title: nextProps.title,
+      label: nextProps.label,
       message: nextProps.message
     });
   }
@@ -25,7 +27,10 @@ class Message extends Component {
   }
   
 	render() {
-    var messageJsx = [];
+    var messageJsx = [], labelJsx;
+    if (this.state.label) {
+      labelJsx = <h5>{this.state.label}</h5>;
+    }
     if (this.state.message) {
       this.state.message.forEach((message, index) => {
         messageJsx.push(<li key={index}>{message}</li>);
@@ -42,6 +47,7 @@ class Message extends Component {
             </button>
           </div>
           <div className="modal-body">
+            {labelJsx}
             <ul>
               {messageJsx}
             </ul>

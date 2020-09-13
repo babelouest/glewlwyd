@@ -1,17 +1,19 @@
 # Glewlwyd TLS Certificate Schema documentation
 
+[![License: CC BY 4.0](https://licensebuttons.net/l/by/4.0/80x15.png)](https://creativecommons.org/licenses/by/4.0/)
+
 ![scheme-certificate](screenshots/scheme-certificate.png)
 
-The TLS Certificate Schema implements authentification based on the [Client-authenticated TLS handshake](https://en.wikipedia.org/wiki/Transport_Layer_Security#Client-authenticated_TLS_handshake) protocol.
+The TLS Certificate Schema implements authentication based on the [Client-authenticated TLS handshake](https://en.wikipedia.org/wiki/Transport_Layer_Security#Client-authenticated_TLS_handshake) protocol.
 
 !!!Full disclosure!!!
 This authentication scheme has been implemented based on the documentation and examples I could find. But there may be other and better ways to implement this type of authentication.
-If you find bugs, weird behaviours, or wish new features, please [open an issue](https://github.com/babelouest/glewlwyd/issues) in the github repository or send an e-mail.
+If you find bugs, weird behaviours, or wish new features, please [open an issue](https://github.com/babelouest/glewlwyd/issues) in the GitHub repository or send an e-mail.
 
 ## Installation
 
 In the administration page, go to `Parameters/Authentication schemes` and add a new scheme by clicking on the `+` button. In the modal, enter a name and a display name (the name must be unique among all authentication scheme instances), and a scheme session expiration in seconds.
-Select the type `Client certificate` in the Type dropdown button.
+Select the type `Client certificate` in the Type drop-down button.
 
 Below is the definition of all parameters.
 
@@ -29,7 +31,7 @@ Number of seconds to expire a valid session.
 
 ### Max use per session (0: unlimited)
 
-Maximum number of times a valid authentification with this scheme is possible. This is an additional parameter used to enforce the security of the session and forbid to reuse this session for other authentications.
+Maximum number of times a valid authentication with this scheme is possible. This is an additional parameter used to enforce the security of the session and forbid to reuse this session for other authentications.
 
 ### Allow users to register
 
@@ -53,11 +55,13 @@ Using the example config above, you must set this value to `SSL_CLIENT_CERT`.
 
 ### Use scheme storage
 
-If this option is set to `yes`, the registered certificates will be stored in the database, in a specific table for this scheme. If this option is set to `no`, the registered certificates will be extracted from the user properies.
+If this option is set to `yes`, the registered certificates will be stored in the database, in a specific table for this scheme.
+
+If this option is set to `no`, the registered certificates will be extracted from the user properties. Also, at least one of the fields `Certificate property` or `DN Property` must be filled. If a user has a DN value and one or more certificates in its properties, only the DN will be checked to validate its certificate.
 
 ### Certificate property
 
-This option is mandatory if the option `Use scheme storage` is set to `no`. It is used to specify the user property that will store the certificates used to authenticate the user.
+This option is available if the option `Use scheme storage` is set to `no`. It is used to specify the user property that will store the certificates used to authenticate the user.
 
 ### Certificate format
 
@@ -65,38 +69,9 @@ This option is available if the option `Use scheme storage` is set to `no`. This
 
 Because Glewlwyd's internal format of the user properties is JSON, if the certificate format is set to `DER`, the certificate must be converted to base64. In fact, this option exists to use the LDAP property `userCertificate` which is stored in DER format. In that case, the property `userCertificate` must be converted in base64 in the [LDAP backend configuration](USER_LDAP.md#convert).
 
-### Allow to emit PKCS#12 certificates for the clients
+### DN Property
 
-This options allows Glewlwyd to emit pairs of certificate and key in PKCS#12 format. The PKCS#12 will be signed by the provided certificate. The users must then request a certificate in the profile page and inmport this certificate in their browser using the given password. Every time a certificate is generated or requested, it will be registered in the user's certificate list.
-
-### Issuer certificate X509 PEM
-
-Issuer certificate to sign the generated certificate. Must be a X509 file in PEM format.
-
-### Issuer prvate key X509 PEM
-
-Issuer key to sign the generated certificates. Must be a X509 file in PEM format.
-
-### Expiration (seconds)
-
-Expiration in seconds of the generated certificates.
-
-### DN format for the issued certificates
-
-Pattern that will be used to generate the DN (Distinguished Name) of every generated certificates.
-
-You can use variables that will be replaced by the user's properties values. A variable must follow the format `{user_property_name}`, and the corresponding property MUST be a single value, not an array.
-If a variable doesn't have a corresponding property in the user, it will be ignored and left as is, so make sure you use variables present in all users that will request new certificates with this option.
-
-For example, a DN format can have the following value: `cn={name},uid={username},o=user,ou=glewlwyd`.
-
-The variables `{name}` and `{username}` will be replaced by (for example) `Dave Lopper` and `user1`: `cn=Dave Lopper,uid=user1,o=user,ou=glewlwyd`.
-
-### Allow multiple certificates for each user
-
-If this option is set to `Yes`, each time a user will request a certificate, a new PKCS#12 certificate will be generated. Otherwise, a PKCS#12 certificate will be generated at the first request, then will be reused every time the user make the request.
-
-Security warning: If this option is set to `No`, then the generated PKCS#12 certificate and its password will be stored unencrypted in the database to make it available at each request.
+This option is available if the option `Use scheme storage` is set to `no`. It is used to specify the user property that will store the user DN to authenticate the certificate.
 
 ### CA Certificates
 

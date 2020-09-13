@@ -1,5 +1,20 @@
 # Glewlwyd Changelog
 
+## 2.4.0
+
+- Allow user to update its e-mail
+- Allow user to reset its credentials
+- Handle callback url for registration and reset credentials
+- Update certificate scheme management: remove online certiticate generation and add certificate validation via DN
+- Implement revoke tokens on code replay for oauth2 and oidc plugins
+- Show `client_id` and `redirect_uri` on grant scope
+- Remove `parameters` object on `*_load()` functions result
+- Scheme Webauthn: disable fmt `none` by default
+- Allow to add granted scope list in `id_token` and `/userinfo`
+- Fix last login refresh without authentication bug
+- Add endpoint `/mod/reload/` to reload modules lists
+- Add Event log messages
+
 ## 2.3.2
 
 - Allow to specify a public JWKS for OIDC plugin
@@ -70,14 +85,14 @@ The `"Containment Release"`
 - Add plugin `Register` to allow users to create new accounts
 - Add HTTP Basic Auth scheme
 - Multiple bugfixes and UI improvements
-- Many thanks to all helpers who send feedbacks and bugfixes! Keep running :-)
+- Many thanks to all helpers who send feedback and bugfixes! Keep running :-)
 
 ## 2.0.0
 
 - Fix UI bugs
 - Fix Microsoft Edge bug
 - Add possibility to build UI with Internet Explorer support
-- Fix gcc9 warnings
+- Fix GCC9 warnings
 - Add `autocomplete="off"` and `autofocus` properties in some input
 - Clean UI code a lot by adding most libraries in `package.json` instead of static files in `webapp-src/js`
 - Use vanilla `qrcode-generator` instead of `jquery.qrcode` because the last one embedded the first one, so it was overkill
@@ -122,7 +137,7 @@ The `"Containment Release"`
 - Improve documentation
 - Fix build on supported platforms
 - Fix #59 and add action reset to modules
-- Make build and tests reproductible using huddersfield
+- Make build and tests reproductive using Huddersfield
 
 ## 2.0.0-b1
 
@@ -153,8 +168,8 @@ The `"Containment Release"`
 
 ## 1.4.7
 
-- Adapt Glewlwyd build to the new version of the underlying libraries: orcania, yder, hoel, ulfius (thanks ythogtha!)
-- Improve doc about front-end pages, as mentionned in #46, and fix libjwt install doc
+- Adapt Glewlwyd build to the new version of the underlying libraries: Orcania, Yder, Hoel, Ulfius (thanks ythogtha!)
+- Improve doc about front-end pages, as mentioned in #46, and fix libjwt install doc
 
 ## 1.4.6
 
@@ -166,7 +181,7 @@ The `"Containment Release"`
 
 ## 1.4.4
 
-- Add current token scope list in the api `/api/profile` when authenticated with the OAuth2 token
+- Add current token scope list in the API `/api/profile` when authenticated with the OAuth2 token
 - Fix issue in client_check that made it not check properly if a client is authorized or not
 
 ## 1.4.3
@@ -176,8 +191,8 @@ The `"Containment Release"`
 
 ## 1.4.2
 
-- Add option `auth_code_match_ip_address` to prevent glewlwyd to check the match of the ip address that requested a code and the ip address that requested the refresh token
-- Fix bug with confidentials clients that were not able to get refresh tokens
+- Add option `auth_code_match_ip_address` to prevent glewlwyd to check the match of the IP address that requested a code and the IP address that requested the refresh token
+- Fix bug with confidential clients that were not able to get refresh tokens
 - Fix bug that made Glewlwyd crash when try to add users and ldap auth was disabled
 
 ## 1.4.1
@@ -201,7 +216,7 @@ The `"Containment Release"`
 
 ## 1.3.1
 
-- Make glewlwyd admin application url more changeable
+- Make glewlwyd admin application URL more changeable
 - fix minor bugs and memory leaks
 
 ## 1.3.0
@@ -235,7 +250,7 @@ If none is specified in the config file, default key_size value is 512
 
 ## 1.1.1
 
-- Update api prefix to new default value
+- Update API prefix to new default value
 
 ## 1.1.0
 
@@ -243,7 +258,7 @@ If none is specified in the config file, default key_size value is 512
 
 ## 1.0.1
 
-- Improve documentation on ulfius usage
+- Improve documentation on Ulfius usage
 
 ## 1.0.0
 

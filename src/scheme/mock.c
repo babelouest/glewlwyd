@@ -102,21 +102,11 @@ struct mock_config {
  */
 json_t * user_auth_scheme_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{sisssssss{s{ssso}}}",
-                   "result",
-                   G_OK,
-                   "name",
-                   "mock",
-                   "display_name",
-                   "Mock",
-                   "description",
-                   "Mock scheme module for glewlwyd tests",
-                   "parameters",
-                     "mock-value",
-                       "type",
-                       "string",
-                       "mandatory",
-                       json_true());
+  return json_pack("{sissssss}",
+                   "result", G_OK,
+                   "name", "mock",
+                   "display_name", "Mock",
+                   "description", "Mock scheme module for glewlwyd tests");
 }
 
 /**

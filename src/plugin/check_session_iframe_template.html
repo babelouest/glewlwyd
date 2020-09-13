@@ -17,36 +17,40 @@ The MIT License (MIT)
       var client_id = e.data.split(' ')[0];
       var session_state = e.data.split(' ')[1];
       var salt = session_state.split('.')[1];
+      var origin = e.origin.toLowerCase();
+      var host = window.location.host;
       
-      var request = new XMLHttpRequest();
-      request.open("GET", "%s/%s/profile_list/", true);
-      request.onload = function() {
-        if (this.status === 200) {
-          var profile_list = JSON.parse(this.response);
-          if (profile_list && profile_list[0]) {
-            const encoder = new TextEncoder();
-            var intermediate = (client_id + " " + e.origin + " " + profile_list[0].username + " " + salt);
-            const data = encoder.encode(intermediate);
-            crypto.subtle.digest('SHA-256', data).then((value) => {
-              if (session_state == (btoa(new Uint8Array(value).reduce((s, b) => s + String.fromCharCode(b), ''))+ "." + salt)) {
-                e.source.postMessage("unchanged", e.origin);
-              } else {
-                e.source.postMessage("changed", e.origin);
-              }
-            })
+      if (origin.indexOf(host) !== -1) {
+        var request = new XMLHttpRequest();
+        request.open("GET", "%s/%s/profile_list/", true);
+        request.onload = function() {
+          if (this.status === 200) {
+            var profile_list = JSON.parse(this.response);
+            if (profile_list && profile_list[0]) {
+              const encoder = new TextEncoder();
+              var intermediate = (client_id + " " + origin + " " + profile_list[0].username + " " + salt);
+              const data = encoder.encode(intermediate);
+              crypto.subtle.digest('SHA-256', data).then((value) => {
+                if (session_state == (btoa(new Uint8Array(value).reduce((s, b) => s + String.fromCharCode(b), ''))+ "." + salt)) {
+                  e.source.postMessage("unchanged", origin);
+                } else {
+                  e.source.postMessage("changed", origin);
+                }
+              })
+            } else {
+              e.source.postMessage("error", origin);
+            }
+          } else if (this.status === 401) {
+            e.source.postMessage("changed", origin);
           } else {
-            e.source.postMessage("error", e.origin);
+            e.source.postMessage("error", origin);
           }
-        } else if (this.status === 401) {
-          e.source.postMessage("changed", e.origin);
-        } else {
-          e.source.postMessage("error", e.origin);
-        }
-      };
-      request.onerror = function() {
-        e.source.postMessage("error", e.origin);
-      };
-      request.send();
+        };
+        request.onerror = function() {
+          e.source.postMessage("error", origin);
+        };
+        request.send();
+      }
     };
     window.addEventListener('message', receiveMessage, false);
   </script>

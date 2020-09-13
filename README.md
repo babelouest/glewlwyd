@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.com/babelouest/glewlwyd.svg?branch=master)](https://travis-ci.com/babelouest/glewlwyd)
 ![C/C++ CI](https://github.com/babelouest/glewlwyd/workflows/C/C++%20CI/badge.svg)
+![CodeQL](https://github.com/babelouest/glewlwyd/workflows/CodeQL/badge.svg)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3475/badge)](https://bestpractices.coreinfrastructure.org/projects/3475)
 [![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/github@babelouest.org)
 
@@ -9,34 +10,41 @@ Single-Sign-On (SSO) server with multiple factor authentication.
 
 ![logged in](docs/screenshots/login-nopassword.png)
 
-Authentication processus supported:
+Authentication process supported:
 - OAuth2
 - OpenID Connect
 
-Allows users to authenticate via multiple factors:
+Allows users authentication via multiple factors:
 - Password
 - One-time password (TOTP/HOTP)
 - Webauthn (Yubikey, Android devices)
 - One-time password sent via e-mail
 - TLS Certificate
 - External OAuth2/OIDC providers
+- HTTP Backend service providing Basic Authentication
 
 Users and clients can be stored and managed from various backends:
 - Database
 - LDAP service
 - HTTP Backend service providing Basic Authentication
 
-Allows users to register a new account with the possibility to confirm their e-mail address or not. During the registration process, the new user may be expected to register their passwords, as well as other authentication factors:
+New users can register a new account with the possibility to confirm their e-mail address or not. During the registration process, the new user may be expected to register their passwords, as well as other authentication factors:
 - One-time password (TOTP/HOTP)
 - Webauthn (Yubikey, Android devices)
 - TLS Certificate
 - External OAuth2/OIDC providers
 
-See the [register documentation](docs/REGISTER.md) for more information on the registration features.
+Existing users can update their e-mail by sending a confirmation link to the new e-mail.
 
-Based on a plugin architecture to make it easier to add or update storing backends, authentication schemes or processus.
+Existing users can reset their credentials if their password or authentication schemes are lost or unavailable. Credentials can be reset by different factors:
+- A link sent to the user's e-mail
+- A one-time use secret code
 
-Allows passwordless authentication.
+See the [register/update e-mail/reset credentials documentation](docs/REGISTER.md) for more information on the registration, update e-mail or reset credentials features.
+
+Based on a plugin architecture to make it easier to add or update storage backends, authentication schemes or process.
+
+**Allows passwordless authentication.**
 
 Adding new authentication schemes or backend storage for users and clients is possible via the plugin architecture.
 
@@ -44,7 +52,7 @@ The backend API server is fully written in C and uses a small amount of resource
 
 Its plugin architecture makes it easy to add new modules or plugins, or modify existing ones with less risks to have unmaintainable code.
 
-Glewlwyd 2.3 [is released](https://github.com/babelouest/glewlwyd/releases/tag/v2.3.0). Feel free to [install](docs/INSTALL.md), test it, and [send feedbacks](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
+Glewlwyd 2.3 [is released](https://github.com/babelouest/glewlwyd/releases/latest). Feel free to [install](docs/INSTALL.md), test it, and [send feedback](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
 
 Important! Due to a complete database reworking of the application, you can't upgrade an existing installation from Glewlwyd 1.x to Glewlwyd 2.x.
 
@@ -57,7 +65,7 @@ The full installation documentation is available in the [install documentation](
 A docker image is available for tests on localhost, run the following command:
 
 ```shell
-$ docker run --rm -it -p 4593:4593 babelouest/glewlwyd
+$ docker run --rm -it -p 4593:4593 babelouest/glewlwyd:latest
 ```
 
 And open the address [http://localhost:4593/](http://localhost:4593/) on your browser.
@@ -65,7 +73,7 @@ And open the address [http://localhost:4593/](http://localhost:4593/) on your br
 - User: `admin`
 - Password: `password`
 
-More information in the [install documentation](docs/INSTALL.md#docker).
+This Docker image can be used for tests or for real use by changing the configuration files. More information in the [install documentation](docs/INSTALL.md#docker).
 
 ## Getting started
 
@@ -77,7 +85,7 @@ The [user documentation](docs/USER.md) will help Glewlwyd's users manage their p
 
 ## Core API
 
-The full core REST API documention is available in the [API documentation](docs/API.md)
+The full core REST API documentation is available in the [API documentation](docs/API.md)
 
 ## Plugins architecture
 

@@ -104,6 +104,7 @@ int main (int argc, char ** argv) {
   config->config_p->glewlwyd_plugin_callback_scheme_register_get = &glewlwyd_plugin_callback_scheme_register_get;
   config->config_p->glewlwyd_plugin_callback_scheme_deregister = &glewlwyd_plugin_callback_scheme_deregister;
   config->config_p->glewlwyd_plugin_callback_scheme_can_use = &glewlwyd_plugin_callback_scheme_can_use;
+  config->config_p->glewlwyd_plugin_callback_get_scheme_list = &glewlwyd_plugin_callback_get_scheme_list;
 
   // Init config structure with default values
   config->config_m->external_url = NULL;
@@ -351,6 +352,7 @@ int main (int argc, char ** argv) {
 
   // Get all module types available
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/type/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_module_type_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/reload/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_reload_modules, (void*)config);
 
   // User modules management
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_module_list, (void*)config);
@@ -423,7 +425,7 @@ int main (int argc, char ** argv) {
   u_map_put(config->instance->default_headers, "Cache-Control", "no-store");
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
 
-  y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd started on port %d, prefix: %s, secure: %s, bind address: %s", config->instance->port, config->api_prefix, config->use_secure_connection?"true":"false", config->bind_address!=NULL?config->bind_address:"no");
+  y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd started on port %d, prefix: %s, secure: %s, bind address: %s, external URL: %s", config->instance->port, config->api_prefix, config->use_secure_connection?"true":"false", config->bind_address!=NULL?config->bind_address:"no", config->external_url);
 
   if (config->use_secure_connection) {
     char * key_file = get_file_content(config->secure_connection_key_file);
@@ -452,6 +454,7 @@ int main (int argc, char ** argv) {
   }
   
   if (res == U_OK) {
+    ulfius_global_init();
     // Wait until stop signal is broadcasted
     pthread_mutex_lock(&global_handler_close_lock);
     pthread_cond_wait(&global_handler_close_cond, &global_handler_close_lock);
@@ -472,156 +475,22 @@ int main (int argc, char ** argv) {
  * Exit properly the server by closing opened connections, databases and files
  */
 void exit_server(struct config_elements ** config, int exit_value) {
-  size_t i;
   int close_logs = 0;
   
   if (config != NULL && *config != NULL) {
     close_logs = ((*config)->log_mode != Y_LOG_MODE_NONE && (*config)->log_level != Y_LOG_LEVEL_NONE);
-    for (i=0; i<pointer_list_size((*config)->user_module_instance_list); i++) {
-      struct _user_module_instance * instance = (struct _user_module_instance *)pointer_list_get_at((*config)->user_module_instance_list, i);
-      if (instance != NULL) {
-        if (instance->enabled && instance->module->user_module_close((*config)->config_m, instance->cls) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
-        }
-        o_free(instance->name);
-        o_free(instance);
-      }
-    }
-    pointer_list_clean((*config)->user_module_instance_list);
-    o_free((*config)->user_module_instance_list);
     
-    for (i=0; i<pointer_list_size((*config)->user_module_list); i++) {
-      struct _user_module * module = (struct _user_module *)pointer_list_get_at((*config)->user_module_list, i);
-      if (module != NULL) {
-        if (module->user_module_unload((*config)->config_m) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_module_unload for module '%s'", module->name);
-        }
-/* 
- * dlclose() makes valgrind not useful when it comes to libraries
- * they say it's not relevant to use it anyway
- * I'll let it here until I'm sure
- */
-#ifndef DEBUG
-        if (dlclose(module->file_handle)) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
-        }
-#endif
-        o_free(module->name);
-        o_free(module->display_name);
-        o_free(module->description);
-        json_decref(module->parameters);
-        o_free(module);
-      }
-    }
-    pointer_list_clean((*config)->user_module_list);
-    o_free((*config)->user_module_list);
+    close_user_module_instance_list(*config);
+    close_user_module_list(*config);
     
-    for (i=0; i<pointer_list_size((*config)->client_module_instance_list); i++) {
-      struct _client_module_instance * instance = (struct _client_module_instance *)pointer_list_get_at((*config)->client_module_instance_list, i);
-      if (instance != NULL) {
-        if (instance->enabled && instance->module->client_module_close((*config)->config_m, instance->cls) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error client_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
-        }
-        o_free(instance->name);
-        o_free(instance);
-      }
-    }
-    pointer_list_clean((*config)->client_module_instance_list);
-    o_free((*config)->client_module_instance_list);
+    close_client_module_instance_list(*config);
+    close_client_module_list(*config);
     
-    for (i=0; i<pointer_list_size((*config)->client_module_list); i++) {
-      struct _client_module * module = (struct _client_module *)pointer_list_get_at((*config)->client_module_list, i);
-      if (module != NULL) {
-        if (module->client_module_unload((*config)->config_m) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error client_module_unload for module '%s'", module->name);
-        }
-/* 
- * dlclose() makes valgrind not useful when it comes to libraries
- * they say it's not relevant to use it anyway
- * I'll let it here until I'm sure
- */
-#ifndef DEBUG
-        if (dlclose(module->file_handle)) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
-        }
-#endif
-        o_free(module->name);
-        o_free(module->display_name);
-        o_free(module->description);
-        json_decref(module->parameters);
-        o_free(module);
-      }
-    }
-    pointer_list_clean((*config)->client_module_list);
-    o_free((*config)->client_module_list);
+    close_user_auth_scheme_module_instance_list(*config);
+    close_user_auth_scheme_module_list(*config);
     
-    for (i=0; i<pointer_list_size((*config)->user_auth_scheme_module_instance_list); i++) {
-      struct _user_auth_scheme_module_instance * instance = (struct _user_auth_scheme_module_instance *)pointer_list_get_at((*config)->user_auth_scheme_module_instance_list, i);
-      if (instance != NULL) {
-        if (instance->enabled && instance->module->user_auth_scheme_module_close((*config)->config_m, instance->cls) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_auth_scheme_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
-        }
-        o_free(instance->name);
-        o_free(instance);
-      }
-    }
-    pointer_list_clean((*config)->user_auth_scheme_module_instance_list);
-    o_free((*config)->user_auth_scheme_module_instance_list);
-    
-    for (i=0; i<pointer_list_size((*config)->user_auth_scheme_module_list); i++) {
-      struct _user_auth_scheme_module * module = (struct _user_auth_scheme_module *)pointer_list_get_at((*config)->user_auth_scheme_module_list, i);
-      if (module != NULL) {
-        if (module->user_auth_scheme_module_unload((*config)->config_m) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error user_auth_scheme_module_unload for module '%s'", module->name);
-        }
-#ifndef DEBUG
-        if (dlclose(module->file_handle)) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
-        }
-#endif
-        o_free(module->name);
-        o_free(module->display_name);
-        o_free(module->description);
-        json_decref(module->parameters);
-        o_free(module);
-      }
-    }
-    pointer_list_clean((*config)->user_auth_scheme_module_list);
-    o_free((*config)->user_auth_scheme_module_list);
-    
-    for (i=0; i<pointer_list_size((*config)->plugin_module_instance_list); i++) {
-      struct _plugin_module_instance * instance = (struct _plugin_module_instance *)pointer_list_get_at((*config)->plugin_module_instance_list, i);
-      if (instance != NULL) {
-        if (instance->enabled && instance->module->plugin_module_close((*config)->config_p, instance->name, instance->cls) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error plugin_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
-        }
-        o_free(instance->name);
-        o_free(instance);
-      }
-    }
-    pointer_list_clean((*config)->plugin_module_instance_list);
-    o_free((*config)->plugin_module_instance_list);
-    
-    for (i=0; i<pointer_list_size((*config)->plugin_module_list); i++) {
-      struct _plugin_module * module = (struct _plugin_module *)pointer_list_get_at((*config)->plugin_module_list, i);
-      if (module != NULL) {
-        if (module->plugin_module_unload((*config)->config_p) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error plugin_module_unload for module '%s'", module->name);
-        }
-#ifndef DEBUG
-        if (dlclose(module->file_handle)) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "exit_server - Error dlclose for module '%s'", module->name);
-        }
-#endif
-        o_free(module->name);
-        o_free(module->display_name);
-        o_free(module->description);
-        json_decref(module->parameters);
-        o_free(module);
-      }
-    }
-    pointer_list_clean((*config)->plugin_module_list);
-    o_free((*config)->plugin_module_list);
+    close_plugin_module_instance_list(*config);
+    close_plugin_module_list(*config);
     
     /* stop framework */
     if ((*config)->instance_initialized) {
@@ -630,6 +499,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     }
     h_close_db((*config)->conn);
     h_clean_connection((*config)->conn);
+    ulfius_global_close();
     
     // Cleaning data
     o_free((*config)->instance);
@@ -1620,7 +1490,6 @@ static int load_user_module_file(struct config_elements * config, const char * f
     cur_user_module = o_malloc(sizeof(struct _user_module));
     if (cur_user_module != NULL) {
       cur_user_module->name = NULL;
-      cur_user_module->parameters = NULL;
       cur_user_module->file_handle = file_handle;
       *(void **) (&cur_user_module->user_module_load) = dlsym(file_handle, "user_module_load");
       *(void **) (&cur_user_module->user_module_unload) = dlsym(file_handle, "user_module_unload");
@@ -1658,7 +1527,6 @@ static int load_user_module_file(struct config_elements * config, const char * f
           cur_user_module->name = o_strdup(json_string_value(json_object_get(j_parameters, "name")));
           cur_user_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
           cur_user_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
-          cur_user_module->parameters = json_deep_copy(json_object_get(j_parameters, "parameters"));
           if (o_strlen(cur_user_module->name) && get_user_module_lib(config, cur_user_module->name) == NULL) {
             if (pointer_list_append(config->user_module_list, (void*)cur_user_module)) {
               y_log_message(Y_LOG_LEVEL_INFO, "Loading user module %s - %s", file_path, cur_user_module->name);
@@ -1669,7 +1537,6 @@ static int load_user_module_file(struct config_elements * config, const char * f
               o_free(cur_user_module->name);
               o_free(cur_user_module->display_name);
               o_free(cur_user_module->description);
-              json_decref(cur_user_module->parameters);
               o_free(cur_user_module);
               y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_file - Error pointer_list_append");
               ret = G_ERROR;
@@ -1681,7 +1548,6 @@ static int load_user_module_file(struct config_elements * config, const char * f
             o_free(cur_user_module->name);
             o_free(cur_user_module->display_name);
             o_free(cur_user_module->description);
-            json_decref(cur_user_module->parameters);
             o_free(cur_user_module);
             ret = G_ERROR_PARAM;
           }
@@ -1889,6 +1755,52 @@ struct _user_module * get_user_module_lib(struct config_elements * config, const
   return NULL;
 }
 
+void close_user_module_instance_list(struct config_elements * config) {
+  size_t i;
+  
+  for (i=0; i<pointer_list_size(config->user_module_instance_list); i++) {
+    struct _user_module_instance * instance = (struct _user_module_instance *)pointer_list_get_at(config->user_module_instance_list, i);
+    if (instance != NULL) {
+      if (instance->enabled && instance->module->user_module_close(config->config_m, instance->cls) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_instance_list - Error user_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+      }
+      o_free(instance->name);
+      o_free(instance);
+    }
+  }
+  pointer_list_clean(config->user_module_instance_list);
+  o_free(config->user_module_instance_list);
+}
+
+void close_user_module_list(struct config_elements * config) {
+  size_t i;
+  
+  for (i=0; i<pointer_list_size(config->user_module_list); i++) {
+    struct _user_module * module = (struct _user_module *)pointer_list_get_at(config->user_module_list, i);
+    if (module != NULL) {
+      if (module->user_module_unload(config->config_m) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_list - Error user_module_unload for module '%s'", module->name);
+      }
+/* 
+* dlclose() makes valgrind not useful when it comes to libraries
+* they say it's not relevant to use it anyway
+* I'll let it here until I'm sure
+*/
+#ifndef DEBUG
+      if (dlclose(module->file_handle)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_list - Error dlclose for module '%s'", module->name);
+      }
+#endif
+      o_free(module->name);
+      o_free(module->display_name);
+      o_free(module->description);
+      o_free(module);
+    }
+  }
+  pointer_list_clean(config->user_module_list);
+  o_free(config->user_module_list);
+}
+
 static int load_user_auth_scheme_module_file(struct config_elements * config, const char * file_path) {
   void * file_handle;
   struct _user_auth_scheme_module * cur_user_auth_scheme_module = NULL;
@@ -1928,7 +1840,6 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
           cur_user_auth_scheme_module->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
           cur_user_auth_scheme_module->display_name = o_strdup(json_string_value(json_object_get(j_module, "display_name")));
           cur_user_auth_scheme_module->description = o_strdup(json_string_value(json_object_get(j_module, "description")));
-          cur_user_auth_scheme_module->parameters = json_deep_copy(json_object_get(j_module, "parameters"));
           if (o_strlen(cur_user_auth_scheme_module->name) && get_user_auth_scheme_module_lib(config, cur_user_auth_scheme_module->name) == NULL) {
             if (pointer_list_append(config->user_auth_scheme_module_list, cur_user_auth_scheme_module)) {
               y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s - %s", file_path, cur_user_auth_scheme_module->name);
@@ -1939,7 +1850,6 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
               o_free(cur_user_auth_scheme_module->name);
               o_free(cur_user_auth_scheme_module->display_name);
               o_free(cur_user_auth_scheme_module->description);
-              json_decref(cur_user_auth_scheme_module->parameters);
               o_free(cur_user_auth_scheme_module);
               y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_file - Error reallocating resources for user_auth_scheme_module_list");
               ret = G_ERROR_MEMORY;
@@ -1951,7 +1861,6 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
             o_free(cur_user_auth_scheme_module->name);
             o_free(cur_user_auth_scheme_module->display_name);
             o_free(cur_user_auth_scheme_module->description);
-            json_decref(cur_user_auth_scheme_module->parameters);
             o_free(cur_user_auth_scheme_module);
             ret = G_ERROR;
           }
@@ -2159,6 +2068,47 @@ struct _user_auth_scheme_module * get_user_auth_scheme_module_lib(struct config_
   return NULL;
 }
 
+void close_user_auth_scheme_module_instance_list(struct config_elements * config) {
+  size_t i;
+  
+  for (i=0; i<pointer_list_size(config->user_auth_scheme_module_instance_list); i++) {
+    struct _user_auth_scheme_module_instance * instance = (struct _user_auth_scheme_module_instance *)pointer_list_get_at(config->user_auth_scheme_module_instance_list, i);
+    if (instance != NULL) {
+      if (instance->enabled && instance->module->user_auth_scheme_module_close(config->config_m, instance->cls) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_auth_scheme_module_instance_list - Error user_auth_scheme_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+      }
+      o_free(instance->name);
+      o_free(instance);
+    }
+  }
+  pointer_list_clean(config->user_auth_scheme_module_instance_list);
+  o_free(config->user_auth_scheme_module_instance_list);
+}
+
+void close_user_auth_scheme_module_list(struct config_elements * config) {
+  size_t i;
+  
+  for (i=0; i<pointer_list_size(config->user_auth_scheme_module_list); i++) {
+    struct _user_auth_scheme_module * module = (struct _user_auth_scheme_module *)pointer_list_get_at(config->user_auth_scheme_module_list, i);
+    if (module != NULL) {
+      if (module->user_auth_scheme_module_unload(config->config_m) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_auth_scheme_module_list - Error user_auth_scheme_module_unload for module '%s'", module->name);
+      }
+#ifndef DEBUG
+      if (dlclose(module->file_handle)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_auth_scheme_module_list - Error dlclose for module '%s'", module->name);
+      }
+#endif
+      o_free(module->name);
+      o_free(module->display_name);
+      o_free(module->description);
+      o_free(module);
+    }
+  }
+  pointer_list_clean(config->user_auth_scheme_module_list);
+  o_free(config->user_auth_scheme_module_list);
+}
+
 static int load_client_module_file(struct config_elements * config, const char * file_path) {
   void * file_handle;
   struct _client_module * cur_client_module = NULL;
@@ -2202,7 +2152,6 @@ static int load_client_module_file(struct config_elements * config, const char *
           cur_client_module->name = o_strdup(json_string_value(json_object_get(j_parameters, "name")));
           cur_client_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
           cur_client_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
-          cur_client_module->parameters = json_deep_copy(json_object_get(j_parameters, "parameters"));
           if (o_strlen(cur_client_module->name) && get_client_module_lib(config, cur_client_module->name) == NULL) {
             if (pointer_list_append(config->client_module_list, cur_client_module)) {
               y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_client_module->name);
@@ -2213,7 +2162,6 @@ static int load_client_module_file(struct config_elements * config, const char *
               o_free(cur_client_module->name);
               o_free(cur_client_module->display_name);
               o_free(cur_client_module->description);
-              json_decref(cur_client_module->parameters);
               o_free(cur_client_module);
               y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_file - Error reallocating resources for client_module_list");
               ret = G_ERROR_MEMORY;
@@ -2225,7 +2173,6 @@ static int load_client_module_file(struct config_elements * config, const char *
             o_free(cur_client_module->name);
             o_free(cur_client_module->display_name);
             o_free(cur_client_module->description);
-            json_decref(cur_client_module->parameters);
             o_free(cur_client_module);
             ret = G_ERROR;
           }
@@ -2425,6 +2372,52 @@ struct _client_module * get_client_module_lib(struct config_elements * config, c
   return NULL;
 }
 
+void close_client_module_instance_list(struct config_elements * config) {
+  size_t i;
+  
+  for (i=0; i<pointer_list_size(config->client_module_instance_list); i++) {
+    struct _client_module_instance * instance = (struct _client_module_instance *)pointer_list_get_at(config->client_module_instance_list, i);
+    if (instance != NULL) {
+      if (instance->enabled && instance->module->client_module_close(config->config_m, instance->cls) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_instance_list - Error client_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+      }
+      o_free(instance->name);
+      o_free(instance);
+    }
+  }
+  pointer_list_clean(config->client_module_instance_list);
+  o_free(config->client_module_instance_list);
+}
+
+void close_client_module_list(struct config_elements * config) {
+  size_t i;
+  
+  for (i=0; i<pointer_list_size(config->client_module_list); i++) {
+    struct _client_module * module = (struct _client_module *)pointer_list_get_at(config->client_module_list, i);
+    if (module != NULL) {
+      if (module->client_module_unload(config->config_m) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_list - Error client_module_unload for module '%s'", module->name);
+      }
+/* 
+* dlclose() makes valgrind not useful when it comes to libraries
+* they say it's not relevant to use it anyway
+* I'll let it here until I'm sure
+*/
+#ifndef DEBUG
+      if (dlclose(module->file_handle)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_list - Error dlclose for module '%s'", module->name);
+      }
+#endif
+      o_free(module->name);
+      o_free(module->display_name);
+      o_free(module->description);
+      o_free(module);
+    }
+  }
+  pointer_list_clean(config->client_module_list);
+  o_free(config->client_module_list);
+}
+
 static int load_plugin_module_file(struct config_elements * config, const char * file_path) {
   void * file_handle;
   struct _plugin_module * cur_plugin_module = NULL;
@@ -2452,7 +2445,6 @@ static int load_plugin_module_file(struct config_elements * config, const char *
           cur_plugin_module->name = o_strdup(json_string_value(json_object_get(j_result, "name")));
           cur_plugin_module->display_name = o_strdup(json_string_value(json_object_get(j_result, "display_name")));
           cur_plugin_module->description = o_strdup(json_string_value(json_object_get(j_result, "description")));
-          cur_plugin_module->parameters = json_deep_copy(json_object_get(j_result, "parameters"));
           if (o_strlen(cur_plugin_module->name) && get_plugin_module_lib(config, cur_plugin_module->name) == NULL) {
             if (pointer_list_append(config->plugin_module_list, cur_plugin_module)) {
               y_log_message(Y_LOG_LEVEL_INFO, "Loading plugin module %s - %s", file_path, cur_plugin_module->name);
@@ -2463,7 +2455,6 @@ static int load_plugin_module_file(struct config_elements * config, const char *
               o_free(cur_plugin_module->name);
               o_free(cur_plugin_module->display_name);
               o_free(cur_plugin_module->description);
-              json_decref(cur_plugin_module->parameters);
               o_free(cur_plugin_module);
               y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_file - Error reallocating resources for client_module_list");
               ret = G_ERROR_MEMORY;
@@ -2475,7 +2466,6 @@ static int load_plugin_module_file(struct config_elements * config, const char *
             o_free(cur_plugin_module->name);
             o_free(cur_plugin_module->display_name);
             o_free(cur_plugin_module->description);
-            json_decref(cur_plugin_module->parameters);
             o_free(cur_plugin_module);
             ret = G_ERROR;
           }
@@ -2484,7 +2474,6 @@ static int load_plugin_module_file(struct config_elements * config, const char *
           o_free(cur_plugin_module->name);
           o_free(cur_plugin_module->display_name);
           o_free(cur_plugin_module->description);
-          json_decref(cur_plugin_module->parameters);
           o_free(cur_plugin_module);
           y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_file - Error client_module_init for module %s", file_path);
           ret = G_ERROR_MEMORY;
@@ -2670,4 +2659,45 @@ struct _plugin_module * get_plugin_module_lib(struct config_elements * config, c
     }
   }
   return NULL;
+}
+
+void close_plugin_module_instance_list(struct config_elements * config) {
+  size_t i;
+  
+  for (i=0; i<pointer_list_size(config->plugin_module_instance_list); i++) {
+    struct _plugin_module_instance * instance = (struct _plugin_module_instance *)pointer_list_get_at(config->plugin_module_instance_list, i);
+    if (instance != NULL) {
+      if (instance->enabled && instance->module->plugin_module_close(config->config_p, instance->name, instance->cls) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_plugin_module_instance_list - Error plugin_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+      }
+      o_free(instance->name);
+      o_free(instance);
+    }
+  }
+  pointer_list_clean(config->plugin_module_instance_list);
+  o_free(config->plugin_module_instance_list);
+}
+
+void close_plugin_module_list(struct config_elements * config) {
+  size_t i;
+  
+  for (i=0; i<pointer_list_size(config->plugin_module_list); i++) {
+    struct _plugin_module * module = (struct _plugin_module *)pointer_list_get_at(config->plugin_module_list, i);
+    if (module != NULL) {
+      if (module->plugin_module_unload(config->config_p) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_plugin_module_list - Error plugin_module_unload for module '%s'", module->name);
+      }
+#ifndef DEBUG
+      if (dlclose(module->file_handle)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_plugin_module_list - Error dlclose for module '%s'", module->name);
+      }
+#endif
+      o_free(module->name);
+      o_free(module->display_name);
+      o_free(module->description);
+      o_free(module);
+    }
+  }
+  pointer_list_clean(config->plugin_module_list);
+  o_free(config->plugin_module_list);
 }

@@ -133,7 +133,6 @@ struct _user_module {
   char      * name;
   char      * display_name;
   char      * description;
-  json_t    * parameters;
   json_t * (* user_module_load)(struct config_module * config);
   int      (* user_module_unload)(struct config_module * config);
   json_t * (* user_module_init)(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
@@ -170,7 +169,6 @@ struct _client_module {
   char     * name;
   char     * display_name;
   char     * description;
-  json_t   * parameters;
   json_t * (* client_module_load)(struct config_module * config);
   int      (* client_module_unload)(struct config_module * config);
   json_t * (* client_module_init)(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
@@ -204,7 +202,6 @@ struct _user_auth_scheme_module {
   char       * name;
   char       * display_name;
   char       * description;
-  json_t     * parameters;
   json_t  * (* user_auth_scheme_module_load)(struct config_module * config);
   int       (* user_auth_scheme_module_unload)(struct config_module * config);
   json_t *  (* user_auth_scheme_module_init)(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls);
@@ -241,7 +238,6 @@ struct _plugin_module {
   char      * name;
   char      * display_name;
   char      * description;
-  json_t    * parameters;
   json_t * (* plugin_module_load)(struct config_plugin * config);
   int      (* plugin_module_unload)(struct config_plugin * config);
   json_t * (* plugin_module_init)(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls);
@@ -345,6 +341,7 @@ struct config_plugin {
   int      (* glewlwyd_plugin_callback_delete_client)(struct config_plugin * config, const char * client_id);
 
   // Register scheme functions
+  json_t * (* glewlwyd_plugin_callback_get_scheme_list)(struct config_plugin * config, const char * username);
   json_t * (* glewlwyd_plugin_callback_scheme_register)(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username, json_t * j_scheme_data);
   json_t * (* glewlwyd_plugin_callback_scheme_register_get)(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username);
   int      (* glewlwyd_plugin_callback_scheme_deregister)(struct config_plugin * config, const char * mod_name, const char * username);

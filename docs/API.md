@@ -1,15 +1,18 @@
 # Glewlwyd API description
 
+[![License: CC BY 4.0](https://licensebuttons.net/l/by/4.0/80x15.png)](https://creativecommons.org/licenses/by/4.0/)
+
 This document is intended to describe Glewlwyd's core API endpoints. Glewlwyd's core API endpoints are used to manage core functionalities data.
 
 - [Endpoints authentication](#endpoints-authentication)
 - [Prefix](#prefix)
 - [Content-type](#content-type)
 - [Error response](#error-response)
-- [Configuratiom](#configuration)
+- [Configuration](#configuration)
   - [Get server configuration](#get-server-configuration)
 - [Plugins and modules management](#plugins-and-modules-management)
   - [Get all modules available](#get-all-modules-available)
+  - [Reload all modules](#reload-all-modules)
   - [Get all user module instances available](#get-all-user-module-instances-available)
   - [Get a user module instance](#get-a-user-module-instance)
   - [Add a new user module instance](#add-a-new-user-module-instance)
@@ -436,6 +439,28 @@ Example
   ]
 }
 ```
+
+### Reload all modules
+
+Reload all the modules and instances, useful if you have multiple Glewlwyd instances connected to the same database
+
+#### URL
+
+`/api/mod/reload/`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+#### Success response
+
+Code 200
 
 ### Get all user module instances available
 
@@ -2756,7 +2781,7 @@ User with scope `g_profile` authorized.
 
 Code 200
 
-Profile succesfully removed
+Profile successfully removed
 
 Code 403
 
@@ -3246,7 +3271,7 @@ No enabled authenticated user for this session
 
 ## Authentication Scheme APIs
 
-This chapter will describe the specific paramters for the authentication schemes.
+This chapter will describe the specific parameters for the authentication schemes.
 
 The following APIs will be further explained for each scheme:
 
@@ -3732,7 +3757,7 @@ HTTP Status 200 on success, 401 on error registration, 400 on error parameters, 
 
 This authentication scheme is based on TLS certificate authentication. The first level of authentication is provided by the TLS layer deep down the application, therefore a user can't authenticate with an invalid certificate or a certificate not provided by the configured CA. The scheme module is used to integrate the auth result in Glewlwyd's authentication process with the session, and is also used to manage registered certificates and emit new certificates if possible.
 
-To successfully authenticate a user in Glewlwyd's process using the TLS certificate, the used certificate must be valid for the TLS layer AND must be previously regostered in the user's authorized certificate list.
+To successfully authenticate a user in Glewlwyd's process using the TLS certificate, the used certificate must be valid for the TLS layer AND must be previously registered in the user's authorized certificate list.
 
 #### Register scheme
 
