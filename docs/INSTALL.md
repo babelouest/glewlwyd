@@ -856,6 +856,8 @@ The `glewlwyd.conf` has the following content if you log to a user-defined log f
 # Author: Nicolas Mora
 #
 
+[Definition]
+
 failregex = ^.* - Glewlwyd WARNING: Security - Authorization invalid for username .* at IP Address <HOST>
             ^.* - Glewlwyd WARNING: Security - Authorization invalid for client_id .* at IP Address <HOST>
             ^.* - Glewlwyd WARNING: Security - Code invalid at IP Address <HOST>
