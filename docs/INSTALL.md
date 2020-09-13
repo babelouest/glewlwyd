@@ -923,7 +923,7 @@ ignoreregex =
 
 The `glewlwyd.conf` has the following content if you log to syslog:
 
-```
+```config
 # Fail2Ban filter for Glewlwyd
 #
 #

@@ -1,5 +1,5 @@
 [glewlwyd]
 enabled  = true
-filter   = glewlwyd
+filter   = glewlwyd-log # (change to glewlwyd-syslog if you use the syslog filter/logging)
 logpath  = /var/log/glewlwyd.log
 port     = http,https
