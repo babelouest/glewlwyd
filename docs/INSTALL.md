@@ -848,12 +848,34 @@ The `glewlwyd.conf` file is available in [fail2ban/glewlwyd.conf](fail2ban/glewl
 - `Token invalid` - on invalid token refresh or token delete in OAuth2 or OIDC
 - `Scheme email - code sent` - when an OTP code is sent via e-mail, to mitigate users spam
 
-The `glewlwyd.conf` has the following content:
+The `glewlwyd.conf` has the following content if you log to a user-defined log file:
 
 ```config
 # Fail2Ban filter for Glewlwyd
 #
-# Author: Nicolas Mora, modifications for syslog logging with common.conf prefixes by Neal Clayton
+# Author: Nicolas Mora
+#
+
+failregex = ^.* - Glewlwyd WARNING: Security - Authorization invalid for username .* at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Authorization invalid for client_id .* at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Code invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Token invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Scheme email - code sent for username .* at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Register new user - code sent to email .* at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Verify e-mail - code invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Update e-mail - token sent to email .* at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Update e-mail - token invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Reset credentials - token invalid at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Reset credentials - code invalid at IP Address <HOST>
+ignoreregex =
+```
+
+The `glewlwyd.conf` has the following content if you log to syslog:
+
+```
+# Fail2Ban filter for Glewlwyd
+#
+#
 #
 [INCLUDES]
 #
@@ -867,18 +889,7 @@ before = common.conf
 #
 _daemon = Glewlwyd
 
-failregex = ^.* - Glewlwyd WARNING: Security - Authorization invalid for username .* at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Authorization invalid for client_id .* at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Code invalid at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Token invalid at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Scheme email - code sent for username .* at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Register new user - code sent to email .* at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Verify e-mail - code invalid at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Update e-mail - token sent to email .* at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Update e-mail - token invalid at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Reset credentials - token invalid at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Reset credentials - code invalid at IP Address <HOST>
-            ^.* %(__prefix_line)sSecurity - Authorization invalid for username .* at IP Address <HOST>
+failregex = ^.* %(__prefix_line)sSecurity - Authorization invalid for username .* at IP Address <HOST>
             ^.* %(__prefix_line)sSecurity - Authorization invalid for client_id .* at IP Address <HOST>
             ^.* %(__prefix_line)sSecurity - Code invalid at IP Address <HOST>
             ^.* %(__prefix_line)sSecurity - Token invalid at IP Address <HOST>
