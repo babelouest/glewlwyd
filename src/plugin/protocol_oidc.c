@@ -1246,10 +1246,10 @@ static char * generate_client_access_token(struct _oidc_config * config, json_t 
     token = r_jwt_serialize_signed(jwt, jwk, 0);
     r_jwk_free(jwk);
     if (token == NULL) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_client_access_token - Error generating token");
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - oidc - Error generating token");
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_client_access_token - Error cloning jwt");
+    y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - oidc - Error cloning jwt");
   }
   r_jwt_free(jwt);
   return token;
@@ -1772,25 +1772,25 @@ static char * generate_id_token(struct _oidc_config * config, const char * usern
           if (r_jwt_set_full_claims_json_t(jwt, j_user_info) == RHN_OK) {
             token = r_jwt_serialize_signed(jwt, jwk, 0);
             if (token == NULL) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_id_token - oidc - Error r_jwt_serialize_signed");
+              y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - oidc - Error r_jwt_serialize_signed");
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_id_token - oidc - Error jwt_add_grants_json");
+            y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - oidc - Error jwt_add_grants_json");
           }
           json_decref(j_user_info);
           r_jwk_free(jwk);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_id_token - oidc - Error get_userinfo");
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - oidc - Error get_userinfo");
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_id_token - oidc - Error key_size");
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - oidc - Error key_size");
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_id_token - oidc - Error r_jwt_copy");
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - oidc - Error r_jwt_copy");
     }
     r_jwt_free(jwt);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_id_token - oidc - Error get_sub");
+    y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - oidc - Error get_sub");
   }
   o_free(sub);
   return token;
@@ -1805,7 +1805,7 @@ static int serialize_access_token(struct _oidc_config * config, uint auth_type, 
   char * issued_at_clause, ** scope_array = NULL, * access_token_hash = NULL;
   
   if (pthread_mutex_lock(&config->insert_lock)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_access_token - Error pthread_mutex_lock");
+    y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - oidc - Error pthread_mutex_lock");
     ret = G_ERROR;
   } else {
     if ((access_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, access_token)) != NULL) {
@@ -1862,25 +1862,25 @@ static int serialize_access_token(struct _oidc_config * config, uint auth_type, 
                 if (res == H_OK) {
                   ret = G_OK;
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_access_token - Error executing j_query (2)");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - oidc - Error executing j_query (2)");
                   ret = G_ERROR_DB;
                 }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_access_token - Error json_pack");
+                y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - oidc - Error json_pack");
                 ret = G_ERROR;
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_access_token - Error split_string");
+              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - oidc - Error split_string");
               ret = G_ERROR;
             }
             free_string_array(scope_array);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_access_token - Error h_last_insert_id");
+            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - oidc - Error h_last_insert_id");
             ret = G_ERROR_DB;
           }
           json_decref(j_last_id);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_access_token - Error executing j_query (1)");
+          y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - oidc - Error executing j_query (1)");
           ret = G_ERROR_DB;
         }
       } else {
@@ -1960,17 +1960,17 @@ static char * generate_access_token(struct _oidc_config * config, const char * u
       }
       if (jwk != NULL) {
         if ((token = r_jwt_serialize_signed(jwt, jwk, 0)) == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_access_token - oidc - Error r_jwt_serialize_signed");
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - oidc - Error r_jwt_serialize_signed");
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_access_token - oidc - Error no jwk to sign");
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - oidc - Error no jwk to sign");
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_access_token - oidc - Error r_jwt_copy");
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - oidc - Error r_jwt_copy");
     }
     r_jwt_free(jwt);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_access_token - oidc - Error get_sub");
+    y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - oidc - Error get_sub");
   }
   o_free(sub);
   r_jwk_free(jwk);
@@ -1987,7 +1987,7 @@ static json_t * serialize_refresh_token(struct _oidc_config * config, uint auth_
   char * issued_at_clause, * expires_at_clause, * last_seen_clause, ** scope_array = NULL, * str_claims_request = NULL;
   
   if (pthread_mutex_lock(&config->insert_lock)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_refresh_token - Error pthread_mutex_lock");
+    y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - oidc - Error pthread_mutex_lock");
     j_return = json_pack("{si}", "result", G_ERROR);
   } else {
     if (token_hash != NULL && username != NULL && issued_for != NULL && now > 0 && duration > 0) {
@@ -2015,7 +2015,7 @@ static json_t * serialize_refresh_token(struct _oidc_config * config, uint auth_
       }
       if (j_claims_request != NULL) {
         if ((str_claims_request = json_dumps(j_claims_request, JSON_COMPACT)) == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_refresh_token - Error dumping JSON claims request");
+          y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - oidc - Error dumping JSON claims request");
         }
       }
       j_query = json_pack_ex(&error, 0, "{sss{ss si so ss so s{ss} s{ss} s{ss} sI si ss ss ss ss}}",
@@ -2082,25 +2082,25 @@ static json_t * serialize_refresh_token(struct _oidc_config * config, uint auth_
               if (res == H_OK) {
                 j_return = json_pack("{sisO}", "result", G_OK, "gpor_id", j_last_id);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_refresh_token - Error executing j_query (2)");
+                y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - oidc - Error executing j_query (2)");
                 j_return = json_pack("{si}", "result", G_ERROR_DB);
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_refresh_token - Error json_pack");
+              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - oidc - Error json_pack");
               j_return = json_pack("{si}", "result", G_ERROR);
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_refresh_token - Error split_string");
+            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - oidc - Error split_string");
             j_return = json_pack("{si}", "result", G_ERROR);
           }
           free_string_array(scope_array);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_refresh_token - Error h_last_insert_id");
+          y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - oidc - Error h_last_insert_id");
           j_return = json_pack("{si}", "result", G_ERROR_DB);
         }
         json_decref(j_last_id);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_refresh_token - Error executing j_query (1)");
+        y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - oidc - Error executing j_query (1)");
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else {
@@ -2180,10 +2180,10 @@ static json_t * check_client_valid_without_secret(struct _oidc_config * config, 
       }
     }
     if (!uri_found) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid_without_secret - Error, redirect_uri '%s' is invalid for the client '%s', origin: %s", redirect_uri, client_id, ip_source);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid_without_secret - oidc - Error, redirect_uri '%s' is invalid for the client '%s', origin: %s", redirect_uri, client_id, ip_source);
     }
     if (!authorization_type_enabled) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid_without_secret - Error, authorization type %d is not enabled for the client '%s', origin: %s", authorization_type, client_id, ip_source);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid_without_secret - oidc - Error, authorization type %d is not enabled for the client '%s', origin: %s", authorization_type, client_id, ip_source);
     }
     if (uri_found && authorization_type_enabled) {
       j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
@@ -2191,7 +2191,7 @@ static json_t * check_client_valid_without_secret(struct _oidc_config * config, 
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid_without_secret - Error, client '%s' is invalid, origin: %s", client_id, ip_source);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid_without_secret - oidc - Error, client '%s' is invalid, origin: %s", client_id, ip_source);
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   json_decref(j_client);
@@ -2257,7 +2257,7 @@ static json_t * check_client_valid(struct _oidc_config * config, const char * cl
   j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, client_id, client_secret);
   if (check_result_value(j_client, G_OK)) {
     if (!implicit_flow && client_secret == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, confidential client must be authentified with its password, origin: %s", ip_source);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid - oidc - Error, confidential client must be authentified with its password, origin: %s", ip_source);
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     } else {
       if (redirect_uri != NULL) {
@@ -2299,10 +2299,10 @@ static json_t * check_client_valid(struct _oidc_config * config, const char * cl
         }
       }
       if (!uri_found) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, redirect_uri '%s' is invalid for the client '%s', origin: %s", redirect_uri, client_id, ip_source);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid - oidc - Error, redirect_uri '%s' is invalid for the client '%s', origin: %s", redirect_uri, client_id, ip_source);
       }
       if (!authorization_type_enabled) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, authorization type %d is not enabled for the client '%s', origin: %s", authorization_type, client_id, ip_source);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid - oidc - Error, authorization type %d is not enabled for the client '%s', origin: %s", authorization_type, client_id, ip_source);
       }
       if (uri_found && authorization_type_enabled) {
         j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
@@ -2311,7 +2311,7 @@ static json_t * check_client_valid(struct _oidc_config * config, const char * cl
       }
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_client_valid - Error, client '%s' is invalid, origin: %s", client_id, ip_source);
+    y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid - oidc - Error, client '%s' is invalid, origin: %s", client_id, ip_source);
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   json_decref(j_client);
@@ -2372,7 +2372,7 @@ static char * generate_authorization_code(struct _oidc_config * config, const ch
   time_t now;
 
   if (pthread_mutex_lock(&config->insert_lock)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_authorization_code - Error pthread_mutex_lock");
+    y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - Error pthread_mutex_lock");
   } else {
     code = o_malloc(33*sizeof(char));
     if (code != NULL) {
@@ -2382,7 +2382,7 @@ static char * generate_authorization_code(struct _oidc_config * config, const ch
           if (j_claims != NULL) {
             str_claims = json_dumps(j_claims, JSON_COMPACT);
             if (str_claims == NULL) {
-              y_log_message(Y_LOG_LEVEL_DEBUG, "oidc generate_authorization_code - Error dumping claims");
+              y_log_message(Y_LOG_LEVEL_DEBUG, "generate_authorization_code - oidc - Error dumping claims");
             }
           }
           time(&now);
@@ -2427,7 +2427,7 @@ static char * generate_authorization_code(struct _oidc_config * config, const ch
           res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
           json_decref(j_query);
           if (res != H_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_authorization_code - Error executing j_query (1)");
+            y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - Error executing j_query (1)");
             o_free(code);
             code = NULL;
           } else {
@@ -2445,42 +2445,42 @@ static char * generate_authorization_code(struct _oidc_config * config, const ch
                   res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
                   json_decref(j_query);
                   if (res != H_OK) {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_authorization_code - Error executing j_query (2)");
+                    y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - Error executing j_query (2)");
                     o_free(code);
                     code = NULL;
                   }
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_authorization_code - Error split_string");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - Error split_string");
                   o_free(code);
                   code = NULL;
                 }
                 free_string_array(scope_array);
                 if (set_amr_list_for_code(config, json_integer_value(j_code_id), j_amr) != G_OK) {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_authorization_code - Error set_amr_list_for_code");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - Error set_amr_list_for_code");
                   o_free(code);
                   code = NULL;
                 }
                 json_decref(j_code_id);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_authorization_code - Error h_last_insert_id");
+                y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - Error h_last_insert_id");
                 o_free(code);
                 code = NULL;
               }
             }
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_authorization_code - Error glewlwyd_callback_generate_hash");
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - Error glewlwyd_callback_generate_hash");
           o_free(code);
           code = NULL;
         }
         o_free(code_hash);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_authorization_code - Error rand_string");
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - Error rand_string");
         o_free(code);
         code = NULL;
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oidc generate_authorization_code - Error allocating resources for code");
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - Error allocating resources for code");
     }
     pthread_mutex_unlock(&config->insert_lock);
   }
@@ -2582,7 +2582,7 @@ static int disable_authorization_code(struct _oidc_config * config, json_int_t g
   if (res == H_OK) {
     return G_OK;
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "oidc disable_authorization_code - Error executing j_query");
+    y_log_message(Y_LOG_LEVEL_ERROR, "disable_authorization_code - oidc - Error executing j_query");
     return G_ERROR_DB;
   }
 }
@@ -5116,13 +5116,13 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
                                                            issued_for, 
                                                            u_map_get_case(request->map_header, "user-agent")) == G_OK) {
                                     } else {
-                                      y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_id_token");
+                                      y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oidc - Error serialize_id_token");
                                       j_body = json_pack("{ss}", "error", "server_error");
                                       ulfius_set_json_body_response(response, 500, j_body);
                                       json_decref(j_body);
                                     }
                                   } else {
-                                    y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_id_token");
+                                    y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oidc - Error generate_id_token");
                                     j_body = json_pack("{ss}", "error", "server_error");
                                     ulfius_set_json_body_response(response, 500, j_body);
                                     json_decref(j_body);
@@ -5148,7 +5148,7 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
                                     ulfius_set_json_body_response(response, 200, j_body);
                                     json_decref(j_body);
                                   } else {
-                                    y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error encrypt_token_if_required");
+                                    y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oidc - Error encrypt_token_if_required");
                                     j_body = json_pack("{ss}", "error", "server_error");
                                     ulfius_set_json_body_response(response, 500, j_body);
                                     json_decref(j_body);
@@ -5158,20 +5158,20 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
                                   o_free(refresh_token_out);
                                   o_free(id_token);
                                 } else {
-                                  y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_access_token");
+                                  y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oidc - Error serialize_access_token");
                                   j_body = json_pack("{ss}", "error", "server_error");
                                   ulfius_set_json_body_response(response, 500, j_body);
                                   json_decref(j_body);
                                 }
                               } else {
-                                y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_access_token");
+                                y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oidc - Error generate_access_token");
                                 j_body = json_pack("{ss}", "error", "server_error");
                                 ulfius_set_json_body_response(response, 500, j_body);
                                 json_decref(j_body);
                               }
                               o_free(access_token);
                           } else {
-                            y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error serialize_refresh_token");
+                            y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oidc - Error serialize_refresh_token");
                             j_body = json_pack("{ss}", "error", "server_error");
                             ulfius_set_json_body_response(response, 500, j_body);
                             json_decref(j_body);
@@ -5179,13 +5179,13 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
                           json_decref(j_refresh_token);
                           o_free(refresh_token);
                         } else {
-                          y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error generate_refresh_token");
+                          y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oidc - Error generate_refresh_token");
                           j_body = json_pack("{ss}", "error", "server_error");
                           ulfius_set_json_body_response(response, 500, j_body);
                           json_decref(j_body);
                         }
                       } else {
-                        y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_device_code - Error getting user %s", username);
+                        y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oidc - Error getting user %s", username);
                         j_body = json_pack("{ss}", "error", "server_error");
                         ulfius_set_json_body_response(response, 500, j_body);
                         json_decref(j_body);
@@ -5194,7 +5194,7 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
                       o_free(scope);
                       json_decref(j_result_scope);
                     } else {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_device_code - Error get_refresh_token_duration_rolling");
+                      y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oidc - Error get_refresh_token_duration_rolling");
                       j_body = json_pack("{ss}", "error", "server_error");
                       ulfius_set_json_body_response(response, 500, j_body);
                       json_decref(j_body);
@@ -8740,12 +8740,12 @@ static int jwt_autocheck(struct _oidc_config * config) {
     if (r_jwt_parse(jwt, token, 0) == RHN_OK && r_jwt_verify_signature(jwt, config->oidc_resource_config->jwk_verify_default, 0) == RHN_OK) {
       ret = RHN_OK;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oidc jwt_autocheck - oidc - Error verifying signature");
+      y_log_message(Y_LOG_LEVEL_ERROR, "jwt_autocheck - oidc - Error verifying signature");
       ret = G_ERROR_PARAM;
     }
     r_jwt_free(jwt);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "oidc jwt_autocheck - oidc - Error generate_access_token");
+    y_log_message(Y_LOG_LEVEL_ERROR, "jwt_autocheck - oidc - Error generate_access_token");
     ret = G_ERROR;
   }
   o_free(token);
@@ -8824,7 +8824,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
         break;
       } else if (!check_result_value(j_result, G_OK)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error check_parameters");
+        y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error check_parameters");
         j_return = json_pack("{si}", "result", G_ERROR);
         break;
       }
@@ -8890,13 +8890,13 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       
       // Set sign and verification jwt and jwk
       if (r_jwt_init(&p_config->jwt_sign) != RHN_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error allocating resources for jwt_sign");
+        y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error allocating resources for jwt_sign");
         j_return = json_pack("{si}", "result", G_ERROR);
         break;
       }
       
       if (r_jwt_init(&p_config->oidc_resource_config->jwt) != RHN_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error allocating resources for oidc_resource_config jwt");
+        y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error allocating resources for oidc_resource_config jwt");
         j_return = json_pack("{si}", "result", G_ERROR);
         break;
       }
@@ -8956,7 +8956,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       if (json_string_length(json_object_get(p_config->j_params, "jwks-public-uri")) || json_string_length(json_object_get(p_config->j_params, "jwks-public"))) {
         if (json_string_length(json_object_get(p_config->j_params, "jwks-public-uri"))) {
           if (r_jwks_init(&jwks_specified) != RHN_OK || r_jwks_import_from_uri(jwks_specified, json_string_value(json_object_get(p_config->j_params, "jwks-public-uri")), R_FLAG_FOLLOW_REDIRECT|(json_object_get(p_config->j_params, "request-uri-allow-https-non-secure")==json_true()?R_FLAG_IGNORE_SERVER_CERTIFICATE:0)) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error importing jwks-public from uri");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error importing jwks-public from uri");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           } else {
@@ -8964,7 +8964,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           }
         } else {
           if (r_jwks_init(&jwks_specified) != RHN_OK || r_jwks_import_from_str(jwks_specified, json_string_value(json_object_get(p_config->j_params, "jwks-public"))) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error importing jwks-public from data");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error importing jwks-public from data");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           } else {
@@ -8976,33 +8976,33 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       if (json_string_length(json_object_get(p_config->j_params, "jwks-private")) || json_string_length(json_object_get(p_config->j_params, "jwks-uri"))) {
         // Extract keys from JWKS
         if (r_jwks_init(&jwks_pubkey) != RHN_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwks_init");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwks_init");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
       
         if (r_jwks_init(&jwks_privkey) != RHN_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error allocating resources for jwks_privkey");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error allocating resources for jwks_privkey");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
         
         if (json_string_length(json_object_get(p_config->j_params, "jwks-uri"))) {
           if (r_jwks_import_from_uri(jwks_privkey, json_string_value(json_object_get(p_config->j_params, "jwks-uri")), p_config->x5u_flags) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwks_import_from_uri");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwks_import_from_uri");
             j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Invalid jwks_uri or jwks_uri content");
             break;
           }
         } else {
           if (r_jwks_import_from_str(jwks_privkey, json_string_value(json_object_get(p_config->j_params, "jwks-private"))) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwks_import_from_str");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwks_import_from_str");
             j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "invalid jwks cntent");
             break;
           }
         }
         
         if (r_jwks_size(jwks_privkey) == 0) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error jwks-private is empty");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error jwks-private is empty");
           j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "jwks is empty");
           break;
         }
@@ -9010,14 +9010,14 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         for (index=0; index < r_jwks_size(jwks_privkey); index++) {
           jwk = r_jwks_get_at(jwks_privkey, index);
           if (r_str_to_jwa_alg(r_jwk_get_property_str(jwk, "alg")) == R_JWA_ALG_UNKNOWN) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error jwk in jwks-private at index %zu has no valid 'alg' property", index);
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error jwk in jwks-private at index %zu has no valid 'alg' property", index);
             j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "invalid alg property in jwks");
             r_jwk_free(jwk);
             jwk = NULL;
             break;
           }
           if (r_jwk_get_property_str(jwk, "kid") == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error jwk in jwks-private at index %zu has no 'kid' property", index);
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error jwk in jwks-private at index %zu has no 'kid' property", index);
             j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "invalid kid property in jwks");
             r_jwk_free(jwk);
             jwk = NULL;
@@ -9032,7 +9032,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           } else if ((key_type & R_KEY_TYPE_SYMMETRIC)) {
             r_jwks_append_jwk(jwks_pubkey, jwk);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error jwk in jwks-private at index %zu is not a private or symmetric key", index);
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error jwk in jwks-private at index %zu is not a private or symmetric key", index);
             j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "invalid key in jwks, only private keys are allowed");
             r_jwk_free(jwk);
             jwk = NULL;
@@ -9046,30 +9046,30 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         
         if (json_string_length(json_object_get(p_config->j_params, "default-kid"))) {
           if ((p_config->jwk_sign_default = r_jwks_get_by_kid(jwks_privkey, json_string_value(json_object_get(p_config->j_params, "default-kid")))) == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error invalid default-kid");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error invalid default-kid");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
           if ((p_config->oidc_resource_config->jwk_verify_default = r_jwks_get_by_kid(jwks_pubkey, json_string_value(json_object_get(p_config->j_params, "default-kid")))) == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error invalid default-kid");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error invalid default-kid");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
         } else {
           if ((p_config->jwk_sign_default = r_jwks_get_at(jwks_privkey, 0)) == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error getting first jwk from jwks-private");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error getting first jwk from jwks-private");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
           if ((p_config->oidc_resource_config->jwk_verify_default = r_jwks_get_at(jwks_pubkey, 0)) == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error getting first jwk from jwks-private");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error getting first jwk from jwks-private");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
         }
         
         if (r_jwt_add_sign_jwks(p_config->jwt_sign, jwks_privkey, NULL) != RHN_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error setting sign key to jwt_priv");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error setting sign key to jwt_priv");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
@@ -9079,26 +9079,26 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         } else {
           r_jwk_init(&jwk_pub);
           if (r_jwk_extract_pubkey(p_config->jwk_sign_default, jwk_pub, p_config->x5u_flags) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error extracting public key");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error extracting public key");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
         }
         
         if (r_jwt_add_sign_keys(p_config->oidc_resource_config->jwt, NULL, jwk_pub) != RHN_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error setting verification key to oidc_resource_config");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error setting verification key to oidc_resource_config");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
         
         if (r_jwt_add_sign_jwks(p_config->oidc_resource_config->jwt, NULL, jwks_pubkey) != RHN_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error setting sign key to jwt_priv");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error setting sign key to jwt_priv");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
         
         if (r_jwks_init(&jwks_published) != RHN_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwks_init to jwks_published");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwks_init to jwks_published");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
@@ -9156,7 +9156,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
             alg = R_JWA_ALG_EDDSA;
             p_config->jwt_key_size = 256;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error invalid alg value from default jwk");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error invalid alg value from default jwk");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
@@ -9164,37 +9164,37 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       } else {
         // Exttract key from PEM
         if (r_jwk_init(&p_config->jwk_sign_default) != RHN_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwk_init jwk_sign_default");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwk_init jwk_sign_default");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
         
         if (r_jwk_init(&p_config->oidc_resource_config->jwk_verify_default) != RHN_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwk_init jwk_verify_default");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwk_init jwk_verify_default");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
         
         if (0 == o_strcmp("sha", json_string_value(json_object_get(p_config->j_params, "jwt-type")))) {
           if (r_jwk_import_from_symmetric_key(p_config->jwk_sign_default, key, key_len) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwk_import_from_symmetric_key");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwk_import_from_symmetric_key");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
           if (r_jwk_import_from_symmetric_key(p_config->oidc_resource_config->jwk_verify_default, key, key_len) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwk_import_from_symmetric_key");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwk_import_from_symmetric_key");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
         } else {
           if (r_jwk_import_from_pem_der(p_config->jwk_sign_default, R_X509_TYPE_PRIVKEY, R_FORMAT_PEM, key, key_len) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwk_import_from_pem_der (1)");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwk_import_from_pem_der (1)");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
           r_jwk_delete_property_str(p_config->jwk_sign_default, "kid");
           if (r_jwk_import_from_pem_der(p_config->oidc_resource_config->jwk_verify_default, R_X509_TYPE_PUBKEY, R_FORMAT_PEM, (const unsigned char *)json_string_value(json_object_get(p_config->j_params, "cert")), json_string_length(json_object_get(p_config->j_params, "cert"))) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwt_add_sign_keys_pem_der (2)");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwt_add_sign_keys_pem_der (2)");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
@@ -9202,26 +9202,26 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         }
         
         if (r_jwt_add_sign_keys(p_config->jwt_sign, p_config->jwk_sign_default, NULL) != RHN_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwt_add_sign_keys (2)");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwt_add_sign_keys (2)");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
         
         if (0 != o_strcmp("sha", json_string_value(json_object_get(p_config->j_params, "jwt-type")))) {
           if (r_jwk_init(&jwk_pub) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwk_init (2)");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwk_init (2)");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
 
           if (r_jwks_init(&jwks_pubkey) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwks_init (2)");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwks_init (2)");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
           
           if (r_jwk_import_from_pem_der(jwk_pub, R_X509_TYPE_PUBKEY, R_FORMAT_PEM, (const unsigned char *)json_string_value(json_object_get(p_config->j_params, "cert")), json_string_length(json_object_get(p_config->j_params, "cert"))) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwk_import_from_pem_der (2)");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwk_import_from_pem_der (2)");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
@@ -9230,7 +9230,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           if (json_array_size(json_object_get(p_config->j_params, "jwks-x5c"))) {
             json_array_foreach(json_object_get(p_config->j_params, "jwks-x5c"), index, j_element) {
               if (r_jwk_append_property_array(jwk_pub, "x5c", json_string_value(j_element)) != RHN_OK) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error r_jwk_append_property_array at index %zu", index);
+                y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwk_append_property_array at index %zu", index);
                 j_return = json_pack("{si}", "result", G_ERROR);
                 break;
               }
@@ -9240,14 +9240,14 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           r_jwk_set_property_str(jwk_pub, "alg", r_jwa_alg_to_str(alg));
           
           if (r_jwks_append_jwk(jwks_pubkey, jwk_pub) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwks_append_jwk");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwks_append_jwk");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
           p_config->jwks_str = r_jwks_export_to_json_str(jwks_pubkey, 0);
           
           if (r_jwt_add_sign_jwks(p_config->oidc_resource_config->jwt, NULL, jwks_pubkey) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwt_add_sign_jwks");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwt_add_sign_jwks");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
@@ -9255,26 +9255,26 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       }
 
       if (r_jwt_set_sign_alg(p_config->jwt_sign, alg) != RHN_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwt_set_sign_alg");
+        y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwt_set_sign_alg");
         j_return = json_pack("{si}", "result", G_ERROR);
         break;
       }
       
       if (r_jwt_set_sign_alg(p_config->oidc_resource_config->jwt, alg) != RHN_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwt_set_sign_alg (2)");
+        y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwt_set_sign_alg (2)");
         j_return = json_pack("{si}", "result", G_ERROR);
         break;
       }
       
       if (jwt_autocheck(p_config) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error jwt_autocheck");
+        y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error jwt_autocheck");
         j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error jwt_autocheck");
         break;
       }
       
       p_config->oidc_resource_config->alg = alg;
       if (r_jwk_init(&jwk) != RHN_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error r_jwk_init");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error r_jwk_init");
         j_return = json_pack("{si}", "result", G_ERROR);
         break;
       }
@@ -9296,14 +9296,14 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
          config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK || 
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_discovery, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "jwks", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_jwks, (void*)*cls) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding endpoints");
+        y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error adding endpoints");
         j_return = json_pack("{si}", "result", G_ERROR);
         break;
       }
 
       if (json_object_get(p_config->j_params, "introspection-revocation-allowed") == json_true()) {
         if ((p_config->introspect_revoke_resource_config = o_malloc(sizeof(struct _oidc_resource_config))) == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error allocating resources for introspect_revoke_resource_config");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error allocating resources for introspect_revoke_resource_config");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
@@ -9330,7 +9330,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_revocation, (void*)*cls) != G_OK ||
           config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK
           ) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding introspect/revoke endpoints");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error adding introspect/revoke endpoints");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
@@ -9338,7 +9338,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       
       if (json_object_get(p_config->j_params, "register-client-allowed") == json_true()) {
         if ((p_config->client_register_resource_config = o_malloc(sizeof(struct _oidc_resource_config))) == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error allocating resources for client_register_resource_config");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error allocating resources for client_register_resource_config");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
@@ -9362,7 +9362,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "register/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_client_registration, (void*)*cls) != G_OK || 
           config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "register/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK
           ) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding register endpoints");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error adding register endpoints");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
@@ -9374,7 +9374,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
             config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "register/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_client_registration_management_delete, (void*)*cls) != G_OK || 
             config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "register/:client_id", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK
             ) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding register endpoints");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error adding register endpoints");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
@@ -9386,13 +9386,13 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "end_session/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_end_session, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "check_session_iframe/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_check_session_iframe, (void*)*cls) != G_OK
         ) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding session-management endpoints");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error adding session-management endpoints");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
         
         if (generate_check_session_iframe(p_config) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error generate_check_session_iframe");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error generate_check_session_iframe");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
@@ -9403,7 +9403,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
          config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "device_authorization/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_device_authorization, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "device/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_device_verification, (void*)*cls) != G_OK
         ) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding device-authorization endpoints");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error adding device-authorization endpoints");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
@@ -9417,13 +9417,13 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       
       if (json_object_get(p_config->j_params, "client-cert-use-endpoint-aliases") == json_true()) {
         if (config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "mtls/token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_token, (void*)*cls) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding mtls token endpoint");
+          y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error adding mtls token endpoint");
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
         if (json_object_get(p_config->j_params, "auth-type-device-enabled") == json_true()) {
           if (config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "mtls/device_authorization/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_device_authorization, (void*)*cls) != G_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding mtls device-authorization endpoints");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error adding mtls device-authorization endpoints");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
@@ -9437,7 +9437,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
             config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "mtls/revoke/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_revocation, (void*)*cls) != G_OK ||
             config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "mtls/revoke/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK
             ) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error adding mtls introspect/revoke endpoints");
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error adding mtls introspect/revoke endpoints");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
@@ -9445,7 +9445,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       }
       
       if (generate_discovery_content(p_config) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - oidc - Error generate_discovery_content");
+        y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error generate_discovery_content");
         j_return = json_pack("{si}", "result", G_ERROR);
         break;
       }
@@ -9535,7 +9535,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       }
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "oidc protocol_init - Error allocating resources for cls");
+    y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error allocating resources for cls");
     o_free(*cls);
     *cls = NULL;
     j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
