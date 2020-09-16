@@ -692,7 +692,7 @@ int build_config_from_file(struct config_elements * config) {
   
   do {
     if (!config_read_file(&cfg, config->config_file)) {
-      fprintf(stderr, "Error parsing config file %s\nOn line %d error: %s\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
+      fprintf(stderr, "Error parsing config file %s\nOn line %d error: %s, exiting\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
       ret = G_ERROR_PARAM;
       break;
     }
@@ -760,7 +760,7 @@ int build_config_from_file(struct config_elements * config) {
             }
           }
         } else {
-          fprintf(stderr, "Error - logging mode '%s' unknown\n", one_log_mode);
+          fprintf(stderr, "Error - logging mode '%s' unknown, exiting\n", one_log_mode);
           ret = G_ERROR_PARAM;
           break;
         }
@@ -896,7 +896,7 @@ int build_config_from_file(struct config_elements * config) {
       } else if (!o_strcmp("MD5", str_value)) {
         config->hash_algorithm = digest_MD5;
       } else {
-        fprintf(stderr, "Error token hash algorithm: %s\n", str_value);
+        fprintf(stderr, "Error token hash algorithm: %s, exiting\n", str_value);
         ret = G_ERROR_PARAM;
         break;
       }
@@ -910,12 +910,12 @@ int build_config_from_file(struct config_elements * config) {
           if (config_setting_lookup_string(database, "path", &str_value_2) == CONFIG_TRUE) {
             config->conn = h_connect_sqlite(str_value_2);
             if (config->conn == NULL) {
-              fprintf(stderr, "Error opening sqlite database %s\n", str_value_2);
+              fprintf(stderr, "Error opening sqlite database %s, exiting\n", str_value_2);
               ret = G_ERROR_PARAM;
               break;
             } else {
               if (h_exec_query_sqlite(config->conn, "PRAGMA foreign_keys = ON;") != H_OK) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "Error executing sqlite3 query 'PRAGMA foreign_keys = ON;'");
+                y_log_message(Y_LOG_LEVEL_ERROR, "Error executing sqlite3 query 'PRAGMA foreign_keys = ON;, exiting'");
                 ret = G_ERROR_PARAM;
                 break;
               }
@@ -938,7 +938,7 @@ int build_config_from_file(struct config_elements * config) {
             break;
           } else {
             if (h_execute_query_mariadb(config->conn, "SET sql_mode='PIPES_AS_CONCAT';", NULL) != H_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "Error executing mariadb query 'SET sql_mode='PIPES_AS_CONCAT';'");
+              y_log_message(Y_LOG_LEVEL_ERROR, "Error executing mariadb query 'SET sql_mode='PIPES_AS_CONCAT';', exiting");
               ret = G_ERROR_PARAM;
               break;
             }
@@ -947,7 +947,7 @@ int build_config_from_file(struct config_elements * config) {
           config_setting_lookup_string(database, "conninfo", &str_value_2);
           config->conn = h_connect_pgsql(str_value_2);
           if (config->conn == NULL) {
-            fprintf(stderr, "Error opening postgre database %s\n", str_value_2);
+            fprintf(stderr, "Error opening postgre database %s, exiting\n", str_value_2);
             ret = G_ERROR_PARAM;
             break;
           }
@@ -1017,7 +1017,7 @@ int build_config_from_env(struct config_elements * config) {
     if (!(*endptr) && lvalue > 0 && lvalue < 65535) {
       config->port = (uint)lvalue;
     } else {
-      fprintf(stderr, "Error invalid port number, exiting\n");
+      fprintf(stderr, "Error invalid port number (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1026,7 +1026,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->bind_address);
     config->bind_address = o_strdup(value);
     if (config->bind_address == NULL) {
-      fprintf(stderr, "Error allocating config->bind_address, exiting\n");
+      fprintf(stderr, "Error allocating config->bind_address (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1035,7 +1035,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->api_prefix);
     config->api_prefix = o_strdup(value);
     if (config->api_prefix == NULL) {
-      fprintf(stderr, "Error allocating config->api_prefix, exiting\n");
+      fprintf(stderr, "Error allocating config->api_prefix (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1044,7 +1044,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->external_url);
     config->external_url = o_strdup(value);
     if (config->external_url == NULL) {
-      fprintf(stderr, "Error allocating config->external_url, exiting\n");
+      fprintf(stderr, "Error allocating config->external_url (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1053,7 +1053,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->login_url);
     config->login_url = o_strdup(value);
     if (config->login_url == NULL) {
-      fprintf(stderr, "Error allocating config->login_url, exiting\n");
+      fprintf(stderr, "Error allocating config->login_url (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1066,7 +1066,7 @@ int build_config_from_env(struct config_elements * config) {
     } else if (0 == o_strcmp("disable", value)) {
       config->delete_profile = GLEWLWYD_PROFILE_DELETE_AUTHORIZED | GLEWLWYD_PROFILE_DELETE_DISABLE_PROFILE;
     } else {
-      fprintf(stderr, "Invalid value for " GLEWLWYD_ENV_PROFILE_DELETE ", expected 'no', 'delete' or 'disable', exiting\n");
+      fprintf(stderr, "Invalid value for " GLEWLWYD_ENV_PROFILE_DELETE ", expected 'no', 'delete' or 'disable' (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1075,7 +1075,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->static_file_config->files_path);
     config->static_file_config->files_path = o_strdup(value);
     if (config->static_file_config->files_path == NULL) {
-      fprintf(stderr, "Error allocating config->files_path, exiting\n");
+      fprintf(stderr, "Error allocating config->files_path (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1087,13 +1087,13 @@ int build_config_from_env(struct config_elements * config) {
         if (json_string_length(json_object_get(j_element, "extension")) && json_string_length(json_object_get(j_element, "mime_type"))) {
           u_map_put(config->static_file_config->mime_types, json_string_value(json_object_get(j_element, "extension")), json_string_value(json_object_get(j_element, "mime_type")));
         } else {
-          fprintf(stderr, "Error - variable "GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES" must be a JSON array, example [{\"extension\":\".html\",\"mime_type\":\"text/html\"}], exiting\n");
+          fprintf(stderr, "Error - variable "GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES" must be a JSON array, example [{\"extension\":\".html\",\"mime_type\":\"text/html\"}] (env), exiting\n");
           ret = G_ERROR_PARAM;
           break;
         }
       }
     } else {
-      fprintf(stderr, "Error - variable "GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES" must be a JSON array, example [{\"extension\":\".html\",\"mime_type\":\"text/html\"}], exiting\n");
+      fprintf(stderr, "Error - variable "GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES" must be a JSON array, example [{\"extension\":\".html\",\"mime_type\":\"text/html\"}] (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
     json_decref(j_mime_types);
@@ -1103,7 +1103,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->allow_origin);
     config->allow_origin = o_strdup(value);
     if (config->allow_origin == NULL) {
-      fprintf(stderr, "Error allocating config->allow_origin, exiting\n");
+      fprintf(stderr, "Error allocating config->allow_origin (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1125,12 +1125,12 @@ int build_config_from_env(struct config_elements * config) {
           o_free(config->log_file);
           config->log_file = o_strdup(value2);
           if (config->log_file == NULL) {
-            fprintf(stderr, "Error allocating config->log_file, exiting\n");
+            fprintf(stderr, "Error allocating config->log_file (env), exiting\n");
             ret = G_ERROR_PARAM;
           }
         }
       } else {
-        fprintf(stderr, "Error - logging mode '%s' unknown\n", one_log_mode);
+        fprintf(stderr, "Error - logging mode '%s' unknown (env), exiting\n", one_log_mode);
         ret = G_ERROR_PARAM;
       }
       one_log_mode = strtok(NULL, ",");
@@ -1154,7 +1154,7 @@ int build_config_from_env(struct config_elements * config) {
   if ((value = getenv(GLEWLWYD_ENV_COOKIE_DOMAIN)) != NULL && o_strlen(value)) {
     config->cookie_domain = o_strdup(value);
     if (config->cookie_domain == NULL) {
-      fprintf(stderr, "Error allocating config->cookie_domain, exiting\n");
+      fprintf(stderr, "Error allocating config->cookie_domain (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1169,7 +1169,7 @@ int build_config_from_env(struct config_elements * config) {
     if (!(*endptr) && lvalue > 0) {
       config->session_expiration = (uint)lvalue;
     } else {
-      fprintf(stderr, "Error invalid session_expiration number, exiting\n");
+      fprintf(stderr, "Error invalid session_expiration number (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1178,7 +1178,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->session_key);
     config->session_key = o_strdup(value);
     if (config->session_key == NULL) {
-      fprintf(stderr, "Error allocating config->session_key, exiting\n");
+      fprintf(stderr, "Error allocating config->session_key (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1187,7 +1187,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->admin_scope);
     config->admin_scope = o_strdup(value);
     if (config->admin_scope == NULL) {
-      fprintf(stderr, "Error allocating config->admin_scope, exiting\n");
+      fprintf(stderr, "Error allocating config->admin_scope (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1196,7 +1196,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->profile_scope);
     config->profile_scope = o_strdup(value);
     if (config->profile_scope == NULL) {
-      fprintf(stderr, "Error allocating config->profile_scope, exiting\n");
+      fprintf(stderr, "Error allocating config->profile_scope (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1205,7 +1205,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->user_module_path);
     config->user_module_path = o_strdup(value);
     if (config->user_module_path == NULL) {
-      fprintf(stderr, "Error allocating config->user_module_path, exiting\n");
+      fprintf(stderr, "Error allocating config->user_module_path (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1214,7 +1214,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->client_module_path);
     config->client_module_path = o_strdup(value);
     if (config->client_module_path == NULL) {
-      fprintf(stderr, "Error allocating config->client_module_path, exiting\n");
+      fprintf(stderr, "Error allocating config->client_module_path (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1223,7 +1223,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->user_auth_scheme_module_path);
     config->user_auth_scheme_module_path = o_strdup(value);
     if (config->user_auth_scheme_module_path == NULL) {
-      fprintf(stderr, "Error allocating config->user_auth_scheme_module_path, exiting\n");
+      fprintf(stderr, "Error allocating config->user_auth_scheme_module_path (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1232,7 +1232,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->plugin_module_path);
     config->plugin_module_path = o_strdup(value);
     if (config->plugin_module_path == NULL) {
-      fprintf(stderr, "Error allocating config->plugin_module_path, exiting\n");
+      fprintf(stderr, "Error allocating config->plugin_module_path (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1245,7 +1245,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->secure_connection_key_file);
     config->secure_connection_key_file = o_strdup(value);
     if (config->secure_connection_key_file == NULL) {
-      fprintf(stderr, "Error allocating config->secure_connection_key_file, exiting\n");
+      fprintf(stderr, "Error allocating config->secure_connection_key_file (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1254,7 +1254,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->secure_connection_pem_file);
     config->secure_connection_pem_file = o_strdup(value);
     if (config->secure_connection_pem_file == NULL) {
-      fprintf(stderr, "Error allocating config->secure_connection_pem_file, exiting\n");
+      fprintf(stderr, "Error allocating config->secure_connection_pem_file (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1263,7 +1263,7 @@ int build_config_from_env(struct config_elements * config) {
     o_free(config->secure_connection_ca_file);
     config->secure_connection_ca_file = o_strdup(value);
     if (config->secure_connection_ca_file == NULL) {
-      fprintf(stderr, "Error allocating config->secure_connection_ca_file, exiting\n");
+      fprintf(stderr, "Error allocating config->secure_connection_ca_file (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1282,7 +1282,7 @@ int build_config_from_env(struct config_elements * config) {
     } else if (!o_strcmp("MD5", value)) {
       config->hash_algorithm = digest_MD5;
     } else {
-      fprintf(stderr, "Error token hash algorithm: %s\n", value);
+      fprintf(stderr, "Error token hash algorithm: %s (env), exiting\n", value);
       ret = G_ERROR_PARAM;
     }
   }
@@ -1294,11 +1294,11 @@ int build_config_from_env(struct config_elements * config) {
     }
     if (0 == o_strcmp(value, "sqlite3")) {
       if ((config->conn = h_connect_sqlite(getenv(GLEWLWYD_ENV_DATABASE_SQLITE3_PATH))) == NULL) {
-        fprintf(stderr, "Error opening sqlite database '%s'\n", getenv(GLEWLWYD_ENV_DATABASE_SQLITE3_PATH));
+        fprintf(stderr, "Error opening sqlite database '%s' (env), exiting\n", getenv(GLEWLWYD_ENV_DATABASE_SQLITE3_PATH));
         ret = G_ERROR_PARAM;
       } else {
         if (h_exec_query_sqlite(config->conn, "PRAGMA foreign_keys = ON;") != H_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Error executing sqlite3 query 'PRAGMA foreign_keys = ON;'");
+          y_log_message(Y_LOG_LEVEL_ERROR, "Error executing sqlite3 query 'PRAGMA foreign_keys = ON; (env), exiting'");
           ret = G_ERROR_PARAM;
         }
       }
@@ -1310,18 +1310,18 @@ int build_config_from_env(struct config_elements * config) {
           ret = G_ERROR_PARAM;
         } else {
           if (h_execute_query_mariadb(config->conn, "SET sql_mode='PIPES_AS_CONCAT';", NULL) != H_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Error executing mariadb query 'SET sql_mode='PIPES_AS_CONCAT';'");
+            y_log_message(Y_LOG_LEVEL_ERROR, "Error executing mariadb query 'SET sql_mode='PIPES_AS_CONCAT'; (env), exiting'");
             ret = G_ERROR_PARAM;
           }
         }
       }
     } else if (0 == o_strcmp(value, "postgre")) {
-      if ((config->conn = h_connect_pgsql(getenv(GLEWLWYD_ENV_DATABASE_MARIADB_PORT))) == NULL) {
-        fprintf(stderr, "Error opening postgre database %s\n", getenv(GLEWLWYD_ENV_DATABASE_MARIADB_PORT));
+      if ((config->conn = h_connect_pgsql(getenv(GLEWLWYD_ENV_DATABASE_POSTGRE_CONNINFO))) == NULL) {
+        fprintf(stderr, "Error opening postgre database %s (env), exiting\n", getenv(GLEWLWYD_ENV_DATABASE_POSTGRE_CONNINFO));
         ret = G_ERROR_PARAM;
       }
     } else {
-      fprintf(stderr, "Error - database type unknown\n");
+      fprintf(stderr, "Error - database type unknown (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
