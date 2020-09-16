@@ -294,9 +294,11 @@ See [Configure Glewlwyd](#configure-glewlwyd) for a complete list of configurati
 
 ```shell
 $ # Run docker instance with a new set of config files
-$ docker run -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd -e GLWD_EXTERNAL_URL=https://glewlwyd.tld babelouest/glewlwyd
+$ docker run -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd
+
 $ # Run docker instance with default config files but override external url and dsatabase connexion using env variables
 $ docker run -p 4593:4593 -e GLWD_EXTERNAL_URL=https://glewlwyd.tld -e GLWD_DATABASE_TYPE=postgre -e GLWD_DATABASE_POSTGRE_CONNINFO="host=dbhost port=5432 dbname=glewlwyd user=glewlwyd password=secret" babelouest/glewlwyd
+
 $ # Run docker instance with a new set of config files and an overwritten external url using env variables
 $ docker run -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd -e GLWD_EXTERNAL_URL=https://glewlwyd.tld babelouest/glewlwyd -e GLWD_EXTERNAL_URL=https://glewlwyd.tld
 ```
@@ -342,7 +344,7 @@ With Libmicrohttpd 0.9.37 and older version, there is a bug when parsing `applic
 
 #### Libmicrohttpd 0.9.70 minimum recommended in some edge cases
 
-A bug has been [fixed](https://git.gnunet.org/libmicrohttpd.git/tree/ChangeLog?h=v0.9.70#n9) in Libmicrohttpd 0.9.70 that fixed a bug that appeared at least with [Jenkins OIDC plugin](https://wiki.jenkins.io/display/JENKINS/Openid+Connect+Authentication+Plugin) (see issue #89). It is recommended to install Libmicrohttpd 0.9.70 minimum to avoid this problems.
+A bug has been [fixed](https://git.gnunet.org/libmicrohttpd.git/tree/ChangeLog?h=v0.9.70#n9) in Libmicrohttpd 0.9.70 related to [Jenkins OIDC plugin](https://wiki.jenkins.io/display/JENKINS/Openid+Connect+Authentication+Plugin) (see issue #89). It is recommended to install Libmicrohttpd 0.9.70 minimum to avoid this problems.
 
 ### Build Glewlwyd and its dependencies
 
