@@ -9461,48 +9461,6 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       j_return = json_pack("{si}", "result", G_OK);
     } else {
       if (p_config != NULL) {
-        config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "auth/");
-        config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "auth/");
-        config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "token/");
-        config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "userinfo/");
-        config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "userinfo/");
-        config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "userinfo/");
-        config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "token/");
-        config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/:token_hash");
-        config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/*");
-        config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration");
-        config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "jwks");
-        if (json_object_get(p_config->j_params, "session-management-allowed") == json_true()) {
-          config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "end_session/");
-          config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "check_session_iframe/");
-        }
-        if (p_config->introspect_revoke_resource_config != NULL) {
-          config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "introspect/");
-          config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "revoke/");
-        }
-        if (p_config->client_register_resource_config != NULL) {
-          config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "register/");
-          if (json_object_get(p_config->j_params, "register-client-management-allowed") == json_true()) {
-            config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "register/:client_id");
-            config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "register/:client_id");
-            config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "register/:client_id");
-            config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "register/:client_id");
-          }
-        }
-        if (json_object_get(p_config->j_params, "auth-type-device-enabled") == json_true()) {
-          config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "device_authorization/");
-          config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "device/");
-        }
-        if (json_object_get(p_config->j_params, "client-cert-use-endpoint-aliases") == json_true()) {
-          config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "mtls/token/");
-          if (json_object_get(p_config->j_params, "introspection-revocation-allowed") == json_true()) {
-            config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "mtls/introspect/");
-            config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "mtls/revoke/");
-          }
-          if (json_object_get(p_config->j_params, "auth-type-device-enabled") == json_true()) {
-            config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "mtls/device_authorization/");
-          }
-        }
         if (p_config->introspect_revoke_resource_config != NULL) {
           o_free(p_config->introspect_revoke_resource_config->oauth_scope);
           o_free(p_config->introspect_revoke_resource_config->realm);
