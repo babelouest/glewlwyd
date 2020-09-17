@@ -64,19 +64,24 @@ If the client receives an encrypted access tokens, refresh tokens or code, it mu
 
 ## Access token format
 
-As a heir of [Glewlwyd OAuth2 plugin](OAUTH2.md), Glewlwyd OpenID Connect plugin uses JWTs as access tokens. Therefore, the access token can be used by the client or the third party web service to identify the user and the scopes available with this access token.
+As a heir of [Glewlwyd OAuth2 plugin](OAUTH2.md), Glewlwyd OpenID Connect plugin uses JWTs as access tokens. Therefore, the access token can be used by the client or the third party web service to identify the user and the scopes available with this access token. The access token claims format implements [JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens - draft 05](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-05).
 
 An access token payload has the following JSON format:
 
 ```Javascript
 {
-  "sub": "4321zyxdcba",      // subject that was provided this access_token
-  "aud": "client1",          // client_id the access_token was provided to
-  "salt": "abcdxyz1234",     // Random string to avoid collisions
-  "type": "access_token",    // Hardcoded
-  "iat": 1466556840,         // Issued at time in Epoch Unix format
-  "exp": 1466558840,         // Expiration of the token in Epoch Unix format
-  "scope":"scope1 g_profile" // scopes granted to this access token in a string separated by spaces
+  "iss": "https://glewlwyd.tld" // Issuer
+  "sub": "4321zyxdcba",         // subject that was provided this access_token
+  "aud": "client1",             // client_id the access_token was provided to
+  "client_id": "client1",       // client_id the access_token was provided to
+  "jti": "abcdxyz1234",         // token identifier
+  "type": "access_token",       // Hardcoded
+  "iat": 1466556840,            // Issued at time in Epoch Unix format
+  "exp": 1466558840,            // Expiration of the token in Epoch Unix format
+  "nbf": 1466558840,            // Not before time in Epoch Unix format
+  "scope":"scope1 g_profile"    // scopes granted to this access token in a string separated by spaces
+  "claims": {}                  // claims asked by the client
+  "cnf": {"x5t#S256": xxx"}     // ideintifier of the certificate used to sign this JWT
 }
 ```
 
