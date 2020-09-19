@@ -177,9 +177,9 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("error-api-connect")});
       }
       if (this.state.prompt === "device") {
-        this.setState({deviceAuth: true, currentUser: false, userList: [], loaded: true});
+        this.setState({deviceAuth: true, currentUser: false, userList: [], loaded: true, scheme: this.state.config.params.scheme});
       } else {
-        this.setState({newUser: (!!this.state.config.params.callback_url && !!this.state.config.params.scope), showGrant: false, currentUser: false, userList: [], loaded: true});
+        this.setState({newUser: (!!this.state.config.params.callback_url && !!this.state.config.params.scope), showGrant: false, currentUser: false, userList: [], loaded: true, scheme: this.state.config.params.scheme});
       }
     });
   }
@@ -286,13 +286,13 @@ class App extends Component {
         } else if (!schemeListRequired && canContinue) {
           for (var groupName in scope.schemes) {
             var group = scope.schemes[groupName];
-            var groupAuthenticated = false;
+            var schemeRequired = scope.scheme_required[groupName];
+            var groupSchemeAuthenticated = 0;
             schemeListRequired = group;
             group.forEach((curScheme) => {
               mustRegisterScheme = false;
               if (curScheme.scheme_authenticated) {
-                groupAuthenticated = true;
-                schemeListRequired = false;
+                groupSchemeAuthenticated++;
                 scheme = false;
               } else if ((!scheme || scheme.scheme_last_login < curScheme.scheme_last_login) && curScheme.scheme_registered) {
                 scheme = curScheme;
@@ -300,9 +300,11 @@ class App extends Component {
                 mustRegisterScheme = true;
               }
             });
-            if (!groupAuthenticated) {
+            if (groupSchemeAuthenticated < schemeRequired) {
               canContinue = false;
               break;
+            } else {
+              schemeListRequired = false;
             }
           }
         }
