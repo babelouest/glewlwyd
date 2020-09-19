@@ -282,7 +282,7 @@ class App extends Component {
         } else if (message.role === 'scope') {
           var scopeModal = {
             title: i18next.t("admin.add-scope-title"),
-            data: {name: "", display_name: "", description: "", password_required: true, password_max_age: 0, scheme: {}},
+            data: {name: "", display_name: "", description: "", password_required: true, password_max_age: 0, scheme: {}, schemeRequired: {}},
             callback: this.confirmAddScope,
             add: true
           }

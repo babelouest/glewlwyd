@@ -273,6 +273,7 @@
     "scope-add-scheme-group": "Add a scheme in a new group",
     "scope-add-scheme": "Add a scheme",
     "scope-error-name": "Name is mandatory",
+    "scope-scheme-required-count": "Required scheme: {{number}}",
     "user-mod-list-title": "User modules",
     "add-mod-title": "Add a module",
     "edit-mod-title": "Update module {{mod}}",

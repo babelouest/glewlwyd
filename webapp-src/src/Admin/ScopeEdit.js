@@ -23,6 +23,7 @@ class ScopeEdit extends Component {
     this.togglePasswordRequired = this.togglePasswordRequired.bind(this);
     this.addScheme = this.addScheme.bind(this);
     this.handleRemoveScheme = this.handleRemoveScheme.bind(this);
+    this.handleSelectSchemeRequired = this.handleSelectSchemeRequired.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -102,6 +103,10 @@ class ScopeEdit extends Component {
         group = "" + i;
       }
       scope.scheme[group] = [];
+      if (!scope.scheme_required) {
+        scope.scheme_required = {};
+      }
+      scope.scheme_required[group] = 1;
     }
     var newScheme = {scheme_name: scheme_name}
     this.state.modSchemes.forEach((modScheme) => {
@@ -128,6 +133,16 @@ class ScopeEdit extends Component {
     }
     this.setState({scope: scope});
   }
+  
+  handleSelectSchemeRequired(e, group, number) {
+    e.preventDefault();
+    var scope = this.state.scope;
+    if (!scope.scheme_required) {
+      scope.scheme_required = {};
+    }
+    scope.scheme_required[group] = number;
+    this.setState({scope: scope});
+  }
 
 	render() {
     var groupList = [];
@@ -136,6 +151,7 @@ class ScopeEdit extends Component {
     var modSchemeListDisplayName = [];
     var modSchemeListJsx;
     var modSchemeDropdown;
+    var schemeRequiredDropdown;
     var hasError;
     if (this.state.hasError) {
       hasError = <span className="error-input text-right">{i18next.t("admin.error-input")}</span>;
@@ -159,6 +175,7 @@ class ScopeEdit extends Component {
     // Build groups and scheme lists
     $.each (this.state.scope.scheme, (groupName, scheme) => {
       var schemeList = [];
+      schemeRequiredDropdown = [];
       var iScheme = 0;
       scheme.forEach((scheme, index) => {
         // Add badge or
@@ -167,6 +184,11 @@ class ScopeEdit extends Component {
         }
         // Add scheme
         schemeList.push(<a href="#" key={iScheme++} onClick={(e) => this.handleRemoveScheme(e, groupName, scheme)}><span className="badge badge-primary btn-icon-right">{scheme.scheme_display_name||scheme.scheme_name}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
+        if ((this.state.scope.scheme_required && this.state.scope.scheme_required[groupName] === (index+1)) || (!index && !this.state.scope.scheme_required)) {
+          schemeRequiredDropdown.push(<a className="dropdown-item active" href="#" key={index} disabled={true}>{index+1}</a>);
+        } else {
+          schemeRequiredDropdown.push(<a className="dropdown-item" href="#" key={index} onClick={(e) => this.handleSelectSchemeRequired(e, groupName, (index+1))}>{index+1}</a>);
+        }
       });
       // Add badge
       if (groupList.length) {
@@ -191,9 +213,19 @@ class ScopeEdit extends Component {
           </div>
         );
       }
-      groupList.push(<div className="card glwd-group-card" key={i++}>
+      
+      groupList.push(
+      <div className="card glwd-group-card" key={i++}>
         <div className="card-body">
           {schemeList}
+        </div>
+        <div className="dropdown">
+          <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            {i18next.t("admin.scope-scheme-required-count", {number: (this.state.scope.scheme_required&&this.state.scope.scheme_required[groupName]?this.state.scope.scheme_required[groupName]:1)})}
+          </button>
+          <div className="dropdown-menu" aria-labelledby="dropdownMenuButton">
+            {schemeRequiredDropdown}
+          </div>
         </div>
       </div>);
     });
@@ -212,76 +244,76 @@ class ScopeEdit extends Component {
       </div>
     }
 		return (
-    <div className="modal fade" id="editScopeModal" tabIndex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
-      <div className="modal-dialog modal-lg" role="document">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title" id="confirmModalLabel">{this.state.title}</h5>
-            <button type="button" className="close" aria-label={i18next.t("modal.close")} onClick={(e) => this.closeModal(e, false)}>
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div className="modal-body">
-            <form className="needs-validation" noValidate>
-              <div className="form-group">
-                <div className="input-group mb-3">
-                  <div className="input-group-prepend">
-                    <label className="input-group-text" className="input-group-text" htmlFor="scope-name">{i18next.t("admin.scope-name")}</label>
+      <div className="modal fade" id="editScopeModal" tabIndex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div className="modal-dialog modal-lg" role="document">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="confirmModalLabel">{this.state.title}</h5>
+              <button type="button" className="close" aria-label={i18next.t("modal.close")} onClick={(e) => this.closeModal(e, false)}>
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div className="modal-body">
+              <form className="needs-validation" noValidate>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" className="input-group-text" htmlFor="scope-name">{i18next.t("admin.scope-name")}</label>
+                    </div>
+                    <input type="text" className={this.state.errorList["name"]?"form-control is-invalid":"form-control"} id="scope-name" placeholder={i18next.t("admin.scope-name-ph")} maxLength="128" value={this.state.scope.name||""} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
                   </div>
-                  <input type="text" className={this.state.errorList["name"]?"form-control is-invalid":"form-control"} id="scope-name" placeholder={i18next.t("admin.scope-name-ph")} maxLength="128" value={this.state.scope.name||""} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
+                  {this.state.errorList["name"]?<span className="error-input">{this.state.errorList["name"]}</span>:""}
                 </div>
-                {this.state.errorList["name"]?<span className="error-input">{this.state.errorList["name"]}</span>:""}
-              </div>
-              <div className="form-group">
-                <div className="input-group mb-3">
-                  <div className="input-group-prepend">
-                    <label className="input-group-text" htmlFor="scope-display-name">{i18next.t("admin.scope-display-name")}</label>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="scope-display-name">{i18next.t("admin.scope-display-name")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="scope-display-name" placeholder={i18next.t("admin.scope-display-name-ph")} maxLength="256" value={this.state.scope.display_name||""} onChange={(e) => this.changeDisplayName(e)}/>
                   </div>
-                  <input type="text" className="form-control" id="scope-display-name" placeholder={i18next.t("admin.scope-display-name-ph")} maxLength="256" value={this.state.scope.display_name||""} onChange={(e) => this.changeDisplayName(e)}/>
                 </div>
-              </div>
-              <div className="form-group">
-                <div className="input-group mb-3">
-                  <div className="input-group-prepend">
-                    <label className="input-group-text" htmlFor="scope-description">{i18next.t("admin.scope-description")}</label>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="scope-description">{i18next.t("admin.scope-description")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="scope-description" placeholder={i18next.t("admin.scope-description-ph")} maxLength="512" value={this.state.scope.description||""} onChange={(e) => this.changeDescription(e)}/>
                   </div>
-                  <input type="text" className="form-control" id="scope-description" placeholder={i18next.t("admin.scope-description-ph")} maxLength="512" value={this.state.scope.description||""} onChange={(e) => this.changeDescription(e)}/>
                 </div>
-              </div>
-              <hr/>
-              <div className="form-group">
-                <h4>{i18next.t("admin.scope-auth-title")}</h4>
-              </div>
-              <div className="form-group form-check">
-                <input type="checkbox" className="form-check-input" id="scope-scheme-password" onChange={(e) => this.togglePasswordRequired(e)} checked={!!this.state.scope.password_required} />
-                <label className="form-check-label" htmlFor="scope-scheme-password">{i18next.t("admin.scope-scheme-password")}</label>
-              </div>
-              <div className="form-group">
-                <div className="input-group mb-3">
-                  <div className="input-group-prepend">
-                    <label className="input-group-text" className="input-group-text" htmlFor="scope-password-max-age">{i18next.t("admin.scope-password-max-age")}</label>
+                <hr/>
+                <div className="form-group">
+                  <h4>{i18next.t("admin.scope-auth-title")}</h4>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="scope-scheme-password" onChange={(e) => this.togglePasswordRequired(e)} checked={!!this.state.scope.password_required} />
+                  <label className="form-check-label" htmlFor="scope-scheme-password">{i18next.t("admin.scope-scheme-password")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" className="input-group-text" htmlFor="scope-password-max-age">{i18next.t("admin.scope-password-max-age")}</label>
+                    </div>
+                    <input type="number" step="1" min="0" disabled={!this.state.scope.password_required} className="form-control" id="password-max-age" placeholder={i18next.t("admin.scope-password-max-age-ph")} value={this.state.scope.password_max_age||0} onChange={(e) => this.changePwdMaxAge(e)} />
                   </div>
-                  <input type="number" step="1" min="0" disabled={!this.state.scope.password_required} className="form-control" id="password-max-age" placeholder={i18next.t("admin.scope-password-max-age-ph")} value={this.state.scope.password_max_age||0} onChange={(e) => this.changePwdMaxAge(e)} />
                 </div>
-              </div>
-              <hr/>
-              <div className="form-group">
-                <h4>{i18next.t("admin.scope-auth-schemes-title")}</h4>
-              </div>
-              <div className="form-group">
-                {groupList}
-                {modSchemeDropdown}
-              </div>
-            </form>
-          </div>
-          <div className="modal-footer">
-            {hasError}
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.closeModal(e, false)}>{i18next.t("modal.close")}</button>
-            <button type="button" className="btn btn-primary" onClick={(e) => this.closeModal(e, true)}>{i18next.t("modal.ok")}</button>
+                <hr/>
+                <div className="form-group">
+                  <h4>{i18next.t("admin.scope-auth-schemes-title")}</h4>
+                </div>
+                <div className="form-group">
+                  {groupList}
+                  {modSchemeDropdown}
+                </div>
+              </form>
+            </div>
+            <div className="modal-footer">
+              {hasError}
+              <button type="button" className="btn btn-secondary" onClick={(e) => this.closeModal(e, false)}>{i18next.t("modal.close")}</button>
+              <button type="button" className="btn btn-primary" onClick={(e) => this.closeModal(e, true)}>{i18next.t("modal.ok")}</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 		);
 	}
 }
