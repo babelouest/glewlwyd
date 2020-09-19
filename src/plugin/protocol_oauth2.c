@@ -1091,8 +1091,7 @@ static json_t * validate_session_client_scope(struct _oauth2_config * config, co
   const char * scope_session, * group = NULL;
   char * scope_filtered = NULL, * tmp;
   size_t index = 0;
-  json_int_t scopes_authorized = 0, scopes_granted = 0;
-  int group_allowed;
+  json_int_t scopes_authorized = 0, scopes_granted = 0, group_allowed;
   
   j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, scope);
   if (check_result_value(j_session, G_OK)) {
@@ -1121,11 +1120,11 @@ static json_t * validate_session_client_scope(struct _oauth2_config * config, co
               json_object_foreach(json_object_get(j_scope_session, "schemes"), group, j_group) {
                 group_allowed = 0;
                 json_array_foreach(j_group, index, j_scheme) {
-                  if (!group_allowed && json_object_get(j_scheme, "scheme_authenticated") == json_true()) {
-                    group_allowed = 1;
+                  if (json_object_get(j_scheme, "scheme_authenticated") == json_true()) {
+                    group_allowed++;
                   }
                 }
-                if (!group_allowed) {
+                if (group_allowed < json_integer_value(json_object_get(json_object_get(j_scope_session, "scheme_required"), group))) {
                   json_object_set_new(j_scope_session, "authorized", json_false());
                 }
               }

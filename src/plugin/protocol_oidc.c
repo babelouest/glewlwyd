@@ -2932,8 +2932,7 @@ static json_t * validate_session_client_scope(struct _oidc_config * config, cons
   const char * scope_session, * group = NULL;
   char * scope_filtered = NULL, * tmp;
   size_t index = 0;
-  json_int_t scopes_authorized = 0, scopes_granted = 0;
-  int group_allowed;
+  json_int_t scopes_authorized = 0, scopes_granted = 0, group_allowed;
   
   j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, scope);
   if (check_result_value(j_session, G_OK)) {
@@ -2970,14 +2969,14 @@ static json_t * validate_session_client_scope(struct _oidc_config * config, cons
               json_object_foreach(json_object_get(j_scope_session, "schemes"), group, j_group) {
                 group_allowed = 0;
                 json_array_foreach(j_group, index, j_scheme) {
-                  if (!group_allowed && json_object_get(j_scheme, "scheme_authenticated") == json_true()) {
+                  if (json_object_get(j_scheme, "scheme_authenticated") == json_true()) {
                     if (!json_array_has_string(json_object_get(json_object_get(j_session, "session"), "amr"), json_string_value(json_object_get(j_scheme, "scheme_type")))) {
                       json_array_append(json_object_get(json_object_get(j_session, "session"), "amr"), json_object_get(j_scheme, "scheme_type"));
                     }
-                    group_allowed = 1;
+                    group_allowed++;
                   }
                 }
-                if (!group_allowed) {
+                if (group_allowed < json_integer_value(json_object_get(json_object_get(j_scope_session, "scheme_required"), group))) {
                   json_object_set_new(j_scope_session, "authorized", json_false());
                 }
               }
@@ -6311,7 +6310,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request, struct
       }
       break;
     } else if (!check_result_value(j_session, G_OK)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - Error validate_session_client_scope");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - Error validate_session_client_scope %s", json_dumps(j_session, JSON_ENCODE_ANY));
       if (form_post) {
         build_form_post_error_response(map, response, "error", "server_error", NULL);
       } else {

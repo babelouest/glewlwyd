@@ -151,6 +151,7 @@ json_t * get_scope_list(struct config_elements * config, const char * pattern, s
       j_scheme = get_auth_scheme_list_from_scope(config, json_string_value(json_object_get(j_element, "name")));
       if (check_result_value(j_scheme, G_OK)) {
         json_object_set(j_element, "scheme", json_object_get(j_scheme, "scheme"));
+        json_object_set(j_element, "scheme_required", json_object_get(j_scheme, "scheme_required"));
       } else if (check_result_value(j_scheme, G_ERROR_NOT_FOUND)) {
         json_object_set_new(j_element, "scheme", json_object());
       } else {
@@ -191,6 +192,7 @@ json_t * get_scope(struct config_elements * config, const char * scope) {
       j_scheme = get_auth_scheme_list_from_scope(config, scope);
       if (check_result_value(j_scheme, G_OK)) {
         json_object_set(json_array_get(j_result, 0), "scheme", json_object_get(j_scheme, "scheme"));
+        json_object_set(json_array_get(j_result, 0), "scheme_required", json_object_get(j_scheme, "scheme_required"));
         j_return = json_pack("{sisO}", "result", G_OK, "scope", json_array_get(j_result, 0));
       } else if (check_result_value(j_scheme, G_ERROR_NOT_FOUND)) {
         json_object_set_new(json_array_get(j_result, 0), "scheme", json_object());
@@ -215,6 +217,7 @@ json_t * get_auth_scheme_list_from_scope(struct config_elements * config, const 
   const char * str_query_pattern = 
     "SELECT \
     gsg_name AS group_name, \
+    gsg_scheme_required AS scheme_required, \
     guasmi_module AS scheme_type, \
     guasmi_name AS scheme_name, \
     guasmi_display_name AS scheme_display_name \
@@ -242,11 +245,12 @@ json_t * get_auth_scheme_list_from_scope(struct config_elements * config, const 
       res = h_execute_query_json(config->conn, str_query, &j_result);
       if (res == H_OK) {
         if (json_array_size(j_result)) {
-          j_return = json_pack("{sis{}}", "result", G_OK, "scheme");
+          j_return = json_pack("{sis{}s{}}", "result", G_OK, "scheme", "scheme_required");
           if (j_return != NULL) {
             json_array_foreach(j_result, index, j_element) {
               if (json_object_get(json_object_get(j_return, "scheme"), json_string_value(json_object_get(j_element, "group_name"))) == NULL) {
                 json_object_set_new(json_object_get(j_return, "scheme"), json_string_value(json_object_get(j_element, "group_name")), json_array());
+                json_object_set(json_object_get(j_return, "scheme_required"), json_string_value(json_object_get(j_element, "group_name")), json_object_get(j_element, "scheme_required"));
               }
               if (json_object_get(json_object_get(j_return, "scheme"), json_string_value(json_object_get(j_element, "group_name"))) != NULL) {
                 json_array_append_new(json_object_get(json_object_get(j_return, "scheme"), json_string_value(json_object_get(j_element, "group_name"))), json_pack("{ssssss}", "scheme_type", json_string_value(json_object_get(j_element, "scheme_type")), "scheme_name", json_string_value(json_object_get(j_element, "scheme_name")), "scheme_display_name", json_string_value(json_object_get(j_element, "scheme_display_name"))));
@@ -291,9 +295,9 @@ json_t * get_auth_scheme_list_from_scope_list(struct config_elements * config, c
           if (check_result_value(j_scope, G_OK)) {
             j_scheme_list = get_auth_scheme_list_from_scope(config, scope_array[i]);
             if (check_result_value(j_scheme_list, G_OK)) {
-              json_object_set_new(json_object_get(j_result, "scheme"), scope_array[i], json_pack("{sOsOsO}", "password_required", json_object_get(json_object_get(j_scope, "scope"), "password_required"), "password_max_age", json_object_get(json_object_get(j_scope, "scope"), "password_max_age"), "schemes", json_object_get(j_scheme_list, "scheme")));
+              json_object_set_new(json_object_get(j_result, "scheme"), scope_array[i], json_pack("{sOsOsOsO}", "password_required", json_object_get(json_object_get(j_scope, "scope"), "password_required"), "password_max_age", json_object_get(json_object_get(j_scope, "scope"), "password_max_age"), "schemes", json_object_get(j_scheme_list, "scheme"), "scheme_required", json_object_get(j_scheme_list, "scheme_required")));
             } else if (check_result_value(j_scheme_list, G_ERROR_NOT_FOUND)) {
-              json_object_set_new(json_object_get(j_result, "scheme"), scope_array[i], json_pack("{sOsOs{}}", "password_required", json_object_get(json_object_get(j_scope, "scope"), "password_required"), "password_max_age", json_object_get(json_object_get(j_scope, "scope"), "password_max_age"), "schemes"));
+              json_object_set_new(json_object_get(j_result, "scheme"), scope_array[i], json_pack("{sOsOs{}s{}}", "password_required", json_object_get(json_object_get(j_scope, "scope"), "password_required"), "password_max_age", json_object_get(json_object_get(j_scope, "scope"), "password_max_age"), "schemes", "scheme_required"));
             }
             json_decref(j_scheme_list);
           }
@@ -487,6 +491,7 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
           json_decref(j_scheme_password_valid);
         } else {
           json_object_del(j_cur_scope, "schemes");
+          json_object_del(j_cur_scope, "scheme_required");
           json_object_del(j_cur_scope, "password_required");
         }
         json_object_del(j_cur_scope, "password_max_age");
@@ -704,9 +709,10 @@ int set_granted_scopes_for_client(struct config_elements * config, json_t * j_us
 
 json_t * get_scope_list_allowed_for_session(struct config_elements * config, const char * scope_list, const char * session_uid) {
   json_t * j_scheme_list = get_validated_auth_scheme_list_from_scope_list(config, scope_list, session_uid), * j_scope, * j_group, * j_scheme, * j_scope_allowed = NULL;
-  int ret, group_allowed, scope_allowed;
+  int ret, scope_allowed;
   const char * scope, * group;
   size_t index;
+  json_int_t group_allowed;
 
   if (check_result_value(j_scheme_list, G_OK)) {
     j_scope_allowed = json_array();
@@ -723,11 +729,11 @@ json_t * get_scope_list_allowed_for_session(struct config_elements * config, con
             json_object_foreach(json_object_get(j_scope, "schemes"), group, j_group) {
               group_allowed = 0;
               json_array_foreach(j_group, index, j_scheme) {
-                if (!group_allowed && json_object_get(j_scheme, "scheme_authenticated") == json_true()) {
-                  group_allowed = 1;
+                if (json_object_get(j_scheme, "scheme_authenticated") == json_true()) {
+                  group_allowed++;
                 }
               }
-              if (!group_allowed) {
+              if (group_allowed < json_integer_value(json_object_get(json_object_get(j_scope, "scheme_required"), group))) {
                 ret = G_ERROR_UNAUTHORIZED;
                 scope_allowed = 0;
               }
@@ -761,7 +767,7 @@ json_t * get_scope_list_allowed_for_session(struct config_elements * config, con
 
 json_t * is_scope_valid(struct config_elements * config, json_t * j_scope, int add) {
   json_t * j_return, * j_array, * j_group, * j_scheme, * j_module;
-  size_t index;
+  size_t index, nb_scheme;
   const char * key;
   char * message;
 
@@ -785,12 +791,19 @@ json_t * is_scope_valid(struct config_elements * config, json_t * j_scope, int a
       if (json_object_get(j_scope, "password_max_age") != NULL && (!json_is_integer(json_object_get(j_scope, "password_max_age")) || json_integer_value(json_object_get(j_scope, "password_max_age")) < 0)) {
         json_array_append_new(j_array, json_string("password_max_age is optional and must be a positive integer"));
       }
-      if (json_object_get(j_scope, "scheme") != NULL && !json_is_object(json_object_get(j_scope, "scheme"))) {
+      if (json_object_get(j_scope, "scheme_required") != NULL && !json_is_object(json_object_get(j_scope, "scheme_required"))) {
+        json_array_append_new(j_array, json_string("scheme_required is optional and must be a JSON object"));
+      } else if (json_object_get(j_scope, "scheme") != NULL && !json_is_object(json_object_get(j_scope, "scheme"))) {
         json_array_append_new(j_array, json_string("scheme is optional and must be a JSON object"));
       } else {
         json_object_foreach(json_object_get(j_scope, "scheme"), key, j_group) {
+          nb_scheme = json_array_size(j_group);
           if (!json_is_array(j_group) || !json_array_size(j_group)) {
             json_array_append_new(j_array, json_string("scheme group must be a non empty JSON array"));
+          } else if (json_object_get(json_object_get(j_scope, "scheme_required"), key) != NULL && 
+            (json_integer_value(json_object_get(json_object_get(j_scope, "scheme_required"), key)) < 1 || 
+             json_integer_value(json_object_get(json_object_get(j_scope, "scheme_required"), key)) > (json_int_t)nb_scheme)) {
+            json_array_append_new(j_array, json_string("scheme_required group value must be an integer between 1 and the number of schemes for the schemes in the group"));
           } else {
             json_array_foreach(j_group, index, j_scheme) {
               if (!json_is_object(j_scheme) || !json_object_size(j_scheme)) {
@@ -830,7 +843,7 @@ json_t * is_scope_valid(struct config_elements * config, json_t * j_scope, int a
   return j_return;
 }
 
-static int add_scope_scheme_groups(struct config_elements * config, const char * scope, json_t * j_scheme) {
+static int add_scope_scheme_groups(struct config_elements * config, const char * scope, json_t * j_scheme, json_t * j_scheme_required) {
   json_t * j_query, * j_scope_group, * j_scope_group_id, * j_scheme_module;
   int res, ret = G_OK;
   char * scope_escaped, * scope_clause, * scheme_escaped, * scheme_module_clause;
@@ -850,6 +863,9 @@ static int add_scope_scheme_groups(struct config_elements * config, const char *
                             scope_clause,
                           "gsg_name",
                           group_name);
+    if (json_object_get(j_scheme_required, group_name) != NULL) {
+      json_object_set(json_object_get(j_query, "values"), "gsg_scheme_required", json_object_get(j_scheme_required, group_name));
+    }
     res = h_insert(config->conn, j_query, NULL);
     json_decref(j_query);
     if (res == H_OK) {
@@ -913,7 +929,7 @@ int add_scope(struct config_elements * config, json_t * j_scope) {
   json_decref(j_query);
   if (res == H_OK) {
     if (json_object_get(j_scope, "scheme") != NULL && json_object_size(json_object_get(j_scope, "scheme"))) {
-      if (add_scope_scheme_groups(config, json_string_value(json_object_get(j_scope, "name")), json_object_get(j_scope, "scheme")) == G_OK) {
+      if (add_scope_scheme_groups(config, json_string_value(json_object_get(j_scope, "name")), json_object_get(j_scope, "scheme"), json_object_get(j_scope, "scheme_required")) == G_OK) {
         ret = G_OK;
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "add_scope - Error add_scope_scheme_groups");
@@ -968,7 +984,7 @@ int set_scope(struct config_elements * config, const char * scope, json_t * j_sc
     res = h_update(config->conn, j_query, NULL);
     json_decref(j_query);
     if (res == H_OK) {
-      if (add_scope_scheme_groups(config, scope, json_object_get(j_scope, "scheme")) == G_OK) {
+      if (add_scope_scheme_groups(config, scope, json_object_get(j_scope, "scheme"), json_object_get(j_scope, "scheme_required")) == G_OK) {
         ret = G_OK;
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "set_scope - Error add_scope_scheme_groups");
