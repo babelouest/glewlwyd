@@ -273,6 +273,7 @@
     "scope-add-scheme-group": "Ajouter un schéma dans un nouveau groupe",
     "scope-add-scheme": "Ajouter un schéma",
     "scope-error-name": "Le nom est obligatoire",
+    "scope-scheme-required-count": "Schéma requis: {{number}}",
     "user-mod-list-title": "Modules utilisateurs",
     "add-mod-title": "Ajouter un module",
     "edit-mod-title": "Modifier le module {{mod}}",
