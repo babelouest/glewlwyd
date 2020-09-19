@@ -145,6 +145,7 @@ CREATE TABLE g_scope_group (
   gsg_id INT(11) PRIMARY KEY AUTO_INCREMENT,
   gs_id INT(11),
   gsg_name VARCHAR(128) NOT NULL,
+  gsg_scheme_required INT(11) DEFAULT 1,
   FOREIGN KEY(gs_id) REFERENCES g_scope(gs_id) ON DELETE CASCADE
 );
 

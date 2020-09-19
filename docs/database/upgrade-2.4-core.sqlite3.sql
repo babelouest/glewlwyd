@@ -3,6 +3,9 @@ DROP TABLE IF EXISTS gs_user_pkcs12;
 ALTER TABLE gpr_session
 ADD gprs_callback_url TEXT DEFAULT NULL;
 
+ALTER TABLE g_scope_group
+ADD gsg_scheme_required INTEGER DEFAULT 1;
+
 CREATE TABLE gpr_update_email (
   gprue_id INTEGER PRIMARY KEY AUTOINCREMENT,
   gprue_plugin_name TEXT NOT NULL,
