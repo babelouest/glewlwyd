@@ -14,6 +14,7 @@
 - Fix last login refresh without authentication bug
 - Add endpoint `/mod/reload/` to reload modules lists
 - Add Event log messages
+- Add parameter Scheme Required to a scope scheme group
 
 ## 2.3.2
 
