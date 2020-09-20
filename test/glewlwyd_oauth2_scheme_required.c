@@ -18,7 +18,7 @@
 #define SERVER_URI "http://localhost:4593/api"
 #define ADMIN_USERNAME "admin"
 #define ADMIN_PASSWORD "password"
-#define USER_USERNAME "user1"
+#define USER_USERNAME "new_user"
 #define USER_PASSWORD "password"
 
 #define CLIENT "client1_id"
@@ -44,34 +44,23 @@ START_TEST(test_oauth2_scheme_required_scope_set)
   json_t * j_parameters = json_pack("{ss ss ss so s{s[{ssss}{ssss}{ssss}]}s{si}}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_false(), "scheme", GROUP, "scheme_name", SCHEME1, "scheme_type", "mock", "scheme_name", SCHEME2, "scheme_type", "mock", "scheme_name", SCHEME3, "scheme_type", "mock", "scheme_required", GROUP, 2);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/scope/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
+  
+  j_parameters = json_pack("{sssos[sss]ss}", "username", USER_USERNAME, "enabled", json_true(), "scope", SCOPE, "openid", "g_profile", "password", USER_PASSWORD);
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/user/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
 }
 END_TEST
 
 START_TEST(test_oauth2_scheme_required_auth_flow)
 {
   struct _u_request auth_req;
-  struct _u_response auth_resp, resp;
-  json_t * j_body, * j_user, * j_scope_list;
+  struct _u_response auth_resp;
+  json_t * j_body;
   char * cookie;
 
   ulfius_init_request(&auth_req);
   ulfius_init_response(&auth_resp);
   
-  ulfius_init_response(&resp);
-  ulfius_set_request_properties(&admin_req, U_OPT_HTTP_VERB, "GET", U_OPT_HTTP_URL, SERVER_URI "/user/" USER_USERNAME, U_OPT_NONE);
-  ck_assert_int_eq(ulfius_send_http_request(&admin_req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 200);
-  ck_assert_ptr_ne(NULL, j_user = ulfius_get_json_body_response(&resp, NULL));
-  ulfius_clean_response(&resp);
-  
-  ulfius_init_response(&resp);
-  j_scope_list = json_copy(json_object_get(j_user, "scope"));
-  json_array_append_new(json_object_get(j_user, "scope"), json_string(SCOPE));
-  ulfius_set_request_properties(&admin_req, U_OPT_HTTP_VERB, "PUT", U_OPT_HTTP_URL, SERVER_URI "/user/" USER_USERNAME, U_OPT_JSON_BODY, j_user, U_OPT_NONE);
-  ck_assert_int_eq(ulfius_send_http_request(&admin_req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 200);
-  ulfius_clean_response(&resp);
-
   // Authenticate with password
   auth_req.http_verb = strdup("POST");
   auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
@@ -103,47 +92,41 @@ START_TEST(test_oauth2_scheme_required_auth_flow)
   ck_assert_int_eq(run_simple_test(&auth_req, "PUT", SERVER_URI "/auth/grant/" CLIENT, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
-  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/glwd/auth?response_type=" RESPONSE_TYPE_CODE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE_CODE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
 
-  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/glwd/auth?response_type=" RESPONSE_TYPE_TOKEN "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE_TOKEN "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
 
   // Authenticate scheme mock 42
   j_body = json_pack("{sssssss{ss}}", "username", USER_USERNAME, "scheme_type", "mock", "scheme_name", SCHEME1, "value", "code", SCHEME1_VALUE);
   ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_body);
 
-  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/glwd/auth?response_type=" RESPONSE_TYPE_CODE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE_CODE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
 
-  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/glwd/auth?response_type=" RESPONSE_TYPE_TOKEN "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE_TOKEN "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
 
   // Authenticate scheme mock 95
   j_body = json_pack("{sssssss{ss}}", "username", USER_USERNAME, "scheme_type", "mock", "scheme_name", SCHEME3, "value", "code", SCHEME3_VALUE);
   ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_body);
 
-  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/glwd/auth?response_type=" RESPONSE_TYPE_CODE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE_CODE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
 
-  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/glwd/auth?response_type=" RESPONSE_TYPE_TOKEN "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "access_token="), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE_TOKEN "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "access_token="), 1);
 
   j_body = json_pack("{ss}", "scope", "");
   ck_assert_int_eq(run_simple_test(&auth_req, "PUT", SERVER_URI "/auth/grant/" CLIENT, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
-  ulfius_init_response(&resp);
-  json_object_set_new(j_user, "scope", j_scope_list);
-  ulfius_set_request_properties(&admin_req, U_OPT_HTTP_VERB, "PUT", U_OPT_HTTP_URL, SERVER_URI "/user/" USER_USERNAME, U_OPT_JSON_BODY, j_user, U_OPT_NONE);
-  ck_assert_int_eq(ulfius_send_http_request(&admin_req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 200);
-  ulfius_clean_response(&resp);
-
   ulfius_clean_request(&auth_req);
   ulfius_clean_response(&auth_resp);
-  json_decref(j_user);
 }
 END_TEST
 
 START_TEST(test_oauth2_scheme_required_scope_delete)
 {
+  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/user/" USER_USERNAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/scope/" SCOPE, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
 }
 END_TEST
