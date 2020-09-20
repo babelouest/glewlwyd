@@ -621,6 +621,8 @@ int callback_glewlwyd_set_user_session_scope_grant (const struct _u_request * re
         } else if (res != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_session_scope_grant - Error set_granted_scopes_for_client");
           response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' granted scope list '%s' for client '%s'", json_string_value(json_object_get(j_user, "username")), json_string_value(json_object_get(j_body, "scope")), u_map_get(request->map_url, "client_id"));
         }
       } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
         response->status = 404;
