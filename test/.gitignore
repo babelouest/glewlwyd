@@ -20,6 +20,7 @@ glewlwyd_oauth2_token_introspection
 glewlwyd_oauth2_token_revocation
 glewlwyd_oauth2_device_authorization
 glewlwyd_oauth2_code_replay
+glewlwyd_oauth2_scheme_required
 
 glewlwyd_oidc_auth_code
 glewlwyd_oidc_code
@@ -64,6 +65,7 @@ glewlwyd_oidc_refresh_token_one_use
 glewlwyd_oidc_client_registration_management
 glewlwyd_oidc_client_certificate
 glewlwyd_oidc_code_replay
+glewlwyd_oidc_scheme_required
 
 glewlwyd_register
 

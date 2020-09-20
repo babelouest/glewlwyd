@@ -89,6 +89,14 @@ START_TEST(test_glwd_crud_scope_add_error_param)
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
+  j_parameters = json_pack("{ss ss ss so s{s[{ss}]}ss}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_true(), "scheme", GROUP1, "scheme_name", SCHEME1, "scheme_required", "error");
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  
+  j_parameters = json_pack("{ss ss ss so s{s[{ss}]}s{ss}}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_true(), "scheme", GROUP1, "scheme_name", SCHEME1, "scheme_required", GROUP1, "error");
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  
   o_free(url);
 }
 END_TEST
@@ -96,7 +104,7 @@ END_TEST
 START_TEST(test_glwd_crud_scope_add_OK)
 {
   char * url = msprintf("%s/scope/", SERVER_URI);
-  json_t * j_parameters = json_pack("{ss ss ss so s{s[{ssssss}]}}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_true(), "scheme", GROUP1, "scheme_name", SCHEME1, "scheme_display_name", "Mock 42", "scheme_type", "mock");
+  json_t * j_parameters = json_pack("{ss ss ss so s{s[{ssssss}]}s{si}}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_true(), "scheme", GROUP1, "scheme_name", SCHEME1, "scheme_display_name", "Mock 42", "scheme_type", "mock", "scheme_required", GROUP1, 1);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   o_free(url);

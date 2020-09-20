@@ -743,6 +743,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oauth2_token_revocation
 							glewlwyd_oauth2_device_authorization
               glewlwyd_oauth2_code_replay
+              glewlwyd_oauth2_scheme_required
 							)
 		endif ()
 		
@@ -791,6 +792,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oidc_refresh_token_one_use
 							glewlwyd_oidc_client_registration_management
               glewlwyd_oidc_code_replay
+              glewlwyd_oidc_scheme_required
 							)
 			set(TESTS_SSL ${TESTS_SSL} glewlwyd_oidc_client_certificate)
 		endif ()
