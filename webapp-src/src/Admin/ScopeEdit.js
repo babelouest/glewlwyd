@@ -125,8 +125,12 @@ class ScopeEdit extends Component {
       scope.scheme[group].forEach((curScheme, index) => {
         if (curScheme.scheme_name === scheme.scheme_name) {
           scope.scheme[group].splice(index, 1);
+          if (scope.scheme_required[group] > scope.scheme[group].length) {
+            scope.scheme_required[group] = scope.scheme[group].length;
+          }
           if (!scope.scheme[group].length) {
             delete(scope.scheme[group]);
+            delete(scope.scheme_required[group]);
           }
         }
       });
