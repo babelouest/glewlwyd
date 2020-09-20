@@ -32,7 +32,9 @@ If password is required, set a maximum age for the password in the current sessi
 
 ## Additional authentication schemes
 
-In this section, you can add one or more authentication schemes to the scope. You can gather authentication schemes in groups to allow multiple authentication factor, and you can have multiple groups to force more than one additional authentication factor.
+In this section, you can add one or more authentication schemes to the scope. You can gather authentication schemes in groups to allow multiple authentication factor, you can have multiple groups to force more than one additional authentication factor.
+
+You can specify the number of schemes required by group to authenticate, this option is useful if you want to enforce security for a scope but letting users the choice of schemes to use. e.g., a scope can have one group with 4 schemes and 2 schemes required.
 
 The authentication group model can be represented as the following schema:
 
