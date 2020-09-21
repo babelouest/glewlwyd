@@ -80,7 +80,6 @@
  *                  name: string, mandatory, name of the module, must be unique among other scheme modules
  *                  display_name: string, optional, long name of the module
  *                  description: string, optional, description for the module
- *                  parameters: object, optional, parameters description for the module
  *                }
  * 
  *                Example:
@@ -88,13 +87,7 @@
  *                  result: G_OK,
  *                  name: "mock",
  *                  display_name: "Mock scheme module",
- *                  description: "Mock scheme module for glewlwyd tests",
- *                  parameters: {
- *                    mock-value: {
- *                      type: "string",
- *                      mandatory: true
- *                    }
- *                  }
+ *                  description: "Mock scheme module for glewlwyd tests"
  *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
