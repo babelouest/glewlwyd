@@ -2558,42 +2558,6 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
   return j_return;
 }
 
-/**
- * 
- * plugin_module_load
- * 
- * Executed once when Glewlwyd service is started
- * Used to identify the module and to show its parameters on init
- * You can also use it to load resources that are required once for all
- * instance modules for example
- * 
- * @return value: a json_t * value with the following pattern:
- *                {
- *                  result: number (G_OK on success, another value on error)
- *                  name: string, mandatory, name of the module, must be unique among other scheme modules
- *                  display_name: string, optional, long name of the module
- *                  description: string, optional, description for the module
- *                  parameters: object, optional, parameters description for the module
- *                }
- * 
- *                Example:
- *                {
- *                  result: G_OK,
- *                  name: "mock",
- *                  display_name: "Mock scheme module",
- *                  description: "Mock scheme module for glewlwyd tests",
- *                  parameters: {
- *                    mock-value: {
- *                      type: "string",
- *                      mandatory: true
- *                    }
- *                  }
- *                }
- * 
- * @parameter config: a struct config_module with acess to some Glewlwyd
- *                    service and data
- * 
- */
 json_t * plugin_module_load(struct config_plugin * config) {
   UNUSED(config);
   return json_pack("{sissssss}",
@@ -2607,47 +2571,11 @@ json_t * plugin_module_load(struct config_plugin * config) {
                    "Adds self registered users in the user backend");
 }
 
-/**
- * 
- * plugin_module_unload
- * 
- * Executed once when Glewlwyd service is stopped
- * You can use it to release resources that are required once for all
- * instance modules for example
- * 
- * @return value: G_OK on success, another value on error
- * 
- * @parameter config: a struct config_module with acess to some Glewlwyd
- *                    service and data
- * 
- */
 int plugin_module_unload(struct config_plugin * config) {
   UNUSED(config);
   return G_OK;
 }
 
-/**
- * 
- * plugin_module_init
- * 
- * Initialize an instance of this module declared in Glewlwyd service.
- * If required, you must dynamically allocate a pointer to the configuration
- * for this instance and pass it to *cls
- * 
- * @return value: a json_t * value with the following pattern:
- *                {
- *                  result: number (G_OK on success, G_ERROR_PARAM on input parameters error, another value on error)
- *                  error: array of strings containg the list of input errors, mandatory on result G_ERROR_PARAM, ignored otherwise
- *                }
- * 
- * @parameter config: a struct config_module with acess to some Glewlwyd
- *                    service and data
- * @parameter j_parameters: used to initialize an instance in JSON format
- *                          The module must validate itself its parameters
- * @parameter cls: will contain an allocated void * pointer that will be sent back
- *                 as void * in all module functions
- * 
- */
 json_t * plugin_module_init(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls) {
   json_t * j_return, * j_result;
   struct _register_config * register_config;
@@ -2755,21 +2683,6 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
   return j_return;
 }
 
-/**
- * 
- * plugin_module_close
- * 
- * Close an instance of this module declared in Glewlwyd service.
- * You must free the memory previously allocated in
- * the client_module_init function as void * cls
- * 
- * @return value: G_OK on success, another value on error
- * 
- * @parameter config: a struct config_module with acess to some Glewlwyd
- *                    service and data
- * @parameter cls: pointer to the void * cls value allocated in client_module_init
- * 
- */
 int plugin_module_close(struct config_plugin * config, const char * name, void * cls) {
   y_log_message(Y_LOG_LEVEL_INFO, "Close plugin Glewlwyd register '%s'", name);
   if (cls != NULL) {
