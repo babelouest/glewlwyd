@@ -99,7 +99,7 @@ A plugin must have the following functions defined and available:
  * plugin_module_load
  * 
  * Executed once when Glewlwyd service is started
- * Used to identify the module and to show its parameters on init
+ * Used to identify the module
  * You can also use it to load resources that are required once for all
  * instance modules for example
  * 
