@@ -928,7 +928,7 @@
     "api-key-counter": "Compteur d'utilisation",
     "api-key-username": "Créée par",
     "api-key-issued-at": "Créée le",
-    "api-key-issued-for": "IP source",
+    "api-key-issued-for": "Adresse source",
     "api-key-user-agent": "User-Agent",
     "api-key-add-title": "Nouvelle clé d'API",
     "api-key-add-label": "Veuillez sauvegarder précieusement la clé ci-dessous",
