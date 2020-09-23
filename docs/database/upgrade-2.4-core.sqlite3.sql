@@ -44,3 +44,15 @@ CREATE TABLE gpr_reset_credentials_email (
   gprrct_enabled INTEGER DEFAULT 1
 );
 CREATE INDEX i_gprrct_token_hash ON gpr_reset_credentials_email(gprrct_token_hash);
+
+CREATE TABLE g_api_key (
+  gak_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gak_token_hash TEXT NOT NULL,
+  gak_counter INTEGER DEFAULT 0,
+  gak_username TEXT NOT NULL,
+  gak_issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gak_issued_for TEXT, -- IP address or hostname
+  gak_user_agent TEXT,
+  gak_enabled INTEGER DEFAULT 1
+);
+CREATE INDEX i_gak_token_hash ON g_api_key(gak_token_hash);

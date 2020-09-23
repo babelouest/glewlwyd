@@ -6,6 +6,7 @@
 -- License: MIT                                          --
 -- ----------------------------------------------------- --
 
+DROP TABLE IF EXISTS g_api_key;
 DROP TABLE IF EXISTS g_client_user_scope;
 DROP TABLE IF EXISTS g_scope_group_auth_scheme_module_instance;
 DROP TABLE IF EXISTS g_scope_group;
@@ -126,3 +127,15 @@ CREATE TABLE g_client_user_scope (
 );
 CREATE INDEX i_g_client_user_scope_username ON g_client_user_scope(gcus_username);
 CREATE INDEX i_g_client_user_scope_client_id ON g_client_user_scope(gcus_client_id);
+
+CREATE TABLE g_api_key (
+  gak_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gak_token_hash TEXT NOT NULL,
+  gak_counter INTEGER DEFAULT 0,
+  gak_username TEXT NOT NULL,
+  gak_issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gak_issued_for TEXT, -- IP address or hostname
+  gak_user_agent TEXT,
+  gak_enabled INTEGER DEFAULT 1
+);
+CREATE INDEX i_gak_token_hash ON g_api_key(gak_token_hash);
