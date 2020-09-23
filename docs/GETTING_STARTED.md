@@ -29,6 +29,8 @@
     - [Create the client](#create-the-client)
     - [Configure scopes](#configure-scopes)
     - [Setup the required scopes for a user](#setup-the-required-scopes-for-a-user)
+  - [Access to administration API via API keys](#access-to-administration-api-via-api-keys)
+    - [Use an API key in a script](#use-an-api-key-in-a-script)
 - [How-Tos](#how-tos)
   - [Use case: Configure Glewlwyd to authenticate with Taliesin](#use-case-configure-glewlwyd-to-authenticate-with-taliesin)
   - [Use case: Configure a registration process with a confirmed e-mail address and OTP, Webauthn or OAuth2 Client schemes](#use-case-configure-a-registration-process-with-a-confirmed-e-mail-address-and-otp-webauthn-or-oauth2-client-schemes)
@@ -270,7 +272,7 @@ Go to `Users` menu in the navigation tab, Click on the `Edit` button for an exis
 
 When the user will connect to the client with Glewlwyd, he will need to validate the authentication schemes for the scopes required with this client.
 
-## Access to administration API via API keys
+### Access to administration API via API keys
 
 ![api-key-list](screenshots/api-key-list.png)
 
@@ -282,7 +284,7 @@ An API key allows to access all admin APIs described in the [API documentation](
 
 An API key has no expiration date. Therefore be very careful with those, don't loose them, save them carefully with their creation datestamp, so they won't leak somewhere and allow bad people to do bad things. You can disable an API key in the admin page.
 
-### Use an API key in a script
+#### Use an API key in a script
 
 The API key must be added in the request header `Authorization` with the prefix `token `.
 
