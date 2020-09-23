@@ -15,6 +15,7 @@
 - Add endpoint `/mod/reload/` to reload modules lists
 - Add Event log messages
 - Add parameter Scheme Required to a scope scheme group
+- Add API key to use all admin APIs via scripts without a cookie session
 
 ## 2.3.2
 
