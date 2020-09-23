@@ -6,6 +6,7 @@ import Notification from '../lib/Notification';
 import i18next from 'i18next';
 
 import Confirm from '../Modal/Confirm';
+import Message from '../Modal/Message';
 import EditRecord from '../Modal/EditRecord';
 
 import Navbar from './Navbar';
@@ -19,6 +20,7 @@ import Plugin from './Plugin';
 import ScopeEdit from './ScopeEdit';
 import ModEdit from './ModEdit';
 import PluginEdit from './PluginEdit';
+import APIKey from './APIKey';
 
 class App extends Component {
   constructor(props) {
@@ -36,7 +38,10 @@ class App extends Component {
       curClient: false,
       scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
       curScope: false,
+      apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+      curApiKey: false,
       confirmModal: {title: "", message: ""},
+      messageModal: {title: "", label: "", message: []},
       editModal: {title: "", pattern: [], source: [], data: {}, callback: false, validateCallback: false, add: false},
       scopeModal: {title: "", data: {name: "", display_name: "", description: "", password_required: true, scheme: {}}, callback: false, add: false},
       curMod: false,
@@ -95,6 +100,9 @@ class App extends Component {
     this.confirmAddPluginMod = this.confirmAddPluginMod.bind(this);
     this.confirmEditPluginMod = this.confirmEditPluginMod.bind(this);
     this.confirmDeletePluginMod = this.confirmDeletePluginMod.bind(this);
+
+    this.addApiKey = this.addApiKey.bind(this);
+    this.confirmDisableApiKey = this.confirmDisableApiKey.bind(this);
 
     messageDispatcher.subscribe('App', (message) => {
       if (message.type === 'nav') {
@@ -171,6 +179,15 @@ class App extends Component {
             callback: this.confirmDeletePluginMod
           }
           this.setState({confirmModal: confirmModal, curMod: message.mod}, () => {
+            $("#confirmModal").modal({keyboard: false, show: true});
+          });
+        } else if (message.role === 'apiKey') {
+          var confirmModal = {
+            title: i18next.t("admin.confirm-delete-api-key-title"),
+            message: i18next.t("admin.confirm-delete-api-key"),
+            callback: this.confirmDisableApiKey
+          }
+          this.setState({confirmModal: confirmModal, curApiKey: message.apiKey}, () => {
             $("#confirmModal").modal({keyboard: false, show: true});
           });
         }
@@ -336,6 +353,8 @@ class App extends Component {
           this.setState({PluginModal: PluginModal}, () => {
             $("#editPluginModal").modal({keyboard: false, show: true});
           });
+        } else if (message.role === 'apiKey') {
+          this.addApiKey();
         }
       } else if (message.type === 'swap') {
         if (message.role === 'userMod') {
@@ -421,6 +440,7 @@ class App extends Component {
       this.fetchClientMods();
       this.fetchSchemeMods();
       this.fetchPlugins();
+      this.fetchApiKeys();
     }).fail((err) => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
     });
@@ -443,6 +463,7 @@ class App extends Component {
             this.fetchSchemeMods();
             this.fetchPlugins();
             this.fetchAllScopes();
+            this.fetchApiKeys();
           });
         })
         .fail((error) => {
@@ -451,6 +472,7 @@ class App extends Component {
             users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
             modClients: [],
             modSchemes: [],
@@ -467,6 +489,7 @@ class App extends Component {
           users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
           modClients: [],
           modSchemes: [],
@@ -501,6 +524,7 @@ class App extends Component {
           users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
           modClients: [],
           modSchemes: [],
@@ -527,6 +551,7 @@ class App extends Component {
           users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
           modClients: [],
           modSchemes: [],
@@ -553,6 +578,7 @@ class App extends Component {
           users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
           modClients: [],
           modSchemes: [],
@@ -601,6 +627,7 @@ class App extends Component {
           users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
           modClients: [],
           modSchemes: [],
@@ -624,6 +651,7 @@ class App extends Component {
           users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
           modClients: [],
           modSchemes: [],
@@ -647,6 +675,7 @@ class App extends Component {
           users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
           modClients: [],
           modSchemes: [],
@@ -670,6 +699,7 @@ class App extends Component {
           users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
           modClients: [],
           modSchemes: [],
@@ -693,6 +723,35 @@ class App extends Component {
           users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          modUsers: [],
+          modClients: [],
+          modSchemes: [],
+          plugins: []
+        });
+      }
+    });
+  }
+  
+  fetchApiKeys () {
+    return apiManager.glewlwydRequest("/key?offset=" + this.state.apiKeys.offset + "&limit=" + this.state.apiKeys.limit + (this.state.apiKeys.searchPattern?"&pattern="+this.state.apiKeys.searchPattern:""))
+    .then((apiKeys) => {
+      var curApiKeys = this.state.apiKeys;
+      curApiKeys.list = apiKeys;
+      curApiKeys.pattern = this.state.config.pattern.user;
+      this.setState({apiKeys: curApiKeys, loggedIn: true});
+    }).fail((err) => {
+      if (err.status !== 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+        this.setState({
+          loggedIn: false,
+          modTypes: {user: [], client: [], scheme: [], plugin: []},
+          users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
           modClients: [],
           modSchemes: [],
@@ -1345,6 +1404,37 @@ class App extends Component {
       });
     }
   }
+  
+  addApiKey() {
+    apiManager.glewlwydRequest("/key", "POST")
+    .then((result) => {
+      var messageModal = this.state.messageModal;
+      messageModal.title = i18next.t("admin.api-key-add-title");
+      messageModal.label = i18next.t("admin.api-key-add-label");
+      messageModal.message = [result.key];
+      this.setState({messageModal: messageModal}, () => {
+        $("#messageModal").modal({keyboard: false, show: true});
+      });
+      this.fetchApiKeys();
+    })
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    })
+  }
+  
+  confirmDisableApiKey() {
+    apiManager.glewlwydRequest("/key/" + encodeURIComponent(this.state.curApiKey.token_hash), "DELETE")
+    .then((key) => {
+      messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-api-key")});
+    })
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    })
+    .always(() => {
+      $("#confirmModal").modal("hide");
+      this.fetchApiKeys();
+    });
+  }
 
 	render() {
     var invalidCredentialMessage;
@@ -1383,12 +1473,16 @@ class App extends Component {
                   <div className={"carousel-item" + (this.state.curNav==="plugins"?" active":"")}>
                     <Plugin mods={this.state.plugins} types={this.state.modTypes.plugin} loggedIn={this.state.loggedIn} />
                   </div>
+                  <div className={"carousel-item" + (this.state.curNav==="api-key"?" active":"")}>
+                    <APIKey config={this.state.config} apiKeys={this.state.apiKeys} loggedIn={this.state.loggedIn} />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
           <Notification loggedIn={this.state.loggedIn}/>
           <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
+          <Message title={this.state.messageModal.title} label={this.state.messageModal.label} message={this.state.messageModal.message} />
           <EditRecord title={this.state.editModal.title} pattern={this.state.editModal.pattern} source={this.state.editModal.source} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
           <ScopeEdit title={this.state.scopeModal.title} scope={this.state.scopeModal.data} add={this.state.scopeModal.add} modSchemes={this.state.modSchemes} callback={this.state.scopeModal.callback} />
           <ModEdit title={this.state.ModModal.title} role={this.state.ModModal.role} mod={this.state.ModModal.data} add={this.state.ModModal.add} types={this.state.ModModal.types} callback={this.state.ModModal.callback} config={this.state.config} />

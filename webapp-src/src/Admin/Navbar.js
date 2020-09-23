@@ -209,6 +209,8 @@ class Navbar extends Component {
               <a className={"dropdown-item" + (this.state.curNav==="auth-schemes"?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "auth-schemes", true)}>{i18next.t("admin.menu-auth-schemes")}</a>
               <div className="dropdown-divider"></div>
               <a className={"dropdown-item" + (this.state.curNav==="plugins"?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "plugins", true)}>{i18next.t("admin.menu-plugins")}</a>
+              <div className="dropdown-divider"></div>
+              <a className={"dropdown-item" + (this.state.curNav==="api-key"?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "api-key", true)}>{i18next.t("admin.menu-api-key")}</a>
             </div>
           </li>
         </ul>
