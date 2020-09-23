@@ -55,6 +55,10 @@ This document is intended to describe Glewlwyd's core API endpoints. Glewlwyd's 
   - [Add a new scope](#add-a-new-scope)
   - [Update an existing scope](#update-an-existing-scope)
   - [Delete an existing scope](#delete-an-existing-scope)
+- [API Keys management](#api-keys-management)
+  - [Get a list of API keys available](#get-a-list-of-api-keys-available)
+  - [Create a new API key](#create-a-new-api-key)
+  - [Disable an API key](#disable-an-api-key)
 - [User authentication](#user-authentication)
   - [Authenticate a user with password](#authenticate-a-user-with-password)
   - [Authenticate a user with an authentication scheme](#authenticate-a-user-with-an-authentication-scheme)
@@ -167,7 +171,7 @@ Return the list of all modules available for all types of modules
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -182,26 +186,22 @@ Content
   user: [
     name: string,
     display_name: string
-    description: string,
-    parameters: object, the parameters of the module for initialization
+    description: string
   ],
   client: [
     name: string,
     display_name: string
-    description: string,
-    parameters: object, the parameters of the module for initialization
+    description: string
   ],
   scheme: [
     name: string,
     display_name: string
-    description: string,
-    parameters: object, the parameters of the module for initialization
+    description: string
   ],
   plugin: [
     name: string,
     display_name: string
-    description: string,
-    parameters: object, the parameters of the plugin for initialization
+    description: string
   ]
 }
 ```
@@ -214,227 +214,48 @@ Example
     {
       "name":"http",
       "display_name":"HTTP auth backend user module",
-      "description":"Module to store users in the database",
-      "parameters":{
-        "url":{
-          "type":"string",
-          "mandatory":true
-        },
-        "check-server-certificate":{
-          "type":"boolean",
-          "mandatory":false,
-          "default":true
-        },
-        "default-scope":{
-          "type":"array",
-          "mandatory":true,
-          "values":["string"]
-        }
-      }
+      "description":"Module to store users in the database"
     },
     {
       "name":"mock",
       "display_name":"Mock user module",
-      "description":"Mock user module for glewlwyd tests",
-      "parameters":{
-        "username-prefix":{
-          "type":"string",
-          "mandatory":false
-        },
-        "password":{
-          "type":"string",
-          "mandatory":false
-        }
-      }
+      "description":"Mock user module for glewlwyd tests"
     }
   ],
   "client":[
     {
       "name":"mock",
       "display_name":"Mock scheme module",
-      "description":"Mock scheme module for glewlwyd tests",
-      "parameters":{
-        "username-prefix":{
-          "type":"string",
-          "mandatory":false
-        },
-        "password":{
-          "type":"string",
-          "mandatory":false
-        }
-      }
+      "description":"Mock scheme module for glewlwyd tests"
     },
     {
       "name":"database",
       "display_name":"Database backend client module",
-      "description":"Module to store clients in the database",
-      "parameters":{
-        "use-glewlwyd-connection":{
-          "type":"boolean",
-          "mandatory":true
-        },
-        "connection-type":{
-          "type":"list",
-          "values":[
-            "sqlite","mariadb","postgre"
-          ],
-          "mandatory":false
-        },
-        "sqlite-dbpath":{
-          "type":"string",
-          "mandatory":false
-        },
-        "mariadb-host":{
-          "type":"string",
-          "mandatory":false
-        },
-        "mariadb-client":{
-          "type":"string",
-          "mandatory":false
-        },
-        "mariadb-password":{
-          "type":"string",
-          "mandatory":false
-        },
-        "mariadb-dbname":{
-          "type":"string",
-          "mandatory":false
-        },
-        "mariadb-port":{
-          "type":"number",
-          "mandatory":false
-        },
-        "postgre-conninfo":{
-          "type":"string",
-          "mandatory":false
-        },
-        "data-format":{
-          "field-name":{
-            "multiple":{
-              "type":"boolean",
-              "default":false
-            },
-            "read":{
-              "type":"boolean",
-              "default":true
-            },
-            "write":{
-              "type":"boolean",
-              "default":true
-            },
-            "profile-read":{
-              "type":"boolean",
-              "default":false
-            },
-            "profile-write":{
-              "type":"boolean",
-              "default":false
-            }
-          }
-        }
-      }
+      "description":"Module to store clients in the database"
     }
   ],
   "scheme":[
     {
       "name":"mock",
       "display_name":"Mock",
-      "description":"Mock scheme module for glewlwyd tests",
-      "parameters":{
-        "mock-value":{
-          "type":"string",
-          "mandatory":true
-        }
-      }
+      "description":"Mock scheme module for glewlwyd tests"
     },
     {
       "name":"retype-password",
       "display_name":"Short session password",
-      "description":"Glewlwyd authentification via user password with a short session duration",
-      "parameters":{
-      }
+      "description":"Glewlwyd authentification via user password with a short session duration"
     }
   ],
   "plugin":[
     {
       "name":"mock",
       "display_name":"Mock plugin",
-      "description":"Mock plugin description",
-      "parameters":{
-      }
+      "description":"Mock plugin description"
     },
     {
       "name":"oauth2-glewlwyd",
       "display_name":"Glewlwyd OAuth2 plugin",
-      "description":"Plugin for legacy Glewlwyd OAuth2 workflow",
-      "parameters":{
-        "jwt-type":{
-          "type":"list",
-          "mandatory":true,
-          "values":["rsa","ecdsa","sha"]
-        },
-        "jwt-key-size":{
-          "type":"string",
-          "mandatory":true,
-          "values":["256","384","512"]
-        },
-        "key":{
-          "type":"string",
-          "mandatory":true
-        },
-        "cert":{
-          "type":"string",
-          "mandatory":true
-        },
-        "access-token-duration":{
-          "type":"number",
-          "mandatory":true
-        },
-        "refresh-token-duration":{
-          "type":"number",
-          "mandatory":true
-        },
-        "code-token-duration":{
-          "type":"number",
-          "mandatory":true
-        },
-        "refresh-token-rolling":{
-          "type":"boolean",
-          "default":false
-        },
-        "auth-type-code-enabled":{
-          "type":"boolean",
-          "mandatory":true
-        },
-        "auth-type-implicit-enabled":{
-          "type":"boolean",
-          "mandatory":true
-        },
-        "auth-type-password-enabled":{
-          "type":"boolean",
-          "mandatory":true
-        },
-        "auth-type-client-enabled":{
-          "type":"boolean",
-          "mandatory":true
-        },
-        "auth-type-refresh-enabled":{
-          "type":"boolean",
-          "mandatory":true
-        },
-        "scope":{
-          "type":"array",
-          "mandatory":false,
-          "format":{
-            "type":"string",
-            "mandatory":true
-          },
-          "rolling-refresh":{
-            "type":"boolean",
-            "mandatory":false
-          }
-        }
-      }
+      "description":"Plugin for legacy Glewlwyd OAuth2 workflow"
     }
   ]
 }
@@ -454,7 +275,7 @@ Reload all the modules and instances, useful if you have multiple Glewlwyd insta
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -476,7 +297,7 @@ Return the list of all instances available for user modules
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -531,7 +352,7 @@ Return the details of a user module instance
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -590,7 +411,7 @@ Add a new user module instance
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### Body Parameters
 
@@ -631,7 +452,7 @@ A JSON array with the error messages
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -678,7 +499,7 @@ A JSON array with the error messages
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -706,7 +527,7 @@ Instance not found
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -737,7 +558,7 @@ Return the list of all instances available for client modules
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -792,7 +613,7 @@ Return the details of a client module instance
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -851,7 +672,7 @@ Add a new client module instance
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### Body Parameters
 
@@ -892,7 +713,7 @@ A JSON array with the error messages
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -939,7 +760,7 @@ A JSON array with the error messages
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -967,7 +788,7 @@ Instance not found
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -1255,7 +1076,7 @@ Return the list of all instances available for plugin modules
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -1333,7 +1154,7 @@ Return the details of a plugin module instance
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -1415,7 +1236,7 @@ Add a new plugin module instance
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### Body Parameters
 
@@ -1456,7 +1277,7 @@ A JSON array with the error messages
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -1503,7 +1324,7 @@ A JSON array with the error messages
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -1531,7 +1352,7 @@ Instance not found
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -1564,7 +1385,7 @@ Return a list of users available
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -1637,7 +1458,7 @@ Return the details of a plugin module instance
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -1699,7 +1520,7 @@ User not found
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -1747,7 +1568,7 @@ A JSON array with the error messages
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -1799,7 +1620,7 @@ A JSON array with the error messages
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -1831,7 +1652,7 @@ Return a list of clients available
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -1906,7 +1727,7 @@ Return the details of a plugin module instance
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -1967,7 +1788,7 @@ Client not found
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -2015,7 +1836,7 @@ A JSON array with the error messages
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -2068,7 +1889,7 @@ A JSON array with the error messages
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -2100,7 +1921,7 @@ Return a list of scopes available
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -2186,7 +2007,7 @@ Return the details of a plugin module instance
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -2247,7 +2068,7 @@ Scope not found
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -2295,7 +2116,7 @@ A JSON array with the error messages
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -2348,7 +2169,7 @@ A JSON array with the error messages
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### URL Parameters
 
@@ -2363,6 +2184,138 @@ Scope removed
 Code 404
 
 Scope not found
+
+## API Keys management
+
+### Get a list of API keys available
+
+Return a list of API keys available
+
+#### URL
+
+`/api/key/`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### URL Parameters
+
+`offset`: number, the offset to start the list, default 0
+`limit`: number, the maximal number of elements in the list, default 100, if limit is explicitly set to 0, no limit
+`source`: string, the instance name to limit the result, if not set, all instances will be used
+`pattern`: string, the pattern to filter the result
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[{
+  token_hash: string, mandatory
+  counter: integer, mandatory
+  username: string, mandatory
+  issued_at: integer, mandatory
+  issued_for: string, mandatory
+  user_agent: string, mandatory
+  enabled: boolean, mandatory
+}]
+```
+
+Example
+
+```javascript
+[
+  {
+    "token_hash":"{SHA512}SDb_4UvKcD_4[...]9xSVRunzcJg==",
+    "counter":42,
+    "username":"admin",
+    "issued_at":735700882,
+    "issued_for":"1.2.3.4",
+    "user_agent":"NCSA_Mosaic/2.0 (Windows 3.1)","enabled":true
+  },
+  {
+    "token_hash":"{SHA512}BOw-ad5HskG11[...]N90_LUcuDnkxdRI5TN_w==",
+    "counter":15,
+    "username":"operator",
+    "issued_at":1466571360,
+    "issued_for":"4.3.2.1",
+    "user_agent":"Lynx/2.8.9rel.1 libwww-FM/2.14 SSL-MM/1.4.1 GNUTLS/3.6.5",
+    "enabled":false
+  },
+  {
+    "token_hash":"{SHA512}_pkJyrClgz66[...]aIgWl8X8L4r0DwG3A==",
+    "counter":0,
+    "username":"admin",
+    "issued_at":1600774400,
+    "issued_for":"6.6.6.6",
+    "user_agent":"curl/7.20.0 (x86_64-redhat-linux-gnu) libcurl/7.20.0 OpenSSL/0.9.8b zlib/1.2.3 libidn/0.6.5",
+    "enabled":true
+  }
+]
+```
+
+### Create a new API key
+
+#### URL
+
+`/api/key/`
+
+#### Method
+
+`POST`
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+{
+  key: string, mandatory
+}
+```
+
+Example
+
+```javascript
+{
+  key: "abcdEFGH1234"
+}
+```
+
+### Disable an API key
+
+#### URL
+
+`/api/key/{token_hash}`
+
+#### Method
+
+`DELETE`
+
+#### URL Parameters
+
+`token_hash`: identifier of the token to disable
+
+#### Security
+
+User with scope `g_admin` authorized.
+
+#### Success response
+
+Code 200
 
 ## User authentication
 
@@ -3061,7 +3014,7 @@ A JSON array with the error messages
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### Success response
 
@@ -3098,7 +3051,7 @@ No enabled authenticated admin for this session
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### Success response
 
@@ -3122,7 +3075,7 @@ No enabled authenticated user for this session
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### Success response
 
@@ -3156,7 +3109,7 @@ No enabled authenticated user for this session
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### Success response
 
@@ -3194,7 +3147,7 @@ No enabled authenticated user for this session
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### Body Parameters
 
@@ -3237,7 +3190,7 @@ No enabled authenticated user for this session
 
 #### Security
 
-User with scope `g_admin` authorized.
+User with scope `g_admin` authorized or valid API key header.
 
 #### Body Parameters
 

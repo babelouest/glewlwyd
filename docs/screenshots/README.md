@@ -117,3 +117,11 @@ Screenshots available
 ### OIDC plugin configuration
 
 ![plugin-oidc](plugin-oidc.png)
+
+### List of API keys created
+
+![api-key-list](api-key-list.png)
+
+### Create a new API key
+
+![api-key-add](api-key-add.png)

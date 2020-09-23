@@ -5,39 +5,39 @@
 - [Installation](#installation)
 - [First connection to the administration page](#first-connection-to-the-administration-page)
 - [Configure backends, schemes, scopes and plugins](#configure-backends-schemes-and-plugins)
-    - [User backend modules](#user-backend-modules)
-      - [Database backend](#database-backend)
-      - [LDAP backend](#ldap-backend)
-      - [HTTP authentication backend](#http-authentication)
-    - [Client backend module](#client-backend-module)
-      - [Database backend](#database-backend)
-      - [LDAP backend](#ldap-backend)
-    - [Authentication schemes](#authentication-schemes)
-      - [E-mail code scheme](#e-mail-code-scheme)
-      - [Webauthn scheme](#webauthn-scheme)
-      - [HOTP/TOTP scheme](#hotp-totp-scheme)
-      - [TLS Certificate scheme](#tls-certificate-scheme)
-      - [Retype-password scheme](#retype-password-scheme)
-      - [HTTP Basic Authentication scheme](#http-basic-authentication-scheme)
-      - [OAuth2/OIDC Client Authentication scheme](#oauth2oidc-client-authentication-scheme)
-    - [Scopes](#scopes)
-    - [Plugins](#plugins)
-      - [Glewlwyd OAuth2 plugin](#glewlwyd-oauth2-plugin)
-      - [OpenID Connect Core Plugin](#openid-connect-core-plugin)
-      - [Register new user plugin](#register-new-user-plugin)
-    - [Configure environment to use Glewlwyd OAuth2](#configure-environment-to-use-glewlwyd-oauth2)
-      - [Create the client](#create-the-client)
-      - [Configure scopes](#configure-scopes)
-      - [Setup the required scopes for a user](#setup-the-required-scopes-for-a-user)
+  - [User backend modules](#user-backend-modules)
+    - [Database backend](#database-backend)
+    - [LDAP backend](#ldap-backend)
+    - [HTTP authentication backend](#http-authentication)
+  - [Client backend module](#client-backend-module)
+    - [Database backend](#database-backend)
+    - [LDAP backend](#ldap-backend)
+  - [Authentication schemes](#authentication-schemes)
+    - [E-mail code scheme](#e-mail-code-scheme)
+    - [Webauthn scheme](#webauthn-scheme)
+    - [HOTP/TOTP scheme](#hotp-totp-scheme)
+    - [TLS Certificate scheme](#tls-certificate-scheme)
+    - [Retype-password scheme](#retype-password-scheme)
+    - [HTTP Basic Authentication scheme](#http-basic-authentication-scheme)
+    - [OAuth2/OIDC Client Authentication scheme](#oauth2oidc-client-authentication-scheme)
+  - [Scopes](#scopes)
+  - [Plugins](#plugins)
+    - [Glewlwyd OAuth2 plugin](#glewlwyd-oauth2-plugin)
+    - [OpenID Connect Core Plugin](#openid-connect-core-plugin)
+    - [Register new user plugin](#register-new-user-plugin)
+  - [Configure environment to use Glewlwyd OAuth2](#configure-environment-to-use-glewlwyd-oauth2)
+    - [Create the client](#create-the-client)
+    - [Configure scopes](#configure-scopes)
+    - [Setup the required scopes for a user](#setup-the-required-scopes-for-a-user)
 - [How-Tos](#how-tos)
-    - [Use case: Configure Glewlwyd to authenticate with Taliesin](#use-case-configure-glewlwyd-to-authenticate-with-taliesin)
-    - [Use case: Configure a registration process with a confirmed e-mail address and OTP, Webauthn or OAuth2 Client schemes](#use-case-configure-a-registration-process-with-a-confirmed-e-mail-address-and-otp-webauthn-or-oauth2-client-schemes)
-    - [User profile delegation](#user-profile-delegation)
-    - [Add or update additional properties for users and clients](#add-or-update-additional-properties-for-users-and-clients)
-    - [Non-password authentication](#non-password-authentication)
+  - [Use case: Configure Glewlwyd to authenticate with Taliesin](#use-case-configure-glewlwyd-to-authenticate-with-taliesin)
+  - [Use case: Configure a registration process with a confirmed e-mail address and OTP, Webauthn or OAuth2 Client schemes](#use-case-configure-a-registration-process-with-a-confirmed-e-mail-address-and-otp-webauthn-or-oauth2-client-schemes)
+  - [User profile delegation](#user-profile-delegation)
+  - [Add or update additional properties for users and clients](#add-or-update-additional-properties-for-users-and-clients)
+  - [Non-password authentication](#non-password-authentication)
 - [Troubleshooting](#troubleshooting)
-    - [Impossible to log in as administrator - N-factor issue](#impossible-to-log-in-as-administrator---n-factor-issue)
-    - [Impossible to log in as administrator - Password lost](#impossible-to-log-in-as-administrator---password-lost)
+  - [Impossible to log in as administrator - N-factor issue](#impossible-to-log-in-as-administrator---n-factor-issue)
+  - [Impossible to log in as administrator - Password lost](#impossible-to-log-in-as-administrator---password-lost)
 
 The installation comes with a default configuration that can be updated or overwritten via the administration page or the configuration file.
 
@@ -269,6 +269,28 @@ Scope 2: (mail `OR` certificate `OR` webauthn)
 Go to `Users` menu in the navigation tab, Click on the `Edit` button for an existing user or click on the `+` button to add a new user. Then, set the previously created scope to this user.
 
 When the user will connect to the client with Glewlwyd, he will need to validate the authentication schemes for the scopes required with this client.
+
+## Access to administration API via API keys
+
+![api-key-list](screenshots/api-key-list.png)
+
+![api-key-add](screenshots/api-key-add.png)
+
+Glewlwyd allows to access all administraiton API endpoints using an API key to authenticate instead of the admin session cookie. This can be useful if you want to run API commands through scripts for example.
+
+An API key allows to access all admin APIs described in the [API documentation](API.md), except the APIs to manage API keys for security reasons.
+
+An API key has no expiration date. Therefore be very careful with those, don't loose them, save them carefully with their creation datestamp, so they won't leak somewhere and allow bad people to do bad things. You can disable an API key in the admin page.
+
+### Use an API key in a script
+
+The API key must be added in the request header `Authorization` with the prefix `token `.
+
+Example: getting the list of users using an API key in a curl command:
+
+```shell
+$ curl 'http://localhost:4593/api/user' -H 'Authorization: token E1iuLkBVmtZvvDad2ndCTmjohLnMpEu4'
+```
 
 ## How-Tos
 
