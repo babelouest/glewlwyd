@@ -177,32 +177,45 @@ $ rnbyc -j -g ecdsa256 -k key-1 -p /dev/null -g rsa2048 -k key-2 -p /dev/null
 }
 ```
 
-#### Example 3: Key rotation using rnbyc
+#### Example 3: Key rotation using rnbyc and reload config automatically using API Keys
 
 In this example, you need to generate a new key every week, and want to keep the previous key *alive* for compatibility reasons.
 
 In Glewlwyd's OIDC plugin, if you provide several private keys without specifying the default kid, the first one will be the default key to sign the JWTs. So in this example, the new key will be the first in the list, and the previous one will be the second one. Therefore clients and resource providers will be able to verify a token signature for valid tokens. Each private key generated will be stored in a file.
 
-First, generate an *week 0* private key:
+First, generate a *week 0* private key:
 
 ```shell
 $ # week 0: generate a first private key ECDSA256
-$ rnbyc -j -g ecdsa256 -k $(date +%Y-%V).jwks -p /dev/null
+$ rnbyc -j -g ecdsa256 -o $(date +%Y-%V).jwks -p /dev/null -n 0
 $ # use the generated file content as the private key for token signature
 $ cp $(date +%Y-%V).jwks private.jwks
 ```
 
-Then every other week, generate a new private key and concat last week's private key in the generated JWKS
+Every other week, generate a new private key and concat last week's private key in the generated JWKS
 
 ```shell
 $ # next weeks: generate a new private key ECDSA256 and concat this week and last week's private key in the generated JWKS
-$ rnbyc -j -g ecdsa256 -k $(date +%Y-%V).jwks -p /dev/null
-$ rnbyc -j -f $(date +%Y-%V).jwks -f $(date --date="last week" +%Y-%V).jwks -o private.jwks -p /dev/null
+$ rnbyc -j -g ecdsa256 -o $(date +%Y-%V).jwks -p /dev/null -n 0
+$ rnbyc -j -f $(date +%Y-%V).jwks -f $(date --date="last week" +%Y-%V).jwks -o private.jwks -p /dev/null -n 0
 ```
 
 Then, after each key generation, you can use the content of the file `private.jwks` to update your OIDC plugin configuration.
 
-**Note**: You can make the whole task in full automatic mode using the REST API, see [here](https://github.com/babelouest/glewlwyd/blob/master/docs/API.md#user-authentication) for user authentication with the password and [here](https://github.com/babelouest/glewlwyd/blob/master/docs/API.md#update-an-existing-plugin-module-instance) for updating the plugin instance.
+The following commands show an example on how to automatically update an OIDC plugin with the new private key with an [API key](GETTING_STARTED.md#access-to-administration-api-via-api-keys) and the command-line curl.
+
+```shell
+$ # Get the current configuration for plugin 'oidc'
+$ curl -s 'http://localhost:4593/api/mod/plugin/oidc' -H 'Authorization: token XJcv1MRnK33EHAedPGELl0yXx2W6vUPu' -o oidc.json
+$ # Set the content of the file private.jwks to an environment variable
+$ export private=$(cat private.jwks)
+$ # update the current configuration with the new private key JWKS file and save to file oidc-2.json
+$ jq '.parameters ."jwks-private" = env.private' --compact-output oidc.json > oidc-2.json
+$ # Update the configuration for plugin 'oidc'
+$ curl -s -H 'Authorization: token XJcv1MRnK33EHAedPGELl0yXx2W6vUPu' -X "PUT" -H "Content-Type: application/json" -d @oidc-2.json 'http://localhost:4593/api/mod/plugin/oidc'
+$ # Reset the plugin 'oidc' to load the new private keys
+$ curl -s -H 'Authorization: token XJcv1MRnK33EHAedPGELl0yXx2W6vUPu' -X "PUT" 'http://localhost:4593/api/mod/plugin/oidc/reset'
+```
 
 ## Installation
 
