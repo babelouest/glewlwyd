@@ -922,7 +922,7 @@
     "mod-oauth2-additional_parameters-key-error": "La clé est obligatoire",
     "mod-oauth2-add-param-value-ph": "Valeur",
     "mod-oauth2-additional_parameters-value-error": "La valeur est obligatoire",
-    "api-key-description": "Attention! Les clés d'API vous permettent d'accéder à toutes les API d'administration sans avoir besoin d'être authentifié avec un compte administrateur et n'a pas de date d'expiration. Veuillez les utiliser avec soin et les enregistrer en sûreté.",
+    "api-key-description": "Attention! Les clés d'API vous permettent d'accéder à toutes les APIs d'administration sans avoir besoin d'être authentifié avec un compte administrateur et n'a pas de date d'expiration. Veuillez les utiliser avec soin et les enregistrer en sûreté.",
     "api-key-title": "Clés d'API créées",
     "api-key-add": "Créer une clé",
     "api-key-counter": "Compteur d'utilisation",
