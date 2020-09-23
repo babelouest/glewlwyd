@@ -125,6 +125,7 @@ add_executable(glewlwyd ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.h
 				${CMAKE_CURRENT_SOURCE_DIR}/src/session.c
 				${CMAKE_CURRENT_SOURCE_DIR}/src/static_file_callback.c
 				${CMAKE_CURRENT_SOURCE_DIR}/src/user.c
+				${CMAKE_CURRENT_SOURCE_DIR}/src/api_key.c
 				${CMAKE_CURRENT_SOURCE_DIR}/src/webservice.c
 				${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.c )
 
@@ -695,23 +696,24 @@ if (BUILD_GLEWLWYD_TESTING)
 		set(TST_LIBS ${TST_LIBS} ${GNUTLS_LIBRARIES})
 		set(TST_LIBS ${TST_LIBS} ${CHECK_LIBRARIES} ${SUBUNIT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} m rt)
 
-		set(TESTS glewlwyd_admin_mod_type 
-							glewlwyd_admin_mod_user 
-							glewlwyd_admin_mod_user_auth_scheme 
-							glewlwyd_admin_mod_client 
-							glewlwyd_admin_mod_plugin 
-							glewlwyd_auth_password 
-							glewlwyd_auth_scheme 
-							glewlwyd_auth_grant 
-							glewlwyd_auth_check_scheme 
-							glewlwyd_auth_scheme_trigger 
-							glewlwyd_auth_scheme_register 
-							glewlwyd_auth_profile 
-							glewlwyd_auth_session_manage 
+		set(TESTS glewlwyd_admin_mod_type
+							glewlwyd_admin_mod_user
+							glewlwyd_admin_mod_user_auth_scheme
+							glewlwyd_admin_mod_client
+							glewlwyd_admin_mod_plugin
+              glewlwyd_admin_api_key
+							glewlwyd_auth_password
+							glewlwyd_auth_scheme
+							glewlwyd_auth_grant
+							glewlwyd_auth_check_scheme
+							glewlwyd_auth_scheme_trigger
+							glewlwyd_auth_scheme_register
+							glewlwyd_auth_profile
+							glewlwyd_auth_session_manage
 							glewlwyd_auth_profile_get_scheme_available
 							glewlwyd_crud_user
 							glewlwyd_crud_client
-							glewlwyd_crud_scope 
+							glewlwyd_crud_scope
 							glewlwyd_mod_user_http
 							glewlwyd_mod_user_irl
 							glewlwyd_mod_client_irl
