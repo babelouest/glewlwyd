@@ -69,6 +69,9 @@
 #define GLEWLWYD_DEFAULT_SESSION_EXPIRATION_PASSWORD       40320   // 4 weeks
 #define GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION 2592000 // 30 days
 #define GLEWLWYD_SESSION_ID_LENGTH                         128
+#define GLEWLWYD_API_KEY_HEADER_KEY                        "Authorization"
+#define GLEWLWYD_API_KEY_HEADER_PREFIX                     "token "
+#define GLEWLWYD_API_KEY_LENGTH                            32
 
 #define GLEWLWYD_RUNNING     0
 #define GLEWLWYD_STOP        1
@@ -85,6 +88,7 @@
 #define GLEWLWYD_TABLE_SCOPE_GROUP                             "g_scope_group"
 #define GLEWLWYD_TABLE_SCOPE_GROUP_AUTH_SCHEME_MODULE_INSTANCE "g_scope_group_auth_scheme_module_instance"
 #define GLEWLWYD_TABLE_CLIENT_USER_SCOPE                       "g_client_user_scope"
+#define GLEWLWYD_TABLE_API_KEY                                 "g_api_key"
 
 // Module management
 #define GLEWLWYD_MODULE_ACTION_STOP  0
@@ -309,10 +313,16 @@ int add_scope(struct config_elements * config, json_t * j_scope);
 int set_scope(struct config_elements * config, const char * scope, json_t * j_scope);
 int delete_scope(struct config_elements * config, const char * scope);
 
-// Callback functions
+// API key CRD functions
+int verify_api_key(struct config_elements * config, const char * api_key);
+json_t * get_api_key_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit);
+json_t * generate_api_key(struct config_elements * config, const char * username, const char * issued_for, const char * user_agent);
+int disable_api_key(struct config_elements * config, const char * token_hash);
 
+// Callback functions
 int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_check_admin_session (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_check_admin_session_or_api_key (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_check_admin_session_delegate (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_close_check_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_check_user_profile_valid (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -390,6 +400,10 @@ int callback_glewlwyd_get_scope (const struct _u_request * request, struct _u_re
 int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 int callback_glewlwyd_set_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+
+int callback_glewlwyd_get_api_key_list (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_delete_api_key (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_add_api_key (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
 

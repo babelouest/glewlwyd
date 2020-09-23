@@ -143,6 +143,47 @@ int callback_glewlwyd_check_admin_session (const struct _u_request * request, st
   return ret;
 }
 
+int callback_glewlwyd_check_admin_session_or_api_key (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  char * session_uid = NULL;
+  json_t * j_user;
+  int ret, res;
+  const char * api_key = u_map_get_case(request->map_header, GLEWLWYD_API_KEY_HEADER_KEY), * ip_source = get_ip_source(request);
+  
+  if (NULL != api_key && 0 == o_strncmp(GLEWLWYD_API_KEY_HEADER_PREFIX, api_key, o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) {
+    if ((res = verify_api_key(config, api_key + o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) == G_OK) {
+      response->shared_data = json_pack("{so}", "username", json_null());
+      ret = U_CALLBACK_CONTINUE;
+    } else if (res == G_ERROR_UNAUTHORIZED) {
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - API key invalid at IP Address %s", ip_source);
+      ret = U_CALLBACK_UNAUTHORIZED;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_admin_session_or_api_key - Error verify_api_key");
+      ret = U_CALLBACK_ERROR;
+    }
+  } else if ((session_uid = get_session_id(config, request)) != NULL) {
+    j_user = get_current_user_for_session(config, session_uid);
+    if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
+      if ((res = is_scope_list_valid_for_session(config, config->admin_scope, session_uid)) == G_OK) {
+        response->shared_data = json_incref(json_object_get(j_user, "user"));
+        ret = U_CALLBACK_CONTINUE;
+      } else {
+        if (res == G_ERROR) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_admin_session_or_api_key - Error is_scope_list_valid_for_session");
+        }
+        ret = U_CALLBACK_UNAUTHORIZED;
+      }
+    } else {
+      ret = U_CALLBACK_UNAUTHORIZED;
+    }
+    json_decref(j_user);
+    o_free(session_uid);
+  } else {
+    ret = U_CALLBACK_UNAUTHORIZED;
+  }
+  return ret;
+}
+
 int callback_glewlwyd_check_admin_session_delegate (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   char * session_uid;
@@ -2220,5 +2261,63 @@ int callback_glewlwyd_user_get_scheme_list (const struct _u_request * request, s
     response->status = 500;
   }
   json_decref(j_scheme_list);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_get_api_key_list (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_api_key_list;
+  size_t offset = 0, limit = GLEWLWYD_DEFAULT_LIMIT_SIZE;
+  long int l_converted = 0;
+  char * endptr = NULL;
+  
+  if (u_map_get(request->map_url, "offset") != NULL) {
+    l_converted = strtol(u_map_get(request->map_url, "offset"), &endptr, 10);
+    if (!(*endptr) && l_converted > 0) {
+      offset = (size_t)l_converted;
+    }
+  }
+  if (u_map_get(request->map_url, "limit") != NULL) {
+    l_converted = strtol(u_map_get(request->map_url, "limit"), &endptr, 10);
+    if (!(*endptr) && l_converted >= 0) {
+      limit = (size_t)l_converted;
+    }
+  }
+  j_api_key_list = get_api_key_list(config, u_map_get(request->map_url, "pattern"), offset, limit);
+  if (check_result_value(j_api_key_list, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_api_key_list, "api_key"));
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_api_key_list - Error get_api_key_list");
+    response->status = 500;
+  }
+  json_decref(j_api_key_list);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_add_api_key (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  const char * issued_for = get_ip_source(request), * username = json_string_value(json_object_get((json_t *)response->shared_data, "username")), user_agent = u_map_get_case(request->map_header, "user-agent");
+  json_t * j_api_key = generate_api_key(config, username, issued_for, user_agent);
+  
+  if (check_result_value(j_api_key, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_api_key, "api_key"));
+    y_log_message(Y_LOG_LEVEL_INFO, "Event - API key created for user '%s'", username);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_api_key - Error generate_api_key");
+    response->status = 500;
+  }
+  json_decref(j_api_key);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_delete_api_key (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  
+  if (disable_api_key(config, u_map_get(request->map_url, "key_hash")) != G_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_api_key - Error disable_api_key");
+    response->status = 500;
+  } else {
+    y_log_message(Y_LOG_LEVEL_INFO, "Event - API key disabled by user '%s'", json_string_value(json_object_get((json_t *)response->shared_data, "username")));
+  }
   return U_CALLBACK_CONTINUE;
 }
