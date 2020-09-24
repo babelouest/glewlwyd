@@ -291,7 +291,7 @@ The API key must be added in the request header `Authorization` with the prefix 
 Example: getting the list of users using an API key in a curl command:
 
 ```shell
-$ curl 'http://localhost:4593/api/user' -H 'Authorization: token E1iuLkBVmtZvvDad2ndCTmjohLnMpEu4'
+$ curl 'http://localhost:4593/api/user' -H 'Authorization: token XJcv1MRnK33EHAedPGELl0yXx2W6vUPu'
 ```
 
 ## How-Tos
