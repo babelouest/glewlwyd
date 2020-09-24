@@ -202,7 +202,7 @@ $ rnbyc -j -f $(date +%Y-%V).jwks -f $(date --date="last week" +%Y-%V).jwks -o p
 
 Then, after each key generation, you can use the content of the file `private.jwks` to update your OIDC plugin configuration.
 
-The following commands show an example on how to automatically update an OIDC plugin with the new private key with an [API key](GETTING_STARTED.md#access-to-administration-api-via-api-keys) and the command-line curl.
+The following commands show an example on how to automatically update an OIDC plugin with the new private key with an [API key](GETTING_STARTED.md#access-to-administration-api-via-api-keys), and the command-line tools [curl](https://curl.haxx.se/) and [jq](https://stedolan.github.io/jq/).
 
 ```shell
 $ # Get the current configuration for plugin 'oidc'
