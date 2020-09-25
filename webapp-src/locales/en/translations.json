@@ -890,7 +890,7 @@
     "mod-oauth2-logo_uri": "Logo URL",
     "mod-oauth2-logo_uri-ph": "e.g. https://example.com/logo.png",
     "mod-oauth2-logo_fa": "Fork Awesome icon",
-    "mod-oauth2-logo_fa-ph": "e.g. github",
+    "mod-oauth2-logo_fa-ph": "e.g. GitHub",
     "mod-oauth2-client_id": "client_id",
     "mod-oauth2-client_id-ph": "e.g. clientXyz1234",
     "mod-oauth2-client_id-error": "client_id is mandatory",

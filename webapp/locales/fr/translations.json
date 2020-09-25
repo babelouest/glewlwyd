@@ -890,7 +890,7 @@
     "mod-oauth2-logo_uri": "URL du logo",
     "mod-oauth2-logo_uri-ph": "Ex: https://example.com/logo.png",
     "mod-oauth2-logo_fa": "Icone FontAwesome",
-    "mod-oauth2-logo_fa-ph": "Ex: github",
+    "mod-oauth2-logo_fa-ph": "Ex: GitHub",
     "mod-oauth2-client_id": "client_id",
     "mod-oauth2-client_id-ph": "Ex: clientXyz1234",
     "mod-oauth2-client_id-error": "Le client_id est obligatoire",
