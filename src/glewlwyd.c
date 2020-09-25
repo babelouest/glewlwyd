@@ -1226,7 +1226,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
   
-  if ((value = getenv(GLEWLWYD_ENV_AUTH_SCHEME_MODUE_PATH)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_AUTH_SCHEME_MODULE_PATH)) != NULL && o_strlen(value)) {
     o_free(config->user_auth_scheme_module_path);
     config->user_auth_scheme_module_path = o_strdup(value);
     if (config->user_auth_scheme_module_path == NULL) {
