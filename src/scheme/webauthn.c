@@ -6,7 +6,7 @@
  * Users are authenticated via various backend available: database, ldap
  * Using various authentication methods available: password, OTP, send code, etc.
  * 
- * Webauthn scheme module
+ * WebAuthn scheme module
  * 
  * Copyright 2019-2020 Nicolas Mora <mail@babelouest.org>
  *
@@ -2075,7 +2075,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
             ret = G_ERROR_PARAM;
           }
         } else {
-          message = msprintf("Format '%.*s' is not supported by Glewlwyd Webauthn scheme", fmt_len, fmt);
+          message = msprintf("Format '%.*s' is not supported by Glewlwyd WebAuthn scheme", fmt_len, fmt);
           json_array_append_new(j_error, json_string(message));
           o_free(message);
           ret = G_ERROR_PARAM;
@@ -2646,8 +2646,8 @@ json_t * user_auth_scheme_module_load(struct config_module * config) {
   return json_pack("{si ss ss ss }",
                    "result", G_OK,
                    "name", "webauthn",
-                   "display_name", "Webauthn",
-                   "description", "Webauthn scheme module");
+                   "display_name", "WebAuthn",
+                   "description", "WebAuthn scheme module");
 }
 
 /**

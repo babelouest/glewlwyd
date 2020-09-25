@@ -310,7 +310,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               response->status = 500;
             } else {
               ulfius_add_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", config->cookie_secure, 0);
-              y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' authenticated with sheme '%s/%s'", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")));
+              y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' authenticated with scheme '%s/%s'", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")));
             }
             o_free(session_uid);
           } else {
@@ -393,7 +393,7 @@ int callback_glewlwyd_user_auth_register (const struct _u_request * request, str
             if (json_object_get(j_result, "register") != NULL) {
               ulfius_set_json_body_response(response, 200, json_object_get(j_result, "register"));
             }
-            y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' registered sheme '%s/%s'", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")));
+            y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' registered scheme '%s/%s'", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")));
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth_register - Error auth_check_user_scheme");
             response->status = 500;
@@ -482,7 +482,7 @@ int callback_glewlwyd_user_auth_register_delegate (const struct _u_request * req
             if (json_object_get(j_result, "register") != NULL) {
               ulfius_set_json_body_response(response, 200, json_object_get(j_result, "register"));
             }
-            y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' registered sheme '%s/%s' (delegation)", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")));
+            y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' registered scheme '%s/%s' (delegation)", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")));
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth_register_delegate - Error auth_check_user_scheme");
             response->status = 500;

@@ -9,7 +9,7 @@ An authentication scheme module is independent from the user backends. The schem
 Currently, the following schemes are available:
 - [Random code sent by e-mail](email.c)
 - [HOTP/TOTP](otp.c)
-- [Webauthn](webauthn.c)
+- [WebAuthn](webauthn.c)
 - [Short session password](password.c)
 - [TLS Certificate](certificate.c)
 
