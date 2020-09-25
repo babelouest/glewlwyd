@@ -4,7 +4,6 @@
 ![C/C++ CI](https://github.com/babelouest/glewlwyd/workflows/C/C++%20CI/badge.svg)
 ![CodeQL](https://github.com/babelouest/glewlwyd/workflows/CodeQL/badge.svg)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3475/badge)](https://bestpractices.coreinfrastructure.org/projects/3475)
-[![Say Thanks!](https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg)](https://saythanks.io/to/github@babelouest.org)
 
 Single-Sign-On (SSO) server with multiple factor authentication.
 
@@ -17,7 +16,7 @@ Authentication process supported:
 Allows users authentication via multiple factors:
 - Password
 - One-time password (TOTP/HOTP)
-- Webauthn (Yubikey, Android devices)
+- WebAuthn (Yubikey, Android devices)
 - One-time password sent via e-mail
 - TLS Certificate
 - External OAuth2/OIDC providers
@@ -30,7 +29,7 @@ Users and clients can be stored and managed from various backends:
 
 New users can register a new account with the possibility to confirm their e-mail address or not. During the registration process, the new user may be expected to register their passwords, as well as other authentication factors:
 - One-time password (TOTP/HOTP)
-- Webauthn (Yubikey, Android devices)
+- WebAuthn (Yubikey, Android devices)
 - TLS Certificate
 - External OAuth2/OIDC providers
 
@@ -52,13 +51,11 @@ The backend API server is fully written in C and uses a small amount of resource
 
 Its plugin architecture makes it easy to add new modules or plugins, or modify existing ones with less risks to have unmaintainable code.
 
-Glewlwyd 2.3 [is released](https://github.com/babelouest/glewlwyd/releases/latest). Feel free to [install](docs/INSTALL.md), test it, and [send feedback](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
-
-Important! Due to a complete database reworking of the application, you can't upgrade an existing installation from Glewlwyd 1.x to Glewlwyd 2.x.
+Glewlwyd 2.4 [is released](https://github.com/babelouest/glewlwyd/releases/latest). Feel free to [install](docs/INSTALL.md) it, test it, use it, and [send feedback](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
 
 ## Installation
 
-The full installation documentation is available in the [install documentation](docs/INSTALL.md).
+The full installation documentation is available in the [Install documentation](docs/INSTALL.md).
 
 ## Docker
 

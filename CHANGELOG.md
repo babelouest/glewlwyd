@@ -2,6 +2,8 @@
 
 ## 2.4.0
 
+The `"Second Wave Release"`
+
 - Allow user to update its e-mail
 - Allow user to reset its credentials
 - Handle callback url for registration and reset credentials
@@ -9,13 +11,13 @@
 - Implement revoke tokens on code replay for oauth2 and oidc plugins
 - Show `client_id` and `redirect_uri` on grant scope
 - Remove `parameters` object on `*_load()` functions result
-- Scheme Webauthn: disable fmt `none` by default
+- Scheme WebAuthn: disable fmt `none` by default
 - Allow to add granted scope list in `id_token` and `/userinfo`
 - Fix last login refresh without authentication bug
 - Add endpoint `/mod/reload/` to reload modules lists
 - Add Event log messages
 - Add parameter Scheme Required to a scope scheme group
-- Add API key to use all admin APIs via scripts without a cookie session
+- Add API key to use administration APIs via scripts without a cookie session
 
 ## 2.3.2
 
