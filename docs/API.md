@@ -92,7 +92,7 @@ This document is intended to describe Glewlwyd's core API endpoints. Glewlwyd's 
   - [E-mail OTP authentication scheme](#e-mail-otp-authentication-scheme)
   - [HOTP/TOTP authentication scheme](#hotptotp-authentication-scheme)
   - [Password authentication scheme](#password-authentication-scheme)
-  - [Webauthn authentication scheme](#webauthn-authentication-scheme)
+  - [WebAuthn authentication scheme](#webauthn-authentication-scheme)
   - [TLS Certificate authentication scheme](#tls-certificate-authentication-scheme)
 
 ## Endpoints authentication
@@ -3495,9 +3495,9 @@ N/A
 }
 ```
 
-### Webauthn authentication scheme
+### WebAuthn authentication scheme
 
-This scheme is based on the [Webauthn API](https://w3c.github.io/webauthn/).
+This scheme is based on the [WebAuthn API](https://w3c.github.io/webauthn/).
 
 #### Register scheme
 
@@ -3554,7 +3554,7 @@ This scheme is based on the [Webauthn API](https://w3c.github.io/webauthn/).
   value: {
     register: "register-credential",
     session: string, must be the session id sent in the previous "register-credential"
-    credential: { // The credential object is returned by the Webauthn API call `navigator.credentials.create` in the profile page
+    credential: { // The credential object is returned by the WebAuthn API call `navigator.credentials.create` in the profile page
       rawId: string
       response: {
         clientDataJSON: string
@@ -3625,7 +3625,7 @@ HTTP Status 200 on success, 400 on error parameters, 404 on error in the credent
   value: {
     register: "validate-assertion",
     session: string, must be the session id sent in the previous "register-credential"
-    credential: { // The credential object is returned by the Webauthn API call `navigator.credentials.get` in the profile page
+    credential: { // The credential object is returned by the WebAuthn API call `navigator.credentials.get` in the profile page
       rawId: string
       response: {
         clientDataJSON: string
@@ -3695,7 +3695,7 @@ HTTP Status 200 on success, 401 on error registration, 400 on error parameters, 
   value: {
     register: "validate-assertion",
     session: string, must be the session id sent in the previous "register-credential"
-    credential: { // The credential object is returned by the Webauthn API call `navigator.credentials.get` in the profile page
+    credential: { // The credential object is returned by the WebAuthn API call `navigator.credentials.get` in the profile page
       rawId: string
       response: {
         clientDataJSON: string

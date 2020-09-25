@@ -193,7 +193,7 @@ Maximum duration of the reset credentials session in seconds, default is 3600 (1
 
 #### Use e-mail to reset credentials
 
-Check this if you want to allow the user to send an e-mail to its adress to receive a link to access the reset credentials page for its profile.
+Check this if you want to allow the user to send an e-mail to its address to receive a link to access the reset credentials page for its profile.
 
 #### Token duration (seconds)
 
@@ -303,7 +303,7 @@ You can add a link to the registration page from the login page. You need to add
 
 When the registration process is complete, the user may have different link choices.
 
-If the user has clicked on the button `Register new user` on the login page, a button `Back to login page` will be avilable. If you want to add one or more links on this page to your applications, you must add an entry in the "register-complete" array. The entry has the following format:
+If the user has clicked on the button `Register new user` on the login page, a button `Back to login page` will be available. If you want to add one or more links on this page to your applications, you must add an entry in the "register-complete" array. The entry has the following format:
 
 ```json
 "register-complete": [
@@ -319,7 +319,7 @@ If the user has clicked on the button `Register new user` on the login page, a b
 - The `complete-link` entry must correspond to your landing page.
 - The `complete-link-label` is a locales entry in the `webapp/locales/*/translation.json` files.
 
-And finally, if no button `Back to login page` or `register-complete` is availalbe, a button `Back to profile page` will be available.
+And finally, if no button `Back to login page` or `register-complete` is available, a button `Back to profile page` will be available.
 
 ## Registration process for new users
 
@@ -353,7 +353,7 @@ The new must verify its e-mail address to register, the e-mail will be used as t
 
 ### Enter personal data and register schemes if necessary
 
-When the first step is complete, the new user must register one or more authentication method, such as choosing a password, registering an OTP, a TLS certificate, or a Webauthn device.
+When the first step is complete, the new user must register one or more authentication method, such as choosing a password, registering an OTP, a TLS certificate, or a WebAuthn device.
 
 A message below the screen will explain to the user the mandatory schemes the user must achieve to be able to complete its registration.
 
@@ -377,7 +377,7 @@ If an existing user wants to update its e-mail address, it must validate the new
 
 **Note for registered users with their e-mail address as their username**
 
-This process will update the e-mail propserty only. If the user has registered through your Glewlwyd instance and the registration option `Username is e-mail` is set, the username will remain as the original e-mail address used to register.
+This process will update the e-mail property only. If the user has registered through your Glewlwyd instance and the registration option `Username is e-mail` is set, the username will remain as the original e-mail address used to register.
 
 ### Change e-mail
 
@@ -387,13 +387,13 @@ The change e-mail button is available in the profile page of the user.
 
 ### Enter new e-mail address
 
-When the user clicks on the edit button right to the e-mail input in the profile page, an input modal opens up and asks the user to enter the ne e-mail address. After clicking on the Ok button, an e-mail will be sent to the new address. In the e-mail, the user must click on the given link to validate its new e-mail address.
+When the user clicks on the edit button right to the e-mail input in the profile page, an input modal opens up and asks the user to enter the new e-mail address. After clicking on the Ok button, an e-mail will be sent to the new address. In the e-mail, the user must click on the given link to validate its new e-mail address.
 
 ![change-e-mail](screenshots/profile-update-email-modal.png)
 
 ## Reset credentials process
 
-When a user has losts its credentials (password or authentication scheme) that forbids to log in Glewlwyd properly, it can start the reset credentials process to recover its account. To reset its credentials, the user can either receive a link via e-mail or use a previously generated recovery code.
+When a user has lost its credentials (password or authentication scheme) that forbids to log in Glewlwyd properly, it can start the reset credentials process to recover its account. To reset its credentials, the user can either receive a link via e-mail or use a previously generated recovery code.
 
 ### Start the reset credentials process from the login page
 
@@ -407,13 +407,13 @@ Then, the user must either enter its recovery code or send a link to its e-mail 
 
 ### Reset recovery codes in the profile page
 
-The user can reset its reovery codes in the profile page in the `Password` tab. There, the user must expand the `Reset credentials - Initialize recovery code` accordion and click on the `Reset recovery codes` button. Then a modal window will appear containing new recovery codes. Then, the user must save this new recovery codes in a safe place to be able to recover its account.
+The user can reset its recovery codes in the profile page in the `Password` tab. There, the user must expand the `Reset credentials - Initialize recovery code` accordion and click on the `Reset recovery codes` button. Then a modal window will appear containing new recovery codes. Then, the user must save this new recovery codes in a safe place to be able to recover its account.
 
 ![reset-credentials-reset-recovery-codes](screenshots/reset-credentials-reset-recovery-codes.png)
 
 Note that when a recovery code has been used to reset the user credentials, it will be disabled to avoid re-using a code more than once.
 
-If a user has used all its recovery codes, it can sk for new codes in the proile page.
+At any time, the user can ask for a new set of recovery codes.
 
 ### Reset credentials page
 

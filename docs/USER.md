@@ -9,7 +9,7 @@ This documentation is intended to help Glewlwyd Users to manage their profile an
 - [Sessions and tokens](#sessions-and-tokens)
 - [Password](#password)
 - [Schemes](#schemes)
-  - [Webauthn](#webauthn)
+  - [WebAuthn](#webauthn)
   - [OTP](#otp)
   - [TLS Certificates](#tls-certificates)
   - [External OAuth2/OIDC Login](#external-oauth2oidc-login)
@@ -47,20 +47,20 @@ In the profile page, the user will be able to manage the schemes available for i
 
 By design, the schemes `Retype password` and `E-mail code` can't be registered or configured in the profile page.
 
-### Webauthn
+### WebAuthn
 
 ![profile-webauthn](screenshots/profile-webauthn.png)
 
-Webauthn is an authentication scheme that permits the user to authenticate via a dedicated device without having to retain a password. Currently, the devices available for this scheme are the following:
+WebAuthn is an authentication scheme that permits the user to authenticate via a dedicated device without having to retain a password. Currently, the devices available for this scheme are the following:
 
 - Yubikeys
 - Android devices (phone or tablet) if the system version is Nougat (7.0) or above
 
-You'll need a browser compatible with Webauthn API. Recent versions of Firefox, Chrome, Edge and Opera work fine, check [Can I use](https://caniuse.com/#search=webauthn) for more details.
+You'll need a browser compatible with WebAuthn API. Recent versions of Firefox, Chrome, Edge and Opera work fine, check [Can I use](https://caniuse.com/#search=webauthn) for more details.
 
 #### Registration
 
-On the `Webauthn` tab, click on the button `New Component`. There, follow your browser instructions. Eventually, you should see the new registered component in the component list.
+On the `WebAuthn` tab, click on the button `New Component`. There, follow your browser instructions. Eventually, you should see the new registered component in the component list.
 
 You can verify it's working properly by clicking on the `Test` button, there, follow your browser's instructions. You should see a popup message saying `Authentication succeeded`.
 

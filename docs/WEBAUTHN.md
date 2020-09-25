@@ -1,10 +1,10 @@
-# Glewlwyd Webauthn Schema Documentation
+# Glewlwyd WebAuthn Schema Documentation
 
 [![License: CC BY 4.0](https://licensebuttons.net/l/by/4.0/80x15.png)](https://creativecommons.org/licenses/by/4.0/)
 
 ![scheme-webauthn](screenshots/scheme-webauthn.png)
 
-The Webauthn Schema implements authentication based on the [Webauthn API](https://w3c.github.io/webauthn/). This allows users to authenticate to Glewlwyd using physical devices: Android phones, Yubikeys, etc.
+The WebAuthn Schema implements authentication based on the [WebAuthn API](https://w3c.github.io/webauthn/). This allows users to authenticate to Glewlwyd using physical devices: Android phones, Yubikeys, etc.
 
 The user needs to register its device to Glewlwyd first, then when a webauthn authentication is required, the user plugs its device, end the authentication process is validated without the users need to enter a password.
 
@@ -15,7 +15,7 @@ As for now, the following attestation formats are supported by Glewlwyd:
 ## Installation
 
 In the administration page, go to `Parameters/Authentication schemes` and add a new scheme by clicking on the `+` button. In the modal, enter a name and a display name (the name must be unique among all authentication scheme instances), and a scheme session expiration in seconds.
-Select the type `Webauthn` in the Type drop-down button.
+Select the type `WebAuthn` in the Type drop-down button.
 
 The default settings makes the scheme usable as is.
 
@@ -72,7 +72,7 @@ Value of the relying party that will be used and compared to during the registra
 
 ### Supported webauthn formats
 
-Select the formats you want your Webauthn scheme to support. You must select at least one format. Format TPM and Android Key are not supported yet.
+Select the formats you want your WebAuthn scheme to support. You must select at least one format. Format TPM and Android Key are not supported yet.
 
 **Security warning**: To avoid man in the middle attacks, it's **recommended** to disable format `none`, because it's impossible to verify if a trusted device created the credentials without certificate validation.
 

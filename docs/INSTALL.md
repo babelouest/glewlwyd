@@ -2,7 +2,7 @@
 
 [![License: CC BY 4.0](https://licensebuttons.net/l/by/4.0/80x15.png)](https://creativecommons.org/licenses/by/4.0/)
 
-1.  [Upgrade Glewlwyd](#upgrade-glewlwyid)
+1.  [Upgrade Glewlwyd](#upgrade-glewlwyd)
     * [Upgrade to Glewlwyd 2.4.x](#upgrade-to-glewlwyd-24x)
     * [Upgrade to Glewlwyd 2.3.3](#upgrade-to-glewlwyd-233)
     * [Upgrade to Glewlwyd 2.3.x](#upgrade-to-glewlwyd-23x)
@@ -86,9 +86,9 @@ $ psql glewlwyd < docs/database/upgrade-2.4-core.postgresql.sql
 This is a security release, please upgrade your Glewlwyd version.
 To mitigate server configuration leaks, I recommend the following actions:
   - If you use the TLS Certificate Scheme with [Allow to emit PKCS#12 certificates for the clients](https://github.com/babelouest/glewlwyd/blob/2.3/docs/CERTIFICATE.md#allow-to-emit-pkcs12-certificates-for-the-clients) enabled, please revoke the issuer certificate and use new ones
-  - If you use the Webauthn Scheme, it's reommended to regenerate the [Random seed used to mitigate intrusion](https://github.com/babelouest/glewlwyd/blob/2.3/docs/WEBAUTHN.md#random-seed-used-to-mitigate-intrusion)
+  - If you use the WebAuthn Scheme, it's recommended to regenerate the [Random seed used to mitigate intrusion](https://github.com/babelouest/glewlwyd/blob/2.3/docs/WEBAUTHN.md#random-seed-used-to-mitigate-intrusion)
   - If you use the Oauth2 Scheme, please change the [clients secrets](https://github.com/babelouest/glewlwyd/blob/2.3/docs/OAUTH2_SCHEME.md#secret)
-  - If yout use the Email code scheme and use a [SMTP password](https://github.com/babelouest/glewlwyd/blob/2.3/docs/EMAIL.md#smtp-password-if-required), please to change this password
+  - If you use the Email code scheme and use a [SMTP password](https://github.com/babelouest/glewlwyd/blob/2.3/docs/EMAIL.md#smtp-password-if-required), please to change this password
 
 ### Upgrade to Glewlwyd 2.3.x
 
@@ -296,7 +296,7 @@ See [Configure Glewlwyd](#configure-glewlwyd) for a complete list of configurati
 $ # Run docker instance with a new set of config files
 $ docker run -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd
 
-$ # Run docker instance with default config files but override external url and dsatabase connexion using env variables
+$ # Run docker instance with default config files but override external url and database connection using env variables
 $ docker run -p 4593:4593 -e GLWD_EXTERNAL_URL=https://glewlwyd.tld -e GLWD_DATABASE_TYPE=postgre -e GLWD_DATABASE_POSTGRE_CONNINFO="host=dbhost port=5432 dbname=glewlwyd user=glewlwyd password=secret" babelouest/glewlwyd
 
 $ # Run docker instance with a new set of config files and an overwritten external url using env variables
@@ -380,7 +380,7 @@ The available options for CMake are:
 - `-DWITH_SCHEME_RETYPE_PASSWORD=[on|off]` (default `on`): Build authentication scheme `retype password`
 - `-DWITH_SCHEME_EMAIL=[on|off]` (default `on`): Build authentication scheme `e-mail code`
 - `-DWITH_SCHEME_OTP=[on|off]` (default `on`): Build authentication scheme `OTP`
-- `-DWITH_SCHEME_WEBAUTHN=[on|off]` (default `on`): Build authentication scheme `Webauthn`
+- `-DWITH_SCHEME_WEBAUTHN=[on|off]` (default `on`): Build authentication scheme `WebAuthn`
 - `-DWITH_PLUGIN_OAUTH2=[on|off]` (default `on`): Build Plugin `Glewlwyd OAuth2`
 - `-DWITH_PLUGIN_OIDC=[on|off]` (default `on`): Build Plugin `OpenID Connect`
 
@@ -626,7 +626,7 @@ Mandatory, path to client modules.
 #### User auth scheme modules path
 
 - Config file variable: `user_auth_scheme_module_path`
-- Environment variable: `GLWD_AUTH_SCHEME_MODUE_PATH`
+- Environment variable: `GLWD_AUTH_SCHEME_MODULE_PATH`
 
 Mandatory, path to authentication scheme modules.
 
@@ -1039,7 +1039,7 @@ By choice, Glewlwyd isn't available for Internet Explorer or browser with a poor
 
 ### Internationalization
 
-The languages available in the front-end are English, French and Dutch. If you make a language file for another lang, you can add it in your Glewlwyd installation by adding the file in  `webapp/{lang}/translation.json` where `{lang}` is the translation language in ISO 639-1 format (2 letters). Then, add your new language 2-letters code in the `webapp/config.json` file in the `lang` key, example for adding Korean language:
+The languages available in the front-end are English, French and Dutch. If you make a language file for another Lang, you can add it in your Glewlwyd installation by adding the file in  `webapp/{lang}/translation.json` where `{lang}` is the translation language in ISO 639-1 format (2 letters). Then, add your new language 2-letters code in the `webapp/config.json` file in the `lang` key, example for adding Korean language:
 
 ```json
 "lang": ["en","fr","nl","ko"],
@@ -1120,7 +1120,7 @@ Change the tag content value `<title>` in the following HTML pages:
 
 ## Event logs triggered
 
-Glewlwyd now logs event messages. These messages can be parsed and used to trigger external actions such as webhooks or message broadcasting to other Glewlwyd instances for example.
+Glewlwyd now logs event messages. These messages can be parsed and used to trigger external actions such as web-hooks or message broadcasting to other Glewlwyd instances for example.
 
 Event log messages have the following format:
 
@@ -1134,9 +1134,9 @@ Event log messages have the following format:
 
 ```
 <date_timestamp> - Glewlwyd INFO: Event - User '<username>' authenticated with password
-<date_timestamp> - Glewlwyd INFO: Event - User '<username>' authenticated with sheme '<scheme_type>/<scheme_name>'
-<date_timestamp> - Glewlwyd INFO: Event - User '<username>' registered sheme '<scheme_type>/<scheme_name>'
-<date_timestamp> - Glewlwyd INFO: Event - User '<username>' registered sheme '<scheme_type>/<scheme_name>' (delegation)
+<date_timestamp> - Glewlwyd INFO: Event - User '<username>' authenticated with scheme '<scheme_type>/<scheme_name>'
+<date_timestamp> - Glewlwyd INFO: Event - User '<username>' registered scheme '<scheme_type>/<scheme_name>'
+<date_timestamp> - Glewlwyd INFO: Event - User '<username>' registered scheme '<scheme_type>/<scheme_name>' (delegation)
 <date_timestamp> - Glewlwyd INFO: Event - User backend module '<module_name>' added (<module_type>)
 <date_timestamp> - Glewlwyd INFO: Event - User backend module '<module_name>' updated
 <date_timestamp> - Glewlwyd INFO: Event - User backend module '<module_name>' removed

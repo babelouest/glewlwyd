@@ -14,7 +14,7 @@
     - [LDAP backend](#ldap-backend)
   - [Authentication schemes](#authentication-schemes)
     - [E-mail code scheme](#e-mail-code-scheme)
-    - [Webauthn scheme](#webauthn-scheme)
+    - [WebAuthn scheme](#webauthn-scheme)
     - [HOTP/TOTP scheme](#hotp-totp-scheme)
     - [TLS Certificate scheme](#tls-certificate-scheme)
     - [Retype-password scheme](#retype-password-scheme)
@@ -33,7 +33,7 @@
     - [Use an API key in a script](#use-an-api-key-in-a-script)
 - [How-Tos](#how-tos)
   - [Use case: Configure Glewlwyd to authenticate with Taliesin](#use-case-configure-glewlwyd-to-authenticate-with-taliesin)
-  - [Use case: Configure a registration process with a confirmed e-mail address and OTP, Webauthn or OAuth2 Client schemes](#use-case-configure-a-registration-process-with-a-confirmed-e-mail-address-and-otp-webauthn-or-oauth2-client-schemes)
+  - [Use case: Configure a registration process with a confirmed e-mail address and OTP, WebAuthn or OAuth2 Client schemes](#use-case-configure-a-registration-process-with-a-confirmed-e-mail-address-and-otp-webauthn-or-oauth2-client-schemes)
   - [User profile delegation](#user-profile-delegation)
   - [Add or update additional properties for users and clients](#add-or-update-additional-properties-for-users-and-clients)
   - [Non-password authentication](#non-password-authentication)
@@ -135,12 +135,12 @@ Read the full [documentation](CLIENT_LDAP.md).
 
 When an authentication scheme needs to store specific data for a user, it will use the database rather than the user backend. So a user will be able to register a scheme even if the user backend is in read-only mode.
 
-Please note that a user won't be able to register nor authenticate wih a scheme if the scheme isn't required to authenticate one of the user's scope.
+Please note that a user won't be able to register nor authenticate with a scheme if the scheme isn't required to authenticate one of the user's scope.
 
 Go to `parameters/schemes` menu in the navigation tab. Click on the `+` button to add a new scheme instance. The scheme modules available are:
 
 - E-mail code scheme
-- Webauthn scheme
+- WebAuthn scheme
 - HOTP/TOTP scheme
 - TLS Certificate scheme
 - Retype-password scheme
@@ -149,7 +149,7 @@ Go to `parameters/schemes` menu in the navigation tab. Click on the `+` button t
 
 You can add instances of the same scheme as many times as you want, if you need different configurations or to access different scopes in different contexts. A scheme instance is distinguished by its module name and its instance name, example `webauthn/AdminWebauthn`, `webauthn/UserWebauthn`.
 
-Users will need to register some schemes such as HOTP/TOTP or Webauthn. If the option `Allow users to register` is unchecked for a scheme, the users won't be able to register it, only administrators via delegation will be able to register for users.
+Users will need to register some schemes such as HOTP/TOTP or WebAuthn. If the option `Allow users to register` is unchecked for a scheme, the users won't be able to register it, only administrators via delegation will be able to register for users.
 
 #### E-mail code scheme
 
@@ -157,9 +157,9 @@ The requirements to use this scheme is a smtp server available, able to relay co
 
 Read the full [documentation](EMAIL.md).
 
-#### Webauthn scheme
+#### WebAuthn scheme
 
-The Webauthn Schema implements authentication based on the [Webauthn API](https://w3c.github.io/webauthn/). This allows users to authenticate to Glewlwyd using physical devices: Android phones, Yubikeys, etc.
+The WebAuthn Schema implements authentication based on the [WebAuthn API](https://w3c.github.io/webauthn/). This allows users to authenticate to Glewlwyd using physical devices: Android phones, Yubikeys, etc.
 
 Read the full [documentation](WEBAUTHN.md).
 
@@ -240,7 +240,7 @@ When the plugin instance is enabled, its endpoints available are:
 
 #### Register new user plugin
 
-This plugin allows new users to register to the Glewlwyd service and create a new account. New users may need to confirm their e-mail, set a password to register and/or authentication schemes such as OTP, Webauthn or TLS Certificate, depending on the configuration.
+This plugin allows new users to register to the Glewlwyd service and create a new account. New users may need to confirm their e-mail, set a password to register and/or authentication schemes such as OTP, WebAuthn or TLS Certificate, depending on the configuration.
 
 Read the full [documentation](REGISTER.md).
 
@@ -262,9 +262,9 @@ By default, a scope requires only the password for authentication. You can speci
 
 The authentication group model can be represented as the following schema:
 
-Scope 1: password `AND` (mail `OR` Webauthn) `AND` (TOTP `OR` certificate)
+Scope 1: password `AND` (mail `OR` WebAuthn) `AND` (TOTP `OR` certificate)
 
-Scope 2: (mail `OR` certificate `OR` webauthn)
+Scope 2: (mail `OR` certificate `OR` WebAuthn)
 
 #### Setup the required scopes for a user
 
@@ -278,7 +278,7 @@ When the user will connect to the client with Glewlwyd, he will need to validate
 
 ![api-key-add](screenshots/api-key-add.png)
 
-Glewlwyd allows to access all administraiton API endpoints using an API key to authenticate instead of the admin session cookie. This can be useful if you want to run API commands through scripts for example.
+Glewlwyd allows to access all administration API endpoints using an API key to authenticate instead of the admin session cookie. This can be useful if you want to run API commands through scripts for example.
 
 An API key allows to access all admin APIs described in the [API documentation](API.md), except the APIs to manage API keys for security reasons.
 
@@ -303,10 +303,10 @@ This use case is based on the following assertions:
 - Glewlwyd is installed on the local machine and available at the address [http://localhost:4593/](http://localhost:4593/)
 - Taliesin is installed on the local machine and available at the address [http://localhost:8576/](http://localhost:8576/)
 - The scope `taliesin` will be configured as a rolling refresh, with password only
-- The scope `taliesin_admin` will be configured as standard refresh token, without rolling refresh enabled, with password and OTP 2nd factor or Webauthn enabled
+- The scope `taliesin_admin` will be configured as standard refresh token, without rolling refresh enabled, with password and OTP 2nd factor or WebAuthn enabled
 - The tokens are jwt signed with a RSA 256 key, the key file and the certificate must be available.
 
-To create a RSA key/certificate pair, run the following commands on a linux shell with openssl installed:
+To create a RSA key/certificate pair, run the following commands on a Linux shell with openssl installed:
 
 ```shell
 $ # private key
@@ -321,24 +321,24 @@ Open the Glewlwyd admin page [http://localhost:4593/](http://localhost:4593/) in
 
 Click on the `Change password` menu on the navigation tab, there, you should change the `admin` password with a more efficient password.
 
-#### Step 2: Add OTP and Webauthn schemes
+#### Step 2: Add OTP and WebAuthn schemes
 
 Go to `parameters/schemes` menu in the navigation tab. Click on the `+` button to add a new scheme instance.
 
 In the new scheme modal, enter in the name field `otp`, in the display name field `OTP`, select `HOTP/TOTP` in the type drop-down. Leave the other default parameters as is and click save. The scheme OTP should appear in the scheme list.
 
-Then click again on the `+` button to add the Webauthn scheme. In the new scheme modal, enter in the field name `webauthn`, in the display name field `Webauthn`, select `Webauthn` in the type drop-down. Leave the other default parameters as is and click save. The scheme OTP should appear in the scheme list.
+Then click again on the `+` button to add the WebAuthn scheme. In the new scheme modal, enter in the field name `webauthn`, in the display name field `WebAuthn`, select `WebAuthn` in the type drop-down. Leave the other default parameters as is and click save. The scheme OTP should appear in the scheme list.
 
 #### Step 3: Add scopes in Glewlwyd
 
 - Add the scope `taliesin`, check the password checkbox
-- Add the scope `taliesin_admin`, check the password checkbox and add the schemes `OTP` and `Webauthn` to the scope
+- Add the scope `taliesin_admin`, check the password checkbox and add the schemes `OTP` and `WebAuthn` to the scope
 
 #### Step 4: Add a Glewlwyd OAuth2 plugin instance
 
 Go to `parameters/plugins` menu in the navigation tab. Click on the `+` button to add a new plugin instance.
 
-In the new plugin modal, enter in the name field `glwd`, in the display name field `Glewlwyd OAuth2`, select `Glewlwyd OAuth2` in the type drop-down. There, select `RSA` as JWT type, 256 as key size, set your private and public key. Deploy `Specific scope parameters` and add the scope `taliesin_admin`, uncheck `rolling refresh` for this scope.
+In the new plugin modal, enter in the name field `glwd`, in the display name field `Glewlwyd OAuth2`, select `Glewlwyd OAuth2` in the type drop-down. There, select `RSA` as JWT type, 256 as key size, set your private and public key. Deploy `Specific scope parameters` and add the scope `taliesin_admin`, disable `rolling refresh` for this scope.
 
 Click `Ok`.
 
@@ -354,15 +354,15 @@ Go to `Users` menu in the navigation tab. Click on the `+` button to add a new u
 
 In the new user modal, enter `t_user` in the username field, `Taliesin User` in the name field, set a password (8 characters minimum), add the scopes `g_profile` and `taliesin`. Click `Ok`. The new user `t_user` should appear in the users list.
 
-#### Step 7: Configure OTP and Webauthn for admin
+#### Step 7: Configure OTP and WebAuthn for admin
 
 Click on the `delegate profile` button for the user `admin`. In the new page, select `otp` in the navigation bar.
 
 Create a new OTP scheme for the user `admin`, select `TOTP` in the drop-down list, click on the `Generate` button to generate a random secret for this scheme, click `Save`. Your TOTP scheme is configured. Then you can reproduce this configuration on another device, like an OTP application on a smartphone. You can use the generated QR Code in the profile page.
 
-Register a new Webauthn device. Select `Webauthn` in the navigation bar.
+Register a new WebAuthn device. Select `WebAuthn` in the navigation bar.
 
-Two types of Webauthn devices are currently supported: `fido-u2f` types like Yubikeys and `android-safetynet` types like Android phones or tablet, version 7 or above. Click on the button `Register` to add a new registration. Follow the steps on your browser to complete the registration. You can test the authentication by clicking on the `Test` button.
+Two types of WebAuthn devices are currently supported: `fido-u2f` types like Yubikeys and `android-safetynet` types like Android phones or tablet, version 7 or above. Click on the button `Register` to add a new registration. Follow the steps on your browser to complete the registration. You can test the authentication by clicking on the `Test` button.
 
 #### Step 8: Configure Taliesin's `config.json` file
 
@@ -396,12 +396,12 @@ Click on the login button, you should be redirected to Glewlwyd's login page.
 
 There, log in with your admin password. After that, use the second factor authentication of your choice. When completed, click on the `Continue` button which should be enabled. You will be redirected to Taliesin with a valid login and able to use the application as administrator, enjoy!
 
-### Use case: Configure a registration process with a confirmed e-mail address and OTP, Webauthn or OAuth2 Client schemes
+### Use case: Configure a registration process with a confirmed e-mail address and OTP, WebAuthn or OAuth2 Client schemes
 
 Let's say you want to organize a conference with an open registration, you don't want your users to remember a password but you want a secure login.
-New users will use their e-mail address as username, will have to register a new OTP before completing registration, then will be allowed to register their Facebook or Google account to login to your application, and also will be allowed to register a Webauthn device such as Yubikey or an android phone with fingerprint scan.
+New users will use their e-mail address as username, will have to register a new OTP before completing registration, then will be allowed to register their Facebook or Google account to login to your application, and also will be allowed to register a WebAuthn device such as Yubikey or an android phone with fingerprint scan.
 
-This use case will describe configuration steps to have a Glewlwyd instance where new users will have to register an account using a verified e-mail address, at least the OTP scheme and optionally a Webauthn or an external OAuth2 register (Google or Facebook in this example).
+This use case will describe configuration steps to have a Glewlwyd instance where new users will have to register an account using a verified e-mail address, at least the OTP scheme and optionally a WebAuthn or an external OAuth2 register (Google or Facebook in this example).
 
 This use case is based on the following assertions:
 - Glewlwyd is freshly installed with default configuration
@@ -418,11 +418,11 @@ For each provider, you must use the callback address [https://glewlwyd.tld/callb
 
 #### Step 2: Add authentication schemes
 
-You must instantiate the schemes [OTP](OTP.md), [Webauthn](WEBAUTHN.md) and [OAuth2](OAUTH2_SCHEME.md) by using their respective documentation.
+You must instantiate the schemes [OTP](OTP.md), [WebAuthn](WEBAUTHN.md) and [OAuth2](OAUTH2_SCHEME.md) by using their respective documentation.
 
 #### Step 3: Add a new scope
 
-Add the [new scope](SCOPE.md) `conference`, uncheck `Password` in the Authentication paragraph, then add the 3 schemes to the scope `Additional authentication scheme` in the same group, see screenshot below.
+Add the [new scope](SCOPE.md) `conference`, disable `Password` in the Authentication paragraph, then add the 3 schemes to the scope `Additional authentication scheme` in the same group, see screenshot below.
 
 ![use case register scope](screenshots/usecase-register-scope.png)
 
@@ -431,7 +431,7 @@ Add the [new scope](SCOPE.md) `conference`, uncheck `Password` in the Authentica
 Add a new register plugin, name `register`:
 - `Password` set to `No`
 - `scopes to add` set to `conference` only
-- Add the schemes `OTP`, `oauth2` and `Webauthn`, for the scope `OTP`, set `mandatory` to `Yes`
+- Add the schemes `OTP`, `oauth2` and `WebAuthn`, for the scope `OTP`, set `mandatory` to `Yes`
 - Check `verify e-mail` and `username is e-mail`
 - Enter your SMTP server configuration, at least `SMTP server` and `E-mail sender address`
 - In `E-mail body`, replace `<your_registration_plugin_name>` with `register`
@@ -553,7 +553,7 @@ Then you should see the new property in the user edit modal:
 
 Glewlwyd allows non-password authentication. You can use any other scheme installed to authenticate a user. If a required scope has the option `Password` checked, the password will be mandatory to grant access to this scope.
 
-One or more schemes must be already installed: E-mail code, Webauthn, Client certificate, HOTP/TOTP, etc. The scheme must be defined in the file `webapp/config.json` in the `sessionSchemes` array. The pattern is the following:
+One or more schemes must be already installed: E-mail code, WebAuthn, Client certificate, HOTP/TOTP, etc. The scheme must be defined in the file `webapp/config.json` in the `sessionSchemes` array. The pattern is the following:
 
 ```javascript
 {
@@ -563,7 +563,7 @@ One or more schemes must be already installed: E-mail code, Webauthn, Client cer
 }
 ```
 
-Then, in the login page for a new user, the drop-down `Scheme` will be available, allowing to authentify with the schemes specified.
+Then, in the login page for a new user, the drop-down `Scheme` will be available, allowing to authenticate with the schemes specified.
 
 The option `defaultScheme` in the `config.json` file can be used to overwrite password as default scheme to authenticate users. Fill this option with a scheme name present in the `sessionSchemes` array. Example:
 

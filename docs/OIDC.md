@@ -81,7 +81,7 @@ An access token payload has the following JSON format:
   "nbf": 1466558840,            // Not before time in Epoch Unix format
   "scope":"scope1 g_profile"    // scopes granted to this access token in a string separated by spaces
   "claims": {}                  // claims asked by the client
-  "cnf": {"x5t#S256": xxx"}     // ideintifier of the certificate used to sign this JWT
+  "cnf": {"x5t#S256": xxx"}     // identifier of the certificate used to sign this JWT
 }
 ```
 
@@ -89,7 +89,7 @@ An access token payload has the following JSON format:
 
 ### Single key pair in PEM format
 
-To create a key/certificate pair for RSA, ECDSA, RSA-PSS or EdDSA format, run the following commands on a linux shell with openssl installed:
+To create a key/certificate pair for RSA, ECDSA, RSA-PSS or EdDSA format, run the following commands on a Linux shell with openssl installed:
 
 ```shell
 $ # RSA/RSA-PSS KEY
@@ -576,7 +576,7 @@ Add on or more scopes if you want to allow to use endpoints `/introspect` and `/
 
 This section is used to parameter client registration as defined in [OpenID Connect Dynamic Registration](http://openid.net/specs/openid-connect-registration-1_0.html). If enabled, the administrator can (should?) require an access token with the proper scope to be able to register a new client.
 
-How this `acces_token` is provided is out of scope of this documentation.
+How this `access_token` is provided is out of scope of this documentation.
 
 ### Allow client registration via API /register
 
@@ -1397,7 +1397,7 @@ Optional
 `limit`: number, the number of elements to return, default 100
 `pattern`: text, a pattern to filter results, pattern will filter the properties `user_agent` or `issued_for`
 `sort`: text, the column to order the results, values available are `authorization_type`, `client_id`, `issued_at`, `last_seen`, `expires_at`, `issued_for`, `user_agent`, `enabled` and `rolling_expiration`
-`desc`: no value, is set, the column specified in the `sort` parameter will be orderd by descending order, otherwise ascending
+`desc`: no value, is set, the column specified in the `sort` parameter will be ordered by descending order, otherwise ascending
 ```
 
 ##### Result
@@ -1416,7 +1416,7 @@ Content
   "issued_at": number, date when this refresh token was issued, epoch time format
   "expires_at": number, date when this refresh token will expire, epoch time format
   "last_seen": number, last date when this refresh token was used to generate an access token, epoch time format
-  "rolling_expiration": boolean, wether this refresh token is a rolling token, i.e. its expiration date will be postponed on each use to generate a new access token
+  "rolling_expiration": boolean, weather this refresh token is a rolling token, i.e. its expiration date will be postponed on each use to generate a new access token
   "issued_for": text, IP address of the device which requested this refresh token
   "user_agent": text, user-agent of the device which requested this refresh token
   "enabled": boolean, set to true if this refresh token is enabled, i.e. can be used to generate new access tokens, or not
@@ -1654,7 +1654,7 @@ Code 200
 
 Content
 
-An HTML page adapted for check_session_iframe, this iframe is intended to indicate to the client webpage that the user status has changed. Check [OIDC Session Status Change Notification](https://openid.net/specs/openid-connect-session-1_0.html#ChangeNotification) for more details and an example on how to use it.
+An HTML page adapted for check_session_iframe, this iframe is intended to indicate to the client web page that the user status has changed. Check [OIDC Session Status Change Notification](https://openid.net/specs/openid-connect-session-1_0.html#ChangeNotification) for more details and an example on how to use it.
 
 ### End session
 
@@ -1671,7 +1671,7 @@ An HTML page adapted for check_session_iframe, this iframe is intended to indica
 Optional
 
 ```
-`post_logout_redirect_uri`: string, the uri to redirect the user after end registration is complete and succesfull. Must be previously registered by the client and will be used only if a valid `id_token_hint` is passed too.
+`post_logout_redirect_uri`: string, the uri to redirect the user after end registration is complete and successful. Must be previously registered by the client and will be used only if a valid `id_token_hint` is passed too.
 `id_token_hint`: string, the last id_token sent to the client for the user, must be a valid `id_token`. The `id_token` will be invalidated by Glewlwyd on end session.
 `state`: text, a client-defined string that will be sent back to the client via the `post_logout_redirect_uri`
 ```

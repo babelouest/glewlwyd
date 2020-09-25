@@ -21,7 +21,7 @@ This folder contains full documentation for Glewlwyd and additional resources.
 - [Install Client Backend Database](CLIENT_DATABASE.md)
 - [Install Client Backend LDAP](CLIENT_LDAP.md)
 - [Install Authentication Scheme HOTP/TOTP](OTP.md)
-- [Install Authentication Scheme Webauthn](WEBAUTHN.md)
+- [Install Authentication Scheme WebAuthn](WEBAUTHN.md)
 - [Install Authentication Scheme E-mail code](EMAIL.md)
 - [Install Authentication Scheme TLS certificate](CERTIFICATE.md)
 - [Install Authentication Scheme HTTP Basic Authentication](HTTP.md)
