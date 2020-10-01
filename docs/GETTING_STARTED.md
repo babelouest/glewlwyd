@@ -34,6 +34,7 @@
 - [How-Tos](#how-tos)
   - [Use case: Configure Glewlwyd to authenticate with Taliesin](#use-case-configure-glewlwyd-to-authenticate-with-taliesin)
   - [Use case: Configure a registration process with a confirmed e-mail address and OTP, WebAuthn or OAuth2 Client schemes](#use-case-configure-a-registration-process-with-a-confirmed-e-mail-address-and-otp-webauthn-or-oauth2-client-schemes)
+  - [Use case: Connect Webmail RainLoop with OpenID Connect plugin using Dovecot configured with a master password](#use-case-connect-webmail-rainloop-with-openid-connect-plugin-using-dovecot-configured-with-a-master-password)
   - [User profile delegation](#user-profile-delegation)
   - [Add or update additional properties for users and clients](#add-or-update-additional-properties-for-users-and-clients)
   - [Non-password authentication](#non-password-authentication)
@@ -473,6 +474,80 @@ In the last step, you will have to update your `webapp/config.json` file to adap
   }
 ],
 ```
+
+### Use case: Connect Webmail RainLoop with OpenID Connect plugin using Dovecot configured with a master password
+
+To connect to a RainLoop Webmail instance with Glewlwyd's OpenID Connect plugin, here is a validated setup.
+
+- **Add additional claim `email` in the ID Token**
+
+See [OIDC Configuration](OIDC.md#additional-claims-in-the-id-token-or-the-userinfo-endpoint).
+
+- **Configure Dovecot to allow connectig via [master password](https://doc.dovecot.org/configuration_manual/authentication/master_users/)**
+
+Sample dovecot config to add a master password file:
+
+```
+auth_master_user_separator = *
+passdb {
+  driver = passwd-file
+  args = /etc/dovecot/passwd.masterusers
+  master = yes
+  result_success = continue
+}
+```
+
+Use htpassword to create the file `passwd.masterusers`:
+
+```shell
+$ htpasswd -b -c -s passwd.masterusers masteruser password
+```
+
+Security tip: restrict use of the master password to the ip address hosting Roundcube, append `::::::allow_nets=127.0.0.1/32` to your masterusers password record, the content of the file `passwd.masterusers` should look like this:
+
+```
+masteruser:{SHA}xxxyyyzzz=::::::allow_nets=127.0.0.1/32
+```
+
+- **Configure [mod_auth_openidc](https://github.com/zmartzone/mod_auth_openidc) to authenticate via Glewlwyd before accessing the webmail**
+
+Sample apache.conf config:
+
+```
+Alias /webmail /path/to/rainloop
+
+OIDCProviderMetadataURL https://glewlwyd.tld/api/oidc/.well-known/openid-configuration
+OIDCClientID webmail_client
+OIDCClientSecret webmail_client_secret
+OIDCResponseType "code"
+OIDCScope "openid mail"
+OIDCOAuthRemoteUserClaim "userid"
+
+OIDCRedirectURI /webmail/callback
+OIDCCryptoPassphrase xyz123
+OIDCSessionInactivityTimeout 3600
+
+<Location /webmail/>
+  AuthType openid-connect
+  Require valid-user
+</Location>
+<Location /webmail/data>
+  Require all denied
+</Location>
+```
+
+- **Add a new rainloop plugin dedicated to map OIDC connection with Rainloop**
+
+Create a directory `oidc-master-password-login/` in the  location `<rainloop_root>/data/_data_/_default_/plugins`, download the files from [this gist](https://gist.github.com/babelouest/9c0ca17224ade7c4e763b3c1c37d21ae) in this new directory.
+
+- **Enable and configure the rainloop plugin `oidc-master-password-login/`**
+
+Go to [RainLopp admin page](https://www.rainloop.net/docs/configuration/), on the plugin tab, enable `oidc-master-password-login`, then configure on the plugin to map your configuration:
+- Header username: `OIDC_CLAIM_userid`
+- Master Username and separator: `*masteruser` (don't forget the separator)
+- Master Password: your dovecot master password
+
+Now, when you open RainLoop url, you should be redirected to Glewlwyd login page first, then if successfull, you will be redirected to the RainLoop login page with the e-mail field filled with your e-mail address and a fony password, click on the login button, you are now successfully logged in RainLoop!
 
 ### User profile delegation
 
