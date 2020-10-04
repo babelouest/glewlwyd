@@ -1166,15 +1166,23 @@ Event log messages have the following format:
 
 ```
 <date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Refresh token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
+<date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Access token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
+<date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Refresh token generated for client '<client_id>' revoked
+<date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Access token generated for client '<client_id>' revoked
 ```
 
 #### OIDC plugin events
 
 ```
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Refresh token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
+<date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Access token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
+<date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - id_token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - client '<client_id>' registration updated with redirect_uri <redirect_uri_list>
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - client '<client_id>' registered with redirect_uri <redirect_uri_list>
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - client '<client_id>' deleted
+<date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Refresh token generated for client '<client_id>' revoked
+<date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Access token jti '<jti>' generated for client '<client_id>' revoked
+<date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - id_token generated for client '<client_id>' revoked
 ```
 
 #### Register plugin events
