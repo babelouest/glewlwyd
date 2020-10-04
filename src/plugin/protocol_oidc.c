@@ -1247,6 +1247,8 @@ static char * generate_client_access_token(struct _oidc_config * config, json_t 
     r_jwk_free(jwk);
     if (token == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - oidc - Error generating token");
+    } else {
+      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token generated for client '%s' with scope list '%s'", config->name, json_string_value(json_object_get(j_client, "client_id")), scope_list);
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - oidc - Error cloning jwt");
@@ -1773,6 +1775,8 @@ static char * generate_id_token(struct _oidc_config * config, const char * usern
             token = r_jwt_serialize_signed(jwt, jwk, 0);
             if (token == NULL) {
               y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - oidc - Error r_jwt_serialize_signed");
+            } else {
+              y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - id_token generated for client '%s' granted by user '%s'", config->name, json_string_value(json_object_get(j_client, "client_id")), username);
             }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - oidc - Error jwt_add_grants_json");
@@ -1961,6 +1965,8 @@ static char * generate_access_token(struct _oidc_config * config, const char * u
       if (jwk != NULL) {
         if ((token = r_jwt_serialize_signed(jwt, jwk, 0)) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - oidc - Error r_jwt_serialize_signed");
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token generated for client '%s' granted by user '%s' with scope list '%s'", config->name, json_string_value(json_object_get(j_client, "client_id")), username, scope_list);
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - oidc - Error no jwk to sign");
@@ -2764,16 +2770,43 @@ static json_t * get_refresh_token_duration_rolling(struct _oidc_config * config,
 
 static int revoke_tokens_from_code(struct _oidc_config * config, json_int_t gpoc_id) {
   int ret, res;
-  char * query = msprintf("UPDATE " GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN " SET gpoa_enabled='0' WHERE gpor_id IN (SELECT gpor_id FROM " GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN " WHERE gpoc_id=%" JSON_INTEGER_FORMAT ")", gpoc_id);
+  char * query;
+  json_t * j_result, * j_result_r, * j_element = NULL;
+  size_t index = 0;
 
-  res = h_execute_query(config->glewlwyd_config->glewlwyd_config->conn, query, NULL, H_OPTION_EXEC);
+  query = msprintf("SELECT gpoa_jti AS jti, gpoa_client_id AS client_id FROM " GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN " WHERE gpor_id IN (SELECT gpor_id FROM " GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN " WHERE gpoc_id=%" JSON_INTEGER_FORMAT ") AND gpoa_enabled=1", gpoc_id);
+  res = h_execute_query_json(config->glewlwyd_config->glewlwyd_config->conn, query, &j_result);
   o_free(query);
   if (res == H_OK) {
-    query = msprintf("UPDATE " GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN " SET gpor_enabled='0' WHERE gpoc_id=%" JSON_INTEGER_FORMAT, gpoc_id);
-    res = h_execute_query(config->glewlwyd_config->glewlwyd_config->conn, query, NULL, H_OPTION_EXEC);
+    json_array_foreach(j_result, index, j_element) {
+      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token jti '%s' generated for client '%s' revoked", config->name, json_string_value(json_object_get(j_element, "jti")), json_string_value(json_object_get(j_element, "client_id")));
+    }
+    json_decref(j_result);
+    query = msprintf("SELECT gpor_client_id AS client_id FROM " GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN " WHERE gpoc_id=%" JSON_INTEGER_FORMAT " AND gpor_enabled=1", gpoc_id);
+    res = h_execute_query_json(config->glewlwyd_config->glewlwyd_config->conn, query, &j_result_r);
     o_free(query);
     if (res == H_OK) {
-      ret = G_OK;
+      if (json_array_size(j_result_r)) {
+        y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' revoked", config->name, json_string_value(json_object_get(json_array_get(j_result_r, 0), "client_id")));
+      }
+      json_decref(j_result_r);
+      query = msprintf("UPDATE " GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN " SET gpoa_enabled='0' WHERE gpor_id IN (SELECT gpor_id FROM " GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN " WHERE gpoc_id=%" JSON_INTEGER_FORMAT ")", gpoc_id);
+      res = h_execute_query(config->glewlwyd_config->glewlwyd_config->conn, query, NULL, H_OPTION_EXEC);
+      o_free(query);
+      if (res == H_OK) {
+        query = msprintf("UPDATE " GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN " SET gpor_enabled='0' WHERE gpoc_id=%" JSON_INTEGER_FORMAT, gpoc_id);
+        res = h_execute_query(config->glewlwyd_config->glewlwyd_config->conn, query, NULL, H_OPTION_EXEC);
+        o_free(query);
+        if (res == H_OK) {
+          ret = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "oidc revoke_tokens_from_code - Error executing query (4)");
+          ret = G_ERROR_DB;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "oidc revoke_tokens_from_code - Error executing query (3)");
+        ret = G_ERROR_DB;
+      }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "oidc revoke_tokens_from_code - Error executing query (2)");
       ret = G_ERROR_DB;
@@ -5826,16 +5859,22 @@ static int callback_revocation(const struct _u_request * request, struct _u_resp
         if (revoke_refresh_token(config, u_map_get(request->map_post_body, "token")) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_refresh_token");
           response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' revoked", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")));
         }
       } else if (0 == o_strcmp("access_token", json_string_value(json_object_get(json_object_get(j_result, "token"), "token_type")))) {
         if (revoke_access_token(config, u_map_get(request->map_post_body, "token")) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_access_token");
           response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token jti '%s' generated for client '%s' revoked", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "jti")), json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")));
         }
       } else {
         if (revoke_id_token(config, u_map_get(request->map_post_body, "token")) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_id_token");
           response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - id_token generated for client '%s' revoked", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")));
         }
       }
     }
