@@ -8,6 +8,7 @@
 
 #include <check.h>
 #include <ulfius.h>
+#include <rhonabwy.h>
 #include <orcania.h>
 #include <yder.h>
 
@@ -20,6 +21,8 @@
 #define SCOPE_LIST_PARTIAL "openid scope1"
 #define SCOPE_LIST_MAX_USE "openid scope1 scope2 scope3"
 #define CLIENT "client1_id"
+#define RESOURCE_ENC "https%3A%2F%2Fresource.tld%2F"
+#define RESOURCE "https://resource.tld/"
 
 char * code;
 
@@ -99,6 +102,7 @@ START_TEST(test_oidc_code_ok)
   char ** id_token_split = NULL, * str_payload = NULL, at_hash[33], at_hash_encoded[64];
   size_t str_payload_len = 0, at_hash_len = 33, at_hash_encoded_len = 0;
   gnutls_datum_t at_data;
+  jwt_t * jwt;
   
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
@@ -115,6 +119,11 @@ START_TEST(test_oidc_code_ok)
   ck_assert_ptr_ne(json_object_get(j_body, "refresh_token"), NULL);
   ck_assert_ptr_ne(json_object_get(j_body, "access_token"), NULL);
   ck_assert_ptr_ne(json_object_get(j_body, "id_token"), NULL);
+  
+  ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
+  ck_assert_int_eq(r_jwt_parse(jwt, json_string_value(json_object_get(j_body, "access_token")), 0), RHN_OK);
+  ck_assert_str_eq(RESOURCE, r_jwt_get_claim_str_value(jwt, "aud"));
+  r_jwt_free(jwt);
   
   ck_assert_int_eq(split_string(json_string_value(json_object_get(j_body, "id_token")), ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), NULL, &str_payload_len), 1);
@@ -422,6 +431,7 @@ START_TEST(test_oidc_code_retry_with_max_use)
   struct _u_response auth_resp, code_resp;
   json_t * j_body;
   char * cookie, * code;
+  jwt_t * jwt;
 
   ulfius_init_request(&auth_req);
   ulfius_init_response(&auth_resp);
@@ -581,6 +591,12 @@ START_TEST(test_oidc_code_retry_with_max_use)
   ck_assert_int_eq(code_resp.status, 200);
   j_body = ulfius_get_json_body_response(&code_resp, NULL);
   ck_assert_ptr_ne(j_body, NULL);
+  
+  ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
+  ck_assert_int_eq(r_jwt_parse(jwt, json_string_value(json_object_get(j_body, "access_token")), 0), RHN_OK);
+  ck_assert_str_eq(SCOPE_LIST_MAX_USE, r_jwt_get_claim_str_value(jwt, "aud"));
+  r_jwt_free(jwt);
+  
   ck_assert_str_eq(json_string_value(json_object_get(j_body, "scope")), SCOPE_LIST_MAX_USE);
   ulfius_clean_request(&code_req);
   ulfius_clean_response(&code_resp);
@@ -701,7 +717,7 @@ int main(int argc, char *argv[])
         } else {
           ulfius_init_response(&code_resp);
           user_req.http_verb = strdup("GET");
-          user_req.http_url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
+          user_req.http_url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&state=xyzabcd&scope=%s&resource=%s", SERVER_URI, SCOPE_LIST, RESOURCE_ENC);
           if (ulfius_send_http_request(&user_req, &code_resp) != U_OK) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "Get code error");
           } else if (o_strstr(u_map_get(code_resp.map_header, "Location"), "code=") != NULL) {
