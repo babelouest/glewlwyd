@@ -22,6 +22,7 @@ CREATE TABLE gpo_code (
   gpoc_redirect_uri TEXT NOT NULL,
   gpoc_code_hash TEXT NOT NULL,
   gpoc_nonce TEXT,
+  gpoc_resource TEXT,
   gpoc_claims_request TEXT DEFAULT NULL,
   gpoc_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpoc_issued_for TEXT, -- IP address or hostname
@@ -53,6 +54,7 @@ CREATE TABLE gpo_refresh_token (
   gpoc_id INTEGER DEFAULT NULL,
   gpor_username TEXT NOT NULL,
   gpor_client_id TEXT,
+  gpoc_resource TEXT,
   gpor_claims_request TEXT DEFAULT NULL,
   gpor_issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpor_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -84,6 +86,7 @@ CREATE TABLE gpo_access_token (
   gpor_id INTEGER DEFAULT NULL,
   gpoa_username TEXT,
   gpoa_client_id TEXT,
+  gpoa_resource TEXT,
   gpoa_issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   gpoa_issued_for TEXT, -- IP address or hostname
   gpoa_user_agent TEXT,
@@ -157,6 +160,7 @@ CREATE TABLE gpo_device_authorization (
   gpoda_id INTEGER PRIMARY KEY AUTOINCREMENT,
   gpoda_plugin_name TEXT NOT NULL,
   gpoda_client_id TEXT NOT NULL,
+  gpoda_resource TEXT,
   gpoda_username TEXT,
   gpoda_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   gpoda_expires_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
