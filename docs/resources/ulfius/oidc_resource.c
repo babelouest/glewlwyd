@@ -218,6 +218,9 @@ int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request
             if (json_object_get(json_object_get(j_access_token, "grants"), "aud") != NULL) {
               json_object_set((void*)response->shared_data, "aud", json_object_get(json_object_get(j_access_token, "grants"), "aud"));
             }
+            if (json_object_get(json_object_get(j_access_token, "grants"), "client_id") != NULL) {
+              json_object_set((void*)response->shared_data, "client_id", json_object_get(json_object_get(j_access_token, "grants"), "client_id"));
+            }
             if (json_object_get(json_object_get(j_access_token, "grants"), "claims") != NULL) {
               json_object_set((void*)response->shared_data, "claims", json_object_get(json_object_get(j_access_token, "grants"), "claims"));
             }
