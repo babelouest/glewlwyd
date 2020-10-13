@@ -33,6 +33,7 @@ The following OpenID Connect and OAuth2 functionalities are currently supported:
 - [JWT Response for OAuth Token Introspection](https://tools.ietf.org/html/draft-ietf-oauth-jwt-introspection-response-08)
 - [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252), see [Native Apps Guidelines](#native-apps-guidelines)
 - [OAuth 2.0 Device Grant](https://tools.ietf.org/html/rfc8628)
+- [OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) Draft 01](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-dpop-01)
 
 The following OpenID Connect functionalities are not supported yet:
 
@@ -651,12 +652,24 @@ If this is set to true, clients will be allowed to use self-signed certificates 
 
 **WARNING** This setting must be used with high precaution! Self-signed certificates are less secure than certificates delivered by trusted CA.
 
+## OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) (Draft 01)
+
+Glewlwyd OIDC plugin supports OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) (Draft 01). The DPoP header can be used during a response_type `code` or `device_code`, also the endpoints `/userinfo` and `/token` will validate the DPoP header if the access token used has a `jkt` property. The endpoints `/register`, `/introspect` or `/revoke` won't validate the DPoP header by design.
+
+### Allow DPoP
+
+If this is set to true, the DPoP header will be parsed and validated when enabled.
+
+### DPoP Token iat claim maximum duration (seconds)
+
+Maximum duration authorized for a DPoP iat property.
+
 ## Native Apps Guidelines
 
 Glewlwyd is conform to [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252) best current practice considering the following configuration:
 
 - Any `redirect_uri` is allowed if the client is manually added by an admin in the admin app
-- Any `https://` is allowed URL or unsecured loopback (locahost/127.0.0.1/[::1]) URL when the client uses the client registration endpoint. `redirect_uris` accepted in the client registration endpoint **MUST NOT** contain username attribute (`https://username@domain.tld`)
+- Any `https://` URL is allowed or unsecured loopback URL (locahost/127.0.0.1/[::1]) when the client uses the client registration endpoint. `redirect_uris` accepted in the client registration endpoint **MUST NOT** contain username attribute (`https://username@domain.tld`)
 - [PKCE](https://tools.ietf.org/html/rfc7636) extension is supported
 - A client can be specified as public (i.e. not confidential), without secret or public key
 
