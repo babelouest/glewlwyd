@@ -25,6 +25,7 @@ DROP TABLE IF EXISTS g_user_property;
 DROP TABLE IF EXISTS g_user_scope_user;
 DROP TABLE IF EXISTS g_user_scope;
 DROP TABLE IF EXISTS g_user;
+DROP TABLE IF EXISTS gpo_dpop;
 DROP TABLE IF EXISTS gpg_device_authorization_scope;
 DROP TABLE IF EXISTS gpg_device_authorization;
 DROP TABLE IF EXISTS gpg_access_token_scope;
@@ -385,7 +386,7 @@ CREATE TABLE gpo_refresh_token (
   gpoc_id INTEGER DEFAULT NULL,
   gpor_username TEXT NOT NULL,
   gpor_client_id TEXT,
-  gpor_resource TEXT,
+  gpoc_resource TEXT,
   gpor_claims_request TEXT DEFAULT NULL,
   gpor_issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpor_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -396,6 +397,7 @@ CREATE TABLE gpo_refresh_token (
   gpor_user_agent TEXT,
   gpor_token_hash TEXT NOT NULL,
   gpor_jti TEXT,
+  gpor_dpop_jkt TEXT,
   gpor_enabled INTEGER DEFAULT 1,
   FOREIGN KEY(gpoc_id) REFERENCES gpo_code(gpoc_id) ON DELETE CASCADE
 );
@@ -518,6 +520,19 @@ CREATE TABLE gpo_device_scheme (
   gpodh_scheme_module TEXT NOT NULL,
   FOREIGN KEY(gpoda_id) REFERENCES gpo_device_authorization(gpoda_id) ON DELETE CASCADE
 );
+
+CREATE TABLE gpo_dpop (
+  gpod_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpod_plugin_name TEXT NOT NULL,
+  gpod_client_id TEXT NOT NULL,
+  gpod_jti_hash TEXT NOT NULL,
+  gpod_jkt TEXT NOT NULL,
+  gpod_htm TEXT NOT NULL,
+  gpod_htu TEXT NOT NULL,
+  gpod_iat TIMESTAMP NOT NULL,
+  gpod_last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX i_gpod_jti_hash ON gpo_dpop(gpod_jti_hash);
 
 CREATE TABLE gs_code (
   gsc_id INTEGER PRIMARY KEY AUTOINCREMENT,
