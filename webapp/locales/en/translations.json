@@ -934,7 +934,12 @@
     "api-key-add-label": "Please save the key below with caution",
     "confirm-delete-api-key-title": "Disable an API key",
     "confirm-delete-api-key": "Are you sure you want to disable this API key?",
-    "success-api-delete-api-key": "API key disabled"
+    "success-api-delete-api-key": "API key disabled",
+    "mod-glwd-oauth-dpop-title": "OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) (Draft 01)",
+    "mod-glwd-oauth-dpop-allowed": "Allow DPoP",
+    "mod-glwd-oauth-dpop-iat-duration": "DPoP Token iat claim maximum duration (seconds)",
+    "mod-glwd-oauth-dpop-iat-duration-ph": "e.g. 10",
+    "mod-glwd-oauth-dpop-iat-duration-error": "DPoP Token iat claim maximum duration is mandatory"
   },
   "profile": {
     "error-credential-message": "Please connect to the application",
