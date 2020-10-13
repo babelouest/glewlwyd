@@ -24,7 +24,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
 set(PROGRAM_VERSION_MAJOR "2")
 set(PROGRAM_VERSION_MINOR "4")
-set(PROGRAM_VERSION_PATCH "0")
+set(PROGRAM_VERSION_PATCH "1")
 set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, Openid Connect, multiple factor authentication with, HOTP/TOTP, FIDO2, TLS Certificates, etc. extensible via plugins ")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(ORCANIA_VERSION_REQUIRED "2.1.1")
@@ -795,6 +795,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oidc_client_registration_management
               glewlwyd_oidc_code_replay
               glewlwyd_oidc_scheme_required
+              glewlwyd_oidc_dpop.c
 							)
 			set(TESTS_SSL ${TESTS_SSL} glewlwyd_oidc_client_certificate)
 		endif ()
