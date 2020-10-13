@@ -31,7 +31,7 @@ set(ORCANIA_VERSION_REQUIRED "2.1.1")
 set(YDER_VERSION_REQUIRED "1.4.12")
 set(ULFIUS_VERSION_REQUIRED "2.6.9")
 set(HOEL_VERSION_REQUIRED "1.4.16")
-set(RHONABWY_VERSION_REQUIRED "0.9.12")
+set(RHONABWY_VERSION_REQUIRED "0.9.13")
 set(IDDAWC_VERSION_REQUIRED "0.9.6")
 set(LIBCBOR_VERSION_REQUIRED "0.5.0")
 set(JANSSON_VERSION_REQUIRED "2.11")
@@ -795,7 +795,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_oidc_client_registration_management
               glewlwyd_oidc_code_replay
               glewlwyd_oidc_scheme_required
-              glewlwyd_oidc_dpop.c
+              glewlwyd_oidc_dpop
 							)
 			set(TESTS_SSL ${TESTS_SSL} glewlwyd_oidc_client_certificate)
 		endif ()
