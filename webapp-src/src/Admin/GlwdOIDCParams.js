@@ -81,6 +81,8 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["client-cert-header-name"]!==undefined?"":(props.mod.parameters["client-cert-header-name"] = "SSL_CLIENT_CERT");
     props.mod.parameters["client-cert-use-endpoint-aliases"]!==undefined?"":(props.mod.parameters["client-cert-use-endpoint-aliases"] = false);
     props.mod.parameters["client-cert-self-signed-allowed"]!==undefined?"":(props.mod.parameters["client-cert-self-signed-allowed"] = false);
+    props.mod.parameters["oauth-dpop-allowed"]!==undefined?"":(props.mod.parameters["oauth-dpop-allowed"] = false);
+    props.mod.parameters["oauth-dpop-iat-duration"]!==undefined?"":(props.mod.parameters["oauth-dpop-iat-duration"] = 10);
 
     this.state = {
       config: props.config,
@@ -215,6 +217,8 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["client-cert-header-name"]!==undefined?"":(nextProps.mod.parameters["client-cert-header-name"] = "SSL_CLIENT_CERT");
     nextProps.mod.parameters["client-cert-use-endpoint-aliases"]!==undefined?"":(nextProps.mod.parameters["client-cert-use-endpoint-aliases"] = false);
     nextProps.mod.parameters["client-cert-self-signed-allowed"]!==undefined?"":(nextProps.mod.parameters["client-cert-self-signed-allowed"] = false);
+    nextProps.mod.parameters["oauth-dpop-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-dpop-allowed"] = false);
+    nextProps.mod.parameters["oauth-dpop-iat-duration"]!==undefined?"":(nextProps.mod.parameters["oauth-dpop-iat-duration"] = 10);
     
     this.setState({
       config: nextProps.config,
@@ -742,6 +746,11 @@ class GlwdOIDCParams extends Component {
       hasError = true;
       errorList["introspection-revocation"] = i18next.t("admin.mod-glwd-introspection-revocation-error");
       errorList["token"] = true;
+    }
+    if (this.state.mod.parameters["oauth-dpop-allowed"] && !this.state.mod.parameters["oauth-dpop-iat-duration"]) {
+      hasError = true;
+      errorList["oauth-dpop-iat-duration"] = i18next.t("admin.mod-glwd-oauth-dpop-iat-duration-error");
+      errorList["oauth-dpop"] = true;
     }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
@@ -2200,6 +2209,35 @@ class GlwdOIDCParams extends Component {
                 <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-mtls-client-cert-self-signed-allowed" onChange={(e) => this.toggleParam(e, "client-cert-self-signed-allowed")} checked={this.state.mod.parameters["client-cert-self-signed-allowed"]} disabled={!this.state.mod.parameters["client-cert-source"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-mtls-client-cert-self-signed-allowed">{i18next.t("admin.mod-glwd-mtls-client-cert-self-signed-allowed")}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionDPoP">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseDPoP" aria-expanded="true" aria-controls="collapseDPoP">
+                  {this.state.errorList["oauth-dpop"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
+                  {i18next.t("admin.mod-glwd-oauth-dpop-title")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapseDPoP" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionDPoP">
+              <div className="card-body">
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-oauth-dpop-allowed" onChange={(e) => this.toggleParam(e, "oauth-dpop-allowed")} checked={this.state.mod.parameters["oauth-dpop-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-dpop-allowed">{i18next.t("admin.mod-glwd-oauth-dpop-allowed")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-oauth-dpop-iat-duration">{i18next.t("admin.mod-glwd-oauth-dpop-iat-duration")}</label>
+                    </div>
+                    <input type="number" min="1" step="1" className="form-control" id="mod-glwd-oauth-dpop-iat-duration" onChange={(e) => this.changeNumberParam(e, "oauth-dpop-iat-duration")} value={this.state.mod.parameters["oauth-dpop-iat-duration"]} placeholder={i18next.t("admin.mod-glwd-oauth-dpop-iat-duration-ph")} disabled={!this.state.mod.parameters["oauth-dpop-allowed"]} />
+                  </div>
+                  {this.state.errorList["oauth-dpop-iat-duration"]?<span className="error-input">{this.state.errorList["oauth-dpop-iat-duration"]}</span>:""}
                 </div>
               </div>
             </div>

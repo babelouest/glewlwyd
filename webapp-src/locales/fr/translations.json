@@ -934,7 +934,12 @@
     "api-key-add-label": "Veuillez sauvegarder précieusement la clé ci-dessous",
     "confirm-delete-api-key-title": "Désactivation de clé d'API",
     "confirm-delete-api-key": "Êtes-vous sûr de vouloir désactiver cette clé d'API?",
-    "success-api-delete-api-key": "Clé d'API désactivée"
+    "success-api-delete-api-key": "Clé d'API désactivée",
+    "mod-glwd-oauth-dpop-title": "OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) (Draft 01)",
+    "mod-glwd-oauth-dpop-allowed": "Autoriser DPoP",
+    "mod-glwd-oauth-dpop-iat-duration": "Durée maximum du champ iat dans le token DPoP (secondes)",
+    "mod-glwd-oauth-dpop-iat-duration-ph": "e.g. 10",
+    "mod-glwd-oauth-dpop-iat-duration-error": "La durée maximum du champ iat dans le token DPoP est obligatoire"
   },
   "profile": {
     "error-credential-message": "Veuillez vous connecter à l'application",
