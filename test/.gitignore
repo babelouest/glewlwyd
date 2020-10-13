@@ -66,6 +66,7 @@ glewlwyd_oidc_client_registration_management
 glewlwyd_oidc_client_certificate
 glewlwyd_oidc_code_replay
 glewlwyd_oidc_scheme_required
+glewlwyd_oidc_dpop
 
 glewlwyd_register
 

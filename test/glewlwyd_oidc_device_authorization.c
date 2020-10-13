@@ -146,7 +146,7 @@ START_TEST(test_oidc_device_authorization_client_cred_post_valid)
   ck_assert_ptr_ne(j_resp = ulfius_get_json_body_response(&resp, NULL), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "device_code"), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
@@ -178,7 +178,7 @@ START_TEST(test_oidc_device_authorization_client_cred_header_valid)
   ck_assert_ptr_ne(j_resp = ulfius_get_json_body_response(&resp, NULL), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "device_code"), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
@@ -232,7 +232,7 @@ START_TEST(test_oidc_device_authorization_client_cred_header_no_post_valid)
   ck_assert_ptr_ne(j_resp = ulfius_get_json_body_response(&resp, NULL), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "device_code"), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
@@ -262,7 +262,7 @@ START_TEST(test_oidc_device_authorization_client_pub_post_valid)
   ck_assert_ptr_ne(j_resp = ulfius_get_json_body_response(&resp, NULL), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "device_code"), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
@@ -316,7 +316,7 @@ START_TEST(test_oidc_device_authorization_user_code_redirect_login_valid)
   ck_assert_ptr_ne(j_resp = ulfius_get_json_body_response(&resp, NULL), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "device_code"), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
@@ -359,7 +359,7 @@ START_TEST(test_oidc_device_authorization_user_code_input_invalid)
   ck_assert_ptr_ne(j_resp = ulfius_get_json_body_response(&resp, NULL), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "device_code"), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
@@ -403,7 +403,7 @@ START_TEST(test_oidc_device_authorization_user_code_input_redirect_login_valid)
   ck_assert_ptr_ne(json_object_get(j_resp, "device_code"), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
   ck_assert_ptr_ne(code = json_string_value(json_object_get(j_resp, "user_code")), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
@@ -447,7 +447,7 @@ START_TEST(test_oidc_device_authorization_user_code_input_complete_valid)
   ck_assert_ptr_ne(json_object_get(j_resp, "device_code"), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
   ck_assert_ptr_ne(code = json_string_value(json_object_get(j_resp, "user_code")), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
@@ -503,7 +503,7 @@ START_TEST(test_oidc_device_authorization_device_verification_valid)
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
   ck_assert_ptr_ne(code = json_string_value(json_object_get(j_resp, "user_code")), NULL);
   ck_assert_ptr_ne(device_code = json_string_value(json_object_get(j_resp, "device_code")), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
@@ -586,7 +586,7 @@ START_TEST(test_oidc_device_authorization_device_verification_valid_with_resourc
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
   ck_assert_ptr_ne(code = json_string_value(json_object_get(j_resp, "user_code")), NULL);
   ck_assert_ptr_ne(device_code = json_string_value(json_object_get(j_resp, "device_code")), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
@@ -667,7 +667,7 @@ START_TEST(test_oidc_device_authorization_device_verification_auth_pending)
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
   ck_assert_ptr_ne(code = json_string_value(json_object_get(j_resp, "user_code")), NULL);
   ck_assert_ptr_ne(device_code = json_string_value(json_object_get(j_resp, "device_code")), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
@@ -722,7 +722,7 @@ START_TEST(test_oidc_device_authorization_device_verification_auth_slow_down)
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
   ck_assert_ptr_ne(code = json_string_value(json_object_get(j_resp, "user_code")), NULL);
   ck_assert_ptr_ne(device_code = json_string_value(json_object_get(j_resp, "device_code")), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
@@ -784,7 +784,7 @@ START_TEST(test_oidc_device_authorization_device_verification_device_code_invali
   ck_assert_ptr_ne(json_object_get(j_resp, "device_code"), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
   ck_assert_ptr_ne(code = json_string_value(json_object_get(j_resp, "user_code")), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
@@ -855,7 +855,7 @@ START_TEST(test_oidc_device_authorization_device_verification_client_invalid)
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
   ck_assert_ptr_ne(code = json_string_value(json_object_get(j_resp, "user_code")), NULL);
   ck_assert_ptr_ne(device_code = json_string_value(json_object_get(j_resp, "device_code")), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
@@ -924,7 +924,7 @@ START_TEST(test_oidc_device_authorization_device_verification_client_secret_inva
   ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
   ck_assert_ptr_ne(code = json_string_value(json_object_get(j_resp, "user_code")), NULL);
   ck_assert_ptr_ne(device_code = json_string_value(json_object_get(j_resp, "device_code")), NULL);
-  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/oidc_device/device");
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
   ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
   ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
