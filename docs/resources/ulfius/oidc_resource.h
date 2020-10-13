@@ -45,6 +45,7 @@
 #define HEADER_RESPONSE      "WWW-Authenticate"
 #define HEADER_AUTHORIZATION "Authorization"
 #define BODY_URL_PARAMETER   "access_token"
+#define HEADER_DPOP          "DPoP"
 
 struct _oidc_resource_config {
   int       method;
@@ -65,3 +66,8 @@ struct _oidc_resource_config {
  * 
  */
 int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+/**
+ * Verifies if a DPoP header exists and if it does, verifies that it's a valid DPoP header
+ */
+json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, const char * htu, time_t max_iat, const char * jkt);

@@ -214,7 +214,7 @@ int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request
             o_free(response_value);
           } else {
             res = U_CALLBACK_CONTINUE;
-            response->shared_data = (void*)json_pack("{sssO}", "sub", json_string_value(json_object_get(json_object_get(j_access_token, "grants"), "sub")), "scope", json_object_get(j_res_scope, "scope"));
+            response->shared_data = (void*)json_pack("{sssOsO*}", "sub", json_string_value(json_object_get(json_object_get(j_access_token, "grants"), "sub")), "scope", json_object_get(j_res_scope, "scope"), "jkt", json_object_get(json_object_get(json_object_get(j_access_token, "grants"), "cnf"), "jkt"));
             if (json_object_get(json_object_get(j_access_token, "grants"), "aud") != NULL) {
               json_object_set((void*)response->shared_data, "aud", json_object_get(json_object_get(j_access_token, "grants"), "aud"));
             }
@@ -251,4 +251,115 @@ int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request
     }
   }
   return res;
+}
+
+/**
+ * Parse the DPoP header and extract its jkt value if the DPoP is valid
+ */
+json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, const char * htu, time_t max_iat, const char * jkt) {
+  json_t * j_return = NULL, * j_header = NULL, * j_claims = NULL;
+  const char * dpop_header;
+  jwt_t * dpop_jwt = NULL;
+  jwa_alg alg;
+  jwk_t * jwk_header = NULL;
+  char * jkt_from_token = NULL;
+  time_t now;
+  
+  if ((dpop_header = u_map_get_case(request->map_header, HEADER_DPOP)) != NULL) {
+    if (r_jwt_init(&dpop_jwt) == RHN_OK) {
+      if (r_jwt_parse(dpop_jwt, dpop_header, R_FLAG_IGNORE_REMOTE) == RHN_OK) {
+        if (r_jwt_verify_signature(dpop_jwt, NULL, R_FLAG_IGNORE_REMOTE) == RHN_OK) {
+          do {
+            if (0 != o_strcmp("dpop+jwt", r_jwt_get_header_str_value(dpop_jwt, "typ"))) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "verify_dpop_proof - Invalid typ");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+              break;
+            }
+            if ((alg = r_jwt_get_sign_alg(dpop_jwt)) != R_JWA_ALG_RS256 && alg != R_JWA_ALG_RS384 && alg != R_JWA_ALG_RS512 &&
+                alg != R_JWA_ALG_ES256 && alg != R_JWA_ALG_ES384 && alg != R_JWA_ALG_ES512 && alg != R_JWA_ALG_EDDSA && alg != R_JWA_ALG_ES256K) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "verify_dpop_proof - Invalid sign_alg");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+              break;
+            }
+            if ((j_header = r_jwt_get_full_header_json_t(dpop_jwt)) == NULL) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error r_jwt_get_full_header_json_t");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+              break;
+            }
+            if ((j_claims = r_jwt_get_full_claims_json_t(dpop_jwt)) == NULL) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error r_jwt_get_full_claims_json_t");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+              break;
+            }
+            if (json_object_get(j_header, "x5c") != NULL || json_object_get(j_header, "x5u") != NULL) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "verify_dpop_proof - Invalid header, x5c or x5u present");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+              break;
+            }
+            if (r_jwk_init(&jwk_header) != RHN_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error r_jwk_init");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+              break;
+            }
+            if (r_jwk_import_from_json_t(jwk_header, json_object_get(j_header, "jwk")) != RHN_OK) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "verify_dpop_proof - Invalid jwk property in header");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+              break;
+            }
+            if (!o_strlen(r_jwt_get_claim_str_value(dpop_jwt, "jti"))) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "verify_dpop_proof - Invalid jti");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+              break;
+            }
+            if (0 != o_strcmp(htm, r_jwt_get_claim_str_value(dpop_jwt, "htm"))) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "verify_dpop_proof - Invalid htm");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+              break;
+            }
+            if (0 != o_strcmp(htu, r_jwt_get_claim_str_value(dpop_jwt, "htu"))) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "verify_dpop_proof - Invalid htu");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+              break;
+            }
+            time(&now);
+            if ((time_t)r_jwt_get_claim_int_value(dpop_jwt, "iat") > now || ((time_t)r_jwt_get_claim_int_value(dpop_jwt, "iat"))+max_iat < now) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "verify_dpop_proof - Invalid iat");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+              break;
+            }
+            if ((jkt_from_token = r_jwk_thumbprint(jwk_header, R_JWK_THUMB_SHA256, R_FLAG_IGNORE_REMOTE)) == NULL) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error r_jwk_thumbprint");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+              break;
+            }
+            if (0 != o_strcmp(jkt, jkt_from_token)) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "verify_dpop_proof - jkt value doesn't match");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+              break;
+            }
+          } while (0);
+          if (j_return == NULL) {
+            j_return = json_pack("{sisO*sO*}", "result", G_TOKEN_OK, "header", j_header, "claims", j_claims);
+          }
+          json_decref(j_header);
+          json_decref(j_claims);
+          r_jwk_free(jwk_header);
+          o_free(jkt_from_token);
+        } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "verify_dpop_proof - Invalid signature");
+          j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_REQUEST);
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "verify_dpop_proof - Invalid DPoP token");
+        j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error r_jwt_init");
+      j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INTERNAL);
+    }
+    r_jwt_free(dpop_jwt);
+  } else {
+    j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+  }
+  return j_return;
 }
