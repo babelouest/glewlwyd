@@ -12437,7 +12437,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
                               "response",
                                 "attestationObject", att_obj_ser_enc, att_obj_ser_enc_len,
                                 "clientDataJSON", client_data_json_enc, client_data_json_enc_len);
-  j_error = json_string("Invalid signature");
+  j_error = json_string("response invalid");
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_credential, NULL, 400, j_error, NULL, NULL), 1);
 
   /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
