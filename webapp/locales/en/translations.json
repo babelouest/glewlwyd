@@ -935,6 +935,8 @@
     "confirm-delete-api-key-title": "Disable an API key",
     "confirm-delete-api-key": "Are you sure you want to disable this API key?",
     "success-api-delete-api-key": "API key disabled",
+    "api-key-example-description": "To use an API key, you must set it in a header 'Authorization' with the prefix value 'token' (the prefix is case sensitive)",
+    "api-key-example": "curl 'http://localhost:4593/api/user' -H 'Authorization: token XJcv1MRnK33EHAedPGELl0yXx2W6vUPu'",
     "mod-glwd-oauth-dpop-title": "OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) (Draft 01)",
     "mod-glwd-oauth-dpop-allowed": "Allow DPoP",
     "mod-glwd-oauth-dpop-iat-duration": "DPoP Token iat claim maximum duration (seconds)",

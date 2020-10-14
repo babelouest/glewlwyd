@@ -935,6 +935,8 @@
     "confirm-delete-api-key-title": "Désactivation de clé d'API",
     "confirm-delete-api-key": "Êtes-vous sûr de vouloir désactiver cette clé d'API?",
     "success-api-delete-api-key": "Clé d'API désactivée",
+    "api-key-example-description": "Pour utiliser une clé d'API, vous devez l'utiliser dans un header 'Authorization' avec le préfixe de valeur 'token' (le préfixe est sensible à la casse)",
+    "api-key-example": "curl 'http://localhost:4593/api/user' -H 'Authorization: token XJcv1MRnK33EHAedPGELl0yXx2W6vUPu'",
     "mod-glwd-oauth-dpop-title": "OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) (Draft 01)",
     "mod-glwd-oauth-dpop-allowed": "Autoriser DPoP",
     "mod-glwd-oauth-dpop-iat-duration": "Durée maximum du champ iat dans le token DPoP (secondes)",
