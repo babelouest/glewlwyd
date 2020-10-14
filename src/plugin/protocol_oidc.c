@@ -975,13 +975,13 @@ static int check_dpop_jti(struct _oidc_config * config, const char * jti, const 
   if (res == H_OK) {
     if (!json_array_size(j_result)) {
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        iat_clause = msprintf("FROM_UNIXTIME(%"JSON_INTEGER_FORMAT")", (iat));
+        iat_clause = msprintf("FROM_UNIXTIME(%"JSON_INTEGER_FORMAT")", iat);
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
         iat_clause = msprintf("TO_TIMESTAMP(%"JSON_INTEGER_FORMAT")", iat);
       } else { // HOEL_DB_TYPE_SQLITE
-        iat_clause = msprintf("%"JSON_INTEGER_FORMAT"", (iat));
+        iat_clause = msprintf("%"JSON_INTEGER_FORMAT, iat);
       }
-      j_query = json_pack("{sss{sssssssssssss{ssss}}}",
+      j_query = json_pack("{sss{sssssssssssss{ss}}}",
                           "table",
                           GLEWLWYD_PLUGIN_OIDC_TABLE_DPOP,
                           "values",
@@ -998,9 +998,7 @@ static int check_dpop_jti(struct _oidc_config * config, const char * jti, const 
                             "gpod_htu",
                             htu,
                             "gpod_iat",
-                              "operator",
                               "raw",
-                              "value",
                               iat_clause);
       o_free(iat_clause);
       res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
