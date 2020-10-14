@@ -130,7 +130,7 @@ START_TEST(test_oidc_dpop_get_at_with_jkt_invalid)
   ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
   srand(time(NULL)+1);
-  snprintf(jti, 16, "%u", rand());
+  snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
   
   // No jti
@@ -482,7 +482,7 @@ START_TEST(test_oidc_dpop_get_at_with_jkt_jti_replay)
   ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
   srand(time(NULL)+2);
-  snprintf(jti, 16, "%u", rand());
+  snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
@@ -580,7 +580,7 @@ START_TEST(test_oidc_dpop_get_at_with_jkt)
   ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
   srand(time(NULL)+3);
-  snprintf(jti, 16, "%u", rand());
+  snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
@@ -650,7 +650,7 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt_invalid)
   ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
   srand(time(NULL)+4);
-  snprintf(jti, 16, "%u", rand());
+  snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
@@ -901,7 +901,7 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt_invalid)
   ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str_2, NULL), RHN_OK);
   srand(time(NULL)+5);
-  snprintf(jti, 16, "%u", rand());
+  snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
@@ -958,7 +958,7 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt)
   ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
   srand(time(NULL)+5);
-  snprintf(jti, 16, "%u", rand());
+  snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
@@ -988,7 +988,7 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt)
   
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
-  snprintf(jti, 16, "%u", rand());
+  snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "GET"), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/userinfo"), RHN_OK);
@@ -1044,7 +1044,7 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt_jti_replay)
   ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
   srand(time(NULL)+6);
-  snprintf(jti, 16, "%u", rand());
+  snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
@@ -1074,7 +1074,7 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt_jti_replay)
   
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
-  snprintf(jti, 16, "%u", rand());
+  snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "GET"), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/userinfo"), RHN_OK);
@@ -1181,8 +1181,8 @@ START_TEST(test_oidc_dpop_device_verification_valid)
   ck_assert_ptr_ne(NULL, j_dpop_pub = r_jwk_export_to_json_t(jwk_dpop_pub));
   ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
-  srand(time(NULL)+5);
-  snprintf(jti, 16, "%u", rand());
+  srand(time(NULL)+7);
+  snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
@@ -1260,8 +1260,8 @@ START_TEST(test_oidc_dpop_refresh_token_management_with_jkt)
   ck_assert_ptr_ne(NULL, j_dpop_pub = r_jwk_export_to_json_t(jwk_dpop_pub));
   ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
-  srand(time(NULL)+7);
-  snprintf(jti, 16, "%u", rand());
+  srand(time(NULL)+8);
+  snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
@@ -1291,7 +1291,7 @@ START_TEST(test_oidc_dpop_refresh_token_management_with_jkt)
   
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
-  snprintf(jti, 16, "%u", rand());
+  snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "DELETE"), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/token/hash"), RHN_OK);
@@ -1311,7 +1311,7 @@ START_TEST(test_oidc_dpop_refresh_token_management_with_jkt)
   
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
-  snprintf(jti, 16, "%u", rand());
+  snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "GET"), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/token"), RHN_OK);
@@ -1409,7 +1409,6 @@ int main(int argc, char *argv[])
   json_t * j_body;
   char * cookie;
   
-  srand(time(NULL));
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
   
   ulfius_init_request(&admin_req);
