@@ -55,7 +55,7 @@ CREATE TABLE gpo_refresh_token (
   gpoc_id INTEGER DEFAULT NULL,
   gpor_username TEXT NOT NULL,
   gpor_client_id TEXT,
-  gpoc_resource TEXT,
+  gpor_resource TEXT,
   gpor_claims_request TEXT DEFAULT NULL,
   gpor_issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpor_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
