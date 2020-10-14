@@ -180,6 +180,8 @@ class APIKey extends Component {
           </tr>
         </tbody>
       </table>
+      <p>{i18next.t("admin.api-key-example-description")}</p>
+      <code>{i18next.t("admin.api-key-example")}</code>
     </div>
 		);
   }
