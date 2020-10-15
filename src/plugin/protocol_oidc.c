@@ -5829,6 +5829,9 @@ static int generate_discovery_content(struct _oidc_config * config) {
         json_array_append_new(json_object_get(j_discovery, "token_endpoint_auth_methods_supported"), json_string("private_key_jwt"));
       }
     }
+    if (json_object_get(config->j_params, "oauth-dpop-allowed") == json_true()) {
+      json_object_set(j_discovery, "dpop_signing_alg_values_supported", j_sign_pubkey);
+    }
     if (json_object_get(config->j_params, "allowed-scope") != NULL && json_array_size(json_object_get(config->j_params, "allowed-scope"))) {
       json_object_set(j_discovery, "scopes_supported", json_object_get(config->j_params, "allowed-scope"));
     } else {
