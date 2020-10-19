@@ -3391,14 +3391,14 @@ Setup current OTP setting as HOTP
 }
 ```
 
-Setup current OTP setting as HT
+Setup current OTP setting as TOTP
 ```javascript
 {
   username: string, mandatory
   scheme_type: "otp"
   scheme_name: string: mandatory
   value: {
-    type: "HOTP"
+    type: "TOTP"
     secret: base32 string, mandatory
     time_step_size: non zero positive integer, optional
   }
