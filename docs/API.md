@@ -3392,6 +3392,7 @@ Setup current OTP setting as HOTP
 ```
 
 Setup current OTP setting as TOTP
+
 ```javascript
 {
   username: string, mandatory
