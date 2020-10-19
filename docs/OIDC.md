@@ -72,18 +72,21 @@ An access token payload has the following JSON format:
 
 ```Javascript
 {
-  "iss": "https://glewlwyd.tld" // Issuer
-  "sub": "4321zyxdcba",         // subject that was provided this access_token
-  "aud": "client1",             // client_id the access_token was provided to
-  "client_id": "client1",       // client_id the access_token was provided to
-  "jti": "abcdxyz1234",         // token identifier
-  "type": "access_token",       // Hardcoded
-  "iat": 1466556840,            // Issued at time in Epoch Unix format
-  "exp": 1466558840,            // Expiration of the token in Epoch Unix format
-  "nbf": 1466558840,            // Not before time in Epoch Unix format
-  "scope":"scope1 g_profile"    // scopes granted to this access token in a string separated by spaces
-  "claims": {}                  // claims asked by the client
-  "cnf": {"x5t#S256": xxx"}     // identifier of the certificate used to sign this JWT
+  "iss": "https://glewlwyd.tld/", // Issuer
+  "sub": "4321zyxdcba",           // subject that was provided this access_token
+  "aud": "https://resource.tld/", // The resource this access_token is intended to, or the scope list
+  "client_id": "client1",         // client_id the access_token was provided to
+  "jti": "abcdxyz1234",           // token identifier
+  "type": "access_token",         // Hardcoded
+  "iat": 1466556840,              // Issued at time in Epoch Unix format
+  "exp": 1466558840,              // Expiration of the token in Epoch Unix format
+  "nbf": 1466558840,              // Not before time in Epoch Unix format
+  "scope":"scope1 g_profile",     // scopes granted to this access token in a string separated by spaces
+  "claims": {},                   // claims asked by the client
+  "cnf": {
+    "x5t#S256": xxx",             // identifier of the certificate used to sign this JWT
+    "jkt": "yyy"                  // thumbprint of the client public key if DPoP is used
+  }       
 }
 ```
 
