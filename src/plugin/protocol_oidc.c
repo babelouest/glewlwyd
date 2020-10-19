@@ -4165,7 +4165,7 @@ static json_t * get_token_metadata(struct _oidc_config * config, const char * to
                             "gpoa_id",
                             "gpoa_username AS username",
                             "gpoa_client_id AS client_id",
-                            "gpoa_client_id AS aud",
+                            "gpoa_resource AS aud",
                             SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpoa_issued_at) AS iat", "gpoa_issued_at AS iat", "EXTRACT(EPOCH FROM gpoa_issued_at)::integer AS iat"),
                             SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpoa_issued_at) AS nbf", "gpoa_issued_at AS nbf", "EXTRACT(EPOCH FROM gpoa_issued_at)::integer AS nbf"),
                             "gpoa_jti as jti",
@@ -4191,7 +4191,6 @@ static json_t * get_token_metadata(struct _oidc_config * config, const char * to
             json_object_del(json_array_get(j_result, 0), "gpoa_enabled");
             if (json_object_get(json_array_get(j_result, 0), "client_id") == json_null()) {
               json_object_del(json_array_get(j_result, 0), "client_id");
-              json_object_del(json_array_get(j_result, 0), "aud");
               sub = get_sub(config, json_string_value(json_object_get(json_array_get(j_result, 0), "username")), NULL);
             } else if (json_object_get(json_array_get(j_result, 0), "username") != json_null()) {
               j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get(json_array_get(j_result, 0), "client_id")));
@@ -6149,6 +6148,7 @@ static int callback_introspection(const struct _u_request * request, struct _u_r
   time_t now;
   const char * sign_kid = json_string_value(json_object_get(config->j_params, "client-sign_kid-parameter"));
   char * token = NULL, * token_out;
+  int jwt_ok;
   
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
@@ -6156,14 +6156,32 @@ static int callback_introspection(const struct _u_request * request, struct _u_r
 
   j_result = get_token_metadata(config, u_map_get(request->map_post_body, "token"), u_map_get(request->map_post_body, "token_type_hint"), get_client_id_for_introspection(config, request));
   if (check_result_value(j_result, G_OK)) {
-    if (0 == o_strcmp("jwt", u_map_get(request->map_url, "format")) || 0 == o_strcmp("jwt", u_map_get(request->map_post_body, "format")) || 0 == o_strcasecmp("application/jwt", u_map_get_case(request->map_header, "Accept"))) {
+    if (0 == o_strcmp("jwt", u_map_get(request->map_url, "format")) || 0 == o_strcmp("jwt", u_map_get(request->map_post_body, "format")) || 0 == o_strcasecmp("application/jwt", u_map_get_case(request->map_header, "Accept")) || 0 == o_strcasecmp("application/token-introspection+jwt", u_map_get_case(request->map_header, "Accept"))) {
       if (0 == o_strcmp("access_token", json_string_value(json_object_get(json_object_get(j_result, "token"), "token_type")))) {
         if ((jwt = r_jwt_copy(config->jwt_sign)) != NULL) {
           time(&now);
+          r_jwt_set_claim_json_t_value(jwt, "iss", json_object_get(config->j_params, "iss"));
           json_object_set(json_object_get(j_result, "token"), "iss", json_object_get(config->j_params, "iss"));
-          json_object_set_new(json_object_get(j_result, "token"), "iat", json_integer(now));
-          if (r_jwt_set_full_claims_json_t(jwt, json_object_get(j_result, "token")) == RHN_OK) {
+          r_jwt_set_claim_json_t_value(jwt, "aud", json_object_get(json_object_get(j_result, "token"), "aud"));
+          r_jwt_set_claim_int_value(jwt, "iat", now);
+          if (0 == o_strcasecmp("application/token-introspection+jwt", u_map_get_case(request->map_header, "Accept"))) {
+            r_jwt_set_header_str_value(jwt, "typ", "token-introspection+jwt");
+            u_map_put(response->map_header, "Content-Type", "application/token-introspection+jwt");
+            if (r_jwt_set_claim_json_t_value(jwt, "token_introspection", json_object_get(j_result, "token")) == RHN_OK) {
+              jwt_ok = 1;
+            } else {
+              jwt_ok = 0;
+            }
+          } else {
             r_jwt_set_header_str_value(jwt, "typ", "introspection+jwt");
+            u_map_put(response->map_header, "Content-Type", "application/jwt");
+            if (r_jwt_set_full_claims_json_t(jwt, json_object_get(j_result, "token")) == RHN_OK) {
+              jwt_ok = 1;
+            } else {
+              jwt_ok = 0;
+            }
+          }
+          if (jwt_ok) {
             if (json_string_length(json_object_get(json_object_get(j_result, "client"), sign_kid))) {
               jwk = r_jwks_get_by_kid(config->jwt_sign->jwks_privkey_sign, json_string_value(json_object_get(json_object_get(j_result, "client"), sign_kid)));
             } else {
@@ -6174,7 +6192,6 @@ static int callback_introspection(const struct _u_request * request, struct _u_r
             if (token != NULL) {
               if ((token_out = encrypt_token_if_required(config, token, json_object_get(j_result, "client"), GLEWLWYD_TOKEN_TYPE_INTROSPECTION)) != NULL) {
                 ulfius_set_string_body_response(response, 200, token_out);
-                u_map_put(response->map_header, "Content-Type", "application/jwt");
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "callback_introspection oidc - Error encrypt_token_if_required");
                 response->status = 500;
@@ -6186,7 +6203,7 @@ static int callback_introspection(const struct _u_request * request, struct _u_r
             }
             o_free(token);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "callback_introspection - Error r_jwt_set_full_claims_json_t");
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_introspection - Error setting jwt claims");
             response->status = 500;
           }
         } else {
