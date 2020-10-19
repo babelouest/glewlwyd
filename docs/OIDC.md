@@ -34,6 +34,7 @@ The following OpenID Connect and OAuth2 functionalities are currently supported:
 - [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252), see [Native Apps Guidelines](#native-apps-guidelines)
 - [OAuth 2.0 Device Grant](https://tools.ietf.org/html/rfc8628)
 - [OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) Draft 01](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-dpop-01)
+- [JWT Response for OAuth Token Introspection Draft 10](https://tools.ietf.org/html/draft-ietf-oauth-jwt-introspection-response-10)
 
 The following OpenID Connect functionalities are not supported yet:
 
@@ -1221,7 +1222,7 @@ format=jwt: send the result in JSON Web Token (JWT) format
 
 #### Header parameters
 
-Optional
+By default, the response format is `Application/JSON`, but the client can request a JWT response. The JWT will be signed with the server's private key, and can be encrypted using the client's secret or public key.
 
 ```
 Accept: application/jwt - send the result in JSON Web Token (JWT) format
@@ -1505,6 +1506,15 @@ token: text, the token to introspect, required
 token_type_hint: text, optional, values available are 'access_token', 'refresh_token' or 'id_token'
 ```
 
+#### Header parameters
+
+By default, the response format is `Application/JSON`, but the client can request a JWT response, either using the default JSON format as the JWT claim, or using the [JWT Response for OAuth Token Introspection Draft 10](https://tools.ietf.org/html/draft-ietf-oauth-jwt-introspection-response-10) format. The JWT will be signed with the server's private key, and can be encrypted using the client's secret or public key.
+
+```
+Accept: application/jwt - send the result in JSON Web Token (JWT) format
+Accept: Accept: application/token-introspection+jwt - send the result in JWT Response for OAuth Token Introspection format
+```
+
 ##### Result
 
 ##### Success response
@@ -1577,7 +1587,7 @@ Invalid parameters
 
 ##### URL
 
-`/api/glwd/introspect`
+`/api/glwd/register`
 
 ##### Method
 
