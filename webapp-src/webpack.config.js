@@ -3,7 +3,7 @@
  * 
  * webpack configuration for build in production
  * 
- * Copyright 2019 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2019-2020 Nicolas Mora <mail@babelouest.org>
  * 
  */
 
@@ -53,16 +53,17 @@ module.exports = {
 			test: /\.js($|\?)/i,
 			sourceMap: true,
 			uglifyOptions: {
-			mangle: {
-				keep_fnames: true
-			},
-			warnings: false,
-			output: {
-				beautify: false
-			}
+        mangle: {
+          keep_fnames: true
+        },
+        warnings: false,
+        output: {
+          beautify: false
+        }
 			}
 		})
 	],
+  
 	optimization: {
 		splitChunks: {
 			chunks: 'all'

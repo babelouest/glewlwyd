@@ -1,11 +1,9 @@
 /**
  * webpack.polyfill.config.js
  * 
- * webpack configuration for build in production
- * with polyfill plugin so old javascript engine (i.e. < es6)
- * can run the build app
+ * webpack configuration for build in production compatible with old javascript engine (i.e. < es6)
  * 
- * Copyright 2019 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2019-2020 Nicolas Mora <mail@babelouest.org>
  * 
  */
 
@@ -16,10 +14,10 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 module.exports = {
 	mode: 'production',
 	entry: {
-		admin: ["@babel/polyfill", path.resolve(__dirname, 'src/admin.js')],
-		login: ["@babel/polyfill", path.resolve(__dirname, 'src/login.js')],
-		profile: ["@babel/polyfill", path.resolve(__dirname, 'src/profile.js')],
-		callback: ["@babel/polyfill", path.resolve(__dirname, 'src/callback.js')]
+		admin: path.resolve(__dirname, 'src/admin.js'),
+		login: path.resolve(__dirname, 'src/login.js'),
+		profile: path.resolve(__dirname, 'src/profile.js'),
+		callback: path.resolve(__dirname, 'src/callback.js')
 	},
 	output: {
 		path: path.resolve(__dirname, 'output'),
@@ -35,7 +33,16 @@ module.exports = {
 				exclude: [ path.resolve(__dirname, "node_modules") ],
 				loader: 'babel-loader',
 				options: {
-					presets: ['@babel/env','@babel/react']
+          presets: [
+            [
+              '@babel/preset-env', 
+              {
+                "useBuiltIns": "usage",
+                "corejs": 3
+              }
+            ],
+            "@babel/react"
+          ]
 				}
 			},
 			{
@@ -55,16 +62,17 @@ module.exports = {
 			test: /\.js($|\?)/i,
 			sourceMap: true,
 			uglifyOptions: {
-			mangle: {
-				keep_fnames: true
-			},
-			warnings: false,
-			output: {
-				beautify: false
-			}
+        mangle: {
+          keep_fnames: true
+        },
+        warnings: false,
+        output: {
+          beautify: false
+        }
 			}
 		})
 	],
+  
 	optimization: {
 		splitChunks: {
 			chunks: 'all'
