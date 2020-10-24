@@ -35,6 +35,7 @@ The following OpenID Connect and OAuth2 functionalities are currently supported:
 - [OAuth 2.0 Device Grant](https://tools.ietf.org/html/rfc8628)
 - [OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) Draft 01](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-dpop-01)
 - [JWT Response for OAuth Token Introspection Draft 10](https://tools.ietf.org/html/draft-ietf-oauth-jwt-introspection-response-10)
+- [Resource Indicators for OAuth 2.0](https://tools.ietf.org/html/rfc8707)
 
 The following OpenID Connect functionalities are not supported yet:
 
@@ -571,11 +572,11 @@ Enable this feature if you want your oauth2 instance to enable endpoints `/intro
 
 ### Allow for the token client
 
-Enable this feature if your want to allow clients to use endpoints `/introspect` and `/revoke` using their client_id and secret as HTTP Basic Auth. The clients will be allowed to introspect and revoke only the tokens that were issued for them.
+Enable this feature if your want to allow clients to use endpoints `/introspect` and `/revoke` using their client_id and secret as HTTP Basic Auth. The client will be allowed to introspect and revoke tokens if it has the auhtorization type `client_credentials`.
 
 ### Required scopes in the access token
 
-Add on or more scopes if you want to allow to use endpoints `/introspect` and `/revoke` using valid access tokens to authenticate the requests. The access tokens must have the scopes required in their payload to be valid.
+Add one or more scopes if you want to allow to use endpoints `/introspect` and `/revoke` using valid access tokens to authenticate the requests. The access tokens must have the scopes required in their payload to be valid.
 
 ## Clients registration
 
@@ -667,6 +668,30 @@ If this is set to true, the DPoP header will be parsed and validated when enable
 ### DPoP Token iat claim maximum duration (seconds)
 
 Maximum duration authorized for a DPoP iat property.
+
+## Resource Indicators (RFC 8707)
+
+### Allow resource indicators
+
+If this is set to true, clients will be allowed to use the resource parameter during `/auth` or `/token` requests. If this is set to false, the resource parameter will be ignored, and the `aud` claim will be set to the scope list. If there's no resource parameter, the `aud` claim will be set to the scope list as well.
+
+### Allow to change resource indicator on access token refresh
+
+If this is set to true, client will be allowed to change the resource parameter while refreshing an access token.
+
+### Resource list by scope
+
+For all scopes, you can specify a list of allowed resources available.
+
+When the client is claiming multiple scopes, the given resource parameter must match at least one of the resource of one of the scopes.
+
+### Client resource list property
+
+The client property that will store the resources allowed for this client
+
+### And/Or
+
+Configure if the claimed resource must be available in one of the clained scopes **and/or** in the client resource list available.
 
 ## Native Apps Guidelines
 
