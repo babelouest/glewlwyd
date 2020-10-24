@@ -796,6 +796,7 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_oidc_code_replay
               glewlwyd_oidc_scheme_required
               glewlwyd_oidc_dpop
+              glewlwyd_oidc_resource
 							)
 			set(TESTS_SSL ${TESTS_SSL} glewlwyd_oidc_client_certificate)
 		endif ()
