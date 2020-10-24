@@ -213,6 +213,13 @@
       "edit": true,
       "forceShow": true,
       "label": "admin.client-enabled"
+    },{
+      "name": "resource",
+      "edit": true,
+      "forceShow": true,
+      "type": "textarea",
+      "list": true,
+      "label": "admin.client-resource"
     }]
   },
   "defaultScheme": "",

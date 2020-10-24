@@ -83,6 +83,11 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["client-cert-self-signed-allowed"]!==undefined?"":(props.mod.parameters["client-cert-self-signed-allowed"] = false);
     props.mod.parameters["oauth-dpop-allowed"]!==undefined?"":(props.mod.parameters["oauth-dpop-allowed"] = false);
     props.mod.parameters["oauth-dpop-iat-duration"]!==undefined?"":(props.mod.parameters["oauth-dpop-iat-duration"] = 10);
+    props.mod.parameters["resource-allowed"]!==undefined?"":(props.mod.parameters["resource-allowed"] = false);
+    props.mod.parameters["resource-scope"]!==undefined?"":(props.mod.parameters["resource-scope"] = {});
+    props.mod.parameters["resource-client-property"]!==undefined?"":(props.mod.parameters["resource-client-property"] = "");
+    props.mod.parameters["resource-scope-and-client-property"]!==undefined?"":(props.mod.parameters["resource-scope-and-client-property"] = false);
+    props.mod.parameters["resource-change-allowed"]!==undefined?"":(props.mod.parameters["resource-change-allowed"] = false);
 
     this.state = {
       config: props.config,
@@ -90,7 +95,8 @@ class GlwdOIDCParams extends Component {
       role: props.role,
       check: props.check,
       errorList: {},
-      newScopeOverride: false
+      newScopeOverride: false,
+      newResourceScope: false
     };
     
     if (this.state.check) {
@@ -138,6 +144,9 @@ class GlwdOIDCParams extends Component {
     this.deleteAllowedScope = this.deleteAllowedScope.bind(this);
     this.addScope = this.addScope.bind(this);
     this.deleteScope = this.deleteScope.bind(this);
+    this.setResourceScope = this.setResourceScope.bind(this);
+    this.addResourceScope = this.addResourceScope.bind(this);
+    this.changeResourceScopeUrls = this.changeResourceScopeUrls.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -219,6 +228,11 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["client-cert-self-signed-allowed"]!==undefined?"":(nextProps.mod.parameters["client-cert-self-signed-allowed"] = false);
     nextProps.mod.parameters["oauth-dpop-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-dpop-allowed"] = false);
     nextProps.mod.parameters["oauth-dpop-iat-duration"]!==undefined?"":(nextProps.mod.parameters["oauth-dpop-iat-duration"] = 10);
+    nextProps.mod.parameters["resource-allowed"]!==undefined?"":(nextProps.mod.parameters["resource-allowed"] = false);
+    nextProps.mod.parameters["resource-scope"]!==undefined?"":(nextProps.mod.parameters["resource-scope"] = {});
+    nextProps.mod.parameters["resource-client-property"]!==undefined?"":(nextProps.mod.parameters["resource-client-property"] = "");
+    nextProps.mod.parameters["resource-scope-and-client-property"]!==undefined?"":(nextProps.mod.parameters["resource-scope-and-client-property"] = false);
+    nextProps.mod.parameters["resource-change-allowed"]!==undefined?"":(nextProps.mod.parameters["resource-change-allowed"] = false);
     
     this.setState({
       config: nextProps.config,
@@ -575,6 +589,29 @@ class GlwdOIDCParams extends Component {
     this.setState({mod: mod});
   }
   
+  setResourceScope(e, scope) {
+    e.preventDefault();
+    this.setState({newResourceScope: scope});
+  }
+  
+  addResourceScope() {
+    var mod = this.state.mod;
+    mod.parameters["resource-scope"][this.state.newResourceScope] = [];
+    this.setState({mod: mod, newResourceScope: false});
+  }
+  
+  changeResourceScopeUrls(e, scope) {
+    var mod = this.state.mod;
+    mod.parameters["resource-scope"][scope] = e.target.value.split("\n");
+    this.setState({mod: mod, newResourceScope: false});
+  }
+  
+  deleteResourceScope(e, scope) {
+    var mod = this.state.mod;
+    delete(mod.parameters["resource-scope"][scope]);
+    this.setState({mod: mod, newResourceScope: false});
+  }
+  
   checkParameters() {
     var errorList = {}, hasError = false;
     if (!this.state.mod.parameters["iss"]) {
@@ -752,6 +789,48 @@ class GlwdOIDCParams extends Component {
       errorList["oauth-dpop-iat-duration"] = i18next.t("admin.mod-glwd-oauth-dpop-iat-duration-error");
       errorList["oauth-dpop"] = true;
     }
+    if (this.state.mod.parameters["resource-allowed"]) {
+      var nbScopes = 0;
+      Object.keys(this.state.mod.parameters["resource-scope"]).forEach(scope => {
+        nbScopes++;
+        if (!this.state.mod.parameters["resource-scope"][scope].length) {
+          hasError = true;
+          if (!errorList["resource-scope"]) {
+            errorList["resource-scope"] = {};
+          }
+          errorList["resource-scope"][scope] = i18next.t("admin.mod-glwd-resource-scope-empty-error");
+          errorList["resource"] = true;
+        } else {
+          this.state.mod.parameters["resource-scope"][scope].forEach((url, index) => {
+            if (!url.startsWith("https://") && !url.startsWith("http://localhost") && !url.startsWith("http://127.0.0.1") && !url.startsWith("http://[::1]")) {
+              hasError = true;
+              if (!errorList["resource-scope"]) {
+                errorList["resource-scope"] = {};
+              }
+              errorList["resource-scope"][scope] = i18next.t("admin.mod-glwd-resource-scope-url-error");
+              errorList["resource"] = true;
+            } else if (url.indexOf("#") > -1) {
+              hasError = true;
+              if (!errorList["resource-scope"]) {
+                errorList["resource-scope"] = {};
+              }
+              errorList["resource-scope"][scope] = i18next.t("admin.mod-glwd-resource-scope-url-error");
+              errorList["resource"] = true;
+            }
+          });
+        }
+      });
+      if (!nbScopes && !this.state.mod.parameters["resource-client-property"]) {
+        hasError = true;
+        errorList["resource-scope-or-client"] = i18next.t("admin.mod-glwd-resource-scope-or-client-error");
+        errorList["resource"] = true;
+      }
+      if (this.state.mod.parameters["resource-scope-and-client-property"] && (!nbScopes || !this.state.mod.parameters["resource-client-property"])) {
+        hasError = true;
+        errorList["resource-scope-or-client"] = i18next.t("admin.mod-glwd-resource-scope-and-client-error");
+        errorList["resource"] = true;
+      }
+    }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
         messageDispatcher.sendMessage('ModPlugin', {type: "modValid"});
@@ -909,6 +988,7 @@ class GlwdOIDCParams extends Component {
         );
       }
     });
+    
     var allowedScopeList = [];
     this.state.mod.parameters["allowed-scope"].forEach((scope, indexScope) => {
       allowedScopeList.push(
@@ -924,6 +1004,7 @@ class GlwdOIDCParams extends Component {
         );
       }
     });
+    
     var nameScopeList = [];
     this.state.mod.parameters["name-claim-scope"].forEach((scope, indexScope) => {
       nameScopeList.push(
@@ -939,12 +1020,14 @@ class GlwdOIDCParams extends Component {
         );
       }
     });
+    
     var emailScopeList = [];
     this.state.mod.parameters["email-claim-scope"].forEach((scope, indexScope) => {
       emailScopeList.push(
         <a href="#" onClick={(e) => this.deleteEmailScope(e, indexScope)} key={indexScope}><span className="badge badge-primary btn-icon-right">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>
       );
     });
+    
     var scopeScopeListToAdd = [];
     this.state.config.scopes.forEach((scope, indexScope) => {
       if (this.state.mod.parameters["scope-claim-scope"].indexOf(scope.name) === -1) {
@@ -953,6 +1036,7 @@ class GlwdOIDCParams extends Component {
         );
       }
     });
+    
     var scopeScopeList = [];
     this.state.mod.parameters["scope-claim-scope"].forEach((scope, indexScope) => {
       scopeScopeList.push(
@@ -1152,6 +1236,7 @@ class GlwdOIDCParams extends Component {
         })
       }
     });
+    
     this.state.mod.parameters["introspection-revocation-auth-scope"].forEach((scope, index) => {
       if (this.state.mod.parameters["introspection-revocation-allowed"]) {
         defaultScopeIntrospectList.push(<a className="btn-icon-right" href="#" onClick={(e) => this.deleteScope(e, "introspection-revocation-auth-scope", index)} key={index} ><span className="badge badge-primary">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
@@ -1181,6 +1266,7 @@ class GlwdOIDCParams extends Component {
     if (!this.state.mod.parameters["register-client-auth-scope"].length) {
       defaultScopeRegisterAuthList.push(<span key={0} className="badge badge-danger btn-icon-right">{i18next.t("admin.mod-glwd-register-client-auth-scope-open")}</span>);
     }
+    
     this.state.mod.parameters["register-client-auth-scope"].forEach((scope, index) => {
       if (this.state.mod.parameters["register-client-allowed"]) {
         defaultScopeRegisterAuthList.push(<a className="btn-icon-right" href="#" onClick={(e) => this.deleteScope(e, "register-client-auth-scope", index)} key={index} ><span className="badge badge-primary">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
@@ -1224,6 +1310,55 @@ class GlwdOIDCParams extends Component {
         {defaultScopeRegisterDefaultList}
       </div>
     </div>;
+    
+    var resourceScopeAvailable = [];
+    this.state.config.scopes.forEach((scope, index) => {
+      if (this.state.mod.parameters["resource-scope"][scope.name] === undefined) {
+        resourceScopeAvailable.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.setResourceScope(e, scope.name)} disabled={!this.state.mod.parameters["resource-allowed"]}>{scope.name}</a>);
+      }
+    });
+    
+    var resourceScopeJsx =
+    <div className="btn-group" role="group">
+      <button className="btn btn-secondary dropdown-toggle" 
+              type="button" 
+              id="mod-register-scope" 
+              data-toggle="dropdown" 
+              aria-haspopup="true" 
+              aria-expanded="false" 
+              disabled={!this.state.mod.parameters["resource-allowed"] || !resourceScopeAvailable.length}>
+          {this.state.newResourceScope||i18next.t("admin.mod-glwd-scope")}
+        </button>
+      <div className="dropdown-menu" aria-labelledby="mod-register-scope">
+        {resourceScopeAvailable}
+      </div>
+    </div>;
+    
+    var resourceScopeUrls = [];
+    Object.keys(this.state.mod.parameters["resource-scope"]).forEach(scope => {
+      resourceScopeUrls.push(
+        <div className="form-group" key={scope}>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <span className="input-group-text">{scope}
+                <button type="button" className="close btn-icon-right" data-dismiss="alert" aria-label="Close" onClick={(e) => this.deleteResourceScope(e, scope)}>
+                  <span aria-hidden="true">
+                    <i className="fas fa-trash"></i>
+                  </span>
+                </button>
+              </span>
+            </div>
+            <textarea className={this.state.errorList["resource-scope"]&&this.state.errorList["resource-scope"][scope]?"form-control is-invalid":"form-control"} 
+                      id={"mod-resource-scope-urls-"+scope}
+                      onChange={(e) => this.changeResourceScopeUrls(e, scope)} 
+                      placeholder={i18next.t("admin.mod-glwd-resource-scope-urls-ph")} 
+                      value={this.state.mod.parameters["resource-scope"][scope]&&this.state.mod.parameters["resource-scope"][scope].join("\n")}>
+            </textarea>
+          </div>
+          {this.state.errorList["resource-scope"]&&this.state.errorList["resource-scope"][scope]?<span className="error-input">{this.state.errorList["resource-scope"][scope]}</span>:""}
+        </div>
+      );
+    });
 
     return (
       <div>
@@ -2238,6 +2373,88 @@ class GlwdOIDCParams extends Component {
                     <input type="number" min="1" step="1" className="form-control" id="mod-glwd-oauth-dpop-iat-duration" onChange={(e) => this.changeNumberParam(e, "oauth-dpop-iat-duration")} value={this.state.mod.parameters["oauth-dpop-iat-duration"]} placeholder={i18next.t("admin.mod-glwd-oauth-dpop-iat-duration-ph")} disabled={!this.state.mod.parameters["oauth-dpop-allowed"]} />
                   </div>
                   {this.state.errorList["oauth-dpop-iat-duration"]?<span className="error-input">{this.state.errorList["oauth-dpop-iat-duration"]}</span>:""}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionResource">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseResource" aria-expanded="true" aria-controls="collapseResource">
+                  {this.state.errorList["resource"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
+                  {i18next.t("admin.mod-glwd-resource-title")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapseResource" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionResource">
+              <div className="card-body">
+                {this.state.errorList["resource-scope-or-client"]?<span className="error-input">{this.state.errorList["resource-scope-or-client"]}</span>:""}
+                <div className="form-group form-check">
+                  <input type="checkbox" 
+                         className="form-check-input" 
+                         id="mod-glwd-resource-allowed" 
+                         onChange={(e) => this.toggleParam(e, "resource-allowed")} 
+                         checked={this.state.mod.parameters["resource-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-resource-allowed">{i18next.t("admin.mod-glwd-resource-allowed")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox" 
+                         className="form-check-input" 
+                         id="mod-glwd-resource-change-allowed" 
+                         onChange={(e) => this.toggleParam(e, "resource-change-allowed")} 
+                         checked={this.state.mod.parameters["resource-change-allowed"]}
+                         disabled={!this.state.mod.parameters["resource-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-resource-change-allowed">{i18next.t("admin.mod-glwd-resource-change-allowed")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="btn-group" role="group">
+                    {resourceScopeJsx}
+                    <button type="button" className="btn btn-secondary" onClick={this.addResourceScope} title={i18next.t("admin.mod-glwd-resource-scope-add")} disabled={!this.state.newResourceScope || !this.state.mod.parameters["resource-allowed"]}>
+                      <i className="fas fa-plus"></i>
+                    </button>
+                  </div>
+                </div>
+                <div className="form-group form-check">
+                  <label className="form-check-label" htmlFor="mod-glwd-resource-allowed">{i18next.t("admin.mod-glwd-resource-scope")}</label>
+                </div>
+                {resourceScopeUrls}
+                <div className="form-group">
+                  <div className="form-check form-check-inline">
+                    <input className="form-check-input" 
+                           type="radio" 
+                           id="resourceScopeAndClientFalse"
+                           value={this.state.mod.parameters["resource-scope-and-client-property"]}
+                           checked={!this.state.mod.parameters["resource-scope-and-client-property"]}
+                           onChange={(e) => this.toggleParam(e, "resource-scope-and-client-property")}
+                           disabled={!this.state.mod.parameters["resource-allowed"]} />
+                    <label className="form-check-label" htmlFor="resourceScopeAndClientFalse">{i18next.t("admin.mod-glwd-resource-scope-and-client-false")}</label>
+                  </div>
+                  <div className="form-check form-check-inline">
+                    <input className="form-check-input" 
+                           type="radio" 
+                           id="resourceScopeAndClientTrue"
+                           value={this.state.mod.parameters["resource-scope-and-client-property"]}
+                           checked={this.state.mod.parameters["resource-scope-and-client-property"]}
+                           onChange={(e) => this.toggleParam(e, "resource-scope-and-client-property")}
+                           disabled={!this.state.mod.parameters["resource-allowed"]} />
+                    <label className="form-check-label" htmlFor="resourceScopeAndClientTrue">{i18next.t("admin.mod-glwd-resource-scope-and-client-true")}</label>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-resource-client-property">{i18next.t("admin.mod-glwd-resource-client-property")}</label>
+                    </div>
+                    <input type="text" 
+                           className="form-control" 
+                           id="mod-glwd-resource-client-property" 
+                           onChange={(e) => this.changeParam(e, "resource-client-property")} 
+                           value={this.state.mod.parameters["resource-client-property"]} 
+                           placeholder={i18next.t("admin.mod-glwd-resource-client-property-ph")} 
+                           disabled={!this.state.mod.parameters["resource-allowed"]} />
+                  </div>
                 </div>
               </div>
             </div>
