@@ -21,8 +21,6 @@
 #define SCOPE_LIST_PARTIAL "openid scope1"
 #define SCOPE_LIST_MAX_USE "openid scope1 scope2 scope3"
 #define CLIENT "client1_id"
-#define RESOURCE_ENC "https%3A%2F%2Fresource.tld%2F"
-#define RESOURCE "https://resource.tld/"
 
 char * code;
 
@@ -122,7 +120,6 @@ START_TEST(test_oidc_code_ok)
   
   ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
   ck_assert_int_eq(r_jwt_parse(jwt, json_string_value(json_object_get(j_body, "access_token")), 0), RHN_OK);
-  ck_assert_str_eq(RESOURCE, r_jwt_get_claim_str_value(jwt, "aud"));
   r_jwt_free(jwt);
   
   ck_assert_int_eq(split_string(json_string_value(json_object_get(j_body, "id_token")), ".", &id_token_split), 3);
@@ -717,7 +714,7 @@ int main(int argc, char *argv[])
         } else {
           ulfius_init_response(&code_resp);
           user_req.http_verb = strdup("GET");
-          user_req.http_url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&state=xyzabcd&scope=%s&resource=%s", SERVER_URI, SCOPE_LIST, RESOURCE_ENC);
+          user_req.http_url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
           if (ulfius_send_http_request(&user_req, &code_resp) != U_OK) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "Get code error");
           } else if (o_strstr(u_map_get(code_resp.map_header, "Location"), "code=") != NULL) {
