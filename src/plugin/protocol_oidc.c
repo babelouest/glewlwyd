@@ -8363,7 +8363,10 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         }
         if (state == NULL) {
           state = get_state_param(json_string_value(json_object_get(json_object_get(j_request, "request"), "state")));
-		  state_value = json_string_value(json_object_get(json_object_get(j_request, "request"), "state"));
+          state_value = json_string_value(json_object_get(json_object_get(j_request, "request"), "state"));
+        }
+        if (resource == NULL && json_object_get(config->j_params, "resource-allowed") == json_true()) {
+          resource = json_string_value(json_object_get(json_object_get(j_request, "request"), "resource"));
         }
       }
     }
