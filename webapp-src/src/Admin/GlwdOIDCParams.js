@@ -61,6 +61,8 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["register-client-auth-scope"]!==undefined?"":(props.mod.parameters["register-client-auth-scope"] = []);
     props.mod.parameters["register-client-credentials-scope"]!==undefined?"":(props.mod.parameters["register-client-credentials-scope"] = []);
     props.mod.parameters["register-client-management-allowed"]!==undefined?"":(props.mod.parameters["register-client-management-allowed"] = true);
+    props.mod.parameters["register-resource-specify-allowed"]!==undefined?"":(props.mod.parameters["register-resource-specify-allowed"] = false);
+    props.mod.parameters["register-resource-default"]!==undefined?"":(props.mod.parameters["register-resource-default"] = []);
     props.mod.parameters["session-management-allowed"]!==undefined?"":(props.mod.parameters["session-management-allowed"] = false);
     props.mod.parameters["client-pubkey-parameter"]!==undefined?"":(props.mod.parameters["client-pubkey-parameter"] = "");
     props.mod.parameters["client-jwks-parameter"]!==undefined?"":(props.mod.parameters["client-jwks-parameter"] = "jwks");
@@ -206,6 +208,8 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["register-client-auth-scope"]!==undefined?"":(nextProps.mod.parameters["register-client-auth-scope"] = []);
     nextProps.mod.parameters["register-client-credentials-scope"]!==undefined?"":(nextProps.mod.parameters["register-client-credentials-scope"] = []);
     nextProps.mod.parameters["register-client-management-allowed"]!==undefined?"":(nextProps.mod.parameters["register-client-management-allowed"] = true);
+    nextProps.mod.parameters["register-resource-specify-allowed"]!==undefined?"":(nextProps.mod.parameters["register-resource-specify-allowed"] = false);
+    nextProps.mod.parameters["register-resource-default"]!==undefined?"":(nextProps.mod.parameters["register-resource-default"] = []);
     nextProps.mod.parameters["session-management-allowed"]!==undefined?"":(nextProps.mod.parameters["session-management-allowed"] = false);
     nextProps.mod.parameters["client-pubkey-parameter"]!==undefined?"":(nextProps.mod.parameters["client-pubkey-parameter"] = "");
     nextProps.mod.parameters["client-jwks-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks-parameter"] = "jwks");
@@ -603,13 +607,19 @@ class GlwdOIDCParams extends Component {
   changeResourceScopeUrls(e, scope) {
     var mod = this.state.mod;
     mod.parameters["resource-scope"][scope] = e.target.value.split("\n");
-    this.setState({mod: mod, newResourceScope: false});
+    this.setState({mod: mod});
   }
   
   deleteResourceScope(e, scope) {
     var mod = this.state.mod;
     delete(mod.parameters["resource-scope"][scope]);
-    this.setState({mod: mod, newResourceScope: false});
+    this.setState({mod: mod});
+  }
+  
+  changeRegisterResourceDefaultUrls(e) {
+    var mod = this.state.mod;
+    mod.parameters["register-resource-default"] = e.target.value.split("\n");
+    this.setState({mod: mod});
   }
   
   checkParameters() {
@@ -2245,6 +2255,26 @@ class GlwdOIDCParams extends Component {
                 <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-register-client-management-allowed" onChange={(e) => this.toggleParam(e, "register-client-management-allowed")} checked={this.state.mod.parameters["register-client-management-allowed"]} disabled={!this.state.mod.parameters["register-client-allowed"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-register-client-management-allowed">{i18next.t("admin.mod-glwd-register-client-management-allowed")}</label>
+                </div>
+                <hr/>
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-register-resource-specify-allowed" onChange={(e) => this.toggleParam(e, "register-resource-specify-allowed")} checked={this.state.mod.parameters["register-resource-specify-allowed"]} disabled={!this.state.mod.parameters["register-client-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-register-resource-specify-allowed">{i18next.t("admin.mod-glwd-register-resource-specify-allowed")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <span className="input-group-text">{i18next.t("admin.mod-glwd-register-resource-default")}
+                      </span>
+                    </div>
+                    <textarea className="form-control"
+                              id="mod-register-resource-default"
+                              onChange={(e) => this.changeRegisterResourceDefaultUrls(e)}
+                              placeholder={i18next.t("admin.mod-glwd-register-resource-default-ph")}
+                              disabled={!this.state.mod.parameters["register-client-allowed"] || this.state.mod.parameters["register-resource-specify-allowed"]}
+                              value={this.state.mod.parameters["register-resource-default"].join("\n")}>
+                    </textarea>
+                  </div>
                 </div>
               </div>
             </div>
