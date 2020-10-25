@@ -56,6 +56,7 @@
 #define CLIENT_POLICY_URI                       "https://client.tld/policy"
 #define CLIENT_TOS_URI                          "https://client.tld/tos"
 #define CLIENT_JWKS_URI                         "https://client.tld/jwks"
+#define CLIENT_RESOURCE_IDENTIFIER              "https://resource.tld/"
 
 const char jwk_pubkey_ecdsa_str[] = "{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4\","\
                                     "\"y\":\"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM\",\"use\":\"enc\",\"kid\":\"1\"}]}";
@@ -116,6 +117,69 @@ START_TEST(test_oidc_registration_plugin_add_using_auth_scope)
                                   "register-client-allowed", json_true(),
                                   "register-client-auth-scope", PLUGIN_REGISTER_AUTH_SCOPE,
                                   "register-client-credentials-scope", PLUGIN_REGISTER_DEFAULT_SCOPE);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_oidc_registration_plugin_add_using_no_auth_scope_allow_add_resource)
+{
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososos[]s[s]so}}",
+                                "module", PLUGIN_MODULE,
+                                "name", PLUGIN_NAME,
+                                "display_name", PLUGIN_DISPLAY_NAME,
+                                "enabled", json_true(),
+                                "parameters",
+                                  "iss", PLUGIN_ISS,
+                                  "jwt-type", PLUGIN_JWT_TYPE,
+                                  "jwt-key-size", PLUGIN_JWT_KEY_SIZE,
+                                  "key", PLUGIN_KEY,
+                                  "code-duration", PLUGIN_CODE_DURATION,
+                                  "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
+                                  "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
+                                  "allow-non-oidc", json_true(),
+                                  "auth-type-client-enabled", json_true(),
+                                  "auth-type-code-enabled", json_true(),
+                                  "auth-type-implicit-enabled", json_true(),
+                                  "auth-type-password-enabled", json_true(),
+                                  "auth-type-refresh-enabled", json_true(),
+                                  "register-client-allowed", json_true(),
+                                  "register-client-auth-scope",
+                                  "register-client-credentials-scope", PLUGIN_REGISTER_DEFAULT_SCOPE,
+                                  "register-resource-specify-allowed", json_true());
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_oidc_registration_plugin_add_using_no_auth_scope_resource_default)
+{
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososos[]s[s]sos[s]}}",
+                                "module", PLUGIN_MODULE,
+                                "name", PLUGIN_NAME,
+                                "display_name", PLUGIN_DISPLAY_NAME,
+                                "enabled", json_true(),
+                                "parameters",
+                                  "iss", PLUGIN_ISS,
+                                  "jwt-type", PLUGIN_JWT_TYPE,
+                                  "jwt-key-size", PLUGIN_JWT_KEY_SIZE,
+                                  "key", PLUGIN_KEY,
+                                  "code-duration", PLUGIN_CODE_DURATION,
+                                  "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
+                                  "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
+                                  "allow-non-oidc", json_true(),
+                                  "auth-type-client-enabled", json_true(),
+                                  "auth-type-code-enabled", json_true(),
+                                  "auth-type-implicit-enabled", json_true(),
+                                  "auth-type-password-enabled", json_true(),
+                                  "auth-type-refresh-enabled", json_true(),
+                                  "register-client-allowed", json_true(),
+                                  "register-client-auth-scope",
+                                  "register-client-credentials-scope", PLUGIN_REGISTER_DEFAULT_SCOPE,
+                                  "register-resource-specify-allowed", json_false(),
+                                  "register-resource-default", CLIENT_RESOURCE_IDENTIFIER);
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -939,6 +1003,143 @@ START_TEST(test_oidc_registration_auth_register_client_with_valid_credentials)
 }
 END_TEST
 
+START_TEST(test_oidc_registration_no_auth_register_client_specify_resource_invalid)
+{
+  json_t * j_client;
+  
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]sssssssss[s]}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
+                       "response_types",
+                         CLIENT_RESPONSE_TYPE_CODE,
+                         CLIENT_RESPONSE_TYPE_TOKEN,
+                         CLIENT_RESPONSE_TYPE_ID_TOKEN,
+                       "application_type", CLIENT_APP_TYPE_WEB,
+                       "contacts",
+                         CLIENT_CONTACT,
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "resource", "error");
+  ck_assert_ptr_ne(j_client, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+}
+END_TEST
+
+START_TEST(test_oidc_registration_no_auth_register_client_specify_resource_ok)
+{
+  json_t * j_client;
+  
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]sssssssss[s]}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
+                       "response_types",
+                         CLIENT_RESPONSE_TYPE_CODE,
+                         CLIENT_RESPONSE_TYPE_TOKEN,
+                         CLIENT_RESPONSE_TYPE_ID_TOKEN,
+                       "application_type", CLIENT_APP_TYPE_WEB,
+                       "contacts",
+                         CLIENT_CONTACT,
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "resource", CLIENT_RESOURCE_IDENTIFIER);
+  ck_assert_ptr_ne(j_client, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 200, j_client, NULL, NULL), 1);
+  json_decref(j_client);
+}
+END_TEST
+
+START_TEST(test_oidc_registration_no_auth_register_client_specify_resource_ignored)
+{
+  json_t * j_client, * j_result;
+  
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]sssssssss[s]}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
+                       "response_types",
+                         CLIENT_RESPONSE_TYPE_CODE,
+                         CLIENT_RESPONSE_TYPE_TOKEN,
+                         CLIENT_RESPONSE_TYPE_ID_TOKEN,
+                       "application_type", CLIENT_APP_TYPE_WEB,
+                       "contacts",
+                         CLIENT_CONTACT,
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "resource", CLIENT_RESOURCE_IDENTIFIER "ignore_me");
+  j_result = json_pack("{s[s]}", "resource", CLIENT_RESOURCE_IDENTIFIER);
+  
+  ck_assert_ptr_ne(j_client, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 200, j_result, NULL, NULL), 1);
+  json_decref(j_client);
+  json_decref(j_result);
+}
+END_TEST
+
+START_TEST(test_oidc_registration_no_auth_register_client_no_specify_resource)
+{
+  json_t * j_client, * j_result;
+  
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
+                       "response_types",
+                         CLIENT_RESPONSE_TYPE_CODE,
+                         CLIENT_RESPONSE_TYPE_TOKEN,
+                         CLIENT_RESPONSE_TYPE_ID_TOKEN,
+                       "application_type", CLIENT_APP_TYPE_WEB,
+                       "contacts",
+                         CLIENT_CONTACT,
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI);
+  j_result = json_pack("{s[s]}", "resource", CLIENT_RESOURCE_IDENTIFIER);
+  
+  ck_assert_ptr_ne(j_client, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 200, j_result, NULL, NULL), 1);
+  json_decref(j_client);
+  json_decref(j_result);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -958,6 +1159,14 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_registration_auth_register_client_without_credentials);
   tcase_add_test(tc_core, test_oidc_registration_auth_register_client_with_incorrect_credentials);
   tcase_add_test(tc_core, test_oidc_registration_auth_register_client_with_valid_credentials);
+  tcase_add_test(tc_core, test_oidc_revocation_plugin_remove);
+  tcase_add_test(tc_core, test_oidc_registration_plugin_add_using_no_auth_scope_allow_add_resource);
+  tcase_add_test(tc_core, test_oidc_registration_no_auth_register_client_specify_resource_invalid);
+  tcase_add_test(tc_core, test_oidc_registration_no_auth_register_client_specify_resource_ok);
+  tcase_add_test(tc_core, test_oidc_revocation_plugin_remove);
+  tcase_add_test(tc_core, test_oidc_registration_plugin_add_using_no_auth_scope_resource_default);
+  tcase_add_test(tc_core, test_oidc_registration_no_auth_register_client_specify_resource_ignored);
+  tcase_add_test(tc_core, test_oidc_registration_no_auth_register_client_no_specify_resource);
   tcase_add_test(tc_core, test_oidc_revocation_plugin_remove);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
