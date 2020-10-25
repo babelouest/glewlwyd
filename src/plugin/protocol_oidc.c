@@ -759,7 +759,7 @@ static json_t * check_parameters (json_t * j_params) {
       } else {
         json_array_foreach(json_object_get(j_params, "register-client-credentials-scope"), index, j_element) {
           if (!json_string_length(j_element) || json_string_length(j_element) > 128) {
-            json_array_append_new(j_error, json_string("Property 'register-client-credentials-scope' is mandatory and must be a non empty JSON array of strings, maximum 128 characters"));
+            json_array_append_new(j_error, json_string("Property 'register-client-credentials-scope' is optional and must be a JSON array of strings, maximum 128 characters"));
             ret = G_ERROR_PARAM;
           }
         }
@@ -767,6 +767,23 @@ static json_t * check_parameters (json_t * j_params) {
       if (json_object_get(j_params, "register-client-management-allowed") != NULL && !json_is_boolean(json_object_get(j_params, "register-client-management-allowed"))) {
         json_array_append_new(j_error, json_string("Property 'register-client-management-allowed' is optional and must be a boolean"));
         ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "register-resource-specify-allowed") != NULL && !json_is_boolean(json_object_get(j_params, "register-resource-specify-allowed"))) {
+        json_array_append_new(j_error, json_string("Property 'register-resource-specify-allowed' is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "register-resource-specify-allowed") == json_false()) {
+        if (json_object_get(j_params, "register-resource-default") != NULL && !json_is_array(json_object_get(j_params, "register-resource-default"))) {
+          json_array_append_new(j_error, json_string("Property 'register-resource-default' is optional and must be a JSON array of strings"));
+          ret = G_ERROR_PARAM;
+        } else {
+          json_array_foreach(json_object_get(j_params, "register-resource-default"), index, j_element) {
+            if (!json_string_length(j_element)) {
+              json_array_append_new(j_error, json_string("Property 'register-resource-default' is optional and must be a JSON array of strings"));
+              ret = G_ERROR_PARAM;
+            }
+          }
+        }
       }
     }
     if (json_object_get(j_params, "auth-type-device-enabled") == json_true()) {
@@ -4732,6 +4749,12 @@ static json_t * client_register(struct _oidc_config * config, const struct _u_re
   if (!json_array_size(json_object_get(j_registration, "grant_types"))) {
     json_object_set_new(j_registration, "grant_types", json_pack("[s]", "authorization_code"));
   }
+  if (json_object_get(config->j_params, "register-resource-specify-allowed") != json_true()) {
+    json_object_del(j_registration, "resource");
+    if (json_array_size(json_object_get(config->j_params, "register-resource-default"))) {
+      json_object_set(j_registration, "resource", json_object_get(config->j_params, "register-resource-default"));
+    }
+  }
   if (j_return == NULL) {
     j_client = convert_client_registration_to_glewlwyd(j_registration);
     json_object_set(j_client, "enabled", json_true());
@@ -4796,6 +4819,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
   json_t * j_error = NULL, * j_return, * j_element = NULL;
   size_t index = 0;
   jwks_t * jwks = NULL;
+  const char * resource = NULL;
 
   do {
     if (!json_is_object(j_registration)) {
@@ -4933,7 +4957,9 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       if (json_object_get(j_registration, "jwks") != NULL) {
         r_jwks_init(&jwks);
         if (r_jwks_import_from_json_t(jwks, json_object_get(j_registration, "jwks")) != RHN_OK) {
-          j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid JWKS");
+          if (j_error == NULL) {
+            j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid JWKS");
+          }
         }
         r_jwks_free(jwks);
         if (j_error != NULL) {
@@ -4944,6 +4970,27 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
     if (json_object_get(j_registration, "sector_identifier_uri") != NULL && 0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "sector_identifier_uri")), o_strlen("https://"))) {
       j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "sector_identifier_uri is optional and must be an https:// uri");
       break;
+    }
+    if (json_object_get(config->j_params, "register-resource-specify-allowed") == json_true()) {
+      if (json_object_get(j_registration, "resource") != NULL) {
+        if (json_array_size(json_object_get(j_registration, "resource"))) {
+          json_array_foreach(json_object_get(j_registration, "resource"), index, j_element) {
+            resource = json_string_value(j_element);
+            if ((0 != o_strncmp("https://", resource, o_strlen("https://")) && 
+                 0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_1, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_1)) &&
+                 0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_2, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_2)) &&
+                 0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_3, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_3))) ||
+                 o_strchr(resource, '#') != NULL) { // URL with fragment not allowed
+              if (j_error == NULL) {
+                j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "resource is optional and must be an array of urls");
+              }
+            }
+          }
+          if (j_error != NULL) {
+            break;
+          }
+        }
+      }
     }
   } while(0);
   
