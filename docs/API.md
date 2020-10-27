@@ -3461,7 +3461,9 @@ N/A
   username: string, mandatory
   scheme_type: "otp"
   scheme_name: string: mandatory
-  value: string, mandatory
+  value: {
+    value: string, mandatory
+  }
 }
 ```
 
