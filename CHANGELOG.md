@@ -5,6 +5,7 @@
 - Fix `aud` property to fit JWT access token spec
 - Add support for OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) [Draft 01](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-dpop-01)
 - Implement [Resource Indicators for OAuth 2.0](https://tools.ietf.org/html/rfc8707) for OIDC plugin
+- Implement [Content-Encoding](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding) to compress response bodies using `gzip` or `deflate` when relevant
 
 ## 2.4.0
 
