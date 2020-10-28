@@ -37,7 +37,7 @@ Existing users can update their e-mail by sending a confirmation link to the new
 
 Existing users can reset their credentials if their password or authentication schemes are lost or unavailable. Credentials can be reset by different factors:
 - A link sent to the user's e-mail
-- A one-time use secret code
+- A one-time use recovery code
 
 See the [register/update e-mail/reset credentials documentation](docs/REGISTER.md) for more information on the registration, update e-mail or reset credentials features.
 
