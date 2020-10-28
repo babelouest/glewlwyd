@@ -501,7 +501,7 @@ Optional, local path to the webapp files. If not set, the front-end application 
 ### Static files mime types
 
 - Config file variable: `static_files_mime_types`
-- Environment variable: `GLWD_STATIC_FILES_MIME_TYPES` in JSON array format, example `'[{"extension":".html","mime_type":"text/html"}{"extension":".css","mime_type":"text/css"}]'`
+- Environment variable: `GLWD_STATIC_FILES_MIME_TYPES` in JSON array format, example `'[{"extension":".html","mime_type":"text/html","compress":true}{"extension":".css","mime_type":"text/css","compress":true}{"extension":".png","mime_type":"image/png","compress":false}]'`
 
 Optional, list of mime types for the webapp files.
 
