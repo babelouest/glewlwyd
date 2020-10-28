@@ -241,12 +241,12 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
     }
 
     if (split_string(u_map_get_case(request->map_header, U_ACCEPT_HEADER), ",", &accept_list)) {
-      if ((config == NULL || config->allow_gzip) && string_array_has_trimmed_value((const char **)accept_list, U_ACCEPT_GZIP)) {
+      if (config->allow_gzip && string_array_has_trimmed_value((const char **)accept_list, U_ACCEPT_GZIP)) {
         compress_mode = U_COMPRESS_GZIP;
-      } else if ((config == NULL || config->allow_deflate) && string_array_has_trimmed_value((const char **)accept_list, U_ACCEPT_DEFLATE)) {
+      } else if (config->allow_deflate && string_array_has_trimmed_value((const char **)accept_list, U_ACCEPT_DEFLATE)) {
         compress_mode = U_COMPRESS_DEFL;
       }
-      
+
       content_type = u_map_get_case(&config->mime_types, get_filename_ext(file_requested));
       if (content_type == NULL) {
         content_type = u_map_get(&config->mime_types, "*");
