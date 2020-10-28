@@ -54,6 +54,7 @@ static pthread_cond_t  global_handler_close_cond;
  */
 int main (int argc, char ** argv) {
   struct config_elements * config = o_malloc(sizeof(struct config_elements));
+  struct _http_compression_config http_comression_config;
   int res, use_config_file = 0, use_config_env = 0;
   struct sockaddr_in bind_address;
   pthread_t signal_thread_id;
@@ -157,28 +158,18 @@ int main (int argc, char ** argv) {
   config->plugin_module_instance_list = NULL;
   config->admin_scope = o_strdup(GLEWLWYD_DEFAULT_ADMIN_SCOPE);
   config->profile_scope = o_strdup(GLEWLWYD_DEFAULT_PROFILE_SCOPE);
+  http_comression_config.allow_gzip = 1;
+  http_comression_config.allow_deflate = 1;
 
-  config->static_file_config = o_malloc(sizeof(struct _static_file_config));
+  config->static_file_config = o_malloc(sizeof(struct _u_compressed_inmemory_website_config));
   if (config->static_file_config == NULL) {
     fprintf(stderr, "Error allocating resources for config->static_file_config, aborting\n");
     return 2;
-  }
-  config->static_file_config->files_path = NULL;
-  config->static_file_config->url_prefix = NULL;
-  config->static_file_config->redirect_on_404 = NULL;
-  config->static_file_config->map_header = o_malloc(sizeof(struct _u_map));
-  if (config->static_file_config->map_header == NULL) {
-    fprintf(stderr, "init - Error allocating resources for config->static_file_config->map_header, aborting\n");
+  } else if (u_init_compressed_inmemory_website_config(config->static_file_config) != U_OK) {
+    fprintf(stderr, "Error u_init_compressed_inmemory_website_config for config->static_file_config, aborting\n");
     return 2;
   }
-  u_map_init(config->static_file_config->map_header);
-  config->static_file_config->mime_types = o_malloc(sizeof(struct _u_map));
-  if (config->static_file_config->mime_types == NULL) {
-    fprintf(stderr, "init - Error allocating resources for config->static_file_config->mime_types, aborting\n");
-    return 2;
-  }
-  u_map_init(config->static_file_config->mime_types);
-  u_map_put(config->static_file_config->mime_types, "*", "application/octet-stream");
+  u_map_put(&config->static_file_config->mime_types, "*", "application/octet-stream");
   config->instance = o_malloc(sizeof(struct _u_instance));
   if (config->instance == NULL) {
     fprintf(stderr, "Error allocating resources for config->instance, aborting\n");
@@ -319,6 +310,7 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile_list/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_profile_valid, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_delete_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/password", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_password, (void*)config);
@@ -334,10 +326,12 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/auth/grant/:client_id/:scope_list", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_session_scope_grant, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/auth/grant/:client_id/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user_session_scope_grant, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/auth/grant/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/auth/grant/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
 
   // User profile by delegation
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/delegate/:username/profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session_delegate, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/delegate/:username/profile/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/delegate/:username/profile/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/delegate/:username/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/delegate/:username/profile/session", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_session_list, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/delegate/:username/profile/plugin", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_plugin_list, (void*)config);
@@ -349,6 +343,7 @@ int main (int argc, char ** argv) {
   // Modules check session
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/mod/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session_or_api_key, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/mod/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/mod/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
 
   // Get all module types available
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/type/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_module_type_list, (void*)config);
@@ -389,6 +384,7 @@ int main (int argc, char ** argv) {
   // Users CRUD
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/user/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session_or_api_key, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/user/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/user/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_list, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/user/:username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/user/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_user, (void*)config);
@@ -398,6 +394,7 @@ int main (int argc, char ** argv) {
   // Clients CRUD
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/client/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session_or_api_key, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/client/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/client/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/client/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_client_list, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/client/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_client, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/client/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_client, (void*)config);
@@ -407,6 +404,7 @@ int main (int argc, char ** argv) {
   // Scopes CRUD
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/scope/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session_or_api_key, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/scope/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/scope/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/scope/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_scope_list, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/scope/:scope", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_scope, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/scope/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_scope, (void*)config);
@@ -416,14 +414,17 @@ int main (int argc, char ** argv) {
   // API key CRD
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/key/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/key/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/key/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/key/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_api_key_list, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/key/:key_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_api_key, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/key/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_api_key, (void*)config);
-
+  
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/config", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", "/config", NULL, GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
   ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_ZERO, &callback_glewlwyd_options, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "GET", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_FILE, &callback_static_file, (void*)config->static_file_config);
+  ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_FILE, &callback_static_compressed_inmemory_website, (void*)config->static_file_config);
   ulfius_set_default_endpoint(config->instance, &callback_default, (void*)config);
 
   // Set default headers
@@ -533,10 +534,8 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free((*config)->bind_address);
     
     if ((*config)->static_file_config != NULL) {
-      u_map_clean_full((*config)->static_file_config->mime_types);
-      u_map_clean_full((*config)->static_file_config->map_header);
       o_free((*config)->static_file_config->files_path);
-      o_free((*config)->static_file_config->url_prefix);
+      u_clean_compressed_inmemory_website_config((*config)->static_file_config);
       o_free((*config)->static_file_config);
     }
     
@@ -866,7 +865,14 @@ int build_config_from_file(struct config_elements * config) {
         if (mime_type != NULL) {
           if (config_setting_lookup_string(mime_type, "extension", &str_value) == CONFIG_TRUE && 
               config_setting_lookup_string(mime_type, "mime_type", &str_value_2) == CONFIG_TRUE) {
-            u_map_put(config->static_file_config->mime_types, str_value, str_value_2);
+            u_map_put(&config->static_file_config->mime_types, str_value, str_value_2);
+            if (config_setting_lookup_int(mime_type, "compress", &int_value) == CONFIG_TRUE) {
+              if (int_value && u_add_mime_types_compressed(config->static_file_config, str_value_2) != U_OK) {
+                fprintf(stderr, "Error setting mime_type %s to compressed list (env), exiting\n", str_value_2);
+                ret = G_ERROR_PARAM;
+                break;
+              }
+            }
           }
         }
       }
@@ -1092,7 +1098,14 @@ int build_config_from_env(struct config_elements * config) {
     if (json_is_array(j_mime_types)) {
       json_array_foreach(j_mime_types, index, j_element) {
         if (json_string_length(json_object_get(j_element, "extension")) && json_string_length(json_object_get(j_element, "mime_type"))) {
-          u_map_put(config->static_file_config->mime_types, json_string_value(json_object_get(j_element, "extension")), json_string_value(json_object_get(j_element, "mime_type")));
+          u_map_put(&config->static_file_config->mime_types, json_string_value(json_object_get(j_element, "extension")), json_string_value(json_object_get(j_element, "mime_type")));
+          if (json_object_get(j_element, "compress") == json_true()) {
+            if (u_add_mime_types_compressed(config->static_file_config, json_string_value(json_object_get(j_element, "mime_type"))) != U_OK) {
+              fprintf(stderr, "Error setting mime_type %s to compressed list (env), exiting\n", json_string_value(json_object_get(j_element, "mime_type")));
+              ret = G_ERROR_PARAM;
+              break;
+            }
+          }
         } else {
           fprintf(stderr, "Error - variable "GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES" must be a JSON array, example [{\"extension\":\".html\",\"mime_type\":\"text/html\"}] (env), exiting\n");
           ret = G_ERROR_PARAM;

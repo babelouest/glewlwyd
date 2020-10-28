@@ -37,7 +37,8 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
 
-#include "static_file_callback.h"
+#include "static_compressed_inmemory_website_callback.h"
+#include "http_compression_callback.h"
 
 /**
  * Result values used in the application
@@ -56,8 +57,9 @@
 #define GLEWLWYD_CALLBACK_PRIORITY_ZERO           0
 #define GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION 1
 #define GLEWLWYD_CALLBACK_PRIORITY_APPLICATION    2
-#define GLEWLWYD_CALLBACK_PRIORITY_CLOSE          3
-#define GLEWLWYD_CALLBACK_PRIORITY_PLUGIN         4
+#define GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION    3
+#define GLEWLWYD_CALLBACK_PRIORITY_CLOSE          4
+#define GLEWLWYD_CALLBACK_PRIORITY_PLUGIN         5
 #define GLEWLWYD_CALLBACK_PRIORITY_FILE           100
 
 /**
@@ -258,49 +260,49 @@ struct _plugin_module_instance {
  * Structure used to store the global application config
  */
 struct config_elements {
-  char *                                      config_file;
-  unsigned int                                port;
-  char *                                      bind_address;
-  char *                                      external_url;
-  char *                                      api_prefix;
-  char *                                      cookie_domain;
-  unsigned int                                cookie_secure;
-  unsigned short                              log_mode_args;
-  unsigned short                              log_level_args;
-  unsigned long                               log_mode;
-  unsigned long                               log_level;
-  char *                                      log_file;
-  struct _static_file_config *                static_file_config;
-  char *                                      admin_scope;
-  char *                                      profile_scope;
-  char *                                      allow_origin;
-  unsigned int                                use_secure_connection;
-  char *                                      secure_connection_key_file;
-  char *                                      secure_connection_pem_file;
-  char *                                      secure_connection_ca_file;
-  struct _h_connection *                      conn;
-  struct _u_instance *                        instance;
-  unsigned int                                instance_initialized;
-  char *                                      session_key;
-  unsigned int                                session_expiration;
-  unsigned int                                salt_length;
-  digest_algorithm                            hash_algorithm;
-  char *                                      login_url;
-  unsigned int                                delete_profile;
-  char *                                      user_module_path;
-  struct _pointer_list *                      user_module_list;
-  struct _pointer_list *                      user_module_instance_list;
-  char *                                      client_module_path;
-  struct _pointer_list *                      client_module_list;
-  struct _pointer_list *                      client_module_instance_list;
-  char *                                      user_auth_scheme_module_path;
-  struct _pointer_list *                      user_auth_scheme_module_list;
-  struct _pointer_list *                      user_auth_scheme_module_instance_list;
-  char *                                      plugin_module_path;
-  struct _pointer_list *                      plugin_module_list;
-  struct _pointer_list *                      plugin_module_instance_list;
-  struct config_plugin *                      config_p;
-  struct config_module *                      config_m;
+  char *                                         config_file;
+  unsigned int                                   port;
+  char *                                         bind_address;
+  char *                                         external_url;
+  char *                                         api_prefix;
+  char *                                         cookie_domain;
+  unsigned int                                   cookie_secure;
+  unsigned short                                 log_mode_args;
+  unsigned short                                 log_level_args;
+  unsigned long                                  log_mode;
+  unsigned long                                  log_level;
+  char *                                         log_file;
+  struct _u_compressed_inmemory_website_config * static_file_config;
+  char *                                         admin_scope;
+  char *                                         profile_scope;
+  char *                                         allow_origin;
+  unsigned int                                   use_secure_connection;
+  char *                                         secure_connection_key_file;
+  char *                                         secure_connection_pem_file;
+  char *                                         secure_connection_ca_file;
+  struct _h_connection *                         conn;
+  struct _u_instance *                           instance;
+  unsigned int                                   instance_initialized;
+  char *                                         session_key;
+  unsigned int                                   session_expiration;
+  unsigned int                                   salt_length;
+  digest_algorithm                               hash_algorithm;
+  char *                                         login_url;
+  unsigned int                                   delete_profile;
+  char *                                         user_module_path;
+  struct _pointer_list *                         user_module_list;
+  struct _pointer_list *                         user_module_instance_list;
+  char *                                         client_module_path;
+  struct _pointer_list *                         client_module_list;
+  struct _pointer_list *                         client_module_instance_list;
+  char *                                         user_auth_scheme_module_path;
+  struct _pointer_list *                         user_auth_scheme_module_list;
+  struct _pointer_list *                         user_auth_scheme_module_instance_list;
+  char *                                         plugin_module_path;
+  struct _pointer_list *                         plugin_module_list;
+  struct _pointer_list *                         plugin_module_instance_list;
+  struct config_plugin *                         config_p;
+  struct config_module *                         config_m;
 };
 
 /**
