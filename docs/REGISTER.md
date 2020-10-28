@@ -578,7 +578,7 @@ The new user can't verify its e-mail address.
   username: string, mandatory if the username is different from the e-mail in the plugin configuration and if token is missing or empty
   email: string, mandatory if token is missing or empty
   code: string, code verification, mandatory if token is missing or empty
-  token:: string, token verification
+  token: string, token verification
 }
 ```
 
@@ -787,7 +787,7 @@ Session invalid
 {
   scheme_name: name of the scheme to check, mandatory
   username: string, mandatory
-  data: object, mandatory
+  value: object, mandatory
 }
 ```
 
