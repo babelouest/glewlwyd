@@ -112,18 +112,27 @@ if (MHD_FOUND)
 	include_directories(${MHD_INCLUDE_DIRS})
 endif ()
 
+include(FindZLIB)
+find_package(ZLIB REQUIRED)
+if (ZLIB_FOUND)
+	set(LIBS ${LIBS} ${ZLIB_LIBRARIES})
+	include_directories(${ZLIB_INCLUDE_DIRS})
+endif ()
+
 # build
 
 add_executable(glewlwyd ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.h
 				${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h
-				${CMAKE_CURRENT_SOURCE_DIR}/src/static_file_callback.h
+				${CMAKE_CURRENT_SOURCE_DIR}/src/static_compressed_inmemory_website_callback.h
+				${CMAKE_CURRENT_SOURCE_DIR}/src/http_compression_callback.h
 				${CMAKE_CURRENT_SOURCE_DIR}/src/client.c
 				${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c
 				${CMAKE_CURRENT_SOURCE_DIR}/src/module.c
 				${CMAKE_CURRENT_SOURCE_DIR}/src/plugin.c
 				${CMAKE_CURRENT_SOURCE_DIR}/src/scope.c
 				${CMAKE_CURRENT_SOURCE_DIR}/src/session.c
-				${CMAKE_CURRENT_SOURCE_DIR}/src/static_file_callback.c
+				${CMAKE_CURRENT_SOURCE_DIR}/src/static_compressed_inmemory_website_callback.c
+				${CMAKE_CURRENT_SOURCE_DIR}/src/http_compression_callback.c#
 				${CMAKE_CURRENT_SOURCE_DIR}/src/user.c
 				${CMAKE_CURRENT_SOURCE_DIR}/src/api_key.c
 				${CMAKE_CURRENT_SOURCE_DIR}/src/webservice.c
