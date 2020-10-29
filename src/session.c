@@ -322,11 +322,11 @@ int user_session_update(struct config_elements * config, const char * session_ui
                               1);
         if (update_login) {
           if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-            expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
+            expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + config->session_expiration));
           } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-            expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
+            expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + config->session_expiration));
           } else { // HOEL_DB_TYPE_SQLITE
-            expiration_clause = msprintf("%u", (now + GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE));
+            expiration_clause = msprintf("%u", (now + config->session_expiration));
           }
           if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
             last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
@@ -382,14 +382,23 @@ int user_session_update(struct config_elements * config, const char * session_ui
         if (update_login) {
           // Refresh session for user
           if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+            expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + config->session_expiration));
+          } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+            expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + config->session_expiration));
+          } else { // HOEL_DB_TYPE_SQLITE
+            expiration_clause = msprintf("%u", (now + config->session_expiration));
+          }
+          if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
             last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
           } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
             last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
           } else { // HOEL_DB_TYPE_SQLITE
             last_login_clause = msprintf("%u", (now));
           }
-          json_object_set_new(json_object_get(j_query, "values"), "gus_last_login", json_pack("{ss}", "raw", last_login_clause));
+          json_object_set_new(json_object_get(j_query, "set"), "gus_last_login", json_pack("{ss}", "raw", last_login_clause));
+          json_object_set_new(json_object_get(j_query, "set"), "gus_expiration", json_pack("{ss}", "raw", expiration_clause));
           o_free(last_login_clause);
+          o_free(expiration_clause);
         }
         res = h_update(config->conn, j_query, NULL);
         json_decref(j_query);
