@@ -139,7 +139,7 @@ int main (int argc, char ** argv) {
   config->secure_connection_ca_file = NULL;
   config->conn = NULL;
   config->session_key = o_strdup(GLEWLWYD_DEFAULT_SESSION_KEY);
-  config->session_expiration = GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE;
+  config->session_expiration = GLEWLWYD_DEFAULT_SESSION_EXPIRATION_PASSWORD;
   config->salt_length = GLEWLWYD_DEFAULT_SALT_LENGTH;
   config->hash_algorithm = digest_SHA256;
   config->login_url = o_strdup(GLEWLWYD_DEFAULT_LOGIN_URL);
