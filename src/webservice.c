@@ -222,7 +222,7 @@ int callback_glewlwyd_close_check_session (const struct _u_request * request, st
   if (response->shared_data != NULL) {
     json_decref((json_t *)response->shared_data);
   }
-  if (request->callback_position < 3) {
+  if (request->callback_position < 2) {
     ulfius_set_empty_body_response(response, 404);
   }
   return U_CALLBACK_COMPLETE;
