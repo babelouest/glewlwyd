@@ -43,7 +43,6 @@
     * [webapp/config.json](#webappconfigjson)
     * [Internationalization](#internationalization)
     * [Login, Admin and Profile pages](#login-admin-and-profile-pages)
-
     * [Customize CSS](#customize-css)
     * [Customize titles and logos](#customize-titles-and-logos)
 12. [Run Glewlwyd](#run-glewlwyd)
