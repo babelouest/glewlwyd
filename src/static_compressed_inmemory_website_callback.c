@@ -160,6 +160,7 @@ static int callback_static_file_uncompressed (const struct _u_request * request,
   FILE * f;
   char * file_requested, * file_path, * url_dup_save;
   const char * content_type;
+  int ret = U_CALLBACK_CONTINUE;
 
   if (user_data != NULL && ((struct _u_compressed_inmemory_website_config *)user_data)->files_path != NULL) {
     file_requested = o_strdup(request->http_url);
@@ -209,7 +210,7 @@ static int callback_static_file_uncompressed (const struct _u_request * request,
       }
     } else {
       if (((struct _u_compressed_inmemory_website_config *)user_data)->redirect_on_404 == NULL) {
-        ulfius_set_string_body_response(response, 404, "File not found");
+        ret = U_CALLBACK_IGNORE;
       } else {
         ulfius_add_header_to_response(response, "Location", ((struct _u_compressed_inmemory_website_config *)user_data)->redirect_on_404);
         response->status = 302;
@@ -217,11 +218,11 @@ static int callback_static_file_uncompressed (const struct _u_request * request,
     }
     o_free(file_path);
     o_free(url_dup_save);
-    return U_CALLBACK_CONTINUE;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "Static File Server - Error, user_data is NULL or inconsistent");
-    return U_CALLBACK_ERROR;
+    ret = U_CALLBACK_ERROR;
   }
+  return ret;
 }
 
 int u_init_compressed_inmemory_website_config(struct _u_compressed_inmemory_website_config * config) {
@@ -297,36 +298,31 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
   char * file_requested, * file_path, * url_dup_save, * data_zip = NULL;
   const char * content_type;
 
-  /*
-   * Comment this if statement if you don't access static files url from root dir, like /app
-   */
-  if (request->callback_position > 0) {
-    return U_CALLBACK_CONTINUE;
-  } else {
-    file_requested = o_strdup(request->http_url);
-    url_dup_save = file_requested;
+  file_requested = o_strdup(request->http_url);
+  url_dup_save = file_requested;
 
-    while (file_requested[0] == '/') {
-      file_requested++;
-    }
-    file_requested += o_strlen((config->url_prefix));
-    while (file_requested[0] == '/') {
-      file_requested++;
-    }
+  while (file_requested[0] == '/') {
+    file_requested++;
+  }
+  file_requested += o_strlen((config->url_prefix));
+  while (file_requested[0] == '/') {
+    file_requested++;
+  }
 
-    if (strchr(file_requested, '#') != NULL) {
-      *strchr(file_requested, '#') = '\0';
-    }
+  if (strchr(file_requested, '#') != NULL) {
+    *strchr(file_requested, '#') = '\0';
+  }
 
-    if (strchr(file_requested, '?') != NULL) {
-      *strchr(file_requested, '?') = '\0';
-    }
+  if (strchr(file_requested, '?') != NULL) {
+    *strchr(file_requested, '?') = '\0';
+  }
 
-    if (file_requested == NULL || o_strlen(file_requested) == 0 || 0 == o_strcmp("/", file_requested)) {
-      o_free(url_dup_save);
-      url_dup_save = file_requested = o_strdup("index.html");
-    }
+  if (file_requested == NULL || o_strlen(file_requested) == 0 || 0 == o_strcmp("/", file_requested)) {
+    o_free(url_dup_save);
+    url_dup_save = file_requested = o_strdup("index.html");
+  }
 
+  if (!u_map_has_key_case(response->map_header, U_CONTENT_HEADER)) {
     if (split_string(u_map_get_case(request->map_header, U_ACCEPT_HEADER), ",", &accept_list)) {
       if (config->allow_gzip && string_array_has_trimmed_value((const char **)accept_list, U_ACCEPT_GZIP)) {
         compress_mode = U_COMPRESS_GZIP;
@@ -429,7 +425,7 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
             }
           } else {
             if (((struct _u_compressed_inmemory_website_config *)user_data)->redirect_on_404 == NULL) {
-              ulfius_set_string_body_response(response, 404, "File not found");
+              ret = U_CALLBACK_IGNORE;
             } else {
               ulfius_add_header_to_response(response, "Location", ((struct _u_compressed_inmemory_website_config *)user_data)->redirect_on_404);
               response->status = 302;
@@ -440,9 +436,9 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
       } else {
         ret = callback_static_file_uncompressed(request, response, user_data);
       }
+      free_string_array(accept_list);
+      o_free(url_dup_save);
     }
-    free_string_array(accept_list);
-    o_free(url_dup_save);
   }
 
   return ret;
