@@ -96,7 +96,7 @@ END_TEST
 
 START_TEST(test_glwd_crud_user_get)
 {
-  char * url = msprintf("%s/user/%s", SERVER_URI, NEW_USERNAME), * url_404 = msprintf("%s/mod/user/error", SERVER_URI);
+  char * url = msprintf("%s/user/%s", SERVER_URI, NEW_USERNAME), * url_404 = msprintf("%s/user/error", SERVER_URI);
   json_t * j_parameters = json_pack("{sssssss[ss]}", "username", NEW_USERNAME, "name", NEW_NAME, "email", NEW_EMAIL, "scope", NEW_SCOPE_1, NEW_SCOPE_2);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);

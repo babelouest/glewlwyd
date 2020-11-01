@@ -70,33 +70,27 @@ END_TEST
 
 START_TEST(test_glwd_crud_client_add_OK)
 {
-  char * url = msprintf("%s/client/", SERVER_URI);
   json_t * j_parameters = json_pack("{ssssss}", "client_id", NEW_CLIENT_ID, "name", NEW_NAME, "description", NEW_DESCRIPTION);
   
-  ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
-  o_free(url);
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   
-  url = msprintf("%s/client/%s", SERVER_URI, NEW_CLIENT_ID);
-  ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
-  o_free(url);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/client/" NEW_CLIENT_ID, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
   json_decref(j_parameters);
 }
 END_TEST
 
 START_TEST(test_glwd_crud_client_add_already_present)
 {
-  char * url = msprintf("%s/client/", SERVER_URI);
   json_t * j_parameters = json_pack("{ss}", "client_id", NEW_CLIENT_ID);
   
-  ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
-  o_free(url);
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
 }
 END_TEST
 
 START_TEST(test_glwd_crud_client_get)
 {
-  char * url = msprintf("%s/client/%s", SERVER_URI, NEW_CLIENT_ID), * url_404 = msprintf("%s/mod/client/error", SERVER_URI);
+  char * url = msprintf("%s/client/%s", SERVER_URI, NEW_CLIENT_ID), * url_404 = msprintf("%s/client/error", SERVER_URI);
   json_t * j_parameters = json_pack("{ssssss}", "client_id", NEW_CLIENT_ID, "name", NEW_NAME, "description", NEW_DESCRIPTION);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
@@ -132,10 +126,7 @@ END_TEST
 
 START_TEST(test_glwd_crud_client_delete_OK)
 {
-  char * url = msprintf("%s/client/%s", SERVER_URI, NEW_CLIENT_ID);
-
-  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
-  o_free(url);
+  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/client/" NEW_CLIENT_ID, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
 }
 END_TEST
 

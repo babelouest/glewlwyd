@@ -129,13 +129,10 @@ END_TEST
 
 START_TEST(test_glwd_crud_scope_get)
 {
-  char * url = msprintf("%s/scope/%s", SERVER_URI, SCOPE), * url_404 = msprintf("%s/mod/scope/error", SERVER_URI);
   json_t * j_parameters = json_pack("{ss ss ss so s{s[{ssssss}]}}", "name", SCOPE, "display_name", NAME, "description", DESCRIPTION, "password_required", json_true(), "scheme", GROUP1, "scheme_name", SCHEME1, "scheme_display_name", "Mock 42", "scheme_type", "mock");
   
-  ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
-  ck_assert_int_eq(run_simple_test(&admin_req, "GET", url_404, NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL), 1);
-  o_free(url);
-  o_free(url_404);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/scope/" SCOPE, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/scope/error", NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
 }
 END_TEST
