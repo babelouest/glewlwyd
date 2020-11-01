@@ -142,6 +142,7 @@ Content
   "api_prefix": string, prefix to access the APIs
   "admin_scope": string, name of the admin scope
   "profile_scope": string, name of the profile scope
+  "delete_profile": string, "yes" if the user is allowed to delete its profile, "no" otherwise
 }
 ```
 
@@ -151,7 +152,8 @@ Example
 {
   "api_prefix":"api",
   "admin_scope":"g_admin",
-  "profile_scope":"g_profile"
+  "profile_scope":"g_profile",
+  "delete_profile": "no"
 }
 ```
 
