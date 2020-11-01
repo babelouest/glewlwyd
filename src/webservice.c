@@ -34,7 +34,7 @@ int callback_glewlwyd_options (const struct _u_request * request, struct _u_resp
   u_map_put(response->map_header, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   u_map_put(response->map_header, "Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Bearer, Authorization");
   u_map_put(response->map_header, "Access-Control-Max-Age", "1800");
-  return U_CALLBACK_COMPLETE;
+  return U_CALLBACK_CONTINUE;
 }
 
 int callback_glewlwyd_server_configuration (const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -74,7 +74,7 @@ int callback_glewlwyd_check_user_profile_valid (const struct _u_request * reques
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if ((res = is_scope_list_valid_for_session(config, config->profile_scope, session_uid)) == G_OK) {
         response->shared_data = json_incref(json_object_get(j_user, "user"));
-        ret = U_CALLBACK_CONTINUE;
+        ret = U_CALLBACK_IGNORE;
       } else {
         if (res == G_ERROR) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_user_session - Error is_scope_list_valid_for_session");
@@ -102,7 +102,7 @@ int callback_glewlwyd_check_user_session (const struct _u_request * request, str
     j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       response->shared_data = json_incref(json_object_get(j_user, "user"));
-      ret = U_CALLBACK_CONTINUE;
+      ret = U_CALLBACK_IGNORE;
     } else {
       ret = U_CALLBACK_UNAUTHORIZED;
     }
@@ -125,7 +125,7 @@ int callback_glewlwyd_check_admin_session (const struct _u_request * request, st
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if ((res = is_scope_list_valid_for_session(config, config->admin_scope, session_uid)) == G_OK) {
         response->shared_data = json_incref(json_object_get(j_user, "user"));
-        ret = U_CALLBACK_CONTINUE;
+        ret = U_CALLBACK_IGNORE;
       } else {
         if (res == G_ERROR) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_admin_session - Error is_scope_list_valid_for_session");
@@ -153,7 +153,7 @@ int callback_glewlwyd_check_admin_session_or_api_key (const struct _u_request * 
   if (NULL != api_key && 0 == o_strncmp(GLEWLWYD_API_KEY_HEADER_PREFIX, api_key, o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) {
     if ((res = verify_api_key(config, api_key + o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) == G_OK) {
       response->shared_data = json_pack("{so}", "username", json_null());
-      ret = U_CALLBACK_CONTINUE;
+      ret = U_CALLBACK_IGNORE;
     } else if (res == G_ERROR_UNAUTHORIZED) {
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - API key invalid at IP Address %s", ip_source);
       ret = U_CALLBACK_UNAUTHORIZED;
@@ -166,7 +166,7 @@ int callback_glewlwyd_check_admin_session_or_api_key (const struct _u_request * 
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if ((res = is_scope_list_valid_for_session(config, config->admin_scope, session_uid)) == G_OK) {
         response->shared_data = json_incref(json_object_get(j_user, "user"));
-        ret = U_CALLBACK_CONTINUE;
+        ret = U_CALLBACK_IGNORE;
       } else {
         if (res == G_ERROR) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_admin_session_or_api_key - Error is_scope_list_valid_for_session");
@@ -197,7 +197,7 @@ int callback_glewlwyd_check_admin_session_delegate (const struct _u_request * re
         j_delegate = get_user(config, u_map_get(request->map_url, "username"), NULL);
         if (check_result_value(j_delegate, G_OK)) {
           response->shared_data = json_incref(json_object_get(j_delegate, "user"));
-          ret = U_CALLBACK_CONTINUE;
+          ret = U_CALLBACK_IGNORE;
         } else {
           ret = U_CALLBACK_UNAUTHORIZED;
         }
@@ -222,10 +222,7 @@ int callback_glewlwyd_close_check_session (const struct _u_request * request, st
   if (response->shared_data != NULL) {
     json_decref((json_t *)response->shared_data);
   }
-  if (request->callback_position < 2) {
-    ulfius_set_empty_body_response(response, 404);
-  }
-  return U_CALLBACK_COMPLETE;
+  return U_CALLBACK_IGNORE;
 }
 
 int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -1655,7 +1652,7 @@ int callback_glewlwyd_add_user (const struct _u_request * request, struct _u_res
           y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' added", json_string_value(json_object_get(j_user, "username")));
         }
       } else if (check_result_value(j_search_user, G_OK)) {
-        j_body = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "username already exists");
+        j_body = json_pack("{s[s]}", "error", "username already exists");
         ulfius_set_json_body_response(response, 400, j_body);
         json_decref(j_body);
       } else {
@@ -1808,7 +1805,7 @@ int callback_glewlwyd_add_client (const struct _u_request * request, struct _u_r
           y_log_message(Y_LOG_LEVEL_INFO, "Event - Client '%s' added", json_string_value(json_object_get(j_client, "client_id")));
         }
       } else if (check_result_value(j_search_client, G_OK)) {
-        j_body = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "client_id already exists");
+        j_body = json_pack("{s[s]}", "error", "client_id already exists");
         ulfius_set_json_body_response(response, 400, j_body);
         json_decref(j_body);
       } else {
@@ -1961,7 +1958,7 @@ int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_re
           y_log_message(Y_LOG_LEVEL_INFO, "Event - Scope '%s' added", json_string_value(json_object_get(j_scope, "name")));
         }
       } else if (check_result_value(j_search_scope, G_OK)) {
-        j_body = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "scope already exists");
+        j_body = json_pack("{s[s]}", "error", "scope already exists");
         ulfius_set_json_body_response(response, 400, j_body);
         json_decref(j_body);
       } else {
