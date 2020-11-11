@@ -895,10 +895,10 @@ Content
 
 ```javascript
 {
-  "access_token":text, jwt token
-  "token_type":text, value is "bearer",
-  "expires_in":number, set by server configuration
-  "refresh_token":text,
+  "access_token": text, jwt token
+  "token_type": text, value is "bearer",
+  "expires_in": number, set by server configuration
+  "refresh_token": text,
   "id_token": text, jwt token
 }
 ```
@@ -1087,10 +1087,10 @@ Content
 
 ```javascript
 {
-  "access_token":text, jwt token
-  "token_type":text, value is "bearer",
-  "expires_in":number, set by server configuration
-  "refresh_token":text, jwt token
+  "access_token": text, jwt token
+  "token_type": text, value is "bearer",
+  "expires_in": number, set by server configuration
+  "refresh_token": text, jwt token
 }
 ```
 
@@ -1137,9 +1137,9 @@ Content
 
 ```javascript
 {
-  "access_token":text, jwt token
-  "token_type":text, value is "bearer",
-  "expires_in":number, set by server configuration
+  "access_token": text, jwt token
+  "token_type": text, value is "bearer",
+  "expires_in": number, set by server configuration
 }
 ```
 
@@ -1179,9 +1179,9 @@ Content
 
 ```javascript
 {
-  "access_token":text, jwt token
-  "token_type":text, value is "bearer",
-  "expires_in":number, set by server configuration
+  "access_token": text, jwt token
+  "token_type": text, value is "bearer",
+  "expires_in": number, set by server configuration
 }
 ```
 
@@ -1228,7 +1228,7 @@ This endpoint is defined in the OpenID Connect core: [Userinfo Endpoint](https:/
 
 #### URL
 
-`/api/oidc/unserinfo`
+`/api/oidc/userinfo`
 
 #### Method
 
