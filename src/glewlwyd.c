@@ -59,6 +59,7 @@ int main (int argc, char ** argv) {
   struct sockaddr_in bind_address;
   pthread_t signal_thread_id;
   static sigset_t close_signals;
+  char * tmp, * tmp2;
 
   if (config == NULL) {
     fprintf(stderr, "Memory error - config\n");
@@ -434,6 +435,39 @@ int main (int argc, char ** argv) {
   u_map_put(config->instance->default_headers, "Cache-Control", "no-store");
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
 
+  // Check if cookie domain (if set) is the same domain as in external_url
+  if (o_strlen(config->cookie_domain)) {
+    if (0 == o_strncmp("http://", config->external_url, o_strlen("http://"))) {
+      tmp = o_strdup(config->external_url);
+      tmp2 = o_strchr(tmp+o_strlen("http://"), '/');
+      if (tmp2 != NULL) {
+        *tmp2 = '\0';
+      }
+      tmp2 = o_strchr(tmp+o_strlen("http://"), ':');
+      if (tmp2 != NULL) {
+        *tmp2 = '\0';
+      }
+      if (0 != o_strcmp(tmp+o_strlen("http://"), config->cookie_domain)) {
+        y_log_message(Y_LOG_LEVEL_WARNING, "Configuration parameter cookie_domain '%s' does not seem to match the domain in external_url '%s'", config->cookie_domain, tmp+o_strlen("http://"));
+      }
+      o_free(tmp);
+    } else if (0 == o_strncmp("https://", config->external_url, o_strlen("https://"))) {
+      tmp = o_strdup(config->external_url);
+      tmp2 = o_strchr(tmp+o_strlen("https://"), '/');
+      if (tmp2 != NULL) {
+        *tmp2 = '\0';
+      }
+      tmp2 = o_strchr(tmp+o_strlen("https://"), ':');
+      if (tmp2 != NULL) {
+        *tmp2 = '\0';
+      }
+      if (0 != o_strcmp(tmp+o_strlen("https://"), config->cookie_domain)) {
+        y_log_message(Y_LOG_LEVEL_WARNING, "Configuration parameter cookie_domain '%s' does not seem to match the domain in external_url '%s'", config->cookie_domain, tmp+o_strlen("https://"));
+      }
+      o_free(tmp);
+    }
+  }
+  
   y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd started on port %d, prefix: %s, secure: %s, bind address: %s, external URL: %s", config->instance->port, config->api_prefix, config->use_secure_connection?"true":"false", config->bind_address!=NULL?config->bind_address:"no", config->external_url);
 
   if (config->use_secure_connection) {
