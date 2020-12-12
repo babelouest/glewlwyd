@@ -115,7 +115,7 @@ endif ()
 include(FindZLIB)
 find_package(ZLIB REQUIRED)
 if (ZLIB_FOUND)
-	set(LIBS ${LIBS} ${ZLIB_LIBRARIES})
+	set(GLWD_LIBS ${GLWD_LIBS} ${ZLIB_LIBRARIES})
 	include_directories(${ZLIB_INCLUDE_DIRS})
 endif ()
 
