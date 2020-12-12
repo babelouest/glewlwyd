@@ -3,7 +3,8 @@
 [![License: CC BY 4.0](https://licensebuttons.net/l/by/4.0/80x15.png)](https://creativecommons.org/licenses/by/4.0/)
 
 1.  [Upgrade Glewlwyd](#upgrade-glewlwyd)
-    * [Upgrade to Glewlwyd 2.4.x](#upgrade-to-glewlwyd-24x)
+    * [Upgrade to Glewlwyd 2.4.1](#upgrade-to-glewlwyd-241)
+    * [Upgrade to Glewlwyd 2.4.0](#upgrade-to-glewlwyd-240)
     * [Upgrade to Glewlwyd 2.3.3](#upgrade-to-glewlwyd-233)
     * [Upgrade to Glewlwyd 2.3.x](#upgrade-to-glewlwyd-23x)
     * [Upgrade to Glewlwyd 2.2.x](#upgrade-to-glewlwyd-22x)
@@ -54,7 +55,33 @@
 
 Glewlwyd upgrades usually come with database changes. It is highly recommended to backup your database before performing the upgrade. You must perform the database upgrades in the correct order. i.e. if you upgrade from Glewlwyd 2.1 to Glewlwyd 2.3, you must first install the 2.2 upgrade, then the 2.3.
 
-### Upgrade to Glewlwyd 2.4.x
+### Upgrade to Glewlwyd 2.4.1
+
+If your current version is prior to 2.4.0, first follow the security instructions in the paragraph [Upgrade to Glewlwyd 2.4.0](#upgrade-to-glewlwyd-240).
+
+#### Mandatory core tables upgrade
+
+Small changes were added to the core tables. You must execute the script depending on your database backend:
+
+- MariaDB: [upgrade-2.4.1-core.mariadb.sql](database/upgrade-2.4.1-core.mariadb.sql)
+
+```shell
+$ mysql glewlwyd < docs/database/upgrade-2.4-core.mariadb.sql
+```
+
+- SQLite3: [upgrade-2.4.1-core.sqlite3.sql](database/upgrade-2.4.1-core.sqlite3.sql)
+
+```shell
+$ sqlite3 /path/to/glewlwyd.db < docs/database/upgrade-2.3-core.sqlite3.sql
+```
+
+- PostgreSQL: [upgrade-2.4.1-core.postgresql.sql](database/upgrade-2.4.1-core.postgresql.sql)
+
+```shell
+$ psql glewlwyd < docs/database/upgrade-2.4.1-core.postgresql.sql
+```
+
+### Upgrade to Glewlwyd 2.4.0
 
 If your current version is prior to 2.3.3, first follow the security instructions in the paragraph [Upgrade to Glewlwyd 2.3.3](#upgrade-to-glewlwyd-233).
 
