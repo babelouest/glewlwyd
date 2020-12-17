@@ -128,11 +128,12 @@ static int json_has_str_pattern_case(json_t * j_source, const char * pattern) {
  */
 json_t * user_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{sissssss}",
+  return json_pack("{sisssssssf}",
                    "result", G_OK,
                    "name", "mock",
                    "display_name", "Mock user module",
-                   "description", "Mock user module for glewlwyd tests");
+                   "description", "Mock user module for glewlwyd tests",
+                   "api_version", 2.5);
 }
 
 /**
@@ -176,44 +177,37 @@ int user_module_unload(struct config_module * config) {
  *                 as void * in all module functions
  * 
  */
-json_t * user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
+json_t * user_module_init(struct config_module * config, int readonly, int multiple_passwords, json_t * j_parameters, void ** cls) {
   UNUSED(readonly);
-  json_t * j_return;
+  json_t * j_return, * j_password;
   if (json_object_get(j_parameters, "error") == NULL) {
-    const char * prefix = "", * password = "";
+    const char * prefix = "";
     if (json_string_length(json_object_get(j_parameters, "username-prefix"))) {
       prefix = json_string_value(json_object_get(j_parameters, "username-prefix"));
     }
     if (json_string_length(json_object_get(j_parameters, "password"))) {
-      password = json_string_value(json_object_get(j_parameters, "password"));
+      if (multiple_passwords) {
+        j_password = json_pack("[O]", json_object_get(j_parameters, "password"));
+      } else {
+        j_password = json_incref(json_object_get(j_parameters, "password"));
+      }
     }
-    *cls = (void*)json_pack("{sss[{ss+ ss ss so s[sss]}{ss+ ss ss so s[sssss]}{ss+ ss ss so s[sss]}{ss+ ss ss so s[ssss]}]}",
-                            "password",
-                            password,
+    *cls = (void*)json_pack("{sos[{ss+ ss ss so s[sss]}{ss+ ss ss so s[sssss]}{ss+ ss ss so s[sss]}{ss+ ss ss so s[ssss]}]}",
+                            "password", j_password,
                             "list",
-                              "username", 
-                              prefix,
-                              "admin", 
-                              "name", 
-                              "The Boss", 
-                              "email", 
-                              "boss@glewlwyd.domain",
-                              "enabled",
-                              json_true(),
+                              "username", prefix, "admin", 
+                              "name", "The Boss", 
+                              "email", "boss@glewlwyd.domain",
+                              "enabled",json_true(),
                               "scope",
                                 config->admin_scope,
                                 config->profile_scope,
                                 "openid",
 
-                              "username",
-                              prefix,
-                              "user1",
-                              "name",
-                              "Dave Lopper 1",
-                              "email",
-                              "dev1@glewlwyd",
-                              "enabled",
-                              json_true(),
+                              "username", prefix, "user1",
+                              "name", "Dave Lopper 1",
+                              "email", "dev1@glewlwyd",
+                              "enabled", json_true(),
                               "scope",
                                 config->profile_scope,
                                 "openid",
@@ -221,29 +215,19 @@ json_t * user_module_init(struct config_module * config, int readonly, json_t * 
                                 "scope2",
                                 "scope3",
 
-                              "username",
-                              prefix,
-                              "user2",
-                              "name",
-                              "Dave Lopper 2",
-                              "email",
-                              "dev2@glewlwyd",
-                              "enabled",
-                              json_true(),
+                              "username", prefix, "user2",
+                              "name", "Dave Lopper 2",
+                              "email", "dev2@glewlwyd",
+                              "enabled", json_true(),
                               "scope",
                                 config->profile_scope,
                                 "openid",
                                 "scope1",
 
-                              "username",
-                              prefix,
-                              "user3",
-                              "name",
-                              "Dave Lopper 3",
-                              "email",
-                              "dev3@glewlwyd",
-                              "enabled",
-                              json_true(),
+                              "username", prefix, "user3",
+                              "name", "Dave Lopper 3",
+                              "email", "dev3@glewlwyd",
+                              "enabled", json_true(),
                               "scope",
                                 config->profile_scope,
                                 "scope1",
@@ -358,6 +342,9 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
     if (j_array != NULL) {
       json_array_foreach(j_pattern_array, index, j_user) {
         if (index >= offset && (offset + counter) < json_array_size(j_pattern_array) && counter < limit) {
+          if (json_is_array(json_object_get((json_t *)cls, "password"))) {
+            json_object_set_new(j_user, "password", json_integer(json_array_size(json_object_get((json_t *)cls, "password"))));
+          }
           json_array_append(j_array, j_user);
           counter++;
         }
@@ -395,13 +382,17 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
  */
 json_t * user_module_get(struct config_module * config, const char * username, void * cls) {
   UNUSED(config);
-  json_t * j_user = NULL;
+  json_t * j_user = NULL, * j_new_user;
   size_t index = 0;
   
   if (username != NULL && o_strlen(username)) {
     json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_user) {
       if (0 == o_strcmp(username, json_string_value(json_object_get(j_user, "username")))) {
-        return json_pack("{siso}", "result", G_OK, "user", json_deep_copy(j_user));
+        j_new_user = json_deep_copy(j_user);
+        if (json_is_array(json_object_get((json_t *)cls, "password"))) {
+          json_object_set_new(j_new_user, "password", json_integer(json_array_size(json_object_get((json_t *)cls, "password"))));
+        }
+        return json_pack("{siso}", "result", G_OK, "user", j_new_user);
         break;
       }
     }
@@ -470,7 +461,17 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
   } else {
     if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
       if (json_is_string(json_object_get(j_user, "username")) && json_string_length(json_object_get(j_user, "username")) <= 128) {
-        j_return = json_pack("{si}", "result", G_OK);
+        if (json_object_get(j_user, "password") != NULL) {
+          if (json_is_array(json_object_get((json_t *)cls, "password")) && json_is_array(json_object_get(j_user, "password"))) {
+            j_return = json_pack("{si}", "result", G_OK);
+          } else if (json_string_length(json_object_get(j_user, "password"))) {
+            j_return = json_pack("{si}", "result", G_OK);
+          } else {
+            j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "invalid password");
+          }
+        } else {
+          j_return = json_pack("{si}", "result", G_OK);
+        }
       } else {
         j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "username must be a string value of maximum 128 characters");
       }
@@ -498,6 +499,32 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
  */
 int user_module_add(struct config_module * config, json_t * j_user, void * cls) {
   UNUSED(config);
+  json_t * j_password, * j_pwd_cur, * j_pwd_next;
+  size_t index = 0, pwd_max = 0;
+  
+  if (json_object_get(j_user, "password") != NULL) {
+    if (json_is_array(json_object_get((json_t *)cls, "password"))) {
+      j_password = json_array();
+      pwd_max = MAX(json_array_size(json_object_get(j_user, "password")), json_array_size(json_object_get((json_t *)cls, "password")));
+      for (index=0; index<pwd_max; index++) {
+        j_pwd_cur = json_array_get(json_object_get((json_t *)cls, "password"), index);
+        j_pwd_next = json_array_get(json_object_get(j_user, "password"), index);
+        
+        if (json_string_length(j_pwd_next)) {
+          json_array_append(j_password, j_pwd_next);
+        } else if (j_pwd_cur != NULL && 0 == o_strcmp("", json_string_value(j_pwd_next))) {
+          json_array_append(j_password, j_pwd_cur);
+        }
+      }
+      json_object_set_new((json_t *)cls, "password", j_password);
+    } else {
+      if (json_string_length(json_object_get(j_user, "password"))) {
+        json_object_set((json_t *)cls, "password", json_object_get(j_user, "password"));
+      } else {
+        json_object_set((json_t *)cls, "password", json_null());
+      }
+    }
+  }
   json_array_append(json_object_get((json_t *)cls, "list"), j_user);
   return G_OK;
 }
@@ -521,11 +548,34 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
  */
 int user_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls) {
   UNUSED(config);
-  json_t * j_element = NULL, * j_property;
-  size_t index = 0;
+  json_t * j_element = NULL, * j_property, * j_password, * j_pwd_cur, * j_pwd_next;
+  size_t index = 0, pwd_max = 0;
   int found = 0, ret;
   const char * key;
   
+  if (json_object_get(j_user, "password") != NULL) {
+    if (json_is_array(json_object_get((json_t *)cls, "password"))) {
+      j_password = json_array();
+      pwd_max = MAX(json_array_size(json_object_get(j_user, "password")), json_array_size(json_object_get((json_t *)cls, "password")));
+      for (index=0; index<pwd_max; index++) {
+        j_pwd_cur = json_array_get(json_object_get((json_t *)cls, "password"), index);
+        j_pwd_next = json_array_get(json_object_get(j_user, "password"), index);
+        
+        if (json_string_length(j_pwd_next)) {
+          json_array_append(j_password, j_pwd_next);
+        } else if (j_pwd_cur != NULL && 0 == o_strcmp("", json_string_value(j_pwd_next))) {
+          json_array_append(j_password, j_pwd_cur);
+        }
+      }
+      json_object_set_new((json_t *)cls, "password", j_password);
+    } else {
+      if (json_string_length(json_object_get(j_user, "password"))) {
+        json_object_set((json_t *)cls, "password", json_object_get(j_user, "password"));
+      } else {
+        json_object_set((json_t *)cls, "password", json_null());
+      }
+    }
+  }
   json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_element) {
     if (0 == o_strcmp(username, json_string_value(json_object_get(j_element, "username")))) {
       json_object_set_new(j_user, "username", json_string(username));
@@ -621,13 +671,23 @@ int user_module_delete(struct config_module * config, const char * username, voi
  */
 int user_module_check_password(struct config_module * config, const char * username, const char * password, void * cls) {
   int ret;
-  json_t * j_user = user_module_get(config, username, cls);
+  json_t * j_user = user_module_get(config, username, cls), * j_element = NULL;
+  size_t index = 0;
   
   if (check_result_value(j_user, G_OK)) {
-    if (0 == o_strcmp(password, json_string_value(json_object_get((json_t *)cls, "password")))) {
-      ret = G_OK;
-    } else {
+    if (json_is_array(json_object_get((json_t *)cls, "password"))) {
       ret = G_ERROR_UNAUTHORIZED;
+      json_array_foreach(json_object_get((json_t *)cls, "password"), index, j_element) {
+        if (0 == o_strcmp(password, json_string_value(j_element))) {
+          ret = G_OK;
+        }
+      }
+    } else {
+      if (0 == o_strcmp(password, json_string_value(json_object_get((json_t *)cls, "password")))) {
+        ret = G_OK;
+      } else {
+        ret = G_ERROR_UNAUTHORIZED;
+      }
     }
   } else {
     ret = G_ERROR_NOT_FOUND;
@@ -652,10 +712,30 @@ int user_module_check_password(struct config_module * config, const char * usern
  * @parameter cls: pointer to the void * cls value allocated in user_module_init
  * 
  */
-int user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls) {
+int user_module_update_password(struct config_module * config, const char * username, const char ** new_passwords, size_t new_passwords_len, void * cls) {
   UNUSED(config);
   UNUSED(cls);
   UNUSED(username);
-  json_object_set_new((json_t *)cls, "password", json_string(new_password));
+  json_t * j_element = NULL, * j_password = json_array();
+  size_t index = 0;
+  
+  if (json_is_array(json_object_get((json_t *)cls, "password"))) {
+    json_array_foreach(json_object_get((json_t *)cls, "password"), index, j_element) {
+      if (index < new_passwords_len) {
+        if (o_strlen(new_passwords[index])) {
+          json_array_append_new(j_password, json_string(new_passwords[index]));
+        } else if (new_passwords[index] != NULL && json_string_length(j_element)) {
+          json_array_append(j_password, j_element);
+        }
+      }
+    }
+    json_object_set_new((json_t *)cls, "password", j_password);
+  } else {
+    if (new_passwords_len && new_passwords[0] != NULL) {
+      json_object_set_new((json_t *)cls, "password", json_string(new_passwords[0]));
+    } else {
+      json_object_set((json_t *)cls, "password", json_null());
+    }
+  }
   return G_OK;
 }
