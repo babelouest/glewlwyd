@@ -296,6 +296,7 @@
     "mod-type": "Type",
     "mod-type-select": "Choose a type",
     "mod-readonly": "Read only",
+    "mod-multiple-password": "Multiple password",
     "client-mod-list-title": "Client modules",
     "scheme-mod-list-title": "Authentication schemes modules",
     "plugin-mod-list-title": "Plugins",
