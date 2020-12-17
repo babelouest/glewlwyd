@@ -1546,6 +1546,7 @@ static int load_user_module_file(struct config_elements * config, const char * f
     if (cur_user_module != NULL) {
       cur_user_module->name = NULL;
       cur_user_module->file_handle = file_handle;
+      cur_user_module->api_version = 0.0;
       *(void **) (&cur_user_module->user_module_load) = dlsym(file_handle, "user_module_load");
       *(void **) (&cur_user_module->user_module_unload) = dlsym(file_handle, "user_module_unload");
       *(void **) (&cur_user_module->user_module_init) = dlsym(file_handle, "user_module_init");
@@ -1582,19 +1583,31 @@ static int load_user_module_file(struct config_elements * config, const char * f
           cur_user_module->name = o_strdup(json_string_value(json_object_get(j_parameters, "name")));
           cur_user_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
           cur_user_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
+          cur_user_module->api_version = json_real_value(json_object_get(j_parameters, "api_version"));
           if (o_strlen(cur_user_module->name) && get_user_module_lib(config, cur_user_module->name) == NULL) {
-            if (pointer_list_append(config->user_module_list, (void*)cur_user_module)) {
-              y_log_message(Y_LOG_LEVEL_INFO, "Loading user module %s - %s", file_path, cur_user_module->name);
-              ret = G_OK;
+            if (cur_user_module->api_version >= _GLEWLWYD_USER_MODULE_VERSION) {
+              if (pointer_list_append(config->user_module_list, (void*)cur_user_module)) {
+                y_log_message(Y_LOG_LEVEL_INFO, "Loading user module %s - %s", file_path, cur_user_module->name);
+                ret = G_OK;
+              } else {
+                cur_user_module->user_module_unload(config->config_m);
+                dlclose(file_handle);
+                o_free(cur_user_module->name);
+                o_free(cur_user_module->display_name);
+                o_free(cur_user_module->description);
+                o_free(cur_user_module);
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_file - Error pointer_list_append");
+                ret = G_ERROR;
+              }
             } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_file - User module with name '%s' has invalid api_version: %.2f, minimum required: %.2f", cur_user_module->name, cur_user_module->api_version, _GLEWLWYD_USER_MODULE_VERSION);
               cur_user_module->user_module_unload(config->config_m);
               dlclose(file_handle);
               o_free(cur_user_module->name);
               o_free(cur_user_module->display_name);
               o_free(cur_user_module->description);
               o_free(cur_user_module);
-              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_file - Error pointer_list_append");
-              ret = G_ERROR;
+              ret = G_ERROR_PARAM;
             }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_file - User module with name '%s' already present or name empty", cur_user_module->name);
@@ -1609,7 +1622,7 @@ static int load_user_module_file(struct config_elements * config, const char * f
         } else {
           dlclose(file_handle);
           o_free(cur_user_module);
-          y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_file - Error user_module_init for module %s", file_path);
+          y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_file - Error user_module_load for module %s", file_path);
           ret = G_ERROR_MEMORY;
         }
         json_decref(j_parameters);
@@ -1705,7 +1718,7 @@ int load_user_module_instance_list(struct config_elements * config) {
   config->user_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->user_module_instance_list != NULL) {
     pointer_list_init(config->user_module_instance_list);
-    j_query = json_pack("{sss[ssssss]ss}",
+    j_query = json_pack("{sss[sssssss]ss}",
                         "table",
                         GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                         "columns",
@@ -1714,6 +1727,7 @@ int load_user_module_instance_list(struct config_elements * config) {
                           "gumi_order AS order_by",
                           "gumi_parameters AS parameters",
                           "gumi_readonly AS readonly",
+                          "gumi_multiple_passwords AS multiple_passwords",
                           "gumi_enabled AS enabled",
                         "order_by",
                         "gumi_order");
@@ -1737,11 +1751,12 @@ int load_user_module_instance_list(struct config_elements * config) {
             cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
             cur_instance->module = module;
             cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
+            cur_instance->multiple_passwords = json_integer_value(json_object_get(j_instance, "multiple_passwords"));
             if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
               if (json_integer_value(json_object_get(j_instance, "enabled"))) {
                 j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
                 if (j_parameters != NULL) {
-                  j_init = module->user_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls);
+                  j_init = module->user_module_init(config->config_m, cur_instance->readonly, cur_instance->multiple_passwords, j_parameters, &cur_instance->cls);
                   if (check_result_value(j_init, G_OK)) {
                     cur_instance->enabled = 1;
                   } else {
@@ -1869,6 +1884,7 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
     if (cur_user_auth_scheme_module != NULL) {
       cur_user_auth_scheme_module->name = NULL;
       cur_user_auth_scheme_module->file_handle = file_handle;
+      cur_user_auth_scheme_module->api_version = 0.0;
       *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_load) = dlsym(file_handle, "user_auth_scheme_module_load");
       *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_unload) = dlsym(file_handle, "user_auth_scheme_module_unload");
       *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_init) = dlsym(file_handle, "user_auth_scheme_module_init");
@@ -1895,6 +1911,7 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
           cur_user_auth_scheme_module->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
           cur_user_auth_scheme_module->display_name = o_strdup(json_string_value(json_object_get(j_module, "display_name")));
           cur_user_auth_scheme_module->description = o_strdup(json_string_value(json_object_get(j_module, "description")));
+          cur_user_auth_scheme_module->api_version = json_real_value(json_object_get(j_module, "api_version"));
           if (o_strlen(cur_user_auth_scheme_module->name) && get_user_auth_scheme_module_lib(config, cur_user_auth_scheme_module->name) == NULL) {
             if (pointer_list_append(config->user_auth_scheme_module_list, cur_user_auth_scheme_module)) {
               y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s - %s", file_path, cur_user_auth_scheme_module->name);
@@ -2177,6 +2194,7 @@ static int load_client_module_file(struct config_elements * config, const char *
     if (cur_client_module != NULL) {
       cur_client_module->name = NULL;
       cur_client_module->file_handle = file_handle;
+      cur_client_module->api_version = 0.0;
       *(void **) (&cur_client_module->client_module_load) = dlsym(file_handle, "client_module_load");
       *(void **) (&cur_client_module->client_module_unload) = dlsym(file_handle, "client_module_unload");
       *(void **) (&cur_client_module->client_module_init) = dlsym(file_handle, "client_module_init");
@@ -2207,6 +2225,7 @@ static int load_client_module_file(struct config_elements * config, const char *
           cur_client_module->name = o_strdup(json_string_value(json_object_get(j_parameters, "name")));
           cur_client_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
           cur_client_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
+          cur_client_module->api_version = json_real_value(json_object_get(j_parameters, "api_version"));
           if (o_strlen(cur_client_module->name) && get_client_module_lib(config, cur_client_module->name) == NULL) {
             if (pointer_list_append(config->client_module_list, cur_client_module)) {
               y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_client_module->name);
@@ -2482,10 +2501,11 @@ static int load_plugin_module_file(struct config_elements * config, const char *
   file_handle = dlopen(file_path, RTLD_LAZY);
   
   if (file_handle != NULL) {
-    cur_plugin_module = o_malloc(sizeof(struct _client_module));
+    cur_plugin_module = o_malloc(sizeof(struct _plugin_module));
     if (cur_plugin_module != NULL) {
       cur_plugin_module->name = NULL;
       cur_plugin_module->file_handle = file_handle;
+      cur_plugin_module->api_version = 0.0;
       *(void **) (&cur_plugin_module->plugin_module_load) = dlsym(file_handle, "plugin_module_load");
       *(void **) (&cur_plugin_module->plugin_module_unload) = dlsym(file_handle, "plugin_module_unload");
       *(void **) (&cur_plugin_module->plugin_module_init) = dlsym(file_handle, "plugin_module_init");
@@ -2500,6 +2520,7 @@ static int load_plugin_module_file(struct config_elements * config, const char *
           cur_plugin_module->name = o_strdup(json_string_value(json_object_get(j_result, "name")));
           cur_plugin_module->display_name = o_strdup(json_string_value(json_object_get(j_result, "display_name")));
           cur_plugin_module->description = o_strdup(json_string_value(json_object_get(j_result, "description")));
+          cur_plugin_module->api_version = json_real_value(json_object_get(j_result, "api_version"));
           if (o_strlen(cur_plugin_module->name) && get_plugin_module_lib(config, cur_plugin_module->name) == NULL) {
             if (pointer_list_append(config->plugin_module_list, cur_plugin_module)) {
               y_log_message(Y_LOG_LEVEL_INFO, "Loading plugin module %s - %s", file_path, cur_plugin_module->name);

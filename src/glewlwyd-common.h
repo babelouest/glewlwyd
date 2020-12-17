@@ -135,9 +135,10 @@ struct _user_module {
   char      * name;
   char      * display_name;
   char      * description;
+  double      api_version;
   json_t * (* user_module_load)(struct config_module * config);
   int      (* user_module_unload)(struct config_module * config);
-  json_t * (* user_module_init)(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
+  json_t * (* user_module_init)(struct config_module * config, int readonly, int multiple_passwords, json_t * j_parameters, void ** cls);
   int      (* user_module_close)(struct config_module * config, void * cls);
   size_t   (* user_module_count_total)(struct config_module * config, const char * pattern, void * cls);
   json_t * (* user_module_get_list)(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
@@ -149,7 +150,7 @@ struct _user_module {
   int      (* user_module_update_profile)(struct config_module * config, const char * username, json_t * j_user, void * cls);
   int      (* user_module_delete)(struct config_module * config, const char * username, void * cls);
   int      (* user_module_check_password)(struct config_module * config, const char * username, const char * password, void * cls);
-  int      (* user_module_update_password)(struct config_module * config, const char * username, const char * new_password, void * cls);
+  int      (* user_module_update_password)(struct config_module * config, const char * username, const char ** new_passwords, size_t new_passwords_len, void * cls);
   };
 
 /**
@@ -161,6 +162,7 @@ struct _user_module_instance {
   void                * cls;
   short int             enabled;
   short int             readonly;
+  short int             multiple_passwords;
 };
 
 /**
@@ -171,6 +173,7 @@ struct _client_module {
   char     * name;
   char     * display_name;
   char     * description;
+  double     api_version;
   json_t * (* client_module_load)(struct config_module * config);
   int      (* client_module_unload)(struct config_module * config);
   json_t * (* client_module_init)(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
@@ -204,6 +207,7 @@ struct _user_auth_scheme_module {
   char       * name;
   char       * display_name;
   char       * description;
+  double       api_version;
   json_t  * (* user_auth_scheme_module_load)(struct config_module * config);
   int       (* user_auth_scheme_module_unload)(struct config_module * config);
   json_t *  (* user_auth_scheme_module_init)(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls);
@@ -240,6 +244,7 @@ struct _plugin_module {
   char      * name;
   char      * display_name;
   char      * description;
+  double      api_version;
   json_t * (* plugin_module_load)(struct config_plugin * config);
   int      (* plugin_module_unload)(struct config_plugin * config);
   json_t * (* plugin_module_init)(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls);
@@ -404,7 +409,7 @@ int check_result_value(json_t * result, const int value);
  */
 json_t * user_module_load(struct config_module * config);
 int      user_module_unload(struct config_module * config);
-json_t * user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
+json_t * user_module_init(struct config_module * config, int readonly, int multiple_passwords, json_t * j_parameters, void ** cls);
 int      user_module_close(struct config_module * config, void * cls);
 size_t   user_module_count_total(struct config_module * config, const char * pattern, void * cls);
 json_t * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
@@ -416,7 +421,7 @@ int      user_module_update(struct config_module * config, const char * username
 int      user_module_update_profile(struct config_module * config, const char * username, json_t * j_user, void * cls);
 int      user_module_delete(struct config_module * config, const char * username, void * cls);
 int      user_module_check_password(struct config_module * config, const char * username, const char * password, void * cls);
-int      user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls);
+int      user_module_update_password(struct config_module * config, const char * username, const char ** new_passwords, size_t new_passwords_len, void * cls);
 
 /**
  * Client functions prototypes

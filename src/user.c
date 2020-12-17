@@ -739,7 +739,7 @@ int user_delete_profile(struct config_elements * config, const char * username) 
   return ret;
 }
 
-int user_update_password(struct config_elements * config, const char * username, const char * old_password, const char * new_password) {
+int user_update_password(struct config_elements * config, const char * username, const char * old_password, const char ** new_passwords, size_t new_passwords_len) {
   json_t * j_user = get_user(config, username, NULL);
   struct _user_module_instance * user_module;
   int ret;
@@ -748,7 +748,7 @@ int user_update_password(struct config_elements * config, const char * username,
     user_module = get_user_module_instance(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
       if ((ret = user_module->module->user_module_check_password(config->config_m, username, old_password, user_module->cls)) == G_OK) {
-        ret = user_module->module->user_module_update_password(config->config_m, username, new_password, user_module->cls);
+        ret = user_module->module->user_module_update_password(config->config_m, username, new_passwords, new_passwords_len, user_module->cls);
       } else if (ret == G_ERROR_UNAUTHORIZED) {
         ret = G_ERROR_PARAM;
       } else {
@@ -771,7 +771,7 @@ int user_update_password(struct config_elements * config, const char * username,
   return ret;
 }
 
-int user_set_password(struct config_elements * config, const char * username, const char * new_password) {
+int user_set_password(struct config_elements * config, const char * username, const char ** new_passwords, size_t new_passwords_len) {
   json_t * j_user = get_user(config, username, NULL);
   struct _user_module_instance * user_module;
   int ret;
@@ -779,7 +779,7 @@ int user_set_password(struct config_elements * config, const char * username, co
   if (check_result_value(j_user, G_OK)) {
     user_module = get_user_module_instance(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
-      ret = user_module->module->user_module_update_password(config->config_m, username, new_password, user_module->cls);
+      ret = user_module->module->user_module_update_password(config->config_m, username, new_passwords, new_passwords_len, user_module->cls);
     } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
       ret = G_ERROR_PARAM;
     } else {

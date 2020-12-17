@@ -95,7 +95,7 @@ json_t * get_user_module_list(struct config_elements * config) {
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters, * j_element;
   size_t index;
   
-  j_query = json_pack("{sss[sssssss]ss}",
+  j_query = json_pack("{sss[ssssssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "columns",
@@ -105,6 +105,7 @@ json_t * get_user_module_list(struct config_elements * config) {
                         "gumi_parameters",
                         "gumi_order AS order_rank",
                         "gumi_readonly",
+                        "gumi_multiple_passwords",
                         "gumi_enabled",
                       "order_by",
                       "gumi_order");
@@ -126,6 +127,9 @@ json_t * get_user_module_list(struct config_elements * config) {
       
       json_object_set_new(j_element, "readonly", json_integer_value(json_object_get(j_element, "gumi_readonly"))?json_true():json_false());
       json_object_del(j_element, "gumi_readonly");
+      
+      json_object_set_new(j_element, "multiple_passwords", json_integer_value(json_object_get(j_element, "gumi_multiple_passwords"))?json_true():json_false());
+      json_object_del(j_element, "gumi_multiple_passwords");
     }
     j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
   } else {
@@ -140,7 +144,7 @@ json_t * get_user_module(struct config_elements * config, const char * name) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
   
-  j_query = json_pack("{sss[sssssss]s{ss}}",
+  j_query = json_pack("{sss[ssssssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "columns",
@@ -151,6 +155,7 @@ json_t * get_user_module(struct config_elements * config, const char * name) {
                         "gumi_order AS order_rank",
                         "gumi_enabled",
                         "gumi_readonly",
+                        "gumi_multiple_passwords",
                       "where",
                         "gumi_name",
                         name);
@@ -172,6 +177,9 @@ json_t * get_user_module(struct config_elements * config, const char * name) {
       
       json_object_set_new(json_array_get(j_result, 0), "readonly", json_integer_value(json_object_get(json_array_get(j_result, 0), "gumi_readonly"))?json_true():json_false());
       json_object_del(json_array_get(j_result, 0), "gumi_readonly");
+      
+      json_object_set_new(json_array_get(j_result, 0), "multiple_passwords", json_integer_value(json_object_get(json_array_get(j_result, 0), "gumi_multiple_passwords"))?json_true():json_false());
+      json_object_del(json_array_get(j_result, 0), "gumi_multiple_passwords");
 
       j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
     } else {
@@ -246,6 +254,9 @@ json_t * is_user_module_valid(struct config_elements * config, json_t * j_module
       if (json_object_get(j_module, "readonly") != NULL && !json_is_boolean(json_object_get(j_module, "readonly"))) {
         json_array_append_new(j_error_list, json_string("readonly is optional and must be a boolean"));
       }
+      if (json_object_get(j_module, "multiple_passwords") != NULL && !json_is_boolean(json_object_get(j_module, "multiple_passwords"))) {
+        json_array_append_new(j_error_list, json_string("multiple_passwords is optional and must be a boolean"));
+      }
       if (json_array_size(j_error_list) > 0) {
         j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error_list);
       } else {
@@ -271,7 +282,7 @@ json_t * add_user_module(struct config_elements * config, json_t * j_module) {
   json_t * j_return, * j_result;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
-  j_query = json_pack("{sss{sOsOsOsisiss}}",
+  j_query = json_pack("{sss{sOsOsOsisisiss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "values",
@@ -283,6 +294,8 @@ json_t * add_user_module(struct config_elements * config, json_t * j_module) {
                         json_object_get(j_module, "display_name")!=NULL?json_object_get(j_module, "display_name"):json_null(),
                         "gumi_readonly",
                         json_object_get(j_module, "readonly")==json_true()?1:0,
+                        "gumi_multiple_passwords",
+                        json_object_get(j_module, "multiple_passwords")==json_true()?1:0,
                         "gumi_enabled",
                         1,
                         "gumi_parameters",
@@ -312,8 +325,9 @@ json_t * add_user_module(struct config_elements * config, json_t * j_module) {
         cur_instance->module = module;
         cur_instance->enabled = 0;
         cur_instance->readonly = json_object_get(j_module, "readonly")==json_true()?1:0;
+        cur_instance->multiple_passwords = json_object_get(j_module, "multiple_passwords")==json_true()?1:0;
         if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
-          j_result = module->user_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls);
+          j_result = module->user_module_init(config->config_m, cur_instance->readonly, cur_instance->multiple_passwords, json_object_get(j_module, "parameters"), &cur_instance->cls);
           if (check_result_value(j_result, G_OK)) {
             cur_instance->enabled = 1;
             j_return = json_pack("{si}", "result", G_OK);
@@ -351,7 +365,7 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _user_module_instance * cur_instance;
   
-  j_query = json_pack("{sss{sOsisiss}s{ss}}",
+  j_query = json_pack("{sss{sOsisisiss}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
                       "set",
@@ -361,6 +375,8 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
                         json_object_get(j_module, "readonly")==json_true()?1:0,
                         "gumi_enabled",
                         json_object_get(j_module, "enabled")==json_false()?0:1,
+                        "gumi_multiple_passwords",
+                        json_object_get(j_module, "multiple_passwords")==json_true()?1:0,
                         "gumi_parameters",
                         parameters,
                       "where",
@@ -379,6 +395,7 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
   if (res == H_OK) {
     if ((cur_instance = get_user_module_instance(config, name)) != NULL) {
       cur_instance->readonly = json_object_get(j_module, "readonly")==json_true()?1:0;
+      cur_instance->multiple_passwords = json_object_get(j_module, "multiple_passwords")==json_true()?1:0;
       ret = G_OK;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error get_user_module_instance");
@@ -444,7 +461,7 @@ json_t * manage_user_module(struct config_elements * config, const char * name, 
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
-        j_result = instance->module->user_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
+        j_result = instance->module->user_module_init(config->config_m, instance->readonly, instance->multiple_passwords, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
         if (check_result_value(j_result, G_OK)) {
           instance->enabled = 1;
           json_object_set(json_object_get(j_module, "module"), "enabled", json_true());

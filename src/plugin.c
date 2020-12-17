@@ -491,9 +491,11 @@ int glewlwyd_plugin_callback_set_user(struct config_plugin * config, const char 
 int glewlwyd_plugin_callback_user_update_password(struct config_plugin * config, const char * username, const char * password) {
   json_t * j_user = get_user(config->glewlwyd_config, username, NULL);
   int ret;
+  const char *passwords[1];
   
+  passwords[0] = password;
   if (check_result_value(j_user, G_OK)) {
-    ret = user_set_password(config->glewlwyd_config, username, password);
+    ret = user_set_password(config->glewlwyd_config, username, passwords, 1);
   } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
     ret = U_ERROR_NOT_FOUND;
   } else {

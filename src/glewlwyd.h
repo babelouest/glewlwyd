@@ -28,7 +28,7 @@
 #ifndef __GLEWLWYD_H_
 #define __GLEWLWYD_H_
 
-#define _GLEWLWYD_VERSION_ "2.4.1"
+#define _GLEWLWYD_VERSION_ "2.5.0"
 
 #include <jansson.h>
 
@@ -54,6 +54,8 @@
 #endif
 
 #define GLEWLWYD_LOG_NAME "Glewlwyd"
+
+#define _GLEWLWYD_USER_MODULE_VERSION 2.5
 
 // Configuration default values
 #define GLEWLWYD_DEFAULT_PORT                              4593
@@ -183,8 +185,8 @@ int delete_user_session_from_hash(struct config_elements * config, const char * 
 json_t * user_set_profile(struct config_elements * config, const char * username, json_t * j_profile);
 int user_delete_profile(struct config_elements * config, const char * username);
 json_t * user_get_profile(struct config_elements * config, const char * username);
-int user_update_password(struct config_elements * config, const char * username, const char * old_password, const char * new_password);
-int user_set_password(struct config_elements * config, const char * username, const char * new_password);
+int user_update_password(struct config_elements * config, const char * username, const char * old_password, const char ** new_passwords, size_t new_passwords_len);
+int user_set_password(struct config_elements * config, const char * username, const char ** new_passwords, size_t new_passwords_len);
 json_t * get_scheme_list_for_user(struct config_elements * config, const char * username);
 
 // User
