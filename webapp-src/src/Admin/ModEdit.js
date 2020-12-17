@@ -193,6 +193,12 @@ class ModEdit extends Component {
     this.setState({mod: mod});
   }
   
+  toggleMultiplePasswords(e) {
+    var mod = this.state.mod;
+    mod.multiple_passwords = !mod.multiple_passwords;
+    this.setState({mod: mod});
+  }
+  
   toggleAllowUserRegister() {
     var mod = this.state.mod;
     mod.allow_user_register = !mod.allow_user_register;
@@ -231,12 +237,31 @@ class ModEdit extends Component {
     if (this.state.hasError) {
       hasError = <span className="error-input text-right">{i18next.t("admin.error-input")}</span>;
     }
-    var readonly = "";
+    var readonly = "", multiplePasswords = "";
     var schemeParams = "";
+    if (this.state.role === "user") {
+      var isChecked = !!this.state.mod.multiple_passwords;
+      var isDisabled = false;
+      if (this.state.mod.module==="http") {
+        isChecked = false;
+        isDisabled = true;
+      }
+      multiplePasswords = 
+      <div className="form-group form-check">
+        <input type="checkbox" className="form-check-input" id="mod-multiple-password" onChange={(e) => this.toggleMultiplePasswords(e)} checked={isChecked} disabled={isDisabled} />
+        <label className="form-check-label" htmlFor="mod-multiple-password">{i18next.t("admin.mod-multiple-password")}</label>
+      </div>;
+    }
     if (this.state.role !== "scheme") {
+      var isChecked = !!this.state.mod.readonly;
+      var isDisabled = false;
+      if (this.state.mod.module==="http") {
+        isChecked = true;
+        isDisabled = true;
+      }
       readonly = 
       <div className="form-group form-check">
-        <input type="checkbox" className="form-check-input" id="mod-readonly" onChange={(e) => this.toggleReadonly(e)} checked={this.state.mod.readonly||this.state.mod.module==="http"||false} />
+        <input type="checkbox" className="form-check-input" id="mod-readonly" onChange={(e) => this.toggleReadonly(e)} checked={isChecked} disabled={isDisabled} />
         <label className="form-check-label" htmlFor="mod-readonly">{i18next.t("admin.mod-readonly")}</label>
       </div>;
     } else {
@@ -302,6 +327,7 @@ class ModEdit extends Component {
                 </div>
               </div>
               {readonly}
+              {multiplePasswords}
               {schemeParams}
               <ModEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
             </form>

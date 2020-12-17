@@ -20,11 +20,7 @@ class EditRecord extends Component {
       listEltConfirm: this.initListConfirm(props.pattern),
       listError: {},
       hasError: false,
-      listPwd: this.initListPwd(props.pattern, props.add),
-      confirmModal: {
-        elt: "",
-        value: ""
-      }
+      listPwd: this.initListPwd(props.pattern, props.data, props.add)
     }
 
     this.closeModal = this.closeModal.bind(this);
@@ -65,7 +61,7 @@ class EditRecord extends Component {
       listEltConfirm: this.initListConfirm(nextProps.pattern, nextProps.data),
       listError: {},
       hasError: false,
-      listPwd: this.initListPwd(nextProps.pattern, nextProps.add),
+      listPwd: this.initListPwd(nextProps.pattern, nextProps.data, nextProps.add),
     }, () => {
       if (nextProps.add) {
         this.createData();
@@ -80,7 +76,7 @@ class EditRecord extends Component {
           // Clean data of empty and unset values
           var data = this.state.data;
           for (var key in data) {
-            if (Array.isArray(data[key])) {
+            if (Array.isArray(data[key]) && key !== "password") {
               if (!data[key].length) {
                 delete(data[key]);
               } else {
@@ -119,13 +115,13 @@ class EditRecord extends Component {
       }
     }
   }
-  
+
   changeSource(e, source) {
     var data = this.state.data;
     data.source = source;
     this.setState({data: data});
   }
-  
+
   editElt(pattern, elt, key) {
     var labelJsx, inputJsx, listJsx = [], checkboxJsx = false;
     if (elt !== undefined || pattern.type === "password" || pattern.forceShow) {
@@ -163,7 +159,7 @@ class EditRecord extends Component {
                 );
               });
               if (pattern.edit || this.state.add) {
-                inputJsx = 
+                inputJsx =
                 <div>
                   <div className="custom-file">
                     <input type="file" accept="image/*" className={"custom-file-input" + validInput} onChange={(e) => this.uploadImage(e, pattern.name, true)} id={"modal-image-" + pattern.name}/>
@@ -221,13 +217,13 @@ class EditRecord extends Component {
           }
         } else if (pattern.type === "boolean") {
           if (pattern.edit === false && !this.state.add) {
-            checkboxJsx = 
+            checkboxJsx =
               <div className="form-group form-check" key={key}>
                 <input disabled={true} type="checkbox" className="form-check-input" id={"modal-edit-" + pattern.name} checked={elt} />
                 <label className="form-check-label" htmlFor={"modal-edit-" + pattern.name}>{i18next.t(pattern.label)}</label>
               </div>
           } else {
-            checkboxJsx = 
+            checkboxJsx =
               <div className="form-group form-check" key={key}>
                 <input type="checkbox" className={"form-check-input" + validInput} id={"modal-edit-" + pattern.name} onChange={(e) => this.toggleBooleanElt(e, pattern.name)} checked={elt} />
                 <label className="form-check-label" htmlFor={"modal-edit-" + pattern.name}>{i18next.t(pattern.label)}</label>
@@ -259,7 +255,7 @@ class EditRecord extends Component {
             </a>
           }
           if (pattern.edit || this.state.add) {
-            inputJsx = 
+            inputJsx =
             <div>
               <div className="custom-file">
                 <input type="file" accept="image/*" className={"custom-file-input" + validInput} onChange={(e) => this.uploadImage(e, pattern.name)} id={"modal-image-" + pattern.name} />
@@ -290,26 +286,109 @@ class EditRecord extends Component {
                 </div>
               </div>
             } else if (pattern.type === "password") {
-              var keepOption = "";
-              if (!this.state.add) {
-                keepOption = <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "keep")}>{i18next.t("modal.pwd-keep")}</a>;
-              }
-              var pwdDropdown = <div className="dropdown">
-                <button className="btn btn-secondary dropdown-toggle" type="button" id={"modal-pwd-" + pattern.name} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  {i18next.t("modal.pwd-" + (this.state.listPwd[pattern.name]||(this.state.add?"set":"keep")))}
-                </button>
-                <div className="dropdown-menu" aria-labelledby={"modal-pwd-" + pattern.name}>
-                  {keepOption}
-                  <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "set")}>{i18next.t("modal.pwd-set")}</a>
-                  <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "disabled")}>{i18next.t("modal.pwd-disabled")}</a>
+              if (!Array.isArray(elt)) {
+                var keepOption = "";
+                if (!this.state.add) {
+                  keepOption = <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "keep")}>{i18next.t("modal.pwd-keep")}</a>;
+                }
+                var pwdDropdown = <div className="dropdown">
+                  <button className="btn btn-secondary dropdown-toggle" type="button" id={"modal-pwd-" + pattern.name} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    {i18next.t("modal.pwd-" + (this.state.listPwd[pattern.name]||(this.state.add?"set":"keep")))}
+                  </button>
+                  <div className="dropdown-menu" aria-labelledby={"modal-pwd-" + pattern.name}>
+                    {keepOption}
+                    <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "set")}>{i18next.t("modal.pwd-set")}</a>
+                    <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "disabled")}>{i18next.t("modal.pwd-disabled")}</a>
+                  </div>
                 </div>
-              </div>
-              inputJsx = 
-              <div>
-                {pwdDropdown}
-                <input type="password" autoComplete="new-password" disabled={this.state.listPwd[pattern.name]==="disabled"||this.state.listPwd[pattern.name]==="keep"} className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} onChange={(e) => this.changeElt(e, pattern.name)} value={elt||""}/>
-                <input type="password" autoComplete="new-password" disabled={this.state.listPwd[pattern.name]==="disabled"||this.state.listPwd[pattern.name]==="keep"} className={"form-control" + validInput} id={"modal-edit-confirm" + pattern.name} placeholder={i18next.t(pattern.placeholderConfirm)} value={this.state.listEltConfirm[pattern.name]||""} onChange={(e) => this.changeEltConfirm(e, pattern.name)} />
-              </div>
+                inputJsx =
+                  <div>
+                    {pwdDropdown}
+                    <input type="password"
+                           autoComplete="new-password"
+                           disabled={this.state.listPwd[pattern.name]==="disabled"||this.state.listPwd[pattern.name]==="keep"}
+                           className={"form-control" + validInput}
+                           id={"modal-edit-" + pattern.name}
+                           placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""}
+                           onChange={(e) => this.changeElt(e, pattern.name)}
+                           value={this.state.listPwd[pattern.name]==="change"?elt||"":""}/>
+                    <input type="password"
+                           autoComplete="new-password"
+                           disabled={this.state.listPwd[pattern.name]==="disabled"||this.state.listPwd[pattern.name]==="keep"}
+                           className={"form-control" + validInput}
+                           id={"modal-edit-confirm" + pattern.name}
+                           placeholder={i18next.t(pattern.placeholderConfirm)}
+                           onChange={(e) => this.changeEltConfirm(e, pattern.name)}
+                           value={this.state.listPwd[pattern.name]==="change"?this.state.listEltConfirm[pattern.name]||"":""} />
+                  </div>;
+              } else {
+                var pwdJsx = [], counter = 0;
+                console.log(elt);
+                elt.forEach((curPassword, index) => {
+                  if (curPassword !== null) {
+                    counter++;
+                    var curPasswordConfirm = this.state.listEltConfirm[pattern.name][index]||"";
+                    if (this.state.listPwd[pattern.name][index]!=="set") {
+                      curPassword = "";
+                      curPasswordConfirm = "";
+                    }
+                    var keepOption = "";
+                    if (!this.state.add) {
+                      keepOption = <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "keep", index)}>{i18next.t("modal.pwd-keep")}</a>;
+                    }
+                    var pwdDropdown =
+                    <div className="btn-group" role="group">
+                      <div className="btn-group" role="group">
+                        <div className="dropdown">
+                          <button className="btn btn-secondary dropdown-toggle" type="button" id={"modal-pwd-" + pattern.name} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <span className="badge badge-light btn-icon">
+                              {counter}
+                            </span>
+                            {i18next.t("modal.pwd-" + (this.state.listPwd[pattern.name][index]))}
+                          </button>
+                          <div className="dropdown-menu" aria-labelledby={"modal-pwd-" + pattern.name}>
+                            {keepOption}
+                            <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "set", index)}>{i18next.t("modal.pwd-set")}</a>
+                          </div>
+                        </div>
+                        <button className="btn btn-secondary" type="button" onClick={(e) => this.deletePasswordAt(pattern.name, index)} title={i18next.t("admin.delete")}>
+                          <i className="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                    pwdJsx.push(
+                      <div key={index}>
+                        {pwdDropdown}
+                        <input type="password"
+                               autoComplete="new-password"
+                               disabled={this.state.listPwd[pattern.name][index]==="disabled"||this.state.listPwd[pattern.name][index]==="keep"}
+                               className={"form-control" + validInput}
+                               id={"modal-edit-" + pattern.name}
+                               placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""}
+                               onChange={(e) => this.changeElt(e, pattern.name, index)}
+                               value={curPassword}/>
+                        <input type="password"
+                               autoComplete="new-password"
+                               disabled={this.state.listPwd[pattern.name][index]==="disabled"||this.state.listPwd[pattern.name][index]==="keep"}
+                               className={"form-control" + validInput}
+                               id={"modal-edit-confirm" + pattern.name}
+                               placeholder={i18next.t(pattern.placeholderConfirm)}
+                               value={curPasswordConfirm}
+                               onChange={(e) => this.changeEltConfirm(e, pattern.name, index)} />
+                      </div>);
+                  }
+                });
+                inputJsx =
+                  <div className="card">
+                    <div className="card-body">
+                      {pwdJsx}
+                      <hr/>
+                      <button className="btn btn-secondary" type="button" onClick={(e) => this.addPassword(pattern.name)} title={i18next.t("admin.add")}>
+                        <i className="fas fa-plus"></i>
+                      </button>
+                    </div>
+                  </div>
+              }
             } else if (pattern.type === "jwks") {
               inputJsx = <input type="text" className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={this.state.listEltConfirm[pattern.name]||""} onChange={(e) => this.setJwks(e, pattern.name)} />
             } else {
@@ -344,12 +423,19 @@ class EditRecord extends Component {
     }
   }
 
-  changeElt(e, name) {
+  changeElt(e, name, index = -1) {
     var data = this.state.data;
-    data[name] = e.target.value;
+    if (index >= 0) {
+      if (data[name] === undefined) {
+        data[name] = [];
+      }
+      data[name][index] = e.target.value;
+    } else {
+      data[name] = e.target.value;
+    }
     this.setState({data: data});
   }
-  
+
   setJwks(e, name) {
     var data = this.state.data;
     var listError = this.state.listError;
@@ -421,7 +507,7 @@ class EditRecord extends Component {
       }
     }
   }
-  
+
   initListAdd(patternList) {
     var listAddValue = {};
     patternList.forEach((pat) => {
@@ -437,6 +523,8 @@ class EditRecord extends Component {
     patternList.forEach((pat) => {
       if (pat.confirm) {
         listEltConfirm[pat.name] = "";
+      } else if (pat.type === "password" && !!data[pat.name]) {
+        listEltConfirm[pat.name] = [];
       } else if (pat.type === "jwks") {
         listEltConfirm[pat.name] = JSON.stringify(data[pat.name]);
       }
@@ -444,23 +532,41 @@ class EditRecord extends Component {
     return listEltConfirm;
   }
 
-  initListPwd(patternList, add) {
-    var listEltPwd = {};
+  initListPwd(patternList, data, add) {
+    var listPwd = {};
     patternList.forEach((pat) => {
       if (pat.type === "password") {
-        if (add) {
-          listEltPwd[pat.name] = "set";
+        if (!!data[pat.name]) {
+          var len = data[pat.name];
+          data[pat.name] = [];
+          listPwd[pat.name] = [];
+          for (var i=0; i<len; i++) {
+            data[pat.name].push("");
+            if (add) {
+              listPwd[pat.name].push("set");
+            } else {
+              listPwd[pat.name].push("keep");
+            }
+          }
         } else {
-          listEltPwd[pat.name] = "keep";
+          if (add) {
+            listPwd[pat.name] = "set";
+          } else {
+            listPwd[pat.name] = "keep";
+          }
         }
       }
     });
-    return listEltPwd;
+    return listPwd;
   }
 
-  changeEltConfirm(e, name) {
+  changeEltConfirm(e, name, index = -1) {
     var listEltConfirm = this.state.listEltConfirm;
-    listEltConfirm[name] = e.target.value;
+    if (index >= 0) {
+      listEltConfirm[name][index] = e.target.value;
+    } else {
+      listEltConfirm[name] = e.target.value;
+    }
     this.setState({listEltConfirm: listEltConfirm});
   }
 
@@ -491,7 +597,7 @@ class EditRecord extends Component {
     };
     fr.readAsText(file);
   }
-  
+
   uploadImage(e, name, list) {
     var data = this.state.data;
     var file = e.target.files[0];
@@ -509,7 +615,7 @@ class EditRecord extends Component {
     };
     fr.readAsBinaryString(file);
   }
-  
+
   removeImage(e, name, index) {
     var data = this.state.data;
     if (index > -1) {
@@ -519,7 +625,7 @@ class EditRecord extends Component {
     }
     this.setState({data: data});
   }
-  
+
   deleteFile(e, name, index) {
     var data = this.state.data;
     if (index > -1) {
@@ -529,22 +635,48 @@ class EditRecord extends Component {
     }
     this.setState({data: data});
   }
-  
-  setPwd(e, name, act) {
+
+  setPwd(e, name, act, index = -1) {
     e.preventDefault();
     var listPwd = this.state.listPwd;
     var data = this.state.data;
     var listEltConfirm = this.state.listEltConfirm;
-    listPwd[name] = act;
-    this.setState({listPwd: listPwd});
-    if (act === "disabled") {
-      data[name] = "";
-      listEltConfirm[name] = "";
+    if (index >= 0) {
+      listPwd[name][index] = act;
+      data[name][index] = "";
+      if (listEltConfirm[name] === undefined) {
+        listEltConfirm[name] = [];
+      }
+      listEltConfirm[name][index] = "";
     } else {
-      delete(data[name]);
-      delete(listEltConfirm[name]);
+      listPwd[name] = act;
+      if (act === "disabled") {
+        data[name] = "";
+        listEltConfirm[name] = "";
+      } else {
+        delete(data[name]);
+        delete(listEltConfirm[name]);
+      }
     }
     this.setState({listPwd: listPwd, listEltConfirm: listEltConfirm, data: data});
+  }
+
+  addPassword(name) {
+    var data = this.state.data;
+    var listPwd = this.state.listPwd;
+    var listEltConfirm = this.state.listEltConfirm;
+    data[name].push("");
+    listPwd[name].push("set");
+    if (!listEltConfirm[name]) {
+      listEltConfirm[name] = [""];
+    }
+    this.setState({data: data, listPwd: listPwd, listEltConfirm: listEltConfirm});
+  }
+
+  deletePasswordAt(name, index) {
+    var data = this.state.data;
+    data[name][index] = null;
+    this.setState({data: data});
   }
 
 	render() {

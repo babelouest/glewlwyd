@@ -482,13 +482,13 @@ class App extends Component {
         invalidMessage = <div className="alert alert-danger" role="alert">{i18next.t("admin.error-credential-message")}</div>
       }
       if (this.state.config.params.delegate) {
-        userJsx = <UserDelegate config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} />
+        userJsx = <UserDelegate config={this.state.config} profile={(this.state.profileList[0]||false)} />
       } else if (this.state.config.params.register) {
         userJsx = <Register config={this.state.config} registerConfig={this.state.registerConfig} registerProfile={this.state.registerProfile} registerSchemes={this.state.registerSchemes} registerValid={this.state.registerValid} registerDefaultLang={this.state.registerDefaultLang} />
       } else if (this.state.config.params.resetCredentials) {
-        userJsx = <UserResetCredentials config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} status={this.state.resetCredentials} />
+        userJsx = <UserResetCredentials config={this.state.config} profile={(this.state.profileList[0]||false)} status={this.state.resetCredentials} />
       } else {
-        userJsx = <User config={this.state.config} profile={(this.state.profileList?this.state.profileList[0]:false)} pattern={this.state.config?this.state.config.pattern.user:false} profileUpdate={this.state.profileUpdate} loggedIn={this.state.loggedIn} updateEmail={this.state.updateEmail}/>
+        userJsx = <User config={this.state.config} profile={(this.state.profileList[0]||false)} pattern={this.state.config?this.state.config.pattern.user:false} profileUpdate={this.state.profileUpdate} loggedIn={this.state.loggedIn} updateEmail={this.state.updateEmail}/>
       }
       return (
         <div aria-live="polite" aria-atomic="true" className="glwd-container">
@@ -515,7 +515,7 @@ class App extends Component {
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="password"?" active":"")}>
                     <Password config={this.state.config} 
-                              profile={(this.state.profileList?this.state.profileList[0]:false)} 
+                              profile={(this.state.profileList[0]||false)} 
                               loggedIn={this.state.loggedIn} 
                               callback={this.showPasswordChangeNotification} 
                               registerPlugin={this.state.registerPlugin} />
@@ -524,7 +524,7 @@ class App extends Component {
                     <SchemePage config={this.state.config} 
                                 module={this.state.curNav} 
                                 name={this.state.module} 
-                                profile={(this.state.profileList?this.state.profileList[0]:false)}
+                                profile={(this.state.profileList[0]||false)}
                                 schemePrefix={this.state.schemePrefix}/>
                   </div>
                 </div>

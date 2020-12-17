@@ -510,7 +510,6 @@ class RegisterParams extends Component {
     }
     var newState = {};
     newState["currentLang"+property] = lang;
-    console.log(newState);
     this.setState(newState);
   }
   

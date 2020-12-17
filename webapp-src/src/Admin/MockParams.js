@@ -56,27 +56,20 @@ class MockParams extends Component {
   }
   
   checkParameters() {
-    if (this.state.role === "user") {
-      if (!this.state.mod.parameters["username-prefix"]) {
-        this.setState({hasError: true});
-      } else {
-        this.setState({hasError: false});
-        messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
-      }
-    } else if (this.state.role === "client") {
-      if (!this.state.mod.parameters["client-id-prefix"]) {
-        this.setState({hasError: true});
-      } else {
-        this.setState({hasError: false});
-        messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
-      }
-    } else if (this.state.role === "scheme") {
+    var errorList = {}, hasError = false;
+    if (this.state.role === "scheme") {
       if (!this.state.mod.parameters["mock-value"]) {
-        this.setState({hasError: true});
-      } else {
-        this.setState({hasError: false});
-        messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
+        hasError = true;
       }
+    }
+    if (!hasError) {
+      this.setState({errorList: {}}, () => {
+        messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
+      });
+    } else {
+      this.setState({errorList: errorList}, () => {
+        messageDispatcher.sendMessage('ModEdit', {type: "modInvalid"});
+      });
     }
   }
   

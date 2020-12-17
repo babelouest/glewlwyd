@@ -57,7 +57,7 @@ class App extends Component {
       savedRecord: false,
       savedIndex: -1
     }
-    
+
     this.fetchApi = this.fetchApi.bind(this);
     this.reloadMods = this.reloadMods.bind(this);
 
@@ -78,21 +78,21 @@ class App extends Component {
     this.confirmDeleteScope = this.confirmDeleteScope.bind(this);
     this.confirmEditScope = this.confirmEditScope.bind(this);
     this.confirmAddScope = this.confirmAddScope.bind(this);
-    
+
     this.fetchModTypes = this.fetchModTypes.bind(this);
     this.fetchUserMods = this.fetchUserMods.bind(this);
     this.fetchClientMods = this.fetchClientMods.bind(this);
     this.fetchSchemeMods = this.fetchSchemeMods.bind(this);
     this.fetchPlugins = this.fetchPlugins.bind(this);
-    
+
     this.confirmAddUserMod = this.confirmAddUserMod.bind(this);
     this.confirmEditUserMod = this.confirmEditUserMod.bind(this);
     this.confirmDeleteUserMod = this.confirmDeleteUserMod.bind(this);
-    
+
     this.confirmAddClientMod = this.confirmAddClientMod.bind(this);
     this.confirmEditClientMod = this.confirmEditClientMod.bind(this);
     this.confirmDeleteClientMod = this.confirmDeleteClientMod.bind(this);
-    
+
     this.confirmAddSchemeMod = this.confirmAddSchemeMod.bind(this);
     this.confirmEditSchemeMod = this.confirmEditSchemeMod.bind(this);
     this.confirmDeleteSchemeMod = this.confirmDeleteSchemeMod.bind(this);
@@ -426,12 +426,12 @@ class App extends Component {
         }
       }
     });
-    
+
     if (this.state.config) {
       this.fetchApi();
     }
   }
-  
+
   reloadMods() {
     apiManager.glewlwydRequest("/mod/reload", "PUT")
     .then(() => {
@@ -445,7 +445,7 @@ class App extends Component {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
     });
   }
-  
+
   fetchApi() {
     apiManager.glewlwydRequest("/profile_list")
     .then((res) => {
@@ -587,7 +587,7 @@ class App extends Component {
       }
     });
   }
-  
+
   fetchAllScopes() {
     return apiManager.glewlwydRequest("/scope?limit=0")
     .then((scopes) => {
@@ -636,7 +636,7 @@ class App extends Component {
       }
     });
   }
-  
+
   fetchModTypes () {
     return apiManager.glewlwydRequest("/mod/type")
     .then((modTypes) => {
@@ -660,7 +660,7 @@ class App extends Component {
       }
     });
   }
-  
+
   fetchClientMods () {
     return apiManager.glewlwydRequest("/mod/client")
     .then((modClients) => {
@@ -684,7 +684,7 @@ class App extends Component {
       }
     });
   }
-  
+
   fetchSchemeMods () {
     return apiManager.glewlwydRequest("/mod/scheme")
     .then((modSchemes) => {
@@ -708,7 +708,7 @@ class App extends Component {
       }
     });
   }
-  
+
   fetchPlugins () {
     return apiManager.glewlwydRequest("/mod/plugin")
     .then((plugins) => {
@@ -732,7 +732,7 @@ class App extends Component {
       }
     });
   }
-  
+
   fetchApiKeys () {
     return apiManager.glewlwydRequest("/key?offset=" + this.state.apiKeys.offset + "&limit=" + this.state.apiKeys.limit + (this.state.apiKeys.searchPattern?"&pattern="+this.state.apiKeys.searchPattern:""))
     .then((apiKeys) => {
@@ -760,7 +760,7 @@ class App extends Component {
       }
     });
   }
-  
+
   confirmDeleteUser(result) {
     if (result) {
       apiManager.glewlwydRequest("/user/" + encodeURIComponent(this.state.curUser.username), "DELETE")
@@ -986,7 +986,7 @@ class App extends Component {
   validateUser(user, confirmData, add, cb) {
     var result = true, data = {};
     if (add) {
-      if (user.password !== undefined || confirmData.password !== undefined) {
+      if (!Array.isArray(user.password) && (user.password !== undefined || confirmData.password !== undefined)) {
         if (user.password !== confirmData.password) {
           result = false;
           data["password"] = i18next.t("admin.user-password-error-match");
@@ -1010,7 +1010,7 @@ class App extends Component {
         });
       }
     } else {
-      if (user.password !== undefined || confirmData.password !== undefined) {
+      if (!Array.isArray(user.password) && (user.password !== undefined || confirmData.password !== undefined)) {
         if (user.password || confirmData.password) {
           if (user.password !== confirmData.password) {
             result = false;
@@ -1062,7 +1062,7 @@ class App extends Component {
       cb(result, data);
     }
   }
-  
+
   confirmAddUserMod(result, mod) {
     if (result) {
       apiManager.glewlwydRequest("/mod/user/", "POST", mod)
@@ -1404,7 +1404,7 @@ class App extends Component {
       });
     }
   }
-  
+
   addApiKey() {
     apiManager.glewlwydRequest("/key", "POST")
     .then((result) => {
@@ -1421,7 +1421,7 @@ class App extends Component {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
     })
   }
-  
+
   confirmDisableApiKey() {
     apiManager.glewlwydRequest("/key/" + encodeURIComponent(this.state.curApiKey.token_hash), "DELETE")
     .then((key) => {
@@ -1481,12 +1481,38 @@ class App extends Component {
             </div>
           </div>
           <Notification loggedIn={this.state.loggedIn}/>
-          <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
-          <Message title={this.state.messageModal.title} label={this.state.messageModal.label} message={this.state.messageModal.message} />
-          <EditRecord title={this.state.editModal.title} pattern={this.state.editModal.pattern} source={this.state.editModal.source} data={this.state.editModal.data} callback={this.state.editModal.callback} validateCallback={this.state.editModal.validateCallback} add={this.state.editModal.add} />
-          <ScopeEdit title={this.state.scopeModal.title} scope={this.state.scopeModal.data} add={this.state.scopeModal.add} modSchemes={this.state.modSchemes} callback={this.state.scopeModal.callback} />
-          <ModEdit title={this.state.ModModal.title} role={this.state.ModModal.role} mod={this.state.ModModal.data} add={this.state.ModModal.add} types={this.state.ModModal.types} callback={this.state.ModModal.callback} config={this.state.config} />
-          <PluginEdit title={this.state.PluginModal.title} mod={this.state.PluginModal.data} add={this.state.PluginModal.add} modSchemes={this.state.modSchemes} types={this.state.PluginModal.types} callback={this.state.PluginModal.callback} config={this.state.config} />
+          <Confirm title={this.state.confirmModal.title}
+                   message={this.state.confirmModal.message}
+                   callback={this.state.confirmModal.callback} />
+          <Message title={this.state.messageModal.title}
+                   label={this.state.messageModal.label}
+                   message={this.state.messageModal.message} />
+          <EditRecord title={this.state.editModal.title}
+                      pattern={this.state.editModal.pattern}
+                      source={this.state.editModal.source}
+                      data={this.state.editModal.data}
+                      callback={this.state.editModal.callback}
+                      validateCallback={this.state.editModal.validateCallback}
+                      add={this.state.editModal.add} />
+          <ScopeEdit title={this.state.scopeModal.title}
+                     scope={this.state.scopeModal.data}
+                     add={this.state.scopeModal.add}
+                     modSchemes={this.state.modSchemes}
+                     callback={this.state.scopeModal.callback} />
+          <ModEdit title={this.state.ModModal.title}
+                   role={this.state.ModModal.role}
+                   mod={this.state.ModModal.data}
+                   add={this.state.ModModal.add}
+                   types={this.state.ModModal.types}
+                   callback={this.state.ModModal.callback}
+                   config={this.state.config} />
+          <PluginEdit title={this.state.PluginModal.title}
+                      mod={this.state.PluginModal.data}
+                      add={this.state.PluginModal.add}
+                      modSchemes={this.state.modSchemes}
+                      types={this.state.PluginModal.types}
+                      callback={this.state.PluginModal.callback}
+                      config={this.state.config} />
         </div>
       );
     } else {

@@ -296,6 +296,7 @@
     "mod-type": "Type",
     "mod-type-select": "Choisir un type",
     "mod-readonly": "Lecture seule",
+    "mod-multiple-password": "Multiples mots de passe",
     "client-mod-list-title": "Modules clients",
     "scheme-mod-list-title": "Modules de schémas d'authentification",
     "plugin-mod-list-title": "Greffons",

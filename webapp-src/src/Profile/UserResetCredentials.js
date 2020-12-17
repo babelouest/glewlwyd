@@ -71,7 +71,6 @@ class UserResetCredentials extends Component {
       document.location.href = this.state.config.LoginUrl + "?callback_url=" + encodeURIComponent([location.protocol, '//', location.host, location.pathname].join('')) + "&scope=" + encodeURIComponent(this.state.config.profile_scope) + (schemeDefault?("&scheme="+encodeURIComponent(schemeDefault)):"") + "&prompt=login";
     })
     .fail((err) => {
-      console.log(err);
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
     });
   }
