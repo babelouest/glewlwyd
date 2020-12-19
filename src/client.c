@@ -165,31 +165,33 @@ json_t * get_client_list(struct config_elements * config, const char * pattern, 
       j_return = json_pack("{sis[]}", "result", G_OK, "client");
       if (j_return != NULL) {
         json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
-          client_module = get_client_module_instance(config, json_string_value(json_object_get(j_module, "name")));
-          if (client_module != NULL && client_module->enabled) {
-            result = G_ERROR;
-            if ((count_total = client_module->module->client_module_count_total(config->config_m, pattern, client_module->cls)) > cur_offset && cur_limit) {
-              j_list_parsed = client_module->module->client_module_get_list(config->config_m, pattern, cur_offset, cur_limit, client_module->cls);
-              if (check_result_value(j_list_parsed, G_OK)) {
-                json_array_foreach(json_object_get(j_list_parsed, "list"), index_c, j_element) {
-                  json_object_set_new(j_element, "source", json_string(client_module->name));
-                }
-                cur_offset = 0;
-                if (cur_limit > json_array_size(json_object_get(j_list_parsed, "list"))) {
-                  cur_limit -= json_array_size(json_object_get(j_list_parsed, "list"));
+          if (cur_limit) {
+            client_module = get_client_module_instance(config, json_string_value(json_object_get(j_module, "name")));
+            if (client_module != NULL && client_module->enabled) {
+              result = G_ERROR;
+              if ((count_total = client_module->module->client_module_count_total(config->config_m, pattern, client_module->cls)) > cur_offset && cur_limit) {
+                j_list_parsed = client_module->module->client_module_get_list(config->config_m, pattern, cur_offset, cur_limit, client_module->cls);
+                if (check_result_value(j_list_parsed, G_OK)) {
+                  json_array_foreach(json_object_get(j_list_parsed, "list"), index_c, j_element) {
+                    json_object_set_new(j_element, "source", json_string(client_module->name));
+                  }
+                  cur_offset = 0;
+                  if (cur_limit > json_array_size(json_object_get(j_list_parsed, "list"))) {
+                    cur_limit -= json_array_size(json_object_get(j_list_parsed, "list"));
+                  } else {
+                    cur_limit = 0;
+                  }
+                  json_array_extend(json_object_get(j_return, "client"), json_object_get(j_list_parsed, "list"));
                 } else {
-                  cur_limit = 0;
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error client_module_get_list for module %s", json_string_value(json_object_get(j_module, "name")));
                 }
-                json_array_extend(json_object_get(j_return, "client"), json_object_get(j_list_parsed, "list"));
+                json_decref(j_list_parsed);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error client_module_get_list for module %s", json_string_value(json_object_get(j_module, "name")));
+                cur_offset -= count_total;
               }
-              json_decref(j_list_parsed);
-            } else {
-              cur_offset -= count_total;
+            } else if (client_module == NULL) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error, client_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
             }
-          } else if (client_module == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_client_list - Error, client_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
           }
         }
       } else {

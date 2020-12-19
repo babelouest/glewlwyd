@@ -398,30 +398,32 @@ json_t * get_user_list(struct config_elements * config, const char * pattern, si
       j_return = json_pack("{sis[]}", "result", G_OK, "user");
       if (j_return != NULL) {
         json_array_foreach(json_object_get(j_module_list, "module"), index, j_module) {
-          user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
-          if (user_module != NULL && user_module->enabled) {
-            if ((count_total = user_module->module->user_module_count_total(config->config_m, pattern, user_module->cls)) > cur_offset && cur_limit) {
-              j_result = user_module->module->user_module_get_list(config->config_m, pattern, cur_offset, cur_limit, user_module->cls);
-              if (check_result_value(j_result, G_OK)) {
-                json_array_foreach(json_object_get(j_result, "list"), index_u, j_element) {
-                  json_object_set_new(j_element, "source", json_string(user_module->name));
-                }
-                cur_offset = 0;
-                if (cur_limit > json_array_size(json_object_get(j_result, "list"))) {
-                  cur_limit -= json_array_size(json_object_get(j_result, "list"));
+          if (cur_limit) {
+            user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
+            if (user_module != NULL && user_module->enabled) {
+              if ((count_total = user_module->module->user_module_count_total(config->config_m, pattern, user_module->cls)) > cur_offset && cur_limit) {
+                j_result = user_module->module->user_module_get_list(config->config_m, pattern, cur_offset, cur_limit, user_module->cls);
+                if (check_result_value(j_result, G_OK)) {
+                  json_array_foreach(json_object_get(j_result, "list"), index_u, j_element) {
+                    json_object_set_new(j_element, "source", json_string(user_module->name));
+                  }
+                  cur_offset = 0;
+                  if (cur_limit > json_array_size(json_object_get(j_result, "list"))) {
+                    cur_limit -= json_array_size(json_object_get(j_result, "list"));
+                  } else {
+                    cur_limit = 0;
+                  }
+                  json_array_extend(json_object_get(j_return, "user"), json_object_get(j_result, "list"));
                 } else {
-                  cur_limit = 0;
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error user_module_get_list for module %s", json_string_value(json_object_get(j_module, "name")));
                 }
-                json_array_extend(json_object_get(j_return, "user"), json_object_get(j_result, "list"));
+                json_decref(j_result);
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error user_module_get_list for module %s", json_string_value(json_object_get(j_module, "name")));
+                cur_offset -= count_total;
               }
-              json_decref(j_result);
-            } else {
-              cur_offset -= count_total;
+            } else if (user_module == NULL) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
             }
-          } else if (user_module == NULL) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error, user_module_instance %s is NULL", json_string_value(json_object_get(j_module, "name")));
           }
         }
       } else {
