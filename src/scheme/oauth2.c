@@ -794,11 +794,8 @@ static json_t * get_provider(struct _oauth2_config * oauth2_config, const char *
  */
 json_t * user_auth_scheme_module_load(struct config_module * config) {
   UNUSED(config);
-// TODO: Enable when available
-#if 0
   r_global_init();
   i_global_init();
-#endif
   return json_pack("{sissssss}",
                    "result", G_OK,
                    "name", "oauth2",
@@ -822,11 +819,8 @@ json_t * user_auth_scheme_module_load(struct config_module * config) {
  */
 int user_auth_scheme_module_unload(struct config_module * config) {
   UNUSED(config);
-// TODO: Enable when available
-#if 0
   r_global_close();
   i_global_close();
-#endif
   return G_OK;
 }
 
