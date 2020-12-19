@@ -20,7 +20,8 @@ class EditRecord extends Component {
       listEltConfirm: this.initListConfirm(props.pattern),
       listError: {},
       hasError: false,
-      listPwd: this.initListPwd(props.pattern, props.data, props.add)
+      listPwd: this.initListPwd(props.pattern, props.data, props.add),
+      multiplePasswords: this.hasMultiplePasswords(props.source, props.data)
     }
 
     this.closeModal = this.closeModal.bind(this);
@@ -41,6 +42,7 @@ class EditRecord extends Component {
     this.uploadImage = this.uploadImage.bind(this);
     this.removeImage = this.removeImage.bind(this);
     this.setPwd = this.setPwd.bind(this);
+    this.hasMultiplePasswords = this.hasMultiplePasswords.bind(this);
 
     if (this.state.add) {
       this.createData();
@@ -62,6 +64,7 @@ class EditRecord extends Component {
       listError: {},
       hasError: false,
       listPwd: this.initListPwd(nextProps.pattern, nextProps.data, nextProps.add),
+      multiplePasswords: this.hasMultiplePasswords(nextProps.source, nextProps.data)
     }, () => {
       if (nextProps.add) {
         this.createData();
@@ -118,8 +121,21 @@ class EditRecord extends Component {
 
   changeSource(e, source) {
     var data = this.state.data;
+    var listEltConfirm = this.state.listEltConfirm;
+    var listPwd = this.state.listPwd;
     data.source = source;
-    this.setState({data: data});
+    var multiplePasswords = false;
+    for (var i=0; i<this.state.source.length; i++) {
+      if (source === this.state.source[i].name) {
+        multiplePasswords = this.state.source[i].multiple_passwords;
+        if (multiplePasswords) {
+          data.password = [""];
+          listEltConfirm["password"] = [""];
+          listPwd["password"] = ["set"];
+        }
+      }
+    }
+    this.setState({data: data, listEltConfirm: listEltConfirm, listPwd: listPwd, multiplePasswords: multiplePasswords});
   }
 
   editElt(pattern, elt, key) {
@@ -286,7 +302,7 @@ class EditRecord extends Component {
                 </div>
               </div>
             } else if (pattern.type === "password") {
-              if (!Array.isArray(elt)) {
+              if (!this.state.multiplePasswords) {
                 var keepOption = "";
                 if (!this.state.add) {
                   keepOption = <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "keep")}>{i18next.t("modal.pwd-keep")}</a>;
@@ -323,7 +339,6 @@ class EditRecord extends Component {
                   </div>;
               } else {
                 var pwdJsx = [], counter = 0;
-                console.log(elt);
                 elt.forEach((curPassword, index) => {
                   if (curPassword !== null) {
                     counter++;
@@ -679,6 +694,15 @@ class EditRecord extends Component {
     this.setState({data: data});
   }
 
+  hasMultiplePasswords(source, data) {
+    for (var i=0; i<source.length; i++) {
+      if (data.source === source[i].name) {
+        return source[i].multiple_passwords;
+      }
+    }
+    return false;
+  }
+  
 	render() {
     var editLines = [], sourceLine = [], curSource = false, hasError;
     this.state.pattern.forEach((pat, index) => {
