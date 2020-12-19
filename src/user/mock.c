@@ -179,18 +179,21 @@ int user_module_unload(struct config_module * config) {
  */
 json_t * user_module_init(struct config_module * config, int readonly, int multiple_passwords, json_t * j_parameters, void ** cls) {
   UNUSED(readonly);
-  json_t * j_return, * j_password;
+  json_t * j_return, * j_password = NULL;
+  const char * password = json_string_value(json_object_get(j_parameters, "password"));
+  
   if (json_object_get(j_parameters, "error") == NULL) {
     const char * prefix = "";
     if (json_string_length(json_object_get(j_parameters, "username-prefix"))) {
       prefix = json_string_value(json_object_get(j_parameters, "username-prefix"));
     }
-    if (json_string_length(json_object_get(j_parameters, "password"))) {
-      if (multiple_passwords) {
-        j_password = json_pack("[O]", json_object_get(j_parameters, "password"));
-      } else {
-        j_password = json_incref(json_object_get(j_parameters, "password"));
-      }
+    if (password == NULL) {
+      password = "password";
+    }
+    if (multiple_passwords) {
+      j_password = json_pack("[s]", password);
+    } else {
+      j_password = json_string(password);
     }
     *cls = (void*)json_pack("{sos[{ss+ ss ss so s[sss]}{ss+ ss ss so s[sssss]}{ss+ ss ss so s[sss]}{ss+ ss ss so s[ssss]}]}",
                             "password", j_password,
@@ -326,7 +329,11 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
   UNUSED(config);
   json_t * j_user = NULL, * j_array, * j_pattern_array, * j_return;
   size_t index = 0, counter = 0;
+  json_int_t password = -1;
 
+  if (json_is_array(json_object_get((json_t *)cls, "password"))) {
+    password = (json_int_t)json_array_size(json_object_get((json_t *)cls, "password"));
+  }
   if (limit) {
     if (o_strlen(pattern)) {
       j_pattern_array = json_array();
@@ -342,8 +349,8 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
     if (j_array != NULL) {
       json_array_foreach(j_pattern_array, index, j_user) {
         if (index >= offset && (offset + counter) < json_array_size(j_pattern_array) && counter < limit) {
-          if (json_is_array(json_object_get((json_t *)cls, "password"))) {
-            json_object_set_new(j_user, "password", json_integer(json_array_size(json_object_get((json_t *)cls, "password"))));
+          if (password > -1) {
+            json_object_set_new(j_user, "password", json_integer(password));
           }
           json_array_append(j_array, j_user);
           counter++;
