@@ -1,20 +1,23 @@
 -- ----------------------------------------------------- --
--- Upgrade Glewlwyd 2.4.0 2.4.1
+-- Upgrade Glewlwyd 2.4.0 2.5.0
 -- Copyright 2020 Nicolas Mora <mail@babelouest.org>     --
 -- License: MIT                                          --
 -- ----------------------------------------------------- --
 
+ALTER TABLE g_user_module_instance
+ADD gumi_multiple_passwords INTEGER DEFAULT 0;
+
 ALTER TABLE gpo_code
-ADD gpoc_resource INTEGER;
+ADD gpoc_resource TEXT;
 
 ALTER TABLE gpo_refresh_token
-ADD gpor_resource INTEGER;
+ADD gpor_resource TEXT;
 
 ALTER TABLE gpo_access_token
-ADD gpoa_resource INTEGER;
+ADD gpoa_resource TEXT;
 
 ALTER TABLE gpo_device_authorization
-ADD gpoda_resource INTEGER;
+ADD gpoda_resource TEXT;
 
 CREATE TABLE gpo_dpop (
   gpod_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,3 +31,16 @@ CREATE TABLE gpo_dpop (
   gpod_last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX i_gpod_jti_hash ON gpo_dpop(gpod_jti_hash);
+
+CREATE TABLE g_user_password (
+  guw_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gu_id INTEGER,
+  guw_password TEXT,
+  FOREIGN KEY(gu_id) REFERENCES g_user(gu_id) ON DELETE CASCADE
+);
+
+INSERT INTO g_user_password (gu_id, guw_password)
+SELECT gu_id, gu_password FROM g_user;
+
+ALTER TABLE g_user
+DROP COLUMN gu_password;

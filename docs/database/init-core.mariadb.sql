@@ -26,6 +26,7 @@ CREATE TABLE g_user_module_instance (
   gumi_display_name VARCHAR(256) DEFAULT '',
   gumi_parameters MEDIUMBLOB,
   gumi_readonly TINYINT(1) DEFAULT 0,
+  gumi_multiple_passwords TINYINT(1) DEFAULT 0,
   gumi_enabled TINYINT(1) DEFAULT 1
 );
 

@@ -36,12 +36,14 @@
 #define G_TABLE_USER_SCOPE "g_user_scope"
 #define G_TABLE_USER_SCOPE_USER "g_user_scope_user"
 #define G_TABLE_USER_PROPERTY "g_user_property"
+#define G_TABLE_USER_PASSWORD "g_user_password"
 
 struct mod_parameters {
   int use_glewlwyd_connection;
   digest_algorithm hash_algorithm;
   struct _h_connection * conn;
   json_t * j_params;
+  int multiple_passwords;
 };
 
 static char * get_pattern_clause(struct mod_parameters * param, const char * pattern) {
@@ -52,6 +54,32 @@ static char * get_pattern_clause(struct mod_parameters * param, const char * pat
   }
   o_free(escape_pattern);
   return clause;
+}
+
+static json_int_t get_user_nb_passwords(struct mod_parameters * param, json_int_t gu_id) {
+  json_t * j_query, * j_result = NULL;
+  int res;
+  json_int_t result = 0;
+  
+  j_query = json_pack("{sss[s]s{sI}}",
+                      "table",
+                      G_TABLE_USER_PASSWORD,
+                      "columns",
+                        "COUNT(guw_password) AS nb_passwords",
+                      "where",
+                        "gu_id",
+                        gu_id);
+  res = h_select(param->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result)) {
+      result = json_integer_value(json_object_get(json_array_get(j_result, 0), "nb_passwords"));
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_user_nb_passwords database - Error executing j_query");
+  }
+  return result;
 }
 
 static int append_user_properties(struct mod_parameters * param, json_t * j_user, int profile) {
@@ -244,6 +272,9 @@ static json_t * database_user_get(const char * username, void * cls, int profile
       if (check_result_value(j_scope, G_OK)) {
         json_object_set(json_array_get(j_result, 0), "scope", json_object_get(j_scope, "scope"));
         json_object_set(json_array_get(j_result, 0), "enabled", (json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_enabled"))?json_true():json_false()));
+        if (param->multiple_passwords) {
+          json_object_set_new(json_array_get(j_result, 0), "password", json_integer(get_user_nb_passwords(param, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")))));
+        }
         if (append_user_properties(param, json_array_get(j_result, 0), profile) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "database_user_get database - Error append_user_properties");
         }
@@ -378,6 +409,82 @@ static char * get_password_clause_write(struct mod_parameters * param, const cha
   return clause;
 }
 
+static int update_password_list(struct mod_parameters * param, json_int_t gu_id, const char ** new_passwords, size_t new_passwords_len, int add) {
+  json_t * j_query, * j_result;
+  int res, ret;
+  size_t i;
+  char * clause_password;
+  
+  if (add) {
+    j_query = json_pack("{sss[]}",
+                        "table",
+                        G_TABLE_USER_PASSWORD,
+                        "values");
+    for (i=0; i<new_passwords_len; i++) {
+      clause_password = get_password_clause_write(param, new_passwords[i]);
+      json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIs{ss}}", "gu_id", gu_id, "guw_password", "raw", clause_password));
+      o_free(clause_password);
+    }
+    res = h_insert(param->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      ret = G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "update_password_list - Error executing j_query (1)");
+      ret = G_ERROR_DB;
+    }
+  } else {
+    j_query = json_pack("{sss[s]s{sI}}",
+                        "table", G_TABLE_USER_PASSWORD,
+                        "columns",
+                          "guw_password",
+                        "where",
+                          "gu_id", gu_id);
+    res = h_select(param->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      j_query = json_pack("{sss{sI}}",
+                          "table",
+                          G_TABLE_USER_PASSWORD,
+                          "where",
+                            "gu_id", gu_id);
+      res = h_delete(param->conn, j_query, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        j_query = json_pack("{sss[]}",
+                            "table",
+                            G_TABLE_USER_PASSWORD,
+                            "values");
+        for (i=0; i<new_passwords_len; i++) {
+          if (o_strlen(new_passwords[i])) {
+            clause_password = get_password_clause_write(param, new_passwords[i]);
+            json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIs{ss}}", "gu_id", gu_id, "guw_password", "raw", clause_password));
+            o_free(clause_password);
+          } else if (new_passwords[i] != NULL) {
+            json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIsO}", "gu_id", gu_id, "guw_password", json_object_get(json_array_get(j_result, i), "guw_password")));
+          }
+        }
+        res = h_insert(param->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          ret = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "update_password_list - Error executing j_query (4)");
+          ret = G_ERROR_DB;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "update_password_list - Error executing j_query (3)");
+        ret = G_ERROR_DB;
+      }
+      json_decref(j_result);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "update_password_list - Error executing j_query (2)");
+      ret = G_ERROR_DB;
+    }
+  }
+  return ret;
+}
+
 static char * get_salt_from_password_hash(struct mod_parameters * param, const char * username) {
   json_t * j_query, * j_result;
   int res;
@@ -422,12 +529,12 @@ static char * get_salt_from_password_hash(struct mod_parameters * param, const c
 }
 
 static char * get_password_clause_check(struct mod_parameters * param, const char * username, const char * password) {
-  char * clause = NULL, * password_encoded, digest[1024] = {0}, * salt;
+  char * clause = NULL, * password_encoded, digest[1024] = {0}, * salt, * username_escaped = h_escape_string_with_quotes(param->conn, username);;
   
   if (param->conn->type == HOEL_DB_TYPE_SQLITE) {
     if ((salt = get_salt_from_password_hash(param, username)) != NULL) {
       if (generate_digest_pbkdf2(password, salt, digest)) {
-        clause = msprintf(" = '%s'", digest);
+        clause = msprintf("'%s'", digest);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_check database - Error generate_digest_pbkdf2");
       }
@@ -438,20 +545,21 @@ static char * get_password_clause_check(struct mod_parameters * param, const cha
   } else if (param->conn->type == HOEL_DB_TYPE_MARIADB) {
     password_encoded = h_escape_string_with_quotes(param->conn, password);
     if (password_encoded != NULL) {
-      clause = msprintf(" = PASSWORD(%s)", password_encoded);
+      clause = msprintf("PASSWORD(%s)", password_encoded);
       o_free(password_encoded);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error h_escape_string_with_quotes (mariadb)");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_check database - Error h_escape_string_with_quotes (mariadb)");
     }
   } else if (param->conn->type == HOEL_DB_TYPE_PGSQL) {
     password_encoded = h_escape_string_with_quotes(param->conn, password);
     if (password_encoded != NULL) {
-      clause = msprintf(" = crypt(%s, gu_password)", password_encoded);
+      clause = msprintf("crypt(%s, gu_password)", password_encoded);
       o_free(password_encoded);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error h_escape_string_with_quotes (postgre)");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_check database - Error h_escape_string_with_quotes (postgre)");
     }
   }
+  o_free(username_escaped);
   return clause;
 }
 
@@ -630,11 +738,12 @@ static int save_user_scope(struct mod_parameters * param, json_t * j_scope, json
 
 json_t * user_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{si ss ss ss}",
+  return json_pack("{si ss ss ss sf}",
                    "result", G_OK,
                    "name", "database",
                    "display_name", "Database backend user module",
-                   "description", "Module to store users in the database");
+                   "description", "Module to store users in the database",
+                   "api_version", 2.5);
 }
 
 int user_module_unload(struct config_module * config) {
@@ -642,7 +751,7 @@ int user_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-json_t * user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
+json_t * user_module_init(struct config_module * config, int readonly, int multiple_passwords, json_t * j_parameters, void ** cls) {
   UNUSED(readonly);
   json_t * j_result, * j_return;
   char * error_message;
@@ -653,6 +762,7 @@ json_t * user_module_init(struct config_module * config, int readonly, json_t * 
     if (*cls != NULL) {
       ((struct mod_parameters *)*cls)->j_params = json_incref(j_parameters);
       ((struct mod_parameters *)*cls)->hash_algorithm = config->hash_algorithm;
+      ((struct mod_parameters *)*cls)->multiple_passwords = multiple_passwords;
       if (json_object_get(j_parameters, "use-glewlwyd-connection") != json_false()) {
           ((struct mod_parameters *)*cls)->use_glewlwyd_connection = 0;
           ((struct mod_parameters *)*cls)->conn = config->conn;
@@ -778,6 +888,9 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
       if (check_result_value(j_scope, G_OK)) {
         json_object_set(j_element, "scope", json_object_get(j_scope, "scope"));
         json_object_set(j_element, "enabled", (json_integer_value(json_object_get(j_element, "gu_enabled"))?json_true():json_false()));
+        if (param->multiple_passwords) {
+          json_object_set_new(j_element, "password", json_integer(get_user_nb_passwords(param, json_integer_value(json_object_get(j_element, "gu_id")))));
+        }
         if (append_user_properties(param, j_element, 0) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list database - Error append_user_properties");
         }
@@ -844,8 +957,14 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
         }
       }
     }
-    if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE && json_object_get(j_user, "password") != NULL && !json_is_string(json_object_get(j_user, "password"))) {
-      json_array_append_new(j_result, json_string("password must be a string"));
+    if (param->multiple_passwords) {
+      if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE && json_object_get(j_user, "password") != NULL && !json_is_array(json_object_get(j_user, "password"))) {
+        json_array_append_new(j_result, json_string("password must be an array"));
+      }
+    } else {
+      if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE && json_object_get(j_user, "password") != NULL && !json_is_string(json_object_get(j_user, "password"))) {
+        json_array_append_new(j_result, json_string("password must be a string"));
+      }
     }
     if (json_object_get(j_user, "name") != NULL && (!json_is_string(json_object_get(j_user, "name")) || json_string_length(json_object_get(j_user, "name")) > 256)) {
       json_array_append_new(j_result, json_string("name must be a string (maximum 256 characters)"));
@@ -900,7 +1019,8 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_gu_id;
   int res, ret;
-  char * password_clause;
+  const char ** passwords = NULL;
+  size_t i;
   
   j_query = json_pack("{sss{ss}}",
                       "table",
@@ -909,11 +1029,6 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
                         "gu_username",
                         json_string_value(json_object_get(j_user, "username")));
   
-  if (json_object_get(j_user, "password") != NULL) {
-    password_clause = get_password_clause_write(param, json_string_value(json_object_get(j_user, "password")));
-    json_object_set_new(json_object_get(j_query, "values"), "gu_password", json_pack("{ss}", "raw", password_clause));
-    o_free(password_clause);
-  }
   if (json_object_get(j_user, "name") != NULL) {
     json_object_set(json_object_get(j_query, "values"), "gu_name", json_object_get(j_user, "name"));
   }
@@ -934,7 +1049,27 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_scope");
       ret = G_ERROR_DB;
     } else {
-      ret = G_OK;
+      if (param->multiple_passwords) {
+        if ((passwords = o_malloc(json_array_size(json_object_get(j_user, "password"))*sizeof(char *))) != NULL) {
+          for (i=0; i<json_array_size(json_object_get(j_user, "password")); i++) {
+            passwords[i] = json_string_value(json_array_get(json_object_get(j_user, "password"), i));
+          }
+          ret = update_password_list(param, json_integer_value(j_gu_id), passwords, json_array_size(json_object_get(j_user, "password")), 1);
+          o_free(passwords);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error allocating resources for password");
+          ret = G_ERROR_MEMORY;
+        }
+      } else {
+        if ((passwords = o_malloc(sizeof(char *))) != NULL) {
+          passwords[0] = json_string_value(json_object_get(j_user, "password"));
+          ret = update_password_list(param, json_integer_value(j_gu_id), passwords, 1, 1);
+          o_free(passwords);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error allocating resources for password");
+          ret = G_ERROR_MEMORY;
+        }
+      }
     }
     json_decref(j_gu_id);
   } else {
@@ -949,8 +1084,9 @@ int user_module_update(struct config_module * config, const char * username, jso
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_query, * j_result = NULL;
   int res, ret;
-  char * password_clause;
   char * username_escaped, * username_clause;
+  const char ** passwords = NULL;
+  size_t i;
   
   username_escaped = h_escape_string_with_quotes(param->conn, username);
   username_clause = msprintf(" = UPPER(%s)", username_escaped);  
@@ -968,11 +1104,6 @@ int user_module_update(struct config_module * config, const char * username, jso
                           "gu_id",
                           json_object_get(json_array_get(j_result, 0), "gu_id"));
     
-    if (json_object_get(j_user, "password") != NULL) {
-      password_clause = get_password_clause_write(param, json_string_value(json_object_get(j_user, "password")));
-      json_object_set_new(json_object_get(j_query, "set"), "gu_password", json_pack("{ss}", "raw", password_clause));
-      o_free(password_clause);
-    }
     if (json_object_get(j_user, "name") != NULL) {
       json_object_set(json_object_get(j_query, "set"), "gu_name", json_object_get(j_user, "name"));
     }
@@ -996,6 +1127,27 @@ int user_module_update(struct config_module * config, const char * username, jso
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_scope");
         ret = G_ERROR_DB;
       } else {
+        if (param->multiple_passwords) {
+          if ((passwords = o_malloc(json_array_size(json_object_get(j_user, "password"))*sizeof(char *))) != NULL) {
+            for (i=0; i<json_array_size(json_object_get(j_user, "password")); i++) {
+              passwords[i] = json_string_value(json_array_get(json_object_get(j_user, "password"), i));
+            }
+            ret = update_password_list(param, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), passwords, json_array_size(json_object_get(j_user, "password")), 0);
+            o_free(passwords);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error allocating resources for password");
+            ret = G_ERROR_MEMORY;
+          }
+        } else {
+          if ((passwords = o_malloc(sizeof(char *))) != NULL) {
+            passwords[0] = json_string_value(json_object_get(j_user, "password"));
+            ret = update_password_list(param, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), passwords, 1, 0);
+            o_free(passwords);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error allocating resources for password");
+            ret = G_ERROR_MEMORY;
+          }
+        }
         ret = G_OK;
       }
     } else {
@@ -1106,22 +1258,23 @@ int user_module_check_password(struct config_module * config, const char * usern
   char * username_escaped, * username_clause;
   
   username_escaped = h_escape_string_with_quotes(param->conn, username);
-  username_clause = msprintf(" = UPPER(%s)", username_escaped);  
-  j_query = json_pack("{sss[s]s{s{ssss}s{ssss}}}",
+  username_clause = msprintf("IN (SELECT gu_id FROM "G_TABLE_USER" WHERE UPPER(gu_username) = UPPER(%s))", username_escaped);  
+  j_query = json_pack("{sss[s]s{s{ssss}s{ssss+}}}",
                       "table",
-                      G_TABLE_USER,
+                      G_TABLE_USER_PASSWORD,
                       "columns",
                         "gu_id",
                       "where",
-                        "UPPER(gu_username)",
+                        "gu_id",
                           "operator",
                           "raw",
                           "value",
                           username_clause,
-                        "gu_password",
+                        "guw_password",
                           "operator",
                           "raw",
                           "value",
+                          "= ",
                           clause);
   o_free(clause);
   o_free(username_clause);
@@ -1142,40 +1295,41 @@ int user_module_check_password(struct config_module * config, const char * usern
   return ret;
 }
 
-int user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls) {
+int user_module_update_password(struct config_module * config, const char * username, const char ** new_passwords, size_t new_passwords_len, void * cls) {
   UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
-  json_t * j_query;
+  json_t * j_query, * j_result;
   int res, ret;
-  char * password_clause;
   char * username_escaped, * username_clause;
   
   username_escaped = h_escape_string_with_quotes(param->conn, username);
   username_clause = msprintf(" = UPPER(%s)", username_escaped);  
-  password_clause = get_password_clause_write(param, new_password);
-  j_query = json_pack("{sss{s{ss}}s{s{ssss}}}",
+  j_query = json_pack("{sss[s]s{s{ssss}}}",
                       "table",
                       G_TABLE_USER,
-                      "set",
-                        "gu_password",
-                          "raw",
-                          password_clause,
+                      "columns",
+                        "gu_id",
                       "where",
                         "UPPER(gu_username)",
                           "operator",
                           "raw",
                           "value",
                           username_clause);
-  o_free(password_clause);
   o_free(username_clause);
   o_free(username_escaped);
-  res = h_update(param->conn, j_query, NULL);
+  res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    ret = G_OK;
+    if (json_array_size(j_result)) {
+      ret = update_password_list(param, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), new_passwords, new_passwords_len, 0);
+    } else {
+      ret = G_ERROR_UNAUTHORIZED;
+    }
+    json_decref(j_result);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password database - Error executing j_query update");
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_check_password database - Error executing j_query");
     ret = G_ERROR_DB;
   }
+  
   return ret;
 }

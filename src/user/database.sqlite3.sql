@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS g_user_property;
 DROP TABLE IF EXISTS g_user_scope_user;
 DROP TABLE IF EXISTS g_user_scope;
+DROP TABLE IF EXISTS g_user_password;
 DROP TABLE IF EXISTS g_user;
 
 CREATE TABLE g_user (
@@ -8,7 +9,6 @@ CREATE TABLE g_user (
   gu_username TEXT NOT NULL UNIQUE,
   gu_name TEXT DEFAULT '',
   gu_email TEXT DEFAULT '',
-  gu_password TEXT,
   gu_enabled INTEGER DEFAULT 1
 );
 
@@ -33,3 +33,10 @@ CREATE TABLE g_user_property (
   FOREIGN KEY(gu_id) REFERENCES g_user(gu_id) ON DELETE CASCADE
 );
 CREATE INDEX i_g_user_property_name ON g_user_property(gup_name);
+
+CREATE TABLE g_user_password (
+  guw_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gu_id INTEGER,
+  guw_password TEXT,
+  FOREIGN KEY(gu_id) REFERENCES g_user(gu_id) ON DELETE CASCADE
+);

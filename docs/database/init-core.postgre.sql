@@ -26,6 +26,7 @@ CREATE TABLE g_user_module_instance (
   gumi_display_name VARCHAR(256) DEFAULT '',
   gumi_parameters TEXT,
   gumi_readonly SMALLINT DEFAULT 0,
+  gumi_multiple_passwords SMALLINT DEFAULT 0,
   gumi_enabled SMALLINT DEFAULT 1
 );
 

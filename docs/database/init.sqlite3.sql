@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS g_client;
 DROP TABLE IF EXISTS g_user_property;
 DROP TABLE IF EXISTS g_user_scope_user;
 DROP TABLE IF EXISTS g_user_scope;
+DROP TABLE IF EXISTS g_user_password;
 DROP TABLE IF EXISTS g_user;
 DROP TABLE IF EXISTS gpo_dpop;
 DROP TABLE IF EXISTS gpg_device_authorization_scope;
@@ -69,6 +70,7 @@ CREATE TABLE g_user_module_instance (
   gumi_display_name TEXT DEFAULT '',
   gumi_parameters TEXT,
   gumi_readonly INTEGER DEFAULT 0,
+  gumi_multiple_passwords INTEGER DEFAULT 0,
   gumi_enabled INTEGER DEFAULT 1
 );
 
@@ -220,7 +222,6 @@ CREATE TABLE g_user (
   gu_username TEXT NOT NULL UNIQUE,
   gu_name TEXT DEFAULT '',
   gu_email TEXT DEFAULT '',
-  gu_password TEXT,
   gu_enabled INTEGER DEFAULT 1
 );
 
@@ -245,6 +246,13 @@ CREATE TABLE g_user_property (
   FOREIGN KEY(gu_id) REFERENCES g_user(gu_id) ON DELETE CASCADE
 );
 CREATE INDEX i_g_user_property_name ON g_user_property(gup_name);
+
+CREATE TABLE g_user_password (
+  guw_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gu_id INTEGER,
+  guw_password TEXT,
+  FOREIGN KEY(gu_id) REFERENCES g_user(gu_id) ON DELETE CASCADE
+);
 
 CREATE TABLE gpg_code (
   gpgc_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -700,7 +708,8 @@ INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_requi
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('openid', 'Open ID', 'Open ID Connect scope', 0, 0);
 INSERT INTO g_user_module_instance (gumi_module, gumi_order, gumi_name, gumi_display_name, gumi_parameters, gumi_readonly) VALUES ('database', 0, 'database', 'Database backend', '{"use-glewlwyd-connection":true,"data-format":{"picture":{"multiple":false,"read":true,"write":true,"profile-read":true,"profile-write":true},"reset-credentials-code":{"multiple":false,"read":true,"write":true,"profile-read":false,"profile-write":false}}}', 0);
 INSERT INTO g_client_module_instance (gcmi_module, gcmi_order, gcmi_name, gcmi_display_name, gcmi_parameters, gcmi_readonly) VALUES ('database', 0, 'database', 'Database backend', '{"use-glewlwyd-connection":true,"data-format":{"redirect_uri":{"multiple":true,"read":true,"write":true},"authorization_type":{"multiple":true,"read":true,"write":true},"client_secret":{"read":true,"write":true},"pubkey":{"read":true,"write":true},"jwks":{"convert":"jwks","read":true,"write":true},"jwks_uri":{"read":true,"write":true},"post_logout_redirect_uris":{"multiple":true,"read":true,"write":true},"token_endpoint_auth_method":{"multiple":false,"read":true,"write":true},"resource":{"multiple":true,"read":true,"write":true}}}', 0);
-INSERT INTO g_user (gu_username, gu_name, gu_password, gu_email, gu_enabled) VALUES ('admin', 'The Administrator', 'fOfvZC/wR2cUSTWbW6YZueGyyDuFqwkoFlcNlRYWJscxYTVOVFJ3VWFHdVJQT0pU', '', 1);
+INSERT INTO g_user (gu_username, gu_name, gu_email, gu_enabled) VALUES ('admin', 'The Administrator', '', 1);
+INSERT INTO g_user_password (gu_id, guw_password) VALUES ((SELECT gu_id from g_user WHERE gu_username='admin'), 'fOfvZC/wR2cUSTWbW6YZueGyyDuFqwkoFlcNlRYWJscxYTVOVFJ3VWFHdVJQT0pU');
 INSERT INTO g_user_scope (gus_name) VALUES ('g_admin');
 INSERT INTO g_user_scope (gus_name) VALUES ('g_profile');
 INSERT INTO g_user_scope_user (gu_id, gus_id) VALUES ((SELECT gu_id from g_user WHERE gu_username='admin'), (SELECT gus_id FROM g_user_scope WHERE gus_name='g_admin'));
