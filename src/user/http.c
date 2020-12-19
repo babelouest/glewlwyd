@@ -34,11 +34,12 @@
 
 json_t * user_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{sissssss}",
+  return json_pack("{sisssssssf}",
                    "result", G_OK,
                    "name", "http",
                    "display_name", "HTTP auth backend user module",
-                   "description", "Module to store users in the database");
+                   "description", "Module to store users in the database",
+                   "api_version", 2.5);
 }
 
 int user_module_unload(struct config_module * config) {
@@ -46,9 +47,10 @@ int user_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-json_t * user_module_init(struct config_module * config, int readonly, json_t * j_params, void ** cls) {
+json_t * user_module_init(struct config_module * config, int readonly, int multiple_passwords, json_t * j_params, void ** cls) {
   UNUSED(config);
   UNUSED(readonly);
+  UNUSED(multiple_passwords);
   size_t index = 0;
   json_t * j_element = NULL, * j_return = NULL;
   int ret;
@@ -210,10 +212,11 @@ int user_module_check_password(struct config_module * config, const char * usern
   return ret;
 }
 
-int user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls) {
+int user_module_update_password(struct config_module * config, const char * username, const char ** new_passwords, size_t new_passwords_len, void * cls) {
   UNUSED(config);
   UNUSED(username);
-  UNUSED(new_password);
+  UNUSED(new_passwords);
+  UNUSED(new_passwords_len);
   UNUSED(cls);
   return G_ERROR_PARAM;
 }
