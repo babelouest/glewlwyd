@@ -551,8 +551,20 @@ class EditRecord extends Component {
     var listPwd = {};
     patternList.forEach((pat) => {
       if (pat.type === "password") {
-        if (!!data[pat.name]) {
+        if (Number.isInteger(data[pat.name])) {
           var len = data[pat.name];
+          data[pat.name] = [];
+          listPwd[pat.name] = [];
+          for (var i=0; i<len; i++) {
+            data[pat.name].push("");
+            if (add) {
+              listPwd[pat.name].push("set");
+            } else {
+              listPwd[pat.name].push("keep");
+            }
+          }
+        } else if (Array.isArray(data[pat.name])) {
+          var len = data[pat.name].length;
           data[pat.name] = [];
           listPwd[pat.name] = [];
           for (var i=0; i<len; i++) {

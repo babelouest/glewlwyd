@@ -19,11 +19,13 @@ class Password extends Component {
       old_password: "",
       password: this.initPassword(props.profile),
       password_confirm: this.initPassword(props.profile),
+      pwdStatus: this.initPwdStatus(props.profile),
       oldPasswordInvalid: false,
       passwordInvalid: false,
       passwordInvalidMessage: false,
       passwordConfirmInvalid: false,
-      passwordConfirmInvalidMessage: false
+      passwordConfirmInvalidMessage: false,
+      saveDisabled: Number.isInteger(props.profile.password)
     }
 
     this.initPassword = this.initPassword.bind(this);
@@ -35,6 +37,8 @@ class Password extends Component {
     this.resetCredentialsCodeReset = this.resetCredentialsCodeReset.bind(this);
     this.deletePasswordAt = this.deletePasswordAt.bind(this);
     this.addPassword = this.addPassword.bind(this);
+    this.initPwdStatus = this.initPwdStatus.bind(this);
+    this.setPwdStatus = this.setPwdStatus.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -44,9 +48,11 @@ class Password extends Component {
       passwordMinLength: nextProps.config.PasswordMinLength||8,
       password: this.initPassword(nextProps.profile),
       password_confirm: this.initPassword(nextProps.profile),
+      pwdStatus: this.initPwdStatus(nextProps.profile),
       callback: nextProps.callback,
       loggedIn: nextProps.loggedIn,
-      registerPlugin: nextProps.registerPlugin
+      registerPlugin: nextProps.registerPlugin,
+      saveDisabled: Number.isInteger(nextProps.profile.password)
     }, () => {
       if (!this.state.loggedIn) {
         this.setState({
@@ -75,7 +81,8 @@ class Password extends Component {
                          passwordInvalid: false,
                          passwordInvalidMessage: "",
                          passwordConfirmInvalid: false,
-                         passwordConfirmInvalidMessage: ""}, () => {
+                         passwordConfirmInvalidMessage: "",
+                         pwdStatus: this.initPwdStatus(this.state.profile)}, () => {
             this.state.callback(result);
           });
         })
@@ -127,16 +134,18 @@ class Password extends Component {
         passwordConfirmInvalidMessage.push("");
         var password = this.state.password[i];
         var password_confirm = this.state.password_confirm[i];
-        if (password !== null) {
-          if (password.length < this.state.passwordMinLength) {
-            passwordInvalid[i] = true;
-            passwordInvalidMessage[i] = i18next.t("profile.password-min-characters", {minLength: this.state.passwordMinLength});
-            hasInvalid = true;
-          }
-          if (password !== password_confirm) {
-            passwordConfirmInvalid[i] = true;
-            passwordConfirmInvalidMessage[i] = i18next.t("profile.password-not-match");
-            hasInvalid = true;
+        if (this.state.pwdStatus[i] === "set") {
+          if (password !== null) {
+            if (password.length < this.state.passwordMinLength) {
+              passwordInvalid[i] = true;
+              passwordInvalidMessage[i] = i18next.t("profile.password-min-characters", {minLength: this.state.passwordMinLength});
+              hasInvalid = true;
+            }
+            if (password !== password_confirm) {
+              passwordConfirmInvalid[i] = true;
+              passwordConfirmInvalidMessage[i] = i18next.t("profile.password-not-match");
+              hasInvalid = true;
+            }
           }
         }
       }
@@ -196,9 +205,36 @@ class Password extends Component {
   addPassword() {
     var password = this.state.password;
     var password_confirm = this.state.password_confirm;
+    var pwdStatus = this.state.pwdStatus;
     password.push("");
     password_confirm.push("");
-    this.setState({password: password, password_confirm: password_confirm});
+    pwdStatus.push("set");
+    this.setState({password: password, password_confirm: password_confirm, pwdStatus: pwdStatus});
+  }
+
+  initPwdStatus(profile) {
+    if (Number.isInteger(profile.password)) {
+      var pwdStatus = [];
+      for (var i=0; i<profile.password; i++) {
+        pwdStatus.push("keep");
+      }
+      return pwdStatus;
+    } else {
+      return "";
+    }
+  }
+  
+  setPwdStatus(e, status, index) {
+    e.preventDefault();
+    var pwdStatus = this.state.pwdStatus;
+    var saveDisabled = true;
+    pwdStatus[index] = status;
+    pwdStatus.forEach(status => {
+      if (status === "set") {
+        saveDisabled = false;
+      }
+    });
+    this.setState({pwdStatus: pwdStatus, saveDisabled: saveDisabled});
   }
 
   render() {
@@ -235,12 +271,25 @@ class Password extends Component {
           passwordChangeList.push(
             <div key={index}>
               <div className="form-group">
-                <button className="btn btn-secondary" type="button" onClick={(e) => this.deletePasswordAt(index)} title={i18next.t("admin.delete")}>
-                  <span className="badge badge-light btn-icon">
-                    {counter}
-                  </span>
-                  <i className="fas fa-trash"></i>
-                </button>
+                <div className="btn-group" role="group">
+                  <div className="btn-group" role="group">
+                    <div className="dropdown">
+                      <button className="btn btn-secondary dropdown-toggle" type="button" id="modal-pwd" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span className="badge badge-light btn-icon">
+                          {counter}
+                        </span>
+                        {i18next.t("modal.pwd-" + (this.state.pwdStatus[index]))}
+                      </button>
+                      <div className="dropdown-menu" aria-labelledby="modal-pwd">
+                        <a className="dropdown-item" href="#" onClick={(e) => this.setPwdStatus(e, "set", index)}>{i18next.t("modal.pwd-set")}</a>
+                        <a className="dropdown-item" href="#" onClick={(e) => this.setPwdStatus(e, "keep", index)}>{i18next.t("modal.pwd-keep")}</a>
+                      </div>
+                    </div>
+                    <button className="btn btn-secondary" type="button" onClick={(e) => this.deletePasswordAt(index)} title={i18next.t("admin.delete")}>
+                      <i className="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
                 <div className="input-group mb-3">
                   <div className="input-group-prepend">
                     <label className="input-group-text" htmlFor="mod-new-password">{i18next.t("profile.password-new-password")}</label>
@@ -251,6 +300,7 @@ class Password extends Component {
                           id="newPassword"
                           placeholder={i18next.t("profile.password-new-password-ph", {minLength: this.state.passwordMinLength})}
                           value={password||""}
+                          disabled={this.state.pwdStatus[index]==="keep"}
                           onChange={(e) => this.changeNewPassword(e, index)} />
                 </div>
                 <span className={"error-input" + (this.state.passwordInvalid[index]?"":" hidden")}>{this.state.passwordInvalidMessage[index]}</span>
@@ -266,6 +316,7 @@ class Password extends Component {
                           id="retypeNewPassword"
                           placeholder={i18next.t("profile.password-new-password-confirm-ph", {minLength: this.state.passwordMinLength})}
                           value={this.state.password_confirm[index]||""}
+                          disabled={this.state.pwdStatus[index]==="keep"}
                           onChange={(e) => this.changeNewPasswordConfirm(e, index)} />
                 </div>
                 <span className={"error-input" + (this.state.passwordConfirmInvalid[index]?"":" hidden")}>{this.state.passwordConfirmInvalidMessage[index]}</span>
@@ -350,7 +401,7 @@ class Password extends Component {
         </div>
         <div className="row">
           <div className="col-md-12 text-right">
-              <button type="button" className="btn btn-primary" onClick={(e) => this.passwordButtonHandler(e, true)}>{i18next.t("profile.save")}</button>
+              <button type="button" className="btn btn-primary" onClick={(e) => this.passwordButtonHandler(e, true)} disabled={this.state.saveDisabled}>{i18next.t("profile.save")}</button>
           </div>
         </div>
         <hr/>
