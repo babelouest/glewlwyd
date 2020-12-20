@@ -721,6 +721,7 @@ if (BUILD_GLEWLWYD_TESTING)
 							glewlwyd_crud_scope
 							glewlwyd_mod_user_http
 							glewlwyd_mod_user_irl
+							glewlwyd_mod_user_multiple_password_irl
 							glewlwyd_mod_client_irl
 							glewlwyd_profile_delete
 							)
@@ -858,32 +859,40 @@ if (BUILD_GLEWLWYD_TESTING)
 								WORKING_DIRECTORY ${TST_DIR}
 								COMMAND ${t})
 			elseif (${t} MATCHES "_user_irl$")
-				FILE(GLOB UserJsonIrl ${TST_DIR}/mod_user_*.json)
-				foreach (j ${UserJsonIrl})
+				FILE(GLOB JsonIrl ${TST_DIR}/mod_user_*.json)
+				foreach (j ${JsonIrl})
+						add_test(NAME "${t}_${COUNTER}"
+										WORKING_DIRECTORY ${TST_DIR}
+										COMMAND ${t} ${j})
+						MATH(EXPR COUNTER "${COUNTER}+1")
+				endforeach ()
+			elseif (${t} MATCHES "_user_multiple_password_irl$")
+				FILE(GLOB JsonIrl ${TST_DIR}/mod_multiple_password_*.json)
+				foreach (j ${JsonIrl})
 						add_test(NAME "${t}_${COUNTER}"
 										WORKING_DIRECTORY ${TST_DIR}
 										COMMAND ${t} ${j})
 						MATH(EXPR COUNTER "${COUNTER}+1")
 				endforeach ()
 			elseif (${t} MATCHES "_client_irl$")
-				FILE(GLOB UserJsonIrl ${TST_DIR}/mod_client_*.json)
-				foreach (j ${UserJsonIrl})
+				FILE(GLOB JsonIrl ${TST_DIR}/mod_client_*.json)
+				foreach (j ${JsonIrl})
 						add_test(NAME "${t}_${COUNTER}"
 										WORKING_DIRECTORY ${TST_DIR}
 										COMMAND ${t} ${j})
 						MATH(EXPR COUNTER "${COUNTER}+1")
 				endforeach ()
 			elseif (${t} MATCHES "_oauth2_irl$")
-				FILE(GLOB UserJsonIrl ${TST_DIR}/plugin_oauth2_*.json)
-				foreach (j ${UserJsonIrl})
+				FILE(GLOB JsonIrl ${TST_DIR}/plugin_oauth2_*.json)
+				foreach (j ${JsonIrl})
 						add_test(NAME "${t}_${COUNTER}"
 										WORKING_DIRECTORY ${TST_DIR}
 										COMMAND ${t} ${j})
 						MATH(EXPR COUNTER "${COUNTER}+1")
 				endforeach ()
 			elseif (${t} MATCHES "_oidc_irl$")
-				FILE(GLOB UserJsonIrl ${TST_DIR}/plugin_iodc_*.json)
-				foreach (j ${UserJsonIrl})
+				FILE(GLOB JsonIrl ${TST_DIR}/plugin_iodc_*.json)
+				foreach (j ${JsonIrl})
 						add_test(NAME "${t}_${COUNTER}"
 										WORKING_DIRECTORY ${TST_DIR}
 										COMMAND ${t} ${j})
