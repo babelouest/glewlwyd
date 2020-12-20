@@ -62,6 +62,10 @@ START_TEST(test_glwd_mod_user_irl_add_error_param)
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
+  j_parameters = json_pack("{sss[s]}", "username", "test", "password", PROFILE_PASSWORD);
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+  
   o_free(url);
 }
 END_TEST
@@ -371,6 +375,10 @@ START_TEST(test_glwd_mod_user_irl_user_update_password)
   ck_assert_int_eq(u_map_put(auth_req.map_header, "Cookie", cookie), U_OK);
   
   ulfius_clean_response(&auth_resp);
+  
+  j_profile = json_pack("{sss[s]}", "old_password", PROFILE_PASSWORD, "password", PROFILE_NEW_PASSWORD);
+  ck_assert_int_eq(run_simple_test(&auth_req, "PUT", SERVER_URI "/profile/password/", NULL, NULL, j_profile, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_profile);
   
   j_profile = json_pack("{ssss}", "username", username, "password", PROFILE_NEW_PASSWORD);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/auth/", NULL, NULL, j_profile, NULL, 401, NULL, NULL, NULL), 1);
