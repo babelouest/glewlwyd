@@ -485,22 +485,22 @@ static int update_password_list(struct mod_parameters * param, json_int_t gu_id,
   return ret;
 }
 
-static char * get_salt_from_password_hash(struct mod_parameters * param, const char * username) {
-  json_t * j_query, * j_result;
+static char ** get_salt_from_password_hash(struct mod_parameters * param, const char * username) {
+  json_t * j_query, * j_result, * j_element = 0;
   int res;
   unsigned char password_b64_decoded[1024] = {0};
-  char * salt = NULL, * username_escaped, * username_clause;
-  size_t password_b64_decoded_len;
+  char * salt = NULL, * username_escaped, * username_clause, ** salt_list = NULL;
+  size_t password_b64_decoded_len, index = 0;
   
   username_escaped = h_escape_string_with_quotes(param->conn, username);
-  username_clause = msprintf(" = UPPER(%s)", username_escaped);
+  username_clause = msprintf("IN (SELECT gu_id FROM "G_TABLE_USER" WHERE UPPER(gu_username) = UPPER(%s))", username_escaped);  
   j_query = json_pack("{sss[s]s{s{ssss}}}",
                       "table",
-                      G_TABLE_USER,
+                      G_TABLE_USER_PASSWORD,
                       "columns",
-                        "gu_password",
+                        "guw_password",
                       "where",
-                        "UPPER(gu_username)",
+                        "gu_id",
                           "operator",
                           "raw",
                           "value",
@@ -510,42 +510,65 @@ static char * get_salt_from_password_hash(struct mod_parameters * param, const c
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    if (json_array_size(j_result) && json_string_length(json_object_get(json_array_get(j_result, 0), "gu_password"))) {
-      if (o_base64_decode((const unsigned char *)json_string_value(json_object_get(json_array_get(j_result, 0), "gu_password")), json_string_length(json_object_get(json_array_get(j_result, 0), "gu_password")), password_b64_decoded, &password_b64_decoded_len)) {
-        if ((salt = o_strdup((const char *)password_b64_decoded + password_b64_decoded_len - GLEWLWYD_DEFAULT_SALT_LENGTH)) == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error extracting salt");
+    if (json_array_size(j_result)) {
+      if ((salt_list = o_malloc((json_array_size(j_result)+1)*sizeof(char *))) != NULL) {
+        json_array_foreach(j_result, index, j_element) {
+          if (json_string_length(json_object_get(j_element, "guw_password")) && o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_element, "guw_password")), json_string_length(json_object_get(j_element, "guw_password")), password_b64_decoded, &password_b64_decoded_len)) {
+            if ((salt = o_strdup((const char *)password_b64_decoded + password_b64_decoded_len - GLEWLWYD_DEFAULT_SALT_LENGTH)) != NULL) {
+              salt_list[index] = salt;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error extracting salt");
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error o_base64_decode");
+          }
         }
+        salt_list[json_array_size(j_result)] = NULL;
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error o_base64_decode");
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error allocatig resources for salt_list (1)");
       }
     } else {
-      salt = o_strdup("");
+      if ((salt_list = o_malloc(sizeof(char *))) != NULL) {
+        salt_list[0] = NULL;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error allocatig resources for salt_list (2)");
+      }
     }
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error executing j_query");
   }
-  return salt;
+  return salt_list;
 }
 
 static char * get_password_clause_check(struct mod_parameters * param, const char * username, const char * password) {
-  char * clause = NULL, * password_encoded, digest[1024] = {0}, * salt, * username_escaped = h_escape_string_with_quotes(param->conn, username);;
+  char * clause = NULL, * password_encoded, digest[1024] = {0}, ** salt_list, * username_escaped = h_escape_string_with_quotes(param->conn, username);
+  size_t i;
   
   if (param->conn->type == HOEL_DB_TYPE_SQLITE) {
-    if ((salt = get_salt_from_password_hash(param, username)) != NULL) {
-      if (generate_digest_pbkdf2(password, salt, digest)) {
-        clause = msprintf("'%s'", digest);
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_check database - Error generate_digest_pbkdf2");
+    if ((salt_list = get_salt_from_password_hash(param, username)) != NULL) {
+      clause = o_strdup("IN (");
+      for (i=0; salt_list[i]!=NULL; i++) {
+        if (generate_digest_pbkdf2(password, salt_list[i], digest)) {
+          if (!i) {
+            clause = mstrcatf(clause, "'%s'", digest);
+          } else {
+            clause = mstrcatf(clause, ",'%s'", digest);
+          }
+          digest[0] = '\0';
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_check database - Error generate_digest_pbkdf2");
+        }
       }
+      clause = mstrcatf(clause, ")");
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_check database - Error get_salt_from_password_hash");
     }
-    o_free(salt);
+    free_string_array(salt_list);
   } else if (param->conn->type == HOEL_DB_TYPE_MARIADB) {
     password_encoded = h_escape_string_with_quotes(param->conn, password);
     if (password_encoded != NULL) {
-      clause = msprintf("PASSWORD(%s)", password_encoded);
+      clause = msprintf("= PASSWORD(%s)", password_encoded);
       o_free(password_encoded);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_check database - Error h_escape_string_with_quotes (mariadb)");
@@ -553,7 +576,7 @@ static char * get_password_clause_check(struct mod_parameters * param, const cha
   } else if (param->conn->type == HOEL_DB_TYPE_PGSQL) {
     password_encoded = h_escape_string_with_quotes(param->conn, password);
     if (password_encoded != NULL) {
-      clause = msprintf("crypt(%s, gu_password)", password_encoded);
+      clause = msprintf("= crypt(%s, guw_password)", password_encoded);
       o_free(password_encoded);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_check database - Error h_escape_string_with_quotes (postgre)");
@@ -1259,7 +1282,7 @@ int user_module_check_password(struct config_module * config, const char * usern
   
   username_escaped = h_escape_string_with_quotes(param->conn, username);
   username_clause = msprintf("IN (SELECT gu_id FROM "G_TABLE_USER" WHERE UPPER(gu_username) = UPPER(%s))", username_escaped);  
-  j_query = json_pack("{sss[s]s{s{ssss}s{ssss+}}}",
+  j_query = json_pack("{sss[s]s{s{ssss}s{ssss}}}",
                       "table",
                       G_TABLE_USER_PASSWORD,
                       "columns",
@@ -1274,7 +1297,6 @@ int user_module_check_password(struct config_module * config, const char * usern
                           "operator",
                           "raw",
                           "value",
-                          "= ",
                           clause);
   o_free(clause);
   o_free(username_clause);
@@ -1327,7 +1349,7 @@ int user_module_update_password(struct config_module * config, const char * user
     }
     json_decref(j_result);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_check_password database - Error executing j_query");
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password database - Error executing j_query");
     ret = G_ERROR_DB;
   }
   
