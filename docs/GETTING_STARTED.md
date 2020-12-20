@@ -38,6 +38,7 @@
   - [User profile delegation](#user-profile-delegation)
   - [Add or update additional properties for users and clients](#add-or-update-additional-properties-for-users-and-clients)
   - [Non-password authentication](#non-password-authentication)
+  - [Multiple password authentication](#multiple-password-authentication)
 - [Troubleshooting](#troubleshooting)
   - [Impossible to log in as administrator - N-factor issue](#impossible-to-log-in-as-administrator---n-factor-issue)
   - [Impossible to log in as administrator - Password lost](#impossible-to-log-in-as-administrator---password-lost)
@@ -647,6 +648,12 @@ The option `defaultScheme` in the `config.json` file can be used to overwrite pa
 ```
 
 ![login-nopassword](screenshots/login-nopassword.png)
+
+### Multiple password authentication
+
+This feature is new since Glewlwyd 2.5. If this option is enabled in a user backend module (except for the User Module HTTP Backend), users are allowed to have more than one password to authenticate in Glewlwyd services where password is required.
+
+The use-case why this feature was added is when the user backend is LDAP. If this LDAP service is used to authenticate to other services than Glewlwyd, such as an IMAP service or network login, all those services can use different passwords, and those different passwords don't have to be remembered by the user if the user uses a password vault. Also, if one password is compromised, you can change only the compromised password without having too change the password with all the services.
 
 ## Troubleshooting
 

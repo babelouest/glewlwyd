@@ -40,6 +40,10 @@ Name of the instance displayed to the user.
 
 Check this option if you want to use this backend as read-only. All user properties such as e-mail, name, password, scopes can't be modifier with Glewlwyd, even administrators.
 
+### Multiple password
+
+Check this option if you allow users to manage multiple passwords. More information about multiple passwords use-cases are avaiable in the [Getting Started Dcumentation](GETTING_STARTED.md#multiple-password-authentication).
+
 ### URL
 
 URL of the HTTP service to connect to.

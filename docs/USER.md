@@ -37,9 +37,19 @@ This tab allows the user to manually disable active sessions or refresh tokens p
 
 ## Password
 
+### Single password configuration
+
 ![profile-password](screenshots/profile-password.png)
 
-If you click on the `Password` tab, you'll open a modal window that will allow to change your user password. The new password must be at least 8 characters long.
+If you click on the `Password` tab, you'll be able to change your user password.
+
+### Multiple password configuration
+
+![profile-multiple-password](screenshots/profile-multiple-password.png)
+
+If you click on the `Password` tab, you'll be able to change your user passwords. You can have multiple passwords if you need to, or none if your Glewlwyd service allows passwordless authentication.
+
+Be careful that every password will allow the same access level to your Glewlwyd service, so all of them must be strong enough to avoid being guessed.
 
 ## Schemes
 
