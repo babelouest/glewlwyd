@@ -460,7 +460,6 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
  */
 json_t * user_module_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
   UNUSED(config);
-  UNUSED(cls);
   json_t * j_return = NULL;
 
   if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && username == NULL) {
@@ -471,7 +470,7 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
         if (json_object_get(j_user, "password") != NULL) {
           if (json_is_array(json_object_get((json_t *)cls, "password")) && json_is_array(json_object_get(j_user, "password"))) {
             j_return = json_pack("{si}", "result", G_OK);
-          } else if (json_string_length(json_object_get(j_user, "password"))) {
+          } else if (!json_is_array(json_object_get((json_t *)cls, "password")) && json_string_length(json_object_get(j_user, "password"))) {
             j_return = json_pack("{si}", "result", G_OK);
           } else {
             j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "invalid password");
@@ -483,7 +482,17 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
         j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "username must be a string value of maximum 128 characters");
       }
     } else {
-      j_return = json_pack("{si}", "result", G_OK);
+      if (json_object_get(j_user, "password") != NULL) {
+        if (json_is_array(json_object_get((json_t *)cls, "password")) && json_is_array(json_object_get(j_user, "password"))) {
+          j_return = json_pack("{si}", "result", G_OK);
+        } else if (!json_is_array(json_object_get((json_t *)cls, "password")) && json_string_length(json_object_get(j_user, "password"))) {
+          j_return = json_pack("{si}", "result", G_OK);
+        } else {
+          j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "invalid password");
+        }
+      } else {
+        j_return = json_pack("{si}", "result", G_OK);
+      }
     }
   }
   return j_return;
@@ -723,17 +732,16 @@ int user_module_update_password(struct config_module * config, const char * user
   UNUSED(config);
   UNUSED(cls);
   UNUSED(username);
-  json_t * j_element = NULL, * j_password = json_array();
+  json_t * j_password;
   size_t index = 0;
   
   if (json_is_array(json_object_get((json_t *)cls, "password"))) {
-    json_array_foreach(json_object_get((json_t *)cls, "password"), index, j_element) {
-      if (index < new_passwords_len) {
-        if (o_strlen(new_passwords[index])) {
-          json_array_append_new(j_password, json_string(new_passwords[index]));
-        } else if (new_passwords[index] != NULL && json_string_length(j_element)) {
-          json_array_append(j_password, j_element);
-        }
+    j_password = json_array();
+    for (index=0; index<new_passwords_len; index++) {
+      if (o_strlen(new_passwords[index])) {
+        json_array_append_new(j_password, json_string(new_passwords[index]));
+      } else if (new_passwords[index] != NULL && json_string_length(json_array_get(json_object_get((json_t *)cls, "password"), index))) {
+        json_array_append(j_password, json_array_get(json_object_get((json_t *)cls, "password"), index));
       }
     }
     json_object_set_new((json_t *)cls, "password", j_password);

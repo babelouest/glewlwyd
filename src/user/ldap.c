@@ -5,9 +5,9 @@
  * Authentiation server
  * Users are authenticated via various backend available: database, ldap
  * Using various authentication methods available: password, OTP, send code, etc.
- * 
+ *
  * LDAP user module
- * 
+ *
  * Copyright 2016-2020 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -35,17 +35,17 @@
 #define LDAP_DEFAULT_PAGE_SIZE 50
 
 /**
- * 
+ *
  * Escapes any special chars (RFC 4515) from a string representing a
  * a search filter assertion value.
- * 
+ *
  * You must o_free the returned value after use
  *
  */
 static char * escape_ldap(const char * input) {
   char * tmp, * to_return = NULL;
   size_t len, i;
-  
+
   if (input != NULL) {
     to_return = strdup("");
     len = o_strlen(input);
@@ -76,17 +76,17 @@ static char * escape_ldap(const char * input) {
         tmp = msprintf("%s%c", to_return, c);
         o_free(to_return);
         to_return = tmp;
-      } else if (((c & 0xE0) == 0xC0) && i < (len-2)) { 
+      } else if (((c & 0xE0) == 0xC0) && i < (len-2)) {
         // higher-order 2-byte UTF-8 chars
         tmp = msprintf("%s\\%02x\\%02x", to_return, input[i], input[i+1]);
         o_free(to_return);
         to_return = tmp;
-      } else if (((c & 0xF0) == 0xE0) && i < (len-3)) { 
+      } else if (((c & 0xF0) == 0xE0) && i < (len-3)) {
         // higher-order 3-byte UTF-8 chars
         tmp = msprintf("%s\\%02x\\%02x\\%02x", to_return, input[i], input[i+1], input[i+2]);
         o_free(to_return);
         to_return = tmp;
-      } else if (((c & 0xF8) == 0xF0) && i < (len-4)) { 
+      } else if (((c & 0xF8) == 0xF0) && i < (len-4)) {
         // higher-order 4-byte UTF-8 chars
         tmp = msprintf("%s\\%02x\\%02x\\%02x\\%02x", to_return, input[i], input[i+1], input[i+2], input[i+3]);
         o_free(to_return);
@@ -101,7 +101,7 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params, int readonly) {
   json_t * j_return, * j_error = json_array(), * j_element = NULL, * j_element_p = NULL;
   size_t index = 0;
   const char * field;
-  
+
   if (j_error != NULL) {
     if (!json_is_object(j_params)) {
       json_array_append_new(j_error, json_string("parameters must be a JSON object"));
@@ -221,22 +221,22 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params, int readonly) {
         if (json_object_get(j_params, "password-property") == NULL || !json_string_length(json_object_get(j_params, "password-property"))) {
           json_array_append_new(j_error, json_string("password-property is mandatory and must be a non empty string"));
         }
-        if (json_object_get(j_params, "password-algorithm") == NULL || 
-          (0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SHA") && 
-           //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SHA256") && 
-           //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SHA384") && 
-           //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SHA512") && 
-           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SSHA") && 
-           //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SSHA256") && 
-           //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SSHA384") && 
-           //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SSHA512") && 
-           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SMD5") && 
-           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "MD5") && 
-           //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "PKCS5S2") && 
-           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "CRYPT") && 
-           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "CRYPT_MD5") && 
-           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "CRYPT_SHA256") && 
-           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "CRYPT_SHA512") && 
+        if (json_object_get(j_params, "password-algorithm") == NULL ||
+          (0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SHA") &&
+           //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SHA256") &&
+           //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SHA384") &&
+           //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SHA512") &&
+           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SSHA") &&
+           //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SSHA256") &&
+           //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SSHA384") &&
+           //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SSHA512") &&
+           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "SMD5") &&
+           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "MD5") &&
+           //0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "PKCS5S2") &&
+           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "CRYPT") &&
+           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "CRYPT_MD5") &&
+           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "CRYPT_SHA256") &&
+           0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "CRYPT_SHA512") &&
            0 != o_strcmp(json_string_value(json_object_get(j_params, "password-algorithm")), "PLAIN"))) {
           //json_array_append_new(j_error, json_string("password-property is mandatory and must have one of the following values: 'SHA', 'SHA256', 'SHA284', 'SHA512', 'SSHA', "
           //                                           "'SSHA256', 'SSHA384', 'SSHA512', 'SMD5', 'MD5', 'PKCS5S2', 'PLAIN'"));
@@ -319,10 +319,10 @@ static LDAP * connect_ldap_server(json_t * j_params) {
   int result;
   char * ldap_mech = LDAP_SASL_SIMPLE;
   struct berval cred, * servcred;
-  
+
   cred.bv_val = (char*)json_string_value(json_object_get(j_params, "bind-password"));
   cred.bv_len = o_strlen(json_string_value(json_object_get(j_params, "bind-password")));
-  
+
   if (ldap_initialize(&ldap, json_string_value(json_object_get(j_params, "uri"))) != LDAP_SUCCESS) {
     y_log_message(Y_LOG_LEVEL_ERROR, "connect_ldap_server ldap - Error initializing ldap");
     ldap = NULL;
@@ -335,7 +335,7 @@ static LDAP * connect_ldap_server(json_t * j_params) {
     ldap_unbind_ext(ldap, NULL, NULL);
     ldap = NULL;
   }
-  
+
   return ldap;
 }
 
@@ -351,7 +351,7 @@ static const char * get_read_property(json_t * j_params, const char * property) 
 
 static char * get_ldap_filter_pattern(json_t * j_params, const char * pattern) {
   char * pattern_escaped, * filter, * name_filter, * email_filter;
-  
+
   if (o_strlen(pattern)) {
     pattern_escaped = escape_ldap(pattern);
     if (json_object_get(j_params, "name-property") != NULL) {
@@ -364,8 +364,8 @@ static char * get_ldap_filter_pattern(json_t * j_params, const char * pattern) {
     } else {
       email_filter = o_strdup("");
     }
-    filter = msprintf("(&(%s)(|(%s=*%s*)%s%s))", 
-                      json_string_value(json_object_get(j_params, "filter")), 
+    filter = msprintf("(&(%s)(|(%s=*%s*)%s%s))",
+                      json_string_value(json_object_get(j_params, "filter")),
                       get_read_property(j_params, "username-property"),
                       pattern_escaped,
                       name_filter,
@@ -376,7 +376,7 @@ static char * get_ldap_filter_pattern(json_t * j_params, const char * pattern) {
   } else {
     filter = msprintf("(%s)", json_string_value(json_object_get(j_params, "filter")));
   }
-  
+
   return filter;
 }
 
@@ -385,10 +385,11 @@ static char ** get_ldap_read_attributes(json_t * j_params, int profile, json_t *
   size_t i, nb_attrs = 2; // Username, Scope
   json_t * j_element = NULL;
   const char * field = NULL;
-  
+
   if (j_properties != NULL && json_is_object(j_properties) && !json_object_size(j_properties)) {
     nb_attrs += (json_object_get(j_params, "name-property") != NULL);
     nb_attrs += (json_object_get(j_params, "email-property") != NULL);
+    nb_attrs += (json_object_get(j_params, "multiple_passwords") == json_true() && json_object_get(j_params, "password-property") != NULL);
     if (json_object_get(j_params, "data-format") != NULL) {
       json_object_foreach(json_object_get(j_params, "data-format"), field, j_element) {
         nb_attrs += ((!profile && json_object_get(j_element, "read") != json_false()) || (profile && json_object_get(j_element, "profile-read") == json_true()));
@@ -409,6 +410,9 @@ static char ** get_ldap_read_attributes(json_t * j_params, int profile, json_t *
       if (json_object_get(j_params, "email-property") != NULL) {
         attrs[i++] = (char*)get_read_property(j_params, "email-property");
         json_object_set_new(j_properties, "email", json_string(get_read_property(j_params, "email-property")));
+      }
+      if (json_object_get(j_params, "multiple_passwords") == json_true() && json_object_get(j_params, "password-property") != NULL) {
+        attrs[i++] = (char*)get_read_property(j_params, "password-property");
       }
       if (json_object_get(j_params, "data-format") != NULL) {
         json_object_foreach(json_object_get(j_params, "data-format"), field, j_element) {
@@ -479,7 +483,82 @@ static digest_algorithm get_digest_algorithm(json_t * j_params) {
   }
 }
 
-static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int profile, int add, json_t * j_mod_value_free_array) {
+static int set_update_password_mod(json_t * j_params, LDAP * ldap, const char * username, const char ** new_passwords, size_t new_passwords_len, LDAPMod * mod, int add) {
+  LDAPMessage * entry, * answer;
+  int ldap_result, nb_values, ret = G_OK, i;
+  struct berval ** result_values = NULL;
+  size_t counter;
+
+  int  scope = LDAP_SCOPE_ONELEVEL;
+  char * filter = NULL;
+  char * attrs[2] = {(char *)json_string_value(json_object_get(j_params, "password-property")), NULL};
+  int attrsonly = 0;
+
+  if (0 == o_strcmp(json_string_value(json_object_get(j_params, "search-scope")), "subtree")) {
+    scope = LDAP_SCOPE_SUBTREE;
+  } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "search-scope")), "subtree")) {
+    scope = LDAP_SCOPE_CHILDREN;
+  }
+  if (!add) {
+    // Connection successful, doing ldap search
+    filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "username-property"), username);
+    if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "set_update_password_mod - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
+      ret = G_ERROR;
+    } else {
+      // Looping in results, staring at offset, until the end of the list
+      if (ldap_count_entries(ldap, answer) > 0) {
+        entry = ldap_first_entry(ldap, answer);
+        result_values = ldap_get_values_len(ldap, entry, json_string_value(json_object_get(j_params, "password-property")));
+        nb_values = ldap_count_values_len(result_values);
+        if ((mod->mod_values = o_malloc((new_passwords_len+1)*sizeof(char *))) != NULL) {
+          for (i=0; i<(int)new_passwords_len+1; i++) {
+            mod->mod_values[i] = NULL;
+          }
+          counter = 0;
+          for (i=0; i<(int)new_passwords_len; i++) {
+            if (o_strlen(new_passwords[i])) {
+              mod->mod_values[counter] = generate_hash(get_digest_algorithm(j_params), new_passwords[i]);
+              counter++;
+            } else if (new_passwords[i] != NULL && i < nb_values) {
+              mod->mod_values[counter] = o_strndup(result_values[i]->bv_val, result_values[i]->bv_len);
+              counter++;
+            }
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "set_update_password_mod - Error allocating resources for mod->mod_values");
+          ret = G_ERROR_MEMORY;
+        }
+        ldap_value_free_len(result_values);
+      }
+    }
+
+    o_free(filter);
+    ldap_msgfree(answer);
+  } else {
+    if ((mod->mod_values = o_malloc((new_passwords_len+1)*sizeof(char *))) != NULL) {
+      for (i=0; i<(int)new_passwords_len+1; i++) {
+        mod->mod_values[i] = NULL;
+      }
+      counter = 0;
+      for (i=0; i<(int)new_passwords_len; i++) {
+        if (o_strlen(new_passwords[i])) {
+          mod->mod_values[counter] = generate_hash(get_digest_algorithm(j_params), new_passwords[i]);
+          counter++;
+        } else {
+          mod->mod_values[counter] = o_strdup("");
+          counter++;
+        }
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "set_update_password_mod - Error allocating resources for mod->mod_values");
+      ret = G_ERROR_MEMORY;
+    }
+  }
+  return ret;
+}
+
+static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char * username, json_t * j_user, int profile, int add, json_t * j_mod_value_free_array) {
   LDAPMod ** mods = NULL;
   size_t nb_attr = 0;
   json_t * j_format, * j_property = NULL, * j_property_value, * j_scope;
@@ -489,7 +568,8 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
   int has_error = 0;
   unsigned char * value_dec = NULL;
   size_t value_dec_len = 0;
-  
+  const char ** passwords = NULL;
+
   if (j_mod_value_free_array != NULL) {
     // Count attrs
     if (add) {
@@ -505,7 +585,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
       if (json_object_get(j_user, "email") != NULL) {
         nb_attr += count_properties(j_params, "email-property");
       }
-      if (json_string_length(json_object_get(j_user, "password"))) {
+      if (json_object_get(j_user, "password") != NULL) {
         nb_attr++;
       }
     }
@@ -522,7 +602,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
     for (i=0; i<=nb_attr; i++) {
       mods[i] = NULL;
     }
-    
+
     // Fill mods
     i=0;
     if (mods != NULL) {
@@ -723,25 +803,52 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
           }
           i++;
         }
-        if (json_string_length(json_object_get(j_user, "password"))) {
-          mods[i] = o_malloc(sizeof(LDAPMod));
-          if (mods[i] != NULL) {
-            mods[i]->mod_values = o_malloc(2 * sizeof(char *));
-            if (mods[i]->mod_values != NULL) {
-              mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
-              mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "password-property"));
-              mods[i]->mod_values[0] = json_string_length(json_object_get(j_user, "password"))?generate_hash(get_digest_algorithm(j_params), json_string_value(json_object_get(j_user, "password"))):NULL;
-              mods[i]->mod_values[1] = NULL;
-              json_array_append_new(j_mod_value_free_array, json_integer(i));
+        if (json_object_get(j_params, "multiple_passwords") == json_true()) {
+          if ((passwords = o_malloc(json_array_size(json_object_get(j_user, "password"))*sizeof(char *))) != NULL) {
+            mods[i] = o_malloc(sizeof(LDAPMod));
+            if (mods[i] != NULL) {
+              json_array_foreach(json_object_get(j_user, "password"), index, j_property) {
+                passwords[index] = json_string_value(j_property);
+              }
+              if (set_update_password_mod(j_params, ldap, username, passwords, json_array_size(json_object_get(j_user, "password")), mods[i], add) == G_OK) {
+                mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+                mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "password-property"));
+                json_array_append_new(j_mod_value_free_array, json_integer(i));
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error set_update_password_mod for mods[%d]", i);
+                has_error = 1;
+              }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (password)", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (password)", i);
               has_error = 1;
             }
+            i++;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (password)", i);
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (passwords)", i);
             has_error = 1;
           }
-          i++;
+          o_free(passwords);
+        } else {
+          if (json_string_length(json_object_get(j_user, "password"))) {
+            mods[i] = o_malloc(sizeof(LDAPMod));
+            if (mods[i] != NULL) {
+              mods[i]->mod_values = o_malloc(2 * sizeof(char *));
+              if (mods[i]->mod_values != NULL) {
+                mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+                mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "password-property"));
+                mods[i]->mod_values[0] = json_string_length(json_object_get(j_user, "password"))?generate_hash(get_digest_algorithm(j_params), json_string_value(json_object_get(j_user, "password"))):NULL;
+                mods[i]->mod_values[1] = NULL;
+                json_array_append_new(j_mod_value_free_array, json_integer(i));
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (password)", i);
+                has_error = 1;
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (password)", i);
+              has_error = 1;
+            }
+            i++;
+          }
         }
       }
       json_object_foreach(j_user, field, j_property) {
@@ -860,7 +967,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_user, int pro
 static json_t * get_scope_from_ldap(json_t * j_params, const char * ldap_scope_value) {
   json_t * j_element = NULL;
   const char * key = NULL, * value;
-  
+
   if (json_object_get(j_params, "scope-property-match-correspondence") != NULL) {
     json_object_foreach(json_object_get(j_params, "scope-property-match-correspondence"), key, j_element) {
       value = json_string_value(j_element);
@@ -883,7 +990,7 @@ static json_t * get_user_from_result(json_t * j_params, json_t * j_properties_us
   int i;
   unsigned char * value_enc = NULL;
   size_t value_enc_len = 0;
-  
+
   if (j_user != NULL) {
     json_object_foreach(j_properties_user, field, j_property) {
       result_values = ldap_get_values_len(ldap, entry, json_string_value(j_property));
@@ -959,12 +1066,12 @@ static json_t * get_user_from_result(json_t * j_params, json_t * j_properties_us
 static char * get_user_dn_from_username(json_t * j_params, LDAP * ldap, const char * username) {
   char * user_dn, * filter;
   int  result;
-  char * attrs[]      = {NULL};
-  int  attrsonly      = 0;
+  char * attrs[] = {NULL};
+  int  attrsonly = 0;
   LDAPMessage * answer = NULL, * entry;
   char * str_result = NULL;
   int  scope = LDAP_SCOPE_ONELEVEL;
-  
+
   if (0 == o_strcmp(json_string_value(json_object_get(j_params, "search-scope")), "subtree")) {
     scope = LDAP_SCOPE_SUBTREE;
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "search-scope")), "subtree")) {
@@ -990,11 +1097,12 @@ static char * get_user_dn_from_username(json_t * j_params, LDAP * ldap, const ch
 
 json_t * user_module_load(struct config_module * config) {
   UNUSED(config);
-  return json_pack("{si ss ss ss}",
+  return json_pack("{si ss ss ss sf}",
                    "result", G_OK,
                    "name", "ldap",
                    "display_name", "LDAP backend user module",
-                   "description", "Module to store users in a LDAP server");
+                   "description", "Module to store users in a LDAP server",
+                   "api_version", 2.5);
 }
 
 int user_module_unload(struct config_module * config) {
@@ -1002,13 +1110,14 @@ int user_module_unload(struct config_module * config) {
   return G_OK;
 }
 
-json_t * user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls) {
+json_t * user_module_init(struct config_module * config, int readonly, int multiple_passwords, json_t * j_parameters, void ** cls) {
   UNUSED(config);
   json_t * j_properties, * j_return;
   char * error_message;
-  
+
   j_properties = is_user_ldap_parameters_valid(j_parameters, readonly);
   if (check_result_value(j_properties, G_OK)) {
+    json_object_set(j_parameters, "multiple_passwords", multiple_passwords?json_true():json_false());
     *cls = json_incref(j_parameters);
     j_return = json_pack("{si}", "result", G_OK);
   } else if (check_result_value(j_properties, G_ERROR_PARAM)) {
@@ -1040,7 +1149,7 @@ size_t user_module_count_total(struct config_module * config, const char * patte
   int  attrsonly = 0;
   size_t counter = 0;
   int result, scope = LDAP_SCOPE_ONELEVEL;
-  
+
   if (0 == o_strcmp(json_string_value(json_object_get(j_params, "search-scope")), "subtree")) {
     scope = LDAP_SCOPE_SUBTREE;
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "search-scope")), "subtree")) {
@@ -1067,12 +1176,13 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
   json_t * j_params = (json_t *)cls, * j_properties_user = NULL, * j_user_list, * j_user, * j_return;
   LDAP * ldap = connect_ldap_server(j_params);
   LDAPMessage * entry;
-  
+
   int  ldap_result;
   int  scope = LDAP_SCOPE_ONELEVEL;
   char * filter = NULL;
   char ** attrs = NULL;
   int  attrsonly = 0;
+  struct berval ** result_values = NULL;
 
   /* paged control variables */
   struct berval new_cookie, * cookie = NULL;
@@ -1080,7 +1190,7 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
   LDAPControl * page_control = NULL, * search_controls[2] = { NULL, NULL }, ** returned_controls = NULL;
   LDAPMessage * l_result = NULL;
   ber_int_t total_count;
-  
+
   if (0 == o_strcmp(json_string_value(json_object_get(j_params, "search-scope")), "subtree")) {
     scope = LDAP_SCOPE_SUBTREE;
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "search-scope")), "subtree")) {
@@ -1097,25 +1207,25 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error ldap_create_page_control, message: %s", ldap_err2string(ldap_result));
         break;
       }
-      
+
       search_controls[0] = page_control;
       ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, search_controls, NULL, NULL, 0, &l_result);
       if ((ldap_result != LDAP_SUCCESS) & (ldap_result != LDAP_PARTIAL_RESULTS)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error ldap search, base search: %s, filter: %s, error message: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
         break;
       }
-      
+
       ldap_result = ldap_parse_result(ldap, l_result, &l_errcode, NULL, NULL, NULL, &returned_controls, 0);
       if (ldap_result != LDAP_SUCCESS) {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error ldap_parse_result, message: %s", ldap_err2string(ldap_result));
         break;
       }
-      
+
       if (cookie != NULL) {
         ber_bvfree(cookie);
         cookie = NULL;
       }
-      
+
       if (returned_controls != NULL) {
         ldap_result = ldap_parse_pageresponse_control(ldap, *returned_controls, &total_count, &new_cookie);
         if (ldap_result != LDAP_SUCCESS) {
@@ -1126,7 +1236,7 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error returned_controls is NULL");
         break;
       }
-      
+
       cookie = ber_memalloc( sizeof( struct berval ) );
       if (cookie != NULL) {
         *cookie = new_cookie;
@@ -1139,7 +1249,7 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error ber_malloc returned NULL");
         break;
       }
-      
+
       if (returned_controls != NULL) {
         ldap_controls_free(returned_controls);
         returned_controls = NULL;
@@ -1147,15 +1257,20 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
       search_controls[0] = NULL;
       ldap_control_free(page_control);
       page_control = NULL;
-      
+
       entry = ldap_first_entry(ldap, l_result);
       for (;entry !=NULL && offset > 0; entry = ldap_next_entry(ldap, entry)) {
         offset--;
       }
-      
+
       while (entry != NULL && limit) {
         j_user = get_user_from_result(j_params, j_properties_user, ldap, entry);
         if (j_user != NULL) {
+          if (json_object_get(j_params, "multiple_passwords") == json_true()) {
+            result_values = ldap_get_values_len(ldap, entry, json_string_value(json_object_get(j_params, "password-property")));
+            json_object_set_new(j_user, "password", json_integer(ldap_count_values_len(result_values)));
+            ldap_value_free_len(result_values);
+          }
           json_array_append_new(j_user_list, j_user);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error get_user_from_result");
@@ -1163,7 +1278,7 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
         entry = ldap_next_entry(ldap, entry);
         limit--;
       }
-      
+
       ldap_msgfree(l_result);
       l_result = NULL;
     } while (more_page && limit);
@@ -1172,7 +1287,7 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
     o_free(filter);
     ber_bvfree(cookie);
     cookie = NULL;
-    
+
     ldap_unbind_ext(ldap, NULL, NULL);
     j_return = json_pack("{sisO}", "result", G_OK, "list", j_user_list);
     json_decref(j_user_list);
@@ -1191,7 +1306,8 @@ json_t * user_module_get(struct config_module * config, const char * username, v
   LDAP * ldap = connect_ldap_server(j_params);
   LDAPMessage * entry, * answer;
   int ldap_result;
-  
+  struct berval ** result_values = NULL;
+
   int  scope = LDAP_SCOPE_ONELEVEL;
   char * filter = NULL;
   char ** attrs = NULL;
@@ -1215,6 +1331,11 @@ json_t * user_module_get(struct config_module * config, const char * username, v
         entry = ldap_first_entry(ldap, answer);
         j_user = get_user_from_result(j_params, j_properties_user, ldap, entry);
         if (j_user != NULL) {
+          if (json_object_get(j_params, "multiple_passwords") == json_true()) {
+            result_values = ldap_get_values_len(ldap, entry, json_string_value(json_object_get(j_params, "password-property")));
+            json_object_set_new(j_user, "password", json_integer(ldap_count_values_len(result_values)));
+            ldap_value_free_len(result_values);
+          }
           j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap user - Error get_user_from_result");
@@ -1225,7 +1346,7 @@ json_t * user_module_get(struct config_module * config, const char * username, v
         j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
       }
     }
-    
+
     json_decref(j_properties_user);
     o_free(attrs);
     o_free(filter);
@@ -1244,7 +1365,8 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
   LDAP * ldap = connect_ldap_server(j_params);
   LDAPMessage * entry, * answer;
   int ldap_result;
-  
+  struct berval ** result_values = NULL;
+
   int  scope = LDAP_SCOPE_ONELEVEL;
   char * filter = NULL;
   char ** attrs = NULL;
@@ -1267,6 +1389,11 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
         entry = ldap_first_entry(ldap, answer);
         j_user = get_user_from_result(j_params, j_properties_user, ldap, entry);
         if (j_user != NULL) {
+          if (json_object_get(j_params, "multiple_passwords") == json_true()) {
+            result_values = ldap_get_values_len(ldap, entry, json_string_value(json_object_get(j_params, "password-property")));
+            json_object_set_new(j_user, "password", json_integer(ldap_count_values_len(result_values)));
+            ldap_value_free_len(result_values);
+          }
           j_return = json_pack("{sisO}", "result", G_OK, "user", j_user);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap user - Error get_user_from_result");
@@ -1277,7 +1404,7 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
         j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
       }
     }
-    
+
     json_decref(j_properties_user);
     o_free(attrs);
     o_free(filter);
@@ -1296,7 +1423,7 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
   char * message;
   size_t index = 0, len = 0;
   const char * property;
-  
+
   if (j_result != NULL) {
     if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
       if (!json_is_string(json_object_get(j_user, "username")) || !json_string_length(json_object_get(j_user, "username"))) {
@@ -1324,8 +1451,14 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
         }
       }
     }
-    if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE && json_object_get(j_user, "password") != NULL && !json_is_string(json_object_get(j_user, "password"))) {
-      json_array_append_new(j_result, json_string("password must be a string"));
+    if (json_object_get(j_params, "multiple_passwords") == json_true()) {
+      if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE && json_object_get(j_user, "password") != NULL && !json_is_array(json_object_get(j_user, "password"))) {
+        json_array_append_new(j_result, json_string("password must be an array"));
+      }
+    } else {
+      if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE && json_object_get(j_user, "password") != NULL && !json_is_string(json_object_get(j_user, "password"))) {
+        json_array_append_new(j_result, json_string("password must be a string"));
+      }
     }
     if (json_object_get(j_user, "name") != NULL && (!json_is_string(json_object_get(j_user, "name")) || !json_string_length(json_object_get(j_user, "name")))) {
       json_array_append_new(j_result, json_string("name must be a non empty string"));
@@ -1395,9 +1528,9 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
   LDAPMod ** mods = NULL;
   char * new_dn;
   size_t index = 0;
-  
+
   if (ldap != NULL) {
-    mods = get_ldap_write_mod(j_params, j_user, 0, 1, (j_mod_value_free_array = json_array()));
+    mods = get_ldap_write_mod(j_params, ldap, json_string_value(json_object_get(j_user, "username")), j_user, 0, 1, (j_mod_value_free_array = json_array()));
     if (mods != NULL) {
       new_dn = msprintf("%s=%s,%s", json_string_value(json_object_get(j_params, "rdn-property")), json_string_value(json_object_get(j_user, "username")), json_string_value(json_object_get(j_params, "base-search")));
       if (new_dn != NULL) {
@@ -1443,9 +1576,9 @@ int user_module_update(struct config_module * config, const char * username, jso
   LDAPMod ** mods = NULL;
   char * cur_dn;
   size_t index = 0;
-  
+
   if (ldap != NULL) {
-    mods = get_ldap_write_mod(j_params, j_user, 0, 0, (j_mod_value_free_array = json_array()));
+    mods = get_ldap_write_mod(j_params, ldap, username, j_user, 0, 0, (j_mod_value_free_array = json_array()));
     if (mods != NULL) {
       cur_dn = get_user_dn_from_username(j_params, ldap, username);
       if (cur_dn != NULL) {
@@ -1491,9 +1624,9 @@ int user_module_update_profile(struct config_module * config, const char * usern
   LDAPMod ** mods = NULL;
   char * cur_dn;
   size_t index = 0;
-  
+
   if (ldap != NULL) {
-    mods = get_ldap_write_mod(j_params, j_user, 1, 0, (j_mod_value_free_array = json_array()));
+    mods = get_ldap_write_mod(j_params, ldap, username, j_user, 1, 0, (j_mod_value_free_array = json_array()));
     if (mods != NULL) {
       cur_dn = get_user_dn_from_username(j_params, ldap, username);
       if (cur_dn != NULL) {
@@ -1537,7 +1670,7 @@ int user_module_delete(struct config_module * config, const char * username, voi
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, result;
   char * cur_dn;
-  
+
   if (ldap != NULL) {
     cur_dn = get_user_dn_from_username(j_params, ldap, username);
     if (cur_dn != NULL) {
@@ -1567,7 +1700,7 @@ int user_module_check_password(struct config_module * config, const char * usern
   LDAPMessage * entry, * answer;
   int ldap_result, result_login, result;
   char * user_dn = NULL;
-  
+
   int  scope = LDAP_SCOPE_ONELEVEL;
   char * filter = NULL;
   char * attrs[] = {"memberOf", NULL, NULL};
@@ -1605,7 +1738,7 @@ int user_module_check_password(struct config_module * config, const char * usern
         result = G_ERROR_NOT_FOUND;
       }
     }
-    
+
     o_free(filter);
     ldap_msgfree(answer);
     ldap_unbind_ext(ldap, NULL, NULL);
@@ -1616,39 +1749,69 @@ int user_module_check_password(struct config_module * config, const char * usern
   return result;
 }
 
-int user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls) {
+int user_module_update_password(struct config_module * config, const char * username, const char ** new_passwords, size_t new_passwords_len, void * cls) {
   UNUSED(config);
+  UNUSED(new_passwords_len); // TODO
   json_t * j_params = (json_t *)cls;
   LDAP * ldap = connect_ldap_server(j_params);
-  int ret, result;
+  int ret, result, i;
   LDAPMod * mods[2] = {NULL, NULL};
   char * cur_dn;
-  
+
   if (ldap != NULL) {
     mods[0] = o_malloc(sizeof(LDAPMod));
     if (mods[0] != NULL) {
-      mods[0]->mod_values = o_malloc(2 * sizeof(char *));
-      mods[0]->mod_op     = LDAP_MOD_REPLACE;
-      mods[0]->mod_type   = (char *)json_string_value(json_object_get(j_params, "password-property"));
-      mods[0]->mod_values[0] = o_strlen(new_password)?generate_hash(get_digest_algorithm(j_params), new_password):NULL;
-      mods[0]->mod_values[1] = NULL;
-      mods[1] = NULL;
-      cur_dn = get_user_dn_from_username(j_params, ldap, username);
-      if (cur_dn != NULL) {
-        if ((result = ldap_modify_ext_s(ldap, cur_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password ldap - Error setting new user %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
-          ret = G_ERROR;
+      if (json_object_get(j_params, "multiple_passwords") == json_true()) {
+        mods[0]->mod_op     = LDAP_MOD_REPLACE;
+        mods[0]->mod_type   = (char *)json_string_value(json_object_get(j_params, "password-property"));
+        mods[1] = NULL;
+        if (set_update_password_mod(j_params, ldap, username, new_passwords, new_passwords_len, mods[0], 0) == G_OK) {
+          cur_dn = get_user_dn_from_username(j_params, ldap, username);
+          if (cur_dn != NULL) {
+            if ((result = ldap_modify_ext_s(ldap, cur_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password ldap - Error setting new user %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
+              ret = G_ERROR;
+            } else {
+              ret = G_OK;
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password ldap - Error get_user_dn_from_username");
+            ret = G_ERROR;
+          }
+          o_free(cur_dn);
         } else {
-          ret = G_OK;
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password ldap - Error set_update_password_mod");
+          ret = G_ERROR;
         }
+        for (i=0; mods[0]->mod_values[i]!=NULL; i++) {
+          o_free(mods[0]->mod_values[i]);
+        }
+        o_free(mods[0]->mod_values);
+        o_free(mods[0]);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password ldap - Error get_user_dn_from_username");
-        ret = G_ERROR;
+        mods[0]->mod_values = o_malloc(2 * sizeof(char *));
+        mods[0]->mod_op     = LDAP_MOD_REPLACE;
+        mods[0]->mod_type   = (char *)json_string_value(json_object_get(j_params, "password-property"));
+        mods[0]->mod_values[0] = o_strlen(new_passwords[0])?generate_hash(get_digest_algorithm(j_params), new_passwords[0]):NULL;
+        mods[0]->mod_values[1] = NULL;
+        mods[1] = NULL;
+        cur_dn = get_user_dn_from_username(j_params, ldap, username);
+        if (cur_dn != NULL) {
+          if ((result = ldap_modify_ext_s(ldap, cur_dn, mods, NULL, NULL)) != LDAP_SUCCESS) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password ldap - Error setting new user %s in the ldap backend: %s", cur_dn, ldap_err2string(result));
+            ret = G_ERROR;
+          } else {
+            ret = G_OK;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password ldap - Error get_user_dn_from_username");
+          ret = G_ERROR;
+        }
+        o_free(cur_dn);
+        o_free(mods[0]->mod_values[0]);
+        o_free(mods[0]->mod_values);
+        o_free(mods[0]);
       }
-      o_free(cur_dn);
-      o_free(mods[0]->mod_values[0]);
-      o_free(mods[0]->mod_values);
-      o_free(mods[0]);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password ldap - Error allocating resources for mods");
       ret = G_ERROR;
