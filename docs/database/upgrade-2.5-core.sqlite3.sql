@@ -42,5 +42,6 @@ CREATE TABLE g_user_password (
 INSERT INTO g_user_password (gu_id, guw_password)
 SELECT gu_id, gu_password FROM g_user;
 
-ALTER TABLE g_user
-DROP COLUMN gu_password;
+-- SQLite3 doesn't support DROP COLUMN, using a backup table to remove this column is dangerous because of all the foreign keys.
+-- So instead I'll set the old gu_password to NULL
+UPDATE g_user SET gu_password=NULL;
