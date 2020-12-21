@@ -653,15 +653,17 @@ The option `defaultScheme` in the `config.json` file can be used to overwrite pa
 
 This feature is new since Glewlwyd 2.5. If this option is enabled in a user backend module (except for the User Module HTTP Backend), users are allowed to have more than one password to authenticate in Glewlwyd services where password is required.
 
-The use-case why this feature was added is when the user backend is LDAP. If this LDAP service is used to authenticate to other services than Glewlwyd, such as an IMAP service or network login, all those services can use different passwords, and those different passwords don't have to be remembered by the user if the user uses a password vault. Also, if one password is compromised, you can change only the compromised password without having too change the password with all the services.
+The use-case why this feature was added is when the user backend is LDAP and this LDAP service is used to authenticate to other services than Glewlwyd, such as an IMAP service or network login. All those services can use different passwords, and those different passwords don't have to be remembered by the user if the user uses a password vault. Also, if one password is compromised, you can change only the compromised password without having to change the password in all the services.
+
+Be careful that every password will allow the same access level to your Glewlwyd service, so all of them must be strong enough to avoid being guessed.
 
 ## Troubleshooting
 
 ### Impossible to log in as administrator - N-factor issue
 
-If for any reason, the n-factor(s) scheme(s) added to the scope `g_admin` can't be used anymore, you need to reset the scope `g_admin` to its original setup, i.e. password only, no n-factor authentication.
+If for any reason, the n-factor(s) scheme(s) added to the scope `g_admin` can't be used anymore, you can reset the scope `g_admin` to its original setup, i.e. password only, no n-factor authentication.
 
-- Step 1 (optional but recommended): to use Glewlwyd in a secured channel, you can disconnect Glewlwyd from the outside world, in order to avoid opportunity attacks when the security will be lowered. i.e.: disable the reverse proxy if you have one and access your Glewlwyd instance directly.
+- Step 1 (optional but recommended): to use Glewlwyd in a secured channel, you can disconnect Glewlwyd from the outside world, in order to avoid opportunity attacks when the security will be lowered. i.e.: disable the reverse proxy if you have one and access your Glewlwyd instance directly, or add rules to yuor firewall.
 - Step 2: Backup your database
 - Step 3: connect to your database and execute the following SQL queries:
 
