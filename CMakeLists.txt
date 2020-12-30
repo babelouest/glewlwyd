@@ -803,6 +803,7 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_oidc_scheme_required
               glewlwyd_oidc_dpop
               glewlwyd_oidc_resource
+              glewlwyd_oidc_rich_auth_requests
 							)
 			set(TESTS_SSL ${TESTS_SSL} glewlwyd_oidc_client_certificate)
 		endif ()
