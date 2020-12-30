@@ -1207,6 +1207,50 @@ START_TEST(test_oidc_rar_at_signed_error)
 }
 END_TEST
 
+START_TEST(test_oidc_rar_at_unsigned_error)
+{
+  jwt_t * jwt_request = NULL;
+  json_t * j_rar;
+  char * url, * request;
+  
+  r_jwt_init(&jwt_request);
+  
+  j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}}]",
+                    "type", RAR1,
+                    "locations",
+                      "https://"RAR1"-1.resource.tld",
+                    "actions",
+                      "action1-"RAR1,
+                    "datatypes",
+                      "type1-"RAR1,
+                    "access",
+                      ENRICHED1);
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_request, R_JWA_ALG_NONE), RHN_OK);
+  r_jwt_set_claim_str_value(jwt_request, "aud", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "response_type", RESPONSE_TYPE);
+  r_jwt_set_claim_str_value(jwt_request, "client_id", CLIENT_PUBKEY_ID);
+  r_jwt_set_claim_str_value(jwt_request, "redirect_uri", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
+  r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
+  r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
+  ck_assert_int_eq(r_jwt_set_claim_json_t_value(jwt_request, "authorization_details", j_rar), RHN_OK);
+  ck_assert_ptr_ne(NULL, request = r_jwt_serialize_signed(jwt_request, NULL, 0));
+  ck_assert_ptr_ne(request, NULL);
+  url = msprintf(SERVER_URI"/"PLUGIN_NAME"/auth?g_continue&request=%s", request);
+  
+  ulfius_set_request_properties(&user_req,
+                                U_OPT_HTTP_URL, url,
+                                U_OPT_HTTP_VERB, "GET",
+                                U_OPT_NONE);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  o_free(url);
+  o_free(request);
+  r_jwt_free(jwt_request);
+  json_decref(j_rar);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -1228,6 +1272,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_rar_add_client_pubkey);
   tcase_add_test(tc_core, test_oidc_rar_set_consent_client_pubkey);
   tcase_add_test(tc_core, test_oidc_rar_at_unsigned_no_rar);
+  tcase_add_test(tc_core, test_oidc_rar_at_unsigned_error);
   tcase_add_test(tc_core, test_oidc_rar_at_signed_ok);
   tcase_add_test(tc_core, test_oidc_rar_at_encrypted_ok);
   tcase_add_test(tc_core, test_oidc_rar_delete_consent_client_pubkey);
@@ -1237,6 +1282,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_rar_add_client_pubkey);
   tcase_add_test(tc_core, test_oidc_rar_set_consent_client_pubkey);
   tcase_add_test(tc_core, test_oidc_rar_at_unsigned_no_rar);
+  tcase_add_test(tc_core, test_oidc_rar_at_unsigned_error);
   tcase_add_test(tc_core, test_oidc_rar_at_signed_error);
   tcase_add_test(tc_core, test_oidc_rar_at_encrypted_ok);
   tcase_add_test(tc_core, test_oidc_rar_delete_consent_client_pubkey);
