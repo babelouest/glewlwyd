@@ -118,6 +118,10 @@ Screenshots available
 
 ![plugin-oidc](plugin-oidc.png)
 
+### OIDC plugin configuration for OAuth 2.0 Rich Authorization Requests
+
+![plugin-oidc-rar](plugin-oidc-rar.png)
+
 ### List of API keys created
 
 ![api-key-list](api-key-list.png)

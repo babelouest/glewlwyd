@@ -35,6 +35,7 @@ The following OpenID Connect and OAuth2 functionalities are currently supported:
 - [OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) Draft 01](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-dpop-01)
 - [JWT Response for OAuth Token Introspection Draft 10](https://tools.ietf.org/html/draft-ietf-oauth-jwt-introspection-response-10)
 - [Resource Indicators for OAuth 2.0](https://tools.ietf.org/html/rfc8707)
+- [OAuth 2.0 Rich Authorization Requests Draft 03](https://www.ietf.org/archive/id/draft-ietf-oauth-rar-03.html)
 
 The following OpenID Connect functionalities are not supported yet:
 
@@ -691,6 +692,71 @@ The client property that will store the resources allowed for this client
 ### And/Or
 
 Configure if the claimed resource must be available in one of the clained scopes **and/or** in the client resource list available.
+
+## OAuth 2.0 Rich Authorization Requests (Draft 03)
+
+This settings will allow your Glewlwyd instance to provide `authorization_details` objects in the access tokens or the introspection endpoint, based on the `authorization_details` request specified by the client.
+
+### Allow OAuth 2.0 Rich Authorization Requests
+
+If this is set to true, client will be allowed to use rich authorization requests.
+
+### Allow unsigned OAuth 2.0 Rich Authorization Requests
+
+If this is set to true, clients will be allowed to add a `authorization_details` in the url in JSON format. This setting is disabled by default because then the `authorization_details` value an be changed by the user or a third party, and lead to data leaks or broken process. If you want to enable this feature, you must be aware of the risks.
+
+### Allow unencrypted OAuth 2.0 Rich Authorization Requests
+
+If this is set to true, clients will be allowed to add a `authorization_details` in authorization request objects without encryption, signed requests are mandatory though.
+
+### Client authorization_data_types property
+
+The client property that will store the authorization requests types allowed for this client
+
+### New type
+
+Enter the name of a new type
+
+### Allowed scopes
+
+List of scopes allwed to be used with that type. If one of the allowed scopes is included in the request, the `authorization_details` request will be allowed.
+
+### Description
+
+Description for the authorization request. Will be displayed to the user when consent is asked.
+
+### Allowed locations (optional, one per line)
+
+`locations` values allowed for this authorization request. If a client requests a location not present in this list, the request is invalid.
+
+### Allowed actions (optional, one per line)
+
+`actions` values allowed for this authorization request. If a client requests an action not present in this list, the request is invalid.
+
+### Allowed datatypes (optional, one per line)
+
+`datatypes` values allowed for this authorization request. If a client requests a datatype not present in this list, the request is invalid.
+
+### Enriched authorization details - user properties (optional, one per line)
+
+List of user properties available for enriched authorization details. If a client requests a property not present in this list, the request is invalid.
+
+The client must set the enriched properties in a `access` object in the `authorization_details` request. The properties requested are the keys of the object, the values for each keys are ignored.
+
+Example of an `authorization_details` request with `access` object:
+
+```JSON
+[
+   {
+      "type": "account_information",
+      "access": {
+         "accounts": [],
+         "balances": [],
+         "transactions": []
+      }
+   }
+]
+```
 
 ## Native Apps Guidelines
 
