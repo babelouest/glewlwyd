@@ -86,10 +86,10 @@
   <body>
     <div class="container">
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="send_method">Send parameter method</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <select id="send_method" class="form-control">
             <option value="GET">GET</option>
             <option value="POST">POST</option>
@@ -97,19 +97,19 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="request">Request JWT</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="request" name="request" value="" class="form-control">
           <button type="button" name="run_request" id="run_request" class="btn btn-sm btn-primary btn-block">Run JWT Request</button>
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="response_type">response_type</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <select id="response_type" class="form-control">
             <option value="code">code</option>
             <option value="authorization_code">authorization_code</option>
@@ -130,10 +130,10 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="client_id">client</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <select id="client_id" class="form-control">
             <option value="client1_id">client1_id</option>
             <option value="client2_id">client2_id</option>
@@ -143,26 +143,26 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="clientpassword">client password</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="clientpassword" name="clientpassword" value="" class="form-control">
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
-          <label for="clientpassword">client confidential</label>
+        <div class="col-md-4">
+          <label for="clientconfidential">client confidential</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="checkbox" id="clientconfidential" name="clientconfidential" value="confidential" class="form-control">
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="redirect_uri">redirect_uri</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <select id="redirect_uri" class="form-control">
             <option value="../../test-oidc.html?param=client1_cb1">uri_client1</option>
             <option value="../../test-oidc.html?param=client3">uri_client3</option>
@@ -171,10 +171,10 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="scope">scope</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <select id="scope" class="form-control" multiple size="3">
             <option value="openid" selected>openid</option>
             <option value="g_profile">g_profile</option>
@@ -187,10 +187,10 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="display">response mode</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <select id="response_mode" class="form-control">
             <option value="">redirect</option>
             <option value="form_post">form_post</option>
@@ -198,10 +198,10 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="display">display</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <select id="display" class="form-control">
             <option value=""></option>
             <option value="page">page</option>
@@ -212,10 +212,10 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="prompt">prompt</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <select id="prompt" class="form-control">
             <option value=""></option>
             <option value="none">none</option>
@@ -226,34 +226,34 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="state">state</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="state" name="state" value="xyz" class="form-control">
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="nonce">nonce</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="nonce" name="nonce" value="abc1234" class="form-control">
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="max_age">max_age</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="max_age" name="max_age" value="" class="form-control">
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="ui_locales">ui_locales</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <select id="ui_locales" class="form-control">
             <option value=""></option>
             <option value="en">en</option>
@@ -262,89 +262,104 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="login_hint">login_hint</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="login_hint" name="login_hint" value="" class="form-control">
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="claims">claims</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="claims" name="claims" value="" class="form-control">
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="username">username</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="username" name="username" value="" class="form-control">
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="password">password</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="password" name="password" value="" class="form-control">
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="code">code</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="code" name="code" value="" class="form-control">
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="refresh_token">refresh_token</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="refresh_token" name="refresh_token" value="" class="form-control">
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="access_token">access_token</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="access_token" name="access_token" value="" class="form-control">
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="access_token">id_token</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="id_token" name="id_token" value="" class="form-control">
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="url">url to test access_token</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="url" name="url" value="api/oidc/userinfo" class="form-control">
         </div>
       </div>
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label for="session_state">session_state</label>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <input type="text" id="session_state" name="session_state" value="" class="form-control">
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <div id="session_state_result"></div>
         </div>
       </div>
       <div class="row">
+        <div class="col-md-4">
+          <label for="authorization_details">authorization_details</label>
+        </div>
+        <div class="col-md-4">
+          <textarea id="authorization_details" name="authorization_details" class="form-control"></textarea>
+        </div>
+        <div class="col-md-4">
+          <div id="session_state_result"></div>
+        </div>
+      </div>
+      <div class="row">
+      </div>
+      <div class="row">
+        <div class="col-md-2">
+        </div>
         <div class="col-md-4">
           <button type="button" name="generate_jwt" id="generate_jwt" class="btn btn-lg btn-primary btn-block">Generate unencoded JWT</button>
           <button type="button" name="run" id="run" class="btn btn-lg btn-primary btn-block">Run test</button>
@@ -452,6 +467,9 @@
     } else if ($("#prompt").val()) {
       payload.prompt = $("#prompt").val();
     }
+    if ($("#authorization_details").val()) {
+      payload.authorization_details = JSON.parse($("#authorization_details").val());
+    }
     $("#result").empty();
     $("#result").append("<div><strong>payload</strong>: <code>" + JSON.stringify(payload) + "</code></div>");
   });
@@ -488,11 +506,20 @@
           } else {
             promptParam = "&prompt=" + $("#prompt").val();
           }
+          var authorization_details = "";
+          if ($("#authorization_details").val()) {
+            try {
+              authorization_details = JSON.stringify(JSON.parse($("#authorization_details").val()))
+            } catch (e) {
+              authorization_details = "";
+            }
+          }
           var url = glewlwyd_api + "/auth?response_type=" + $("#response_type").val() + "&client_id=" + $("#client_id").val() +
                    "&redirect_uri=" + $("#redirect_uri").val() + "&state=" + $("#state").val() + "&nonce=" + $("#nonce").val() +
                    promptParam + "&display=" + $("#display").val() + "&scope=" + $("#scope").val().join(" ") + "&max_age=" +
                    $("#max_age").val() + "&ui_locales=" + $("#ui_locales").val() + "&login_hint=" + $("#login_hint").val() +
-                   "&request=" + $("#request").val() + "&claims=" + encodeURI($("#claims").val()) + "&response_mode=" + $("#response_mode").val();
+                   "&request=" + $("#request").val() + "&claims=" + encodeURI($("#claims").val()) + "&response_mode=" + $("#response_mode").val() +
+                   "&authorization_details=" + authorization_details;
           window.location = url;
         } else if ($("#send_method").val() == "POST") {
           var url = glewlwyd_api + "/auth";
@@ -539,7 +566,7 @@
             $("#access_token").val(result.access_token);
             $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
             for (var key in result) {
-              $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+              $("#result").append("<div><strong>" + key + "</strong>: <code>" + JSON.stringify(result[key], null, 4) + "</code></div>");
             }
           },
           error: function (error) {
@@ -561,7 +588,7 @@
           success: function (result, status, request) {
             $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
             for (var key in result) {
-              $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+              $("#result").append("<div><strong>" + key + "</strong>: <code>" + JSON.stringify(result[key], null, 4) + "</code></div>");
             }
           },
           error: function (error) {
@@ -583,7 +610,7 @@
           success: function (result, status, request) {
             $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
             for (var key in result) {
-              $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+              $("#result").append("<div><strong>" + key + "</strong>: <code>" + JSON.stringify(result[key], null, 4) + "</code></div>");
             }
           },
           error: function (error) {
@@ -605,7 +632,7 @@
           success: function (result, status, request) {
             $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
             for (var key in result) {
-              $("#result").append("<div><strong>" + key + "</strong>: <code>" + result[key] + "</code></div>");
+              $("#result").append("<div><strong>" + key + "</strong>: <code>" + JSON.stringify(result[key], null, 4) + "</code></div>");
             }
           },
           error:function (error) {
