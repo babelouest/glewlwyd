@@ -3535,8 +3535,8 @@ json_t * plugin_module_load(struct config_plugin * config) {
   return json_pack("{si ss ss ss}",
                    "result", G_OK,
                    "name", "oauth2-glewlwyd",
-                   "display_name", "Glewlwyd OAuth2 plugin",
-                   "description", "Plugin for legacy Glewlwyd OAuth2 workflow");
+                   "display_name", "OAuth2 plugin",
+                   "description", "Plugin for legacy OAuth2 workflow");
 }
 
 int plugin_module_unload(struct config_plugin * config) {
