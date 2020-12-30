@@ -13,12 +13,14 @@ class GrantScope extends Component {
       currentUser: props.currentUser,
       client: props.client,
       scope: props.scope,
+      authDetails: props.authDetails,
       show: props.show,
       infoSomeScopeUnavailable: props.infoSomeScopeUnavailable
     };
     
     this.handleToggleGrantScope = this.handleToggleGrantScope.bind(this);
     this.handleGrantScope = this.handleGrantScope.bind(this);
+    this.handleToggleAuthDetails = this.handleToggleAuthDetails.bind(this);
     
     messageDispatcher.subscribe('GrantScope', (message) => {
     });
@@ -30,6 +32,7 @@ class GrantScope extends Component {
       currentUser: nextProps.currentUser, 
       client: nextProps.client, 
       scope: nextProps.scope,
+      authDetails: nextProps.authDetails,
       show: nextProps.show,
       infoSomeScopeUnavailable: nextProps.infoSomeScopeUnavailable
     });
@@ -61,8 +64,25 @@ class GrantScope extends Component {
     });
   }
   
+  handleToggleAuthDetails(selectedAuthDetails) {
+    var authDetails = this.state.authDetails;
+    authDetails.forEach((curAuthDetails) => {
+      if (selectedAuthDetails.type === curAuthDetails.type) {
+        curAuthDetails.consent = !curAuthDetails.consent;
+        apiManager.glewlwydRequest("/" + this.state.config.params.plugin + "/rar/" + this.state.config.params.client_id + "/" + selectedAuthDetails.type + "/" + (curAuthDetails.consent?"1":"0"), "PUT")
+        .then(() => {
+          messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("login.grant-auth-details-granted")});
+        })
+        .fail(() => {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-set-grant")});
+        });
+      }
+    });
+    this.setState({authDetails: authDetails});
+  }
+  
 	render() {
-    var scopeList = [];
+    var scopeList = [], authDetails = [], authDetailsJsx;
     this.state.scope.forEach((scope, index) => {
       if (scope.name === "openid") {
         scopeList.push(
@@ -88,6 +108,126 @@ class GrantScope extends Component {
     if (this.state.infoSomeScopeUnavailable) {
       infoSomeScopeUnavailable = <div className="alert alert-info" role="alert">{i18next.t("login.info-some-scope-unavailable")}</div>
     }
+    this.state.authDetails.forEach((curDetails, index) => {
+      var locationsList = [], actionsList = [], datatypesList = [], enrichedList = [];
+      var locationsJsx, actionsJsx, datatypesJsx, enrichedJsx, typeJsx = <h5>{i18next.t("login.grant-auth-details-type", {type: curDetails.type})}</h5>, descriptionJsx;
+      curDetails.locations.forEach((e, index) => {
+        locationsList.push(
+          <li className="list-group-item" key={index}>{e}</li>
+        );
+      });
+      if (locationsList.length) {
+        locationsJsx =
+        <div>
+          <h5>{i18next.t("login.grant-auth-details-locations")}</h5>
+          <ul className="list-group">
+            {locationsList}
+          </ul>
+        </div>
+      }
+      curDetails.actions.forEach((e, index) => {
+        actionsList.push(
+          <li className="list-group-item" key={index}>{e}</li>
+        );
+      });
+      if (actionsList.length) {
+        actionsJsx =
+        <div>
+          <h5>{i18next.t("login.grant-auth-details-actions")}</h5>
+          <ul className="list-group">
+            {actionsList}
+          </ul>
+        </div>
+      }
+      curDetails.datatypes.forEach((e, index) => {
+        datatypesList.push(
+          <li className="list-group-item" key={index}>{e}</li>
+        );
+      });
+      if (datatypesList.length) {
+        datatypesJsx =
+        <div>
+          <h5>{i18next.t("login.grant-auth-details-datatypes")}</h5>
+          <ul className="list-group">
+            {datatypesList}
+          </ul>
+        </div>
+      }
+      curDetails.enriched.forEach((e, index) => {
+        var data = e;
+        this.state.config.pattern.user.forEach((clientProperty) => {
+          if (e === clientProperty.name) {
+            data = i18next.t(clientProperty.label);
+          }
+        });
+        enrichedList.push(
+          <li className="list-group-item" key={index}>{data}</li>
+        );
+      });
+      if (enrichedList.length) {
+        enrichedJsx =
+        <div>
+          <h5>{i18next.t("login.grant-auth-details-enriched")}</h5>
+          <ul className="list-group">
+            {enrichedList}
+          </ul>
+        </div>
+      }
+      if (curDetails.description) {
+        descriptionJsx = <h5>{i18next.t("login.grant-auth-details-description", {description: curDetails.description})}</h5>
+      }
+      authDetails.push(
+        <li className="list-group-item" key={index}>
+          <div className="form-group form-check">
+            <input type="checkbox" 
+                   className="form-check-input" 
+                   onChange={() => this.handleToggleAuthDetails(curDetails)} 
+                   id={"auth-details-" + curDetails.type} 
+                   checked={curDetails.consent && curDetails.enabled}
+                   disabled={!curDetails.enabled}/>
+            <label className="form-check-label" htmlFor={"auth-details-" + curDetails.type}>{curDetails.description||curDetails.type}</label>
+            <button className="btn btn-secondary btn-sm btn-icon-right" 
+                    type="button" 
+                    title={i18next.t("details")}
+                    data-toggle="collapse" 
+                    data-target={"#auth-details-collapse-" + curDetails.type} 
+                    aria-expanded="false" 
+                    aria-controls={"auth-details-collapse-" + curDetails.type}>
+              <i className="fas fa-chevron-circle-down"></i>
+            </button>
+            <div className="collapse" id={"auth-details-collapse-" + curDetails.type}>
+              <div className="card card-body">
+                <h4>{i18next.t("login.grant-auth-details-explanation")}</h4>
+                {typeJsx}
+                {descriptionJsx}
+                {locationsJsx}
+                {actionsJsx}
+                {datatypesJsx}
+                {enrichedJsx}
+              </div>
+            </div>
+          </div>
+        </li>
+      );
+    });
+    if (authDetails.length) {
+      authDetailsJsx =
+      <div>
+        <hr/>
+        <div className="row">
+          <div className="col-md-12">
+            <h3>{i18next.t("login.grant-auth-details-title")}</h3>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col-md-12">
+            <ul className="list-group">
+              {authDetails}
+            </ul>
+          </div>
+        </div>
+      </div>
+    }
     return (
     <div>
       <div className="row">
@@ -108,6 +248,7 @@ class GrantScope extends Component {
           </ul>
         </div>
       </div>
+      {authDetailsJsx}
       <hr className="glwd-hr-no-border"/>
       <div className="row">
         <div className="col-md-2">

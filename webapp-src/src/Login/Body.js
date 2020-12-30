@@ -14,6 +14,7 @@ class Body extends Component {
       currentUser: props.currentUser,
       client: props.client,
       scope: props.scope,
+      authDetails: props.authDetails,
       scheme: props.scheme,
       schemeListRequired: props.schemeListRequired,
       showGrant: props.showGrant,
@@ -28,6 +29,7 @@ class Body extends Component {
       currentUser: nextProps.currentUser,
       client: nextProps.client,
       scope: nextProps.scope,
+      authDetails: nextProps.authDetails,
       scheme: nextProps.scheme,
       schemeListRequired: nextProps.schemeListRequired,
       showGrant: nextProps.showGrant,
@@ -42,14 +44,23 @@ class Body extends Component {
       content = <div id="carouselBody" className="carousel slide" data-ride="carousel">
         <div className="carousel-inner">
           <div className={"carousel-item" + (this.state.showGrant?" active":"")}>
-            <GrantScope config={this.state.config} currentUser={this.state.currentUser} client={this.state.client} scope={this.state.scope} infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable} />
+            <GrantScope config={this.state.config}
+                        currentUser={this.state.currentUser} 
+                        client={this.state.client} 
+                        scope={this.state.scope} 
+                        infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable} 
+                        authDetails={this.state.authDetails}/>
           </div>
         </div>
       </div>;
     } else {
       content = <div className="row">
         <div className="col-md-12">
-          <SchemeAuth config={this.state.config} currentUser={this.state.currentUser} scheme={this.state.scheme} schemeListRequired={this.state.schemeListRequired} client={this.state.client} />
+          <SchemeAuth config={this.state.config} 
+                      currentUser={this.state.currentUser} 
+                      scheme={this.state.scheme} 
+                      schemeListRequired={this.state.schemeListRequired} 
+                      client={this.state.client} />
         </div>
       </div>
     }

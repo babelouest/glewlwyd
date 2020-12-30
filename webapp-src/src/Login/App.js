@@ -34,6 +34,7 @@ class App extends Component {
       client: false,
       showGrant: true,
       showGrantAsterisk: false,
+      showAuthDetailsAsterisk: false,
       canContinue: false,
       prompt: props.config.params.prompt,
       refresh_login: props.config.params.refresh_login,
@@ -49,6 +50,7 @@ class App extends Component {
       registration: [],
       resetCredentials: [],
       resetCredentialsShow: false,
+      authDetails: [],
       messageModal: {
         title: "",
         label: "",
@@ -164,7 +166,10 @@ class App extends Component {
       }
       this.setState(newState, () => {
         if (this.state.config.params.client_id && this.state.config.params.scope) {
-          this.checkClientScope(this.state.config.params.client_id, this.state.config.params.scope);
+          this.checkClientScope(this.state.config.params.client_id, this.state.config.params.scope)
+          .then(() => {
+            this.checkAuthorizationDetails(this.state.config.params.authorization_details);
+          });
         } else if (this.state.config.params.scope) {
           this.checkScopeScheme(this.state.config.params.scope);
         } else {
@@ -185,7 +190,7 @@ class App extends Component {
   }
 
   checkClientScope(clientId, scopeList) {
-    apiManager.glewlwydRequest("/auth/grant/" + encodeURIComponent(clientId) + "/" + encodeURIComponent(scopeList))
+    return apiManager.glewlwydRequest("/auth/grant/" + encodeURIComponent(clientId) + "/" + encodeURIComponent(scopeList))
     .then((res) => {
       var scopeGranted = [];
       var showGrant = true;
@@ -216,23 +221,23 @@ class App extends Component {
           });
         }
         if (scopeGranted.length) {
-          apiManager.glewlwydRequest("/auth/scheme/?scope=" + encodeURIComponent(scopeGranted.join(" ")))
+          return apiManager.glewlwydRequest("/auth/scheme/?scope=" + encodeURIComponent(scopeGranted.join(" ")))
           .then((schemeRes) => {
-            this.setState({client: res.client, 
+            return this.setState({client: res.client, 
                            scope: res.scope, 
                            scheme: schemeRes, 
                            showGrant: showGrant, 
                            showGrantAsterisk: showGrantAsterisk, 
                            infoSomeScopeUnavailable: infoSomeScopeUnavailable, 
                            errorScopesUnavailable: false}, () => {
-              this.parseSchemes();
+              return this.parseSchemes();
             });
           })
           .fail((error) => {
             messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
           });
         } else {
-          this.setState({client: res.client, 
+          return this.setState({client: res.client, 
                          scope: res.scope, 
                          showGrant: true, 
                          showGrantAsterisk: true, 
@@ -240,7 +245,7 @@ class App extends Component {
                          infoSomeScopeUnavailable: infoSomeScopeUnavailable});
         }
       } else {
-        this.setState({errorScopesUnavailable: true, infoSomeScopeUnavailable: false});
+        return this.setState({errorScopesUnavailable: true, infoSomeScopeUnavailable: false});
       }
     })
     .fail((error) => {
@@ -266,6 +271,36 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
       }
     });
+  }
+  
+  checkAuthorizationDetails(authorization_details) {
+    if (authorization_details) {
+      var showAuthDetailsAsterisk = false;
+      var authDetails = [];
+      authorization_details.split(",").forEach(authName => {
+        apiManager.glewlwydRequest("/" + this.state.config.params.plugin + "/rar/" + this.state.config.params.client_id + "/" +authName)
+        .then((curDetails) => {
+          if (curDetails.scopes && curDetails.scopes.length) {
+            var enabled = false;
+            this.state.scope.forEach((scope) => {
+              if (curDetails.scopes.indexOf(scope.name) > -1) {
+                enabled = true;
+              }
+            });
+            curDetails.enabled = enabled;
+          } else {
+            curDetails.enabled = true;
+          }
+          authDetails.push(curDetails);
+          this.setState({authDetails: authDetails, showAuthDetailsAsterisk: (showAuthDetailsAsterisk | !curDetails.consent)});
+        })
+        .fail((error) => {
+          if (error.status !== 404) {
+            messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
+          }
+        });
+      });
+    }
   }
 
   parseSchemes() {
@@ -316,7 +351,7 @@ class App extends Component {
     if (canContinue) {
       scheme = false;
     }
-    this.setState({canContinue: canContinue, 
+    return this.setState({canContinue: canContinue, 
                    passwordRequired: passwordRequired, 
                    schemeListRequired: schemeListRequired, 
                    scheme: scheme, 
@@ -372,9 +407,17 @@ class App extends Component {
           }
           if ((this.state.newUser || this.state.passwordRequired)) {
             if (!this.state.scheme) {
-              body = <PasswordForm config={this.state.config} username={this.state.login_hint} currentUser={this.state.currentUser} userList={this.state.userList} callbackInitProfile={this.initProfile}/>;
+              body = <PasswordForm config={this.state.config} 
+                                   username={this.state.login_hint} 
+                                   currentUser={this.state.currentUser} 
+                                   userList={this.state.userList} 
+                                   callbackInitProfile={this.initProfile}/>;
             } else {
-              body = <NoPasswordForm config={this.state.config} username={this.state.login_hint} userList={this.state.userList} callbackInitProfile={this.initProfile} scheme={this.state.scheme}/>;
+              body = <NoPasswordForm config={this.state.config} 
+                                     username={this.state.login_hint} 
+                                     userList={this.state.userList} 
+                                     callbackInitProfile={this.initProfile} 
+                                     scheme={this.state.scheme}/>;
             }
           } else if (this.state.selectAccount) {
             body = <SelectAccount config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
@@ -387,7 +430,8 @@ class App extends Component {
                          schemeListRequired={this.state.schemeListRequired} 
                          showGrant={this.state.showGrant} 
                          infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable}
-                         validLogin={(!!this.state.config.params.callback_url && !!this.state.config.params.scope)}/>;
+                         validLogin={(!!this.state.config.params.callback_url && !!this.state.config.params.scope)}
+                         authDetails={this.state.authDetails}/>;
             if (this.state.errorScopesUnavailable) {
               scopeUnavailable = <div className="alert alert-danger" role="alert">{i18next.t("login.error-scope-unavailable")}</div>
             }
@@ -437,7 +481,7 @@ class App extends Component {
                        userList={this.state.userList}
                        client={this.state.client}
                        showGrant={this.state.showGrant} 
-                       showGrantAsterisk={this.state.showGrantAsterisk} 
+                       showGrantAsterisk={this.state.showGrantAsterisk || this.state.showAuthDetailsAsterisk} 
                        newUser={this.state.newUser} 
                        newUserScheme={this.state.scheme} 
                        canContinue={this.state.canContinue && !this.state.errorScopesUnavailable} 

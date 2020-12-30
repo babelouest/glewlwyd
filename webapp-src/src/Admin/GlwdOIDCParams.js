@@ -6,7 +6,7 @@ import messageDispatcher from '../lib/MessageDispatcher';
 class GlwdOIDCParams extends Component {
   constructor(props) {
     super(props);
-    
+
     props.mod.parameters?"":(props.mod.parameters = {});
     props.mod.parameters["jwt-type"]?"":(props.mod.parameters["jwt-type"] = "rsa");
     props.mod.parameters["jwt-key-size"]!==undefined?"":(props.mod.parameters["jwt-key-size"] = "256");
@@ -90,6 +90,11 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["resource-client-property"]!==undefined?"":(props.mod.parameters["resource-client-property"] = "");
     props.mod.parameters["resource-scope-and-client-property"]!==undefined?"":(props.mod.parameters["resource-scope-and-client-property"] = false);
     props.mod.parameters["resource-change-allowed"]!==undefined?"":(props.mod.parameters["resource-change-allowed"] = false);
+    props.mod.parameters["oauth-rar-allowed"]!==undefined?"":(props.mod.parameters["oauth-rar-allowed"] = false);
+    props.mod.parameters["rar-types-client-property"]!==undefined?"":(props.mod.parameters["rar-types-client-property"] = "authorization_data_types");
+    props.mod.parameters["rar-allow-auth-unsigned"]!==undefined?"":(props.mod.parameters["rar-allow-auth-unsigned"] = false);
+    props.mod.parameters["rar-allow-auth-unencrypted"]!==undefined?"":(props.mod.parameters["rar-allow-auth-unencrypted"] = true);
+    props.mod.parameters["rar-types"]!==undefined?"":(props.mod.parameters["rar-types"] = {});
 
     this.state = {
       config: props.config,
@@ -98,13 +103,16 @@ class GlwdOIDCParams extends Component {
       check: props.check,
       errorList: {},
       newScopeOverride: false,
-      newResourceScope: false
+      newResourceScope: false,
+      newRar: "",
+      newRarExists: false,
+      newRarInvalidChar: false
     };
-    
+
     if (this.state.check) {
       this.checkParameters();
     }
-    
+
     this.checkParameters = this.checkParameters.bind(this);
     this.changeParam = this.changeParam.bind(this);
     this.changeParamWithValue = this.changeParamWithValue.bind(this);
@@ -149,10 +157,11 @@ class GlwdOIDCParams extends Component {
     this.setResourceScope = this.setResourceScope.bind(this);
     this.addResourceScope = this.addResourceScope.bind(this);
     this.changeResourceScopeUrls = this.changeResourceScopeUrls.bind(this);
+    this.addRAR = this.addRAR.bind(this);
   }
-  
+
   componentWillReceiveProps(nextProps) {
-    
+
     nextProps.mod.parameters?"":(nextProps.mod.parameters = {});
     nextProps.mod.parameters["jwt-type"]?"":(nextProps.mod.parameters["jwt-type"] = "rsa");
     nextProps.mod.parameters["jwt-key-size"]!==undefined?"":(nextProps.mod.parameters["jwt-key-size"] = "256");
@@ -237,7 +246,12 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["resource-client-property"]!==undefined?"":(nextProps.mod.parameters["resource-client-property"] = "");
     nextProps.mod.parameters["resource-scope-and-client-property"]!==undefined?"":(nextProps.mod.parameters["resource-scope-and-client-property"] = false);
     nextProps.mod.parameters["resource-change-allowed"]!==undefined?"":(nextProps.mod.parameters["resource-change-allowed"] = false);
-    
+    nextProps.mod.parameters["oauth-rar-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-rar-allowed"] = false);
+    nextProps.mod.parameters["rar-types-client-property"]!==undefined?"":(nextProps.mod.parameters["rar-types-client-property"] = "authorization_data_types");
+    nextProps.mod.parameters["rar-allow-auth-unsigned"]!==undefined?"":(nextProps.mod.parameters["rar-allow-auth-unsigned"] = false);
+    nextProps.mod.parameters["rar-allow-auth-unencrypted"]!==undefined?"":(nextProps.mod.parameters["rar-allow-auth-unencrypted"] = true);
+    nextProps.mod.parameters["rar-types"]!==undefined?"":(nextProps.mod.parameters["rar-types"] = {});
+
     this.setState({
       config: nextProps.config,
       mod: nextProps.mod,
@@ -249,19 +263,19 @@ class GlwdOIDCParams extends Component {
       }
     });
   }
-  
+
   changeParam(e, param) {
     var mod = this.state.mod;
     mod.parameters[param] = e.target.value;
     this.setState({mod: mod});
   }
-  
+
   changeParamWithValue(param, value) {
     var mod = this.state.mod;
     mod.parameters[param] = value;
     this.setState({mod: mod});
   }
-  
+
   changeNumberParam(e, param) {
     var mod = this.state.mod;
     mod.parameters[param] = parseInt(e.target.value);
@@ -269,37 +283,37 @@ class GlwdOIDCParams extends Component {
       this.setState({mod: mod});
     }
   }
-  
+
   emptyParameter(param) {
     var mod = this.state.mod;
     delete mod.parameters[param];
     this.setState({mod: mod});
   }
-  
+
   toggleParam(e, param) {
     var mod = this.state.mod;
     mod.parameters[param] = !mod.parameters[param];
     this.setState({mod: mod});
   }
-  
+
   changeJwtType(e, type) {
     var mod = this.state.mod;
     mod.parameters["jwt-type"] = type;
     this.setState({mod: mod});
   }
-  
+
   changeSecretType(e, type) {
     var mod = this.state.mod;
     mod.parameters["secret-type"] = type;
     this.setState({mod: mod});
   }
-  
+
   changeJwtKeySize(e, size) {
     var mod = this.state.mod;
     mod.parameters["jwt-key-size"] = size;
     this.setState({mod: mod});
   }
-  
+
   uploadFile(e, name) {
     var mod = this.state.mod;
     var file = e.target.files[0];
@@ -310,7 +324,7 @@ class GlwdOIDCParams extends Component {
     };
     fr.readAsText(file);
   }
-  
+
   uploadX5cFile(e) {
     var mod = this.state.mod;
     var file = e.target.files[0];
@@ -321,7 +335,7 @@ class GlwdOIDCParams extends Component {
     };
     fr.readAsText(file);
   }
-  
+
   handleRemoveX5c(e, index) {
     e.preventDefault();
     if (this.state.mod.parameters["jwks-show"]) {
@@ -330,23 +344,23 @@ class GlwdOIDCParams extends Component {
       this.setState({mod: mod});
     }
   }
-  
+
   setNewScopeOverride(e, scope) {
     this.setState({newScopeOverride: scope});
   }
-  
+
   addScopeOverride() {
     if (this.state.newScopeOverride) {
       var mod = this.state.mod;
       mod.parameters["scope"].push({
-        name: this.state.newScopeOverride, 
-        "refresh-token-rolling": this.state.mod.parameters["refresh-token-rolling"], 
+        name: this.state.newScopeOverride,
+        "refresh-token-rolling": this.state.mod.parameters["refresh-token-rolling"],
         "refresh-token-duration": 0
       });
       this.setState({mod: mod, newScopeOverride: false});
     }
   }
-  
+
   changeScopeOverrideRefreshDuration(e, scope) {
     var mod = this.state.mod;
     mod.parameters["scope"].forEach((curScope) => {
@@ -356,7 +370,7 @@ class GlwdOIDCParams extends Component {
     });
     this.setState({mod: mod});
   }
-  
+
   toggleScopeOverrideRolling(e, scope, value) {
     var mod = this.state.mod;
     mod.parameters["scope"].forEach((curScope) => {
@@ -370,7 +384,7 @@ class GlwdOIDCParams extends Component {
     });
     this.setState({mod: mod});
   }
-  
+
   deleteScopeOverride(e, scope) {
     var mod = this.state.mod;
     mod.parameters["scope"].forEach((curScope, index) => {
@@ -380,17 +394,17 @@ class GlwdOIDCParams extends Component {
     });
     this.setState({mod: mod});
   }
-  
+
   addAdditionalParameter() {
     var mod = this.state.mod;
     mod.parameters["additional-parameters"].push({
-      "user-parameter": "", 
-      "token-parameter": "", 
+      "user-parameter": "",
+      "token-parameter": "",
       "token-changed": false
     });
     this.setState({mod: mod, newScopeOverride: false});
   }
-  
+
   setAdditionalPropertyUserParameter(e, index) {
     var mod = this.state.mod;
     if (mod.parameters["additional-parameters"][index]) {
@@ -401,7 +415,7 @@ class GlwdOIDCParams extends Component {
     }
     this.setState({mod: mod, newScopeOverride: false});
   }
-  
+
   setAdditionalPropertyTokenParameter(e, index) {
     var mod = this.state.mod;
     if (mod.parameters["additional-parameters"][index]) {
@@ -410,7 +424,7 @@ class GlwdOIDCParams extends Component {
     }
     this.setState({mod: mod, newScopeOverride: false});
   }
-  
+
   deleteAdditionalProperty(e, index) {
     var mod = this.state.mod;
     if (mod.parameters["additional-parameters"][index]) {
@@ -418,12 +432,12 @@ class GlwdOIDCParams extends Component {
     }
     this.setState({mod: mod, newScopeOverride: false});
   }
-  
+
   addClaim() {
     var mod = this.state.mod;
     mod.parameters["claims"].push({
-      "name": "", 
-      "user-property": "", 
+      "name": "",
+      "user-property": "",
       "type": "string",
       "boolean-value-true": "",
       "boolean-value-false": "",
@@ -433,80 +447,80 @@ class GlwdOIDCParams extends Component {
     });
     this.setState({mod: mod});
   }
-  
+
   deleteClaim(e, index) {
     var mod = this.state.mod;
     mod.parameters["claims"].splice(index, 1);
     this.setState({mod: mod});
   }
-  
+
   setClaimName(e, index) {
     var mod = this.state.mod;
     mod.parameters["claims"][index]["name"] = e.target.value;
     this.setState({mod: mod});
   }
-  
+
   setClaimUserProperty(e, index) {
     var mod = this.state.mod;
     mod.parameters["claims"][index]["user-property"] = e.target.value;
     this.setState({mod: mod});
   }
-  
+
   setClaimType(e, index, type) {
     var mod = this.state.mod;
     mod.parameters["claims"][index]["type"] = type;
     this.setState({mod: mod});
   }
-  
+
   setClaimBooleanTrue(e, index) {
     var mod = this.state.mod;
     mod.parameters["claims"][index]["boolean-value-true"] = e.target.value;
     this.setState({mod: mod});
   }
-  
+
   setClaimBooleanFalse(e, index) {
     var mod = this.state.mod;
     mod.parameters["claims"][index]["boolean-value-false"] = e.target.value;
     this.setState({mod: mod});
   }
-  
+
   toggleClaimMandatory(e, index) {
     var mod = this.state.mod;
     mod.parameters["claims"][index]["mandatory"] = !mod.parameters["claims"][index]["mandatory"];
     this.setState({mod: mod});
   }
-  
+
   toggleClaimOnDemand(e, index) {
     var mod = this.state.mod;
     mod.parameters["claims"][index]["on-demand"] = !mod.parameters["claims"][index]["on-demand"];
     this.setState({mod: mod});
   }
-  
+
   changeAddressClaimParam(e, param) {
     var mod = this.state.mod;
     mod.parameters["address-claim"][param] = e.target.value;
     this.setState({mod: mod});
   }
-  
+
   changeAddressClaim(e, type) {
     var mod = this.state.mod;
     mod.parameters["address-claim"].type = type;
     this.setState({mod: mod});
   }
-  
+
   toggleAddrClaimMandatory(e, index) {
     var mod = this.state.mod;
     mod.parameters["address-claim"].mandatory = !mod.parameters["address-claim"].mandatory;
     this.setState({mod: mod});
   }
-  
+
   addScopeClaim(e, index, scope) {
     e.preventDefault();
     var mod = this.state.mod;
     mod.parameters["claims"][index].scope.push(scope);
     this.setState({mod: mod});
   }
-  
+
   deleteScopeClaim(e, index, indexScope) {
     e.preventDefault();
     if (!this.state.mod.parameters["claims"][index].mandatory) {
@@ -515,35 +529,35 @@ class GlwdOIDCParams extends Component {
       this.setState({mod: mod});
     }
   }
-  
+
   addNameScope(e, scope) {
     e.preventDefault();
     var mod = this.state.mod;
     mod.parameters["name-claim-scope"].push(scope);
     this.setState({mod: mod});
   }
-  
+
   deleteNameScope(e, index) {
     e.preventDefault();
     var mod = this.state.mod;
     mod.parameters["name-claim-scope"].splice(index, 1);
     this.setState({mod: mod});
   }
-  
+
   addEmailScope(e, scope) {
     e.preventDefault();
     var mod = this.state.mod;
     mod.parameters["email-claim-scope"].push(scope);
     this.setState({mod: mod});
   }
-  
+
   deleteEmailScope(e, index) {
     e.preventDefault();
     var mod = this.state.mod;
     mod.parameters["email-claim-scope"].splice(index, 1);
     this.setState({mod: mod});
   }
-  
+
   addAllowedScope(e, scope) {
     e.preventDefault();
     var mod = this.state.mod;
@@ -559,7 +573,7 @@ class GlwdOIDCParams extends Component {
     }
     this.setState({mod: mod});
   }
-  
+
   deleteAllowedScope(e, index) {
     e.preventDefault();
     if (this.state.mod.parameters["allowed-scope"][index] !== "openid") {
@@ -568,7 +582,7 @@ class GlwdOIDCParams extends Component {
       this.setState({mod: mod});
     }
   }
-  
+
   addScope(e, param, scope) {
     e.preventDefault();
     var mod = this.state.mod;
@@ -582,7 +596,7 @@ class GlwdOIDCParams extends Component {
     mod.parameters[param].splice(index, 1);
     this.setState({mod: mod});
   }
-  
+
   changeMtlsClientSource(e, source) {
     var mod = this.state.mod;
     if (source) {
@@ -592,36 +606,93 @@ class GlwdOIDCParams extends Component {
     }
     this.setState({mod: mod});
   }
-  
+
   setResourceScope(e, scope) {
     e.preventDefault();
     this.setState({newResourceScope: scope});
   }
-  
+
   addResourceScope() {
     var mod = this.state.mod;
     mod.parameters["resource-scope"][this.state.newResourceScope] = [];
     this.setState({mod: mod, newResourceScope: false});
   }
-  
+
   changeResourceScopeUrls(e, scope) {
     var mod = this.state.mod;
     mod.parameters["resource-scope"][scope] = e.target.value.split("\n");
     this.setState({mod: mod});
   }
-  
+
   deleteResourceScope(e, scope) {
     var mod = this.state.mod;
     delete(mod.parameters["resource-scope"][scope]);
     this.setState({mod: mod});
   }
-  
+
   changeRegisterResourceDefaultUrls(e) {
     var mod = this.state.mod;
     mod.parameters["register-resource-default"] = e.target.value.split("\n");
     this.setState({mod: mod});
   }
+
+  setNewRar(e) {
+    var newRarExists = false;
+    var newRarInvalidChar = false;
+    var regexp = /^[a-zA-Z0-9-_\$]+$/;
+    
+    if (this.state.mod.parameters["rar-types"][e.target.value]) {
+      newRarExists = true;
+    }
+    if (e.target.value && e.target.value.search(regexp) === -1) {
+      newRarInvalidChar = true;
+    }
+    this.setState({newRar: e.target.value, newRarExists: newRarExists, newRarInvalidChar: newRarInvalidChar});
+  }
+
+  addRAR() {
+    var mod = this.state.mod;
+    if (!mod.parameters["rar-types"][this.state.newRar]) {
+      mod.parameters["rar-types"][this.state.newRar] = {
+        scopes: [],
+        locations: [],
+        actions: [],
+        datatypes: [],
+        enriched: []
+      };
+      this.setState({mod: mod, newRar: ""});
+    }
+  }
   
+  changeRarParameter(e, type, parameter) {
+    var mod = this.state.mod;
+    if (parameter === "description") {
+      mod.parameters["rar-types"][type][parameter] = e.target.value;
+    } else {
+      mod.parameters["rar-types"][type][parameter] = e.target.value.split("\n");
+    }
+    this.setState({mod: mod});
+  }
+  
+  deleteRar(e, type) {
+    var mod = this.state.mod;
+    delete(mod.parameters["rar-types"][type]);
+    this.setState({mod: mod});
+  }
+  
+  addRarTypeScope(e, type, scope) {
+    var mod = this.state.mod;
+    mod.parameters["rar-types"][type].scopes.push(scope);
+    this.setState({mod: mod});
+  }
+  
+  deleteRarTypeScope(e, type, scope) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["rar-types"][type].scopes.splice(mod.parameters["rar-types"][type].scopes.indexOf(scope), 1);
+    this.setState({mod: mod});
+  }
+
   checkParameters() {
     var errorList = {}, hasError = false;
     if (!this.state.mod.parameters["iss"]) {
@@ -722,8 +793,8 @@ class GlwdOIDCParams extends Component {
           errorList["additional-parameters"][index] = {};
         }
         errorList["additional-parameters"][index]["token"] = i18next.t("admin.mod-glwd-additional-parameter-token-parameter-error");
-      } else if (addParam["token-parameter"] === "username" || 
-                 addParam["token-parameter"] === "salt" || 
+      } else if (addParam["token-parameter"] === "username" ||
+                 addParam["token-parameter"] === "salt" ||
                  addParam["token-parameter"] === "type" ||
                  addParam["token-parameter"] === "iat" ||
                  addParam["token-parameter"] === "expires_in" ||
@@ -841,6 +912,13 @@ class GlwdOIDCParams extends Component {
         errorList["resource"] = true;
       }
     }
+    if (this.state.mod.parameters["oauth-rar-allowed"]) {
+      if (!this.state.mod.parameters["rar-types-client-property"]) {
+        hasError = true;
+        errorList["rar-types-client-property"] = i18next.t("admin.mod-glwd-rar-types-client-property-error");
+        errorList["oauth-rar"] = true;
+      }
+    }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
         messageDispatcher.sendMessage('ModPlugin', {type: "modValid"});
@@ -851,7 +929,7 @@ class GlwdOIDCParams extends Component {
       });
     }
   }
-  
+
   render() {
     var keyJsx, certJsx, scopeOverrideList = [], scopeList = [], additionalParametersList = [], claimsList = [], x5cList = [], addressClaim;
     var baseApiUrl = document.location.href.split('?')[0].split('#')[0] + this.state.config.api_prefix + "/" + (this.state.mod.name||"");
@@ -912,7 +990,7 @@ class GlwdOIDCParams extends Component {
         });
       }
     });
-    var scopeJsx = 
+    var scopeJsx =
       <div className="dropdown">
         <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-glwd-scope-override-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           {this.state.newScopeOverride||i18next.t("admin.mod-glwd-scope-override-scope")}
@@ -957,7 +1035,7 @@ class GlwdOIDCParams extends Component {
       </div>
       );
     });
-    
+
     this.state.mod.parameters["additional-parameters"].forEach((parameter, index) => {
       var hasUserError = this.state.errorList["additional-parameters"] && this.state.errorList["additional-parameters"][index] && this.state.errorList["additional-parameters"][index]["user"];
       var hasTokenError = this.state.errorList["additional-parameters"] && this.state.errorList["additional-parameters"][index] && this.state.errorList["additional-parameters"][index]["token"];
@@ -989,7 +1067,7 @@ class GlwdOIDCParams extends Component {
       </div>
       );
     });
-    
+
     var allowedScopeListToAdd = [<a className="dropdown-item" key={-1} href="#" onClick={(e) => this.addAllowedScope(e, false)}>{i18next.t("admin.mod-glwd-allowed-scope-all")}</a>];
     this.state.config.scopes.forEach((scope, indexScope) => {
       if (this.state.mod.parameters["allowed-scope"].indexOf(scope.name) === -1 && scope.name !== "openid") {
@@ -998,14 +1076,14 @@ class GlwdOIDCParams extends Component {
         );
       }
     });
-    
+
     var allowedScopeList = [];
     this.state.mod.parameters["allowed-scope"].forEach((scope, indexScope) => {
       allowedScopeList.push(
         <a href="#" onClick={(e) => this.deleteAllowedScope(e, indexScope)} key={indexScope}><span className="badge badge-primary btn-icon-right">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>
       );
     });
-    
+
     var nameScopeListToAdd = [];
     this.state.config.scopes.forEach((scope, indexScope) => {
       if (this.state.mod.parameters["name-claim-scope"].indexOf(scope.name) === -1) {
@@ -1014,14 +1092,14 @@ class GlwdOIDCParams extends Component {
         );
       }
     });
-    
+
     var nameScopeList = [];
     this.state.mod.parameters["name-claim-scope"].forEach((scope, indexScope) => {
       nameScopeList.push(
         <a href="#" onClick={(e) => this.deleteNameScope(e, indexScope)} key={indexScope}><span className="badge badge-primary btn-icon-right">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>
       );
     });
-    
+
     var emailScopeListToAdd = [];
     this.state.config.scopes.forEach((scope, indexScope) => {
       if (this.state.mod.parameters["email-claim-scope"].indexOf(scope.name) === -1) {
@@ -1030,14 +1108,14 @@ class GlwdOIDCParams extends Component {
         );
       }
     });
-    
+
     var emailScopeList = [];
     this.state.mod.parameters["email-claim-scope"].forEach((scope, indexScope) => {
       emailScopeList.push(
         <a href="#" onClick={(e) => this.deleteEmailScope(e, indexScope)} key={indexScope}><span className="badge badge-primary btn-icon-right">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>
       );
     });
-    
+
     var scopeScopeListToAdd = [];
     this.state.config.scopes.forEach((scope, indexScope) => {
       if (this.state.mod.parameters["scope-claim-scope"].indexOf(scope.name) === -1) {
@@ -1046,14 +1124,14 @@ class GlwdOIDCParams extends Component {
         );
       }
     });
-    
+
     var scopeScopeList = [];
     this.state.mod.parameters["scope-claim-scope"].forEach((scope, indexScope) => {
       scopeScopeList.push(
         <a href="#" onClick={(e) => this.deleteEmailScope(e, indexScope)} key={indexScope}><span className="badge badge-primary btn-icon-right">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>
       );
     });
-    
+
     this.state.mod.parameters["jwks-x5c"].forEach((x5c, index) => {
       x5cList.push(
         <a disabled={!this.state.mod.parameters["jwks-show"]} href="#" key={index} onClick={(e) => this.handleRemoveX5c(e, index)}>
@@ -1181,7 +1259,7 @@ class GlwdOIDCParams extends Component {
     });
 
     if (this.state.mod.parameters["address-claim"].type!=="no") {
-      addressClaim = 
+      addressClaim =
         <div>
           <div className="form-group">
             <div className="input-group mb-3">
@@ -1246,7 +1324,7 @@ class GlwdOIDCParams extends Component {
         })
       }
     });
-    
+
     this.state.mod.parameters["introspection-revocation-auth-scope"].forEach((scope, index) => {
       if (this.state.mod.parameters["introspection-revocation-allowed"]) {
         defaultScopeIntrospectList.push(<a className="btn-icon-right" href="#" onClick={(e) => this.deleteScope(e, "introspection-revocation-auth-scope", index)} key={index} ><span className="badge badge-primary">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
@@ -1254,16 +1332,16 @@ class GlwdOIDCParams extends Component {
         defaultScopeIntrospectList.push(<span key={index} className="badge badge-primary btn-icon-right">{scope}</span>);
       }
     });
-    var scopeIntrospectJsx = 
-    <div className="dropdown">
-      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-register-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.mod.parameters["introspection-revocation-allowed"]}>{i18next.t("admin.mod-glwd-scope")}</button>
-      <div className="dropdown-menu" aria-labelledby="mod-register-scope">
-        {scopeIntrospectList}
-      </div>
-      <div>
-        {defaultScopeIntrospectList}
-      </div>
-    </div>;
+    var scopeIntrospectJsx =
+      <div className="dropdown">
+        <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-register-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.mod.parameters["introspection-revocation-allowed"]}>{i18next.t("admin.mod-glwd-scope")}</button>
+        <div className="dropdown-menu" aria-labelledby="mod-register-scope">
+          {scopeIntrospectList}
+        </div>
+        <div>
+          {defaultScopeIntrospectList}
+        </div>
+      </div>;
 
     var scopeRegisterAuthList = [], defaultScopeRegisterAuthList = [];
     this.state.config.pattern.user.forEach((pattern) => {
@@ -1276,7 +1354,7 @@ class GlwdOIDCParams extends Component {
     if (!this.state.mod.parameters["register-client-auth-scope"].length) {
       defaultScopeRegisterAuthList.push(<span key={0} className="badge badge-danger btn-icon-right">{i18next.t("admin.mod-glwd-register-client-auth-scope-open")}</span>);
     }
-    
+
     this.state.mod.parameters["register-client-auth-scope"].forEach((scope, index) => {
       if (this.state.mod.parameters["register-client-allowed"]) {
         defaultScopeRegisterAuthList.push(<a className="btn-icon-right" href="#" onClick={(e) => this.deleteScope(e, "register-client-auth-scope", index)} key={index} ><span className="badge badge-primary">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
@@ -1284,7 +1362,7 @@ class GlwdOIDCParams extends Component {
         defaultScopeRegisterAuthList.push(<span key={index} className="badge badge-primary btn-icon-right">{scope}</span>);
       }
     });
-    var scopeRegisterClientAllowedJsx = 
+    var scopeRegisterClientAllowedJsx =
     <div className="dropdown">
       <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-register-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.mod.parameters["register-client-allowed"]}>{i18next.t("admin.mod-glwd-scope")}</button>
       <div className="dropdown-menu" aria-labelledby="mod-register-scope">
@@ -1310,32 +1388,32 @@ class GlwdOIDCParams extends Component {
         defaultScopeRegisterDefaultList.push(<span key={index} className="badge badge-primary btn-icon-right">{scope}</span>);
       }
     });
-    var scopeRegisterClientListJsx = 
-    <div className="dropdown">
-      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-register-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.mod.parameters["register-client-allowed"]}>{i18next.t("admin.mod-glwd-scope")}</button>
-      <div className="dropdown-menu" aria-labelledby="mod-register-scope">
-        {scopeRegisterDefaultList}
-      </div>
-      <div>
-        {defaultScopeRegisterDefaultList}
-      </div>
-    </div>;
-    
+    var scopeRegisterClientListJsx =
+      <div className="dropdown">
+        <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-register-scope" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.mod.parameters["register-client-allowed"]}>{i18next.t("admin.mod-glwd-scope")}</button>
+        <div className="dropdown-menu" aria-labelledby="mod-register-scope">
+          {scopeRegisterDefaultList}
+        </div>
+        <div>
+          {defaultScopeRegisterDefaultList}
+        </div>
+      </div>;
+
     var resourceScopeAvailable = [];
     this.state.config.scopes.forEach((scope, index) => {
       if (this.state.mod.parameters["resource-scope"][scope.name] === undefined) {
         resourceScopeAvailable.push(<a key={index} className="dropdown-item" href="#" onClick={(e) => this.setResourceScope(e, scope.name)} disabled={!this.state.mod.parameters["resource-allowed"]}>{scope.name}</a>);
       }
     });
-    
+
     var resourceScopeJsx =
     <div className="btn-group" role="group">
-      <button className="btn btn-secondary dropdown-toggle" 
-              type="button" 
-              id="mod-register-scope" 
-              data-toggle="dropdown" 
-              aria-haspopup="true" 
-              aria-expanded="false" 
+      <button className="btn btn-secondary dropdown-toggle"
+              type="button"
+              id="mod-register-scope"
+              data-toggle="dropdown"
+              aria-haspopup="true"
+              aria-expanded="false"
               disabled={!this.state.mod.parameters["resource-allowed"] || !resourceScopeAvailable.length}>
           {this.state.newResourceScope||i18next.t("admin.mod-glwd-scope")}
         </button>
@@ -1343,7 +1421,7 @@ class GlwdOIDCParams extends Component {
         {resourceScopeAvailable}
       </div>
     </div>;
-    
+
     var resourceScopeUrls = [];
     Object.keys(this.state.mod.parameters["resource-scope"]).forEach(scope => {
       resourceScopeUrls.push(
@@ -1358,16 +1436,149 @@ class GlwdOIDCParams extends Component {
                 </button>
               </span>
             </div>
-            <textarea className={this.state.errorList["resource-scope"]&&this.state.errorList["resource-scope"][scope]?"form-control is-invalid":"form-control"} 
+            <textarea className={this.state.errorList["resource-scope"]&&this.state.errorList["resource-scope"][scope]?"form-control is-invalid":"form-control"}
                       id={"mod-resource-scope-urls-"+scope}
-                      onChange={(e) => this.changeResourceScopeUrls(e, scope)} 
-                      placeholder={i18next.t("admin.mod-glwd-resource-scope-urls-ph")} 
+                      onChange={(e) => this.changeResourceScopeUrls(e, scope)}
+                      placeholder={i18next.t("admin.mod-glwd-resource-scope-urls-ph")}
                       value={this.state.mod.parameters["resource-scope"][scope]&&this.state.mod.parameters["resource-scope"][scope].join("\n")}>
             </textarea>
           </div>
           {this.state.errorList["resource-scope"]&&this.state.errorList["resource-scope"][scope]?<span className="error-input">{this.state.errorList["resource-scope"][scope]}</span>:""}
         </div>
       );
+    });
+
+    var rarTypes = [], i = 0;
+    Object.keys(this.state.mod.parameters["rar-types"]).forEach(type => {
+      var rarType = this.state.mod.parameters["rar-types"][type];
+
+      var typeScopeAvailable = [], typeScopeAdded = [];
+      this.state.config.scopes.forEach((scope, index) => {
+        if (rarType.scopes.indexOf(scope.name) === -1) {
+          typeScopeAvailable.push(<a key={index} 
+                                     className="dropdown-item" 
+                                     href="#" 
+                                     onClick={(e) => this.addRarTypeScope(e, type, scope.name)} 
+                                     disabled={!this.state.mod.parameters["oauth-rar-allowed"]}>
+                                    {scope.name}
+                                  </a>);
+        } else {
+          typeScopeAdded.push(
+            <a href="#" onClick={(e) => this.deleteRarTypeScope(e, type, scope.name)} key={index}>
+              <span className="badge badge-primary btn-icon-right">{scope.name}
+                <span className="badge badge-light btn-icon-right">
+                  <i className="fas fa-times"></i>
+                </span>
+              </span>
+            </a>
+          );
+        }
+      });
+
+      var resourceScopeJsx =
+        <div className="btn-group" role="group">
+          <button className="btn btn-secondary dropdown-toggle"
+                  type="button"
+                  id={"mod-rar-types-scope-"+type}
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false">
+              {i18next.t("admin.mod-glwd-scope")}
+            </button>
+          <div className="dropdown-menu" aria-labelledby="mod-register-scope">
+            {typeScopeAvailable}
+          </div>
+          {typeScopeAdded}
+        </div>
+
+      rarTypes.push(
+        <div className="form-group" key={type}>
+          <hr/>
+          <h4>{type}</h4>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <label className="input-group-text" htmlFor="mod-glwd-scope-claim">{i18next.t("admin.mod-glwd-rar-scope")}</label>
+              </div>
+              {resourceScopeJsx}
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <span className="input-group-text">{i18next.t("admin.mod-glwd-rar-description")}
+                </span>
+              </div>
+              <input type="text"
+                     className="form-control"
+                     id="mod-glwd-rar-description"
+                     placeholder={i18next.t("admin.mod-glwd-rar-description-ph")}
+                     value={rarType.description}
+                     onChange={(e) => this.changeRarParameter(e, type, "description")}/>
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <span className="input-group-text">{i18next.t("admin.mod-glwd-rar-locations")}
+                </span>
+              </div>
+              <textarea className="form-control"
+                        id={"mod-glwd-rar-locations-"+type}
+                        onChange={(e) => this.changeRarParameter(e, type, "locations")}
+                        placeholder={i18next.t("admin.mod-glwd-rar-locations-ph")}
+                        value={rarType.locations?rarType.locations.join("\n"):""}>
+              </textarea>
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <span className="input-group-text">{i18next.t("admin.mod-glwd-rar-actions")}
+                </span>
+              </div>
+              <textarea className="form-control"
+                        id={"mod-glwd-rar-actions-"+type}
+                        onChange={(e) => this.changeRarParameter(e, type, "actions")}
+                        placeholder={i18next.t("admin.mod-glwd-rar-actions-ph")}
+                        value={rarType.actions?rarType.actions.join("\n"):""}>
+              </textarea>
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <span className="input-group-text">{i18next.t("admin.mod-glwd-rar-datatypes")}
+                </span>
+              </div>
+              <textarea className="form-control"
+                        id={"mod-glwd-rar-datatypes-"+type}
+                        onChange={(e) => this.changeRarParameter(e, type, "datatypes")}
+                        placeholder={i18next.t("admin.mod-glwd-rar-datatypes-ph")}
+                        value={rarType.datatypes?rarType.datatypes.join("\n"):""}>
+              </textarea>
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <span className="input-group-text">{i18next.t("admin.mod-glwd-rar-enriched")}
+                </span>
+              </div>
+              <textarea className="form-control"
+                        id={"mod-glwd-rar-enriched-"+type}
+                        onChange={(e) => this.changeRarParameter(e, type, "enriched")}
+                        placeholder={i18next.t("admin.mod-glwd-rar-enriched-ph")}
+                        value={rarType.enriched?rarType.enriched.join("\n"):""}>
+              </textarea>
+            </div>
+          </div>
+          <button type="button" className="btn btn-secondary" title={i18next.t("admin.delete")} onClick={(e) => this.deleteRar(e, type)}>
+            <i className="fas fa-trash"></i>
+          </button>
+        </div>
+      );
+      i++;
     });
 
     return (
@@ -2422,18 +2633,18 @@ class GlwdOIDCParams extends Component {
               <div className="card-body">
                 {this.state.errorList["resource-scope-or-client"]?<span className="error-input">{this.state.errorList["resource-scope-or-client"]}</span>:""}
                 <div className="form-group form-check">
-                  <input type="checkbox" 
-                         className="form-check-input" 
-                         id="mod-glwd-resource-allowed" 
-                         onChange={(e) => this.toggleParam(e, "resource-allowed")} 
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-resource-allowed"
+                         onChange={(e) => this.toggleParam(e, "resource-allowed")}
                          checked={this.state.mod.parameters["resource-allowed"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-resource-allowed">{i18next.t("admin.mod-glwd-resource-allowed")}</label>
                 </div>
                 <div className="form-group form-check">
-                  <input type="checkbox" 
-                         className="form-check-input" 
-                         id="mod-glwd-resource-change-allowed" 
-                         onChange={(e) => this.toggleParam(e, "resource-change-allowed")} 
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-resource-change-allowed"
+                         onChange={(e) => this.toggleParam(e, "resource-change-allowed")}
                          checked={this.state.mod.parameters["resource-change-allowed"]}
                          disabled={!this.state.mod.parameters["resource-allowed"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-resource-change-allowed">{i18next.t("admin.mod-glwd-resource-change-allowed")}</label>
@@ -2452,8 +2663,8 @@ class GlwdOIDCParams extends Component {
                 {resourceScopeUrls}
                 <div className="form-group">
                   <div className="form-check form-check-inline">
-                    <input className="form-check-input" 
-                           type="radio" 
+                    <input className="form-check-input"
+                           type="radio"
                            id="resourceScopeAndClientFalse"
                            value={this.state.mod.parameters["resource-scope-and-client-property"]}
                            checked={!this.state.mod.parameters["resource-scope-and-client-property"]}
@@ -2462,8 +2673,8 @@ class GlwdOIDCParams extends Component {
                     <label className="form-check-label" htmlFor="resourceScopeAndClientFalse">{i18next.t("admin.mod-glwd-resource-scope-and-client-false")}</label>
                   </div>
                   <div className="form-check form-check-inline">
-                    <input className="form-check-input" 
-                           type="radio" 
+                    <input className="form-check-input"
+                           type="radio"
                            id="resourceScopeAndClientTrue"
                            value={this.state.mod.parameters["resource-scope-and-client-property"]}
                            checked={this.state.mod.parameters["resource-scope-and-client-property"]}
@@ -2477,15 +2688,97 @@ class GlwdOIDCParams extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-glwd-resource-client-property">{i18next.t("admin.mod-glwd-resource-client-property")}</label>
                     </div>
-                    <input type="text" 
-                           className="form-control" 
-                           id="mod-glwd-resource-client-property" 
-                           onChange={(e) => this.changeParam(e, "resource-client-property")} 
-                           value={this.state.mod.parameters["resource-client-property"]} 
-                           placeholder={i18next.t("admin.mod-glwd-resource-client-property-ph")} 
+                    <input type="text"
+                           className="form-control"
+                           id="mod-glwd-resource-client-property"
+                           onChange={(e) => this.changeParam(e, "resource-client-property")}
+                           value={this.state.mod.parameters["resource-client-property"]}
+                           placeholder={i18next.t("admin.mod-glwd-resource-client-property-ph")}
                            disabled={!this.state.mod.parameters["resource-allowed"]} />
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionRAR">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseRAR" aria-expanded="true" aria-controls="collapseRAR">
+                  {this.state.errorList["oauth-rar"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
+                  {i18next.t("admin.mod-glwd-oauth-rar-title")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapseRAR" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionRAR">
+              <div className="card-body">
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-rar-allowed"
+                         onChange={(e) => this.toggleParam(e, "oauth-rar-allowed")}
+                         checked={this.state.mod.parameters["oauth-rar-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-rar-allowed">{i18next.t("admin.mod-glwd-oauth-rar-allowed")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-rar-allow-auth-unsigned"
+                         onChange={(e) => this.toggleParam(e, "rar-allow-auth-unsigned")}
+                         disabled={!this.state.mod.parameters["oauth-rar-allowed"]}
+                         checked={this.state.mod.parameters["rar-allow-auth-unsigned"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-rar-allow-auth-unsigned">{i18next.t("admin.mod-glwd-rar-allow-auth-unsigned")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-rar-allow-auth-unencrypted"
+                         onChange={(e) => this.toggleParam(e, "rar-allow-auth-unencrypted")}
+                         disabled={!this.state.mod.parameters["oauth-rar-allowed"] || this.state.mod.parameters["rar-allow-auth-unsigned"]}
+                         checked={this.state.mod.parameters["rar-allow-auth-unencrypted"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-rar-allow-auth-unencrypted">{i18next.t("admin.mod-glwd-rar-allow-auth-unencrypted")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-rar-types-client-property">{i18next.t("admin.mod-glwd-rar-types-client-property")}</label>
+                    </div>
+                    <input type="text"
+                           className="form-control"
+                           id="mod-glwd-rar-types-client-property"
+                           maxLength="256"
+                           onChange={(e) => this.changeParam(e, "rar-types-client-property")}
+                           value={this.state.mod.parameters["rar-types-client-property"]}
+                           placeholder={i18next.t("admin.mod-glwd-rar-types-client-property-ph")}
+                           disabled={!this.state.mod.parameters["oauth-rar-allowed"]} />
+                  </div>
+                  {this.state.errorList["rar-types-client-property"]?<span className="error-input">{this.state.errorList["rar-types-client-property"]}</span>:""}
+                </div>
+                <hr/>
+                {this.state.newRarExists?<span className="error-input">{i18next.t("admin.mod-glwd-new-rar-error")}</span>:""}
+                {this.state.newRarInvalidChar?<span className="error-input">{i18next.t("admin.mod-glwd-new-rar-invalid-char")}</span>:""}
+                <div className="input-group mb-3">
+                  <input type="text"
+                         className="form-control"
+                         id="mod-glwd-new-rar"
+                         maxLength="256"
+                         placeholder={i18next.t("admin.mod-glwd-new-rar-ph")}
+                         value={this.state.newRar}
+                         onChange={(e) => this.setNewRar(e)}
+                         disabled={!this.state.mod.parameters["oauth-rar-allowed"]}/>
+                  <div className="input-group-append">
+                    <button type="button" 
+                            id="mod-glwd-new-rar-btn"
+                            className="btn btn-secondary" 
+                            onClick={this.addRAR} 
+                            title={i18next.t("admin.add")} 
+                            disabled={!this.state.newRar || !this.state.mod.parameters["oauth-rar-allowed"] || this.state.newRarExists}>
+                      <i className="fas fa-plus"></i>
+                    </button>
+                  </div>
+                </div>
+                {rarTypes}
               </div>
             </div>
           </div>

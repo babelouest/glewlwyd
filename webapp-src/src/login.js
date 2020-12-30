@@ -38,7 +38,9 @@ var initApp = () => {
           scheme: urlParams.get("scheme")||frontEndConfig.defaultScheme||false,
           prompt: urlParams.get("prompt")||false,
           refresh_login: !!urlParams.get("refresh_login"),
-          login_hint: urlParams.get("login_hint")||false
+          login_hint: urlParams.get("login_hint")||false,
+          authorization_details: urlParams.get("authorization_details")||false,
+          plugin: urlParams.get("plugin")||false
         }
       }, frontEndConfig, serverConfig);
       ReactDOM.render(<App config={config}/>, document.getElementById('root'));
