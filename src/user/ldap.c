@@ -1751,7 +1751,6 @@ int user_module_check_password(struct config_module * config, const char * usern
 
 int user_module_update_password(struct config_module * config, const char * username, const char ** new_passwords, size_t new_passwords_len, void * cls) {
   UNUSED(config);
-  UNUSED(new_passwords_len); // TODO
   json_t * j_params = (json_t *)cls;
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, result, i;
