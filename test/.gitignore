@@ -68,6 +68,7 @@ glewlwyd_oidc_code_replay
 glewlwyd_oidc_scheme_required
 glewlwyd_oidc_dpop
 glewlwyd_oidc_resource
+glewlwyd_oidc_rich_auth_requests
 
 glewlwyd_register
 
