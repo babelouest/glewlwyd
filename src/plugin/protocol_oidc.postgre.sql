@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS gpo_rar;
 DROP TABLE IF EXISTS gpo_dpop;
 DROP TABLE IF EXISTS gpo_client_registration;
 DROP TABLE IF EXISTS gpo_subject_identifier;
@@ -25,6 +26,7 @@ CREATE TABLE gpo_code (
   gpoc_code_hash VARCHAR(512) NOT NULL,
   gpoc_nonce VARCHAR(512),
   gpoc_claims_request TEXT DEFAULT NULL,
+  gpoc_authorization_details TEXT DEFAULT NULL,
   gpoc_expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gpoc_issued_for VARCHAR(256), -- IP address or hostname
   gpoc_user_agent VARCHAR(256),
@@ -57,6 +59,7 @@ CREATE TABLE gpo_refresh_token (
   gpor_client_id VARCHAR(256),
   gpor_resource VARCHAR(512),
   gpor_claims_request TEXT DEFAULT NULL,
+  gpor_authorization_details TEXT DEFAULT NULL,
   gpor_issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gpor_expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gpor_last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -94,6 +97,7 @@ CREATE TABLE gpo_access_token (
   gpoa_user_agent VARCHAR(256),
   gpoa_token_hash VARCHAR(512) NOT NULL,
   gpoa_jti VARCHAR(128),
+  gpoa_authorization_details TEXT DEFAULT NULL,
   gpoa_enabled SMALLINT DEFAULT 1,
   FOREIGN KEY(gpor_id) REFERENCES gpo_refresh_token(gpor_id) ON DELETE CASCADE
 );
@@ -170,6 +174,7 @@ CREATE TABLE gpo_device_authorization (
   gpoda_device_code_hash VARCHAR(512) NOT NULL,
   gpoda_user_code_hash VARCHAR(512) NOT NULL,
   gpoda_status SMALLINT DEFAULT 0, -- 0: created, 1: user verified, 2 device completed, 3 disabled
+  gpoda_authorization_details TEXT DEFAULT NULL,
   gpoda_last_check TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX i_gpoda_device_code_hash ON gpo_device_authorization(gpoda_device_code_hash);
@@ -202,3 +207,13 @@ CREATE TABLE gpo_dpop (
   gpod_last_seen TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX i_gpod_jti_hash ON gpo_dpop(gpod_jti_hash);
+
+CREATE TABLE gpo_rar (
+  gporar_id SERIAL PRIMARY KEY,
+  gporar_plugin_name VARCHAR(256) NOT NULL,
+  gporar_client_id VARCHAR(256) NOT NULL,
+  gporar_type VARCHAR(256) NOT NULL,
+  gporar_username VARCHAR(256),
+  gporar_consent SMALLINT DEFAULT 0,
+  gporar_enabled SMALLINT DEFAULT 1
+);

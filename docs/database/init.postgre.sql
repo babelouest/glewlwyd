@@ -34,6 +34,7 @@ DROP TABLE IF EXISTS gpg_refresh_token_scope;
 DROP TABLE IF EXISTS gpg_refresh_token;
 DROP TABLE IF EXISTS gpg_code_scope;
 DROP TABLE IF EXISTS gpg_code;
+DROP TABLE IF EXISTS gpo_rar;
 DROP TABLE IF EXISTS gpo_dpop;
 DROP TABLE IF EXISTS gpo_device_scheme;
 DROP TABLE IF EXISTS gpo_device_authorization_scope;
@@ -364,6 +365,7 @@ CREATE TABLE gpo_code (
   gpoc_code_hash VARCHAR(512) NOT NULL,
   gpoc_nonce VARCHAR(512),
   gpoc_claims_request TEXT DEFAULT NULL,
+  gpoc_authorization_details TEXT DEFAULT NULL,
   gpoc_expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gpoc_issued_for VARCHAR(256), -- IP address or hostname
   gpoc_user_agent VARCHAR(256),
@@ -396,6 +398,7 @@ CREATE TABLE gpo_refresh_token (
   gpor_client_id VARCHAR(256),
   gpor_resource VARCHAR(512),
   gpor_claims_request TEXT DEFAULT NULL,
+  gpor_authorization_details TEXT DEFAULT NULL,
   gpor_issued_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gpor_expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gpor_last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -433,6 +436,7 @@ CREATE TABLE gpo_access_token (
   gpoa_user_agent VARCHAR(256),
   gpoa_token_hash VARCHAR(512) NOT NULL,
   gpoa_jti VARCHAR(128),
+  gpoa_authorization_details TEXT DEFAULT NULL,
   gpoa_enabled SMALLINT DEFAULT 1,
   FOREIGN KEY(gpor_id) REFERENCES gpo_refresh_token(gpor_id) ON DELETE CASCADE
 );
@@ -509,6 +513,7 @@ CREATE TABLE gpo_device_authorization (
   gpoda_device_code_hash VARCHAR(512) NOT NULL,
   gpoda_user_code_hash VARCHAR(512) NOT NULL,
   gpoda_status SMALLINT DEFAULT 0, -- 0: created, 1: user verified, 2 device completed, 3 disabled
+  gpoda_authorization_details TEXT DEFAULT NULL,
   gpoda_last_check TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX i_gpoda_device_code_hash ON gpo_device_authorization(gpoda_device_code_hash);
@@ -541,6 +546,16 @@ CREATE TABLE gpo_dpop (
   gpod_last_seen TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX i_gpod_jti_hash ON gpo_dpop(gpod_jti_hash);
+
+CREATE TABLE gpo_rar (
+  gporar_id SERIAL PRIMARY KEY,
+  gporar_plugin_name VARCHAR(256) NOT NULL,
+  gporar_client_id VARCHAR(256) NOT NULL,
+  gporar_type VARCHAR(256) NOT NULL,
+  gporar_username VARCHAR(256),
+  gporar_consent SMALLINT DEFAULT 0,
+  gporar_enabled SMALLINT DEFAULT 1
+);
 
 CREATE TABLE gs_code (
   gsc_id SERIAL PRIMARY KEY,
@@ -707,7 +722,7 @@ INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_requi
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('g_profile', 'Glewlwyd profile', 'Access to the user''s profile API', 1, 600);
 INSERT INTO g_scope (gs_name, gs_display_name, gs_description, gs_password_required, gs_password_max_age) VALUES ('openid', 'Open ID', 'Open ID Connect scope', 0, 0);
 INSERT INTO g_user_module_instance (gumi_module, gumi_order, gumi_name, gumi_display_name, gumi_parameters, gumi_readonly) VALUES ('database', 0, 'database', 'Database backend', '{"use-glewlwyd-connection":true,"data-format":{"picture":{"multiple":false,"read":true,"write":true,"profile-read":true,"profile-write":true},"reset-credentials-code":{"multiple":false,"read":true,"write":true,"profile-read":false,"profile-write":false}}}', 0);
-INSERT INTO g_client_module_instance (gcmi_module, gcmi_order, gcmi_name, gcmi_display_name, gcmi_parameters, gcmi_readonly) VALUES ('database', 0, 'database', 'Database backend', '{"use-glewlwyd-connection":true,"data-format":{"redirect_uri":{"multiple":true,"read":true,"write":true},"authorization_type":{"multiple":true,"read":true,"write":true},"client_secret":{"read":true,"write":true},"pubkey":{"read":true,"write":true},"jwks":{"convert":"jwks","read":true,"write":true},"jwks_uri":{"read":true,"write":true},"post_logout_redirect_uris":{"multiple":true,"read":true,"write":true},"token_endpoint_auth_method":{"multiple":false,"read":true,"write":true},"resource":{"multiple":true,"read":true,"write":true}}}', 0);
+INSERT INTO g_client_module_instance (gcmi_module, gcmi_order, gcmi_name, gcmi_display_name, gcmi_parameters, gcmi_readonly) VALUES ('database', 0, 'database', 'Database backend', '{"use-glewlwyd-connection":true,"data-format":{"redirect_uri":{"multiple":true,"read":true,"write":true},"authorization_type":{"multiple":true,"read":true,"write":true},"client_secret":{"read":true,"write":true},"pubkey":{"read":true,"write":true},"jwks":{"convert":"jwks","read":true,"write":true},"jwks_uri":{"read":true,"write":true},"post_logout_redirect_uris":{"multiple":true,"read":true,"write":true},"token_endpoint_auth_method":{"multiple":false,"read":true,"write":true},"resource":{"multiple":true,"read":true,"write":true},"authorization_data_types":{"multiple":true,"read":true,"write":true}}}', 0);
 INSERT INTO g_user (gu_username, gu_name, gu_email, gu_enabled) VALUES ('admin', 'The Administrator', '', 1);
 INSERT INTO g_user_password (gu_id, guw_password) VALUES ((SELECT gu_id from g_user WHERE gu_username='admin'), crypt('password', gen_salt('bf')));
 INSERT INTO g_user_scope (gus_name) VALUES ('g_admin');

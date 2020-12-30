@@ -45,3 +45,25 @@ SELECT gu_id, gu_password FROM g_user;
 -- SQLite3 doesn't support DROP COLUMN, using a backup table to remove this column is dangerous because of all the foreign keys.
 -- So instead I'll set the old gu_password to NULL
 UPDATE g_user SET gu_password=NULL;
+
+ALTER TABLE gpo_code
+ADD gpoc_authorization_details TEXT DEFAULT NULL;
+
+ALTER TABLE gpo_refresh_token
+ADD gpor_authorization_details TEXT DEFAULT NULL;
+
+ALTER TABLE gpo_access_token
+ADD gpoa_authorization_details TEXT DEFAULT NULL;
+
+ALTER TABLE gpo_device_authorization
+ADD gpoda_authorization_details TEXT DEFAULT NULL;
+
+CREATE TABLE gpo_rar (
+  gporar_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gporar_plugin_name TEXT NOT NULL,
+  gporar_client_id TEXT NOT NULL,
+  gporar_type TEXT NOT NULL,
+  gporar_username TEXT,
+  gporar_consent INTEGER DEFAULT 0,
+  gporar_enabled INTEGER DEFAULT 1
+);

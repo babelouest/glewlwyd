@@ -44,3 +44,25 @@ SELECT gu_id, gu_password FROM g_user;
 
 ALTER TABLE g_user
 DROP COLUMN gu_password;
+
+ALTER TABLE gpo_code
+ADD gpoc_authorization_details TEXT DEFAULT NULL;
+
+ALTER TABLE gpo_refresh_token
+ADD gpor_authorization_details TEXT DEFAULT NULL;
+
+ALTER TABLE gpo_access_token
+ADD gpoa_authorization_details TEXT DEFAULT NULL;
+
+ALTER TABLE gpo_device_authorization
+ADD gpoda_authorization_details TEXT DEFAULT NULL;
+
+CREATE TABLE gpo_rar (
+  gporar_id SERIAL PRIMARY KEY,
+  gporar_plugin_name VARCHAR(256) NOT NULL,
+  gporar_client_id VARCHAR(256) NOT NULL,
+  gporar_type VARCHAR(256) NOT NULL,
+  gporar_username VARCHAR(256),
+  gporar_consent SMALLINT DEFAULT 0,
+  gporar_enabled SMALLINT DEFAULT 1
+);
