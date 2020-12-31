@@ -1207,6 +1207,8 @@ Event log messages have the following format:
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Refresh token generated for client '<client_id>' revoked
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Access token jti '<jti>' generated for client '<client_id>' revoked
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - id_token generated for client '<client_id>' revoked
+<date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Rich Authorization Request consent type '<type>' set to <true|false> by user '<username>' to client '<client_id>'
+<date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Rich Authorization Request consent type '<type>' deleted by user '<username>' to client '<client_id>'
 ```
 
 #### Register plugin events
