@@ -53,7 +53,7 @@ int verify_api_key(struct config_elements * config, const char * token) {
     json_decref(j_query);
     if (res == H_OK) {
       if (json_array_size(j_result)) {
-        j_query = json_pack("{sss{si}s{sO}}",
+        j_query = json_pack("{sss{sI}s{sO}}",
                             "table",
                             GLEWLWYD_TABLE_API_KEY,
                             "set",
