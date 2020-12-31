@@ -961,6 +961,114 @@ START_TEST(test_oidc_rar_at_reduced_ok)
 }
 END_TEST
 
+START_TEST(test_oidc_rar_device_verification_valid)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_resp, * j_grant, * j_rar, * j_jwt_content;
+  const char * redirect_uri, * code, * device_code;
+  jwt_t * jwt;
+  char * str_rar;
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  j_rar = json_pack("[{sss[s]s[s]s[s]}]",
+                    "type", RAR1,
+                    "locations",
+                      "https://"RAR1"-1.resource.tld",
+                    "actions",
+                      "action1-"RAR1,
+                    "datatypes",
+                      "type1-"RAR1);
+  str_rar = json_dumps(j_rar, JSON_COMPACT);
+  ulfius_set_request_properties(&req,
+                                U_OPT_HTTP_VERB, "POST",
+                                U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/device_authorization/",
+                                U_OPT_POST_BODY_PARAMETER, "grant_type", "device_authorization",
+                                U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT,
+                                U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                U_OPT_POST_BODY_PARAMETER, "authorization_details", str_rar,
+                                U_OPT_AUTH_BASIC_USER, CLIENT,
+                                U_OPT_AUTH_BASIC_PASSWORD, CLIENT_PASSWORD,
+                                U_OPT_NONE);
+  o_free(str_rar);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(200, resp.status);
+  ck_assert_ptr_ne(j_resp = ulfius_get_json_body_response(&resp, NULL), NULL);
+  ck_assert_ptr_ne(json_object_get(j_resp, "device_code"), NULL);
+  ck_assert_ptr_ne(json_object_get(j_resp, "user_code"), NULL);
+  ck_assert_ptr_ne(code = json_string_value(json_object_get(j_resp, "user_code")), NULL);
+  ck_assert_ptr_ne(device_code = json_string_value(json_object_get(j_resp, "device_code")), NULL);
+  ck_assert_str_eq(json_string_value(json_object_get(j_resp, "verification_uri")), "http://localhost:4593/api/" PLUGIN_NAME "/device");
+  ck_assert_ptr_ne(json_object_get(j_resp, "verification_uri_complete"), NULL);
+  ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "expires_in")), 600);
+  ck_assert_int_eq(json_integer_value(json_object_get(j_resp, "interval")), 5);
+  
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  
+  j_grant = json_pack("{ss}", "scope", SCOPE_LIST);
+  run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT, NULL, NULL, j_grant, NULL, 200, NULL, NULL, NULL);
+  json_decref(j_grant);
+  
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf(SERVER_URI "/" PLUGIN_NAME "/device?code=%s&g_continue", code);
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(302, resp.status);
+  ck_assert_ptr_ne(redirect_uri = u_map_get(resp.map_header, "Location"), NULL);
+  ck_assert_ptr_ne(o_strstr(redirect_uri, "prompt=deviceComplete"), NULL);
+  ulfius_clean_response(&resp);
+  
+  j_grant = json_pack("{ss}", "scope", "");
+  run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT, NULL, NULL, j_grant, NULL, 200, NULL, NULL, NULL);
+  json_decref(j_grant);
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/token/");
+  req.http_verb = o_strdup("POST");
+  u_map_put(req.map_post_body, "grant_type", "urn:ietf:params:oauth:grant-type:device_code");
+  u_map_put(req.map_post_body, "client_id", CLIENT);
+  u_map_put(req.map_post_body, "device_code", device_code);
+  req.auth_basic_user = o_strdup(CLIENT);
+  req.auth_basic_password = o_strdup(CLIENT_PASSWORD);
+  json_decref(j_resp);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(200, resp.status);
+  ck_assert_ptr_ne(j_resp = ulfius_get_json_body_response(&resp, NULL), NULL);
+  ck_assert_ptr_ne(json_object_get(j_resp, "authorization_details"), NULL);
+  ck_assert_ptr_ne(json_object_get(j_resp, "access_token"), NULL);
+  ck_assert_ptr_ne(json_object_get(j_resp, "refresh_token"), NULL);
+  ck_assert_ptr_ne(json_object_get(j_resp, "id_token"), NULL);
+  ck_assert_int_eq(1, json_array_size(json_object_get(j_resp, "authorization_details")));
+  ck_assert_ptr_ne(NULL, json_search(json_object_get(j_resp, "authorization_details"), json_array_get(j_rar, 0)));
+  ck_assert_ptr_eq(json_object_get(json_object_get(json_array_get(json_object_get(j_resp, "authorization_details"), 0), "access"), ENRICHED1), NULL);
+  ck_assert_ptr_eq(json_object_get(json_array_get(json_object_get(j_resp, "authorization_details"), 0), "access"), NULL);
+  
+  ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
+  ck_assert_int_eq(r_jwt_parse(jwt, json_string_value(json_object_get(j_resp, "access_token")), 0), RHN_OK);
+  ck_assert_str_eq(SCOPE_LIST, r_jwt_get_claim_str_value(jwt, "aud"));
+  j_jwt_content = r_jwt_get_full_claims_json_t(jwt);
+  ck_assert_ptr_ne(NULL, json_object_get(j_jwt_content, "authorization_details"));
+  ck_assert_int_eq(1, json_array_size(json_object_get(j_jwt_content, "authorization_details")));
+  ck_assert_ptr_ne(NULL, json_search(json_object_get(j_jwt_content, "authorization_details"), json_array_get(j_rar, 0)));
+  ck_assert_ptr_eq(json_object_get(json_object_get(json_array_get(json_object_get(j_jwt_content, "authorization_details"), 0), "access"), ENRICHED1), NULL);
+  ck_assert_ptr_eq(json_object_get(json_array_get(json_object_get(j_jwt_content, "authorization_details"), 0), "access"), NULL);
+  r_jwt_free(jwt);
+  
+  json_decref(j_resp);
+  json_decref(j_rar);
+  json_decref(j_jwt_content);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  
+}
+END_TEST
+
 START_TEST(test_oidc_rar_add_client_pubkey)
 {
   json_t * j_client = json_pack("{ss ss so s[s] s[ssss] s[s] ss so s[sss]}", "client_id", CLIENT_PUBKEY_ID, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, CLIENT_PUBKEY_PARAM, pubkey_1_pem, "enabled", json_true(), "authorization_data_types", RAR1, RAR2, RAR3);
@@ -1266,6 +1374,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_rar_set_consent);
   tcase_add_test(tc_core, test_oidc_rar_at_code_refresh_introspect_ok);
   tcase_add_test(tc_core, test_oidc_rar_at_reduced_ok);
+  tcase_add_test(tc_core, test_oidc_rar_device_verification_valid);
   tcase_add_test(tc_core, test_oidc_rar_delete_consent);
   tcase_add_test(tc_core, test_oidc_rar_delete_plugin);
   tcase_add_test(tc_core, test_oidc_rar_add_plugin_signed_unencrypted);
@@ -1346,6 +1455,7 @@ int main(int argc, char *argv[])
   j_client = ulfius_get_json_body_response(&client_resp, NULL);
   ulfius_clean_response(&client_resp);
   json_object_set_new(j_client, "authorization_data_types", json_pack("[sss]", RAR1, RAR2, RAR3));
+  json_array_append_new(json_object_get(j_client, "authorization_type"), json_string("device_authorization"));
   ulfius_set_request_properties(&client_req,
                                 U_OPT_HTTP_URL, SERVER_URI "/client/" CLIENT,
                                 U_OPT_HTTP_VERB, "PUT",
@@ -1413,6 +1523,7 @@ int main(int argc, char *argv[])
   o_free(url);
 
   json_object_set_new(j_client, "authorization_data_types", json_pack("[]"));
+  json_array_remove(json_object_get(j_client, "authorization_type"), json_array_size(json_object_get(j_client, "authorization_type"))-1);
   ulfius_set_request_properties(&client_req,
                                 U_OPT_HTTP_URL, SERVER_URI "/client/" CLIENT,
                                 U_OPT_HTTP_VERB, "PUT",
