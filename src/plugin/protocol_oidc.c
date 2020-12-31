@@ -6346,6 +6346,7 @@ static int authorization_details_set_consent(struct _oidc_config * config, const
   res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
+    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Rich Authorization Request consent type '%s' set to %s by user '%s' to client '%s'", config->name, type, consent?"true":"false", username, client_id);
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "authorization_details_set_consent - Error executing j_query");
@@ -6370,6 +6371,7 @@ static int authorization_details_add_consent(struct _oidc_config * config, const
   res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
+    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Rich Authorization Request consent type '%s' set to %s by user '%s' to client '%s'", config->name, type, consent?"true":"false", username, client_id);
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "authorization_details_add_consent - Error executing j_query");
@@ -6393,6 +6395,7 @@ static int authorization_details_delete_consent(struct _oidc_config * config, co
   res = h_delete(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
+    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Rich Authorization Request consent type '%s' deleted by user '%s' to client '%s'", config->name, type, username, client_id);
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "authorization_details_delete_consent - Error executing j_query");
