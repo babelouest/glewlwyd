@@ -51,6 +51,9 @@ ADD gpoc_authorization_details BLOB DEFAULT NULL;
 ALTER TABLE gpo_refresh_token
 ADD gpor_authorization_details BLOB DEFAULT NULL;
 
+ALTER TABLE gpo_refresh_token
+ADD gpor_dpop_jkt VARCHAR(512);
+
 ALTER TABLE gpo_access_token
 ADD gpoa_authorization_details BLOB DEFAULT NULL;
 
@@ -66,3 +69,6 @@ CREATE TABLE gpo_rar (
   gporar_consent TINYINT(1) DEFAULT 0,
   gporar_enabled TINYINT(1) DEFAULT 1
 );
+CREATE INDEX i_gporar_client_id ON gpo_rar(gporar_client_id);
+CREATE INDEX i_gporar_type ON gpo_rar(gporar_type);
+CREATE INDEX i_gporar_username ON gpo_rar(gporar_username);

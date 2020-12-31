@@ -217,3 +217,6 @@ CREATE TABLE gpo_rar (
   gporar_consent SMALLINT DEFAULT 0,
   gporar_enabled SMALLINT DEFAULT 1
 );
+CREATE INDEX i_gporar_client_id ON gpo_rar(gporar_client_id);
+CREATE INDEX i_gporar_type ON gpo_rar(gporar_type);
+CREATE INDEX i_gporar_username ON gpo_rar(gporar_username);
