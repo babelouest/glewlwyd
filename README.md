@@ -1,6 +1,5 @@
 # Glewlwyd SSO server
 
-[![Build Status](https://travis-ci.org/babelouest/glewlwyd.svg?branch=master)](https://travis-ci.org/babelouest/glewlwyd)
 ![C/C++ CI](https://github.com/babelouest/glewlwyd/workflows/C/C++%20CI/badge.svg)
 ![CodeQL](https://github.com/babelouest/glewlwyd/workflows/CodeQL/badge.svg)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3475/badge)](https://bestpractices.coreinfrastructure.org/projects/3475)
