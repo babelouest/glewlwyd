@@ -61,10 +61,12 @@ class Buttons extends Component {
     apiManager.glewlwydRequest("/auth/?username=" + this.state.currentUser.username, "DELETE")
     .then(() => {
       messageDispatcher.sendMessage('App', {type: 'InitProfile'});
+      messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
     })
     .fail(() => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
       messageDispatcher.sendMessage('App', {type: 'InitProfile'});
+      messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
     });
   }
   

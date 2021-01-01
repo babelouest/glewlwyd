@@ -47,7 +47,8 @@ class SchemeAuth extends Component {
       var schemeList = [];
       if (this.state.scheme) {
         schemeForm = <SchemeAuthForm config={this.state.config} scheme={this.state.scheme} currentUser={this.state.currentUser}/>;
-        separator = <div className="row">
+        separator =
+          <div className="row">
             <div className="col-md-12">
               <hr/>
             </div>

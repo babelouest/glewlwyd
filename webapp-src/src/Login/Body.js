@@ -22,7 +22,7 @@ class Body extends Component {
       validLogin: props.validLogin
     };
   }
-  
+
   componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
@@ -45,10 +45,10 @@ class Body extends Component {
         <div className="carousel-inner">
           <div className={"carousel-item" + (this.state.showGrant?" active":"")}>
             <GrantScope config={this.state.config}
-                        currentUser={this.state.currentUser} 
-                        client={this.state.client} 
-                        scope={this.state.scope} 
-                        infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable} 
+                        currentUser={this.state.currentUser}
+                        client={this.state.client}
+                        scope={this.state.scope}
+                        infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable}
                         authDetails={this.state.authDetails}/>
           </div>
         </div>
@@ -56,10 +56,10 @@ class Body extends Component {
     } else {
       content = <div className="row">
         <div className="col-md-12">
-          <SchemeAuth config={this.state.config} 
-                      currentUser={this.state.currentUser} 
-                      scheme={this.state.scheme} 
-                      schemeListRequired={this.state.schemeListRequired} 
+          <SchemeAuth config={this.state.config}
+                      currentUser={this.state.currentUser}
+                      scheme={this.state.scheme}
+                      schemeListRequired={this.state.schemeListRequired}
                       client={this.state.client} />
         </div>
       </div>
@@ -69,7 +69,7 @@ class Body extends Component {
       if (Array.isArray(picData)) {
         picData = picData[0];
       }
-      profilePicture = 
+      profilePicture =
         <div className="row">
           <div className="col-md-12 text-center">
             <img className="btn-icon-right img-medium" src={"data:"+this.state.config.profilePicture.type+";base64,"+picData} alt={this.state.config.profilePicture.property} />

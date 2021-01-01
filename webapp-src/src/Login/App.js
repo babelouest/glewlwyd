@@ -223,12 +223,12 @@ class App extends Component {
         if (scopeGranted.length) {
           return apiManager.glewlwydRequest("/auth/scheme/?scope=" + encodeURIComponent(scopeGranted.join(" ")))
           .then((schemeRes) => {
-            return this.setState({client: res.client, 
-                           scope: res.scope, 
-                           scheme: schemeRes, 
-                           showGrant: showGrant, 
-                           showGrantAsterisk: showGrantAsterisk, 
-                           infoSomeScopeUnavailable: infoSomeScopeUnavailable, 
+            return this.setState({client: res.client,
+                           scope: res.scope,
+                           scheme: schemeRes,
+                           showGrant: showGrant,
+                           showGrantAsterisk: showGrantAsterisk,
+                           infoSomeScopeUnavailable: infoSomeScopeUnavailable,
                            errorScopesUnavailable: false}, () => {
               return this.parseSchemes();
             });
@@ -237,11 +237,11 @@ class App extends Component {
             messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("login.error-scheme-scope-api")});
           });
         } else {
-          return this.setState({client: res.client, 
-                         scope: res.scope, 
-                         showGrant: true, 
-                         showGrantAsterisk: true, 
-                         errorScopesUnavailable: false, 
+          return this.setState({client: res.client,
+                         scope: res.scope,
+                         showGrant: true,
+                         showGrantAsterisk: true,
+                         errorScopesUnavailable: false,
                          infoSomeScopeUnavailable: infoSomeScopeUnavailable});
         }
       } else {
@@ -272,7 +272,7 @@ class App extends Component {
       }
     });
   }
-  
+
   checkAuthorizationDetails(authorization_details) {
     if (authorization_details) {
       var showAuthDetailsAsterisk = false;
@@ -351,11 +351,11 @@ class App extends Component {
     if (canContinue) {
       scheme = false;
     }
-    return this.setState({canContinue: canContinue, 
-                   passwordRequired: passwordRequired, 
-                   schemeListRequired: schemeListRequired, 
-                   scheme: scheme, 
-                   errorScheme: (!scheme && !canContinue), 
+    return this.setState({canContinue: canContinue,
+                   passwordRequired: passwordRequired,
+                   schemeListRequired: schemeListRequired,
+                   scheme: scheme,
+                   errorScheme: (!scheme && !canContinue),
                    mustRegisterScheme: mustRegisterScheme});
   }
 
@@ -365,7 +365,7 @@ class App extends Component {
       this.setState({lang: lang});
     });
   }
-  
+
   userHasScope(user, scope_list) {
     var hasScope = false;
     if (scope_list) {
@@ -407,28 +407,28 @@ class App extends Component {
           }
           if ((this.state.newUser || this.state.passwordRequired)) {
             if (!this.state.scheme) {
-              body = <PasswordForm config={this.state.config} 
-                                   username={this.state.login_hint} 
-                                   currentUser={this.state.currentUser} 
-                                   userList={this.state.userList} 
+              body = <PasswordForm config={this.state.config}
+                                   username={this.state.login_hint}
+                                   currentUser={this.state.currentUser}
+                                   userList={this.state.userList}
                                    callbackInitProfile={this.initProfile}/>;
             } else {
-              body = <NoPasswordForm config={this.state.config} 
-                                     username={this.state.login_hint} 
-                                     userList={this.state.userList} 
-                                     callbackInitProfile={this.initProfile} 
+              body = <NoPasswordForm config={this.state.config}
+                                     username={this.state.login_hint}
+                                     userList={this.state.userList}
+                                     callbackInitProfile={this.initProfile}
                                      scheme={this.state.scheme}/>;
             }
           } else if (this.state.selectAccount) {
             body = <SelectAccount config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
           } else {
-            body = <Body config={this.state.config} 
-                         currentUser={this.state.currentUser} 
-                         client={this.state.client} 
-                         scope={this.state.scope} 
-                         scheme={this.state.scheme} 
-                         schemeListRequired={this.state.schemeListRequired} 
-                         showGrant={this.state.showGrant} 
+            body = <Body config={this.state.config}
+                         currentUser={this.state.currentUser}
+                         client={this.state.client}
+                         scope={this.state.scope}
+                         scheme={this.state.scheme}
+                         schemeListRequired={this.state.schemeListRequired}
+                         showGrant={this.state.showGrant}
                          infoSomeScopeUnavailable={this.state.infoSomeScopeUnavailable}
                          validLogin={(!!this.state.config.params.callback_url && !!this.state.config.params.scope)}
                          authDetails={this.state.authDetails}/>;
@@ -476,17 +476,17 @@ class App extends Component {
               {body}
             </div>
             <div className="card-footer">
-              <Buttons config={this.state.config} 
-                       currentUser={this.state.currentUser} 
+              <Buttons config={this.state.config}
+                       currentUser={this.state.currentUser}
                        userList={this.state.userList}
                        client={this.state.client}
-                       showGrant={this.state.showGrant} 
-                       showGrantAsterisk={this.state.showGrantAsterisk || this.state.showAuthDetailsAsterisk} 
-                       newUser={this.state.newUser} 
-                       newUserScheme={this.state.scheme} 
-                       canContinue={this.state.canContinue && !this.state.errorScopesUnavailable} 
+                       showGrant={this.state.showGrant}
+                       showGrantAsterisk={this.state.showGrantAsterisk || this.state.showAuthDetailsAsterisk}
+                       newUser={this.state.newUser}
+                       newUserScheme={this.state.scheme}
+                       canContinue={this.state.canContinue && !this.state.errorScopesUnavailable}
                        schemeListRequired={this.state.schemeListRequired}
-                       selectAccount={this.state.selectAccount} 
+                       selectAccount={this.state.selectAccount}
                        registration={this.state.registration}
                        resetCredentials={this.state.resetCredentials}
                        resetCredentialsShow={this.state.resetCredentialsShow} />
