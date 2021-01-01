@@ -90,7 +90,7 @@ class App extends Component {
           this.setState({curNav: message.module, module: message.page});
         }
       } else if (message.type === 'loggedIn') {
-        this.setState({loggedIn: message.loggedIn}, () => {
+        this.setState({loggedIn: message.loggedIn, curNav: "profile"}, () => {
           this.fetchProfile();
         });
       } else if (message.type === 'lang') {
