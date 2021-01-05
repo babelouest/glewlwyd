@@ -95,6 +95,10 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["rar-allow-auth-unsigned"]!==undefined?"":(props.mod.parameters["rar-allow-auth-unsigned"] = false);
     props.mod.parameters["rar-allow-auth-unencrypted"]!==undefined?"":(props.mod.parameters["rar-allow-auth-unencrypted"] = true);
     props.mod.parameters["rar-types"]!==undefined?"":(props.mod.parameters["rar-types"] = {});
+    props.mod.parameters["oauth-par-allowed"]!==undefined?"":(props.mod.parameters["oauth-par-allowed"] = false);
+    props.mod.parameters["oauth-par-duration"]!==undefined?"":(props.mod.parameters["oauth-par-duration"] = 90);
+    props.mod.parameters["oauth-par-required"]!==undefined?"":(props.mod.parameters["oauth-par-required"] = false);
+    props.mod.parameters["oauth-par-request_uri-prefix"]!==undefined?"":(props.mod.parameters["oauth-par-request_uri-prefix"] = "urn:ietf:params:oauth:request_uri:");
 
     this.state = {
       config: props.config,
@@ -251,6 +255,10 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["rar-allow-auth-unsigned"]!==undefined?"":(nextProps.mod.parameters["rar-allow-auth-unsigned"] = false);
     nextProps.mod.parameters["rar-allow-auth-unencrypted"]!==undefined?"":(nextProps.mod.parameters["rar-allow-auth-unencrypted"] = true);
     nextProps.mod.parameters["rar-types"]!==undefined?"":(nextProps.mod.parameters["rar-types"] = {});
+    nextProps.mod.parameters["oauth-par-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-par-allowed"] = false);
+    nextProps.mod.parameters["oauth-par-duration"]!==undefined?"":(nextProps.mod.parameters["oauth-par-duration"] = 90);
+    nextProps.mod.parameters["oauth-par-required"]!==undefined?"":(nextProps.mod.parameters["oauth-par-required"] = false);
+    nextProps.mod.parameters["oauth-par-request_uri-prefix"]!==undefined?"":(nextProps.mod.parameters["oauth-par-request_uri-prefix"] = "urn:ietf:params:oauth:request_uri:");
 
     this.setState({
       config: nextProps.config,
@@ -2779,6 +2787,61 @@ class GlwdOIDCParams extends Component {
                   </div>
                 </div>
                 {rarTypes}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionPAR">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapsePAR" aria-expanded="true" aria-controls="collapsePAR">
+                  {i18next.t("admin.mod-glwd-oauth-par-title")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapsePAR" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionPAR">
+              <div className="card-body">
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-par-allowed"
+                         onChange={(e) => this.toggleParam(e, "oauth-par-allowed")}
+                         checked={this.state.mod.parameters["oauth-par-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-par-allowed">{i18next.t("admin.mod-glwd-oauth-par-allowed")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-par-required"
+                         onChange={(e) => this.toggleParam(e, "oauth-par-required")}
+                         disabled={!this.state.mod.parameters["oauth-par-allowed"]}
+                         checked={this.state.mod.parameters["oauth-par-required"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-par-required">{i18next.t("admin.mod-glwd-oauth-par-required")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-oauth-par-request_uri-prefix">{i18next.t("admin.mod-glwd-oauth-par-request_uri-prefix")}</label>
+                    </div>
+                    <input type="text"
+                           className="form-control"
+                           id="mod-glwd-oauth-par-request_uri-prefix"
+                           maxLength="256"
+                           onChange={(e) => this.changeParam(e, "oauth-par-request_uri-prefix")}
+                           value={this.state.mod.parameters["oauth-par-request_uri-prefix"]}
+                           placeholder={i18next.t("admin.mod-glwd-oauth-par-request_uri-prefix-ph")}
+                           disabled={!this.state.mod.parameters["oauth-par-allowed"]} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-oauth-par-duration">{i18next.t("admin.mod-glwd-oauth-par-duration")}</label>
+                    </div>
+                    <input type="number" min="1" step="1" className="form-control" id="mod-glwd-oauth-par-duration" onChange={(e) => this.changeNumberParam(e, "oauth-par-duration")} value={this.state.mod.parameters["oauth-par-duration"]} placeholder={i18next.t("admin.mod-glwd-oauth-par-duration-ph")} disabled={!this.state.mod.parameters["oauth-par-allowed"]} />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
