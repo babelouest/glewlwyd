@@ -4,9 +4,11 @@
 
 - Fix `aud` property to fit JWT access token spec
 - Add support for OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) [Draft 01](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-dpop-01)
+- Allow multiple passwords for users
 - Implement [Resource Indicators for OAuth 2.0](https://tools.ietf.org/html/rfc8707) for OIDC plugin
 - Implement [Content-Encoding](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Encoding) to compress response bodies using `gzip` or `deflate` when relevant
-- Allow multiple passwords for users
+- Implement [OAuth 2.0 Rich Authorization Requests Draft 03](https://www.ietf.org/archive/id/draft-ietf-oauth-rar-03.html)
+- Implement [OAuth 2.0 Pushed Authorization Requests Draft 05](https://tools.ietf.org/html/draft-ietf-oauth-par-05)
 
 ## 2.4.0
 
