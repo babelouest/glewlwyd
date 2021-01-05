@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS gpo_par_scope;
+DROP TABLE IF EXISTS gpo_par;
 DROP TABLE IF EXISTS gpo_rar;
 DROP TABLE IF EXISTS gpo_dpop;
 DROP TABLE IF EXISTS gpo_client_registration;
@@ -220,3 +222,33 @@ CREATE TABLE gpo_rar (
 CREATE INDEX i_gporar_client_id ON gpo_rar(gporar_client_id);
 CREATE INDEX i_gporar_type ON gpo_rar(gporar_type);
 CREATE INDEX i_gporar_username ON gpo_rar(gporar_username);
+
+CREATE TABLE gpo_par (
+  gpop_id SERIAL PRIMARY KEY,
+  gpop_plugin_name VARCHAR(256) NOT NULL,
+  gpop_response_type VARCHAR(128) NOT NULL,
+  gpop_state TEXT,
+  gpop_username VARCHAR(256),
+  gpop_client_id VARCHAR(256) NOT NULL,
+  gpop_redirect_uri VARCHAR(512) NOT NULL,
+  gpop_request_uri_hash VARCHAR(512) NOT NULL,
+  gpop_nonce VARCHAR(512),
+  gpop_code_challenge VARCHAR(128),
+  gpop_resource VARCHAR(512),
+  gpop_claims_request TEXT DEFAULT NULL,
+  gpop_authorization_details TEXT DEFAULT NULL,
+  gpop_additional_parameters TEXT DEFAULT NULL,
+  gpop_status SMALLINT DEFAULT 0, -- 0 created, 1 validated, 2 completed
+  gpop_expires_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gpop_issued_for VARCHAR(256), -- IP address or hostname
+  gpop_user_agent VARCHAR(256)
+);
+CREATE INDEX i_gpop_request_uri_hash ON gpo_par(gpop_request_uri_hash);
+CREATE INDEX i_gpop_code_challenge ON gpo_par(gpop_code_challenge);
+
+CREATE TABLE gpo_par_scope (
+  gpops_id SERIAL PRIMARY KEY,
+  gpop_id INTEGER,
+  gpops_scope VARCHAR(128) NOT NULL,
+  FOREIGN KEY(gpop_id) REFERENCES gpo_par(gpop_id) ON DELETE CASCADE
+);

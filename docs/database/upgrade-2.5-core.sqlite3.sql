@@ -73,3 +73,33 @@ CREATE TABLE gpo_rar (
 CREATE INDEX i_gporar_client_id ON gpo_rar(gporar_client_id);
 CREATE INDEX i_gporar_type ON gpo_rar(gporar_type);
 CREATE INDEX i_gporar_username ON gpo_rar(gporar_username);
+
+CREATE TABLE gpo_par (
+  gpop_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpop_plugin_name TEXT NOT NULL,
+  gpop_response_type TEXT NOT NULL,
+  gpop_state TEXT,
+  gpop_username TEXT,
+  gpop_client_id TEXT NOT NULL,
+  gpop_redirect_uri TEXT NOT NULL,
+  gpop_request_uri_hash TEXT NOT NULL,
+  gpop_nonce TEXT,
+  gpop_code_challenge TEXT,
+  gpop_resource TEXT,
+  gpop_claims_request TEXT DEFAULT NULL,
+  gpop_authorization_details TEXT DEFAULT NULL,
+  gpop_additional_parameters TEXT DEFAULT NULL,
+  gpop_status INTEGER DEFAULT 0, -- 0 created, 1 validated, 2 completed
+  gpop_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gpop_issued_for TEXT, -- IP address or hostname
+  gpop_user_agent TEXT
+);
+CREATE INDEX i_gpop_request_uri_hash ON gpo_par(gpop_request_uri_hash);
+CREATE INDEX i_gpop_code_challenge ON gpo_par(gpop_code_challenge);
+
+CREATE TABLE gpo_par_scope (
+  gpops_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpop_id INTEGER,
+  gpops_scope TEXT NOT NULL,
+  FOREIGN KEY(gpop_id) REFERENCES gpo_par(gpop_id) ON DELETE CASCADE
+);
