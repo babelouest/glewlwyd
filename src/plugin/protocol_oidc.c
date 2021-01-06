@@ -9071,15 +9071,16 @@ static json_t * verify_pushed_authorization_request(struct _oidc_config * config
   return j_return;
 }
 
-static int complete_pushed_authorization_request(struct _oidc_config * config, json_int_t gpop_id) {
+static int complete_pushed_authorization_request(struct _oidc_config * config, json_int_t gpop_id, const char * username) {
   json_t * j_query;
   int res, ret;
 
-  j_query = json_pack("{sss{si}s{sI}}",
+  j_query = json_pack("{sss{siss}s{sI}}",
                       "table",
                       GLEWLWYD_PLUGIN_OIDC_TABLE_PAR,
                       "set",
                         "gpop_status", 2,
+                        "gpop_username", username,
                       "where",
                         "gpop_id", gpop_id);
   res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
@@ -10179,7 +10180,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         }
 
         if (ret == G_OK && request_par) {
-          if (complete_pushed_authorization_request(config, json_integer_value(json_object_get(json_object_get(j_request, "request"), "gpop_id"))) != G_OK) {
+          if (complete_pushed_authorization_request(config, json_integer_value(json_object_get(json_object_get(j_request, "request"), "gpop_id")), json_string_value(json_object_get(json_object_get(json_object_get(j_auth_result, "session"), "user"), "username"))) != G_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_authorization - Error complete_pushed_authorization_request");
             if (redirect_uri != NULL) {
               if (form_post) {
