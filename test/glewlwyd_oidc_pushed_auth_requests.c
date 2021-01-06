@@ -54,6 +54,9 @@
 #define STATE "state1234"
 #define NONCE "nonce1234"
 #define CLIENT_AUTH_TOKEN_MAX_AGE 3600
+#define CODE_CHALLENGE_VALID "V0UN9ToT-UnbxeIx7imQdhFjsAZTmuARpHyuD2ajIIo"
+#define CODE_VERIFIER_VALID "XvkLR4XIl4DbkFz3RLEZUBStp8yIjvF8UtfRv0nkK8DqmrBtWvHmEuyBL2enyLF9"
+#define CODE_CHALLENGE_METHOD_S256 "S256"
 
 const char pubkey_1_jwk[] = "{\"keys\":[{\"kty\":\"RSA\",\"n\":\"AMWhdXoJpkPtPwABHL_yXUwgcYuwNOVbw70YGmMzhFqiRd6r92-onw-BOAvfnIq-rSMgjidllxOE1fXwlgUIyKJmnHUI3RMDABFmGFRM-Dz6VmQxHgiioLM-Q5yzcj85zIqJvNrw0RL0qhvssQBG5Fta_jLXBUXeGEmciWA0lSfrdlS-zbfxsWqPzAvKyT_0B80m1o8K7ksFtyTPu-cHbCVGx4ciGeZUNrtOnevGQPUOE-tIvsxOPcqC3fPjyI3K4TN5GCCZHEyso1qmRFfsHtenq6EvD1_2DebcODnfnym-iNFyC4YsgqipToNxR3WPIgCu-WrSOk71-93ovs0hd1MhBYw03J4Xupjxy_URCFZm9Pp-9H3j_0hUKmhUWmpsQTpAT7FWvTT-MyyYkZ-9Y33-6KR3E-82kdfXIoEMbGJnfq2Z4Yh_lF3pfD-5FUzOzgnOy0UiTxusWOBbaVhNqmm6xmlHwQjBrax9Bqo7WzQpwXgXgooo6TeVz6pxpUl6V63d5o5XZaxYYilUpZ78qXpHQMwNFr6a2gct-dU8zLF6YaJHIaMp6XT9OD8r-w7SOkq1O7J-UGRqGbUVczYzhApY1Q-B2ZnO18P5KQnG97AbU_Sjk5Rnf6HJ-w-E8NOIwgo5jzloV_5Ck6w-DH_sL5FDca89BGuzwpQEH_h3ma43\",\"e\":\"AQAB\",\"kid\":\"" KID_PUB "\"}]}";
 const char privkey_1_jwk[] = "{\"kty\":\"RSA\",\"n\":\"AMWhdXoJpkPtPwABHL_yXUwgcYuwNOVbw70YGmMzhFqiRd6r92-onw-BOAvfnIq-rSMgjidllxOE1fXwlgUIyKJmnHUI3RMDABFmGFRM-Dz6VmQxHgiioLM-Q5yzcj85zIqJvNrw0RL0qhvssQBG5Fta_jLXBUXeGEmciWA0lSfrdlS-zbfxsWqPzAvKyT_0B80m1o8K7ksFtyTPu-cHbCVGx4ciGeZUNrtOnevGQPUOE-tIvsxOPcqC3fPjyI3K4TN5GCCZHEyso1qmRFfsHtenq6EvD1_2DebcODnfnym-iNFyC4YsgqipToNxR3WPIgCu-WrSOk71-93ovs0hd1MhBYw03J4Xupjxy_URCFZm9Pp-9H3j_0hUKmhUWmpsQTpAT7FWvTT-MyyYkZ-9Y33-6KR3E-82kdfXIoEMbGJnfq2Z4Yh_lF3pfD-5FUzOzgnOy0UiTxusWOBbaVhNqmm6xmlHwQjBrax9Bqo7WzQpwXgXgooo6TeVz6pxpUl6V63d5o5XZaxYYilUpZ78qXpHQMwNFr6a2gct-dU8zLF6YaJHIaMp6XT9OD8r-w7SOkq1O7J-UGRqGbUVczYzhApY1Q-B2ZnO18P5KQnG97AbU_Sjk5Rnf6HJ-w-E8NOIwgo5jzloV_5Ck6w-DH_sL5FDca89BGuzwpQEH_h3ma43\",\"e\":\"AQAB\",\"d\":\"AIiu6F7k-ZcVKHNKUaX3a8tQzPb9gTf3xWKsnuNpJ-q_PG-Ko_EXwBqrFiYwG0ZiJcCbrXVV76zSPGCCal9E-e5H5YGUBcI2Wv-tiroTGcSipslYpxr1zwrozz47ZZKQ2QQfyvvpfdAMYvI5Oxmj7h-4yQJEcCMoPcf7eY-ODnKziP2HkSPdBwVaOpcVQyb2EcczS0VXHAPLCiVtftmD6qnFUA4H6b3BFLFq6BG-5gIWIHSjtUH8AwRiijs5mOVoIWTGJYe2HTpyU_BH-hCM_6_LCQrLT2jg9jBqsoBkRuJKIroolAvSEPOxVNnXqMKHoc6zNVFJ4IXn3rBVXlDlCm69xoe67-X2M4o8LXpdnwFtvao3YYKqAqv1kH0JZE9kJyY3odhXa-SRZpvOCoE3YpDr5UTlRkEWZATQjqtGP7JEq_RQwtDwM1NpANIl4cFAJVhUJbndjMeJqBcA4-NEV6bBjWkenw179H6UuWNXNzXklPsgtMnF_PwcBFKutwnFqHAE5g6w9iHQ5yG7_2m4zModfBiGiSy3cdQ2f3MEHRRoBmqooEGU_6Urrn6iyAFxk_sINEnT_7Emygle_QwP5N-BQuFpD_NWojGirWwOwiWYBHRBXP0ub17bNx7w4gha6CxHnXyJ0MZBayOIMrnQGeWC7o5a932LCTQfegdBh5xh\",\"p\":\"APQQSKxv01Oky-jENQwxiZcpI4a5PzLPFFCgEqIjSRamCzrCQ07e97iqhU1b8IvRwxDtX358pFKAq7tmwpN2QQb1T9fqUwCpeQuMwRsZwoaM7ZcTSj2FZ_2djN1ixQfzqQ21VxkMRbrdyExqCSJXnHMcLeiFmu81dVopV2iwDbUQv4jZe_ktPUTH4HKle48Y0v9pu22lD5cknAQGB1gUNfyJ0PbUxZMITrZDz4khhYgxqvJ7GluYRNv2tezV-bb5leXbSLDrRgTKqcl5ZjkgLm9FRNGZZAmlsCHEeB3nvCs2ePQYDuLgEkNtuu39kpLFJO6j70bjnvpaIAcDVpPmEE8\",\"q\":\"AM9L09Grg2uSrNUGfj9pfpsMn0k5kqV0n3WjX9z5ZLkwLNNrs0SJjb93haO2MPNlyYhctCpPKnfHJKZWaLhFDV6xr-ubf7c3DbBJjPhlV8dUkgmHfIqWDPl6pzN0xC61zC4IE15LgW_JEMpq53fRWnIHdufs-105QO8YOo0CVYKYjqut4hVbYRBSTaeVLb1vj_yhaL0qV7orQoTrpr6Bg20nftBBa-8Md_B5l0QyiSfvOjKnXsjULQdQGbtypQZvu2jUasnUVUQHBgeF5W5WFj8qCGGnmehqY6QissipLoRMcGPaV_gJKisgcorF7sSU_QzcBUmPk377LkzZXGNUYZk\",\"qi\":\"AILHVNisODhO4GC8P709DqGdVdufLZf2Bl7AwjWyYTkpEzEfQCHHUnmOoTCn-OEvnn9lWiaCaTijtlUmos0fCfvSQLk9elciIOmlRk8G1EtnnzYQsTmerLoMJBgQ02hhip8GK47Y7mbZIjaPB625Dv8F4RHd9ZiTzXTGcNc6bldWlNNbbqw9DWS1DORPhdQEPU424qcYvHq_eklFCujWukO8ul3FEZYnTcth2ODSFMb0a0SCuDGkGI8BDI-_4n6-4wIlAXtc8Vt9Ko8WxJjCK_v2Ae9x05eknWZj0JxuyoAjPtJApp0pt25omJwZr_lY5i8T0cL6dDF5nZcA9hN__eo\",\"dp\":\"ALL4hfI9BmCdxhFoX-YTJWw9dJnEmf1uMN12pHNVILGFDVMHRUg-5LT8BkhWFSzSoxJ0nsQoLm95f3Uqw6BS5RhvJx-T603e-K5phumSmD0GduuD77rxavJlZ_ioBwfvu5Yb1kS95RxEqi6uywft6wHWNiv-XUDwmJ-HFVvlTgfqwileIjT04argT0yC4PpsH73AEPs0QRx6chXZPeVu3K_Vd_Co0kEhpGavjy5l8H-QvGSXtRpZrJUIcxu7RSTSHQOzK7jgrjWxT5Q4e6eEW8ioqPByZRNV9rSsV9DGMAwYI9YLFk90NLBRdPQ0MBmEi7KbcEkxfVDkafv6jLBj0q0\",\"dq\":\"AJldyYY7dczVxMcKucbinwfJq-N6E_QTt5JKYDdV0F5utQtqiEQx3MyGejooJkk9yn_3zlfrIElj7cqe7XU_qWeg4L3Y2wHLWnZNxF1WZT4VZMJmGg9SeqDtTNz2C9tfJ4P695FxHX99681GkKAGJPtuaFuo6kQLgu4iJ9eBnZA0nIGJ8VXJuKNhsRBGf4PDEW1gYeRqemNDdEBxNHmHypusd9dOP7OpruccnnyXQwBnrtAhIjBFQldBvPgBFvUPH0GsvqE6VicxZxWTy635RRZQW8kcPfNFGxkpjsqE2OSKxTArL6BT733e0L-5NzD75cho1ASblA2DerriqcbXfCk\",\"kid\":\"" KID_PUB "\"}";
@@ -195,7 +198,7 @@ struct _u_request user_req;
 
 START_TEST(test_oidc_par_add_plugin_required_no)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssssisisisosososososososososssosososssisosssosos{s{s[ss]s[ss]s[ss]s[ss]s[ss]}}}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssssisisisosososososososososssosososssisosssosososos{s{s[ss]s[ss]s[ss]s[ss]s[ss]}}}}",
                                 "module", PLUGIN_MODULE,
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_NAME,
@@ -227,6 +230,8 @@ START_TEST(test_oidc_par_add_plugin_required_no)
                                   "rar-types-client-property", "authorization_data_types",
                                   "rar-allow-auth-unsigned", json_true(),
                                   "rar-allow-auth-unencrypted", json_true(),
+                                  "pkce-allowed", json_true(),
+                                  "pkce-method-plain-allowed", json_false(),
                                   "rar-types",
                                     RAR1,
                                       "scopes",
@@ -251,7 +256,7 @@ END_TEST
 
 START_TEST(test_oidc_par_add_plugin_required_yes)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssssisisisosososososososososssosososssisosssosos{s{s[ss]s[ss]s[ss]s[ss]s[ss]}}}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssssisisisosososososososososssosososssisosssosososos{s{s[ss]s[ss]s[ss]s[ss]s[ss]}}}}",
                                 "module", PLUGIN_MODULE,
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_NAME,
@@ -283,6 +288,8 @@ START_TEST(test_oidc_par_add_plugin_required_yes)
                                   "rar-types-client-property", "authorization_data_types",
                                   "rar-allow-auth-unsigned", json_true(),
                                   "rar-allow-auth-unencrypted", json_true(),
+                                  "pkce-allowed", json_true(),
+                                  "pkce-method-plain-allowed", json_false(),
                                   "rar-types",
                                     RAR1,
                                       "scopes",
@@ -711,6 +718,7 @@ START_TEST(test_oidc_par_token_client_public_ok)
   struct _u_request req;
   struct _u_response resp;
   json_t * j_response;
+  char * code;
   
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
@@ -721,6 +729,8 @@ START_TEST(test_oidc_par_token_client_public_ok)
                                 U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT,
                                 U_OPT_POST_BODY_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
                                 U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                U_OPT_POST_BODY_PARAMETER, "code_challenge", CODE_CHALLENGE_VALID,
+                                U_OPT_POST_BODY_PARAMETER, "code_challenge_method", CODE_CHALLENGE_METHOD_S256,
                                 U_OPT_NONE);
   ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
   ck_assert_int_eq(201, resp.status);
@@ -759,9 +769,31 @@ START_TEST(test_oidc_par_token_client_public_ok)
   ck_assert_int_eq(302, resp.status);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "access_token="), NULL);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
+  code = o_strdup(strstr(u_map_get(resp.map_header, "Location"), "code=")+strlen("code="));
+  if (strchr(code, '&') != NULL) {
+    *strchr(code, '&') = '\0';
+  }
   ulfius_clean_response(&resp);
   ulfius_clean_request(&req);
   
+  ulfius_init_request(&req);
+  ulfius_copy_request(&req, &user_req);
+  ulfius_init_response(&resp);
+  ulfius_set_request_properties(&req, 
+                                U_OPT_HTTP_VERB, "POST",
+                                U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/token"),
+                                U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT,
+                                U_OPT_POST_BODY_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
+                                U_OPT_POST_BODY_PARAMETER, "code_verifier", CODE_VERIFIER_VALID,
+                                U_OPT_POST_BODY_PARAMETER, "code", code,
+                                U_OPT_POST_BODY_PARAMETER, "grant_type", "authorization_code",
+                                U_OPT_NONE);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(200, resp.status);
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+  
+  o_free(code);
   json_decref(j_response);
 }
 END_TEST
