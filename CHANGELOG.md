@@ -2,6 +2,8 @@
 
 ## 2.5.0
 
+The `"Recontainment Release"`
+
 - Fix `aud` property to fit JWT access token spec
 - Add support for OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) [Draft 01](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-dpop-01)
 - Allow multiple passwords for users
