@@ -8914,7 +8914,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
 
   if (response->status == 201) {
     if ((request_uri = generate_pushed_request_uri(config)) != NULL) {
-      if (serialize_pushed_request_uri(config, request_uri, response_type, client_id, state, scope, nonce, resource, redirect_uri, ip_source, user_agent, j_claims, code_challenge, j_authorization_details, additional_parameters) == G_OK) {
+      if (serialize_pushed_request_uri(config, request_uri, response_type, client_id, state, scope, nonce, resource, redirect_uri, ip_source, user_agent, j_claims, code_challenge_stored, j_authorization_details, additional_parameters) == G_OK) {
         j_response = json_pack("{sssI}", "request_uri", request_uri, "expires_in", config->request_uri_duration);
         ulfius_set_json_body_response(response, 201, j_response);
         json_decref(j_response);
@@ -8940,7 +8940,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
 static json_t * verify_pushed_authorization_request(struct _oidc_config * config, const char * request_uri, const char * client_id, const char * ip_source) {
   json_t * j_query, * j_result = NULL, * j_result_scope = NULL, * j_return, * j_element = NULL;
   int res;
-  char * request_uri_hash = NULL, * expires_at_clause = NULL, * scope_list = NULL;
+  char * request_uri_hash = NULL, * expires_at_clause = NULL, * scope_list = NULL, * tmp;
   time_t now;
   size_t index = 0;
 
@@ -9039,6 +9039,15 @@ static json_t * verify_pushed_authorization_request(struct _oidc_config * config
             json_object_del(json_array_get(j_result, 0), "gpop_additional_parameters");
             json_object_set_new(json_array_get(j_result, 0), "type", json_integer(R_JWT_TYPE_NONE));
             json_decref(j_result_scope);
+            if (0 == o_strncmp(json_string_value(json_object_get(json_array_get(j_result, 0), "code_challenge")), GLEWLWYD_CODE_CHALLENGE_S256_PREFIX, o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX))) {
+              tmp = o_strdup(json_string_value(json_object_get(json_array_get(j_result, 0), "code_challenge"))+o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX));
+              json_object_del(json_array_get(j_result, 0), "code_challenge");
+              json_object_set_new(json_array_get(j_result, 0), "code_challenge", json_string(tmp));
+              json_object_set_new(json_array_get(j_result, 0), "code_challenge_method", json_string("S256")); // TODO: remove when /auth will be refactored
+              o_free(tmp);
+            } else {
+              json_object_set_new(json_array_get(j_result, 0), "code_challenge_method", json_string("plain"));
+            }
             j_return = json_pack("{sisO}", "result", G_OK, "request", json_array_get(j_result, 0));
             o_free(scope_list);
           } else {
