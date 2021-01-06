@@ -992,7 +992,14 @@
     "mod-glwd-rar-datatypes": "Allowed datatypes (optional, one per line)",
     "mod-glwd-rar-datatypes-ph": "e.g. account\nbalance",
     "mod-glwd-rar-enriched": "Enriched authorization details - user properties (optional, one per line)",
-    "mod-glwd-rar-enriched-ph": "e.g. name\nemail\niban"
+    "mod-glwd-rar-enriched-ph": "e.g. name\nemail\niban",
+    "mod-glwd-oauth-par-title": "OAuth 2.0 Pushed Authorization Requests (Draft 05)",
+    "mod-glwd-oauth-par-allowed": "Allow Pushed Authorization Requests",
+    "mod-glwd-oauth-par-required": "Require Pushed Authorization Requests",
+    "mod-glwd-oauth-par-request_uri-prefix": "request_uri prefix",
+    "mod-glwd-oauth-par-request_uri-prefix-ph": "e.g.: urn:ietf:params:oauth:request_uri:",
+    "mod-glwd-oauth-par-duration": "request_uri duration (seconds)",
+    "mod-glwd-oauth-par-duration-ph": "e.g.: 90"
   },
   "profile": {
     "error-credential-message": "Please connect to the application",
