@@ -758,6 +758,26 @@ Example of an `authorization_details` request with `access` object:
 ]
 ```
 
+## OAuth 2.0 Pushed Authorization Requests (Draft 05)
+
+This settings is used to configure pushed authorization requests to enforce client privacy and security.
+
+### Allow Pushed Authorization Requests
+
+If this is set to true, clients will be allowed to use pushed authorization requests via the endpoint `POST /par` to initiate the authentication.
+
+### Require Pushed Authorization Request
+
+If this is set to true, pushed authorization requests will be mandatory, no client will be able to initiate an authorization request directly via `GET /auth`.
+
+### request_uri prefix
+
+Value of the prefix that will be added to every request_uri.
+
+### request_uri duration (seconds)
+
+Duration of a request_uri before user first accesses to the `/auth` using this `request_uri`.
+
 ## Native Apps Guidelines
 
 Glewlwyd is conform to [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252) best current practice considering the following configuration:
