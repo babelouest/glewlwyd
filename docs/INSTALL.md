@@ -215,13 +215,13 @@ $ psql glewlwyd < src/plugin/register.postgresql.sql
 Glewlwyd is available in some distributions as official package. Check out your distribution documentation to install the package automatically.
 
 ```shell
-$ # Example to install Glewlwyd 1.4.9 on Ubuntu 19.10
+$ # Example to install Glewlwyd 2.3.3 on Ubuntu 20.10
 $ apt install glewlwyd
 ```
 
 ## Pre-compiled packages
 
-You can install Glewlwyd with a pre-compiled package available in the [release pages](https://github.com/babelouest/glewlwyd/releases/). The package files `glewlwyd-full_*` contain the package libraries of `orcania`, `yder`, `ulfius`, `hoel` pre-compiled for `glewlwyd`, plus `glewlwyd` package. To install a pre-compiled package, you need the following libraries installed:
+You can install Glewlwyd with a pre-compiled package available in the [release pages](https://github.com/babelouest/glewlwyd/releases/). The package files `glewlwyd-full_*` contain the package libraries of `orcania`, `yder`, `ulfius`, `hoel`, `rhonabwy`, `iddawc` pre-compiled for `glewlwyd`, plus `glewlwyd` package. To install a pre-compiled package, you need the following libraries installed:
 
 ```
 libmicrohttpd
@@ -324,7 +324,7 @@ $ # Run docker instance with default config files but override external url and 
 $ docker run -p 4593:4593 -e GLWD_EXTERNAL_URL=https://glewlwyd.tld -e GLWD_DATABASE_TYPE=postgre -e GLWD_DATABASE_POSTGRE_CONNINFO="host=dbhost port=5432 dbname=glewlwyd user=glewlwyd password=secret" babelouest/glewlwyd
 
 $ # Run docker instance with a new set of config files and an overwritten external url using env variables
-$ docker run -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd -e GLWD_EXTERNAL_URL=https://glewlwyd.tld babelouest/glewlwyd -e GLWD_EXTERNAL_URL=https://glewlwyd.tld
+$ docker run -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd -e GLWD_EXTERNAL_URL=https://glewlwyd.tld babelouest/glewlwyd
 ```
 
 ### Docker image builder
@@ -366,15 +366,15 @@ $ sudo apt-get install libmicrohttpd-dev sqlite3 libsqlite3-dev default-libmysql
 
 With Libmicrohttpd 0.9.37 and older version, there is a bug when parsing `application/x-www-form-urlencoded` parameters. This is fixed in later version, from the 0.9.38, so if your Libmicrohttpd version is older than that, I suggest getting a newer version of [libmicrohttpd](https://www.gnu.org/software/libmicrohttpd/).
 
-#### Libmicrohttpd 0.9.70 minimum recommended in some edge cases
+#### Libmicrohttpd 0.9.71 minimum recommended
 
-A bug has been [fixed](https://git.gnunet.org/libmicrohttpd.git/tree/ChangeLog?h=v0.9.70#n9) in Libmicrohttpd 0.9.70 related to [Jenkins OIDC plugin](https://wiki.jenkins.io/display/JENKINS/Openid+Connect+Authentication+Plugin) (see issue #89). It is recommended to install Libmicrohttpd 0.9.70 minimum to avoid this problems.
+A bug has been [fixed](https://git.gnunet.org/libmicrohttpd.git/tree/ChangeLog?h=v0.9.70#n9) in Libmicrohttpd 0.9.70 related to [Jenkins OIDC plugin](https://wiki.jenkins.io/display/JENKINS/Openid+Connect+Authentication+Plugin) (see issue #89), and a security issue has fixed in Libmicrohttpd 0.9.71. It is recommended to install Libmicrohttpd 0.9.71 minimum to avoid these problems.
 
 ### Build Glewlwyd and its dependencies
 
 #### CMake
 
-Download Glewlwyd from GitHub, then use the CMake script to build the application. CMake will automatically download and build Iddawc, Rhonabwy, Ulfius, Hoel, Yder and Orcania if they are not present on the system.
+Download Glewlwyd from GitHub, then use the CMake script to build the application. CMake will automatically download and build Iddawc, Rhonabwy, Ulfius, Hoel, Yder and Orcania if they are not installed on the system.
 
 ```shell
 # Install Glewlwyd
@@ -807,7 +807,7 @@ An administrator in the LDAP back-end is a user who has the `admin_scope` (defau
 
 ## Install as a service
 
-The files `docs/glewlwyd-init` (SysV init) and `docs/glewlwyd.service` (SystemD) can be used to run glewlwyd as a daemon. They are fitted for a Raspbian distribution, but can easily be changed for other systems. It's highly recommended to run Glewlwyd as a user without root access. Glewlwyd requires to be able to open a TCP port connection, a full access to the glewlwyd database, read access to the config file `glewlwyd.conf` and the installed `webapp/` folder (typically `/usr/share/glewlwyd/webapp`.
+The files `docs/glewlwyd-init` (SysV init) and `docs/glewlwyd.service` (SystemD) can be used to run glewlwyd as a daemon. They are fitted for a Raspbian distribution, but can easily be changed for other systems. It's highly recommended to run Glewlwyd as a user without root access. Glewlwyd requires to be able to open a TCP port connection, a read/write access to the glewlwyd database, read access to the config file `glewlwyd.conf` and the installed `webapp/` folder (typically `/usr/share/glewlwyd/webapp`.
 
 ### Install as a SysV init daemon and run
 
@@ -829,7 +829,7 @@ $ sudo systemctl start glewlwyd
 
 To install Glewlwyd behind a reverse proxy, you must check the following rules:
 - Forward HTTP methods `GET`, `POST`, `PUT`, `DELETE` and `OPTION`
-- Forward the entire URL, including query parameters (I'm watching you Nginx!)
+- Forward the entire URL, including query parameters (I'm watching you NGINX!)
 - Forward the session cookies *-and optionally the registration cookies-*, cookies default keys are `GLEWLWYD2_SESSION_ID` for session cookie and `G_REGISTER_SESSION` for registration cookie
 - Forward HTTP headers, including `Authorization`
 
@@ -1022,7 +1022,7 @@ Check out [Fail2ban](https://www.fail2ban.org/) documentation for more informati
 
 You can add a logrotate configuration file to help you managing Glewlwyd's logs.
 
-Example of a `/etc/logrotate.d/glewlwyd` file. This file will create a new log file every week, compress the old files and keep 52 files (1 year):
+Example of a `/etc/logrotate.d/glewlwyd` file. This file will create a new log file every week, compress the old files and keep 52 files (1 year archive):
 
 ```
 /var/log/glewlwyd.log {
