@@ -24,7 +24,6 @@ RUN apk add --no-cache \
     curl-dev \
     libconfig-dev \
     libgcrypt-dev \
-    libmicrohttpd-dev \
     sqlite-dev \
     mariadb-dev \
     postgresql-dev \
@@ -36,6 +35,8 @@ RUN apk add --no-cache \
     (cd /opt && wget https://github.com/PJK/libcbor/archive/v0.7.0.tar.gz -O libcbor.tar.gz && \
     tar xf libcbor.tar.gz && cd libcbor-0.7.0 && mkdir build && cd build && \
     cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib .. && make && make install) && \
+    (cd /opt && wget https://ftp.gnu.org/gnu/libmicrohttpd/libmicrohttpd-0.9.72.tar.gz -O libmicrohttpd.tar.gz && \
+    tar xf libmicrohttpd.tar.gz && cd libmicrohttpd-0.9.72 && ./configure --prefix=/usr && make && make install) && \
     ls -l /opt/glewlwyd/ && \
     mkdir /opt/glewlwyd/build && cd /opt/glewlwyd/build/ && \
     cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DWITH_JOURNALD=off .. && \
