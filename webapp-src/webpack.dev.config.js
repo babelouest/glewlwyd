@@ -5,7 +5,7 @@
  * Will run a http server providing the webapp
  * on http://localhost:3000/
  * 
- * Copyright 2019 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2019-2021 Nicolas Mora <mail@babelouest.org>
  * 
  */
 

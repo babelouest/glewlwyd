@@ -3,7 +3,7 @@
  * 
  * webpack configuration for build in production compatible with old javascript engine (i.e. < es6)
  * 
- * Copyright 2019-2020 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2019-2021 Nicolas Mora <mail@babelouest.org>
  * 
  */
 
