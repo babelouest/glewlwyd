@@ -220,6 +220,13 @@
       "type": "textarea",
       "list": true,
       "label": "admin.client-resource"
+    },{
+      "name": "authorization_data_types",
+      "list": true,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-authorization-data-types",
+      "placeholder": "client-authorization-data-types-ph"
     }]
   },
   "defaultScheme": "",
