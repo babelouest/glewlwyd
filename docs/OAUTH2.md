@@ -16,6 +16,7 @@ The following OAuth2 functionalities are supported:
 - [Proof Key for Code Exchange by OAuth Public Clients](https://tools.ietf.org/html/rfc7636)
 - [Token introspection (RFC 7662)](https://tools.ietf.org/html/rfc7662)
 - [Token revocation (RFC 7009)](https://tools.ietf.org/html/rfc7009)
+- [OAuth 2.0 Device Authorization Grant](https://tools.ietf.org/html/rfc8628)
 
 ## Access token format
 
