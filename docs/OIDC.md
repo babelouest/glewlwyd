@@ -36,6 +36,7 @@ The following OpenID Connect and OAuth2 functionalities are currently supported:
 - [JWT Response for OAuth Token Introspection Draft 10](https://tools.ietf.org/html/draft-ietf-oauth-jwt-introspection-response-10)
 - [Resource Indicators for OAuth 2.0](https://tools.ietf.org/html/rfc8707)
 - [OAuth 2.0 Rich Authorization Requests Draft 03](https://www.ietf.org/archive/id/draft-ietf-oauth-rar-03.html)
+- [OAuth 2.0 Pushed Authorization Requests Draft 05](https://tools.ietf.org/html/draft-ietf-oauth-par-05)
 
 The following OpenID Connect functionalities are not supported yet:
 
