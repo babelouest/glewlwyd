@@ -18,6 +18,10 @@ Screenshots available
 
 ![login-grant](login-grant.png)
 
+### Grant client access to scopes and Rich Authorization Requests for the user
+
+![login-rar-grant](login-rar-grant.png)
+
 ### Multiple session selector
 
 ![login-multiple-session](login-multiple-session.png)
