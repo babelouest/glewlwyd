@@ -226,7 +226,7 @@
       "edit": true,
       "forceShow": true,
       "label": "admin.client-authorization-data-types",
-      "placeholder": "client-authorization-data-types-ph"
+      "placeholder": "admin.client-authorization-data-types-ph"
     }]
   },
   "defaultScheme": "",
