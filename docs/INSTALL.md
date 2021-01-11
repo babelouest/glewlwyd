@@ -242,14 +242,14 @@ libzlib
 
 ```shell
 $ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.4.0/glewlwyd-full_2.4.0_debian_buster_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.4.0_debian_buster_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.4.0/glewlwyd-full_2.5.0_debian_buster_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.5.0_debian_buster_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.1.1_debian_buster_x86_64.deb
 $ sudo dpkg -i libyder_1.4.12_debian_buster_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.16_debian_buster_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.9_debian_buster_x86_64.deb
-$ sudo dpkg -i librhonabwy_0.9.12_debian_buster_x86_64.deb
-$ sudo dpkg -i libiddawc_0.9.6_debian_buster_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.17_debian_buster_x86_64.deb
+$ sudo dpkg -i libulfius_2.7.1_debian_buster_x86_64.deb
+$ sudo dpkg -i librhonabwy_0.9.13_debian_buster_x86_64.deb
+$ sudo dpkg -i libiddawc_0.9.8_debian_buster_x86_64.deb
 $ sudo dpkg -i glewlwyd_2.4.0_debian_buster_x86_64.deb
 ```
 
@@ -257,14 +257,14 @@ $ sudo dpkg -i glewlwyd_2.4.0_debian_buster_x86_64.deb
 
 ```shell
 $ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.4.0/glewlwyd-full_2.4.0_raspbian_buster_armv6l.tar.gz
-$ tar xf glewlwyd-full_2.4.0_raspbian_buster_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.4.0/glewlwyd-full_2.5.0_raspbian_buster_armv6l.tar.gz
+$ tar xf glewlwyd-full_2.5.0_raspbian_buster_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.1.1_raspbian_buster_armv7l.deb
 $ sudo dpkg -i libyder_1.4.12_raspbian_buster_armv7l.deb
-$ sudo dpkg -i libhoel_1.4.16_raspbian_buster_armv7l.deb
-$ sudo dpkg -i libulfius_2.6.9_raspbian_buster_armv7l.deb
-$ sudo dpkg -i librhonabwy_0.9.12_raspbian_buster_armv7l.deb
-$ sudo dpkg -i libiddawc_0.9.6_raspbian_buster_armv7l.deb
+$ sudo dpkg -i libhoel_1.4.17_raspbian_buster_armv7l.deb
+$ sudo dpkg -i libulfius_2.7.1_raspbian_buster_armv7l.deb
+$ sudo dpkg -i librhonabwy_0.9.13_raspbian_buster_armv7l.deb
+$ sudo dpkg -i libiddawc_0.9.8_raspbian_buster_armv7l.deb
 $ sudo dpkg -i glewlwyd_2.4.0_raspbian_buster_armv7l.deb
 ```
 
@@ -272,14 +272,14 @@ $ sudo dpkg -i glewlwyd_2.4.0_raspbian_buster_armv7l.deb
 
 ```shell
 $ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0.6 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.4.0/glewlwyd-full_2.4.0_ubuntu_focal_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.4.0_ubuntu_focal_x86_64.tar.gz
+$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.4.0/glewlwyd-full_2.5.0_ubuntu_focal_x86_64.tar.gz
+$ tar xf glewlwyd-full_2.5.0_ubuntu_focal_x86_64.tar.gz
 $ sudo dpkg -i liborcania_2.1.1_ubuntu_focal_x86_64.deb
 $ sudo dpkg -i libyder_1.4.12_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.16_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i libulfius_2.6.9_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i librhonabwy_0.9.12_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i libiddawc_0.9.6_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i libhoel_1.4.17_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i libulfius_2.7.1_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i librhonabwy_0.9.13_ubuntu_focal_x86_64.deb
+$ sudo dpkg -i libiddawc_0.9.8_ubuntu_focal_x86_64.deb
 $ sudo dpkg -i glewlwyd_2.4.0_ubuntu_focal_x86_64.deb
 ```
 
