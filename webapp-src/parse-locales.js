@@ -29,14 +29,14 @@ langList.forEach(lang => {
   try {
     data = fs.readFileSync("./locales/"+lang+"/translations.json");
   } catch (e) {
-    console.err("error reading file", err);
+    console.log("error reading file", err);
     process.exit(1);
   }
   var parsed;
   try {
     parsed = JSON.parse(data);
   } catch (e) {
-    console.err("error parsing file", err);
+    console.log("error parsing file", JSON.stringify(e));
     process.exit(1);
   }
   parseI18N(lang, parsed, false);
