@@ -110,9 +110,9 @@ class Buttons extends Component {
     messageDispatcher.sendMessage('App', {type: 'SelectAccount'});
   }
   
-  changeSessionScheme(e, scheme) {
+  changeSessionScheme(e, scheme, identify = false) {
     e.preventDefault();
-    messageDispatcher.sendMessage('App', {type: 'newUserScheme', scheme: scheme});
+    messageDispatcher.sendMessage('App', {type: 'newUserScheme', scheme: scheme, identify: identify});
   }
   
   cancelResetCredentials() {
@@ -227,13 +227,13 @@ class Buttons extends Component {
           if (scheme.show_nopassword_form !== false) {
             if (scheme.scheme_name === this.state.newUserScheme) {
               schemeList.push(
-                <a key={(index+2)} className="dropdown-item active" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name)} alt={i18next.t(scheme.scheme_display_name)}>
+                <a key={(index+2)} className="dropdown-item active" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name, !!scheme.identify)} alt={i18next.t(scheme.scheme_display_name)}>
                   {i18next.t(scheme.scheme_display_name)}
                 </a>
               );
             } else {
               schemeList.push(
-                <a key={(index+2)} className="dropdown-item" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name)} alt={i18next.t(scheme.scheme_display_name)}>
+                <a key={(index+2)} className="dropdown-item" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name, !!scheme.identify)} alt={i18next.t(scheme.scheme_display_name)}>
                   {i18next.t(scheme.scheme_display_name)}
                 </a>
               );

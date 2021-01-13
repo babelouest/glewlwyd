@@ -29,6 +29,7 @@ class App extends Component {
       scope: [],
       mustRegisterScheme: false,
       scheme: props.config.params.scheme,
+      identify: this.isSchemeIdentify(props.config.params.scheme, props.config.sessionSchemes),
       schemeListRequired: false,
       passwordRequired: false,
       client: false,
@@ -76,8 +77,7 @@ class App extends Component {
           this.initProfile(false);
         });
       } else if (message.type === "NewUser") {
-        this.setState({selectAccount: false, newUser: true, currentUser: false, scheme: this.state.config.params.scheme, resetCredentialsShow: false}, () => {
-        });
+        this.setState({selectAccount: false, newUser: true, currentUser: false, scheme: this.state.config.params.scheme, identify: false, resetCredentialsShow: false});
       } else if (message.type === "GrantComplete") {
         this.setState({selectAccount: false, showGrant: false, prompt: false, forceShowGrant: false, resetCredentialsShow: false}, () => {
           this.initProfile(false);
@@ -93,7 +93,7 @@ class App extends Component {
       } else if (message.type === "ToggleGrant") {
         this.setState({showGrant: !this.state.showGrant});
       } else if (message.type === "newUserScheme") {
-        this.setState({scheme: message.scheme});
+        this.setState({scheme: message.scheme, identify: message.identify});
       } else if (message.type === "SessionClosed") {
         this.setState({endSession: false, sessionClosed: true});
       } else if (message.type === "ResetCredentials") {
@@ -108,6 +108,20 @@ class App extends Component {
         });
       }
     });
+  }
+  
+  isSchemeIdentify(scheme, sessionSchemes) {
+    if (sessionSchemes) {
+      var identify = false;
+      sessionSchemes.forEach(curScheme => {
+        if (curScheme.scheme_name === scheme) {
+          identify = curScheme.identify;
+        }
+      });
+      return identify;
+    } else {
+      return false;
+    }
   }
 
   initProfile(checkPrompt) {
@@ -417,6 +431,7 @@ class App extends Component {
                                      username={this.state.login_hint}
                                      userList={this.state.userList}
                                      callbackInitProfile={this.initProfile}
+                                     identify={this.state.identify}
                                      scheme={this.state.scheme}/>;
             }
           } else if (this.state.selectAccount) {

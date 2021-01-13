@@ -20,6 +20,7 @@ class NoPasswordForm extends Component {
       username: props.username,
       usernameValidated: false,
       scheme: props.scheme,
+      identify: props.identify,
       userList: props.userList
     };
 
@@ -32,6 +33,7 @@ class NoPasswordForm extends Component {
       config: nextProps.config,
       username: nextProps.username,
       scheme: nextProps.scheme,
+      identify: nextProps.identify,
       userList: nextProps.userList
     });
   }
@@ -56,7 +58,8 @@ class NoPasswordForm extends Component {
     if (this.state.userList.length > 0) {
       manageUsersButton = <button type="button" className="btn btn-secondary" onClick={this.gotoManageUsers}>{i18next.t("login.manage-users")}</button>
     }
-    if (!this.state.usernameValidated) {
+    console.log(this.state.identify);
+    if (!this.state.usernameValidated && !this.state.identify) {
       return (
         <form action="#" id="passwordForm">
           <div className="form-group">
@@ -67,7 +70,16 @@ class NoPasswordForm extends Component {
               <div className="input-group-prepend">
                 <label className="input-group-text" htmlFor="username">{i18next.t("login.login")}</label>
               </div>
-              <input type="text" className="form-control" name="username" id="username" autoFocus={true} required="" placeholder={i18next.t("login.login-placeholder")} value={this.state.username} onChange={this.handleChangeUsername} autoFocus/>
+              <input type="text" 
+                     className="form-control" 
+                     name="username" 
+                     id="username" 
+                     autoFocus={true} 
+                     required="" 
+                     placeholder={i18next.t("login.login-placeholder")} 
+                     value={this.state.username} 
+                     onChange={this.handleChangeUsername} 
+                     autoFocus/>
             </div>
           </div>
           <div className="row">
@@ -85,7 +97,7 @@ class NoPasswordForm extends Component {
       this.state.config.sessionSchemes.forEach((scheme) => {
         if (scheme.scheme_name === this.state.scheme) {
           if (scheme.scheme_type === "mock") {
-            curScheme = <MockSchemeForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
+            curScheme = <MockSchemeForm config={this.state.config} scheme={scheme} identify={this.state.identify} currentUser={{username: this.state.username}}/>;
           } else if (scheme.scheme_type === "email") {
             curScheme = <EmailSchemeForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
           } else if (scheme.scheme_type === "webauthn") {
@@ -95,9 +107,9 @@ class NoPasswordForm extends Component {
           } else if (scheme.scheme_type === "retype-password" || scheme.scheme_type === "http") {
             curScheme = <PasswordSchemeForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
           } else if (scheme.scheme_type === "certificate") {
-            curScheme = <CertificateSchemeForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
+            curScheme = <CertificateSchemeForm config={this.state.config} scheme={scheme} identify={this.state.identify} currentUser={{username: this.state.username}}/>;
           } else if (scheme.scheme_type === "oauth2") {
-            curScheme = <Oauth2SchemeForm config={this.state.config} scheme={scheme} currentUser={{username: this.state.username}}/>;
+            curScheme = <Oauth2SchemeForm config={this.state.config} scheme={scheme} identify={this.state.identify} currentUser={{username: this.state.username}}/>;
           } else {
             curScheme = <div>No can do</div>;
           }
