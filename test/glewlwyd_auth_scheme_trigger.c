@@ -52,15 +52,7 @@ START_TEST(test_glwd_auth_scheme_trigger_error_parameters)
   ck_assert_int_eq(resp.status, 400);
   ulfius_clean_response(&resp);
 
-  ulfius_init_response(&resp);
-  j_body = json_pack("{sssss{ss}}", "scheme_type", SCHEME_TYPE, "scheme_name", SCHEME_NAME, "value", "data", "grut");
-  ulfius_set_json_body_request(&req, j_body);
-  json_decref(j_body);
-  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 400);
-
   ulfius_clean_request(&req);
-  ulfius_clean_response(&resp);
 }
 END_TEST
 
