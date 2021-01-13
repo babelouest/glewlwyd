@@ -3307,3 +3307,33 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
   
   return ret;
 }
+
+/**
+ * 
+ * user_auth_scheme_module_identify
+ * 
+ * Identify the user using the scheme without the username to be previously given
+ * This functionality isn't available for all schemes, because the scheme authentification
+ * must be triggered without username and the authentication result must contain the username
+ * 
+ * @return value: a json_t * value with the following pattern:
+ *                {
+ *                  result: number (G_OK on success, another value on error)
+ *                  username: string value of the user identified
+ *                }
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * @parameter http_request: the original struct _u_request from the API, must be casted to be available
+ * @parameter j_scheme_data: data sent to validate the scheme for the user
+ *                           in JSON format
+ * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
+ * 
+ */
+json_t * user_auth_scheme_module_identify(struct config_module * config, const void * http_request, json_t * j_scheme_data, void * cls) {
+  UNUSED(config);
+  UNUSED(http_request);
+  UNUSED(j_scheme_data);
+  UNUSED(cls);
+  return json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+}

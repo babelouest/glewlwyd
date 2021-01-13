@@ -102,6 +102,34 @@ json_t * auth_check_user_scheme(struct config_elements * config, const char * sc
   return j_return;
 }
 
+json_t * auth_check_identify_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, json_t * j_scheme_value, const struct _u_request * request) {
+  struct _user_auth_scheme_module_instance * scheme_instance;
+  json_t * j_return = NULL, * j_user, * j_response;
+  
+  scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
+  if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
+    j_response = scheme_instance->module->user_auth_scheme_module_identify(config->config_m, request, j_scheme_value, scheme_instance->cls);
+    if (check_result_value(j_response, G_OK)) {
+      j_user = get_user(config, json_string_value(json_object_get(j_response, "username")), NULL);
+      if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
+        j_return = json_pack("{sisO}", "result", G_OK, "username", json_object_get(j_response, "username"));
+      } else {
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      }
+      json_decref(j_user);
+    } else if (!check_result_value(j_response, G_ERROR)) {
+      j_return = json_incref(j_response);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "auth_check_identify_scheme - Error user_auth_scheme_module_identify");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_response);
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  }
+  return j_return;
+}
+
 json_t * auth_trigger_user_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, const char * username, json_t * j_trigger_parameters, const struct _u_request * request) {
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL, * j_response = NULL;
@@ -119,6 +147,32 @@ json_t * auth_trigger_user_scheme(struct config_elements * config, const char * 
       j_return = json_incref(j_response);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "auth_trigger_user_scheme - Error user_auth_scheme_module_trigger");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_response);
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  }
+  return j_return;
+}
+
+json_t * auth_trigger_identify_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, json_t * j_trigger_parameters, const struct _u_request * request) {
+  struct _user_auth_scheme_module_instance * scheme_instance;
+  json_t * j_return = NULL, * j_response = NULL;
+
+  scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
+  if (scheme_instance != NULL && 0 == o_strcmp(scheme_type, scheme_instance->module->name) && scheme_instance->enabled) {
+    j_response = scheme_instance->module->user_auth_scheme_module_identify(config->config_m, request, j_trigger_parameters, scheme_instance->cls);
+    if (check_result_value(j_response, G_OK)) {
+      if (json_object_get(j_response, "response") != NULL) {
+        j_return = json_pack("{sisO}", "result", G_OK, "trigger", json_object_get(j_response, "response"));
+      } else {
+        j_return = json_pack("{si}", "result", G_OK);
+      }
+    } else if (!check_result_value(j_response, G_ERROR)) {
+      j_return = json_incref(j_response);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "auth_trigger_identify_scheme - Error user_auth_scheme_module_trigger");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
     json_decref(j_response);

@@ -1895,6 +1895,7 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
       *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_validate) = dlsym(file_handle, "user_auth_scheme_module_validate");
       *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_trigger) = dlsym(file_handle, "user_auth_scheme_module_trigger");
       *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_can_use) = dlsym(file_handle, "user_auth_scheme_module_can_use");
+      *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_identify) = dlsym(file_handle, "user_auth_scheme_module_identify");
       
       if (cur_user_auth_scheme_module->user_auth_scheme_module_load != NULL &&
           cur_user_auth_scheme_module->user_auth_scheme_module_unload != NULL &&
@@ -1905,7 +1906,8 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
           cur_user_auth_scheme_module->user_auth_scheme_module_deregister != NULL &&
           cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL &&
           cur_user_auth_scheme_module->user_auth_scheme_module_trigger != NULL &&
-          cur_user_auth_scheme_module->user_auth_scheme_module_can_use != NULL) {
+          cur_user_auth_scheme_module->user_auth_scheme_module_can_use != NULL &&
+          cur_user_auth_scheme_module->user_auth_scheme_module_identify != NULL) {
         j_module = cur_user_auth_scheme_module->user_auth_scheme_module_load(config->config_m);
         if (check_result_value(j_module, G_OK)) {
           cur_user_auth_scheme_module->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
@@ -1955,6 +1957,7 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
         y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_validate: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_validate != NULL?"found":"not found"));
         y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_trigger: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_trigger != NULL?"found":"not found"));
         y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_can_use: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_can_use != NULL?"found":"not found"));
+        y_log_message(Y_LOG_LEVEL_ERROR, " - user_auth_scheme_module_identify: %s", (cur_user_auth_scheme_module->user_auth_scheme_module_identify != NULL?"found":"not found"));
         dlclose(file_handle);
         o_free(cur_user_auth_scheme_module);
         ret = G_ERROR;
