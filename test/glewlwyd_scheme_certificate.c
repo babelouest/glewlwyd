@@ -323,6 +323,24 @@ START_TEST(test_glwd_scheme_certificate_authenticate_error_no_certificate_scheme
 }
 END_TEST
 
+START_TEST(test_glwd_scheme_certificate_identify_error_unregistered_certificate_scheme_backend)
+{
+  struct _u_request req;
+  json_t * j_params = json_pack("{sssss{}}", 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME,
+                                "value");
+  ulfius_init_request(&req);
+  req.check_server_certificate = 0;
+  req.client_cert_file = o_strdup(CLIENT_CERT_2_PATH);
+  req.client_key_file = o_strdup(CLIENT_KEY_2_PATH);
+  req.client_key_password = o_strdup(CLIENT_KEY_2_PASSWORD);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  ulfius_clean_request(&req);
+}
+END_TEST
+
 START_TEST(test_glwd_scheme_certificate_authenticate_error_unregistered_certificate_scheme_backend)
 {
   struct _u_request req;
@@ -376,6 +394,24 @@ START_TEST(test_glwd_scheme_certificate_authenticate_success_scheme_backend)
   struct _u_request req;
   json_t * j_params = json_pack("{sssssss{}}", 
                                 "username", USERNAME, 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME,
+                                "value");
+  ulfius_init_request(&req);
+  req.check_server_certificate = 0;
+  req.client_cert_file = o_strdup(CLIENT_CERT_1_PATH);
+  req.client_key_file = o_strdup(CLIENT_KEY_1_PATH);
+  req.client_key_password = o_strdup(CLIENT_KEY_1_PASSWORD);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  ulfius_clean_request(&req);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_certificate_identify_success_scheme_backend)
+{
+  struct _u_request req;
+  json_t * j_params = json_pack("{sssss{}}",
                                 "scheme_type", MODULE_MODULE, 
                                 "scheme_name", MODULE_NAME,
                                 "value");
@@ -1117,6 +1153,26 @@ START_TEST(test_glwd_scheme_certificate_authenticate_error_no_certificate_scheme
 }
 END_TEST
 
+START_TEST(test_glwd_scheme_certificate_identify_error_unregistered_certificate_scheme_backend_proxyfied)
+{
+  char * cert_content = get_file_content(CLIENT_CERT_2_PATH);
+  char * cert_content_escaped = str_replace(cert_content, "\n", "");
+  struct _u_request req;
+  json_t * j_params = json_pack("{sssss{}}", 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME,
+                                "value");
+  ulfius_init_request(&req);
+  u_map_put(user_req.map_header, MODULE_HEADER_NAME, cert_content_escaped);
+  req.check_server_certificate = 0;
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  ulfius_clean_request(&req);
+  o_free(cert_content);
+  o_free(cert_content_escaped);
+}
+END_TEST
+
 START_TEST(test_glwd_scheme_certificate_authenticate_error_unregistered_certificate_scheme_backend_proxyfied)
 {
   char * cert_content = get_file_content(CLIENT_CERT_2_PATH);
@@ -1131,6 +1187,26 @@ START_TEST(test_glwd_scheme_certificate_authenticate_error_unregistered_certific
   u_map_put(user_req.map_header, MODULE_HEADER_NAME, cert_content_escaped);
   req.check_server_certificate = 0;
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  ulfius_clean_request(&req);
+  o_free(cert_content);
+  o_free(cert_content_escaped);
+}
+END_TEST
+
+START_TEST(test_glwd_scheme_certificate_identify_success_scheme_backend_proxyfied)
+{
+  char * cert_content = get_file_content(CLIENT_CERT_1_PATH);
+  char * cert_content_escaped = str_replace(cert_content, "\n", "");
+  struct _u_request req;
+  json_t * j_params = json_pack("{sssss{}}", 
+                                "scheme_type", MODULE_MODULE, 
+                                "scheme_name", MODULE_NAME,
+                                "value");
+  ulfius_init_request(&req);
+  u_map_put(req.map_header, MODULE_HEADER_NAME, cert_content_escaped);
+  req.check_server_certificate = 0;
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_params);
   ulfius_clean_request(&req);
   o_free(cert_content);
@@ -1360,9 +1436,11 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_certificate_get_register_scheme_backend);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_test_register_scheme_backend);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_no_certificate_scheme_backend);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_identify_error_unregistered_certificate_scheme_backend);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_unregistered_certificate_scheme_backend);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_invalid_ca_scheme_backend);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_scheme_backend);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_identify_success_scheme_backend);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_cert_disabled_enabled_scheme_backend);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_deregister_scheme_backend);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_scheme_backend_multiple_cert);
@@ -1419,8 +1497,10 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_scheme_certificate_scope_set);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_register_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_test_register_scheme_backend_proxyfied);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_identify_error_unregistered_certificate_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_no_certificate_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_error_unregistered_certificate_scheme_backend_proxyfied);
+  tcase_add_test(tc_core, test_glwd_scheme_certificate_identify_success_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_success_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_authenticate_cert_disabled_enabled_scheme_backend_proxyfied);
   tcase_add_test(tc_core, test_glwd_scheme_certificate_deregister_scheme_backend_proxyfied);
