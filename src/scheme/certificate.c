@@ -820,6 +820,58 @@ static int is_user_certificate_valid(struct config_module * config, json_t * j_p
   }
 }
 
+static json_t * identify_certificate(struct config_module * config, json_t * j_parameters, gnutls_x509_crt_t cert) {
+  time_t now, exp;
+  int res;
+  json_t * j_query, * j_result, * j_return;
+  unsigned char key_id_enc[256] = {0};
+  size_t key_id_enc_len = 0;
+
+  time(&now);
+  exp = gnutls_x509_crt_get_expiration_time(cert);
+  if (exp != (time_t)-1 && now < exp) {
+    if (json_object_get(j_parameters, "use-scheme-storage") == json_true()) {
+      if (get_certificate_id(cert, key_id_enc, &key_id_enc_len) == G_OK) {
+        key_id_enc[key_id_enc_len] = '\0';
+        j_query = json_pack("{sss[s]s{sOsssi}}",
+                            "table",
+                            GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_CERTIFICATE,
+                            "columns",
+                              "gsuc_username AS username",
+                            "where",
+                              "gsuc_mod_name",
+                              json_object_get(j_parameters, "mod_name"),
+                              "gsuc_x509_certificate_id",
+                              key_id_enc,
+                              "gsuc_enabled",
+                              1);
+        res = h_select(config->conn, j_query, &j_result, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          if (json_array_size(j_result) == 1) {
+            j_return = json_pack("{sisO}", "result", G_OK, "username", json_object_get(json_array_get(j_result, 0), "username"));
+          } else {
+            j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          }
+          json_decref(j_result);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "identify_certificate - Error executing j_query");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "identify_certificate - Error get_certificate_id");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "identify_certificate - Certificate expired");
+    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  }
+  return j_return;
+}
+
 static void update_cert_chain_issuer(struct _cert_chain_element ** ca_chain, size_t cert_array_len, struct _cert_chain_element * cur_ca) {
   size_t i;
   
@@ -1561,7 +1613,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
       y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_validate certificate - is_user_certificate_valid unauthorized");
       ret = G_ERROR_UNAUTHORIZED;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate certificate - Error is_user_certificate_valid_scheme_storage");
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate certificate - Error is_user_certificate_valid");
       ret = G_ERROR;
     }
     if (clean_cert) {
@@ -1586,7 +1638,8 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
  * @return value: a json_t * value with the following pattern:
  *                {
  *                  result: number (G_OK on success, another value on error)
- *                  username: string value of the user identified
+ *                  username: string value of the user identified - if the function is called within /auth
+ *                  response: JSON object, optional - if the function is called within /auth/scheme/trigger
  *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
@@ -1597,10 +1650,90 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-json_t * user_auth_scheme_module_identify(struct config_module * config, const void * http_request, json_t * j_scheme_data, void * cls) {
-  UNUSED(config);
-  UNUSED(http_request);
+json_t * user_auth_scheme_module_identify(struct config_module * config, const struct _u_request * http_request, json_t * j_scheme_data, void * cls) {
   UNUSED(j_scheme_data);
-  UNUSED(cls);
-  return json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  int res, clean_cert = 0;
+  const char * header_cert = NULL;
+  gnutls_x509_crt_t cert = NULL;
+  gnutls_datum_t cert_dat;
+  unsigned char cert_id[257] = {};
+  size_t cert_id_len = 256;
+  json_t * j_result, * j_return;
+
+  // Get or parse certificate
+  if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_TLS) && http_request->client_cert != NULL) {
+    cert = http_request->client_cert;
+  } else if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL) {
+    if (!gnutls_x509_crt_init(&cert)) {
+      clean_cert = 1;
+      cert_dat.data = (unsigned char *)header_cert;
+      cert_dat.size = o_strlen(header_cert);
+      if (gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_PEM) < 0) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_identify certificate - Error gnutls_x509_crt_import");
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_identify certificate - Error gnutls_x509_crt_init");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+  }
+  
+  // Validate certificate
+  if (cert != NULL) {
+    j_result = identify_certificate(config, ((struct _cert_param *)cls)->j_parameters, cert);
+    if (check_result_value(j_result, G_OK)) {
+      if (((struct _cert_param *)cls)->cert_array_len) {
+        res = is_certificate_valid_from_ca_chain((struct _cert_param *)cls, cert);
+        if (res != G_OK && res != G_ERROR_UNAUTHORIZED) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_identify certificate - Error is_certificate_valid_from_ca_chain");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        } else if (res == G_ERROR_UNAUTHORIZED) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_identify certificate - is_certificate_valid_from_ca_chain unauthorized");
+        } else if (json_object_get(((struct _cert_param *)cls)->j_parameters, "use-scheme-storage") == json_true()) {
+          if (get_certificate_id(cert, cert_id, &cert_id_len) == G_OK) {
+            cert_id[cert_id_len] = '\0';
+            if (update_user_certificate_last_used_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, json_string_value(json_object_get(j_result, "username")), (const char *)cert_id, u_map_get_case(http_request->map_header, "user-agent")) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_identify certificate - Error update_user_certificate_last_used_scheme_storage");
+              j_return = json_pack("{si}", "result", G_ERROR);
+            } else {
+              j_return = json_pack("{sisO}", "result", G_OK, "username", json_object_get(j_result, "username"));
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_identify certificate - Error get_certificate_id");
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
+        }
+      } else {
+        if (json_object_get(((struct _cert_param *)cls)->j_parameters, "use-scheme-storage") == json_true()) {
+          if (get_certificate_id(cert, cert_id, &cert_id_len) == G_OK) {
+            cert_id[cert_id_len] = '\0';
+            if (update_user_certificate_last_used_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, json_string_value(json_object_get(j_result, "username")), (const char *)cert_id, u_map_get_case(http_request->map_header, "user-agent")) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_identify certificate - Error update_user_certificate_last_used_scheme_storage");
+              j_return = json_pack("{si}", "result", G_ERROR);
+            } else {
+              j_return = json_pack("{sisO}", "result", G_OK, "username", json_object_get(j_result, "username"));
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_identify certificate - Error get_certificate_id");
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
+        }
+      }
+    } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED) || check_result_value(j_result, G_ERROR_PARAM)) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_identify certificate - is_user_certificate_valid unauthorized");
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_identify certificate - Error is_user_certificate_valid");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_result);
+    if (clean_cert) {
+      gnutls_x509_crt_deinit(cert);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_identify certificate - No certificate");
+    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  }
+
+  return j_return;
 }
