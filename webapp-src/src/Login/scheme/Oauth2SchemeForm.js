@@ -33,11 +33,15 @@ class Oauth2SchemeForm extends Component {
       var scheme = {
         scheme_type: this.state.scheme.scheme_type,
         scheme_name: this.state.scheme.scheme_name,
-        username: this.state.currentUser.username,
         value: {
           provider_list: true
         }
       };
+      if (this.state.currentUser.username) {
+        scheme.username = this.state.currentUser.username
+      } else {
+        scheme.value.action = "provider_list";
+      }
       
       apiManager.glewlwydRequest("/auth/scheme/trigger/", "POST", scheme, true)
       .then((res) => {
@@ -54,12 +58,16 @@ class Oauth2SchemeForm extends Component {
       var scheme = {
         scheme_type: this.state.scheme.scheme_type,
         scheme_name: this.state.scheme.scheme_name,
-        username: this.state.currentUser.username,
         value: {
           provider: provider,
           callback_url: window.location.href
         }
       };
+      if (this.state.currentUser.username) {
+        scheme.username = this.state.currentUser.username
+      } else {
+        scheme.value.action = "trigger";
+      }
       
       apiManager.glewlwydRequest("/auth/scheme/trigger/", "POST", scheme, true)
       .then((res) => {

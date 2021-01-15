@@ -79,12 +79,16 @@ class App extends Component {
           var data = {
             scheme_name: stateDecoded.module,
             scheme_type: "oauth2",
-            username: stateDecoded.username,
             value: {
               provider: stateDecoded.provider,
               state: state,
               redirect_to: window.location.href
             }
+          }
+          if (stateDecoded.username) {
+            data.username = stateDecoded.username;
+          } else {
+            data.value.action = "verify";
           }
           $.ajax({
             method: "POST",

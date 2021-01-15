@@ -58,7 +58,6 @@ class NoPasswordForm extends Component {
     if (this.state.userList.length > 0) {
       manageUsersButton = <button type="button" className="btn btn-secondary" onClick={this.gotoManageUsers}>{i18next.t("login.manage-users")}</button>
     }
-    console.log(this.state.identify);
     if (!this.state.usernameValidated && !this.state.identify) {
       return (
         <form action="#" id="passwordForm">

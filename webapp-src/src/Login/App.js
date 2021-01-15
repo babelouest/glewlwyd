@@ -135,7 +135,10 @@ class App extends Component {
             registration.push({name: register.name, message: register.message});
           }
           if (config["reset-credentials"].email || config["reset-credentials"].code) {
-            resetCredentials.push({name: register.name, message: register["reset-credentials-message"], email: config["reset-credentials"].email, code: config["reset-credentials"].code});
+            resetCredentials.push({name: register.name,
+                                   message: register["reset-credentials-message"],
+                                   email: config["reset-credentials"].email,
+                                   code: config["reset-credentials"].code});
           }
           this.setState({registration: registration, resetCredentials: resetCredentials});
         })

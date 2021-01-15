@@ -191,7 +191,7 @@ class Buttons extends Component {
         </div>
   		);
     } else if (this.state.newUser) {
-      if (this.state.config.register) {
+      if (this.state.resetCredentials) {
         this.state.resetCredentials.forEach((resetCred, index) => {
           registerTable.push(
             <button key={index+this.state.config.register.length} type="button" className="btn btn-danger" onClick={(e) => this.resetCredentials(e, resetCred.name)}>
@@ -199,6 +199,8 @@ class Buttons extends Component {
             </button>
           );
         });
+      }
+      if (this.state.config.registration) {
         this.state.config.register.forEach((register, index) => {
           registerTable.push(
             <button key={index} type="button" className="btn btn-success" onClick={(e) => this.registerNewUser(e, register.name)}>

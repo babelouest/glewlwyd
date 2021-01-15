@@ -24,10 +24,12 @@ class CertificateSchemeForm extends Component {
       var scheme = {
         scheme_type: this.state.scheme.scheme_type,
         scheme_name: this.state.scheme.scheme_name,
-        username: this.state.currentUser.username,
         value: {
         }
       };
+      if (this.state.currentUser.username) {
+        scheme.username = this.state.currentUser.username;
+      }
       
       apiManager.glewlwydRequest("/auth/", "POST", scheme)
       .then(() => {
