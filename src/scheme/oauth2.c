@@ -204,6 +204,318 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
   return j_return;
 }
 
+static json_t * complete_session_identify(struct config_module * config, struct _oauth2_config * oauth2_config, json_t * j_provider, const char * redirect_uri, const char * redirect_to, const char * state) {
+  json_t * j_query, * j_result = NULL, * j_result_sub = NULL, * j_return;
+  int res, ret;
+  time_t now;
+  char * expires_at_clause, * sub = NULL;
+  struct _i_session i_session;
+  
+  time(&now);
+  if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+    expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
+  } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+    expires_at_clause = msprintf("> TO_TIMESTAMP(%u)", now);
+  } else { // HOEL_DB_TYPE_SQLITE
+    expires_at_clause = msprintf("> %u", (now));
+  }
+  j_query = json_pack("{sss[ss]s{sss{ssss}sisO}}",
+                      "table",
+                      GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE,
+                      "columns",
+                        "gsos_id",
+                        "gsos_session_export",
+                      "where",
+                        "gsos_state",
+                        state,
+                        "gsos_expires_at",
+                          "operator",
+                          "raw",
+                          "value",
+                          expires_at_clause,
+                        "gsos_status",
+                        GLEWLWYD_SCHEME_OAUTH2_SESSION_AUTHENTICATION,
+                        "gsor_id",
+                        json_null());
+  o_free(expires_at_clause);
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result)) {
+      if (i_init_session(&i_session) == I_OK) {
+        if (i_import_session_str(&i_session, json_string_value(json_object_get(json_array_get(j_result, 0), "gsos_session_export"))) == I_OK) {
+          i_set_str_parameter(&i_session, I_OPT_REDIRECT_TO, redirect_to);
+          if ((res = i_parse_redirect_to(&i_session)) == I_OK) {
+            switch (i_get_response_type(&i_session)) {
+              case I_RESPONSE_TYPE_CODE:
+                if ((res = i_run_token_request(&i_session)) == I_OK) {
+                  ret = G_OK;
+                  if (0 == o_strcmp("oidc", json_string_value(json_object_get(j_provider, "provider_type")))) {
+                    if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
+                      sub = o_strdup(json_string_value(json_object_get(i_session.id_token_payload, "sub")));
+                      ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                    } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
+                      sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.id_token_payload, "sub")));
+                      ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Invalid userid_property format (1)");
+                      ret = G_ERROR_PARAM;
+                    }
+                  } else {
+                    if ((res = i_load_userinfo(&i_session)) == I_OK && i_session.j_userinfo != NULL) {
+                      if (json_string_length((json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))))) {
+                        sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
+                        ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                      } else if (json_is_integer(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
+                        sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
+                        ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                      } else {
+                        y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Invalid userid_property format (2)");
+                        ret = G_ERROR_PARAM;
+                      }
+                    } else if (res == I_ERROR_PARAM || res == I_ERROR_SERVER || res == I_ERROR_UNAUTHORIZED || i_session.j_userinfo == NULL) {
+                      ret = G_ERROR_PARAM;
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error i_load_userinfo (1)");
+                      ret = G_ERROR;
+                    }
+                  }
+                } else if (res == I_ERROR_PARAM || res ==  I_ERROR_SERVER) {
+                  ret = G_ERROR_PARAM;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error i_run_token_request");
+                  ret = G_ERROR;
+                }
+                break;
+              case I_RESPONSE_TYPE_TOKEN:
+                if ((res = i_load_userinfo(&i_session)) == I_OK && i_session.j_userinfo != NULL) {
+                  if (json_string_length(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
+                    sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
+                    ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                  } else if (json_is_integer(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
+                    sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
+                    ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Invalid userid_property format (3)");
+                    ret = G_ERROR_PARAM;
+                  }
+                } else if (res == I_ERROR_PARAM || res == I_ERROR_SERVER || res == I_ERROR_UNAUTHORIZED || i_session.j_userinfo == NULL) {
+                  ret = G_ERROR_PARAM;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error i_load_userinfo (2)");
+                  ret = G_ERROR;
+                }
+                break;
+              case I_RESPONSE_TYPE_ID_TOKEN:
+                if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
+                  sub = o_strdup(json_string_value(json_object_get(i_session.id_token_payload, "sub")));
+                  ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
+                  sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.id_token_payload, "sub")));
+                  ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Invalid userid_property format (4)");
+                  ret = G_ERROR_PARAM;
+                }
+                break;
+              default:
+                y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - unsupported response_type");
+                ret = G_ERROR_PARAM;
+                break;
+            }
+            if (ret == G_OK && sub != NULL && 0 == o_strncmp(redirect_to, redirect_uri, o_strlen(redirect_uri))) {
+              j_query = json_pack("{sss[ss]s{sOsOss}}",
+                                  "table",
+                                  GLEWLWYD_SCHEME_OAUTH2_REGISTRATION_TABLE,
+                                  "columns",
+                                    "gsor_username AS username",
+                                    "gsor_id",
+                                  "where",
+                                    "gsor_mod_name",
+                                    json_object_get(oauth2_config->j_parameters, "name"),
+                                    "gsor_provider",
+                                    json_object_get(j_provider, "name"),
+                                    "gsor_userinfo_sub",
+                                    sub);
+              res = h_select(config->conn, j_query, &j_result_sub, NULL);
+              json_decref(j_query);
+              if (res == H_OK) {
+                if (json_array_size(j_result_sub) == 1) {
+                  j_query = json_pack("{sss{sisO}s{sO}}",
+                                      "table",
+                                      GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE,
+                                      "set",
+                                        "gsos_status",
+                                        GLEWLWYD_SCHEME_OAUTH2_SESSION_VERIFIED,
+                                        "gsor_id",
+                                        json_object_get(json_array_get(j_result_sub, 0), "gsor_id"),
+                                      "where",
+                                        "gsos_id",
+                                        json_object_get(json_array_get(j_result, 0), "gsos_id"));
+                  res = h_update(config->conn, j_query, NULL);
+                  json_decref(j_query);
+                  if (res != H_OK) {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error executing j_query (1)");
+                    j_return = json_pack("{si}", "result", G_ERROR_DB);
+                  } else {
+                    j_return = json_pack("{sisO}", "result", G_OK, "username", json_object_get(json_array_get(j_result_sub, 0), "username"));
+                  }
+                } else {
+                  // unable to identify only one user
+                  j_query = json_pack("{sss{si}s{sO}}",
+                                      "table",
+                                      GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE,
+                                      "set",
+                                        "gsos_status",
+                                        GLEWLWYD_SCHEME_OAUTH2_SESSION_CANCELLED,
+                                      "where",
+                                        "gsos_id",
+                                        json_object_get(json_array_get(j_result, 0), "gsos_id"));
+                  res = h_update(config->conn, j_query, NULL);
+                  json_decref(j_query);
+                  if (res != H_OK) {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error executing j_query (2)");
+                    j_return = json_pack("{si}", "result", G_ERROR_DB);
+                  } else {
+                    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+                  }
+                }
+                json_decref(j_result_sub);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error executing j_query (3)");
+                j_return = json_pack("{si}", "result", G_ERROR_DB);
+              }
+            } else {
+              j_query = json_pack("{sss{si}s{sO}}",
+                                  "table",
+                                  GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE,
+                                  "set",
+                                    "gsos_status",
+                                    GLEWLWYD_SCHEME_OAUTH2_SESSION_CANCELLED,
+                                  "where",
+                                    "gsos_id",
+                                    json_object_get(json_array_get(j_result, 0), "gsos_id"));
+              res = h_update(config->conn, j_query, NULL);
+              json_decref(j_query);
+              if (res != H_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error executing j_query (4)");
+                j_return = json_pack("{si}", "result", G_ERROR_DB);
+              } else {
+                j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+              }
+            }
+            o_free(sub);
+          } else if (res == I_ERROR_PARAM || res == I_ERROR_SERVER) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error parsing redirect_to");
+            j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error i_parse_redirect_to");
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error i_import_session_json_t");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error i_init_session");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+      i_clean_session(&i_session);
+    } else {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "complete_session_identify - state not found");
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error executing j_query (5)");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
+  return j_return;
+}
+
+static json_t * add_session_identify(struct config_module * config, struct _oauth2_config * oauth2_config, json_t * j_provider, const char * callback_url) {
+  json_t * j_query, * j_state = NULL, * j_return;
+  int res;
+  time_t now;
+  char * expires_at_clause, * i_export, * state_export = NULL, * state_export_b64 = NULL;
+  struct _i_session i_session;
+  size_t state_export_b64_len = 0;
+
+  if (i_init_session(&i_session) == I_OK) {
+    if (i_import_session_json_t(&i_session, json_object_get(j_provider, "export")) == I_OK) {
+      if (i_set_int_parameter(&i_session, I_OPT_STATE_GENERATE, GLEWLWYD_SCHEME_OAUTH2_STATE_ID_LENGTH) == I_OK && i_set_int_parameter(&i_session, I_OPT_NONCE_GENERATE, GLEWLWYD_SCHEME_OAUTH2_NONCE_LENGTH) == I_OK) {
+        j_state = json_pack("{sssssOsOss*}", "id", i_get_str_parameter(&i_session, I_OPT_STATE), "type", GLEWLWYD_SCHEME_OAUTH2_STATE_AUTHENTICATION, "module", json_object_get(oauth2_config->j_parameters, "name"), "provider", json_object_get(j_provider, "name"), "callback_url", callback_url);
+        state_export = json_dumps(j_state, JSON_COMPACT);
+        if ((state_export_b64 = o_malloc(2*o_strlen(state_export))) != NULL) {
+          if (o_base64url_encode((const unsigned char *)state_export, o_strlen(state_export), (unsigned char *)state_export_b64, &state_export_b64_len)) {
+            i_set_str_parameter(&i_session, I_OPT_STATE, state_export_b64);
+            if (i_build_auth_url_get(&i_session) == I_OK) {
+              time(&now);
+              if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+                expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
+              } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+                expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
+              } else { // HOEL_DB_TYPE_SQLITE
+                expires_at_clause = msprintf("%u", (now + (unsigned int)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
+              }
+              i_export = i_export_session_str(&i_session);
+              j_query = json_pack("{sss{sOs{ss}sssssi}}",
+                                  "table",
+                                  GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE,
+                                  "values",
+                                    "gsor_id",
+                                     json_null(),
+                                    "gsos_expires_at",
+                                      "raw",
+                                      expires_at_clause,
+                                    "gsos_state",
+                                    state_export_b64,
+                                    "gsos_session_export",
+                                    i_export,
+                                    "gsos_status",
+                                    GLEWLWYD_SCHEME_OAUTH2_SESSION_AUTHENTICATION);
+              o_free(expires_at_clause);
+              res = h_insert(config->conn, j_query, NULL);
+              json_decref(j_query);
+              o_free(i_export);
+              if (res == H_OK) {
+                j_return = json_pack("{siss}", "result", G_OK, "session", i_get_str_parameter(&i_session, I_OPT_REDIRECT_TO));
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "add_session_for_user - Error executing j_query (2)");
+                j_return = json_pack("{si}", "result", G_ERROR_DB);
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "add_session_for_user - Error i_build_auth_url_get");
+              j_return = json_pack("{si}", "result", G_ERROR);
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "add_session_for_user - Error o_base64url_encode");
+            j_return = json_pack("{si}", "result", G_ERROR);
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "add_session_for_user - Error o_malloc state_export_b64");
+          j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+        }
+        o_free(state_export);
+        o_free(state_export_b64);
+        json_decref(j_state);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "add_session_for_user - Error i_set_int_parameter I_OPT_STATE_GENERATE");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "add_session_for_user - Error i_import_session_json_t");
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    i_clean_session(&i_session);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "add_session_for_user - Error i_init_session");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  
+  return j_return;
+}
+
 static json_t * add_session_for_user(struct config_module * config, struct _oauth2_config * oauth2_config, const char * username, json_t * j_registration, json_t * j_provider, const char * callback_url) {
   json_t * j_query, * j_state = NULL, * j_return;
   int res;
@@ -1331,7 +1643,8 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
  * @return value: a json_t * value with the following pattern:
  *                {
  *                  result: number (G_OK on success, another value on error)
- *                  username: string value of the user identified
+ *                  username: string value of the user identified - if the function is called within /auth
+ *                  response: JSON object, optional - if the function is called within /auth/scheme/trigger
  *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
@@ -1342,10 +1655,52 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-json_t * user_auth_scheme_module_identify(struct config_module * config, const void * http_request, json_t * j_scheme_data, void * cls) {
-  UNUSED(config);
+json_t * user_auth_scheme_module_identify(struct config_module * config, const struct _u_request * http_request, json_t * j_scheme_data, void * cls) {
   UNUSED(http_request);
-  UNUSED(j_scheme_data);
-  UNUSED(cls);
-  return json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+  struct _oauth2_config * oauth2_config = (struct _oauth2_config *)cls;
+  json_t * j_return, * j_result, * j_provider, * j_element = NULL;
+  size_t index = 0;
+
+  if (0 == o_strcmp("trigger", json_string_value(json_object_get(j_scheme_data, "action")))) {
+    j_provider = get_provider(oauth2_config, json_string_value(json_object_get(j_scheme_data, "provider")));
+    if (check_result_value(j_provider, G_OK)) {
+      j_result = add_session_identify(config, oauth2_config, json_object_get(j_provider, "provider"), json_string_value(json_object_get(j_scheme_data, "callback_url")));
+      if (check_result_value(j_result, G_OK)) {
+        j_return = json_pack("{sis{sO}}", "result", G_OK, "response", "redirect_to", json_object_get(j_result, "session"));
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_identify oauth2 - Error add_session_identify");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+      json_decref(j_result);
+    } else {
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "provider invalid");
+    }
+    json_decref(j_provider);
+  } else if (0 == o_strcmp("verify", json_string_value(json_object_get(j_scheme_data, "action")))) {
+    j_provider = get_provider(oauth2_config, json_string_value(json_object_get(j_scheme_data, "provider")));
+    if (check_result_value(j_provider, G_OK)) {
+      j_result = complete_session_identify(config, oauth2_config, json_object_get(j_provider, "provider"), json_string_value(json_object_get(oauth2_config->j_parameters, "redirect_uri")), json_string_value(json_object_get(j_scheme_data, "redirect_to")), json_string_value(json_object_get(j_scheme_data, "state")));
+      if (check_result_value(j_result, G_OK)) {
+        j_return = json_pack("{sisO}", "result", G_OK, "username", json_object_get(j_result, "username"));
+      } else if (!check_result_value(j_result, G_ERROR)) {
+        j_return = json_incref(j_result);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_identify oauth2 - Error complete_session_identify");
+        j_return = json_pack("{si}", "result", G_ERROR);
+      }
+      json_decref(j_result);
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+    }
+    json_decref(j_provider);
+  } else if (0 == o_strcmp("provider_list", json_string_value(json_object_get(j_scheme_data, "action")))) {
+    j_return = json_pack("{sis[]}", "result", G_OK, "response");
+    json_array_foreach(json_object_get(oauth2_config->j_parameters, "provider_list"), index, j_element) {
+      json_array_append_new(json_object_get(j_return, "response"), json_pack("{sOsOsOso}", "provider", json_object_get(j_element, "name"), "logo_uri", json_object_get(j_element, "logo_uri"), "logo_fa", json_object_get(j_element, "logo_fa"), "created_at", json_null()));
+    }
+  } else {
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+  }
+  
+  return j_return;
 }
