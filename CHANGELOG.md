@@ -1,5 +1,9 @@
 # Glewlwyd Changelog
 
+## 2.5.1
+
+- Add `identify` action to authenticate via schemes oauth2 or certificate without giving the username
+
 ## 2.5.0
 
 The `"Recontainment Release"`
