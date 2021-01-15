@@ -399,7 +399,8 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
  * @return value: a json_t * value with the following pattern:
  *                {
  *                  result: number (G_OK on success, another value on error)
- *                  username: string value of the user identified
+ *                  username: string value of the user identified - if the function is called within /auth
+ *                  response: JSON object, optional - if the function is called within /auth/scheme/trigger
  *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
@@ -410,7 +411,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-json_t * user_auth_scheme_module_identify(struct config_module * config, const void * http_request, json_t * j_scheme_data, void * cls) {
+json_t * user_auth_scheme_module_identify(struct config_module * config, const struct _u_request * http_request, json_t * j_scheme_data, void * cls) {
   UNUSED(config);
   UNUSED(http_request);
   json_t * j_return;

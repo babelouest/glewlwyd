@@ -297,7 +297,6 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
 ```
 
 ```C
-
 /**
  * 
  * user_auth_scheme_module_identify
@@ -306,10 +305,12 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
  * This functionality isn't available for all schemes, because the scheme authentification
  * must be triggered without username and the authentication result must contain the username
  * 
- * @return value: G_OK on success
- *                G_ERROR_UNAUTHORIZED if validation fails
- *                G_ERROR_PARAM if error in parameters
- *                G_ERROR on another error
+ * @return value: a json_t * value with the following pattern:
+ *                {
+ *                  result: number (G_OK on success, another value on error)
+ *                  username: string value of the user identified - if the function is called within /auth
+ *                  response: JSON object, optional - if the function is called within /auth/scheme/trigger
+ *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
@@ -319,5 +320,5 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
  * 
  */
-int user_auth_scheme_module_identify(struct config_module * config, const void * http_request, json_t * j_scheme_data, void * cls);
+int user_auth_scheme_module_identify(struct config_module * config, const struct _u_request * http_request, json_t * j_scheme_data, void * cls);
 ```
