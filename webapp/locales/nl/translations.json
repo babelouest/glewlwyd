@@ -975,7 +975,7 @@
     "mod-glwd-resource-scope-and-client-error": "U moet een lijst met resource toegangsrechten en een clientresource-eigenschap instellen",
     "mod-glwd-oauth-rar-title": "OAuth 2.0 Rich Authorization Requests (Draft 03)",
     "mod-glwd-oauth-rar-allowed": "Sta OAuth 2.0 Rich Authorization Requests toe",
-    "mod-glwd-rar-types-client-property": "Client authorization_data_types property",
+    "mod-glwd-rar-types-client-property": "Client authorization_data_types eigenschap",
     "mod-glwd-rar-types-client-property-ph": "Bijv.: authorization_data_types",
     "mod-glwd-rar-types-client-property-error": "Client authorization_data_types eigenschap is vereist",
     "mod-glwd-rar-allow-auth-unsigned": "Sta unsigned OAuth 2.0 Rich Authorization Requests toe",
@@ -1000,7 +1000,9 @@
     "mod-glwd-oauth-par-request_uri-prefix": "request_uri prefix",
     "mod-glwd-oauth-par-request_uri-prefix-ph": "Bijv.: urn:ietf:params:oauth:request_uri:",
     "mod-glwd-oauth-par-duration": "De maximale duur van de request_uri (seconden)",
-    "mod-glwd-oauth-par-duration-ph": "Bijv.: 90"
+    "mod-glwd-oauth-par-duration-ph": "Bijv.: 90",
+    "mod-glwd-restrict-scope-client-property": "Client restrict-scope eigenschap",
+    "mod-glwd-restrict-scope-client-property-ph": "e.g. scope"
   },
   "profile": {
     "error-credential-message": "Maak verbinding met de applicatie",

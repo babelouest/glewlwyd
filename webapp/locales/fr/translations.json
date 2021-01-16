@@ -1000,7 +1000,9 @@
     "mod-glwd-oauth-par-request_uri-prefix": "Préfixe pour la valeur request_uri",
     "mod-glwd-oauth-par-request_uri-prefix-ph": "Ex: urn:ietf:params:oauth:request_uri:",
     "mod-glwd-oauth-par-duration": "Durée de vie du request_uri en secondes",
-    "mod-glwd-oauth-par-duration-ph": "Ex: 90"
+    "mod-glwd-oauth-par-duration-ph": "Ex: 90",
+    "mod-glwd-restrict-scope-client-property": "Propriété du client pour restrict-scope",
+    "mod-glwd-restrict-scope-client-property-ph": "Ex: scope"
   },
   "profile": {
     "error-credential-message": "Veuillez vous connecter à l'application",
