@@ -4,6 +4,7 @@
 
 - Add `identify` action to authenticate via schemes oauth2 or certificate without giving the username
 - Fix change password issue in the admin interface
+- Add oidc config `restrict-scope-client-property` to restrict a client to certain scopes if needed
 
 ## 2.5.0
 
