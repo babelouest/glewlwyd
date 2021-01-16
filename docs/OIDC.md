@@ -263,6 +263,12 @@ The meaning of existence of this list is to allow the administrator to choose wh
 
 Therefore, the administrator can chose to show in the discovery endpoint all scopes, only `openid` (which is mandatory in the specification) or a subset of all scopes available, including `openid`.
 
+### Client restrict-scope property
+
+Specify the client property to store the list of scopes a client is allowed to get grant access from a user.
+
+Important note: If this configuration is set, then **all** clients must have the restrict scope list set according to the scopes they are allowed to ask for in a request.
+
 ### JWKS URI
 
 URI to fetch the private keys JWKS. This uri is loaded each time the plugin is enabled. If you want to update your server keys, you must restart the Glewlwyd server or call the API [Enable or disable an existing plugin module instance](API.md#enable-or-disable-an-existing-plugin-module-instance) with the action value `reset`.
