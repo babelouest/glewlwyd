@@ -294,7 +294,8 @@ You can add a link to the registration page from the login page. You need to add
 "register": [
   {
     "name": "register",
-    "message": "login.register-link"
+    "message": "login.register-link",
+    "reset-credentials-message": "login.reset-credentials-link"
   }
 ]
 ```

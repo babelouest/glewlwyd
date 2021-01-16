@@ -636,6 +636,7 @@ One or more schemes must be already installed: E-mail code, WebAuthn, Client cer
   "scheme_type": "webauthn", // name of the module, mandatory
   "scheme_name": "webauthn", // name of the module instance, mandatory
   "scheme_display_name": "login.webauthn-title" // i18next label name, label files is available in the files `webapp/locales/*/translations.json`, mandatory
+  "identify": true // Does this scheme requires username first? Available only for schemes OAuth2 and TLS certificate with scheme storage option
 }
 ```
 

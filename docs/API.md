@@ -2370,7 +2370,7 @@ Authentication failure
 
 ```javascript
 {
-  username: string, mandatory
+  username: string, optional for schemes mock, OAuth2 and TLS certificate with scheme storage option, mandatory otherwise
   scheme_type: string, mandatory
   scheme_name: string: mandatory
   value: object, mandatory, content depends on the scheme
@@ -2462,7 +2462,7 @@ Authentication failure
 
 ```javascript
 {
-  username: string, mandatory
+  username: string, optional for schemes mock, OAuth2 and TLS certificate with scheme storage option, mandatory otherwise
   scheme_type: string, mandatory
   scheme_name: string: mandatory
   value: object, mandatory, content depends on the scheme
@@ -3305,10 +3305,11 @@ The response value will be `true` or `false` depending on the scheme registratio
 
 ```javascript
 {
-  username: string, mandatory
+  username: string, optional
   scheme_type: "mock"
   scheme_name: string: mandatory
   value: {
+    username: string, mandatory if omitted below
     code: string, mandatory
   }
 }
@@ -3873,9 +3874,173 @@ N/A
 
 ```javascript
 {
-  username: string, mandatory
+  username: string, optional if option scheme storage is set, mandatory otherwise
   scheme_type: "certificate"
   scheme_name: string: mandatory
   value: {}
 }
 ```
+
+### OAuth2/OIDC Client Authentication scheme
+
+#### Register scheme
+
+##### Request body format
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "oauth2"
+  scheme_name: string: mandatory
+  value: {
+    action: string, values available are "new", "callback", "delete"
+    // Other values depending on the register action value
+  }
+}
+```
+
+- Request body format for `action: "new"`
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "certificate"
+  scheme_name: string: mandatory
+  value: {
+    action: "new",
+    provider: string, provider name to register
+    complete_url: string, uri for registration completion
+  }
+}
+```
+
+- Response for `action: "new"`
+
+```javascript
+{
+  redirect_to: string, url to the authorization uri
+}
+```
+
+HTTP Status 200 on success, 400 on error parameters, 500 otherwise
+
+- Request body format for `action: "callback"`
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "certificate"
+  scheme_name: string: mandatory
+  value: {
+    action: "callback",
+    provider: string, provider name to register
+    state: string
+    redirect_to: string
+  }
+}
+```
+
+HTTP Status 200 on success, 400 on error parameters, 500 otherwise
+
+- Request body format for `action: "delete"`
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "certificate"
+  scheme_name: string: mandatory
+  value: {
+    action: "delete",
+    provider: string, provider name to delete
+  }
+}
+```
+
+HTTP Status 200 on success, 400 on error parameters, 500 otherwise
+
+#### Get scheme registration
+
+##### Response body format
+
+```javascript
+[
+  {
+    provider: string, identifier of the provider
+    logo_uri: string, uri of the provider logo
+    logo_fa: string, fork-awesome logo name
+    enabled: boolean
+    created_at: null
+  }
+]
+```
+
+#### Trigger scheme
+
+##### Request body format
+
+- Get provider list
+
+```javascript
+{
+  username: string, mandatory
+  scheme_type: "oauth2"
+  scheme_name: string: mandatory
+  value: {
+    provider_list: true
+  }
+}
+```
+
+- Response for `provider_list`
+
+```javascript
+[
+  {
+    provider: string, identifier of the provider
+    logo_uri: string, uri of the provider logo
+    logo_fa: string, fork-awesome logo name
+    enabled: boolean
+    created_at: null
+  }
+]
+```
+
+- Run authentication flow
+
+```javascript
+{
+  username: string, optional
+  scheme_type: "certificate"
+  scheme_name: string: mandatory
+  value: {
+    provider: string, provider name to authenticate
+  }
+}
+```
+
+- Response for `action: "new"`
+
+```javascript
+{
+  redirect_to: string, url to the authorization uri
+}
+```
+
+#### Authentication using scheme
+
+##### Request body format
+
+```javascript
+{
+  username: string, optional
+  scheme_type: "certificate"
+  scheme_name: string: mandatory
+  value: {
+    provider: string, provider name to register
+    state: string
+    redirect_to: string
+  }
+}
+```
+
+HTTP Status 200 on success, 400 on error parameters, 500 otherwise
