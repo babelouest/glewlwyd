@@ -3,6 +3,7 @@
 ## 2.5.1
 
 - Add `identify` action to authenticate via schemes oauth2 or certificate without giving the username
+- Fix change password issue in the admin interface
 
 ## 2.5.0
 
