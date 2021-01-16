@@ -691,7 +691,7 @@ int callback_glewlwyd_set_user_session_scope_grant (const struct _u_request * re
   if (config != NULL && j_user != NULL) {
     if (json_object_get(j_body, "scope") != NULL && json_is_string(json_object_get(j_body, "scope"))) {
       j_client = get_client(config, u_map_get(request->map_url, "client_id"), NULL);
-      if (check_result_value(j_client, G_OK)) {
+      if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
         res = set_granted_scopes_for_client(config, j_user, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(j_body, "scope")));
         if (res == G_ERROR_NOT_FOUND) {
           response->status = 404;
