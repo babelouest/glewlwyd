@@ -2055,6 +2055,35 @@ static json_t * get_last_id_token(struct _oidc_config * config, const char * use
   return j_return;
 }
 
+static json_t * reduce_scope(const char * scope, json_t * scope_list) {
+  char * scope_reduced = NULL, ** scope_array = NULL;
+  json_t * j_return;
+  size_t i;
+  
+  if (split_string(scope, " ", &scope_array)) {
+    for (i=0; scope_array[i]!=NULL; i++) {
+      if (json_array_has_string(scope_list, scope_array[i])) {
+        if (scope_reduced == NULL) {
+          scope_reduced = o_strdup(scope_array[i]);
+        } else {
+          scope_reduced = mstrcatf(scope_reduced, " %s", scope_array[i]);
+        }
+      }
+    }
+    if (scope_reduced != NULL) {
+      j_return = json_pack("{siss}", "result", G_OK, "scope", scope_reduced);
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    }
+    o_free(scope_reduced);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "reduce_scope - Error split_string");
+    j_return = json_pack("{si}", "result", G_ERROR);
+  }
+  free_string_array(scope_array);
+  return j_return;
+}
+
 static int serialize_pushed_request_uri(struct _oidc_config * config,
                                         const char * request_uri,
                                         const char * response_type,
@@ -7272,6 +7301,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
        * endptr = NULL,
        * id_token_hash = NULL,
        * rar_list = NULL,
+       * scope_reduced = NULL,
        code_challenge_stored[GLEWLWYD_CODE_CHALLENGE_MAX_LENGTH + 1] = {0};
   const char * client_id = NULL,
              * client_secret = NULL,
@@ -7294,6 +7324,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
          * j_claims = NULL,
          * j_rar_filtered_result = NULL,
          * j_element = NULL,
+         * j_result = NULL,
          * j_return;
   struct _u_map additional_parameters, * map = get_map(request);
   long int l_max_age;
@@ -7429,7 +7460,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
       }
     } else {
       j_client = check_client_valid_without_secret(config, client_id, redirect_uri, auth_type, ip_source);
-      if (!check_result_value(j_client, G_OK)) {
+      if (!check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
         // client is not authorized
         if (form_post) {
           build_form_post_error_response(map, response, "error", "unauthorized_client", NULL);
@@ -7443,7 +7474,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         break;
       }
     }
-
+    
     if (display != NULL) {
       u_map_put(&additional_parameters, "display", display);
     }
@@ -7547,8 +7578,43 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
       break;
     }
 
+    if (json_string_length(json_object_get(config->j_params, "restrict-scope-client-property"))) {
+      j_result = reduce_scope(scope, json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "restrict-scope-client-property"))));
+      if (check_result_value(j_result, G_OK)) {
+        scope_reduced = o_strdup(json_string_value(json_object_get(j_result, "scope")));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "grut 0 %s", scope_reduced);
+      } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_device_authorization - error client %s is not allowed to claim scopes '%s'", client_id, scope);
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+        if (form_post) {
+          build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
+        } else {
+          response->status = 302;
+          redirect_url = msprintf("%s%serror=invalid_scope%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          ulfius_add_header_to_response(response, "Location", redirect_url);
+          o_free(redirect_url);
+        }
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        break;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - error reduce_scope");
+        if (form_post) {
+          build_form_post_error_response(map, response, "error", "server_error", NULL);
+        } else {
+          response->status = 302;
+          redirect_url = msprintf("%s%serror=server_error%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          ulfius_add_header_to_response(response, "Location", redirect_url);
+          o_free(redirect_url);
+        }
+        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        break;
+      }
+    } else {
+      scope_reduced = o_strdup(scope);
+    }
+
     // Split scope list into scope array
-    if (!split_string(scope, " ", &scope_list)) {
+    if (!split_string(scope_reduced, " ", &scope_list)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - Error split_string");
       if (form_post) {
         build_form_post_error_response(map, response, "error", "server_error", NULL);
@@ -7563,7 +7629,9 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
     }
 
     // Check that the scope 'openid' is provided, otherwise return error
-    if ((!string_array_has_value((const char **)scope_list, "openid") && !config->allow_non_oidc) || (auth_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG && !string_array_has_value((const char **)scope_list, "openid"))) {
+    if ((!string_array_has_value((const char **)scope_list, "openid") && 
+         !config->allow_non_oidc) || 
+         (auth_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG && !string_array_has_value((const char **)scope_list, "openid"))) {
       // Scope openid missing
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - scope 'openid' missing, origin: %s", ip_source);
       if (form_post) {
@@ -7579,7 +7647,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
     }
 
     // Check that the session is valid for this user with this scope list
-    j_session = validate_session_client_scope(config, request, client_id, scope);
+    j_session = validate_session_client_scope(config, request, client_id, scope_reduced);
     if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
       if (0 == o_strcmp("none", prompt)) {
         // Scope is not allowed for this user
@@ -7887,11 +7955,13 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
   o_free(issued_for);
   o_free(state_param);
   o_free(id_token_hash);
+  o_free(scope_reduced);
   json_decref(j_session);
   json_decref(j_client);
   json_decref(j_last_token);
   json_decref(j_claims);
   json_decref(j_rar_filtered_result);
+  json_decref(j_result);
   free_string_array(scope_list);
   u_map_clean(&additional_parameters);
   r_jwt_free(jwt);
@@ -8732,10 +8802,12 @@ static int check_pushed_authorization_request (const struct _u_request * request
          * j_claims = NULL,
          * j_request = NULL,
          * j_authorization_details = NULL,
-         * j_response = NULL;
+         * j_response = NULL,
+         * j_result = NULL;
   char  code_challenge_stored[GLEWLWYD_CODE_CHALLENGE_MAX_LENGTH + 1] = {0},
        * request_uri = NULL,
-       ** response_type_array = NULL;
+       ** response_type_array = NULL,
+       * scope_reduced = NULL;
   int res, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NULL_FLAG;
   struct _u_map * additional_parameters = NULL;
 
@@ -8896,10 +8968,26 @@ static int check_pushed_authorization_request (const struct _u_request * request
       j_client = check_client_valid(config, client_id, client_secret, redirect_uri, auth_type, 0, ip_source);
     }
 
-    if (!check_result_value(j_client, G_OK)) {
+    if (!check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "check_pushed_authorization_request oidc - client '%s' is invalid, origin: %s", client_id, ip_source);
       response->status = 403;
       break;
+    }
+
+    if (json_string_length(json_object_get(config->j_params, "restrict-scope-client-property"))) {
+      j_result = reduce_scope(scope, json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "restrict-scope-client-property"))));
+      if (check_result_value(j_result, G_OK)) {
+        scope_reduced = o_strdup(json_string_value(json_object_get(j_result, "scope")));
+      } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_pushed_authorization_request - error client %s is not allowed to claim scopes '%s'", client_id, scope);
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+        response->status = 403;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_pushed_authorization_request - error reduce_scope");
+        response->status = 500;
+      }
+    } else {
+      scope_reduced = o_strdup(scope);
     }
 
     if (!is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
@@ -8927,7 +9015,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
 
   if (response->status == 201) {
     if ((request_uri = generate_pushed_request_uri(config)) != NULL) {
-      if (serialize_pushed_request_uri(config, request_uri, response_type, client_id, state, scope, nonce, resource, redirect_uri, ip_source, user_agent, j_claims, code_challenge_stored, j_authorization_details, additional_parameters) == G_OK) {
+      if (serialize_pushed_request_uri(config, request_uri, response_type, client_id, state, scope_reduced, nonce, resource, redirect_uri, ip_source, user_agent, j_claims, code_challenge_stored, j_authorization_details, additional_parameters) == G_OK) {
         j_response = json_pack("{sssI}", "request_uri", request_uri, "expires_in", config->request_uri_duration);
         ulfius_set_json_body_response(response, 201, j_response);
         json_decref(j_response);
@@ -8944,7 +9032,9 @@ static int check_pushed_authorization_request (const struct _u_request * request
   json_decref(j_claims);
   json_decref(j_request);
   json_decref(j_authorization_details);
+  json_decref(j_result);
   o_free(request_uri);
+  o_free(scope_reduced);
   free_string_array(response_type_array);
   u_map_clean_full(additional_parameters);
   return U_CALLBACK_CONTINUE;
@@ -10694,6 +10784,7 @@ static int callback_oidc_device_authorization(const struct _u_request * request,
              * resource = NULL;
   char * verification_uri,
        * verification_uri_complete,
+       * scope_reduced = NULL,
        * plugin_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, json_string_value(json_object_get(config->j_params, "name")));
   json_t * j_client,
          * j_body,
@@ -10758,65 +10849,87 @@ static int callback_oidc_device_authorization(const struct _u_request * request,
                                      0,
                                      ip_source);
       }
-      if (check_result_value(j_client, G_OK) && is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
-        client_id = json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id"));
-        if (u_map_has_key(request->map_post_body, "resource") && json_object_get(config->j_params, "resource-allowed") == json_true()) {
-          resource = u_map_get(request->map_post_body, "resource");
-        }
-        if (o_strlen(resource)) {
-          if ((res = verify_resource(config, resource, json_object_get(j_client, "client"), u_map_get(request->map_post_body, "scope"))) == G_ERROR_PARAM) {
-            j_body = json_pack("{ss}", "error", "invalid_target");
-            ulfius_set_json_body_response(response, 400, j_body);
-            json_decref(j_body);
-            resource_valid = 0;
-          } else if (res != G_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_authorization - Error verify_resource");
-            j_body = json_pack("{ss}", "error", "server_error");
-            ulfius_set_json_body_response(response, 500, j_body);
-            json_decref(j_body);
-            resource_valid = 0;
-          }
-        }
-        if (o_strlen(u_map_get(request->map_post_body, "authorization_details")) && json_object_get(config->j_params, "oauth-rar-allowed") == json_true() && json_object_get(config->j_params, "rar-allow-auth-unsigned") == json_true()) {
-          if ((j_authorization_details = json_loads(u_map_get(request->map_post_body, "authorization_details"), JSON_DECODE_ANY, NULL)) == NULL) {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_device_authorization oidc - Invalid authorization_details format, origin: %s", ip_source);
-            j_body = json_pack("{ss}", "error", "invalid_request");
-            ulfius_set_json_body_response(response, 400, j_body);
-            json_decref(j_body);
-            authorization_details_valid = 0;
-          } else if (authorization_details_validate(config, j_authorization_details, client_id, u_map_get(request->map_post_body, "scope")) != G_OK) {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_device_authorization oidc - Invalid authorization_details request, origin: %s", ip_source);
-            j_body = json_pack("{ss}", "error", "invalid_request");
-            ulfius_set_json_body_response(response, 400, j_body);
-            json_decref(j_body);
-            authorization_details_valid = 0;
-          }
-        }
-        if (resource_valid && authorization_details_valid) {
-          j_result = generate_device_authorization(config, client_id, u_map_get(request->map_post_body, "scope"), resource, j_authorization_details, ip_source);
+      if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true() && is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
+        if (json_string_length(json_object_get(config->j_params, "restrict-scope-client-property"))) {
+          j_result = reduce_scope(u_map_get(request->map_post_body, "scope"), json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "restrict-scope-client-property"))));
           if (check_result_value(j_result, G_OK)) {
-              verification_uri = msprintf("%s/device", plugin_url);
-              verification_uri_complete = msprintf("%s/device?code=%s", plugin_url, json_string_value(json_object_get(json_object_get(j_result, "authorization"), "user_code")));
-              j_body = json_pack("{sOsOsssssOsO}",
-                                 "device_code", json_object_get(json_object_get(j_result, "authorization"), "device_code"),
-                                 "user_code", json_object_get(json_object_get(j_result, "authorization"), "user_code"),
-                                 "verification_uri", verification_uri,
-                                 "verification_uri_complete", verification_uri_complete,
-                                 "expires_in", json_object_get(config->j_params, "device-authorization-expiration"),
-                                 "interval", json_object_get(config->j_params, "device-authorization-interval"));
-              ulfius_set_json_body_response(response, 200, j_body);
-              json_decref(j_body);
-              o_free(verification_uri);
-              o_free(verification_uri_complete);
+            scope_reduced = o_strdup(json_string_value(json_object_get(j_result, "scope")));
+          } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_device_authorization - error client %s is not allowed to claim scopes '%s'", client_id, u_map_get(request->map_post_body, "scope"));
+            y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+            j_body = json_pack("{ss}", "error", "invalid_scope");
+            ulfius_set_json_body_response(response, 403, j_body);
+            json_decref(j_body);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_authorization oidc - Error generate_device_authorization");
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_authorization - error reduce_scope");
             j_body = json_pack("{ss}", "error", "server_error");
             ulfius_set_json_body_response(response, 500, j_body);
             json_decref(j_body);
           }
           json_decref(j_result);
+        } else {
+          scope_reduced = o_strdup(u_map_get(request->map_post_body, "scope"));
         }
-        json_decref(j_authorization_details);
+        if (scope_reduced != NULL) {
+          client_id = json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id"));
+          if (u_map_has_key(request->map_post_body, "resource") && json_object_get(config->j_params, "resource-allowed") == json_true()) {
+            resource = u_map_get(request->map_post_body, "resource");
+          }
+          if (o_strlen(resource)) {
+            if ((res = verify_resource(config, resource, json_object_get(j_client, "client"), scope_reduced)) == G_ERROR_PARAM) {
+              j_body = json_pack("{ss}", "error", "invalid_target");
+              ulfius_set_json_body_response(response, 400, j_body);
+              json_decref(j_body);
+              resource_valid = 0;
+            } else if (res != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_authorization - Error verify_resource");
+              j_body = json_pack("{ss}", "error", "server_error");
+              ulfius_set_json_body_response(response, 500, j_body);
+              json_decref(j_body);
+              resource_valid = 0;
+            }
+          }
+          if (o_strlen(u_map_get(request->map_post_body, "authorization_details")) && json_object_get(config->j_params, "oauth-rar-allowed") == json_true() && json_object_get(config->j_params, "rar-allow-auth-unsigned") == json_true()) {
+            if ((j_authorization_details = json_loads(u_map_get(request->map_post_body, "authorization_details"), JSON_DECODE_ANY, NULL)) == NULL) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_device_authorization oidc - Invalid authorization_details format, origin: %s", ip_source);
+              j_body = json_pack("{ss}", "error", "invalid_request");
+              ulfius_set_json_body_response(response, 400, j_body);
+              json_decref(j_body);
+              authorization_details_valid = 0;
+            } else if (authorization_details_validate(config, j_authorization_details, client_id, scope_reduced) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_device_authorization oidc - Invalid authorization_details request, origin: %s", ip_source);
+              j_body = json_pack("{ss}", "error", "invalid_request");
+              ulfius_set_json_body_response(response, 400, j_body);
+              json_decref(j_body);
+              authorization_details_valid = 0;
+            }
+          }
+          if (resource_valid && authorization_details_valid) {
+            j_result = generate_device_authorization(config, client_id, scope_reduced, resource, j_authorization_details, ip_source);
+            if (check_result_value(j_result, G_OK)) {
+                verification_uri = msprintf("%s/device", plugin_url);
+                verification_uri_complete = msprintf("%s/device?code=%s", plugin_url, json_string_value(json_object_get(json_object_get(j_result, "authorization"), "user_code")));
+                j_body = json_pack("{sOsOsssssOsO}",
+                                   "device_code", json_object_get(json_object_get(j_result, "authorization"), "device_code"),
+                                   "user_code", json_object_get(json_object_get(j_result, "authorization"), "user_code"),
+                                   "verification_uri", verification_uri,
+                                   "verification_uri_complete", verification_uri_complete,
+                                   "expires_in", json_object_get(config->j_params, "device-authorization-expiration"),
+                                   "interval", json_object_get(config->j_params, "device-authorization-interval"));
+                ulfius_set_json_body_response(response, 200, j_body);
+                json_decref(j_body);
+                o_free(verification_uri);
+                o_free(verification_uri_complete);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_authorization oidc - Error generate_device_authorization");
+              j_body = json_pack("{ss}", "error", "server_error");
+              ulfius_set_json_body_response(response, 500, j_body);
+              json_decref(j_body);
+            }
+            json_decref(j_result);
+          }
+          json_decref(j_authorization_details);
+        }
       } else {
         j_body = json_pack("{ss}", "error", "unauthorized_client");
         ulfius_set_json_body_response(response, 403, j_body);
@@ -10838,6 +10951,7 @@ static int callback_oidc_device_authorization(const struct _u_request * request,
     json_decref(j_body);
   }
   o_free(plugin_url);
+  o_free(scope_reduced);
   json_decref(j_assertion);
   return result;
 }
