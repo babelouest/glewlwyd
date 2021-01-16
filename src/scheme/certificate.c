@@ -1670,11 +1670,9 @@ json_t * user_auth_scheme_module_identify(struct config_module * config, const s
       cert_dat.size = o_strlen(header_cert);
       if (gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_PEM) < 0) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_identify certificate - Error gnutls_x509_crt_import");
-        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       }
     } else {
       y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_identify certificate - Error gnutls_x509_crt_init");
-      j_return = json_pack("{si}", "result", G_ERROR);
     }
   }
   
@@ -1689,6 +1687,7 @@ json_t * user_auth_scheme_module_identify(struct config_module * config, const s
           j_return = json_pack("{si}", "result", G_ERROR);
         } else if (res == G_ERROR_UNAUTHORIZED) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_identify certificate - is_certificate_valid_from_ca_chain unauthorized");
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         } else if (json_object_get(((struct _cert_param *)cls)->j_parameters, "use-scheme-storage") == json_true()) {
           if (get_certificate_id(cert, cert_id, &cert_id_len) == G_OK) {
             cert_id[cert_id_len] = '\0';
@@ -1702,6 +1701,8 @@ json_t * user_auth_scheme_module_identify(struct config_module * config, const s
             y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_identify certificate - Error get_certificate_id");
             j_return = json_pack("{si}", "result", G_ERROR);
           }
+        } else {
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
       } else {
         if (json_object_get(((struct _cert_param *)cls)->j_parameters, "use-scheme-storage") == json_true()) {
@@ -1717,6 +1718,8 @@ json_t * user_auth_scheme_module_identify(struct config_module * config, const s
             y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_identify certificate - Error get_certificate_id");
             j_return = json_pack("{si}", "result", G_ERROR);
           }
+        } else {
+          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
       }
     } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED) || check_result_value(j_result, G_ERROR_PARAM)) {
