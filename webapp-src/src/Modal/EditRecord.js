@@ -303,7 +303,7 @@ class EditRecord extends Component {
               </div>
             } else if (pattern.type === "password") {
               if (!this.state.multiplePasswords) {
-                var keepOption = "";
+                var keepOption = "", valuePassword = "", valueConfirmPassword = "";
                 if (!this.state.add) {
                   keepOption = <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "keep")}>{i18next.t("modal.pwd-keep")}</a>;
                 }
@@ -317,25 +317,29 @@ class EditRecord extends Component {
                     <a className="dropdown-item" href="#" onClick={(e) => this.setPwd(e, pattern.name, "disabled")}>{i18next.t("modal.pwd-disabled")}</a>
                   </div>
                 </div>
+                if (this.state.listPwd[pattern.name]==="set") {
+                  valuePassword = elt||"";
+                  valueConfirmPassword = this.state.listEltConfirm[pattern.name]||"";
+                }
                 inputJsx =
                   <div>
                     {pwdDropdown}
                     <input type="password"
                            autoComplete="new-password"
-                           disabled={this.state.listPwd[pattern.name]==="disabled"||this.state.listPwd[pattern.name]==="keep"}
+                           disabled={this.state.listPwd[pattern.name]!=="set"}
                            className={"form-control" + validInput}
                            id={"modal-edit-" + pattern.name}
                            placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""}
                            onChange={(e) => this.changeElt(e, pattern.name)}
-                           value={this.state.listPwd[pattern.name]==="change"?elt||"":""}/>
+                           value={valuePassword}/>
                     <input type="password"
                            autoComplete="new-password"
-                           disabled={this.state.listPwd[pattern.name]==="disabled"||this.state.listPwd[pattern.name]==="keep"}
+                           disabled={this.state.listPwd[pattern.name]!=="set"}
                            className={"form-control" + validInput}
                            id={"modal-edit-confirm" + pattern.name}
                            placeholder={i18next.t(pattern.placeholderConfirm)}
                            onChange={(e) => this.changeEltConfirm(e, pattern.name)}
-                           value={this.state.listPwd[pattern.name]==="change"?this.state.listEltConfirm[pattern.name]||"":""} />
+                           value={valueConfirmPassword} />
                   </div>;
               } else {
                 var pwdJsx = [], counter = 0;
@@ -449,6 +453,16 @@ class EditRecord extends Component {
       data[name] = e.target.value;
     }
     this.setState({data: data});
+  }
+
+  changeEltConfirm(e, name, index = -1) {
+    var listEltConfirm = this.state.listEltConfirm;
+    if (index >= 0) {
+      listEltConfirm[name][index] = e.target.value;
+    } else {
+      listEltConfirm[name] = e.target.value;
+    }
+    this.setState({listEltConfirm: listEltConfirm});
   }
 
   setJwks(e, name) {
@@ -585,16 +599,6 @@ class EditRecord extends Component {
       }
     });
     return listPwd;
-  }
-
-  changeEltConfirm(e, name, index = -1) {
-    var listEltConfirm = this.state.listEltConfirm;
-    if (index >= 0) {
-      listEltConfirm[name][index] = e.target.value;
-    } else {
-      listEltConfirm[name] = e.target.value;
-    }
-    this.setState({listEltConfirm: listEltConfirm});
   }
 
   changeTextArea(e, name, list) {
