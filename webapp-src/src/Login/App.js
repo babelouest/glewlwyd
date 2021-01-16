@@ -96,6 +96,10 @@ class App extends Component {
         this.setState({scheme: message.scheme, identify: message.identify});
       } else if (message.type === "SessionClosed") {
         this.setState({endSession: false, sessionClosed: true});
+      } else if (message.type === "SessionReopen") {
+        this.setState({sessionClosed: false, newUser: true, currentUser: false, login_hint: ""}, () => {
+          this.initProfile(true);
+        });
       } else if (message.type === "ResetCredentials") {
         this.setState({selectAccount: false, newUser: false, refresh_login: false, prompt: false, resetCredentialsShow: true});
       } else if (message.type === 'message') {
@@ -507,7 +511,8 @@ class App extends Component {
                        selectAccount={this.state.selectAccount}
                        registration={this.state.registration}
                        resetCredentials={this.state.resetCredentials}
-                       resetCredentialsShow={this.state.resetCredentialsShow} />
+                       resetCredentialsShow={this.state.resetCredentialsShow} 
+                       sessionClosed={this.state.sessionClosed}/>
             </div>
           </div>
           <Notification loggedIn={true}/>

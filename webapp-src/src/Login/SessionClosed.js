@@ -12,6 +12,10 @@ class SessionClosed extends Component {
     };
   }
   
+  login() {
+    messageDispatcher.sendMessage('App', {type: 'SessionReopen'});
+  }
+  
   render() {
     return (
     <div>
@@ -24,6 +28,14 @@ class SessionClosed extends Component {
       <div className="row">
         <div className="col-md-12 text-center">
           <h4>{i18next.t("login.session-closed-message")}</h4>
+        </div>
+      </div>
+      <hr/>
+      <div className="row">
+        <div className="col-md-12 text-center">
+          <button type="button" className="btn btn-primary" onClick={this.login}>
+            {i18next.t("title-login")}
+          </button>
         </div>
       </div>
     </div>);

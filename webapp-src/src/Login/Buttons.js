@@ -23,7 +23,8 @@ class Buttons extends Component {
       selectAccount: props.selectAccount,
       registration: props.registration,
       resetCredentials: props.resetCredentials,
-      resetCredentialsShow: props.resetCredentialsShow
+      resetCredentialsShow: props.resetCredentialsShow,
+      sessionClosed: props.sessionClosed
     };
 
     this.clickLogout = this.clickLogout.bind(this);
@@ -53,7 +54,8 @@ class Buttons extends Component {
       selectAccount: nextProps.selectAccount,
       registration: nextProps.registration,
       resetCredentials: nextProps.resetCredentials,
-      resetCredentialsShow: nextProps.resetCredentialsShow
+      resetCredentialsShow: nextProps.resetCredentialsShow,
+      sessionClosed: nextProps.sessionClosed
     });
   }
 
@@ -210,7 +212,7 @@ class Buttons extends Component {
         });
       }
       var schemeList = [];
-      if (this.state.config.sessionSchemes && this.state.config.sessionSchemes.length) {
+      if (this.state.config.sessionSchemes && this.state.config.sessionSchemes.length && !this.state.sessionClosed) {
         if (!this.state.newUserScheme) {
           schemeList.push(
             <a key={0} className="dropdown-item active" href="#" onClick={(e) => this.changeSessionScheme(e, false)} alt={i18next.t("login.password-title")}>

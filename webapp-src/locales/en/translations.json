@@ -1002,7 +1002,7 @@
     "mod-glwd-oauth-par-duration": "request_uri duration (seconds)",
     "mod-glwd-oauth-par-duration-ph": "e.g. 90",
     "mod-glwd-restrict-scope-client-property": "Client restrict-scope property",
-    "mod-glwd-restrict-scope-client-property-ph": "e.g. restrict-scope"
+    "mod-glwd-restrict-scope-client-property-ph": "e.g. scope"
   },
   "profile": {
     "error-credential-message": "Please connect to the application",

@@ -1002,7 +1002,7 @@
     "mod-glwd-oauth-par-duration": "De maximale duur van de request_uri (seconden)",
     "mod-glwd-oauth-par-duration-ph": "Bijv.: 90",
     "mod-glwd-restrict-scope-client-property": "Client restrict-scope eigenschap",
-    "mod-glwd-restrict-scope-client-property-ph": "e.g. restrict-scope"
+    "mod-glwd-restrict-scope-client-property-ph": "e.g. scope"
   },
   "profile": {
     "error-credential-message": "Maak verbinding met de applicatie",
