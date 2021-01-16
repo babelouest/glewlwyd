@@ -99,6 +99,8 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["oauth-par-duration"]!==undefined?"":(props.mod.parameters["oauth-par-duration"] = 90);
     props.mod.parameters["oauth-par-required"]!==undefined?"":(props.mod.parameters["oauth-par-required"] = false);
     props.mod.parameters["oauth-par-request_uri-prefix"]!==undefined?"":(props.mod.parameters["oauth-par-request_uri-prefix"] = "urn:ietf:params:oauth:request_uri:");
+    props.mod.parameters["prompt-continue-client-property"]!==undefined?"":(props.mod.parameters["prompt-continue-client-property"] = "");
+    props.mod.parameters["restrict-scope-client-property"]!==undefined?"":(props.mod.parameters["restrict-scope-client-property"] = "");
 
     this.state = {
       config: props.config,
@@ -259,6 +261,8 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["oauth-par-duration"]!==undefined?"":(nextProps.mod.parameters["oauth-par-duration"] = 90);
     nextProps.mod.parameters["oauth-par-required"]!==undefined?"":(nextProps.mod.parameters["oauth-par-required"] = false);
     nextProps.mod.parameters["oauth-par-request_uri-prefix"]!==undefined?"":(nextProps.mod.parameters["oauth-par-request_uri-prefix"] = "urn:ietf:params:oauth:request_uri:");
+    nextProps.mod.parameters["prompt-continue-client-property"]!==undefined?"":(nextProps.mod.parameters["prompt-continue-client-property"] = "");
+    nextProps.mod.parameters["restrict-scope-client-property"]!==undefined?"":(nextProps.mod.parameters["restrict-scope-client-property"] = "");
 
     this.setState({
       config: nextProps.config,
@@ -1683,6 +1687,14 @@ class GlwdOIDCParams extends Component {
                       </div>
                     </div>
                     {allowedScopeList}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-restrict-scope-client-property">{i18next.t("admin.mod-glwd-restrict-scope-client-property")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-restrict-scope-client-property" onChange={(e) => this.changeParam(e, "restrict-scope-client-property")} value={this.state.mod.parameters["restrict-scope-client-property"]} placeholder={i18next.t("admin.mod-glwd-restrict-scope-client-property-ph")} />
                   </div>
                 </div>
               </div>
