@@ -29,10 +29,8 @@ char * code;
 
 START_TEST(test_oidc_hybrid_token_code_redirect_login)
 {
-  char * url = msprintf("%s/oidc/auth?response_type=%s&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
-  int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html");
-  o_free(url);
-  ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&client_id=" CLIENT "&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&client_id=" CLIENT "&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&g_continue&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
 }
 END_TEST
 
