@@ -241,6 +241,10 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("iss is mandatory must be a non empty string"));
       ret = G_ERROR_PARAM;
     }
+    if (json_object_get(j_params, "restrict-scope-client-property") != NULL && !json_is_string(json_object_get(j_params, "restrict-scope-client-property"))) {
+      json_array_append_new(j_error, json_string("restrict-scope-client-property is optional must be a string"));
+      ret = G_ERROR_PARAM;
+    }
     if (json_object_get(j_params, "jwks-uri") != NULL && !json_is_string(json_object_get(j_params, "jwks-uri"))) {
       json_array_append_new(j_error, json_string("jwks-uri is optional must be a string"));
       ret = G_ERROR_PARAM;
@@ -3757,7 +3761,7 @@ static json_t * validate_session_client_scope(struct _oidc_config * config, cons
   } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
     j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
   } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
-    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    j_return = json_pack("{sisO*}", "result", G_ERROR_UNAUTHORIZED, "session", json_object_get(j_session, "session"));
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_session_client_scope - Error glewlwyd_callback_check_session_valid");
     j_return = json_pack("{si}", "result", G_ERROR);
@@ -7612,15 +7616,24 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         }
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       } else {
-        // Scope is not allowed for this user
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - scope list '%s' is invalid for user '%s', origin: %s", scope, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
-        if (form_post) {
-          build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
+        if (json_object_get(json_object_get(j_session, "session"), "user") != NULL) {
+          // Scope is not allowed for this user
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - scope list '%s' is invalid for user '%s', origin: %s", scope, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
+          if (form_post) {
+            build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
+          } else {
+            response->status = 302;
+            redirect_url = msprintf("%s%serror=invalid_scope%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+            ulfius_add_header_to_response(response, "Location", redirect_url);
+            o_free(redirect_url);
+          }
         } else {
-          response->status = 302;
-          redirect_url = msprintf("%s%serror=invalid_scope%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          // Redirect to login page
+          u_map_put(&additional_parameters, "prompt", prompt);
+          redirect_url = get_login_url(config, request, "auth", client_id, scope, &additional_parameters);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
+          response->status = 302;
         }
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       }

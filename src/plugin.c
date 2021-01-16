@@ -96,7 +96,7 @@ json_t * glewlwyd_callback_check_session_valid(struct config_plugin * config, co
         if (check_result_value(j_scope_allowed, G_OK)) {
           j_return = json_pack("{sis{sOsO}}", "result", G_OK, "session", "scope", json_object_get(j_scope_allowed, "scheme"), "user", json_object_get(j_user, "user"));
         } else if (check_result_value(j_scope_allowed, G_ERROR_UNAUTHORIZED) || check_result_value(j_scope_allowed, G_ERROR_NOT_FOUND)) {
-          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          j_return = json_pack("{sis{sO}}", "result", G_ERROR_UNAUTHORIZED, "session", "user", json_object_get(j_user, "user"));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_session_valid - Error get_validated_auth_scheme_list_from_scope_list");
           j_return = json_pack("{si}", "result", G_ERROR);
@@ -106,7 +106,7 @@ json_t * glewlwyd_callback_check_session_valid(struct config_plugin * config, co
         j_return = json_pack("{sis{sO}}", "result", G_OK, "session", "user", json_object_get(j_user, "user"));
       }
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
-      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_session_valid - Error get_current_user_for_session");
       j_return = json_pack("{si}", "result", G_ERROR);
