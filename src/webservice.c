@@ -1819,7 +1819,7 @@ int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_r
   json_t * j_client;
   
   j_client = get_client(config, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "source"));
-  if (check_result_value(j_client, G_OK)) {
+  if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
     ulfius_set_json_body_response(response, 200, json_object_get(j_client, "client"));
   } else if (check_result_value(j_client, G_ERROR_NOT_FOUND)) {
     response->status = 404;
