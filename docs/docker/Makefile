@@ -1,5 +1,5 @@
 GLEWLWYD_VERSION=$(shell curl $(AUTH_HEADER) -s https://api.github.com/repos/babelouest/glewlwyd/releases/latest | grep tag_name | cut -d '"' -f 4 | cut -c 2-)
-ALPINE_VERSION=3.12.3
+ALPINE_VERSION=3.13.0
 
 build:
 	docker build -t babelouest/glewlwyd:$(GLEWLWYD_VERSION) --build-arg GLEWLWYD_VERSION=$(GLEWLWYD_VERSION) --build-arg ALPINE_VERSION=$(ALPINE_VERSION) .
