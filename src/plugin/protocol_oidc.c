@@ -7460,7 +7460,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
       }
     } else {
       j_client = check_client_valid_without_secret(config, client_id, redirect_uri, auth_type, ip_source);
-      if (!check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
+      if (!check_result_value(j_client, G_OK)) {
         // client is not authorized
         if (form_post) {
           build_form_post_error_response(map, response, "error", "unauthorized_client", NULL);
@@ -8968,7 +8968,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
       j_client = check_client_valid(config, client_id, client_secret, redirect_uri, auth_type, 0, ip_source);
     }
 
-    if (!check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
+    if (!check_result_value(j_client, G_OK)) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "check_pushed_authorization_request oidc - client '%s' is invalid, origin: %s", client_id, ip_source);
       response->status = 403;
       break;
