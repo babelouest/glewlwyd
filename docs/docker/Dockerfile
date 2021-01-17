@@ -47,6 +47,7 @@ RUN apk add --no-cache \
     libpq \
     oath-toolkit-liboath \
     mariadb-connector-c \
+    libmicrohttpd \
     bash
 
 COPY --from=builder /usr/lib/libcbor.* /usr/lib/
