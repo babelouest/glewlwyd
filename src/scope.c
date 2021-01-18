@@ -377,8 +377,9 @@ static json_t * is_scheme_valid_for_session(struct config_elements * config, jso
 
 int is_scope_list_valid_for_session(struct config_elements * config, const char * scope_list, const char * session_uid) {
   json_t * j_validated_scope_list = get_validated_auth_scheme_list_from_scope_list(config, scope_list, session_uid), * j_scope, * j_group, * j_scheme;
-  int ret = G_OK, ret_group;
+  int ret = G_OK;
   size_t index_scheme;
+  json_int_t ret_group;
   const char * key_group, * key_scope;
   
   if (check_result_value(j_validated_scope_list, G_OK)) {
@@ -388,13 +389,13 @@ int is_scope_list_valid_for_session(struct config_elements * config, const char 
           ret = G_ERROR_UNAUTHORIZED;
         } else {
           json_object_foreach(json_object_get(j_scope, "schemes"), key_group, j_group) {
-            ret_group = G_ERROR_UNAUTHORIZED;
+            ret_group = 0;
             json_array_foreach(j_group, index_scheme, j_scheme) {
               if (json_object_get(j_scheme, "scheme_authenticated") == json_true()) {
-                ret_group = G_OK;
+                ret_group++;
               }
             }
-            if (ret_group == G_ERROR_UNAUTHORIZED) {
+            if (ret_group < json_integer_value(json_object_get(json_object_get(j_scope, "scheme_required"), key_group))) {
               ret = G_ERROR_UNAUTHORIZED;
             }
           }
