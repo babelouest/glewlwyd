@@ -1,5 +1,10 @@
 # Glewlwyd Changelog
 
+## 2.5.2
+
+- Fix annoying bug in scheme validation during login
+- Fix scheme verification bug
+
 ## 2.5.1
 
 - Add `identify` action to authenticate via schemes oauth2 or certificate without giving the username
