@@ -349,7 +349,6 @@ class App extends Component {
               mustRegisterScheme = false;
               if (curScheme.scheme_authenticated) {
                 groupSchemeAuthenticated++;
-                scheme = false;
               } else if ((!scheme || scheme.scheme_last_login < curScheme.scheme_last_login) && curScheme.scheme_registered) {
                 scheme = curScheme;
               } else if (!curScheme.scheme_registered && !scheme) {
