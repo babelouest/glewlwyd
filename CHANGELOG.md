@@ -4,6 +4,7 @@
 
 - Fix annoying bug in scheme validation during login
 - Fix scheme verification bug
+- Fix docker image builder
 
 ## 2.5.1
 
