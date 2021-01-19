@@ -3,6 +3,8 @@ FROM alpine:latest AS builder
 ARG GLEWLWYD_VERSION
 ARG ALPINE_VERSION
 
+COPY glewlwyd-full_${GLEWLWYD_VERSION}_alpine_${ALPINE_VERSION}_x86_64.tar.gz /opt/glewlwyd.tar.gz
+
 # Install required packages
 RUN apk add --no-cache \
     git \
@@ -11,9 +13,9 @@ RUN apk add --no-cache \
     wget \
     gcc \
     g++ \
-    libmicrohttpd-dev \
-    jansson-dev \
-    gnutls-dev \
+    libmicrohttpd \
+    jansson \
+    gnutls \
     wget \
     cmake \
     autoconf \
@@ -23,15 +25,14 @@ RUN apk add --no-cache \
     tar xf libcbor.tar.gz && cd libcbor-0.7.0 && mkdir build && cd build && \
     cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib .. && make && make install) && \
     cd /opt && \
-    wget https://github.com/babelouest/glewlwyd/releases/download/v${GLEWLWYD_VERSION}/glewlwyd-full_${GLEWLWYD_VERSION}_alpine_${ALPINE_VERSION}_x86_64.tar.gz -O glewlwyd.tar.gz && \
-    tar xvf ./glewlwyd.tar.gz && \
-    tar xvf liborcania_*.tar.gz -C /usr/ --strip 1 && \
-    tar xvf libyder_*.tar.gz -C /usr/ --strip 1 && \
-    tar xvf libulfius_*.tar.gz -C /usr/ --strip 1 && \
-    tar xvf libhoel_*.tar.gz -C /usr/ --strip 1 && \
-    tar xvf librhonabwy_*.tar.gz -C /usr/ --strip 1 && \
-    tar xvf libiddawc_*.tar.gz -C /usr/ --strip 1 && \
-    tar xvf glewlwyd_*.tar.gz -C /usr/ --strip 1
+    tar xf ./glewlwyd.tar.gz && \
+    tar xf liborcania_*.tar.gz -C /usr/ --strip 1 && \
+    tar xf libyder_*.tar.gz -C /usr/ --strip 1 && \
+    tar xf libulfius_*.tar.gz -C /usr/ --strip 1 && \
+    tar xf libhoel_*.tar.gz -C /usr/ --strip 1 && \
+    tar xf librhonabwy_*.tar.gz -C /usr/ --strip 1 && \
+    tar xf libiddawc_*.tar.gz -C /usr/ --strip 1 && \
+    tar xf glewlwyd_*.tar.gz -C /usr/ --strip 1
 
 
 FROM alpine:latest AS runner
