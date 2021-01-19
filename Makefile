@@ -22,7 +22,7 @@
 GLEWLWYD_SOURCE=./src
 GLEWLWYD_TESTS=./test
 GLEWLWYD_DOCS=./docs
-
+GLEWLWYD_DOCKER=./docs/docker
 all:
 	cd $(GLEWLWYD_SOURCE) && $(MAKE) $*
 
@@ -44,6 +44,9 @@ check:
 clean:
 	cd $(GLEWLWYD_SOURCE) && $(MAKE) clean
 	cd $(GLEWLWYD_TESTS) && $(MAKE) clean
+	cd $(GLEWLWYD_DOCKER) && $(MAKE) clean
+	docker rmi -f babelouest/glewlwyd:src babelouest/glewlwyd:ci
+	docker system prune -f
 
 docker:
 	docker build -t babelouest/glewlwyd:src .
