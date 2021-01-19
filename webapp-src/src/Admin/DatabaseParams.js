@@ -369,6 +369,7 @@ class DatabaseParams extends Component {
             <button type="button" className="btn btn-secondary" onClick={this.addDataFormat} title={i18next.t("admin.mod-data-format-add")}>
               <i className="fas fa-plus"></i>
             </button>
+            <hr />
             {dataFormat}
           </div>
         </div>
