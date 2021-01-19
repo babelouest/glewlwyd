@@ -1187,7 +1187,7 @@
     "scheme-oauth2-registration-invalid": "Registration invalid",
     "update-email-modal-title": "Update e-mail address",
     "update-email-modal-message": "Please enter new e-mail address",
-    "update-email-modal-ph": "e.g. alice@rxample.com",
+    "update-email-modal-ph": "e.g. alice@example.com",
     "update-email-modal-complete-message": "A message has been sent to {{email}}, please confirm by clicking on the link en the message",
     "update-email-success": "E-mail address has been updated",
     "reset-credentials-code-reset-title": "Reset credentials - Initialize recovery code",

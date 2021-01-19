@@ -1187,7 +1187,7 @@
     "scheme-oauth2-registration-invalid": "Enregistrement invalide",
     "update-email-modal-title": "Mettre à jour l'adresse courriel",
     "update-email-modal-message": "Veuillez entrer la nouvelle adresse courriel",
-    "update-email-modal-ph": "Ex: alice@rxample.com",
+    "update-email-modal-ph": "Ex: alice@example.com",
     "update-email-modal-complete-message": "Un message de conformation a été envoyé à l'adresse {{email}}, veuillez cliquer sur le lien pour confirmer",
     "update-email-success": "L'adresse courriel a été mise à jour",
     "reset-credentials-code-reset-title": "Récupérer ses informations d'authentification - Initialiser les codes de récupération",
