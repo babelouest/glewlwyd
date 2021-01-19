@@ -31,7 +31,19 @@ module.exports = {
 		compress: true,
 		port: 3000,
 		host: 'localhost',
-		open: true
+		open: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:4593/',
+        secure: false,
+        changeOrigin: true
+      },
+      '/config': {
+        target: 'http://localhost:4593/',
+        secure: false,
+        changeOrigin: true
+      }
+    }
 	},
 
 	module: {
