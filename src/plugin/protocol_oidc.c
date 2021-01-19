@@ -2950,6 +2950,7 @@ static json_t * check_client_valid(struct _oidc_config * config,
                                    const char * ip_source) {
   json_t * j_client, * j_return;
   int uri_found = 0, authorization_type_enabled;
+  const char * error_description = NULL;
 
   if (client_secret != NULL) {
     j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, client_id, client_secret);
@@ -3015,14 +3016,16 @@ static json_t * check_client_valid(struct _oidc_config * config,
       }
       if (!uri_found) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid - oidc - Error, redirect_uri '%s' is invalid for the client '%s', origin: %s", redirect_uri, client_id, ip_source);
+        error_description = "redirect_uri invalid";
       }
       if (!authorization_type_enabled) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid - oidc - Error, authorization type %d is not enabled for the client '%s', origin: %s", authorization_type, client_id, ip_source);
+        error_description = "authorization type invalid";
       }
       if (uri_found && authorization_type_enabled) {
         j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
       } else {
-        j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+        j_return = json_pack("{siss*}", "result", G_ERROR_PARAM, "error_description", error_description);
       }
     }
   } else {
@@ -7302,7 +7305,8 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
        * id_token_hash = NULL,
        * rar_list = NULL,
        * scope_reduced = NULL,
-       code_challenge_stored[GLEWLWYD_CODE_CHALLENGE_MAX_LENGTH + 1] = {0};
+       * tmp = NULL,
+         code_challenge_stored[GLEWLWYD_CODE_CHALLENGE_MAX_LENGTH + 1] = {0};
   const char * client_id = NULL,
              * client_secret = NULL,
              * redirect_uri = NULL,
@@ -7401,10 +7405,10 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
       if (j_claims == NULL) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - error claims parameter not in JSON format, origin: %s", ip_source);
         if (form_post) {
-          build_form_post_error_response(map, response, "error", "invalid_request", NULL);
+          build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "claims parameter not in JSON format", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s%serror=invalid_request%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          redirect_url = msprintf("%s%serror=invalid_request%s&error_description=claims+parameter+not+in+JSON+format", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -7448,12 +7452,14 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
       if (!check_result_value(j_client, G_OK) || !is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
         // client is not authorized
         if (form_post) {
-          build_form_post_error_response(map, response, "error", "unauthorized_client", NULL);
+          build_form_post_error_response(map, response, "error", "unauthorized_client", "error_description", json_string_value(json_object_get(j_client, "error_description")), NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s%serror=unauthorized_client%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          tmp = str_replace(json_string_value(json_object_get(j_client, "error_description")), " ", "+");
+          redirect_url = msprintf("%s%serror=unauthorized_client%s&error_description=%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, tmp);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
+          o_free(tmp);
         }
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         break;
@@ -7490,10 +7496,10 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
     if (j_claims != NULL && parse_claims_request(j_claims) != G_OK) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - error parsing claims parameter, origin: %s", ip_source);
       if (form_post) {
-        build_form_post_error_response(map, response, "error", "invalid_request", NULL);
+        build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "claims parameter invalid format", NULL);
       } else {
         response->status = 302;
-        redirect_url = msprintf("%s%serror=invalid_request%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+        redirect_url = msprintf("%s%serror=invalid_request%s&error_description=claims+parameter+invalid+format", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       }
@@ -7503,6 +7509,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
 
     // Check code_challenge if necessary
     if ((res = is_code_challenge_valid(config, code_challenge, code_challenge_method, code_challenge_stored)) == G_ERROR_PARAM) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - code challenge invalid");
       if (form_post) {
         build_form_post_error_response(map, response, "error", "invalid_request", NULL);
       } else {
@@ -7582,9 +7589,8 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
       j_result = reduce_scope(scope, json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "restrict-scope-client-property"))));
       if (check_result_value(j_result, G_OK)) {
         scope_reduced = o_strdup(json_string_value(json_object_get(j_result, "scope")));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "grut 0 %s", scope_reduced);
       } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_device_authorization - error client %s is not allowed to claim scopes '%s'", client_id, scope);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - error client %s is not allowed to claim scopes '%s'", client_id, scope);
         y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
@@ -7739,10 +7745,10 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
             if (0 != o_strcmp(id_token_hash, json_string_value(json_object_get(json_object_get(j_last_token, "id_token"), "token_hash")))) {
               y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - id_token_hint was not the last one provided to client '%s' for user '%s', origin: %s", client_id, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
               if (form_post) {
-                build_form_post_error_response(map, response, "error", "invalid_request", NULL);
+                build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "id_token invalid", NULL);
               } else {
                 response->status = 302;
-                redirect_url = msprintf("%s%serror=invalid_request%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+                redirect_url = msprintf("%s%serror=invalid_request%s&error_description=id_token+invalid", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 o_free(redirect_url);
               }
@@ -7752,10 +7758,10 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
           } else if (check_result_value(j_last_token, G_ERROR_NOT_FOUND)) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - no id_token was provided to client '%s' for user '%s', origin: %s", client_id, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), ip_source);
             if (form_post) {
-              build_form_post_error_response(map, response, "error", "invalid_request", NULL);
+              build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "id_token mandatory", NULL);
             } else {
               response->status = 302;
-              redirect_url = msprintf("%s%serror=invalid_request%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+              redirect_url = msprintf("%s%serror=invalid_request%s&error_description=id_token+mandatory", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
               ulfius_add_header_to_response(response, "Location", redirect_url);
               o_free(redirect_url);
             }
@@ -7777,10 +7783,10 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         } else {
           y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - id_token has invalid content or signature, origin: %s", ip_source);
           if (form_post) {
-            build_form_post_error_response(map, response, "error", "invalid_request", NULL);
+            build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "id_token invalid", NULL);
           } else {
             response->status = 302;
-            redirect_url = msprintf("%s%serror=invalid_request%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+            redirect_url = msprintf("%s%serror=invalid_request%s&error_description=id_token+invalid", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
           }
@@ -7790,10 +7796,10 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
       } else {
         y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - no id_token provided in the request, origin: %s", ip_source);
         if (form_post) {
-          build_form_post_error_response(map, response, "error", "invalid_request", NULL);
+          build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "id_token mandatory", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s%serror=invalid_request%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          redirect_url = msprintf("%s%serror=invalid_request%s&error_description=id_token+mandatory", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -7861,9 +7867,9 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
     if ((auth_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG) && !o_strlen(nonce)) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - nonce required, origin: %s", ip_source);
       if (form_post) {
-        build_form_post_error_response(map, response, "error", "invalid_request", NULL);
+        build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "nonce required", NULL);
       } else {
-        redirect_url = msprintf("%s%serror=invalid_request", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+        redirect_url = msprintf("%s%serror=invalid_request&error_description=nonce+required", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
         response->status = 302;
@@ -7877,10 +7883,10 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
       if (check_result_value(j_rar_filtered_result, G_ERROR_UNAUTHORIZED)) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - authorization_details is invalid for client %s, origin: %s", client_id, ip_source);
         if (form_post) {
-          build_form_post_error_response(map, response, "error", "invalid_request", NULL);
+          build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "authorization_details is invalid for client", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s%serror=invalid_request%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          redirect_url = msprintf("%s%serror=invalid_request%s&error_description=authorization_details+is+invalid+for+client", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -7897,12 +7903,12 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
           break;
         }
-      } else if (!check_result_value(j_rar_filtered_result, G_OK)) {
+      } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - Error authorization_details_filter");
         if (form_post) {
-          build_form_post_error_response(map, response, "error", "server_error", NULL);
+          build_form_post_error_response(map, response, "error", "server_error", "error_description", "authorization_details invalid", NULL);
         } else {
-          redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+          redirect_url = msprintf("%s%serror=server_error&error_description=authorization_details+invalid", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
           response->status = 302;
@@ -7929,9 +7935,9 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
       } else {
         y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - nonce required, origin: %s", ip_source);
         if (form_post) {
-          build_form_post_error_response(map, response, "error", "invalid_request", NULL);
+          build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "nonce required", NULL);
         } else {
-          redirect_url = msprintf("%s%serror=invalid_request", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+          redirect_url = msprintf("%s%serror=invalid_request&error_description=nonce+required", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
           response->status = 302;
@@ -9758,10 +9764,10 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - Invalid authorization_details, origin: %s", ip_source);
       if (u_map_get(map, "redirect_uri") != NULL) {
         if (form_post) {
-          build_form_post_error_response(map, response, "error", "invalid_request", NULL);
+          build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "Invalid authorization_details", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s#error=invalid_request%s", u_map_get(map, "redirect_uri"), state);
+          redirect_url = msprintf("%s#error=invalid_request%s&error_description=Invalid+authorization_details", u_map_get(map, "redirect_uri"), state);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -9791,10 +9797,10 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       // parameters request and request_uri at the same time is forbidden
       if (u_map_get(map, "redirect_uri") != NULL) {
         if (form_post) {
-          build_form_post_error_response(map, response, "error", "invalid_request", NULL);
+          build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "request_uri forbidden", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s#error=invalid_request%s", u_map_get(map, "redirect_uri"), state);
+          redirect_url = msprintf("%s#error=invalid_request%s&error_description=request_uri+forbidden", u_map_get(map, "redirect_uri"), state);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -9807,10 +9813,10 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - Error getting request from uri %s, origin: %s", u_map_get(map, "request_uri"), ip_source);
         if (u_map_get(map, "redirect_uri") != NULL) {
           if (form_post) {
-            build_form_post_error_response(map, response, "error", "invalid_request", NULL);
+            build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "request_uri invalid", NULL);
           } else {
             response->status = 302;
-            redirect_url = msprintf("%s#error=invalid_request%s", u_map_get(map, "redirect_uri"), state);
+            redirect_url = msprintf("%s#error=invalid_request%s&error_description=request_uri+invalid", u_map_get(map, "redirect_uri"), state);
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
           }
@@ -9899,10 +9905,10 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
     y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - Invalid authorization_details content, origin: %s", ip_source);
     if (u_map_get(map, "redirect_uri") != NULL) {
       if (form_post) {
-        build_form_post_error_response(map, response, "error", "invalid_request", NULL);
+        build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "Invalid authorization_details content", NULL);
       } else {
         response->status = 302;
-        redirect_url = msprintf("%s#error=invalid_request%s", u_map_get(map, "redirect_uri"), state);
+        redirect_url = msprintf("%s#error=invalid_request%s&error_description=Invalid+authorization_details+content", u_map_get(map, "redirect_uri"), state);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       }
@@ -9916,10 +9922,10 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
     if (!o_strlen(response_type)) {
       if (redirect_uri != NULL) {
         if (form_post) {
-          build_form_post_error_response(map, response, "error", "invalid_request", NULL);
+          build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "response_type missing", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s#error=invalid_request%s", redirect_uri, state);
+          redirect_url = msprintf("%s#error=invalid_request%s&error_description=response_type+missing", redirect_uri, state);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
