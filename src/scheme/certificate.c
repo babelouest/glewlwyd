@@ -1702,6 +1702,7 @@ json_t * user_auth_scheme_module_identify(struct config_module * config, const s
             j_return = json_pack("{si}", "result", G_ERROR);
           }
         } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_identify certificate - use-scheme-storage isn't set");
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
       } else {
@@ -1719,6 +1720,7 @@ json_t * user_auth_scheme_module_identify(struct config_module * config, const s
             j_return = json_pack("{si}", "result", G_ERROR);
           }
         } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_identify certificate - use-scheme-storage isn't set");
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
       }
