@@ -361,12 +361,46 @@ class App extends Component {
           apiManager.glewlwydRequest("/mod/user/" + encodeURIComponent(message.mod.name), "PUT", message.mod)
           .then(() => {
             return apiManager.glewlwydRequest("/mod/user/" + encodeURIComponent(message.previousMod.name), "PUT", message.previousMod)
-            .fail(() => {
+            .fail((err) => {
               messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+              if (err.status !== 401) {
+                messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+              } else {
+                this.setState({
+                  loggedIn: false,
+                  modTypes: {user: [], client: [], scheme: [], plugin: []},
+                  users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                  clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                  scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                  apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                  modUsers: [],
+                  modClients: [],
+                  modSchemes: [],
+                  plugins: [],
+                  invalidCredentialMessage: true
+                });
+              }
             })
           })
-          .fail(() => {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+          .fail((err) => {
+            if (err.status !== 401) {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+            } else {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+              this.setState({
+                loggedIn: false,
+                modTypes: {user: [], client: [], scheme: [], plugin: []},
+                users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                modUsers: [],
+                modClients: [],
+                modSchemes: [],
+                plugins: [],
+                invalidCredentialMessage: true
+              });
+            }
           })
           .always(() => {
             this.fetchUserMods()
@@ -376,12 +410,46 @@ class App extends Component {
           apiManager.glewlwydRequest("/mod/client/" + encodeURIComponent(message.mod.name), "PUT", message.mod)
           .then(() => {
             return apiManager.glewlwydRequest("/mod/client/" + encodeURIComponent(message.previousMod.name), "PUT", message.previousMod)
-            .fail(() => {
+            .fail((err) => {
               messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
-            })
+              if (err.status !== 401) {
+                messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+              } else {
+                this.setState({
+                  loggedIn: false,
+                  modTypes: {user: [], client: [], scheme: [], plugin: []},
+                  users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                  clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                  scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                  apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                  modUsers: [],
+                  modClients: [],
+                  modSchemes: [],
+                  plugins: [],
+                  invalidCredentialMessage: true
+                });
+              }
+            });
           })
-          .fail(() => {
+          .fail((err) => {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+            if (err.status !== 401) {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+            } else {
+              this.setState({
+                loggedIn: false,
+                modTypes: {user: [], client: [], scheme: [], plugin: []},
+                users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                modUsers: [],
+                modClients: [],
+                modSchemes: [],
+                plugins: [],
+                invalidCredentialMessage: true
+              });
+            }
           })
           .always(() => {
             this.fetchClientMods()
@@ -528,7 +596,8 @@ class App extends Component {
           modUsers: [],
           modClients: [],
           modSchemes: [],
-          plugins: []
+          plugins: [],
+          invalidCredentialMessage: true
         });
       }
     });
@@ -555,7 +624,8 @@ class App extends Component {
           modUsers: [],
           modClients: [],
           modSchemes: [],
-          plugins: []
+          plugins: [],
+          invalidCredentialMessage: true
         });
       }
     });
@@ -582,7 +652,8 @@ class App extends Component {
           modUsers: [],
           modClients: [],
           modSchemes: [],
-          plugins: []
+          plugins: [],
+          invalidCredentialMessage: true
         });
       }
     });
@@ -631,7 +702,8 @@ class App extends Component {
           modUsers: [],
           modClients: [],
           modSchemes: [],
-          plugins: []
+          plugins: [],
+          invalidCredentialMessage: true
         });
       }
     });
@@ -655,7 +727,8 @@ class App extends Component {
           modUsers: [],
           modClients: [],
           modSchemes: [],
-          plugins: []
+          plugins: [],
+          invalidCredentialMessage: true
         });
       }
     });
@@ -679,7 +752,8 @@ class App extends Component {
           modUsers: [],
           modClients: [],
           modSchemes: [],
-          plugins: []
+          plugins: [],
+          invalidCredentialMessage: true
         });
       }
     });
@@ -703,7 +777,8 @@ class App extends Component {
           modUsers: [],
           modClients: [],
           modSchemes: [],
-          plugins: []
+          plugins: [],
+          invalidCredentialMessage: true
         });
       }
     });
@@ -727,7 +802,8 @@ class App extends Component {
           modUsers: [],
           modClients: [],
           modSchemes: [],
-          plugins: []
+          plugins: [],
+          invalidCredentialMessage: true
         });
       }
     });
@@ -755,7 +831,8 @@ class App extends Component {
           modUsers: [],
           modClients: [],
           modSchemes: [],
-          plugins: []
+          plugins: [],
+          invalidCredentialMessage: true
         });
       }
     });
@@ -767,8 +844,26 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-user")});
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-user")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
       })
       .always(() => {
         this.fetchUsers()
@@ -791,8 +886,26 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-client")});
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-client")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
       })
       .always(() => {
         this.fetchClients()
@@ -815,8 +928,26 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-scope")});
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-scope")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
       })
       .always(() => {
         this.fetchScopes()
@@ -839,8 +970,26 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-set-user")});
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-set-user")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
       })
       .always(() => {
         this.fetchUsers()
@@ -865,8 +1014,26 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-set-client")});
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-set-client")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
       })
       .always(() => {
         this.fetchClients()
@@ -891,8 +1058,26 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-set-scope")});
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-set-scope")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
       })
       .always(() => {
         this.fetchScopes()
@@ -918,8 +1103,26 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-user")});
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-user")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
       })
       .always(() => {
         this.fetchUsers()
@@ -943,8 +1146,26 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-client")});
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-client")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
       })
       .always(() => {
         this.fetchClients()
@@ -967,8 +1188,26 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-scope")});
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-scope")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
       })
       .always(() => {
         this.fetchScopes()
@@ -1070,10 +1309,27 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-mod")});
       })
       .fail((err) => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
         if (err.status === 400) {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+        } else if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
         }
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
       })
       .always(() => {
         this.fetchUserMods()
@@ -1098,24 +1354,59 @@ class App extends Component {
           messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
         })
         .fail((err) => {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
           if (err.status === 400) {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
-          }
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
-        })
-        .always(() => {
-          this.fetchUserMods()
-          .always(() => {
-            this.setState({ModModal: {data: {}, callback: false, types: [], savedRecord: false, savedIndex: -1}}, () => {
-              $("#editModModal").modal("hide");
-              this.fetchUsers();
+          } else if (err.status !== 401) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          } else {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+            this.setState({
+              loggedIn: false,
+              modTypes: {user: [], client: [], scheme: [], plugin: []},
+              users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              modUsers: [],
+              modClients: [],
+              modSchemes: [],
+              plugins: [],
+              invalidCredentialMessage: true
             });
+          }
+        })
+      })
+      .fail((err) => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
+      })
+      .always(() => {
+        this.fetchUserMods()
+        .always(() => {
+          this.setState({ModModal: {data: {}, callback: false, types: [], savedRecord: false, savedIndex: -1}}, () => {
+            $("#editModModal").modal("hide");
+            this.fetchUsers();
           });
         });
-      })
-      .fail(() => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
-      })
+      });
     } else {
       var modUsers = this.state.modUsers;
       modUsers[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
@@ -1131,8 +1422,26 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-mod")});
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-mod")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
       })
       .always(() => {
         this.fetchUserMods()
@@ -1157,10 +1466,27 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-mod")});
       })
       .fail((err) => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
         if (err.status === 400) {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+        } else if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
         }
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
       })
       .always(() => {
         this.fetchClientMods()
@@ -1185,24 +1511,59 @@ class App extends Component {
           messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
         })
         .fail((err) => {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
           if (err.status === 400) {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
-          }
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
-        })
-        .always(() => {
-          this.fetchClientMods()
-          .always(() => {
-            this.setState({ModModal: {data: {}, callback: false, types: []}, savedRecord: false, savedIndex: -1}, () => {
-              $("#editModModal").modal("hide");
-              this.fetchClients();
+          } else if (err.status !== 401) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          } else {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+            this.setState({
+              loggedIn: false,
+              modTypes: {user: [], client: [], scheme: [], plugin: []},
+              users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              modUsers: [],
+              modClients: [],
+              modSchemes: [],
+              plugins: [],
+              invalidCredentialMessage: true
             });
+          }
+        })
+      })
+      .fail((err) => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
+      })
+      .always(() => {
+        this.fetchClientMods()
+        .always(() => {
+          this.setState({ModModal: {data: {}, callback: false, types: []}, savedRecord: false, savedIndex: -1}, () => {
+            $("#editModModal").modal("hide");
+            this.fetchClients();
           });
         });
-      })
-      .fail(() => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
-      })
+      });
     } else {
       var modClients = this.state.modClients;
       modClients[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
@@ -1218,8 +1579,26 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-mod")});
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-mod")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
       })
       .always(() => {
         this.fetchClientMods()
@@ -1244,10 +1623,27 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-mod")});
       })
       .fail((err) => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
         if (err.status === 400) {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+        } else if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
         }
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
       })
       .always(() => {
         this.fetchSchemeMods()
@@ -1271,17 +1667,52 @@ class App extends Component {
             messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
           })
           .fail((err) => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
             if (err.status === 400) {
               messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+            } else if (err.status !== 401) {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+            } else {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+              this.setState({
+                loggedIn: false,
+                modTypes: {user: [], client: [], scheme: [], plugin: []},
+                users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                modUsers: [],
+                modClients: [],
+                modSchemes: [],
+                plugins: [],
+                invalidCredentialMessage: true
+              });
             }
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
           })
           .always(() => {
             this.fetchSchemeMods()
           });
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
       })
       .always(() => {
         this.setState({ModModal: {data: {}, callback: false, types: []}, savedRecord: false, savedIndex: -1}, () => {
@@ -1303,8 +1734,26 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-mod")});
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-mod")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
       })
       .always(() => {
         this.fetchSchemeMods()
@@ -1331,6 +1780,23 @@ class App extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
         if (err.status === 400) {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+        } else if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
         }
       })
       .always(() => {
@@ -1356,21 +1822,56 @@ class App extends Component {
         })
         .fail((err) => {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
-          if (err.status === 400) {
+          if (err.status !== 401) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          } else if (err.status === 400) {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+          } else {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+            this.setState({
+              loggedIn: false,
+              modTypes: {user: [], client: [], scheme: [], plugin: []},
+              users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              modUsers: [],
+              modClients: [],
+              modSchemes: [],
+              plugins: [],
+              invalidCredentialMessage: true
+            });
           }
         })
-        .always(() => {
-          this.fetchPlugins()
-          .always(() => {
-            this.setState({ModModal: {data: {}, callback: false, types: []}, savedRecord: false, savedIndex: -1}, () => {
-              $("#editPluginModal").modal("hide");
-            });
-          });
-        })
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
+      })
+      .always(() => {
+        this.fetchPlugins()
+        .always(() => {
+          this.setState({ModModal: {data: {}, callback: false, types: []}, savedRecord: false, savedIndex: -1}, () => {
+            $("#editPluginModal").modal("hide");
+          });
+        });
       })
     } else {
       var plugins = this.state.plugins;
@@ -1387,8 +1888,26 @@ class App extends Component {
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-mod")});
       })
-      .fail(() => {
+      .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-mod")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
       })
       .always(() => {
         this.fetchPlugins()
@@ -1417,8 +1936,25 @@ class App extends Component {
       });
       this.fetchApiKeys();
     })
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    .fail((err) => {
+      if (err.status !== 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+        this.setState({
+          loggedIn: false,
+          modTypes: {user: [], client: [], scheme: [], plugin: []},
+          users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          modUsers: [],
+          modClients: [],
+          modSchemes: [],
+          plugins: [],
+          invalidCredentialMessage: true
+        });
+      }
     })
   }
 
@@ -1427,8 +1963,25 @@ class App extends Component {
     .then((key) => {
       messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-api-key")});
     })
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    .fail((err) => {
+      if (err.status !== 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+        this.setState({
+          loggedIn: false,
+          modTypes: {user: [], client: [], scheme: [], plugin: []},
+          users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          modUsers: [],
+          modClients: [],
+          modSchemes: [],
+          plugins: [],
+          invalidCredentialMessage: true
+        });
+      }
     })
     .always(() => {
       $("#confirmModal").modal("hide");

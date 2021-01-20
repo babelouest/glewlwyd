@@ -78,6 +78,7 @@ class SchemeWebauthn extends Component {
       })
       .fail((err) => {
         if (err.status === 401) {
+          messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
           this.setState({registration: i18next.t("profile.scheme-webauthn-register-status-not-registered"), registered: false, credentialList: [], credAssertion: false});
         } else {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
@@ -179,7 +180,9 @@ class SchemeWebauthn extends Component {
           }
         })
         .fail((err, textStatus) => {
-          if (err.status === 400) {
+          if (err.status === 401) {
+            messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+          } else if (err.status === 400) {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-register-credential-error")});
             messageDispatcher.sendMessage('App', {
               type: 'message',
@@ -201,7 +204,11 @@ class SchemeWebauthn extends Component {
       });
     })
     .fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      if (err.status === 401) {
+        messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
     });
   }
   
@@ -276,6 +283,7 @@ class SchemeWebauthn extends Component {
         })
         .fail((err) => {
           if (err.status === 401) {
+            messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-webauthn-assertion-error")});
           } else {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
@@ -292,7 +300,11 @@ class SchemeWebauthn extends Component {
       });
     })
     .fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      if (err.status === 401) {
+        messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
     });
   }
 
@@ -324,7 +336,11 @@ class SchemeWebauthn extends Component {
       });
     })
     .fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      if (err.status === 401) {
+        messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
     });
   }
   
@@ -350,7 +366,11 @@ class SchemeWebauthn extends Component {
       this.getCredentials();
     })
     .fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      if (err.status === 401) {
+        messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
     });
   }
 
@@ -385,7 +405,11 @@ class SchemeWebauthn extends Component {
         }
       })
       .fail((err) => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        if (err.status === 401) {
+          messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        }
       })
       .always(() => {
         messageDispatcher.sendMessage('App', {type: 'closeConfirm'});

@@ -8,7 +8,7 @@ import Notification from '../lib/Notification';
 class User extends Component {
   constructor(props) {
     super(props);
-    
+
     this.state = {
       config: props.config,
       pattern: props.pattern,
@@ -20,7 +20,7 @@ class User extends Component {
       updateEmail: props.updateEmail,
       listError: {}
     };
-    
+
     this.editElt = this.editElt.bind(this);
     this.createData = this.createData.bind(this);
     this.initListAdd = this.initListAdd.bind(this);
@@ -39,7 +39,7 @@ class User extends Component {
     this.saveProfile = this.saveProfile.bind(this);
     this.confirmDeleteProfile = this.confirmDeleteProfile.bind(this);
   }
-  
+
   componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
@@ -60,7 +60,7 @@ class User extends Component {
       };
     });
   }
-  
+
   createData() {
     var data = {};
     this.state.pattern.forEach((pat, index) => {
@@ -178,7 +178,7 @@ class User extends Component {
     };
     fr.readAsText(file);
   }
-  
+
   uploadImage(e, name, list) {
     var profile = this.state.profile;
     var file = e.target.files[0];
@@ -196,7 +196,7 @@ class User extends Component {
     };
     fr.readAsBinaryString(file);
   }
-  
+
   removeImage(e, name, index) {
     var profile = this.state.profile;
     if (index > -1) {
@@ -206,21 +206,25 @@ class User extends Component {
     }
     this.setState({profile: profile});
   }
-  
+
   saveProfile(e) {
     apiManager.glewlwydRequest("/profile", "PUT", this.state.profile)
     .then((res) => {
       messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("profile.save-profile-success")});
     })
-    .fail((error) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.save-profile-error")});
+    .fail((err) => {
+      if (err.status === 401) {
+        messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.save-profile-error")});
+      }
     });
   }
-  
+
   deleteProfile(e) {
     messageDispatcher.sendMessage('App', {type: "confirm", title: i18next.t("profile.delete-profile-title"), message: i18next.t("profile.delete-profile-message"), callback: this.confirmDeleteProfile});
   }
-  
+
   confirmDeleteProfile(result) {
     if (result) {
       apiManager.glewlwydRequest("/profile", "DELETE", this.state.profile)
@@ -228,17 +232,21 @@ class User extends Component {
         messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("profile.delete-profile-success")});
         messageDispatcher.sendMessage('App', {type: "profile"});
       })
-      .fail((error) => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.delete-profile-error")});
+      .fail((err) => {
+        if (err.status === 401) {
+          messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.delete-profile-error")});
+        }
       });
     }
     messageDispatcher.sendMessage('App', {type: "closeConfirm"});
   }
-  
+
   updateEmailModal(module) {
     messageDispatcher.sendMessage('App', {type: "updateEmail", module: module});
   }
-  
+
   editElt(pattern, elt, key) {
     var labelJsx, inputJsx, listJsx = [], checkboxJsx = false;
     if ((elt !== undefined || pattern.type === "password" || pattern.forceShow) && pattern["profile-read"]) {
@@ -275,7 +283,7 @@ class User extends Component {
               );
             });
             if (pattern.edit || this.state.add) {
-              inputJsx = 
+              inputJsx =
               <div>
                 <div className="custom-file">
                   <input type="file" className={"custom-file-input" + validInput} accept="image/*" onChange={(e) => this.uploadImage(e, pattern.name, true)} id={"modal-image-" + pattern.name} />
@@ -296,13 +304,13 @@ class User extends Component {
             }
           } else {
             if (pattern["profile-write"]) {
-              inputJsx = 
+              inputJsx =
               <div className="input-group">
-                <input type="text" 
-                       className={"form-control" + validInput} 
-                       id={"modal-edit-" + pattern.name} 
-                       placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} 
-                       onChange={(e) => this.changeListAddElt(e, pattern.name)} 
+                <input type="text"
+                       className={"form-control" + validInput}
+                       id={"modal-edit-" + pattern.name}
+                       placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""}
+                       onChange={(e) => this.changeListAddElt(e, pattern.name)}
                        value={this.state.listAddValue[pattern.name]}/>
                 <div className="input-group-append">
                   <button className="btn btn-outline-secondary" type="button" onClick={(e) => this.AddListElt(e, pattern.name)} title={i18next.t("modal.list-add-title")}>
@@ -337,8 +345,8 @@ class User extends Component {
                              {displayVal}
                            </span>);
             } else {
-              listJsx.push(<a href="#" 
-                              onClick={(e) => this.deleteListElt(e, pattern.name, index)} 
+              listJsx.push(<a href="#"
+                              onClick={(e) => this.deleteListElt(e, pattern.name, index)}
                               key={index}>
                              <span className="badge badge-primary btn-icon-right">
                               {displayVal}
@@ -352,13 +360,13 @@ class User extends Component {
         });
       } else if (pattern.type === "boolean") {
         if (pattern["profile-write"] !== true && !this.state.add) {
-          checkboxJsx = 
+          checkboxJsx =
             <div className="form-group form-check">
               <input disabled={true} type="checkbox" className="form-check-input" id={"modal-edit-" + pattern.name} checked={elt} />
               <label className="form-check-label" htmlFor={"modal-edit-" + pattern.name}>{i18next.t(pattern.label)}</label>
             </div>
         } else {
-          checkboxJsx = 
+          checkboxJsx =
             <div className="form-group form-check">
               <input type="checkbox" className={"form-check-input" + validInput} id={"modal-edit-" + pattern.name} onChange={(e) => this.toggleBooleanElt(e, pattern.name)} checked={elt} />
               <label className="form-check-label" htmlFor={"modal-edit-" + pattern.name}>{i18next.t(pattern.label)}</label>
@@ -368,8 +376,8 @@ class User extends Component {
         if (pattern["profile-write"] !== true && !this.state.add) {
           inputJsx = <textarea className="form-control" disabled={true} value={elt||""}></textarea>
         } else {
-          inputJsx = <textarea className={"form-control" + validInput} 
-                               onChange={(e) => this.changeTextArea(e, pattern.name, false)} 
+          inputJsx = <textarea className={"form-control" + validInput}
+                               onChange={(e) => this.changeTextArea(e, pattern.name, false)}
                                value={elt||""} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""}>
                      </textarea>
         }
@@ -400,7 +408,7 @@ class User extends Component {
           </a>
         }
         if (pattern.edit || this.state.add) {
-          inputJsx = 
+          inputJsx =
           <div>
             <div className="custom-file">
               <input type="file" accept="image/*" className={"custom-file-input" + validInput} onChange={(e) => this.uploadImage(e, pattern.name)} id={"modal-image-" + pattern.name} />
@@ -424,49 +432,49 @@ class User extends Component {
                 </button>
               );
             });
-            inputJsx = 
+            inputJsx =
             <div className="input-group">
-              <input disabled={true} 
+              <input disabled={true}
                      type="text"
-                     className={"form-control" + validInput} 
-                     id={"modal-edit-" + pattern.name} 
-                     placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} 
+                     className={"form-control" + validInput}
+                     id={"modal-edit-" + pattern.name}
+                     placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""}
                      value={elt}/>
               <div className="input-group-append">
                 {editButtons}
               </div>
             </div>
           } else {
-            inputJsx = <input disabled={true} 
-                              type={(pattern.type||"text")} 
-                              className={"form-control" + validInput} 
-                              id={"modal-edit-" + pattern.name} 
-                              placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} 
+            inputJsx = <input disabled={true}
+                              type={(pattern.type||"text")}
+                              className={"form-control" + validInput}
+                              id={"modal-edit-" + pattern.name}
+                              placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""}
                               value={elt}/>
           }
         } else {
           if (pattern.type === "password") {
-            inputJsx = 
+            inputJsx =
               <div>
-                <input type="password" 
-                       className={"form-control" + validInput} 
-                       id={"modal-edit-" + pattern.name} 
-                       placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} 
+                <input type="password"
+                       className={"form-control" + validInput}
+                       id={"modal-edit-" + pattern.name}
+                       placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""}
                        onChange={(e) => this.changeElt(e, pattern.name)} value={elt||""}
                        autoComplete="new-password" />
-                 <input type="password" 
-                        className={"form-control" + validInput} 
-                        id={"modal-edit-confirm" + pattern.name} 
-                        placeholder={i18next.t(pattern.placeholderConfirm)} 
-                        value={this.state.listEltConfirm[pattern.name]||""} 
+                 <input type="password"
+                        className={"form-control" + validInput}
+                        id={"modal-edit-confirm" + pattern.name}
+                        placeholder={i18next.t(pattern.placeholderConfirm)}
+                        value={this.state.listEltConfirm[pattern.name]||""}
                         onChange={(e) => this.changeEltConfirm(e, pattern.name)}
                         autoComplete="new-password" />
               </div>
           } else {
-            inputJsx = <input type={(pattern.type||"text")} 
-                              className={"form-control" + validInput} 
-                              id={"modal-edit-" + pattern.name} 
-                              placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} 
+            inputJsx = <input type={(pattern.type||"text")}
+                              className={"form-control" + validInput}
+                              id={"modal-edit-" + pattern.name}
+                              placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""}
                               value={elt} onChange={(e) => this.changeElt(e, pattern.name)} />
           }
         }

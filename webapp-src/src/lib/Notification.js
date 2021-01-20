@@ -49,7 +49,13 @@ class Notification extends Component {
   
   render() {
     var toast = [];
-    if (this.state.loggedIn) {
+    var showMessage = this.state.loggedIn;
+    this.state.message.forEach((message) => {
+      if (message.type === "danger" || message.type === "warning") {
+        showMessage = true;
+      }
+    });
+    if (showMessage) {
       this.state.message.forEach((message, index) => {
         var badge;
         if (message.type === "success") {

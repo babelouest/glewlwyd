@@ -66,8 +66,6 @@ class Password extends Component {
   }
 
   passwordButtonHandler(e, result) {
-    var apiError = false;
-
     if (result) {
       // Check whether the new password is well-formed.
       if (this.checkPassword()) {
@@ -90,8 +88,11 @@ class Password extends Component {
            if (err.status == 400) {
              this.setState({oldPasswordInvalid: true, oldPasswordInvalidMessage: i18next.t("profile.password-invalid")});
            } else {
-            apiError = true;
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+            if (err.status === 401) {
+              messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+            } else {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+            }
            }
         });
       }

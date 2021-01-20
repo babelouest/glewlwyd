@@ -56,8 +56,12 @@ class Session extends Component {
         .then((res) => {
           messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.session-disabled")});
         })
-        .fail(() => {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        .fail((err) => {
+          if (err.status === 401) {
+            messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+          } else {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          }
         })
         .always(() => {
           messageDispatcher.sendMessage('App', {type: "refreshSession"});
@@ -82,8 +86,12 @@ class Session extends Component {
           .then((res) => {
             messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.token-disabled")});
           })
-          .fail(() => {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          .fail((err) => {
+            if (err.status === 401) {
+              messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+            } else {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+            }
           })
           .always(() => {
             messageDispatcher.sendMessage('App', {type: "refreshSession"});
@@ -95,8 +103,12 @@ class Session extends Component {
           .then((res) => {
             messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.token-disabled")});
           })
-          .fail(() => {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          .fail((err) => {
+            if (err.status === 401) {
+              messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+            } else {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+            }
           })
           .always(() => {
             messageDispatcher.sendMessage('App', {type: "refreshSession"});

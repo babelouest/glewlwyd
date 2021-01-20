@@ -45,6 +45,9 @@ class SchemeOauth2 extends Component {
       })
       .fail((err) => {
         if (err.status === 400) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-oauth2-registration-invalid")});
+        } else if (err.status === 401) {
+          messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
         } else {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         }
@@ -60,6 +63,9 @@ class SchemeOauth2 extends Component {
       })
       .fail((err) => {
         if (err.status === 400) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-oauth2-registration-invalid")});
+        } else if (err.status === 401) {
+          messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
         } else {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         }
@@ -86,6 +92,9 @@ class SchemeOauth2 extends Component {
       })
       .fail((err) => {
         if (err.status === 400) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-oauth2-registration-invalid")});
+        } else if (err.status === 401) {
+          messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
         } else {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         }

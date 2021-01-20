@@ -42,7 +42,7 @@ class APIManager {
     return this.request(this.GlewlwydApiPrefix + url, method, data)
     .fail((err) => {
       if (unsafe && err.status === 401) {
-        messageDispatcher.sendMessage('App', {type: "loggedIn", message: false});
+        messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
       }
     });
   }

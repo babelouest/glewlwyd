@@ -101,6 +101,8 @@ class SchemeCertificate extends Component {
       .fail((err) => {
         if (err.status === 400) {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-certificate-invalid")});
+        } else if (err.status === 401) {
+          messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
         } else {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         }
@@ -119,6 +121,8 @@ class SchemeCertificate extends Component {
     .fail((err) => {
       if (err.status === 400) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-certificate-invalid")});
+      } else if (err.status === 401) {
+        messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
       } else {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
       }
@@ -135,7 +139,11 @@ class SchemeCertificate extends Component {
       }
     })
     .fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      if (err.status === 401) {
+        messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
     });
   }
   
@@ -161,7 +169,11 @@ class SchemeCertificate extends Component {
         }
       })
       .fail((err) => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        if (err.status === 401) {
+          messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        }
       })
       .always(() => {
         messageDispatcher.sendMessage('App', {type: 'closeConfirm'});
@@ -178,8 +190,10 @@ class SchemeCertificate extends Component {
       messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.scheme-certificate-test-valid")});
     })
     .fail((err) => {
-      if (err.status === 400 || err.status === 401) {
+      if (err.status === 400) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-certificate-invalid")});
+      } else if (err.status === 401) {
+        messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
       } else {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
       }

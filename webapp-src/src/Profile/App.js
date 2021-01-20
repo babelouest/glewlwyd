@@ -71,11 +71,11 @@ class App extends Component {
       schemePrefix: ((props.config && props.config.params.register)?"/" + props.config.params.register + "/profile":"/profile"),
       resetCredentials: 0
     };
-    
+
     this.fetchProfile = this.fetchProfile.bind(this);
     this.updateEmailCallback = this.updateEmailCallback.bind(this);
     this.refreshSession = this.refreshSession.bind(this);
-    
+
     messageDispatcher.subscribe('App', (message) => {
       if (message.type === 'nav') {
         if (message.page === "password") {
@@ -160,7 +160,7 @@ class App extends Component {
         this.refreshSession();
       }
     });
-    
+
     if (this.state.config) {
       this.getRegisterConfig();
       if (this.state.config.params.updateEmail) {
@@ -193,7 +193,7 @@ class App extends Component {
       }
     }
   }
-  
+
   getRegisterConfig() {
     if (this.state.config.register) {
       this.state.config.register.forEach((register, index) => {
@@ -225,18 +225,22 @@ class App extends Component {
       });
     }
   }
-  
+
   getResetCredentialsConfig() {
     apiManager.glewlwydRequest("/" + this.state.config.params.resetCredentials + "/reset-credentials/profile/")
     .then((profile) => {
       this.setState({profileList: [profile.user], loggedIn: true, schemeList: profile.scheme, schemePrefix: "/" + this.state.config.params.resetCredentials + "/reset-credentials/profile", resetCredentials: 1});
     })
     .fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-      this.setState({resetCredentials: -1});
+      if (err.status === 401) {
+        this.setState({invalidCredentialMessage: true, resetCredentials: -1});
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
     });
   }
-  
+
   fetchProfile() {
     if (!this.state.config.params.delegate) {
       apiManager.glewlwydRequest("/profile_list")
@@ -305,14 +309,19 @@ class App extends Component {
       });
     }
   }
-  
+
   refreshSession() {
     apiManager.glewlwydRequest("/profile/session")
     .then((res) => {
       this.setState({sessionList: res});
     })
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    .fail((err) => {
+      if (err.status === 401) {
+        this.setState({invalidCredentialMessage: true});
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
     });
     apiManager.glewlwydRequest("/profile/plugin")
     .then((res) => {
@@ -341,11 +350,16 @@ class App extends Component {
       });
       messageDispatcher.sendMessage('App', {type: "sessionComplete"});
     })
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    .fail((err) => {
+      if (err.status === 401) {
+        this.setState({invalidCredentialMessage: true});
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
     });
   }
-  
+
   fetchRegistration() {
     this.state.registerPlugin.forEach((registerPlugin) => {
       if (registerPlugin.registration) {
@@ -416,14 +430,14 @@ class App extends Component {
                 });
               })
               .fail((err) => {
-                if (err.status != 401) {
+                if (err.status !== 401) {
                   messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
                 }
-                this.setState({registerProfile: false, registering: false});
+                this.setState({registerProfile: false, registering: false, invalidCredentialMessage: true});
               });
             })
             .fail((err) => {
-              if (err.status != 401) {
+              if (err.status !== 401) {
                 messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
               } else {
                 messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-token-invalid")});
@@ -443,17 +457,22 @@ class App extends Component {
 
   updateEmailVerifyToken(module, token) {
     return apiManager.glewlwydRequest("/" + module + "/update-email/" + encodeURIComponent(token), "PUT")
-    .fail(() => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+    .fail((err) => {
+      if (err.status === 401) {
+        this.setState({invalidCredentialMessage: true});
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
     });
   }
-  
+
   showPasswordChangeNotification(result, data) {
     if (result) {
       messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("profile.password-change-success")});
     }
   }
-  
+
   updateEmailCallback(result, value) {
     $("#editModal").modal("hide");
     if (result) {
@@ -467,12 +486,17 @@ class App extends Component {
           $("#messageModal").modal({keyboard: false, show: true});
         });
       })
-      .fail(() => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      .fail((err) => {
+        if (err.status === 401) {
+          this.setState({invalidCredentialMessage: true});
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        }
       });
     }
   }
-  
+
 	render() {
     if (this.state.config) {
       var userJsx = "", invalidMessage;
@@ -494,10 +518,10 @@ class App extends Component {
         <div aria-live="polite" aria-atomic="true" className="glwd-container">
           <div className="card center glwd-card" id="userCard" tabIndex="-1" role="dialog">
             <div className="card-header">
-              <Navbar active={this.state.curNav} 
-                      config={this.state.config} 
-                      loggedIn={this.state.loggedIn} 
-                      schemeList={this.state.schemeList} 
+              <Navbar active={this.state.curNav}
+                      config={this.state.config}
+                      loggedIn={this.state.loggedIn}
+                      schemeList={this.state.schemeList}
                       profileList={this.state.profileList}
                       dataHighlight={!this.state.registerProfile.password_set}
                       schemeHighlight={this.state.schemeHighlight}
@@ -514,16 +538,16 @@ class App extends Component {
                     <Session config={this.state.config} plugins={this.state.plugins} sessionList={this.state.sessionList}/>
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="password"?" active":"")}>
-                    <Password config={this.state.config} 
-                              profile={(this.state.profileList[0]||false)} 
-                              loggedIn={this.state.loggedIn} 
-                              callback={this.showPasswordChangeNotification} 
+                    <Password config={this.state.config}
+                              profile={(this.state.profileList[0]||false)}
+                              loggedIn={this.state.loggedIn}
+                              callback={this.showPasswordChangeNotification}
                               registerPlugin={this.state.registerPlugin} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav!=="profile"&&this.state.curNav!=="session"&&this.state.curNav!=="password"?" active":"")}>
-                    <SchemePage config={this.state.config} 
-                                module={this.state.curNav} 
-                                name={this.state.module} 
+                    <SchemePage config={this.state.config}
+                                module={this.state.curNav}
+                                name={this.state.module}
                                 profile={(this.state.profileList[0]||false)}
                                 schemePrefix={this.state.schemePrefix}/>
                   </div>
@@ -534,10 +558,10 @@ class App extends Component {
           <Notification loggedIn={this.state.loggedIn||this.state.config.params.register}/>
           <Confirm title={this.state.confirmModal.title} message={this.state.confirmModal.message} callback={this.state.confirmModal.callback} />
           <Message title={this.state.messageModal.title} label={this.state.messageModal.label} message={this.state.messageModal.message} />
-          <Edit title={this.state.editModal.title} 
-                message={this.state.editModal.message} 
-                value={this.state.editModal.value} 
-                placeHolder={this.state.editModal.placeHolder} 
+          <Edit title={this.state.editModal.title}
+                message={this.state.editModal.message}
+                value={this.state.editModal.value}
+                placeHolder={this.state.editModal.placeHolder}
                 callback={this.state.editModal.callback} />
         </div>
       );

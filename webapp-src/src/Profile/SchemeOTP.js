@@ -64,7 +64,11 @@ class SchemeOTP extends Component {
         this.setState({myOtp: myOtp, allowHotp: res["hotp-allow"], allowTotp: res["totp-allow"]});
       })
       .fail((err) => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        if (err.status === 401) {
+          messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        }
       })
       .always(() => {
         this.showQRCode();
@@ -140,7 +144,11 @@ class SchemeOTP extends Component {
       });
     })
     .fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      if (err.status === 401) {
+        messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
     });
   }
   
@@ -184,7 +192,13 @@ class SchemeOTP extends Component {
           }
         })
         .fail((err) => {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-otp-save-error")});
+          if (err.status === 400) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-otp-save-error")});
+          } else if (err.status === 401) {
+            messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+          } else {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          }
         });
       }
     });
