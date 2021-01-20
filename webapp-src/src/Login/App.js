@@ -375,7 +375,7 @@ class App extends Component {
                    passwordRequired: passwordRequired,
                    schemeListRequired: schemeListRequired,
                    scheme: scheme,
-                   errorScheme: (!scheme && !canContinue),
+                   errorScheme: (!scheme && !canContinue && !passwordRequired),
                    mustRegisterScheme: mustRegisterScheme});
   }
 
