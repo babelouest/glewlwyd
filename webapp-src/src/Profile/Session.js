@@ -13,7 +13,8 @@ class Session extends Component {
       config: props.config,
       sessionList: props.sessionList,
       plugins: props.plugins,
-      disableObject: false
+      disableObject: false,
+      showActive: false
     };
     
     this.getTable = this.getTable.bind(this);
@@ -21,6 +22,7 @@ class Session extends Component {
     this.disableSessionConfirm = this.disableSessionConfirm.bind(this);
     this.disableToken = this.disableToken.bind(this);
     this.disableTokenConfirm = this.disableTokenConfirm.bind(this);
+    this.toggleActive = this.toggleActive.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -47,6 +49,10 @@ class Session extends Component {
     this.setState({disableObject: session}, () => {
       messageDispatcher.sendMessage('App', {type: "confirm", title: i18next.t("profile.session-disable-title"), message: i18next.t("profile.session-disable-message"), callback: this.disableSessionConfirm});
     });
+  }
+  
+  toggleActive() {
+    this.setState({showActive: !this.state.showActive});
   }
   
   disableSessionConfirm(result) {
@@ -130,45 +136,52 @@ class Session extends Component {
       <th>
         {i18next.t("profile.session-table-expiration")}
       </th>
-      <th>
+      <th className="d-none d-lg-table-cell">
         {i18next.t("profile.session-table-issued-for")}
       </th>
-      <th>
+      <th className="d-none d-lg-table-cell">
         {i18next.t("profile.session-table-user-agent")}
       </th>
       <th>
-        {i18next.t("admin.enabled")}
+        <div className="form-check">
+          <input className="form-check-input" type="checkbox" onChange={this.toggleActive} checked={this.state.showActive} id="session-table"/>
+          <label className="form-check-label" for="session-table">
+            {i18next.t("admin.enabled")}
+          </label>
+        </div>
       </th>
       <th>
       </th>
     </tr>;
-    var sessionList = [], tokenTables = [];
+    var sessionList = [], tokenTables = [], curDate = new Date();
     this.state.sessionList.forEach((session, index) => {
       var lastLogin = new Date(session.last_login * 1000), expiration = new Date(session.expiration * 1000);
-      sessionList.push(
-      <tr key={index}>
-        <td>
-          {lastLogin.toLocaleString()}
-        </td>
-        <td>
-          {expiration.toLocaleString()}
-        </td>
-        <td>
-          {session.issued_for}
-        </td>
-        <td>
-          {session.user_agent}
-        </td>
-        <td>
-          {session.enabled?i18next.t("profile.session-enabled-true"):i18next.t("profile.session-enabled-false")}
-        </td>
-        <td>
-          <button type="button" className="btn btn-secondary" onClick={(e) => this.disableSession(session)} title={i18next.t("admin.delete")} disabled={!session.enabled}>
-            <i className="fas fa-trash"></i>
-          </button>
-        </td>
-      </tr>
-      );
+      if (this.state.showActive || (expiration >= curDate && session.enabled)) {
+        sessionList.push(
+        <tr key={index}>
+          <td>
+            {lastLogin.toLocaleString()}
+          </td>
+          <td>
+            {expiration.toLocaleString()}
+          </td>
+          <td className="d-none d-lg-table-cell">
+            {session.issued_for}
+          </td>
+          <td className="d-none d-lg-table-cell">
+            {session.user_agent}
+          </td>
+          <td>
+            {session.enabled?i18next.t("profile.session-enabled-true"):i18next.t("profile.session-enabled-false")}
+          </td>
+          <td>
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.disableSession(session)} title={i18next.t("admin.delete")} disabled={!session.enabled}>
+              <i className="fas fa-trash"></i>
+            </button>
+          </td>
+        </tr>
+        );
+      }
     });
     var i = 0;
     var tokenTables = [];
@@ -182,17 +195,22 @@ class Session extends Component {
         <th>
           {i18next.t("profile.session-table-expiration")}
         </th>
-        <th>
+        <th className="d-none d-lg-table-cell">
           {i18next.t("profile.session-table-client")}
         </th>
-        <th>
+        <th className="d-none d-lg-table-cell">
           {i18next.t("profile.session-table-issued-for")}
         </th>
-        <th>
+        <th className="d-none d-lg-table-cell">
           {i18next.t("profile.session-table-user-agent")}
         </th>
         <th>
-          {i18next.t("admin.enabled")}
+          <div className="form-check">
+            <input className="form-check-input" type="checkbox" onChange={this.toggleActive} checked={this.state.showActive} id="session-table"/>
+            <label className="form-check-label" for="session-table">
+              {i18next.t("admin.enabled")}
+            </label>
+          </div>
         </th>
         <th>
         </th>
@@ -200,33 +218,35 @@ class Session extends Component {
       var tokenList = [];
       oauth2.forEach((token, index) => {
         var lastSeen = new Date(token.last_seen * 1000), expiration = new Date(token.expires_at * 1000);
-        tokenList.push(
-        <tr key={index}>
-          <td>
-            {lastSeen.toLocaleString()}
-          </td>
-          <td>
-            {expiration.toLocaleString()}
-          </td>
-          <td>
-            {token.client_id}
-          </td>
-          <td>
-            {token.issued_for}
-          </td>
-          <td>
-            {token.user_agent}
-          </td>
-          <td>
-            {token.enabled?i18next.t("profile.session-enabled-true"):i18next.t("profile.session-enabled-false")}
-          </td>
-          <td>
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.disableToken("oauth2", key, token)} title={i18next.t("admin.delete")} disabled={!token.enabled}>
-              <i className="fas fa-trash"></i>
-            </button>
-          </td>
-        </tr>
-        );
+        if (this.state.showActive || (expiration >= curDate && token.enabled)) {
+          tokenList.push(
+          <tr key={index}>
+            <td>
+              {lastSeen.toLocaleString()}
+            </td>
+            <td>
+              {expiration.toLocaleString()}
+            </td>
+            <td className="d-none d-lg-table-cell">
+              {token.client_id}
+            </td>
+            <td className="d-none d-lg-table-cell">
+              {token.issued_for}
+            </td>
+            <td className="d-none d-lg-table-cell">
+              {token.user_agent}
+            </td>
+            <td>
+              {token.enabled?i18next.t("profile.session-enabled-true"):i18next.t("profile.session-enabled-false")}
+            </td>
+            <td>
+              <button type="button" className="btn btn-secondary" onClick={(e) => this.disableToken("oauth2", key, token)} title={i18next.t("admin.delete")} disabled={!token.enabled}>
+                <i className="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+          );
+        }
       });
       tokenTables.push(
         <div className="card" key={++i}>
@@ -256,17 +276,22 @@ class Session extends Component {
         <th>
           {i18next.t("profile.session-table-expiration")}
         </th>
-        <th>
+        <th className="d-none d-lg-table-cell">
           {i18next.t("profile.session-table-client")}
         </th>
-        <th>
+        <th className="d-none d-lg-table-cell">
           {i18next.t("profile.session-table-issued-for")}
         </th>
-        <th>
+        <th className="d-none d-lg-table-cell">
           {i18next.t("profile.session-table-user-agent")}
         </th>
         <th>
-          {i18next.t("admin.enabled")}
+          <div className="form-check">
+            <input className="form-check-input" type="checkbox" onChange={this.toggleActive} checked={this.state.showActive} id="session-table"/>
+            <label className="form-check-label" for="session-table">
+              {i18next.t("admin.enabled")}
+            </label>
+          </div>
         </th>
         <th>
         </th>
@@ -274,33 +299,35 @@ class Session extends Component {
       var tokenList = [];
       oidc.forEach((token, index) => {
         var lastSeen = new Date(token.last_seen * 1000), expiration = new Date(token.expires_at * 1000);
-        tokenList.push(
-        <tr key={index}>
-          <td>
-            {lastSeen.toLocaleString()}
-          </td>
-          <td>
-            {expiration.toLocaleString()}
-          </td>
-          <td>
-            {token.client_id}
-          </td>
-          <td>
-            {token.issued_for}
-          </td>
-          <td>
-            {token.user_agent}
-          </td>
-          <td>
-            {token.enabled?i18next.t("profile.session-enabled-true"):i18next.t("profile.session-enabled-false")}
-          </td>
-          <td>
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.disableToken("oidc", key, token)} title={i18next.t("admin.delete")} disabled={!token.enabled}>
-              <i className="fas fa-trash"></i>
-            </button>
-          </td>
-        </tr>
-        );
+        if (this.state.showActive || (expiration >= curDate && token.enabled)) {
+          tokenList.push(
+          <tr key={index}>
+            <td>
+              {lastSeen.toLocaleString()}
+            </td>
+            <td>
+              {expiration.toLocaleString()}
+            </td>
+            <td className="d-none d-lg-table-cell">
+              {token.client_id}
+            </td>
+            <td className="d-none d-lg-table-cell">
+              {token.issued_for}
+            </td>
+            <td className="d-none d-lg-table-cell">
+              {token.user_agent}
+            </td>
+            <td>
+              {token.enabled?i18next.t("profile.session-enabled-true"):i18next.t("profile.session-enabled-false")}
+            </td>
+            <td>
+              <button type="button" className="btn btn-secondary" onClick={(e) => this.disableToken("oidc", key, token)} title={i18next.t("admin.delete")} disabled={!token.enabled}>
+                <i className="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+          );
+        }
       });
       tokenTables.push(
         <div className="card" key={++i}>
