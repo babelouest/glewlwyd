@@ -190,15 +190,46 @@ class Navbar extends Component {
       <div className="collapse navbar-collapse" id="navbarSupportedContent">
         <ul className="navbar-nav mr-auto">
           <li className={"nav-item" + (this.state.curNav==="users"?" active":"")}>
-            <a className="nav-link" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "users", false)}>{i18next.t("admin.menu-users")}</a>
+            <a className="nav-link" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "users", false)}>
+              {i18next.t("admin.menu-users")}
+            </a>
           </li>
           <li className={"nav-item" + (this.state.curNav==="clients"?" active":"")}>
-            <a className="nav-link" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "clients", false)}>{i18next.t("admin.menu-clients")}</a>
+            <a className="nav-link" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "clients", false)}>
+              {i18next.t("admin.menu-clients")}
+            </a>
           </li>
           <li className={"nav-item" + (this.state.curNav==="scopes"?" active":"")}>
-            <a className="nav-link" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "scopes", false)}>{i18next.t("admin.menu-scopes")}</a>
+            <a className="nav-link" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "scopes", false)}>
+              {i18next.t("admin.menu-scopes")}
+            </a>
           </li>
-          <li className="nav-item dropdown">
+          <li className={"d-md-none nav-item" + (this.state.curNav==="users-mod"?" active":"")}>
+            <a className="nav-link" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "users-mod", false)}>
+              {i18next.t("admin.menu-users-mod")}
+            </a>
+          </li>
+          <li className={"d-md-none nav-item" + (this.state.curNav==="clients-mod"?" active":"")}>
+            <a className="nav-link" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "clients-mod", false)}>
+              {i18next.t("admin.menu-clients-mod")}
+            </a>
+          </li>
+          <li className={"d-md-none nav-item" + (this.state.curNav==="auth-schemes"?" active":"")}>
+            <a className="nav-link" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "auth-schemes", false)}>
+              {i18next.t("admin.menu-auth-schemes")}
+            </a>
+          </li>
+          <li className={"d-md-none nav-item" + (this.state.curNav==="plugins"?" active":"")}>
+            <a className="nav-link" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "plugins", false)}>
+              {i18next.t("admin.menu-plugins")}
+            </a>
+          </li>
+          <li className={"d-md-none nav-item" + (this.state.curNav==="api-key"?" active":"")}>
+            <a className="nav-link" href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "api-key", false)}>
+              {i18next.t("admin.menu-api-key")}
+            </a>
+          </li>
+          <li className="nav-item dropdown d-none d-md-block">
             <a className={"nav-link dropdown-toggle" + (this.state.navDropdown?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               {i18next.t("admin.menu-parameters")}
             </a>
