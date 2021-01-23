@@ -15,6 +15,10 @@ class DatabaseParams extends Component {
       props.mod.parameters["use-glewlwyd-connection"] = true;
     }
     
+    if (props.mod.parameters["pbkdf2-iterations"] === undefined) {
+      props.mod.parameters["pbkdf2-iterations"] = 150000;
+    }
+    
     this.state = {
       mod: props.mod,
       role: props.role,
@@ -43,6 +47,10 @@ class DatabaseParams extends Component {
     
     if (nextProps.mod && nextProps.mod.parameters && nextProps.mod.parameters["use-glewlwyd-connection"] === undefined) {
       nextProps.mod.parameters["use-glewlwyd-connection"] = true;
+    }
+    
+    if (nextProps.mod && nextProps.mod.parameters && nextProps.mod.parameters["pbkdf2-iterations"] === undefined) {
+      nextProps.mod.parameters["pbkdf2-iterations"] = 150000;
     }
     
     this.setState({
@@ -81,9 +89,13 @@ class DatabaseParams extends Component {
     }
   }
   
-  changeValue(e, property) {
+  changeValue(e, property, isNumber = false) {
     var mod = this.state.mod;
-    mod.parameters[property] = e.target.value;
+    if (!isNumber) {
+      mod.parameters[property] = e.target.value;
+    } else {
+      mod.parameters[property] = parseInt(e.target.value);
+    }
     this.setState({mod: mod});
   }
   
@@ -177,6 +189,10 @@ class DatabaseParams extends Component {
         }
       });
     }
+    if (this.state.mod.parameters["pbkdf2-iterations"] === null || this.state.mod.parameters["pbkdf2-iterations"] <= 0) {
+      hasError = true;
+      errorList["pbkdf2-iterations"] = i18next.t("admin.mod-database-pbkdf2-iterations-error")
+    }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
         messageDispatcher.sendMessage('ModEdit', {type: "modValid"});
@@ -190,10 +206,27 @@ class DatabaseParams extends Component {
   
   render() {
     var useInternalConnection = 
-    <div className="form-group form-check">
-      <input type="checkbox" className="form-check-input" id="mod-database-use-internal-connection" onChange={(e) => this.toggleInternalConnection(e)} checked={this.state.mod.parameters["use-glewlwyd-connection"]} />
-      <label className="form-check-label" htmlFor="mod-database-use-internal-connection">{i18next.t("admin.mod-database-use-internal-connection")}</label>
-    </div>;
+      <div className="form-group form-check">
+        <input type="checkbox" className="form-check-input" id="mod-database-use-internal-connection" onChange={(e) => this.toggleInternalConnection(e)} checked={this.state.mod.parameters["use-glewlwyd-connection"]} />
+        <label className="form-check-label" htmlFor="mod-database-use-internal-connection">{i18next.t("admin.mod-database-use-internal-connection")}</label>
+      </div>;
+    var pbkdf2Iterations = 
+      <div className="form-group">
+        <div className="input-group mb-3">
+          <div className="input-group-prepend">
+            <label className="input-group-text" htmlFor="mod-database-pbkdf2-iterations">{i18next.t("admin.mod-database-pbkdf2-iterations")}</label>
+          </div>
+          <input type="number"
+                 min="0" 
+                 step="1" 
+                 className={this.state.errorList["pbkdf2-iterations"]?"form-control is-invalid":"form-control"} 
+                 id="mod-database-pbkdf2-iterations" 
+                 onChange={(e) => this.changeValue(e, "pbkdf2-iterations", true)} 
+                 value={this.state.mod.parameters["pbkdf2-iterations"]} 
+                 placeholder={i18next.t("admin.mod-database-pbkdf2-iterations-ph")} />
+        </div>
+        {this.state.errorList["pbkdf2-iterations"]?<span className="error-input">{this.state.errorList["pbkdf2-iterations"]}</span>:""}
+      </div>
     var selectDbType;
     var dbParams;
     if (!this.state.mod.parameters["use-glewlwyd-connection"]) {
@@ -378,6 +411,7 @@ class DatabaseParams extends Component {
     if (this.state.role === "user") {
       return (
         <div>
+          {pbkdf2Iterations}
           {useInternalConnection}
           {selectDbType}
           {dbParams}
@@ -387,6 +421,7 @@ class DatabaseParams extends Component {
     } else if (this.state.role === "client") {
       return (
         <div>
+          {pbkdf2Iterations}
           {useInternalConnection}
           {selectDbType}
           {dbParams}
