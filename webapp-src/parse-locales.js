@@ -47,7 +47,8 @@ var hasError = false;
 Object.keys(translation).forEach(key => {
   if (translation[key].length !== translationSize) {
     hasError = true;
-    console.log("Error key", translation[key], key);
+    var difference = langList.filter(x => !translation[key].includes(x));
+    console.log("Missing key", difference, key);
   }
 });
 
