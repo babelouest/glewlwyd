@@ -87,6 +87,8 @@
 
 #define GLEWLWYD_DEFAULT_SALT_LENGTH 16
 
+#define G_PBKDF2_ITERATOR_DEFAULT 150000
+
 #define SWITCH_DB_TYPE(T, M, S, P) \
         ((T)==HOEL_DB_TYPE_MARIADB?\
            (M):\
@@ -394,7 +396,7 @@ char * url_encode(const char * str);
 int generate_digest(digest_algorithm digest, const char * data, int use_salt, char * out_digest);
 int generate_digest_raw(digest_algorithm digest, const unsigned char * data, size_t data_len, unsigned char * out_digest, size_t * out_digest_len);
 char * generate_hash(digest_algorithm digest, const char * data);
-int generate_digest_pbkdf2(const char * data, const char * salt, char * out_digest);
+int generate_digest_pbkdf2(const char * data, unsigned int iterations, const char * salt, char * out_digest);
 
 /**
  * Check if the result json object has a "result" element that is equal to value

@@ -38,13 +38,100 @@
 #define G_TABLE_USER_PROPERTY "g_user_property"
 #define G_TABLE_USER_PASSWORD "g_user_password"
 
+#define G_PBKDF2_ITERATOR_SEP ','
+
 struct mod_parameters {
   int use_glewlwyd_connection;
   digest_algorithm hash_algorithm;
   struct _h_connection * conn;
   json_t * j_params;
   int multiple_passwords;
+  unsigned int PBKDF2_iterations;
 };
+
+static json_t * is_user_database_parameters_valid(json_t * j_params) {
+  json_t * j_return, * j_error = json_array(), * j_element = NULL;
+  const char * field = NULL;
+  
+  if (j_error != NULL) {
+    if (!json_is_object(j_params)) {
+      json_array_append_new(j_error, json_string("parameters must be a JSON object"));
+    } else {
+      if (json_object_get(j_params, "use-glewlwyd-connection") != NULL && !json_is_boolean(json_object_get(j_params, "use-glewlwyd-connection"))) {
+        json_array_append_new(j_error, json_string("use-glewlwyd-connection must be a boolean"));
+      }
+      if (json_object_get(j_params, "use-glewlwyd-connection") == json_false()) {
+        if (json_object_get(j_params, "connection-type") == NULL || !json_is_string(json_object_get(j_params, "connection-type")) || (0 != o_strcmp("sqlite", json_string_value(json_object_get(j_params, "connection-type"))) && 0 != o_strcmp("mariadb", json_string_value(json_object_get(j_params, "connection-type"))) && 0 != o_strcmp("postgre", json_string_value(json_object_get(j_params, "connection-type"))))) {
+          json_array_append_new(j_error, json_string("connection-type is mandatory and must be one of the following values: 'sqlite', 'mariadb', 'postgre'"));
+        } else if (0 == o_strcmp("sqlite", json_string_value(json_object_get(j_params, "connection-type")))) {
+          if (json_object_get(j_params, "sqlite-dbpath") == NULL || !json_is_string(json_object_get(j_params, "sqlite-dbpath"))) {
+            json_array_append_new(j_error, json_string("sqlite-dbpath is mandatory and must be a string"));
+          }
+        } else if (0 == o_strcmp("mariadb", json_string_value(json_object_get(j_params, "connection-type")))) {
+          if (json_object_get(j_params, "mariadb-host") == NULL || !json_is_string(json_object_get(j_params, "mariadb-host"))) {
+            json_array_append_new(j_error, json_string("mariadb-host is mandatory and must be a string"));
+          }
+          if (json_object_get(j_params, "mariadb-user") == NULL || !json_is_string(json_object_get(j_params, "mariadb-user"))) {
+            json_array_append_new(j_error, json_string("mariadb-user is mandatory and must be a string"));
+          }
+          if (json_object_get(j_params, "mariadb-password") == NULL || !json_is_string(json_object_get(j_params, "mariadb-password"))) {
+            json_array_append_new(j_error, json_string("mariadb-password is mandatory and must be a string"));
+          }
+          if (json_object_get(j_params, "mariadb-dbname") == NULL || !json_is_string(json_object_get(j_params, "mariadb-dbname"))) {
+            json_array_append_new(j_error, json_string("mariadb-dbname is mandatory and must be a string"));
+          }
+          if (json_object_get(j_params, "mariadb-port") != NULL && (!json_is_integer(json_object_get(j_params, "mariadb-dbname")) || json_integer_value(json_object_get(j_params, "mariadb-dbname")) < 0)) {
+            json_array_append_new(j_error, json_string("mariadb-port is optional and must be a positive integer (default: 0)"));
+          }
+        } else if (0 == o_strcmp("postgre", json_string_value(json_object_get(j_params, "connection-type")))) {
+          if (json_object_get(j_params, "postgre-conninfo") == NULL || !json_is_string(json_object_get(j_params, "postgre-conninfo"))) {
+            json_array_append_new(j_error, json_string("postgre-conninfo is mandatory and must be a string"));
+          }
+        }
+      }
+      if (json_object_get(j_params, "data-format") != NULL) {
+        if (!json_is_object(json_object_get(j_params, "data-format"))) {
+          json_array_append_new(j_error, json_string("data-format is optional and must be a JSON object"));
+        } else {
+          json_object_foreach(json_object_get(j_params, "data-format"), field, j_element) {
+            if (0 == o_strcmp(field, "username") || 0 == o_strcmp(field, "name") || 0 == o_strcmp(field, "email") || 0 == o_strcmp(field, "enabled") || 0 == o_strcmp(field, "password")) {
+              json_array_append_new(j_error, json_string("data-format can not have settings for properties 'username', 'name', 'email', 'enabled' or 'password'"));
+            } else {
+              if (json_object_get(j_element, "multiple") != NULL && !json_is_boolean(json_object_get(j_element, "multiple"))) {
+                json_array_append_new(j_error, json_string("multiple is optional and must be a boolean (default: false)"));
+              }
+              if (json_object_get(j_element, "read") != NULL && !json_is_boolean(json_object_get(j_element, "read"))) {
+                json_array_append_new(j_error, json_string("read is optional and must be a boolean (default: true)"));
+              }
+              if (json_object_get(j_element, "write") != NULL && !json_is_boolean(json_object_get(j_element, "write"))) {
+                json_array_append_new(j_error, json_string("write is optional and must be a boolean (default: true)"));
+              }
+              if (json_object_get(j_element, "profile-read") != NULL && !json_is_boolean(json_object_get(j_element, "profile-read"))) {
+                json_array_append_new(j_error, json_string("profile-read is optional and must be a boolean (default: false)"));
+              }
+              if (json_object_get(j_element, "profile-write") != NULL && !json_is_boolean(json_object_get(j_element, "profile-write"))) {
+                json_array_append_new(j_error, json_string("profile-write is optional and must be a boolean (default: false)"));
+              }
+            }
+          }
+        }
+      }
+      if (json_object_get(j_params, "pbkdf2-iterations") != NULL && json_integer_value(json_object_get(j_params, "pbkdf2-iterations")) <= 0) {
+        json_array_append_new(j_error, json_string("pbkdf2-iterations is optional and must be a positive non null integer"));
+      }
+    }
+    if (json_array_size(j_error)) {
+      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
+    } else {
+      j_return = json_pack("{si}", "result", G_OK);
+    }
+    json_decref(j_error);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "is_user_database_parameters_valid - Error allocating resources for j_error");
+    j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+  }
+  return j_return;
+}
 
 static char * get_pattern_clause(struct mod_parameters * param, const char * pattern) {
   char * escape_pattern = h_escape_string_with_quotes(param->conn, pattern), * clause = NULL;
@@ -297,95 +384,14 @@ static json_t * database_user_get(const char * username, void * cls, int profile
   return j_return;
 }
 
-static json_t * is_user_database_parameters_valid(json_t * j_params) {
-  json_t * j_return, * j_error = json_array(), * j_element = NULL;
-  const char * field = NULL;
-  
-  if (j_error != NULL) {
-    if (!json_is_object(j_params)) {
-      json_array_append_new(j_error, json_string("parameters must be a JSON object"));
-    } else {
-      if (json_object_get(j_params, "use-glewlwyd-connection") != NULL && !json_is_boolean(json_object_get(j_params, "use-glewlwyd-connection"))) {
-        json_array_append_new(j_error, json_string("use-glewlwyd-connection must be a boolean"));
-      }
-      if (json_object_get(j_params, "use-glewlwyd-connection") == json_false()) {
-        if (json_object_get(j_params, "connection-type") == NULL || !json_is_string(json_object_get(j_params, "connection-type")) || (0 != o_strcmp("sqlite", json_string_value(json_object_get(j_params, "connection-type"))) && 0 != o_strcmp("mariadb", json_string_value(json_object_get(j_params, "connection-type"))) && 0 != o_strcmp("postgre", json_string_value(json_object_get(j_params, "connection-type"))))) {
-          json_array_append_new(j_error, json_string("connection-type is mandatory and must be one of the following values: 'sqlite', 'mariadb', 'postgre'"));
-        } else if (0 == o_strcmp("sqlite", json_string_value(json_object_get(j_params, "connection-type")))) {
-          if (json_object_get(j_params, "sqlite-dbpath") == NULL || !json_is_string(json_object_get(j_params, "sqlite-dbpath"))) {
-            json_array_append_new(j_error, json_string("sqlite-dbpath is mandatory and must be a string"));
-          }
-        } else if (0 == o_strcmp("mariadb", json_string_value(json_object_get(j_params, "connection-type")))) {
-          if (json_object_get(j_params, "mariadb-host") == NULL || !json_is_string(json_object_get(j_params, "mariadb-host"))) {
-            json_array_append_new(j_error, json_string("mariadb-host is mandatory and must be a string"));
-          }
-          if (json_object_get(j_params, "mariadb-user") == NULL || !json_is_string(json_object_get(j_params, "mariadb-user"))) {
-            json_array_append_new(j_error, json_string("mariadb-user is mandatory and must be a string"));
-          }
-          if (json_object_get(j_params, "mariadb-password") == NULL || !json_is_string(json_object_get(j_params, "mariadb-password"))) {
-            json_array_append_new(j_error, json_string("mariadb-password is mandatory and must be a string"));
-          }
-          if (json_object_get(j_params, "mariadb-dbname") == NULL || !json_is_string(json_object_get(j_params, "mariadb-dbname"))) {
-            json_array_append_new(j_error, json_string("mariadb-dbname is mandatory and must be a string"));
-          }
-          if (json_object_get(j_params, "mariadb-port") != NULL && (!json_is_integer(json_object_get(j_params, "mariadb-dbname")) || json_integer_value(json_object_get(j_params, "mariadb-dbname")) < 0)) {
-            json_array_append_new(j_error, json_string("mariadb-port is optional and must be a positive integer (default: 0)"));
-          }
-        } else if (0 == o_strcmp("postgre", json_string_value(json_object_get(j_params, "connection-type")))) {
-          if (json_object_get(j_params, "postgre-conninfo") == NULL || !json_is_string(json_object_get(j_params, "postgre-conninfo"))) {
-            json_array_append_new(j_error, json_string("postgre-conninfo is mandatory and must be a string"));
-          }
-        }
-      }
-      if (json_object_get(j_params, "data-format") != NULL) {
-        if (!json_is_object(json_object_get(j_params, "data-format"))) {
-          json_array_append_new(j_error, json_string("data-format is optional and must be a JSON object"));
-        } else {
-          json_object_foreach(json_object_get(j_params, "data-format"), field, j_element) {
-            if (0 == o_strcmp(field, "username") || 0 == o_strcmp(field, "name") || 0 == o_strcmp(field, "email") || 0 == o_strcmp(field, "enabled") || 0 == o_strcmp(field, "password")) {
-              json_array_append_new(j_error, json_string("data-format can not have settings for properties 'username', 'name', 'email', 'enabled' or 'password'"));
-            } else {
-              if (json_object_get(j_element, "multiple") != NULL && !json_is_boolean(json_object_get(j_element, "multiple"))) {
-                json_array_append_new(j_error, json_string("multiple is optional and must be a boolean (default: false)"));
-              }
-              if (json_object_get(j_element, "read") != NULL && !json_is_boolean(json_object_get(j_element, "read"))) {
-                json_array_append_new(j_error, json_string("read is optional and must be a boolean (default: true)"));
-              }
-              if (json_object_get(j_element, "write") != NULL && !json_is_boolean(json_object_get(j_element, "write"))) {
-                json_array_append_new(j_error, json_string("write is optional and must be a boolean (default: true)"));
-              }
-              if (json_object_get(j_element, "profile-read") != NULL && !json_is_boolean(json_object_get(j_element, "profile-read"))) {
-                json_array_append_new(j_error, json_string("profile-read is optional and must be a boolean (default: false)"));
-              }
-              if (json_object_get(j_element, "profile-write") != NULL && !json_is_boolean(json_object_get(j_element, "profile-write"))) {
-                json_array_append_new(j_error, json_string("profile-write is optional and must be a boolean (default: false)"));
-              }
-            }
-          }
-        }
-      }
-    }
-    if (json_array_size(j_error)) {
-      j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
-    } else {
-      j_return = json_pack("{si}", "result", G_OK);
-    }
-    json_decref(j_error);
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "is_user_database_parameters_valid - Error allocating resources for j_error");
-    j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
-  }
-  return j_return;
-}
-
 static char * get_password_clause_write(struct mod_parameters * param, const char * password) {
   char * clause = NULL, * password_encoded, digest[1024] = {0};
   
   if (!o_strlen(password)) {
     clause = o_strdup("''");
   } else if (param->conn->type == HOEL_DB_TYPE_SQLITE) {
-    if (generate_digest_pbkdf2(password, NULL, digest)) {
-      clause = msprintf("'%s'", digest);
+    if (generate_digest_pbkdf2(password, param->PBKDF2_iterations, NULL, digest)) {
+      clause = msprintf("'%s%c%u'", digest, G_PBKDF2_ITERATOR_SEP, param->PBKDF2_iterations);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error generate_digest_pbkdf2");
     }
@@ -485,58 +491,69 @@ static int update_password_list(struct mod_parameters * param, json_int_t gu_id,
   return ret;
 }
 
-static char ** get_salt_from_password_hash(struct mod_parameters * param, const char * username) {
+static char ** get_salt_from_password_hash(struct mod_parameters * param, const char * username, json_t * j_iterations) {
   json_t * j_query, * j_result, * j_element = 0;
   int res;
   unsigned char password_b64_decoded[1024] = {0};
-  char * salt = NULL, * username_escaped, * username_clause, ** salt_list = NULL;
-  size_t password_b64_decoded_len, index = 0;
+  char * salt = NULL, * username_escaped, * username_clause, ** salt_list = NULL, * str_iterator;
+  size_t password_b64_decoded_len, index = 0, gc_password_len;
   
-  username_escaped = h_escape_string_with_quotes(param->conn, username);
-  username_clause = msprintf("IN (SELECT gu_id FROM "G_TABLE_USER" WHERE UPPER(gu_username) = UPPER(%s))", username_escaped);  
-  j_query = json_pack("{sss[s]s{s{ssss}}}",
-                      "table",
-                      G_TABLE_USER_PASSWORD,
-                      "columns",
-                        "guw_password",
-                      "where",
-                        "gu_id",
-                          "operator",
-                          "raw",
-                          "value",
-                          username_clause);
-  o_free(username_clause);
-  o_free(username_escaped);
-  res = h_select(param->conn, j_query, &j_result, NULL);
-  json_decref(j_query);
-  if (res == H_OK) {
-    if (json_array_size(j_result)) {
-      if ((salt_list = o_malloc((json_array_size(j_result)+1)*sizeof(char *))) != NULL) {
-        json_array_foreach(j_result, index, j_element) {
-          if (json_string_length(json_object_get(j_element, "guw_password")) && o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_element, "guw_password")), json_string_length(json_object_get(j_element, "guw_password")), password_b64_decoded, &password_b64_decoded_len)) {
-            if ((salt = o_strdup((const char *)password_b64_decoded + password_b64_decoded_len - GLEWLWYD_DEFAULT_SALT_LENGTH)) != NULL) {
-              salt_list[index] = salt;
+  if (j_iterations != NULL) {
+    username_escaped = h_escape_string_with_quotes(param->conn, username);
+    username_clause = msprintf("IN (SELECT gu_id FROM "G_TABLE_USER" WHERE UPPER(gu_username) = UPPER(%s))", username_escaped);  
+    j_query = json_pack("{sss[s]s{s{ssss}}}",
+                        "table",
+                        G_TABLE_USER_PASSWORD,
+                        "columns",
+                          "guw_password",
+                        "where",
+                          "gu_id",
+                            "operator",
+                            "raw",
+                            "value",
+                            username_clause);
+    o_free(username_clause);
+    o_free(username_escaped);
+    res = h_select(param->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      if (json_array_size(j_result)) {
+        if ((salt_list = o_malloc((json_array_size(j_result)+1)*sizeof(char *))) != NULL) {
+          json_array_foreach(j_result, index, j_element) {
+            if ((str_iterator = o_strchr(json_string_value(json_object_get(j_element, "guw_password")), G_PBKDF2_ITERATOR_SEP)) != NULL) {
+              gc_password_len = o_strchr(json_string_value(json_object_get(j_element, "guw_password")), G_PBKDF2_ITERATOR_SEP) - json_string_value(json_object_get(j_element, "guw_password"));
+              json_array_append_new(j_iterations, json_integer(strtol(str_iterator+1, NULL, 10)));
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error extracting salt");
+              gc_password_len = json_string_length(json_object_get(j_element, "guw_password"));
+              json_array_append_new(j_iterations, json_integer(0));
             }
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error o_base64_decode");
+            if (json_string_length(json_object_get(j_element, "guw_password")) && o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_element, "guw_password")), gc_password_len, password_b64_decoded, &password_b64_decoded_len)) {
+              if ((salt = o_strdup((const char *)password_b64_decoded + password_b64_decoded_len - GLEWLWYD_DEFAULT_SALT_LENGTH)) != NULL) {
+                salt_list[index] = salt;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error extracting salt");
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error o_base64_decode");
+            }
           }
+          salt_list[json_array_size(j_result)] = NULL;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error allocatig resources for salt_list (1)");
         }
-        salt_list[json_array_size(j_result)] = NULL;
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error allocatig resources for salt_list (1)");
+        if ((salt_list = o_malloc(sizeof(char *))) != NULL) {
+          salt_list[0] = NULL;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error allocatig resources for salt_list (2)");
+        }
       }
+      json_decref(j_result);
     } else {
-      if ((salt_list = o_malloc(sizeof(char *))) != NULL) {
-        salt_list[0] = NULL;
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error allocatig resources for salt_list (2)");
-      }
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error executing j_query");
     }
-    json_decref(j_result);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error executing j_query");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error j_iterations is NULL");
   }
   return salt_list;
 }
@@ -544,16 +561,27 @@ static char ** get_salt_from_password_hash(struct mod_parameters * param, const 
 static char * get_password_clause_check(struct mod_parameters * param, const char * username, const char * password) {
   char * clause = NULL, * password_encoded, digest[1024] = {0}, ** salt_list, * username_escaped = h_escape_string_with_quotes(param->conn, username);
   size_t i;
+  json_t * j_iterations = json_array();
+  unsigned int iterations;
   
   if (param->conn->type == HOEL_DB_TYPE_SQLITE) {
-    if ((salt_list = get_salt_from_password_hash(param, username)) != NULL) {
+    if ((salt_list = get_salt_from_password_hash(param, username, j_iterations)) != NULL) {
       clause = o_strdup("IN (");
       for (i=0; salt_list[i]!=NULL; i++) {
-        if (generate_digest_pbkdf2(password, salt_list[i], digest)) {
+        iterations = (unsigned int)json_integer_value(json_array_get(j_iterations, i));
+        if (generate_digest_pbkdf2(password, iterations, salt_list[i], digest)) {
           if (!i) {
-            clause = mstrcatf(clause, "'%s'", digest);
+            if (iterations) {
+              clause = mstrcatf(clause, "'%s%c%u'", digest, G_PBKDF2_ITERATOR_SEP, iterations);
+            } else {
+              clause = mstrcatf(clause, "'%s'", digest);
+            }
           } else {
-            clause = mstrcatf(clause, ",'%s'", digest);
+            if (iterations) {
+              clause = mstrcatf(clause, ",'%s%c%u'", digest, G_PBKDF2_ITERATOR_SEP, iterations);
+            } else {
+              clause = mstrcatf(clause, ",'%s'", digest);
+            }
           }
           digest[0] = '\0';
         } else {
@@ -583,6 +611,7 @@ static char * get_password_clause_check(struct mod_parameters * param, const cha
     }
   }
   o_free(username_escaped);
+  json_decref(j_iterations);
   return clause;
 }
 
@@ -804,6 +833,11 @@ json_t * user_module_init(struct config_module * config, int readonly, int multi
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error connecting to database");
         j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error connecting to database");
+      }
+      if (json_object_get(j_parameters, "pbkdf2-iterations") != NULL) {
+        ((struct mod_parameters *)*cls)->PBKDF2_iterations = (unsigned int)json_integer_value(json_object_get(j_parameters, "pbkdf2-iterations"));
+      } else {
+        ((struct mod_parameters *)*cls)->PBKDF2_iterations = G_PBKDF2_ITERATOR_DEFAULT;
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init database - Error allocating resources for cls");

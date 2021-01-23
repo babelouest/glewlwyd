@@ -385,7 +385,7 @@ int generate_digest_raw(digest_algorithm digest, const unsigned char * data, siz
 /**
  * Generates a digest using the PBKDF2 algorithm from data and a salt if specified, otherwise generates a salt, stores it in out_digest
  */
-int generate_digest_pbkdf2(const char * data, const char * salt, char * out_digest) {
+int generate_digest_pbkdf2(const char * data, unsigned int iterations, const char * salt, char * out_digest) {
   char my_salt[GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0};
   uint8_t cur_salt[GLEWLWYD_DEFAULT_SALT_LENGTH], dst[32 + GLEWLWYD_DEFAULT_SALT_LENGTH] = {0};
   int res;
@@ -397,7 +397,7 @@ int generate_digest_pbkdf2(const char * data, const char * salt, char * out_dige
     rand_string_nonce(my_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
     memcpy(cur_salt, my_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
   }
-  pbkdf2_hmac_sha256(o_strlen(data), (const uint8_t *)data, 1000, GLEWLWYD_DEFAULT_SALT_LENGTH, cur_salt, 32, dst);
+  pbkdf2_hmac_sha256(o_strlen(data), (const uint8_t *)data, iterations, GLEWLWYD_DEFAULT_SALT_LENGTH, cur_salt, 32, dst);
   memcpy(dst+32, cur_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
   if (o_base64_encode(dst, 32 + GLEWLWYD_DEFAULT_SALT_LENGTH, (unsigned char *)out_digest, &encoded_key_size_base64)) {
     res = 1;
@@ -522,7 +522,7 @@ char * generate_hash(digest_algorithm digest, const char * data) {
         }
         break;
       case digest_PBKDF2_SHA256:
-        if (generate_digest_pbkdf2(data, NULL, buffer)) {
+        if (generate_digest_pbkdf2(data, G_PBKDF2_ITERATOR_DEFAULT, NULL, buffer)) {
           to_return = msprintf("{PBKDF2}%s", buffer);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_hash - Error generating digest PBKDF2");

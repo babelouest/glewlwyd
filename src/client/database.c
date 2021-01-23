@@ -36,11 +36,14 @@
 #define G_TABLE_CLIENT_SCOPE_CLIENT "g_client_scope_client"
 #define G_TABLE_CLIENT_PROPERTY "g_client_property"
 
+#define G_PBKDF2_ITERATOR_SEP ','
+
 struct mod_parameters {
   int use_glewlwyd_connection;
   digest_algorithm hash_algorithm;
   struct _h_connection * conn;
   json_t * j_params;
+  unsigned int PBKDF2_iterations;
 };
 
 static json_t * is_client_database_parameters_valid(json_t * j_params) {
@@ -106,6 +109,9 @@ static json_t * is_client_database_parameters_valid(json_t * j_params) {
             }
           }
         }
+      }
+      if (json_object_get(j_params, "pbkdf2-iterations") != NULL && json_integer_value(json_object_get(j_params, "pbkdf2-iterations")) <= 0) {
+        json_array_append_new(j_error, json_string("pbkdf2-iterations is optional and must be a positive non null integer"));
       }
     }
     if (json_array_size(j_error)) {
@@ -392,8 +398,8 @@ static char * get_password_clause_write(struct mod_parameters * param, const cha
   if (!o_strlen(password)) {
     clause = o_strdup("''");
   } else if (param->conn->type == HOEL_DB_TYPE_SQLITE) {
-    if (generate_digest_pbkdf2(password, NULL, digest)) {
-      clause = msprintf("'%s'", digest);
+    if (generate_digest_pbkdf2(password, param->PBKDF2_iterations, NULL, digest)) {
+      clause = msprintf("'%s%c%u'", digest, G_PBKDF2_ITERATOR_SEP, param->PBKDF2_iterations);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_write database - Error generate_digest_pbkdf2");
     }
@@ -417,12 +423,12 @@ static char * get_password_clause_write(struct mod_parameters * param, const cha
   return clause;
 }
 
-static char * get_salt_from_password_hash(struct mod_parameters * param, const char * client_id) {
+static char * get_salt_from_password_hash(struct mod_parameters * param, const char * client_id, unsigned int * iterations) {
   json_t * j_query, * j_result;
   int res;
   unsigned char password_b64_decoded[1024] = {0};
-  char * salt = NULL, * client_id_escaped, * client_id_clause;
-  size_t password_b64_decoded_len;
+  char * salt = NULL, * client_id_escaped, * client_id_clause, * str_iterator;
+  size_t password_b64_decoded_len, gc_password_len;
   
   client_id_escaped = h_escape_string_with_quotes(param->conn, client_id);
   client_id_clause = msprintf(" = UPPER(%s)", client_id_escaped);
@@ -443,7 +449,13 @@ static char * get_salt_from_password_hash(struct mod_parameters * param, const c
   json_decref(j_query);
   if (res == H_OK) {
     if (json_array_size(j_result) && json_string_length(json_object_get(json_array_get(j_result, 0), "gc_password"))) {
-      if (o_base64_decode((const unsigned char *)json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password")), json_string_length(json_object_get(json_array_get(j_result, 0), "gc_password")), password_b64_decoded, &password_b64_decoded_len)) {
+      if ((str_iterator = o_strchr(json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password")), G_PBKDF2_ITERATOR_SEP)) != NULL) {
+        gc_password_len = o_strchr(json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password")), G_PBKDF2_ITERATOR_SEP) - json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password"));
+        *iterations = (unsigned int)strtol(str_iterator+1, NULL, 10);
+      } else {
+        gc_password_len = json_string_length(json_object_get(json_array_get(j_result, 0), "gc_password"));
+      }
+      if (o_base64_decode((const unsigned char *)json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password")), gc_password_len, password_b64_decoded, &password_b64_decoded_len)) {
         if ((salt = o_strdup((const char *)password_b64_decoded + password_b64_decoded_len - GLEWLWYD_DEFAULT_SALT_LENGTH)) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error extracting salt");
         }
@@ -462,11 +474,16 @@ static char * get_salt_from_password_hash(struct mod_parameters * param, const c
 
 static char * get_password_clause_check(struct mod_parameters * param, const char * client_id, const char * password) {
   char * clause = NULL, * password_encoded, digest[1024] = {0}, * salt;
+  unsigned int iterations = 0;
   
   if (param->conn->type == HOEL_DB_TYPE_SQLITE) {
-    if ((salt = get_salt_from_password_hash(param, client_id)) != NULL) {
-      if (generate_digest_pbkdf2(password, salt, digest)) {
-        clause = msprintf(" = '%s'", digest);
+    if ((salt = get_salt_from_password_hash(param, client_id, &iterations)) != NULL) {
+      if (generate_digest_pbkdf2(password, iterations, salt, digest)) {
+        if (iterations) {
+          clause = msprintf(" = '%s%c%u'", digest, G_PBKDF2_ITERATOR_SEP, iterations);
+        } else {
+          clause = msprintf(" = '%s'", digest);
+        }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_password_clause_check database - Error generate_digest_pbkdf2");
       }
@@ -716,6 +733,11 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
         } else if (0 == o_strcmp(json_string_value(json_object_get(j_parameters, "connection-type")), "postgre")) {
           ((struct mod_parameters *)*cls)->conn = h_connect_pgsql(json_string_value(json_object_get(j_parameters, "postgre-conninfo")));
         }
+      }
+      if (json_object_get(j_parameters, "pbkdf2-iterations") != NULL) {
+        ((struct mod_parameters *)*cls)->PBKDF2_iterations = (unsigned int)json_integer_value(json_object_get(j_parameters, "pbkdf2-iterations"));
+      } else {
+        ((struct mod_parameters *)*cls)->PBKDF2_iterations = G_PBKDF2_ITERATOR_DEFAULT;
       }
       if (((struct mod_parameters *)*cls)->conn != NULL) {
         j_return = json_pack("{si}", "result", G_OK);
