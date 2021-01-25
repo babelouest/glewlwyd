@@ -3,7 +3,6 @@
 ## 2.5.3
 
 - Fix UI bugs
-- Add German translation (Thanks Juergen)
 - UI: Improve session expiration error
 - Update SQLite3 password management by increasing PBKDF2 iterations and allowing to set iterations value
 
