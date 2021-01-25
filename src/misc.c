@@ -11,17 +11,17 @@
  * Copyright 2016-2021 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU GENERAL PUBLIC LICENSE
- * License as published by the Free Software Foundation;
- * version 3 of the License.
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation;
+ * version 2.1 of the License.
  *
- * This program is distributed in the hope that it will be useful,
+ * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU GENERAL PUBLIC LICENSE for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 #include <sys/socket.h>
@@ -221,27 +221,6 @@ char * join_json_string_array(json_t * j_array, const char * separator) {
 char to_hex(char code) {
   static char hex[] = "0123456789abcdef";
   return hex[code & 15];
-}
-
-/**
- * Returns a url-encoded version of str
- * IMPORTANT: be sure to o_free() the returned string after use 
- * Thanks Geek Hideout!
- * http://www.geekhideout.com/urlcode.shtml
- */
-char * url_encode(const char * str) {
-  char * pstr = (char *)str, * buf = o_malloc(strlen(str) * 3 + 1), * pbuf = buf;
-  while (* pstr) {
-    if (isalnum(* pstr) || * pstr == '-' || * pstr == '_' || * pstr == '.' || * pstr == '~') 
-      * pbuf++ = * pstr;
-    else if (* pstr == ' ') 
-      * pbuf++ = '+';
-    else 
-      * pbuf++ = '%', * pbuf++ = to_hex(* pstr >> 4), * pbuf++ = to_hex(* pstr & 15);
-    pstr++;
-  }
-  * pbuf = '\0';
-  return buf;
 }
 
 /**
