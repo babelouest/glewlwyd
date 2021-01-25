@@ -392,7 +392,6 @@ char * rand_string_nonce(char * str, size_t str_size);
 char * rand_string_from_charset(char * str, size_t str_size, const char * charset);
 int rand_code(char * str, size_t str_size);
 char * join_json_string_array(json_t * j_array, const char * separator);
-char * url_encode(const char * str);
 int generate_digest(digest_algorithm digest, const char * data, int use_salt, char * out_digest);
 int generate_digest_raw(digest_algorithm digest, const unsigned char * data, size_t data_len, unsigned char * out_digest, size_t * out_digest_len);
 char * generate_hash(digest_algorithm digest, const char * data);
