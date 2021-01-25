@@ -407,13 +407,13 @@ char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char
   int i;
   
   if (callback_url != NULL) {
-    encoded_callback_url = url_encode(callback_url);
+    encoded_callback_url = ulfius_url_encode(callback_url);
   }
   if (client_id != NULL) {
-    encoded_client_id = url_encode(client_id);
+    encoded_client_id = ulfius_url_encode(client_id);
   }
   if (scope_list != NULL) {
-    encoded_scope_list = url_encode(scope_list);
+    encoded_scope_list = ulfius_url_encode(scope_list);
   }
   if (additional_parameters != NULL) {
     keys = u_map_enum_keys(additional_parameters);
@@ -421,7 +421,7 @@ char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char
       if (u_map_get(additional_parameters, keys[i]) == NULL) {
         query_additional_parameters = mstrcatf(query_additional_parameters, "&%s", keys[i]);
       } else {
-        value_encoded = url_encode(u_map_get(additional_parameters, keys[i]));
+        value_encoded = ulfius_url_encode(u_map_get(additional_parameters, keys[i]));
         query_additional_parameters = mstrcatf(query_additional_parameters, "&%s=%s", keys[i], value_encoded);
         o_free(value_encoded);
       }

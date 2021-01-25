@@ -3231,7 +3231,7 @@ static char * generate_query_parameters(struct _u_map * map) {
     keys = u_map_enum_keys(map);
     for (i=0; keys[i] != NULL; i++) {
       if (u_map_get(map, keys[i]) != NULL) {
-        value = url_encode((char *)u_map_get(map, keys[i]));
+        value = ulfius_url_encode((char *)u_map_get(map, keys[i]));
         param = msprintf("%s=%s", keys[i], value);
         o_free(value);
         if (query == NULL) {
@@ -4494,7 +4494,7 @@ static char * get_state_param(const char * state_value) {
   if (!o_strlen(state_value)) {
     state_param = o_strdup("");
   } else {
-    state_encoded = url_encode(state_value);
+    state_encoded = ulfius_url_encode(state_value);
     state_param = msprintf("&state=%s", state_encoded);
     o_free(state_encoded);
   }
@@ -5433,16 +5433,16 @@ static void build_form_post_error_response(struct _u_map * map, struct _u_respon
   form_output = msprintf("<html><head><title>Glewlwyd</title></head><body onload=\"javascript:document.forms[0].submit()\"><form method=\"post\" action=\"%s\">", u_map_get(map, "redirect_uri"));
 
   if (u_map_has_key_case(map, "state")) {
-    value_encoded = url_encode(u_map_get(map, "state"));
+    value_encoded = ulfius_url_encode(u_map_get(map, "state"));
     form_output = mstrcatf(form_output, "<input type=\"hidden\" name=\"state\" value=\"%s\"/>", value_encoded);
     o_free(value_encoded);
   }
   va_start(vl, response);
   for (key = va_arg(vl, const char *); key != NULL; key = va_arg(vl, const char *)) {
     value = va_arg(vl, const char *);
-    key_encoded = url_encode(key);
+    key_encoded = ulfius_url_encode(key);
     if (o_strlen(value)) {
-      value_encoded = url_encode(value);
+      value_encoded = ulfius_url_encode(value);
       form_output = mstrcatf(form_output, "<input type=\"hidden\" name=\"%s\" value=\"%s\"/>", key_encoded, value_encoded);
       o_free(value_encoded);
     } else {
@@ -5465,9 +5465,9 @@ static void build_form_post_response(const char * redirect_uri, struct _u_map * 
   form_output = msprintf("<html><head><title>Glewlwyd</title></head><body onload=\"javascript:document.forms[0].submit()\"><form method=\"post\" action=\"%s\">", redirect_uri);
 
   for (i=0; keys[i] != NULL; i++) {
-    key_encoded = url_encode(keys[i]);
+    key_encoded = ulfius_url_encode(keys[i]);
     if (o_strlen((value = u_map_get(map_query, keys[i])))) {
-      value_encoded = url_encode(value);
+      value_encoded = ulfius_url_encode(value);
       form_output = mstrcatf(form_output, "<input type=\"hidden\" name=\"%s\" value=\"%s\"/>", key_encoded, value_encoded);
       o_free(value_encoded);
     } else {

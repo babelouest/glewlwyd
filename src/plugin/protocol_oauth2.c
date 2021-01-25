@@ -286,7 +286,7 @@ static char * generate_query_parameters(struct _u_map * map_url, struct _u_map *
     if (map_url != NULL) {
       keys = u_map_enum_keys(map_url);
       for (i=0; keys[i] != NULL; i++) {
-        value = url_encode((char *)u_map_get(map_url, keys[i]));
+        value = ulfius_url_encode((char *)u_map_get(map_url, keys[i]));
         param = msprintf("%s=%s", keys[i], value);
         o_free(value);
         if (query == NULL) {
@@ -303,7 +303,7 @@ static char * generate_query_parameters(struct _u_map * map_url, struct _u_map *
     if (map_post_body != NULL) {
       keys = u_map_enum_keys(map_post_body);
       for (i=0; keys[i] != NULL; i++) {
-        value = url_encode((char *)u_map_get(map_post_body, keys[i]));
+        value = ulfius_url_encode((char *)u_map_get(map_post_body, keys[i]));
         param = msprintf("%s=%s", keys[i], value);
         o_free(value);
         if (query == NULL) {
@@ -2350,7 +2350,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
   int res;
   
   if (u_map_get(request->map_url, "state") != NULL) {
-    state_encoded = url_encode(u_map_get(request->map_url, "state"));
+    state_encoded = ulfius_url_encode(u_map_get(request->map_url, "state"));
     state_param = msprintf("&state=%s", state_encoded);
     o_free(state_encoded);
   } else {
@@ -2602,7 +2602,7 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
   time_t now;
   
   if (u_map_get(request->map_url, "state") != NULL) {
-    state_encoded = url_encode(u_map_get(request->map_url, "state"));
+    state_encoded = ulfius_url_encode(u_map_get(request->map_url, "state"));
     state_param = msprintf("&state=%s", state_encoded);
     o_free(state_encoded);
   } else {
@@ -3165,7 +3165,7 @@ static int callback_oauth2_authorization(const struct _u_request * request, stru
   u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
 
   if (u_map_get(request->map_url, "state") != NULL) {
-    state_encoded = url_encode(u_map_get(request->map_url, "state"));
+    state_encoded = ulfius_url_encode(u_map_get(request->map_url, "state"));
     state_param = msprintf("&state=%s", state_encoded);
     o_free(state_encoded);
   } else {
