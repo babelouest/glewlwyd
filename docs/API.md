@@ -2776,6 +2776,47 @@ Code 401
 
 No enabled authenticated user for this session
 
+### Get list of granted scopes per clients
+
+#### URL
+
+`/api/profile/grant`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_profile` authorized.
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[
+  {
+    "client_id": string, client_id of the client
+    "name": string, client name
+    "description": string, client description
+    "scope": [
+      {
+        "name": string, name of the scope
+        "display_name": string, display name of the scope
+        "description": string, description of the scope
+      }
+    ]
+  }
+]
+```
+
+Code 401
+
+No enabled authenticated user for this session
+
 ### Get sessions for current profile
 
 #### URL
