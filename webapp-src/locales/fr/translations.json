@@ -954,7 +954,7 @@
     "success-api-delete-api-key": "Clé d'API désactivée",
     "api-key-example-description": "Pour utiliser une clé d'API, vous devez l'utiliser dans un header 'Authorization' avec le préfixe de valeur 'token' (le préfixe est sensible à la casse)",
     "api-key-example": "curl 'http://localhost:4593/api/user' -H 'Authorization: token XJcv1MRnK33EHAedPGELl0yXx2W6vUPu'",
-    "mod-glwd-oauth-dpop-title": "OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) (Draft 01)",
+    "mod-glwd-oauth-dpop-title": "OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) (Draft 04)",
     "mod-glwd-oauth-dpop-allowed": "Autoriser DPoP",
     "mod-glwd-oauth-dpop-iat-duration": "Durée maximum du champ iat dans le token DPoP (secondes)",
     "mod-glwd-oauth-dpop-iat-duration-ph": "Ex: 10",
@@ -1197,7 +1197,10 @@
     "reset-credentials-email-token-error": "Token invalide",
     "reset-credentials-hello": "Récupération du compte: {{-name}}",
     "reset-credentials-error": "Erreur de session, veuillez vous reconnecter",
-    "reset-credentials-complete-message": "Après avoir mis à jour votre mot de passe et/ou récupéré vos schémas d'authentification, vous pouvez vous reconnecter à l'application en suivant le lien suivant"
+    "reset-credentials-complete-message": "Après avoir mis à jour votre mot de passe et/ou récupéré vos schémas d'authentification, vous pouvez vous reconnecter à l'application en suivant le lien suivant",
+    "session-client-grant-table": "Autorisations clients",
+    "session-remove-scope-grant-title": "Supprimer l'autorisation",
+    "session-remove-scope-grant-message": "Voulez-vous supprimer cette autorisation pour ce client?"
   },
   "callback": {
     "button-login": "Retourner à la page de connexion",

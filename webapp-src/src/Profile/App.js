@@ -61,6 +61,7 @@ class App extends Component {
         }
       },
       sessionList: [],
+      clientGrantList: [],
       invalidCredentialMessage: false,
       invalidDelegateMessage: false,
       tokenParsed: false,
@@ -75,6 +76,7 @@ class App extends Component {
     this.fetchProfile = this.fetchProfile.bind(this);
     this.updateEmailCallback = this.updateEmailCallback.bind(this);
     this.refreshSession = this.refreshSession.bind(this);
+    this.refreshClientGrant = this.refreshClientGrant.bind(this);
 
     messageDispatcher.subscribe('App', (message) => {
       if (message.type === 'nav') {
@@ -158,6 +160,8 @@ class App extends Component {
         }
       } else if (message.type === 'refreshSession') {
         this.refreshSession();
+      } else if (message.type === 'refreshClientGrant') {
+        this.refreshClientGrant();
       }
     });
 
@@ -263,6 +267,7 @@ class App extends Component {
                 }
               });
               this.refreshSession();
+              this.refreshClientGrant();
             })
             .fail((error) => {
               this.setState({loggedIn: false, schemeList: [], invalidDelegateMessage: false, invalidCredentialMessage: true, profileUpdate: false}, () => {
@@ -349,6 +354,21 @@ class App extends Component {
         }
       });
       messageDispatcher.sendMessage('App', {type: "sessionComplete"});
+    })
+    .fail((err) => {
+      if (err.status === 401) {
+        this.setState({invalidCredentialMessage: true});
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      }
+    });
+  }
+  
+  refreshClientGrant() {
+    apiManager.glewlwydRequest("/profile/grant")
+    .then((res) => {
+      this.setState({clientGrantList: res});
     })
     .fail((err) => {
       if (err.status === 401) {
@@ -535,7 +555,7 @@ class App extends Component {
                     {userJsx}
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="session"?" active":"")}>
-                    <Session config={this.state.config} plugins={this.state.plugins} sessionList={this.state.sessionList}/>
+                    <Session config={this.state.config} plugins={this.state.plugins} sessionList={this.state.sessionList} clientGrantList={this.state.clientGrantList}/>
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="password"?" active":"")}>
                     <Password config={this.state.config}

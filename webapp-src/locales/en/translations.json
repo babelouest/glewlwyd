@@ -954,7 +954,7 @@
     "success-api-delete-api-key": "API key disabled",
     "api-key-example-description": "To use an API key, you must set it in a header 'Authorization' with the prefix value 'token' (the prefix is case sensitive)",
     "api-key-example": "curl 'http://localhost:4593/api/user' -H 'Authorization: token XJcv1MRnK33EHAedPGELl0yXx2W6vUPu'",
-    "mod-glwd-oauth-dpop-title": "OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) (Draft 01)",
+    "mod-glwd-oauth-dpop-title": "OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) (Draft 04)",
     "mod-glwd-oauth-dpop-allowed": "Allow DPoP",
     "mod-glwd-oauth-dpop-iat-duration": "DPoP Token iat claim maximum duration (seconds)",
     "mod-glwd-oauth-dpop-iat-duration-ph": "e.g. 10",
@@ -1197,7 +1197,10 @@
     "reset-credentials-email-token-error": "Invalid token",
     "reset-credentials-hello": "Reset credentials: {{-name}}",
     "reset-credentials-error": "Session error, please reconnect",
-    "reset-credentials-complete-message": "After changing your password and/or restoring your credentials, you can reconnect to the application using the following link"
+    "reset-credentials-complete-message": "After changing your password and/or restoring your credentials, you can reconnect to the application using the following link",
+    "session-client-grant-table": "Client grants",
+    "session-remove-scope-grant-title": "Remove grant",
+    "session-remove-scope-grant-message": "Do you want to remove this grant?"
   },
   "callback": {
     "button-login": "Back to login page",

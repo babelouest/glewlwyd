@@ -13,7 +13,9 @@ class Session extends Component {
       config: props.config,
       sessionList: props.sessionList,
       plugins: props.plugins,
+      clientGrantList: props.clientGrantList,
       disableObject: false,
+      removeClientScope: false,
       showActive: false
     };
     
@@ -23,13 +25,16 @@ class Session extends Component {
     this.disableToken = this.disableToken.bind(this);
     this.disableTokenConfirm = this.disableTokenConfirm.bind(this);
     this.toggleActive = this.toggleActive.bind(this);
+    this.removeClientScopeGrant = this.removeClientScopeGrant.bind(this);
+    this.removeClientScopeGrantConfirm = this.removeClientScopeGrantConfirm.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
     this.setState({
       config: nextProps.config,
       plugins: nextProps.plugins,
-      sessionList: nextProps.sessionList
+      sessionList: nextProps.sessionList,
+      clientGrantList: nextProps.clientGrantList
     });
   }
   
@@ -126,37 +131,69 @@ class Session extends Component {
     messageDispatcher.sendMessage('App', {type: "closeConfirm"});
   }
   
+  removeClientScopeGrant(e, client_id, scope) {
+    this.setState({removeClientScope: {client_id: client_id, scope: scope}}, () => {
+      messageDispatcher.sendMessage('App', {type: "confirm", title: i18next.t("profile.session-remove-scope-grant-title"), message: i18next.t("profile.session-remove-scope-grant-message"), callback: this.removeClientScopeGrantConfirm});
+    });
+  }
+  
+  removeClientScopeGrantConfirm(result) {
+    if (result) {
+      var scopeList = [], found = false;
+      this.state.clientGrantList.forEach(clientGrant => {
+        if (clientGrant.client_id === this.state.removeClientScope.client_id) {
+          found = true;
+          clientGrant.scope.forEach(scope => {
+            if (scope.name !== this.state.removeClientScope.scope) {
+              scopeList.push(scope.name);
+            }
+          });
+        }
+      });
+      if (found) {
+        apiManager.glewlwydRequest("/auth/grant/" + encodeURIComponent(this.state.removeClientScope.client_id), "PUT", {scope: scopeList.join(" ")})
+        .then(() => {
+          messageDispatcher.sendMessage('App', {type: 'refreshClientGrant'});
+        })
+        .fail(() => {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-set-grant")});
+        });
+      }
+    }
+    messageDispatcher.sendMessage('App', {type: "closeConfirm"});
+  }
+  
   render() {
     // Session list
     var sessionHeader =
-    <tr>
-      <th>
-        {i18next.t("profile.session-table-last-login")}
-      </th>
-      <th>
-        {i18next.t("profile.session-table-expiration")}
-      </th>
-      <th className="d-none d-lg-table-cell">
-        {i18next.t("profile.session-table-issued-for")}
-      </th>
-      <th className="d-none d-lg-table-cell">
-        {i18next.t("profile.session-table-user-agent")}
-      </th>
-      <th>
-        <div className="form-check">
-          <input className="form-check-input" type="checkbox" onChange={this.toggleActive} checked={this.state.showActive} id="session-table"/>
-          <label className="form-check-label" for="session-table">
-            {i18next.t("admin.enabled")}
-          </label>
-        </div>
-      </th>
-      <th>
-      </th>
-    </tr>;
+      <tr>
+        <th>
+          {i18next.t("profile.session-table-last-login")}
+        </th>
+        <th>
+          {i18next.t("profile.session-table-expiration")}
+        </th>
+        <th className="d-none d-lg-table-cell">
+          {i18next.t("profile.session-table-issued-for")}
+        </th>
+        <th className="d-none d-lg-table-cell">
+          {i18next.t("profile.session-table-user-agent")}
+        </th>
+        <th>
+          <div className="form-check">
+            <input className="form-check-input" type="checkbox" onChange={this.toggleActive} checked={this.state.showActive} id="session-table"/>
+            <label className="form-check-label" htmlFor="session-table">
+              {i18next.t("admin.enabled")}
+            </label>
+          </div>
+        </th>
+        <th>
+        </th>
+      </tr>;
     var sessionList = [], tokenTables = [], curDate = new Date();
     this.state.sessionList.forEach((session, index) => {
       var lastLogin = new Date(session.last_login * 1000), expiration = new Date(session.expiration * 1000);
-      if (this.state.showActive || (expiration >= curDate && session.enabled)) {
+      if (!this.state.showActive || (expiration >= curDate && session.enabled)) {
         sessionList.push(
         <tr key={index}>
           <td>
@@ -207,7 +244,7 @@ class Session extends Component {
         <th>
           <div className="form-check">
             <input className="form-check-input" type="checkbox" onChange={this.toggleActive} checked={this.state.showActive} id="session-table"/>
-            <label className="form-check-label" for="session-table">
+            <label className="form-check-label" htmlFor="session-table">
               {i18next.t("admin.enabled")}
             </label>
           </div>
@@ -218,7 +255,7 @@ class Session extends Component {
       var tokenList = [];
       oauth2.forEach((token, index) => {
         var lastSeen = new Date(token.last_seen * 1000), expiration = new Date(token.expires_at * 1000);
-        if (this.state.showActive || (expiration >= curDate && token.enabled)) {
+        if (!this.state.showActive || (expiration >= curDate && token.enabled)) {
           tokenList.push(
           <tr key={index}>
             <td>
@@ -288,7 +325,7 @@ class Session extends Component {
         <th>
           <div className="form-check">
             <input className="form-check-input" type="checkbox" onChange={this.toggleActive} checked={this.state.showActive} id="session-table"/>
-            <label className="form-check-label" for="session-table">
+            <label className="form-check-label" htmlFor="session-table">
               {i18next.t("admin.enabled")}
             </label>
           </div>
@@ -299,7 +336,7 @@ class Session extends Component {
       var tokenList = [];
       oidc.forEach((token, index) => {
         var lastSeen = new Date(token.last_seen * 1000), expiration = new Date(token.expires_at * 1000);
-        if (this.state.showActive || (expiration >= curDate && token.enabled)) {
+        if (!this.state.showActive || (expiration >= curDate && token.enabled)) {
           tokenList.push(
           <tr key={index}>
             <td>
@@ -346,6 +383,35 @@ class Session extends Component {
         </div>
       );
     }
+    var clientGrantList = [];
+    this.state.clientGrantList.forEach((clientGrant, index) => {
+      var scopeList = [];
+      clientGrant.scope.forEach((scope, scopeIndex) => {
+        scopeList.push(
+          <div key={scopeIndex}>
+            <hr/>
+            <h5>
+              {i18next.t("login.scheme-list-scope", {scope: (scope.display_name || scope.name)})}
+              <button type="button"  className="btn btn-secondary btn-sm btn-icon-right" disabled={"openid"===scope.name} onClick={(e) => this.removeClientScopeGrant(e, clientGrant.client_id, scope.name)}>
+                <i className="fas fa-trash"></i>
+              </button>
+            </h5>
+            <p>{scope.description}</p>
+          </div>
+        );
+      });
+      clientGrantList.push(
+        <div key={index}>
+          <div className="alert alert-success" role="alert">
+            <h4>{clientGrant.name || clientGrant.client_id}</h4>
+            <hr/>
+            <p>{clientGrant.description}</p>
+          </div>
+          {scopeList}
+          <hr/>
+        </div>
+      );
+    });
     return (
       <div>
         <div className="row">
@@ -356,6 +422,20 @@ class Session extends Component {
         <div className="row">
           <div className="col-md-12">
             <div className="accordion" id="accordionParams">
+              <div className="card">
+                <div className="card-header" id="dataFormatCard">
+                  <h2 className="mb-0">
+                    <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseClientGrant" aria-expanded="true" aria-controls="collapseClientGrant">
+                      {i18next.t("profile.session-client-grant-table")}
+                    </button>
+                  </h2>
+                </div>
+                <div id="collapseClientGrant" className="collapse" aria-labelledby="dataFormatCard" data-parent="#accordionParams">
+                  <div className="card-body">
+                    {clientGrantList}
+                  </div>
+                </div>
+              </div>
               <div className="card">
                 <div className="card-header" id="dataFormatCard">
                   <h2 className="mb-0">
