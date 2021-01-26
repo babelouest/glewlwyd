@@ -32,7 +32,7 @@ The following OpenID Connect and OAuth2 functionalities are currently supported:
 - [JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens - draft 10](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-10)
 - [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252), see [Native Apps Guidelines](#native-apps-guidelines)
 - [OAuth 2.0 Device Authorization Grant](https://tools.ietf.org/html/rfc8628)
-- [OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) Draft 01](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-dpop-01)
+- [OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) Draft 04](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-dpop-04)
 - [JWT Response for OAuth Token Introspection Draft 10](https://tools.ietf.org/html/draft-ietf-oauth-jwt-introspection-response-10)
 - [Resource Indicators for OAuth 2.0](https://tools.ietf.org/html/rfc8707)
 - [OAuth 2.0 Rich Authorization Requests Draft 03](https://www.ietf.org/archive/id/draft-ietf-oauth-rar-03.html)
