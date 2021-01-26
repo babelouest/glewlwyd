@@ -205,6 +205,7 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
 int is_scope_list_valid_for_session(struct config_elements * config, const char * scope_list, const char * session_uid);
 json_t * get_client_user_scope_grant(struct config_elements * config, const char * client_id, const char * username, const char * scope_list);
 json_t * get_granted_scopes_for_client(struct config_elements * config, json_t * j_user, const char * client_id, const char * scope_list);
+json_t * get_client_grant_list(struct config_elements * config, const char * username, size_t offset, size_t limit);
 int set_granted_scopes_for_client(struct config_elements * config, json_t * j_user, const char * client_id, const char * scope_list);
 json_t * get_scope_list_allowed_for_session(struct config_elements * config, const char * scope_list, const char * session_uid);
 
@@ -341,6 +342,7 @@ int callback_glewlwyd_user_update_profile (const struct _u_request * request, st
 int callback_glewlwyd_user_delete_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_update_password (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_get_plugin_list (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_user_get_client_grant_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_get_session_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_get_scheme_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_session (const struct _u_request * request, struct _u_response * response, void * user_data);

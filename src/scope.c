@@ -511,18 +511,16 @@ json_t * get_client_user_scope_grant(struct config_elements * config, const char
   char ** scope_array = NULL;
   json_t * j_query, * j_result = NULL, * j_return, * j_element;
   int res, i;
-  char * scope_clause, * scope_name_list = NULL, * scope_escaped, * tmp, * username_escaped, * client_id_escaped;
+  char * scope_clause, * scope_name_list = NULL, * scope_escaped, * username_escaped, * client_id_escaped;
   size_t index;
   
   if (split_string(scope_list, " ", &scope_array) > 0) {
     for (i=0; scope_array[i] != NULL; i++) {
       scope_escaped = h_escape_string_with_quotes(config->conn, scope_array[i]);
       if (scope_name_list == NULL) {
-        scope_name_list = msprintf("%s", scope_escaped);
+        scope_name_list = o_strdup(scope_escaped);
       } else {
-        tmp = msprintf("%s,%s", scope_name_list, scope_escaped);
-        o_free(scope_name_list);
-        scope_name_list = tmp;
+        scope_name_list = mstrcatf(scope_name_list, ",%s", scope_escaped);
       }
       o_free(scope_escaped);
     }
@@ -637,6 +635,70 @@ json_t * get_granted_scopes_for_client(struct config_elements * config, json_t *
     j_return = json_pack("{si}", "result", G_ERROR);
   }
   json_decref(j_client);
+  return j_return;
+}
+
+json_t * get_client_grant_list(struct config_elements * config, const char * username, size_t offset, size_t limit) {
+  json_t * j_query, * j_result = NULL, * j_result_scope = NULL, * j_return, * j_client, * j_element = NULL;
+  int res;
+  size_t index = 0;
+  char * scope_clause, * username_escaped, * client_id_escaped;
+  
+  j_query = json_pack("{sss[s]s{sssi}siss}",
+                      "table", GLEWLWYD_TABLE_CLIENT_USER_SCOPE,
+                      "columns",
+                        "DISTINCT(gcus_client_id) AS client_id",
+                      "where",
+                        "gcus_username", username,
+                        "gcus_enabled", 1,
+                      "offset", offset,
+                      "order_by", "client_id");
+  if (limit) {
+    json_object_set_new(j_query, "limit", json_integer(limit));
+  }
+  res = h_select(config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    j_return = json_pack("{sis[]}", "result", G_OK, "client_grant");
+    json_array_foreach(j_result, index, j_element) {
+      j_client = get_client(config, json_string_value(json_object_get(j_element, "client_id")), NULL);
+      if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
+        username_escaped = h_escape_string_with_quotes(config->conn, username);
+        client_id_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_element, "client_id")));
+        scope_clause = msprintf("IN (SELECT gs_id FROM " GLEWLWYD_TABLE_CLIENT_USER_SCOPE " WHERE gcus_username=%s AND gcus_client_id=%s AND gcus_enabled=1)", username_escaped, client_id_escaped);
+        j_query = json_pack("{sss[sss]s{s{ssss}}}",
+                            "table", GLEWLWYD_TABLE_SCOPE,
+                            "columns",
+                              "gs_name AS name",
+                              "gs_display_name AS display_name",
+                              "gs_description AS description",
+                            "where",
+                              "gs_id",
+                                "operator",
+                                "raw",
+                                "value",
+                                scope_clause);
+        o_free(scope_clause);
+        o_free(client_id_escaped);
+        o_free(username_escaped);
+        res = h_select(config->conn, j_query, &j_result_scope, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          json_array_append_new(json_object_get(j_return, "client_grant"), json_pack("{sOsOsOsO}", "client_id", json_object_get(json_object_get(j_client, "client"), "client_id"), "name", json_object_get(json_object_get(j_client, "client"), "name"), "description", json_object_get(json_object_get(j_client, "client"), "description"), "scope", j_result_scope));
+          json_decref(j_result_scope);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_client_grant_list - Error executing j_query (2) for client_id '%s'", json_string_value(json_object_get(j_element, "client_id")));
+        }
+      } else if (!check_result_value(j_client, G_OK)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_client_grant_list - Error get_client for client_id '%s'", json_string_value(json_object_get(j_element, "client_id")));
+      }
+      json_decref(j_client);
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_client_grant_list - Error executing j_query (1)");
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
+  }
   return j_return;
 }
 
