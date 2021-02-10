@@ -874,7 +874,7 @@
     "mod-register-reset-credentials-session-key-ph": "e.g. G_CREDENTIALS_SESSION",
     "mod-register-reset-credentials-session-key-error": "Session identifier is mandatory",
     "mod-register-reset-credentials-session-duration": "Session duration in seconds",
-    "mod-register-reset-credentials-session-duration-error": "e.g. 3600",
+    "mod-register-reset-credentials-session-duration-error-ph": "e.g. 3600",
     "mod-register-reset-credentials-session-duration-error": "Session duration is mandatory and must be positive",
     "mod-register-reset-credentials-email": "Use e-mail to reset credentials",
     "mod-register-reset-credentials-token-duration": "Token duration (seconds)",
