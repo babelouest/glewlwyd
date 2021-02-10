@@ -134,13 +134,7 @@
   },
   "admin": {
     "error-credential-message": "Bitte verbinde dich mit der App",
-    "requires-profile-scope": "Profil Scope benötigt",
     "requires-admin-scope": "Admin Scope benötigt",
-    "menu-title": "Glewlwyd",
-    "menu-user": "Persönliche Daten",
-    "menu-password": "Passwort",
-    "menu-session": "Sitzungen",
-    "menu-session-new": "Benutzer hinzufügen",
     "error-input": "Das Formular enthält fehler",
     "menu-users": "Benutzer",
     "menu-clients": "Clients",
