@@ -867,7 +867,7 @@
     "mod-register-reset-credentials-session-key-ph": "Bijv.: G_CREDENTIALS_SESSION",
     "mod-register-reset-credentials-session-key-error": "Sessie ID is verplicht",
     "mod-register-reset-credentials-session-duration": "Sessieduur in seconds",
-    "mod-register-reset-credentials-session-duration-error-ph": "Bijv.: 3600",
+    "mod-register-reset-credentials-session-duration-ph": "Bijv.: 3600",
     "mod-register-reset-credentials-session-duration-error": "Sessieduur is verplicht en moet groter zijn dan 0",
     "mod-register-reset-credentials-email": "Gebruik e-mail voor het resetten van de toegangsrechten",
     "mod-register-reset-credentials-token-duration": "Tokenduur (seconden)",

@@ -855,7 +855,7 @@
     "mod-register-reset-credentials-session-key-ph": "z.B.: G_CREDENTIALS_SESSION",
     "mod-register-reset-credentials-session-key-error": "Sitzungs Identifier ist ein Pflichtfeld",
     "mod-register-reset-credentials-session-duration": "Sitzungsdauer (Sekunden)",
-    "mod-register-reset-credentials-session-duration-error-ph": "z.B.: 3600",
+    "mod-register-reset-credentials-session-duration-ph": "z.B.: 3600",
     "mod-register-reset-credentials-session-duration-error": "Sitzungsdauer ist ein Pflichtfeld and must be positive",
     "mod-register-reset-credentials-email": "E-Mail zum Zurücksetzen der Zugangsdaten verwenden",
     "mod-register-reset-credentials-token-duration": "Token Gültigkeitsdauer (Sekunden)",
