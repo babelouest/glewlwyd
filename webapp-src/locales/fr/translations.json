@@ -874,7 +874,7 @@
     "mod-register-reset-credentials-session-key-ph": "Ex: G_CREDENTIALS_SESSION",
     "mod-register-reset-credentials-session-key-error": "L'dentifiant de session est obligatoire",
     "mod-register-reset-credentials-session-duration": "Durée de la session en secondes",
-    "mod-register-reset-credentials-session-duration-error": "Ex: 3600",
+    "mod-register-reset-credentials-session-duration-error-ph": "Ex: 3600",
     "mod-register-reset-credentials-session-duration-error": "La durée de la session est obligatoire et doit être supérieure à 0",
     "mod-register-reset-credentials-email": "Utiliser le courriel pour envoyer un lien",
     "mod-register-reset-credentials-token-duration": "Durée du lien (en secondes)",

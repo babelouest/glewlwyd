@@ -5,7 +5,7 @@
   "LoginUrl": "login.html",
   "CallbackPage": "callback.html",
   "PasswordMinLength": 8,
-  "lang": ["en","fr","nl"],
+  "lang": ["de", "en","fr","nl"],
   "pattern": {
     "user": [{
       "name": "username",
