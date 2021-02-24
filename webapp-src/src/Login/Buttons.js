@@ -202,7 +202,7 @@ class Buttons extends Component {
           );
         });
       }
-      if (this.state.config.registration) {
+      if (this.state.registration) {
         this.state.config.register.forEach((register, index) => {
           registerTable.push(
             <button key={index} type="button" className="btn btn-success" onClick={(e) => this.registerNewUser(e, register.name)}>
