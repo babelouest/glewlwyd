@@ -2,9 +2,9 @@
  *
  * Glewlwyd SSO Access Token token check
  *
- * Copyright 2016-2020 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2021 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20201013
+ * Version 20210301
  *
  * The MIT License (MIT)
  * 
@@ -136,6 +136,7 @@ static json_t * access_token_check_signature(struct _oidc_resource_config * conf
   json_t * j_return = NULL, * j_grants;
   jwt_t * jwt = r_jwt_copy(config->jwt);
   jwk_t * jwk = NULL;
+  jwa_alg alg = R_JWA_ALG_UNKNOWN;
   const char * kid;
   
   if (token_value != NULL) {
@@ -143,12 +144,15 @@ static json_t * access_token_check_signature(struct _oidc_resource_config * conf
       if ((kid = r_jwt_get_header_str_value(jwt, "kid")) != NULL) {
         if ((jwk = r_jwks_get_by_kid(jwt->jwks_pubkey_sign, kid)) == NULL) {
           j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+        } else {
+          alg = r_str_to_jwa_alg(r_jwk_get_property_str(jwk, "alg"));
         }
       } else {
         jwk = r_jwk_copy(config->jwk_verify_default);
+        alg = config->alg;
       }
       if (j_return == NULL) {
-        if (r_jwt_verify_signature(jwt, jwk, 0) == RHN_OK && r_jwt_get_sign_alg(jwt) == config->alg) {
+        if (r_jwt_verify_signature(jwt, jwk, 0) == RHN_OK && r_jwt_get_sign_alg(jwt) == alg) {
           j_grants = r_jwt_get_full_claims_json_t(jwt);
           if (j_grants != NULL) {
             j_return = json_pack("{siso}", "result", G_TOKEN_OK, "grants", j_grants);
