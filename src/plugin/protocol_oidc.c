@@ -217,6 +217,8 @@ static int get_key_size_from_alg(const char * str_alg) {
     return 512;
   } else if (0 == o_strcmp("EdDSA", str_alg)) {
     return 256;
+  } else if (0 == o_strcmp("ES256K", str_alg)) {
+    return 256;
   } else {
     return 0;
   }
@@ -1674,6 +1676,9 @@ static char * generate_client_access_token(struct _oidc_config * config,
       r_jwt_set_claim_json_t_value(jwt, "cnf", j_cnf);
       json_decref(j_cnf);
     }
+    if (r_jwk_get_property_str(jwk, "alg") != NULL) {
+      r_jwt_set_sign_alg(jwt, r_str_to_jwa_alg(r_jwk_get_property_str(jwk, "alg")));
+    }
     token = r_jwt_serialize_signed(jwt, jwk, 0);
     r_jwk_free(jwk);
     if (token == NULL) {
@@ -2384,6 +2389,9 @@ static char * generate_id_token(struct _oidc_config * config,
           }
           //jwt_add_grant(jwt, "acr", "plop"); // TODO?
           if (r_jwt_set_full_claims_json_t(jwt, j_user_info) == RHN_OK) {
+            if (r_jwk_get_property_str(jwk, "alg") != NULL) {
+              r_jwt_set_sign_alg(jwt, r_str_to_jwa_alg(r_jwk_get_property_str(jwk, "alg")));
+            }
             token = r_jwt_serialize_signed(jwt, jwk, 0);
             if (token == NULL) {
               y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - oidc - Error r_jwt_serialize_signed");
@@ -2619,6 +2627,9 @@ static char * generate_access_token(struct _oidc_config * config,
         }
       }
       if (jwk != NULL) {
+        if (r_jwk_get_property_str(jwk, "alg") != NULL) {
+          r_jwt_set_sign_alg(jwt, r_str_to_jwa_alg(r_jwk_get_property_str(jwk, "alg")));
+        }
         if ((token = r_jwt_serialize_signed(jwt, jwk, 0)) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - oidc - Error r_jwt_serialize_signed");
         } else {
@@ -7206,6 +7217,9 @@ static int callback_introspection(const struct _u_request * request, struct _u_r
             } else {
               jwk = r_jwk_copy(config->jwk_sign_default);
             }
+            if (r_jwk_get_property_str(jwk, "alg") != NULL) {
+              r_jwt_set_sign_alg(jwt, r_str_to_jwa_alg(r_jwk_get_property_str(jwk, "alg")));
+            }
             token = r_jwt_serialize_signed(jwt, jwk, 0);
             r_jwk_free(jwk);
             if (token != NULL) {
@@ -10496,6 +10510,9 @@ static int callback_oidc_get_userinfo(const struct _u_request * request, struct 
                   }
                 } else {
                   jwk = r_jwk_copy(config->jwk_sign_default);
+                }
+                if (r_jwk_get_property_str(jwk, "alg") != NULL) {
+                  r_jwt_set_sign_alg(jwt, r_str_to_jwa_alg(r_jwk_get_property_str(jwk, "alg")));
                 }
                 token = r_jwt_serialize_signed(jwt, jwk, 0);
                 r_jwk_free(jwk);
