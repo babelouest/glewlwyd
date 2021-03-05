@@ -6,6 +6,7 @@
 - UI: Improve session expiration error
 - Update SQLite3 password management by increasing PBKDF2 iterations and allowing to set iterations value
 - IO: Add German translation, thanks to Andy2903
+- OIDC: Support more signature and encryption algorithms
 
 ## 2.5.2
 
