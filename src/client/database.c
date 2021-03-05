@@ -478,7 +478,7 @@ static char * get_password_clause_check(struct mod_parameters * param, const cha
   
   if (param->conn->type == HOEL_DB_TYPE_SQLITE) {
     if ((salt = get_salt_from_password_hash(param, client_id, &iterations)) != NULL) {
-      if (generate_digest_pbkdf2(password, iterations, salt, digest)) {
+      if (generate_digest_pbkdf2(password, iterations?iterations:1000, salt, digest)) {
         if (iterations) {
           clause = msprintf(" = '%s%c%u'", digest, G_PBKDF2_ITERATOR_SEP, iterations);
         } else {

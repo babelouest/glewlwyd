@@ -569,7 +569,7 @@ static char * get_password_clause_check(struct mod_parameters * param, const cha
       clause = o_strdup("IN (");
       for (i=0; salt_list[i]!=NULL; i++) {
         iterations = (unsigned int)json_integer_value(json_array_get(j_iterations, i));
-        if (generate_digest_pbkdf2(password, iterations, salt_list[i], digest)) {
+        if (generate_digest_pbkdf2(password, iterations?iterations:1000, salt_list[i], digest)) {
           if (!i) {
             if (iterations) {
               clause = mstrcatf(clause, "'%s%c%u'", digest, G_PBKDF2_ITERATOR_SEP, iterations);
