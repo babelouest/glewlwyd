@@ -99,7 +99,7 @@ const char jwks_privkey[] =
 "crsRq0CRzF8IuF2tPBJrlKNN5xXf5nXVEBimKi_5QbTv4ut-KcLqOFrNP_yn0KzeYUtPUX6VnDZDEMF\""
 ",\"dq\":\"AJnn_9pDx8N5VbBpTFPWlXRFDvDv_QClt5u_xEkGh2MDtIWdoaK_lGhKWslyIWDOtHgCGCQ"
 "cDKaVzk0BMD9uJUldZBCBO3nzK5Asw8G2F-crZHxep83vgRFGvBRwcuuKNMnXNT_G7aV1X5x2oGCq-Aff"
-"VIaPxrYxiG1nzO1ZRNyr\",\"kid\":\"" KID_2 "\",\"alg\":\"PS512\"},{\"kty\":\"EC\",\"x\":\"AJ6TXabOS7Blc_B"
+"VIaPxrYxiG1nzO1ZRNyr\",\"kid\":\"" KID_2 "\",\"alg\":\"RS512\"},{\"kty\":\"EC\",\"x\":\"AJ6TXabOS7Blc_B"
 "NQVqQgp1nEwmatr8g9_HlPaoP4MPe\",\"y\":\"ALbKJWr4c4tksiv2IMWbfq09gghvuaR1pO2S_QjjX"
 "UtZ\",\"d\":\"Xk9lCflRiR6ErF1nqwSYhAFsOteufFotEi2z2xWDHks\",\"crv\":\"P-256\",\"k"
 "id\":\"" KID_3 "\",\"alg\":\"ES384\"},{\"kty\":\"oct\",\"k\":\"Kt5w3prEDTYJn8IveV1JtjXvtlAX0WRSEcEHxmND"
@@ -147,7 +147,7 @@ const char jwks_privkey_alg_missing[] =
 "crsRq0CRzF8IuF2tPBJrlKNN5xXf5nXVEBimKi_5QbTv4ut-KcLqOFrNP_yn0KzeYUtPUX6VnDZDEMF\""
 ",\"dq\":\"AJnn_9pDx8N5VbBpTFPWlXRFDvDv_QClt5u_xEkGh2MDtIWdoaK_lGhKWslyIWDOtHgCGCQ"
 "cDKaVzk0BMD9uJUldZBCBO3nzK5Asw8G2F-crZHxep83vgRFGvBRwcuuKNMnXNT_G7aV1X5x2oGCq-Aff"
-"VIaPxrYxiG1nzO1ZRNyr\",\"kid\":\"" KID_2 "\",\"alg\":\"PS512\"},{\"kty\":\"EC\",\"x\":\"AJ6TXabOS7Blc_B"
+"VIaPxrYxiG1nzO1ZRNyr\",\"kid\":\"" KID_2 "\",\"alg\":\"RS512\"},{\"kty\":\"EC\",\"x\":\"AJ6TXabOS7Blc_B"
 "NQVqQgp1nEwmatr8g9_HlPaoP4MPe\",\"y\":\"ALbKJWr4c4tksiv2IMWbfq09gghvuaR1pO2S_QjjX"
 "UtZ\",\"d\":\"Xk9lCflRiR6ErF1nqwSYhAFsOteufFotEi2z2xWDHks\",\"crv\":\"P-256\",\"k"
 "id\":\"" KID_3 "\",\"alg\":\"ES384\"},{\"kty\":\"oct\",\"k\":\"Kt5w3prEDTYJn8IveV1JtjXvtlAX0WRSEcEHxmND"
@@ -195,7 +195,7 @@ const char jwks_privkey_alg_invalid[] =
 "crsRq0CRzF8IuF2tPBJrlKNN5xXf5nXVEBimKi_5QbTv4ut-KcLqOFrNP_yn0KzeYUtPUX6VnDZDEMF\""
 ",\"dq\":\"AJnn_9pDx8N5VbBpTFPWlXRFDvDv_QClt5u_xEkGh2MDtIWdoaK_lGhKWslyIWDOtHgCGCQ"
 "cDKaVzk0BMD9uJUldZBCBO3nzK5Asw8G2F-crZHxep83vgRFGvBRwcuuKNMnXNT_G7aV1X5x2oGCq-Aff"
-"VIaPxrYxiG1nzO1ZRNyr\",\"kid\":\"" KID_2 "\",\"alg\":\"PS512\"},{\"kty\":\"EC\",\"x\":\"AJ6TXabOS7Blc_B"
+"VIaPxrYxiG1nzO1ZRNyr\",\"kid\":\"" KID_2 "\",\"alg\":\"RS512\"},{\"kty\":\"EC\",\"x\":\"AJ6TXabOS7Blc_B"
 "NQVqQgp1nEwmatr8g9_HlPaoP4MPe\",\"y\":\"ALbKJWr4c4tksiv2IMWbfq09gghvuaR1pO2S_QjjX"
 "UtZ\",\"d\":\"Xk9lCflRiR6ErF1nqwSYhAFsOteufFotEi2z2xWDHks\",\"crv\":\"P-256\",\"k"
 "id\":\"" KID_3 "\",\"alg\":\"ES384\"},{\"kty\":\"oct\",\"k\":\"Kt5w3prEDTYJn8IveV1JtjXvtlAX0WRSEcEHxmND"
@@ -243,7 +243,7 @@ const char jwks_privkey_kid_missing[] =
 "crsRq0CRzF8IuF2tPBJrlKNN5xXf5nXVEBimKi_5QbTv4ut-KcLqOFrNP_yn0KzeYUtPUX6VnDZDEMF\""
 ",\"dq\":\"AJnn_9pDx8N5VbBpTFPWlXRFDvDv_QClt5u_xEkGh2MDtIWdoaK_lGhKWslyIWDOtHgCGCQ"
 "cDKaVzk0BMD9uJUldZBCBO3nzK5Asw8G2F-crZHxep83vgRFGvBRwcuuKNMnXNT_G7aV1X5x2oGCq-Aff"
-"VIaPxrYxiG1nzO1ZRNyr\",\"kid\":\"" KID_2 "\",\"alg\":\"PS512\"},{\"kty\":\"EC\",\"x\":\"AJ6TXabOS7Blc_B"
+"VIaPxrYxiG1nzO1ZRNyr\",\"kid\":\"" KID_2 "\",\"alg\":\"RS512\"},{\"kty\":\"EC\",\"x\":\"AJ6TXabOS7Blc_B"
 "NQVqQgp1nEwmatr8g9_HlPaoP4MPe\",\"y\":\"ALbKJWr4c4tksiv2IMWbfq09gghvuaR1pO2S_QjjX"
 "UtZ\",\"d\":\"Xk9lCflRiR6ErF1nqwSYhAFsOteufFotEi2z2xWDHks\",\"crv\":\"P-256\",\"k"
 "id\":\"" KID_3 "\",\"alg\":\"ES384\"},{\"kty\":\"oct\",\"k\":\"Kt5w3prEDTYJn8IveV1JtjXvtlAX0WRSEcEHxmND"
@@ -291,7 +291,7 @@ const char jwks_privkey_kid_invalid[] =
 "crsRq0CRzF8IuF2tPBJrlKNN5xXf5nXVEBimKi_5QbTv4ut-KcLqOFrNP_yn0KzeYUtPUX6VnDZDEMF\""
 ",\"dq\":\"AJnn_9pDx8N5VbBpTFPWlXRFDvDv_QClt5u_xEkGh2MDtIWdoaK_lGhKWslyIWDOtHgCGCQ"
 "cDKaVzk0BMD9uJUldZBCBO3nzK5Asw8G2F-crZHxep83vgRFGvBRwcuuKNMnXNT_G7aV1X5x2oGCq-Aff"
-"VIaPxrYxiG1nzO1ZRNyr\",\"kid\":\"" KID_2 "\",\"alg\":\"PS512\"},{\"kty\":\"EC\",\"x\":\"AJ6TXabOS7Blc_B"
+"VIaPxrYxiG1nzO1ZRNyr\",\"kid\":\"" KID_2 "\",\"alg\":\"RS512\"},{\"kty\":\"EC\",\"x\":\"AJ6TXabOS7Blc_B"
 "NQVqQgp1nEwmatr8g9_HlPaoP4MPe\",\"y\":\"ALbKJWr4c4tksiv2IMWbfq09gghvuaR1pO2S_QjjX"
 "UtZ\",\"d\":\"Xk9lCflRiR6ErF1nqwSYhAFsOteufFotEi2z2xWDHks\",\"crv\":\"P-256\",\"k"
 "id\":\"" KID_3 "\",\"alg\":\"ES384\"},{\"kty\":\"oct\",\"k\":\"Kt5w3prEDTYJn8IveV1JtjXvtlAX0WRSEcEHxmND"
@@ -884,24 +884,42 @@ END_TEST
 
 START_TEST(test_oidc_jwks_discovery_valid)
 {
-#if GNUTLS_VERSION_NUMBER >= 0x03060e
-  json_t * j_result = json_loads("{\"issuer\":\"https://glewlwyd.tld\",\"authorization_endpoint\":\"http://localhost:4593/api/oidc_jwks/auth\",\"token_endpoint\":\"http://localhost:4593/api/oidc_jwks/token\",\"userinfo_endpoint\":\"http://localhost:4593/api/oidc_jwks/userinfo\",\"jwks_uri\":\"http://localhost:4593/api/oidc_jwks/jwks\",\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"],\"id_token_signing_alg_values_supported\":[\"RS256\",\"PS512\",\"ES384\",\"HS256\"],\"userinfo_signing_alg_values_supported\":[\"RS256\",\"PS512\",\"ES384\",\"HS256\"],\"userinfo_encryption_alg_values_supported\":[\"RSA1_5\",\"A128KW\",\"A192KW\",\"A256KW\",\"dir\",\"A128GCMKW\",\"A256GCMKW\",\"PBES2-HS256+A128KW\",\"PBES2-HS384+A192KW\",\"PBES2-HS512+A256KW\",\"A192GCMKW\",\"RSA-OAEP\",\"RSA-OAEP-256\"],\"userinfo_encryption_enc_values_supported\":[\"A128CBC-HS256\",\"A192CBC-HS384\",\"A256CBC-HS512\",\"A128GCM\",\"A256GCM\",\"A192GCM\"],\"request_object_signing_alg_values_supported\":[\"none\",\"HS256\",\"HS384\",\"HS512\",\"RS256\",\"RS384\",\"RS512\",\"ES256\",\"ES384\",\"ES512\",\"EdDSA\",\"ES256K\",\"PS256\",\"PS384\",\"PS512\"],\"request_object_encryption_alg_values_supported\":[\"RSA1_5\",\"A128KW\",\"A192KW\",\"A256KW\",\"dir\",\"A128GCMKW\",\"A256GCMKW\",\"PBES2-HS256+A128KW\",\"PBES2-HS384+A192KW\",\"PBES2-HS512+A256KW\",\"A192GCMKW\",\"RSA-OAEP\",\"RSA-OAEP-256\"],\"request_object_encryption_enc_values_supported\":[\"A128CBC-HS256\",\"A192CBC-HS384\",\"A256CBC-HS512\",\"A128GCM\",\"A256GCM\",\"A192GCM\"],\"token_endpoint_auth_signing_alg_values_supported\":[\"HS256\",\"HS384\",\"HS512\",\"RS256\",\"RS384\",\"RS512\",\"ES256\",\"ES384\",\"ES512\",\"EdDSA\",\"ES256K\",\"PS256\",\"PS384\",\"PS512\"],\"scopes_supported\":[\"openid\"],\"response_types_supported\":[\"code\",\"id_token\",\"token id_token\",\"code id_token\",\"code token id_token\",\"password\",\"token\",\"client_credentials\",\"refresh_token\"],\"response_modes_supported\":[\"query\",\"fragment\",\"form_post\"],\"grant_types_supported\":[\"authorization_code\",\"implicit\"],\"display_values_supported\":[\"page\",\"popup\",\"touch\",\"wap\"],\"claim_types_supported\":[\"normal\"],\"claims_parameter_supported\":true,\"claims_supported\":[],\"ui_locales_supported\":[\"en\",\"fr\",\"nl\"],\"request_parameter_supported\":true,\"request_uri_parameter_supported\":true,\"require_request_uri_registration\":false,\"subject_types_supported\":[\"public\"]}", JSON_DECODE_ANY, NULL),
-  * j_key = json_loads("{\"keys\":[{\"kty\":\"RSA\",\"n\":\"AOidO2hPJFDK-jHdQ6p-SDGNAS3SbTCq1DN7Yv4kmClva5FtgLFIG8VG0hvn8RKN2kpqmNOa30KsOlYW9GqUCy6esFn0yqyNC_01IVY67qPIU5SRbCD88UXSfqsnhNsFgwU76OmpamqBGXUenZRrewNleNfYLJ6fNQO5n1rOa_UCcOaFqNLjjAcS9Z6e6h4Edlhz6ecYEVW6ZYFODRNmyq_Pf0nZGgUjKXuAzEb8GdhiO99TcsLoc7RxTbfsvqLGofPXhY5EfWksNyeqJtINUEtMC78nADM6J_jFyeqBE3Tsqk1M6aQFo-8xy8kQ_bT7pdL9xh9w1UZ_kFg5pBMsaPk\",\"e\":\"AQAB\",\"kid\":\"key-1\",\"alg\":\"RS256\"},{\"kty\":\"RSA\",\"n\":\"AMZGRVyWHvHCkbGpGF6xdhKSjYwX1q5xtS-9_rATkpGyp5f-vCl9uUgdD0CZZIuuEvWsRvp1zt-JZVS9GrnoWBLZXzafHKO4pADMPPGlzaBsEmp4E5S7t6c4LGMgXExDoBs8jbp3TwbUeiyIsHyQzlY5pfg8_2Stp-PtoOWBVpWvhp1uxVuvvIp5TfHK3q2q3Iziggvja-p_cLji95AAXOLBEfaRklMLPM0aMm996-dX7Yq-cUO5ptCBEoRBcPlEJjFP9ZY_Hb0_3W8BIpkvf_zTcGsgIrcx17mIp9yRQcQ9pQNSa5kpk3nfv2BZ6tJHu8KfKsA3WesYOkMM_6VoFRk\",\"e\":\"AQAB\",\"kid\":\"key-2\",\"alg\":\"PS512\"},{\"kty\":\"EC\",\"x\":\"AJ6TXabOS7Blc_BNQVqQgp1nEwmatr8g9_HlPaoP4MPe\",\"y\":\"ALbKJWr4c4tksiv2IMWbfq09gghvuaR1pO2S_QjjXUtZ\",\"crv\":\"P-256\",\"kid\":\"key-3\",\"alg\":\"ES384\"}]}", JSON_DECODE_ANY, NULL);
-#elif GNUTLS_VERSION_NUMBER >= 0x030600
-  json_t * j_result = json_loads("{\"issuer\": \"https://glewlwyd.tld\", \"authorization_endpoint\": \"http://localhost:4593/api/oidc_jwks/auth\", \"token_endpoint\": \"http://localhost:4593/api/oidc_jwks/token\", \"userinfo_endpoint\": \"http://localhost:4593/api/oidc_jwks/userinfo\", \"jwks_uri\": \"http://localhost:4593/api/oidc_jwks/jwks\", \"token_endpoint_auth_methods_supported\": [\"client_secret_basic\", \"client_secret_post\", \"client_secret_jwt\", \"private_key_jwt\"], \"id_token_signing_alg_values_supported\": [\"RS256\", \"PS512\", \"ES384\", \"HS256\"], \"userinfo_signing_alg_values_supported\": [\"RS256\", \"PS512\", \"ES384\", \"HS256\"], \"userinfo_encryption_alg_values_supported\": [\"RSA1_5\", \"dir\", \"A128GCMKW\", \"A256GCMKW\", \"RSA-OAEP\", \"RSA-OAEP-256\", \"A128KW\", \"A192KW\", \"A256KW\"], \"userinfo_encryption_enc_values_supported\": [\"A128CBC-HS256\", \"A192CBC-HS384\", \"A256CBC-HS512\", \"A128GCM\", \"A256GCM\"], \"request_object_signing_alg_values_supported\": [\"none\", \"HS256\", \"HS384\", \"HS512\", \"RS256\", \"RS384\", \"RS512\", \"ES256\", \"ES384\", \"ES512\", \"EdDSA\", \"ES256K\", \"PS256\", \"PS384\", \"PS512\"], \"request_object_encryption_alg_values_supported\": [\"RSA1_5\", \"dir\", \"A128GCMKW\", \"A256GCMKW\", \"RSA-OAEP\", \"RSA-OAEP-256\", \"A128KW\", \"A192KW\", \"A256KW\"], \"request_object_encryption_enc_values_supported\": [\"A128CBC-HS256\", \"A192CBC-HS384\", \"A256CBC-HS512\", \"A128GCM\", \"A256GCM\"], \"token_endpoint_auth_signing_alg_values_supported\": [\"HS256\", \"HS384\", \"HS512\", \"RS256\", \"RS384\", \"RS512\", \"ES256\", \"ES384\", \"ES512\", \"EdDSA\", \"ES256K\", \"PS256\", \"PS384\", \"PS512\"], \"scopes_supported\": [\"openid\"], \"response_types_supported\": [\"code\", \"id_token\", \"token id_token\", \"code id_token\", \"code token id_token\", \"password\", \"token\", \"client_credentials\", \"refresh_token\"], \"response_modes_supported\": [\"query\", \"fragment\", \"form_post\"], \"grant_types_supported\": [\"authorization_code\", \"implicit\"], \"display_values_supported\": [\"page\", \"popup\", \"touch\", \"wap\"], \"claim_types_supported\": [\"normal\"], \"claims_parameter_supported\": true, \"claims_supported\": [], \"ui_locales_supported\": [\"en\", \"fr\", \"nl\"], \"request_parameter_supported\": true, \"request_uri_parameter_supported\": true, \"require_request_uri_registration\": false, \"subject_types_supported\": [\"public\"]}", JSON_DECODE_ANY, NULL),
-  * j_key = json_loads("{\"keys\":[{\"kty\":\"RSA\",\"n\":\"AOidO2hPJFDK-jHdQ6p-SDGNAS3SbTCq1DN7Yv4kmClva5FtgLFIG8VG0hvn8RKN2kpqmNOa30KsOlYW9GqUCy6esFn0yqyNC_01IVY67qPIU5SRbCD88UXSfqsnhNsFgwU76OmpamqBGXUenZRrewNleNfYLJ6fNQO5n1rOa_UCcOaFqNLjjAcS9Z6e6h4Edlhz6ecYEVW6ZYFODRNmyq_Pf0nZGgUjKXuAzEb8GdhiO99TcsLoc7RxTbfsvqLGofPXhY5EfWksNyeqJtINUEtMC78nADM6J_jFyeqBE3Tsqk1M6aQFo-8xy8kQ_bT7pdL9xh9w1UZ_kFg5pBMsaPk\",\"e\":\"AQAB\",\"kid\":\"key-1\",\"alg\":\"RS256\"},{\"kty\":\"RSA\",\"n\":\"AMZGRVyWHvHCkbGpGF6xdhKSjYwX1q5xtS-9_rATkpGyp5f-vCl9uUgdD0CZZIuuEvWsRvp1zt-JZVS9GrnoWBLZXzafHKO4pADMPPGlzaBsEmp4E5S7t6c4LGMgXExDoBs8jbp3TwbUeiyIsHyQzlY5pfg8_2Stp-PtoOWBVpWvhp1uxVuvvIp5TfHK3q2q3Iziggvja-p_cLji95AAXOLBEfaRklMLPM0aMm996-dX7Yq-cUO5ptCBEoRBcPlEJjFP9ZY_Hb0_3W8BIpkvf_zTcGsgIrcx17mIp9yRQcQ9pQNSa5kpk3nfv2BZ6tJHu8KfKsA3WesYOkMM_6VoFRk\",\"e\":\"AQAB\",\"kid\":\"key-2\",\"alg\":\"PS512\"},{\"kty\":\"EC\",\"x\":\"AJ6TXabOS7Blc_BNQVqQgp1nEwmatr8g9_HlPaoP4MPe\",\"y\":\"ALbKJWr4c4tksiv2IMWbfq09gghvuaR1pO2S_QjjXUtZ\",\"crv\":\"P-256\",\"kid\":\"key-3\",\"alg\":\"ES384\"}]}", JSON_DECODE_ANY, NULL);
-#else
-  json_t * j_result = json_loads("{\"issuer\":\"https://glewlwyd.tld\",\"authorization_endpoint\":\"http://localhost:4593/api/oidc_jwks/auth\",\"token_endpoint\":\"http://localhost:4593/api/oidc_jwks/token\",\"userinfo_endpoint\":\"http://localhost:4593/api/oidc_jwks/userinfo\",\"jwks_uri\":\"http://localhost:4593/api/oidc_jwks/jwks\",\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"],\"id_token_signing_alg_values_supported\":[\"RS256\",\"PS512\",\"ES384\",\"HS256\"],\"userinfo_signing_alg_values_supported\":[\"RS256\",\"PS512\",\"ES384\",\"HS256\"],\"userinfo_encryption_alg_values_supported\":[\"RSA1_5\",\"A128KW\",\"A256KW\",\"dir\"],\"userinfo_encryption_enc_values_supported\":[\"A128CBC-HS256\",\"A192CBC-HS384\",\"A256CBC-HS512\",\"A128GCM\",\"A256GCM\"],\"request_object_signing_alg_values_supported\":[\"none\",\"HS256\",\"HS384\",\"HS512\",\"RS256\",\"RS384\",\"RS512\"],\"request_object_encryption_alg_values_supported\":[\"RSA1_5\",\"A128KW\",\"A256KW\",\"dir\"],\"request_object_encryption_enc_values_supported\":[\"A128CBC-HS256\",\"A192CBC-HS384\",\"A256CBC-HS512\",\"A128GCM\",\"A256GCM\"],\"token_endpoint_auth_signing_alg_values_supported\":[\"HS256\",\"HS384\",\"HS512\",\"RS256\",\"RS384\",\"RS512\"],\"scopes_supported\":[\"openid\"],\"response_types_supported\":[\"code\",\"id_token\",\"token id_token\",\"code id_token\",\"code token id_token\",\"password\",\"token\",\"client_credentials\",\"refresh_token\"],\"response_modes_supported\":[\"query\",\"fragment\",\"form_post\"],\"grant_types_supported\":[\"authorization_code\",\"implicit\"],\"display_values_supported\":[\"page\",\"popup\",\"touch\",\"wap\"],\"claim_types_supported\":[\"normal\"],\"claims_parameter_supported\":true,\"claims_supported\":[],\"ui_locales_supported\":[\"en\",\"fr\",\"nl\"],\"request_parameter_supported\":true,\"request_uri_parameter_supported\":true,\"require_request_uri_registration\":false,\"subject_types_supported\":[\"public\"]}", JSON_DECODE_ANY, NULL),
-  * j_key = json_loads("{\"keys\":[{\"kty\":\"RSA\",\"n\":\"AOidO2hPJFDK-jHdQ6p-SDGNAS3SbTCq1DN7Yv4kmClva5FtgLFIG8VG0hvn8RKN2kpqmNOa30KsOlYW9GqUCy6esFn0yqyNC_01IVY67qPIU5SRbCD88UXSfqsnhNsFgwU76OmpamqBGXUenZRrewNleNfYLJ6fNQO5n1rOa_UCcOaFqNLjjAcS9Z6e6h4Edlhz6ecYEVW6ZYFODRNmyq_Pf0nZGgUjKXuAzEb8GdhiO99TcsLoc7RxTbfsvqLGofPXhY5EfWksNyeqJtINUEtMC78nADM6J_jFyeqBE3Tsqk1M6aQFo-8xy8kQ_bT7pdL9xh9w1UZ_kFg5pBMsaPk\",\"e\":\"AQAB\",\"kid\":\"key-1\",\"alg\":\"RS256\"},{\"kty\":\"RSA\",\"n\":\"AMZGRVyWHvHCkbGpGF6xdhKSjYwX1q5xtS-9_rATkpGyp5f-vCl9uUgdD0CZZIuuEvWsRvp1zt-JZVS9GrnoWBLZXzafHKO4pADMPPGlzaBsEmp4E5S7t6c4LGMgXExDoBs8jbp3TwbUeiyIsHyQzlY5pfg8_2Stp-PtoOWBVpWvhp1uxVuvvIp5TfHK3q2q3Iziggvja-p_cLji95AAXOLBEfaRklMLPM0aMm996-dX7Yq-cUO5ptCBEoRBcPlEJjFP9ZY_Hb0_3W8BIpkvf_zTcGsgIrcx17mIp9yRQcQ9pQNSa5kpk3nfv2BZ6tJHu8KfKsA3WesYOkMM_6VoFRk\",\"e\":\"AQAB\",\"kid\":\"key-2\",\"alg\":\"PS512\"}]}", JSON_DECODE_ANY, NULL);
-#endif
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_discovery = json_loads("{\"issuer\":\"https://glewlwyd.tld\",\"authorization_endpoint\":\"http://localhost:4593/api/oidc_jwks/auth\",\"token_endpoint\":\"http://localhost:4593/api/oidc_jwks/token\",\"userinfo_endpoint\":\"http://localhost:4593/api/oidc_jwks/userinfo\",\"jwks_uri\":\"http://localhost:4593/api/oidc_jwks/jwks\",\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"],\"id_token_signing_alg_values_supported\":[],\"userinfo_signing_alg_values_supported\":[],\"userinfo_encryption_alg_values_supported\":[],\"userinfo_encryption_enc_values_supported\":[],\"request_object_signing_alg_values_supported\":[],\"request_object_encryption_alg_values_supported\":[],\"request_object_encryption_enc_values_supported\":[],\"token_endpoint_auth_signing_alg_values_supported\":[],\"scopes_supported\":[\"openid\"],\"response_types_supported\":[\"code\",\"id_token\",\"token id_token\",\"code id_token\",\"code token id_token\",\"password\",\"token\",\"client_credentials\",\"refresh_token\"],\"response_modes_supported\":[\"query\",\"fragment\",\"form_post\"],\"grant_types_supported\":[\"authorization_code\",\"implicit\"],\"display_values_supported\":[\"page\",\"popup\",\"touch\",\"wap\"],\"claim_types_supported\":[\"normal\"],\"claims_parameter_supported\":true,\"claims_supported\":[],\"ui_locales_supported\":[\"en\",\"fr\",\"nl\"],\"request_parameter_supported\":true,\"request_uri_parameter_supported\":true,\"require_request_uri_registration\":false,\"subject_types_supported\":[\"public\"]}", JSON_DECODE_ANY, NULL), * j_result;
   
-  ck_assert_ptr_ne(j_result, NULL);
-  ck_assert_ptr_ne(j_key, NULL);
-  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/" PLUGIN_NAME "/.well-known/openid-configuration", NULL, NULL, NULL, NULL, 200, j_result, NULL, NULL), 1);
-  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/" PLUGIN_NAME "/jwks", NULL, NULL, NULL, NULL, 200, j_key, NULL, NULL), 1);
+  ck_assert_ptr_ne(j_discovery, NULL);
   
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET", U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/.well-known/openid-configuration", U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(200, resp.status);
+  ck_assert_ptr_ne(j_result = ulfius_get_json_body_response(&resp, NULL), NULL);
+  ck_assert_int_eq(0, json_array_clear(json_object_get(j_result, "id_token_signing_alg_values_supported")));
+  ck_assert_int_eq(0, json_array_clear(json_object_get(j_result, "userinfo_signing_alg_values_supported")));
+  ck_assert_int_eq(0, json_array_clear(json_object_get(j_result, "userinfo_encryption_alg_values_supported")));
+  ck_assert_int_eq(0, json_array_clear(json_object_get(j_result, "userinfo_encryption_enc_values_supported")));
+  ck_assert_int_eq(0, json_array_clear(json_object_get(j_result, "request_object_signing_alg_values_supported")));
+  ck_assert_int_eq(0, json_array_clear(json_object_get(j_result, "request_object_encryption_alg_values_supported")));
+  ck_assert_int_eq(0, json_array_clear(json_object_get(j_result, "token_endpoint_auth_signing_alg_values_supported")));
+  ck_assert_int_eq(0, json_array_clear(json_object_get(j_result, "request_object_encryption_enc_values_supported")));
+  ck_assert_int_eq(1, json_equal(j_result, j_discovery));
   json_decref(j_result);
-  json_decref(j_key);
+  json_decref(j_discovery);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET", U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/jwks", U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(200, resp.status);
+  ck_assert_ptr_ne(j_result = ulfius_get_json_body_response(&resp, NULL), NULL);
+  ck_assert_int_gt(json_array_size(json_object_get(j_result, "keys")), 0);
+  json_decref(j_result);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
