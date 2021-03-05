@@ -237,7 +237,7 @@ START_TEST(test_oidc_all_algs_add_module_ok)
                                 "parameters",
                                   "iss", PLUGIN_ISS,
                                   "jwks-private", keys_list,
-                                  "default-kid", "ES256",
+                                  "default-kid", "RS256",
                                   "client-sign_kid-parameter", "sign_kid",
                                   "code-duration", PLUGIN_CODE_DURATION,
                                   "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
@@ -308,6 +308,7 @@ START_TEST(test_oidc_all_algs_add_client_rs512_ok)
 }
 END_TEST
 
+#if GNUTLS_VERSION_NUMBER >= 0x030600
 START_TEST(test_oidc_all_algs_add_client_es256_ok)
 {
   add_client("ES256");
@@ -355,6 +356,7 @@ START_TEST(test_oidc_all_algs_add_client_es256k_ok)
   add_client("ES256K");
 }
 END_TEST
+#endif
 
 START_TEST(test_oidc_all_algs_delete_client)
 {
@@ -467,6 +469,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_all_algs_add_client_rs512_ok);
   tcase_add_test(tc_core, test_oidc_all_algs_test_client_ok);
   tcase_add_test(tc_core, test_oidc_all_algs_delete_client);
+#if GNUTLS_VERSION_NUMBER >= 0x030600
   tcase_add_test(tc_core, test_oidc_all_algs_add_client_es256_ok);
   tcase_add_test(tc_core, test_oidc_all_algs_test_client_ok);
   tcase_add_test(tc_core, test_oidc_all_algs_delete_client);
@@ -491,6 +494,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_all_algs_add_client_es256k_ok);
   tcase_add_test(tc_core, test_oidc_all_algs_test_client_ok);
   tcase_add_test(tc_core, test_oidc_all_algs_delete_client);
+#endif
   tcase_add_test(tc_core, test_oidc_all_algs_delete_module);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
