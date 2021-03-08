@@ -26,7 +26,7 @@
 ## Users and clients can be storage backends:
 - [Database](docs/USER_DATABASE.md)
 - [LDAP service](docs/USER_LDAP.md)
-- [HTTP Backend service providing Basic Authentication](docs/HTTP.md)
+- [HTTP Backend service providing Basic Authentication](docs/USER_HTTP.md)
 
 ## User registration
 

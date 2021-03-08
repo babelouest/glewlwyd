@@ -25,6 +25,10 @@ Name of the instance displayed to the client.
 
 Check this option if you want to use this backend as read-only. All client properties such as e-mail, name, password, scopes can't be modifier with Glewlwyd, even administrators.
 
+### PKBDF2 iterations (SQLite3)
+
+Number of iterations for the password digest in SQlite3 databases only. Currently (2021), it's recommended to iterate at least 100 000 times.
+
 ### Use the same connection as Glewlwyd server
 
 Uncheck this option if you want to use a different database that will store the clients. The new database must have the structure already present. Use one of the following script to initialize the database:
