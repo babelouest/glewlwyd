@@ -883,6 +883,7 @@
     "mod-register-reset-credentials-code-property": "Champ contenant le hash des codes",
     "mod-register-reset-credentials-code-property-ph": "Ex: reset-credentials-code",
     "mod-register-reset-credentials-code-property-error": "Le champ contenant le hash des codes est obligatoire",
+    "mod-register-option-error": "Veuillez sélectionner une des deux options",
     "mod-reset-credentials-code-list-size": "Nombre maximal de codes de récupération disponibles",
     "mod-reset-credentials-code-list-size-ph": "Ex: 4",
     "mod-reset-credentials-code-list-size-error": "Le nombre maximal de codes de récupération disponibles est obligatoire et doit être supérieure à 0",

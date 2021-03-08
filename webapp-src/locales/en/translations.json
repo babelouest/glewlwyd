@@ -883,6 +883,7 @@
     "mod-register-reset-credentials-code-property": "Recovery code hash property",
     "mod-register-reset-credentials-code-property-ph": "e.g. reset-credentials-code",
     "mod-register-reset-credentials-code-property-error": "Recovery code hash property is mandatory",
+    "mod-register-option-error": "Please select one of the options",
     "mod-reset-credentials-code-list-size": "Number of recovery codes available",
     "mod-reset-credentials-code-list-size-ph": "e.g. 4",
     "mod-reset-credentials-code-list-size-error": "Number of recovery codes available is mandatory and must be a non null positive integer",
