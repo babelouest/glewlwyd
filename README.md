@@ -1,30 +1,34 @@
-# Glewlwyd SSO server
+# Glewlwyd SSO serve
 
 ![C/C++ CI](https://github.com/babelouest/glewlwyd/workflows/C/C++%20CI/badge.svg)
 ![CodeQL](https://github.com/babelouest/glewlwyd/workflows/CodeQL/badge.svg)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3475/badge)](https://bestpractices.coreinfrastructure.org/projects/3475)
 
-Single-Sign-On (SSO) server with multiple factor authentication.
+## Single-Sign-On (SSO) server with multiple factor authentication for OAuth2 and OpenID Connect authentication
+
+**[Glewlwyd 2.5.2 is available](https://github.com/babelouest/glewlwyd/releases/latest). Feel free to [install](docs/INSTALL.md) it, test it, use it, and [send feedback](https://github.com/babelouest/glewlwyd/issues) if you feel like it!**
 
 ![logged in](docs/screenshots/login-nopassword.png)
 
-Authentication process supported:
+## Process supported:
 - [OAuth2](docs/OAUTH2.md)
 - [OpenID Connect](docs/OIDC.md)
 
-Allows users authentication via multiple factors:
-- Password
+## User authentication via multiple factors:
+- [Password](https://xkcd.com/936/)
 - [One-time password (TOTP/HOTP)](docs/OTP.md)
 - [WebAuthn (Yubikey, Android devices)](docs/WEBAUTHN.md)
 - [One-time password sent via e-mail](docs/EMAIL.md)
 - [TLS Certificate](docs/CERTIFICATE.md)
 - [External OAuth2/OIDC providers](docs/OAUTH2.md)
-- HTTP Backend service providing Basic Authentication
+- [HTTP Backend service providing Basic Authentication](docs/HTTP.md)
 
-Users and clients can be stored and managed from various backends:
+## Users and clients can be storage backends:
 - [Database](docs/USER_DATABASE.md)
 - [LDAP service](docs/USER_LDAP.md)
 - [HTTP Backend service providing Basic Authentication](docs/HTTP.md)
+
+## User registration
 
 New users can [register a new account](docs/REGISTER.md) with the possibility to confirm their e-mail address or not. During the registration process, the new user may be expected to register their passwords, as well as other authentication factors:
 - One-time password (TOTP/HOTP)
@@ -42,7 +46,7 @@ See the [register/update e-mail/reset credentials documentation](docs/REGISTER.m
 
 Based on a plugin architecture to make it easier to add or update storage backends, authentication schemes or process.
 
-**Allows passwordless authentication.**
+## Passwordless authentication
 
 Adding new authentication schemes or backend storage for users and clients is possible via the plugin architecture.
 
@@ -50,9 +54,7 @@ The backend API server is fully written in C and uses a small amount of resource
 
 Its plugin architecture makes it easy to add new modules or plugins, or modify existing ones with less risks to have unmaintainable code.
 
-Glewlwyd 2.5 [is released](https://github.com/babelouest/glewlwyd/releases/latest). Feel free to [install](docs/INSTALL.md) it, test it, use it, and [send feedback](https://github.com/babelouest/glewlwyd/issues) if you feel like it.
-
-## Installation
+# Installation
 
 The full installation documentation is available in the [Install documentation](docs/INSTALL.md).
 
