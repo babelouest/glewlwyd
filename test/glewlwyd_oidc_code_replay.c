@@ -248,6 +248,7 @@ START_TEST(test_oidc_code_replay_test_revoked_tokens)
   
   json_decref(j_body_refresh);
   json_decref(j_body_code);
+  o_free(code);
 }
 END_TEST
 
@@ -467,6 +468,7 @@ START_TEST(test_oidc_code_replay_test_non_revoked_tokens)
   
   json_decref(j_body_refresh);
   json_decref(j_body_code);
+  o_free(code);
 }
 END_TEST
 

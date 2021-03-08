@@ -28,6 +28,8 @@ START_TEST(test_glwd_auth_grant_error_parameters)
 
   ulfius_init_response(&resp);
 
+  o_free(user_req.http_verb);
+  o_free(user_req.http_url);
   user_req.http_verb = strdup("PUT");
   user_req.http_url = msprintf("%s/auth/grant/error", SERVER_URI);
 
@@ -69,6 +71,8 @@ START_TEST(test_glwd_auth_grant_success)
 
   ulfius_init_response(&resp);
   
+  o_free(user_req.http_verb);
+  o_free(user_req.http_url);
   user_req.http_verb = strdup("PUT");
   user_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
 
@@ -89,6 +93,8 @@ START_TEST(test_glwd_auth_grant_remove_success)
 
   ulfius_init_response(&resp);
   
+  o_free(user_req.http_verb);
+  o_free(user_req.http_url);
   user_req.http_verb = strdup("PUT");
   user_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
 

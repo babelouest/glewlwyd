@@ -635,6 +635,7 @@ START_TEST(test_oidc_jwt_encrypted_resource_owner_pwd_cred_valid)
   ck_assert_int_eq(r_jwt_decrypt_verify_signature_nested(jwt, NULL, 0, NULL, 0), RHN_OK);
   r_jwt_free(jwt);
   
+  json_decref(j_resp);
   ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
   ck_assert_ptr_ne(j_resp = ulfius_get_json_body_response(&resp, NULL), NULL);
   ck_assert_int_eq(r_jwt_parse(jwt, json_string_value(json_object_get(j_resp, "id_token")), 0), RHN_OK);

@@ -247,6 +247,7 @@ START_TEST(test_oauth2_code_replay_test_revoked_tokens)
   
   json_decref(j_body_refresh);
   json_decref(j_body_code);
+  o_free(code);
 }
 END_TEST
 
@@ -464,6 +465,7 @@ START_TEST(test_oauth2_code_replay_test_non_revoked_tokens)
   
   json_decref(j_body_refresh);
   json_decref(j_body_code);
+  o_free(code);
 }
 END_TEST
 
@@ -615,6 +617,9 @@ int main(int argc, char *argv[])
   
   ulfius_clean_request(&admin_req);
   ulfius_clean_request(&user_req);
+  ulfius_clean_request(&auth_req);
+  ulfius_clean_request(&scope_req);
+  ulfius_clean_request(&register_req);
   y_close_logs();
   
   return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
