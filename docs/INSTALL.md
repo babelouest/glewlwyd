@@ -456,6 +456,10 @@ $ make
 $ sudo make install
 ```
 
+### Note for distribution packaging
+
+Although the cmake script automatically download and install the following dependencies: `Orcania`, `Yder`, `Ulfius`, `Rhonabwy`, `Iddawc` and `Hoel`, it's highly recommended to package those dependencies separately and not to include those in Glewlwyd package. Use the cmake option `-DDOWNLOAD_DEPENDENCIES=OFF` when building Glewlwyd for the distribution package.
+
 ## Configure glewlwyd
 
 Glewlwyd requires several configuration variables to work. You can specify those variables in a configuration file, environment variables, or both. In addition, some variables can be set via command-line arguments.
