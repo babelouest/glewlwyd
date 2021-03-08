@@ -1,4 +1,4 @@
-# Glewlwyd SSO serve
+# Glewlwyd SSO server
 
 ![C/C++ CI](https://github.com/babelouest/glewlwyd/workflows/C/C++%20CI/badge.svg)
 ![CodeQL](https://github.com/babelouest/glewlwyd/workflows/CodeQL/badge.svg)
