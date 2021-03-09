@@ -338,6 +338,7 @@
     "mod-database-mariadb-dbname-ph": "Ex: glewlwyd",
     "mod-database-mariadb-port": "Port de connection TCP (0: défaut du système)",
     "mod-database-mariadb-port-ph": "3306",
+    "mod-database-pbkdf2-iterations": "Itérations PKBDF2 (SQLite3)",
     "mod-data-format": "Format de données spécifiques",
     "mod-data-format-add": "Ajouter un format de données",
     "mod-data-format-message": "Par défaut, toute propriété supplémentaire est stockée comme chaine de caractères et ne sera pas visible dans le profil utilisateur. Pour avoir des valeurs multiples ou autoriser une propriété dans le profil, veuillez le spécifier",

@@ -338,6 +338,7 @@
     "mod-database-mariadb-dbname-ph": "e.g. glewlwyd",
     "mod-database-mariadb-port": "TCP connection port (0: system default)",
     "mod-database-mariadb-port-ph": "3306",
+    "mod-database-pbkdf2-iterations": "PKBDF2 iterations (SQLite3)",
     "mod-data-format": "Specific data format",
     "mod-data-format-add": "Add a data format",
     "mod-data-format-message": "By default, any property can be added to a user as string, and is invisible in the user profile. To have multiple values or allow profile read/write, please specify it",
