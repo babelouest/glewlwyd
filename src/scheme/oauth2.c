@@ -262,7 +262,7 @@ static json_t * complete_session_identify(struct config_module * config, struct 
                       ret = G_ERROR_PARAM;
                     }
                   } else {
-                    if ((res = i_load_userinfo(&i_session)) == I_OK && i_session.j_userinfo != NULL) {
+                    if ((res = i_get_userinfo(&i_session, 0)) == I_OK && i_session.j_userinfo != NULL) {
                       if (json_string_length((json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))))) {
                         sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
                         ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
@@ -276,7 +276,7 @@ static json_t * complete_session_identify(struct config_module * config, struct 
                     } else if (res == I_ERROR_PARAM || res == I_ERROR_SERVER || res == I_ERROR_UNAUTHORIZED || i_session.j_userinfo == NULL) {
                       ret = G_ERROR_PARAM;
                     } else {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error i_load_userinfo (1)");
+                      y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error i_get_userinfo (1)");
                       ret = G_ERROR;
                     }
                   }
@@ -288,7 +288,7 @@ static json_t * complete_session_identify(struct config_module * config, struct 
                 }
                 break;
               case I_RESPONSE_TYPE_TOKEN:
-                if ((res = i_load_userinfo(&i_session)) == I_OK && i_session.j_userinfo != NULL) {
+                if ((res = i_get_userinfo(&i_session, 0)) == I_OK && i_session.j_userinfo != NULL) {
                   if (json_string_length(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
                     sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
                     ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
@@ -302,7 +302,7 @@ static json_t * complete_session_identify(struct config_module * config, struct 
                 } else if (res == I_ERROR_PARAM || res == I_ERROR_SERVER || res == I_ERROR_UNAUTHORIZED || i_session.j_userinfo == NULL) {
                   ret = G_ERROR_PARAM;
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error i_load_userinfo (2)");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error i_get_userinfo (2)");
                   ret = G_ERROR;
                 }
                 break;
@@ -910,7 +910,7 @@ static int complete_session_for_user(struct config_module * config, const char *
                       ret = G_ERROR_PARAM;
                     }
                   } else {
-                    if ((res = i_load_userinfo(&i_session)) == I_OK && i_session.j_userinfo != NULL) {
+                    if ((res = i_get_userinfo(&i_session, 0)) == I_OK && i_session.j_userinfo != NULL) {
                       if (json_string_length((json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))))) {
                         sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
                         ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
@@ -924,7 +924,7 @@ static int complete_session_for_user(struct config_module * config, const char *
                     } else if (res == I_ERROR_PARAM || res == I_ERROR_SERVER || res == I_ERROR_UNAUTHORIZED || i_session.j_userinfo == NULL) {
                       ret = G_ERROR_PARAM;
                     } else {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_load_userinfo (1)");
+                      y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_get_userinfo (1)");
                       ret = G_ERROR;
                     }
                   }
@@ -936,7 +936,7 @@ static int complete_session_for_user(struct config_module * config, const char *
                 }
                 break;
               case I_RESPONSE_TYPE_TOKEN:
-                if ((res = i_load_userinfo(&i_session)) == I_OK && i_session.j_userinfo != NULL) {
+                if ((res = i_get_userinfo(&i_session, 0)) == I_OK && i_session.j_userinfo != NULL) {
                   if (json_string_length(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
                     sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
                     ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
@@ -950,7 +950,7 @@ static int complete_session_for_user(struct config_module * config, const char *
                 } else if (res == I_ERROR_PARAM || res == I_ERROR_SERVER || res == I_ERROR_UNAUTHORIZED || i_session.j_userinfo == NULL) {
                   ret = G_ERROR_PARAM;
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_load_userinfo (2)");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error i_get_userinfo (2)");
                   ret = G_ERROR;
                 }
                 break;
@@ -1194,7 +1194,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
                                                                       I_OPT_SCOPE, is_oidc?"openid":json_string_value(json_object_get(j_element, "scope")),
                                                                       I_OPT_NONE) != I_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init oauth2 - Error setting parameters for provider %s", json_string_value(json_object_get(j_element, "name")));
-                } else if (i_load_openid_config(&i_session) != I_OK) {
+                } else if (i_get_openid_config(&i_session) != I_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init oauth2 - Error loading openid-configuration for provider %s", json_string_value(json_object_get(j_element, "name")));
                 } else if ((j_export = i_export_session_json_t(&i_session)) == NULL) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init oauth2 - Error exporting session for provider %s", json_string_value(json_object_get(j_element, "name")));
