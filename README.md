@@ -38,6 +38,8 @@ New users can [register a new account](docs/REGISTER.md) with the possibility to
 
 Existing users can update their e-mail by sending a confirmation link to the new e-mail.
 
+## Lost credentials
+
 Existing users can reset their credentials if their password or authentication schemes are lost or unavailable. Credentials can be reset by different factors:
 - A link sent to the user's e-mail
 - A one-time use recovery code
@@ -60,7 +62,7 @@ The full installation documentation is available in the [Install documentation](
 
 ## Docker
 
-A docker image is available for tests on localhost, run the following command:
+A docker image is available for tests on localhost. To test the image, run the following command:
 
 ```shell
 $ docker run --rm -it -p 4593:4593 babelouest/glewlwyd:latest
