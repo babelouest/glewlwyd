@@ -2,9 +2,9 @@
  *
  * Static file server with compression Ulfius callback
  *
- * Copyright 2020 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2020-2021 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20201213
+ * Version 20210321
  * 
  * The MIT License (MIT)
  * 
@@ -166,9 +166,6 @@ static int callback_static_file_uncompressed (const struct _u_request * request,
     file_requested = o_strdup(request->http_url);
     url_dup_save = file_requested;
 
-    while (file_requested[0] == '/') {
-      file_requested++;
-    }
     file_requested += o_strlen(((struct _u_compressed_inmemory_website_config *)user_data)->url_prefix);
     while (file_requested[0] == '/') {
       file_requested++;
@@ -307,9 +304,6 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
     file_requested = o_strdup(request->http_url);
     url_dup_save = file_requested;
 
-    while (file_requested[0] == '/') {
-      file_requested++;
-    }
     file_requested += o_strlen((config->url_prefix));
     while (file_requested[0] == '/') {
       file_requested++;
@@ -327,38 +321,37 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
       o_free(url_dup_save);
       url_dup_save = file_requested = o_strdup("index.html");
     }
+    file_path = msprintf("%s/%s", ((struct _u_compressed_inmemory_website_config *)user_data)->files_path, file_requested);
 
-    if (!u_map_has_key_case(response->map_header, U_CONTENT_HEADER)) {
-      if (split_string(u_map_get_case(request->map_header, U_ACCEPT_HEADER), ",", &accept_list)) {
-        if (config->allow_gzip && string_array_has_trimmed_value((const char **)accept_list, U_ACCEPT_GZIP)) {
-          compress_mode = U_COMPRESS_GZIP;
-        } else if (config->allow_deflate && string_array_has_trimmed_value((const char **)accept_list, U_ACCEPT_DEFLATE)) {
-          compress_mode = U_COMPRESS_DEFL;
-        }
+    if (access(file_path, F_OK) != -1) {
+      if (!u_map_has_key_case(response->map_header, U_CONTENT_HEADER)) {
+        if (split_string(u_map_get_case(request->map_header, U_ACCEPT_HEADER), ",", &accept_list)) {
+          if (config->allow_gzip && string_array_has_trimmed_value((const char **)accept_list, U_ACCEPT_GZIP)) {
+            compress_mode = U_COMPRESS_GZIP;
+          } else if (config->allow_deflate && string_array_has_trimmed_value((const char **)accept_list, U_ACCEPT_DEFLATE)) {
+            compress_mode = U_COMPRESS_DEFL;
+          }
 
-        content_type = u_map_get_case(&config->mime_types, get_filename_ext(file_requested));
-        if (content_type == NULL) {
-          content_type = u_map_get(&config->mime_types, "*");
-          y_log_message(Y_LOG_LEVEL_WARNING, "Static File Server - Unknown mime type for extension %s", get_filename_ext(file_requested));
-        }
-        if (!string_array_has_value((const char **)config->mime_types_compressed, content_type)) {
-          compress_mode = U_COMPRESS_NONE;
-        }
+          content_type = u_map_get_case(&config->mime_types, get_filename_ext(file_requested));
+          if (content_type == NULL) {
+            content_type = u_map_get(&config->mime_types, "*");
+            y_log_message(Y_LOG_LEVEL_WARNING, "Static File Server - Unknown mime type for extension %s", get_filename_ext(file_requested));
+          }
+          if (!string_array_has_value((const char **)config->mime_types_compressed, content_type)) {
+            compress_mode = U_COMPRESS_NONE;
+          }
 
-        u_map_put(response->map_header, "Content-Type", content_type);
-        u_map_copy_into(response->map_header, &config->map_header);
+          u_map_put(response->map_header, "Content-Type", content_type);
+          u_map_copy_into(response->map_header, &config->map_header);
 
-        if (compress_mode != U_COMPRESS_NONE) {
-          if (compress_mode == U_COMPRESS_GZIP && config->allow_cache_compressed && u_map_has_key(&config->gzip_files, file_requested)) {
-            ulfius_set_binary_body_response(response, 200, u_map_get(&config->gzip_files, file_requested), u_map_get_length(&config->gzip_files, file_requested));
-            u_map_put(response->map_header, U_CONTENT_HEADER, U_ACCEPT_GZIP);
-          } else if (compress_mode == U_COMPRESS_DEFL && config->allow_cache_compressed && u_map_has_key(&config->deflate_files, file_requested)) {
-            ulfius_set_binary_body_response(response, 200, u_map_get(&config->deflate_files, file_requested), u_map_get_length(&config->deflate_files, file_requested));
-            u_map_put(response->map_header, U_CONTENT_HEADER, U_ACCEPT_DEFLATE);
-          } else {
-            file_path = msprintf("%s/%s", ((struct _u_compressed_inmemory_website_config *)user_data)->files_path, file_requested);
-
-            if (access(file_path, F_OK) != -1) {
+          if (compress_mode != U_COMPRESS_NONE) {
+            if (compress_mode == U_COMPRESS_GZIP && config->allow_cache_compressed && u_map_has_key(&config->gzip_files, file_requested)) {
+              ulfius_set_binary_body_response(response, 200, u_map_get(&config->gzip_files, file_requested), u_map_get_length(&config->gzip_files, file_requested));
+              u_map_put(response->map_header, U_CONTENT_HEADER, U_ACCEPT_GZIP);
+            } else if (compress_mode == U_COMPRESS_DEFL && config->allow_cache_compressed && u_map_has_key(&config->deflate_files, file_requested)) {
+              ulfius_set_binary_body_response(response, 200, u_map_get(&config->deflate_files, file_requested), u_map_get_length(&config->deflate_files, file_requested));
+              u_map_put(response->map_header, U_CONTENT_HEADER, U_ACCEPT_DEFLATE);
+            } else {
               if (!pthread_mutex_lock(&config->lock)) {
                 f = fopen (file_path, "rb");
                 if (f) {
@@ -444,22 +437,23 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
                 y_log_message(Y_LOG_LEVEL_ERROR, "callback_static_compressed_inmemory_website - Error pthread_lock_mutex");
                 ret = U_CALLBACK_ERROR;
               }
-            } else {
-              if (((struct _u_compressed_inmemory_website_config *)user_data)->redirect_on_404 == NULL) {
-                ret = U_CALLBACK_IGNORE;
-              } else {
-                ulfius_add_header_to_response(response, "Location", ((struct _u_compressed_inmemory_website_config *)user_data)->redirect_on_404);
-                response->status = 302;
-              }
             }
-            o_free(file_path);
+          } else {
+            ret = callback_static_file_uncompressed(request, response, user_data);
           }
-        } else {
-          ret = callback_static_file_uncompressed(request, response, user_data);
+          free_string_array(accept_list);
         }
-        free_string_array(accept_list);
+      }
+    } else {
+      if (((struct _u_compressed_inmemory_website_config *)user_data)->redirect_on_404 == NULL) {
+        ret = U_CALLBACK_IGNORE;
+      } else {
+        ulfius_add_header_to_response(response, "Location", ((struct _u_compressed_inmemory_website_config *)user_data)->redirect_on_404);
+        response->status = 302;
       }
     }
+    o_free(file_path);
+
     o_free(url_dup_save);
   }
 
