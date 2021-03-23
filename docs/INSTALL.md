@@ -577,7 +577,7 @@ If log mode `file` is set, log file path must be set to a file path where Glewlw
 - Config file variable: `cookie_secure`
 - Environment variable: `GLWD_COOKIE_SECURE`
 
-Optional. Default, cookie secure false.
+Optional. Default, `cookie_secure` is `false`.
 
 The sample config file has the following cookies configuration:
 
