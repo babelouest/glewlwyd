@@ -412,5 +412,6 @@ int callback_glewlwyd_delete_api_key (const struct _u_request * request, struct 
 int callback_glewlwyd_add_api_key (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_404_if_necessary (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 #endif

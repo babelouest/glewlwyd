@@ -61,6 +61,7 @@
 #define GLEWLWYD_CALLBACK_PRIORITY_CLOSE          4
 #define GLEWLWYD_CALLBACK_PRIORITY_PLUGIN         5
 #define GLEWLWYD_CALLBACK_PRIORITY_FILE           100
+#define GLEWLWYD_CALLBACK_PRIORITY_POST_FILE      101
 
 /**
  * Modes available when adding or modifying a user

@@ -63,6 +63,14 @@ int callback_default (const struct _u_request * request, struct _u_response * re
   return U_CALLBACK_CONTINUE;
 }
 
+int callback_404_if_necessary (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(user_data);
+  if (!request->callback_position) {
+    response->status = 404;
+  }
+  return U_CALLBACK_COMPLETE;
+}
+
 int callback_glewlwyd_check_user_profile_valid (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   char * session_uid;
