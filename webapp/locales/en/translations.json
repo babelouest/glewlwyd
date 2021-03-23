@@ -9,6 +9,8 @@
   "browse": "Browse",
   "save": "Save",
   "details": "Details",
+  "yes": "Yes",
+  "no": "No",
   "login": {
     "menu-title": "Glewlwyd",
     "error-scope-unavailable": "Error, no required scope is available",
@@ -166,8 +168,6 @@
     "email": "E-mail address",
     "enabled": "Enabled",
     "client_id": "Client ID",
-    "yes": "Yes",
-    "no": "No",
     "and": "And",
     "or": "Or",
     "readonly": "Read only",

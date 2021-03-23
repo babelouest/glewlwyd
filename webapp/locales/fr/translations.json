@@ -9,6 +9,8 @@
   "browse": "Sélectionner",
   "save": "Sauvegarder",
   "details": "Détails",
+  "yes": "Oui",
+  "no": "Non",
   "login": {
     "menu-title": "Glewlwyd",
     "error-scope-unavailable": "Erreur, aucun droit d'accès requis n'est accessible",
@@ -166,8 +168,6 @@
     "email": "Adresse courriel",
     "enabled": "Actif",
     "client_id": "Identifiant du client",
-    "yes": "Oui",
-    "no": "Non",
     "and": "Et",
     "or": "Ou",
     "readonly": "Lecture seule",
