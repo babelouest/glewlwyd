@@ -313,77 +313,65 @@ class DatabaseParams extends Component {
     var dataFormat = [];
     var i = 0;
     this.state.mod.parameters["data-format"] && Object.keys(this.state.mod.parameters["data-format"]).map(property => {
-      var nameMultipleJsx = <div>
-        <div className="form-group">
-          <div className="input-group mb-3">
-            <div className="input-group-prepend">
-              <label className="input-group-text" htmlFor={"mod-database-data-format-name-"+property}>{i18next.t("admin.mod-database-data-format-property")}</label>
+      var convertLabel, convertDropdown;
+      if (this.state.role === "client") {
+        convertLabel = <label className="input-group-text" htmlFor={"dropdownFormatConvert-"+i}>{i18next.t("admin.mod-database-data-format-convert")}</label>
+        convertDropdown = 
+          <div>
+            <button className="btn btn-outline-secondary dropdown-toggle" type="button" id={"dropdownFormatConvert-"+i} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {i18next.t("admin.mod-database-data-format-convert-"+(this.state.mod.parameters["data-format"][property]["convert"]?this.state.mod.parameters["data-format"][property]["convert"]:"none"))}
+            </button>
+            <div className="dropdown-menu" aria-labelledby={"dropdownFormatConvert-"+i}>
+              <a className="dropdown-item" href="#" onClick={(e) => this.changedataFormatConvert(e, property, false)}>{i18next.t("admin.mod-database-data-format-convert-none")}</a>
+              <a className="dropdown-item" href="#" onClick={(e) => this.changedataFormatConvert(e, property, 'jwks')}>{i18next.t("admin.mod-database-data-format-convert-jwks")}</a>
             </div>
-            <input type="text" className={this.state.errorList["data-format"]?"form-control is-invalid":"form-control"} id={"mod-database-data-format-name-"+property} onChange={(e) => this.changeDataFormatProperty(e, property)} value={property} placeholder={i18next.t("admin.mod-database-data-format-property-ph")} />
           </div>
-          {this.state.errorList["data-format"]?<span className="error-input">{this.state.errorList["data-format"]}</span>:""}
-        </div>
-        <div className="form-group form-check">
-          <input type="checkbox" className="form-check-input" id={"mod-database-data-format-multiple-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "multiple")} checked={this.state.mod.parameters["data-format"][property]["multiple"]} />
-          <label className="form-check-label" htmlFor={"mod-database-data-format-multiple-"+property}>{i18next.t("admin.mod-database-data-format-multiple")}</label>
-        </div>
-      </div>;
-      if (this.state.role === "user") {
-        dataFormat.push(<div key={i++}>
-          {nameMultipleJsx}
-          <div className="form-group form-check">
-            <input type="checkbox" className="form-check-input" id={"mod-database-data-format-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "read")} checked={this.state.mod.parameters["data-format"][property]["read"]} />
-            <label className="form-check-label" htmlFor={"mod-database-data-format-read-"+property}>{i18next.t("admin.mod-database-data-format-read")}</label>
-          </div>
-          <div className="form-group form-check">
-            <input type="checkbox" className="form-check-input" id={"mod-database-data-format-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "write")} checked={this.state.mod.parameters["data-format"][property]["write"]} />
-            <label className="form-check-label" htmlFor={"mod-database-data-format-write-"+property}>{i18next.t("admin.mod-database-data-format-write")}</label>
-          </div>
-          <div className="form-group form-check">
-            <input type="checkbox" className="form-check-input" id={"mod-database-data-format-profile-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-read")} checked={this.state.mod.parameters["data-format"][property]["profile-read"]} />
-            <label className="form-check-label" htmlFor={"mod-database-data-format-profile-read-"+property}>{i18next.t("admin.mod-database-data-format-profile-read")}</label>
-          </div>
-          <div className="form-group form-check">
-            <input type="checkbox" className="form-check-input" id={"mod-database-data-format-profile-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-write")} checked={this.state.mod.parameters["data-format"][property]["profile-write"]} />
-            <label className="form-check-label" htmlFor={"mod-database-data-format-profile-write-"+property}>{i18next.t("admin.mod-database-data-format-profile-write")}</label>
-          </div>
-          <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteDataFormat(e, property)} title={i18next.t("admin.mod-data-format-delete")}>
-            <i className="fas fa-trash"></i>
-          </button>
-          <hr/>
-        </div>);
-      } else if (this.state.role === "client") {
-        dataFormat.push(<div key={i++}>
-          {nameMultipleJsx}
-          <div className="form-group form-check">
-            <input type="checkbox" className="form-check-input" id={"mod-database-data-format-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "read")} checked={this.state.mod.parameters["data-format"][property]["read"]} />
-            <label className="form-check-label" htmlFor={"mod-database-data-format-read-"+property}>{i18next.t("admin.mod-database-data-format-read")}</label>
-          </div>
-          <div className="form-group form-check">
-            <input type="checkbox" className="form-check-input" id={"mod-database-data-format-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "write")} checked={this.state.mod.parameters["data-format"][property]["write"]} />
-            <label className="form-check-label" htmlFor={"mod-database-data-format-write-"+property}>{i18next.t("admin.mod-database-data-format-write")}</label>
-          </div>
-          <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteDataFormat(e, property)} title={i18next.t("admin.mod-data-format-delete")}>
-            <i className="fas fa-trash"></i>
-          </button>
+      }
+      var nameMultipleJsx = 
+        <div>
           <div className="form-group">
-            <div className="btn-group" role="group">
+            <div className="input-group mb-3">
               <div className="input-group-prepend">
-                <label className="input-group-text" htmlFor={"dropdownFormatConvert-"+i}>{i18next.t("admin.mod-database-data-format-convert")}</label>
+                <label className="input-group-text" htmlFor={"mod-database-data-format-name-"+property}>{i18next.t("admin.mod-database-data-format-property")}</label>
               </div>
-              <div className="dropdown">
-                <button className="btn btn-secondary dropdown-toggle" type="button" id={"dropdownFormatConvert-"+i} data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  {i18next.t("admin.mod-database-data-format-convert-"+(this.state.mod.parameters["data-format"][property]["convert"]?this.state.mod.parameters["data-format"][property]["convert"]:"none"))}
+              <input type="text" className={this.state.errorList["data-format"]?"form-control is-invalid":"form-control"} id={"mod-database-data-format-name-"+property} onChange={(e) => this.changeDataFormatProperty(e, property)} value={property} placeholder={i18next.t("admin.mod-database-data-format-property-ph")} />
+              <div className="input-group-append">
+                {convertLabel}
+                {convertDropdown}
+                <button type="button" className="btn btn-outline-secondary" onClick={(e) => this.deleteDataFormat(e, property)} title={i18next.t("admin.mod-data-format-delete")}>
+                  <i className="fas fa-trash"></i>
                 </button>
-                <div className="dropdown-menu" aria-labelledby={"dropdownFormatConvert-"+i}>
-                  <a className="dropdown-item" href="#" onClick={(e) => this.changedataFormatConvert(e, property, false)}>{i18next.t("admin.mod-database-data-format-convert-none")}</a>
-                  <a className="dropdown-item" href="#" onClick={(e) => this.changedataFormatConvert(e, property, 'jwks')}>{i18next.t("admin.mod-database-data-format-convert-jwks")}</a>
-                </div>
               </div>
             </div>
+            {this.state.errorList["data-format"]?<span className="error-input">{this.state.errorList["data-format"]}</span>:""}
           </div>
-          <hr/>
-        </div>);
+          <div className="form-group form-check">
+            <input type="checkbox" className="form-check-input" id={"mod-database-data-format-multiple-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "multiple")} checked={this.state.mod.parameters["data-format"][property]["multiple"]} />
+            <label className="form-check-label" htmlFor={"mod-database-data-format-multiple-"+property}>{i18next.t("admin.mod-database-data-format-multiple")}</label>
+          </div>
+        </div>;
+      if (this.state.role === "user") {
+        dataFormat.push(
+          <div key={i++}>
+            {nameMultipleJsx}
+            <div className="form-group form-check">
+              <input type="checkbox" className="form-check-input" id={"mod-database-data-format-profile-read-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-read")} checked={this.state.mod.parameters["data-format"][property]["profile-read"]} />
+              <label className="form-check-label" htmlFor={"mod-database-data-format-profile-read-"+property}>{i18next.t("admin.mod-database-data-format-profile-read")}</label>
+            </div>
+            <div className="form-group form-check">
+              <input type="checkbox" className="form-check-input" id={"mod-database-data-format-profile-write-"+property} onChange={(e) => this.toggleDataFormatValue(e, property, "profile-write")} checked={this.state.mod.parameters["data-format"][property]["profile-write"]} />
+              <label className="form-check-label" htmlFor={"mod-database-data-format-profile-write-"+property}>{i18next.t("admin.mod-database-data-format-profile-write")}</label>
+            </div>
+            <hr/>
+          </div>
+        );
+      } else if (this.state.role === "client") {
+        dataFormat.push(
+          <div key={i++}>
+            {nameMultipleJsx}
+            <hr/>
+          </div>
+        );
       }
     });
     var additionalProperties = <div className="accordion" id="accordionParams">
@@ -404,6 +392,9 @@ class DatabaseParams extends Component {
             </button>
             <hr />
             {dataFormat}
+            <button type="button" className="btn btn-secondary" onClick={this.addDataFormat} title={i18next.t("admin.mod-data-format-add")}>
+              <i className="fas fa-plus"></i>
+            </button>
           </div>
         </div>
       </div>
