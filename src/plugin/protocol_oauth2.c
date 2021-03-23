@@ -1816,7 +1816,7 @@ static json_t * get_token_metadata(struct _oauth2_config * config, const char * 
 }
 
 static const char * get_client_id_for_introspection(struct _oauth2_config * config, const struct _u_request * request) {
-  if (u_map_get_case(request->map_header, "Authorization") != NULL && config->introspect_revoke_resource_config->oauth_scope != NULL) {
+  if (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) != NULL && config->introspect_revoke_resource_config->oauth_scope != NULL) {
     return NULL;
   } else if (json_object_get(config->j_params, "introspection-revocation-allow-target-client") == json_true()) {
     return request->auth_basic_user;
@@ -2317,8 +2317,8 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
   size_t index = 0;
   int ret = U_CALLBACK_UNAUTHORIZED;
   
-  if (u_map_get_case(request->map_header, "Authorization") != NULL && config->introspect_revoke_resource_config->oauth_scope != NULL) {
-    j_introspect = get_token_metadata(config, (u_map_get_case(request->map_header, "Authorization") + o_strlen(HEADER_PREFIX_BEARER)), "access_token", NULL);
+  if (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) != NULL && config->introspect_revoke_resource_config->oauth_scope != NULL) {
+    j_introspect = get_token_metadata(config, (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER)), "access_token", NULL);
     if (check_result_value(j_introspect, G_OK) && json_object_get(json_object_get(j_introspect, "token"), "active") == json_true()) {
       ret = callback_check_glewlwyd_access_token(request, response, (void*)config->introspect_revoke_resource_config);
     }
@@ -3125,8 +3125,8 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
   json_t * j_session, * j_user, * j_introspect;
   int ret = U_CALLBACK_UNAUTHORIZED;
   
-  if (u_map_get_case(request->map_header, "Authorization") != NULL && o_strlen(u_map_get_case(request->map_header, "Authorization")) >= o_strlen(HEADER_PREFIX_BEARER)) {
-    j_introspect = get_token_metadata(config, (u_map_get_case(request->map_header, "Authorization") + o_strlen(HEADER_PREFIX_BEARER)), "access_token", NULL);
+  if (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) != NULL && o_strlen(u_map_get_case(request->map_header, HEADER_AUTHORIZATION)) >= o_strlen(HEADER_PREFIX_BEARER)) {
+    j_introspect = get_token_metadata(config, (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER)), "access_token", NULL);
     if (check_result_value(j_introspect, G_OK) && json_object_get(json_object_get(j_introspect, "token"), "active") == json_true()) {
       ret = callback_check_glewlwyd_access_token(request, response, (void*)config->glewlwyd_resource_config);
     }
