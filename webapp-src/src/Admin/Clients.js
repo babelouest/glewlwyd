@@ -82,7 +82,7 @@ class Clients extends Component {
         <td className="d-none d-lg-table-cell">{client.source}</td>
         <td>{client.client_id}</td>
         <td>{client.name||""}</td>
-        <td className="d-none d-lg-table-cell">{(client.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
+        <td className="d-none d-lg-table-cell">{(client.enabled?i18next.t("yes"):i18next.t("no"))}</td>
         <td>
           <div className="btn-group pull-right" role="group">
             <button type="button" className="btn btn-secondary" onClick={(e) => this.editClient(e, client, index)} title={i18next.t("admin.edit")}>

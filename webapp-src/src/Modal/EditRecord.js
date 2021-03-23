@@ -409,7 +409,7 @@ class EditRecord extends Component {
                   </div>
               }
             } else if (pattern.type === "jwks") {
-              inputJsx = <input type="text" className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={this.state.listEltConfirm[pattern.name]||""} onChange={(e) => this.setJwks(e, pattern.name)} />
+              inputJsx = <textarea className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={this.state.listEltConfirm[pattern.name]||""} onChange={(e) => this.setJwks(e, pattern.name)}></textarea>
             } else {
               inputJsx = <input type={(pattern.type||"text")} className={"form-control" + validInput} id={"modal-edit-" + pattern.name} placeholder={pattern.placeholder?i18next.t(pattern.placeholder):""} value={elt||""} onChange={(e) => this.changeElt(e, pattern.name)} />
             }

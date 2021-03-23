@@ -155,31 +155,31 @@
       "edit": true,
       "forceShow": true,
       "label": "admin.client-encrypt_code",
-      "listElements": ["admin.no","admin.yes"]
+      "listElements": ["no","yes"]
     },{
       "name": "encrypt_at",
       "edit": true,
       "forceShow": true,
       "label": "admin.client-encrypt_at",
-      "listElements": ["admin.no","admin.yes"]
+      "listElements": ["no","yes"]
     },{
       "name": "encrypt_userinfo",
       "edit": true,
       "forceShow": true,
       "label": "admin.client-encrypt_userinfo",
-      "listElements": ["admin.no","admin.yes"]
+      "listElements": ["no","yes"]
     },{
       "name": "encrypt_id_token",
       "edit": true,
       "forceShow": true,
       "label": "admin.client-encrypt_id_token",
-      "listElements": ["admin.no","admin.yes"]
+      "listElements": ["no","yes"]
     },{
       "name": "encrypt_refresh_token",
       "edit": true,
       "forceShow": true,
       "label": "admin.client-encrypt_refresh_token",
-      "listElements": ["admin.no","admin.yes"]
+      "listElements": ["no","yes"]
     },{
       "name": "scope",
       "list": true,

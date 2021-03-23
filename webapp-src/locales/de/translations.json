@@ -8,6 +8,8 @@
   "upload": "Hochladen",
   "browse": "Durchsuchen",
   "save": "Speichern",
+  "yes": "Ja",
+  "no": "Nein",
   "login": {
     "menu-title": "Glewlwyd",
     "error-scope-unavailable": "Fehler, Berechtigungen sind nicht vorhanden",
@@ -156,8 +158,6 @@
     "email": "E-mail Adresse",
     "enabled": "Aktiviert",
     "client_id": "Client ID",
-    "yes": "Ja",
-    "no": "Nein",
     "and": "Und",
     "or": "Oder",
     "readonly": "Schreibgeschützt",

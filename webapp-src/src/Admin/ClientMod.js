@@ -112,8 +112,8 @@ class ClientMod extends Component {
         <td>{module}</td>
         <td>{mod.name}</td>
         <td className="d-none d-lg-table-cell">{mod.display_name||""}</td>
-        <td className="d-none d-lg-table-cell">{(mod.readonly?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
-        <td className="d-none d-lg-table-cell">{(mod.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
+        <td className="d-none d-lg-table-cell">{(mod.readonly?i18next.t("yes"):i18next.t("no"))}</td>
+        <td className="d-none d-lg-table-cell">{(mod.enabled?i18next.t("yes"):i18next.t("no"))}</td>
         <td>
           <div className="btn-group d-none d-lg-table-cell" role="group">
             {switchButton}

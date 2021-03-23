@@ -94,7 +94,7 @@ class Users extends Component {
         <td>{user.username}</td>
         <td>{user.name||""}</td>
         <td className="d-none d-lg-table-cell">{user.email||""}</td>
-        <td className="d-none d-lg-table-cell">{(user.enabled?i18next.t("admin.yes"):i18next.t("admin.no"))}</td>
+        <td className="d-none d-lg-table-cell">{(user.enabled?i18next.t("yes"):i18next.t("no"))}</td>
         <td>
           <div className="btn-group d-none d-lg-table-cell" role="group">
             <button type="button" className="btn btn-secondary" onClick={(e) => this.delegateUser(e, user)} title={i18next.t("admin.delegate")}>

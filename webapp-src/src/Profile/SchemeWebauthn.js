@@ -435,7 +435,7 @@ class SchemeWebauthn extends Component {
               </form>
             </td>
             <td className="d-none d-md-block">
-              {i18next.t("admin.yes")}
+              {i18next.t("yes")}
             </td>
             <td>
               <div className="btn-group" role="group">
@@ -466,7 +466,7 @@ class SchemeWebauthn extends Component {
               {checked}
             </td>
             <td className="d-none d-md-block">
-              {i18next.t("admin.yes")}
+              {i18next.t("yes")}
             </td>
             <td>
               <div className="btn-group" role="group">
@@ -495,7 +495,7 @@ class SchemeWebauthn extends Component {
               </span>
             </td>
             <td className="d-none d-md-block">
-              {i18next.t("admin.no")}
+              {i18next.t("no")}
             </td>
             <td>
               <div className="btn-group" role="group">

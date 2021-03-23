@@ -9,6 +9,8 @@
   "browse": "Bladeren",
   "save": "Opslaan",
   "details": "Details",
+    "yes": "Ja",
+    "no": "Nee",
   "login": {
     "menu-title": "Glewlwyd",
     "error-scope-unavailable": "Fout, er is geen vereiste toegangsrecht beschikbaar",
@@ -166,8 +168,6 @@
     "email": "E-mail adres",
     "enabled": "Aktief",
     "client_id": "Client ID",
-    "yes": "Ja",
-    "no": "Nee",
     "and": "En",
     "or": "Of",
     "readonly": "Alleen lezen",
