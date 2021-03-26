@@ -2919,7 +2919,6 @@ static int is_client_auth_method_allowed(json_t * j_client, int client_auth_meth
   int ret;
 
   if (json_string_length(json_object_get(j_client, "token_endpoint_auth_method"))) {
-    ret = 0;
     switch (client_auth_method) {
       case GLEWLWYD_CLIENT_AUTH_METHOD_NONE:
         ret = 1;
@@ -2955,6 +2954,7 @@ static int is_client_auth_method_allowed(json_t * j_client, int client_auth_meth
         }
         break;
       default:
+        ret = 0;
         break;
     }
   } else {
@@ -4182,6 +4182,7 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
   jwks_t * jwks = NULL;
   jwk_t * jwk = NULL;
   jwa_alg alg = R_JWA_ALG_UNKNOWN;
+  const char * kid = r_jwt_get_sig_kid(jwt);
 
   j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, client_id);
   if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
@@ -4204,16 +4205,16 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
       } else if (alg == R_JWA_ALG_ES256 || alg == R_JWA_ALG_ES384 || alg == R_JWA_ALG_ES512 || alg == R_JWA_ALG_RS256 || alg == R_JWA_ALG_RS384 || alg == R_JWA_ALG_RS512 || alg == R_JWA_ALG_PS256 || alg == R_JWA_ALG_PS384 || alg == R_JWA_ALG_PS512 || alg == R_JWA_ALG_EDDSA) {
-        if (json_string_length(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))) && o_strlen(r_jwt_get_header_str_value(jwt, "kid"))) {
+        if (json_string_length(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))) && o_strlen(kid)) {
           if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_uri(jwks, json_string_value(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))), config->x5u_flags) == RHN_OK) {
-            if ((jwk = r_jwks_get_by_kid(jwks, r_jwt_get_header_str_value(jwt, "kid"))) == NULL) {
+            if ((jwk = r_jwks_get_by_kid(jwks, kid)) == NULL) {
               y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from jwks_uri, origin: %s", ip_source);
             }
           }
           r_jwks_free(jwks);
-        } else if (json_is_object(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks-parameter")))) && o_strlen(r_jwt_get_header_str_value(jwt, "kid"))) {
+        } else if (json_is_object(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks-parameter")))) && o_strlen(kid)) {
           if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_json_t(jwks, json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks-parameter")))) == RHN_OK) {
-            if ((jwk = r_jwks_get_by_kid(jwks, r_jwt_get_header_str_value(jwt, "kid"))) == NULL) {
+            if ((jwk = r_jwks_get_by_kid(jwks, kid)) == NULL) {
               y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from jwks, origin: %s", ip_source);
             }
           }
@@ -6613,6 +6614,9 @@ static int generate_discovery_content(struct _oidc_config * config) {
         json_object_set_new(json_object_get(j_discovery, "mtls_endpoint_aliases"), "revocation_endpoint", json_pack("s+", plugin_url, "/mtls/revoke"));
         json_object_set_new(json_object_get(j_discovery, "mtls_endpoint_aliases"), "introspection_endpoint", json_pack("s+", plugin_url, "/mtls/introspect"));
       }
+      if (json_object_get(config->j_params, "oauth-par-allowed") == json_true()) {
+        json_object_set_new(json_object_get(j_discovery, "mtls_endpoint_aliases"), "pushed_authorization_request_endpoint", json_pack("s+", plugin_url, "/mtls/par"));
+      }
     }
     if (json_object_get(config->j_params, "oauth-rar-allowed") == json_true()) {
       json_object_set_new(j_discovery, "authorization_details_supported", json_true());
@@ -7306,18 +7310,39 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
       ret = U_CALLBACK_CONTINUE;
     }
     if (j_assertion == NULL) {
-      j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password);
-      if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
-        json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
-          if (0 == o_strcmp(json_string_value(j_element), "client_credentials")) {
-            ret = U_CALLBACK_CONTINUE;
+      if (o_strlen(u_map_get(request->map_post_body, "client_assertion")) && 0 == o_strcmp(GLEWLWYD_AUTH_TOKEN_ASSERTION_TYPE, u_map_get(request->map_post_body, "client_assertion_type"))) {
+        if (json_object_get(config->j_params, "request-parameter-allow") == json_true()) {
+          j_assertion = validate_jwt_assertion_request(config, u_map_get(request->map_post_body, "client_assertion"), o_strstr(request->url_path, "/introspect")!=NULL?"introspect":"revoke", get_ip_source(request));
+          if (check_result_value(j_assertion, G_ERROR_UNAUTHORIZED) || check_result_value(j_assertion, G_ERROR_PARAM)) {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "callback_check_intropect_revoke - Error validating client_assertion");
+            ret = U_CALLBACK_UNAUTHORIZED;
+          } else if (!check_result_value(j_assertion, G_OK)) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_intropect_revoke - Error validate_jwt_assertion_request");
+            ret = U_CALLBACK_ERROR;
+          } else {
+            if (is_client_auth_method_allowed(json_object_get(j_assertion, "client"), (int)json_integer_value(json_object_get(j_assertion, "client_auth_method")))) {
+              ret = U_CALLBACK_CONTINUE;
+            }
+          }
+          json_decref(j_assertion);
+        } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "callback_check_intropect_revoke - unauthorized request parameter");
+          ret = U_CALLBACK_UNAUTHORIZED;
+        }
+      } else {
+        j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password);
+        if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
+          json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
+            if (0 == o_strcmp(json_string_value(j_element), "client_credentials")) {
+              ret = U_CALLBACK_CONTINUE;
+            }
           }
         }
+        json_decref(j_client);
       }
     }
-    json_decref(j_client);
+    json_decref(j_assertion);
   }
-  json_decref(j_assertion);
   return ret;
 }
 
@@ -12012,6 +12037,13 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
             config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "mtls/revoke/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oidc_clean, NULL) != G_OK
             ) {
             y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error adding mtls introspect/revoke endpoints");
+            j_return = json_pack("{si}", "result", G_ERROR);
+            break;
+          }
+        }
+        if (json_object_get(p_config->j_params, "oauth-par-allowed") == json_true()) {
+          if (config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "mtls/par/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_pushed_authorization_request, (void*)*cls) != G_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error adding mtls device-authorization endpoints");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
