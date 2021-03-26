@@ -630,7 +630,7 @@
     "mod-glwd-jwks-show": "JWKS beschikbaar",
     "mod-glwd-jwks-x5c": "X5C certificaat keten (optioneel)",
     "mod-glwd-request-parameter-allow": "Aanvragen toestaan via JWT",
-    "mod-glwd-request-parameter-encryption-allow": "Sta een gecodeerde aanvraag parameter als JWT toe",
+    "mod-glwd-request-parameter-allow-encrypted": "Sta een gecodeerde aanvraag parameter als JWT toe",
     "mod-glwd-token-encryption-allow": "Sta codering van tokens toe",
     "mod-glwd-request-uri-allow-https-non-secure": "Sta een request_uri en jwks_uri toe naar een onbeveiligde https:// uri",
     "mod-glwd-url-auth": "URL API Auth voor deze instance",
