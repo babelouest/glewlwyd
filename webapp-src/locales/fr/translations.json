@@ -657,7 +657,7 @@
     "mod-glwd-register-client-auth-scope": "Scopes requis dans l'access token",
     "mod-glwd-register-client-auth-scope-open": "Enregistrement ouvert",
     "mod-glwd-register-client-credentials-scope": "Scopes à ajouter aux clients",
-    "mod-glwd-register-client-scope-one-use": "Le scope utilisé pour l'enregistrement ne peut servir qu'une fois",
+    "mod-glwd-register-client-token-one-use": "Le scope utilisé pour l'enregistrement ne peut servir qu'une fois",
     "mod-glwd-register-client-management-allowed": "Autoriser les clients à gérer leur enregistrement",
     "mod-glwd-register-client-management-allowed": "Autoriser les clients à gérer leur enregistrement",
     "mod-glwd-register-resource-specify-allowed": "Autoriser les clients a spécifier les indicateurs de ressource",

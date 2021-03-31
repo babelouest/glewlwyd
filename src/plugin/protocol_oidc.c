@@ -774,8 +774,8 @@ static json_t * check_parameters (json_t * j_params) {
           }
         }
       }
-      if (json_object_get(j_params, "register-client-scope-one-use") != NULL && !json_is_boolean(json_object_get(j_params, "register-client-scope-one-use"))) {
-        json_array_append_new(j_error, json_string("Property 'register-client-scope-one-use' is optional and must be a boolean"));
+      if (json_object_get(j_params, "register-client-token-one-use") != NULL && !json_is_boolean(json_object_get(j_params, "register-client-token-one-use"))) {
+        json_array_append_new(j_error, json_string("Property 'register-client-token-one-use' is optional and must be a boolean"));
         ret = G_ERROR_PARAM;
       }
       if (json_object_get(j_params, "register-client-management-allowed") != NULL && !json_is_boolean(json_object_get(j_params, "register-client-management-allowed"))) {
@@ -7142,7 +7142,7 @@ static int callback_client_registration(const struct _u_request * request, struc
       redirect_uri = json_dumps(json_object_get(json_object_get(j_result, "client"), "redirect_uris"), JSON_COMPACT);
       y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - client '%s' registered with redirect_uri %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "client"), "client_id")), redirect_uri);
       o_free(redirect_uri);
-      if (config->client_register_resource_config->oauth_scope != NULL && json_object_get(config->j_params, "register-client-scope-one-use") == json_true()) {
+      if (config->client_register_resource_config->oauth_scope != NULL && json_object_get(config->j_params, "register-client-token-one-use") == json_true()) {
         if (revoke_access_token(config, (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER))) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_client_registration - Error revoke_access_token");
           response->status = 500;

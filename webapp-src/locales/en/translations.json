@@ -657,7 +657,7 @@
     "mod-glwd-register-client-auth-scope": "Required scopes in the access token",
     "mod-glwd-register-client-auth-scope-open": "Open registration",
     "mod-glwd-register-client-credentials-scope": "Scopes to add to the new clients",
-    "mod-glwd-register-client-scope-one-use": "Scope used for registration can be used once",
+    "mod-glwd-register-client-token-one-use": "Scope used for registration can be used once",
     "mod-glwd-register-client-management-allowed": "Allow clients to manage their registration",
     "mod-glwd-register-resource-specify-allowed": "Allow client to specify resource indicators",
     "mod-glwd-register-resource-default": "Set default resource indicators list",
