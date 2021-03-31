@@ -61,6 +61,7 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["register-client-allowed"]!==undefined?"":(props.mod.parameters["register-client-allowed"] = false);
     props.mod.parameters["register-client-auth-scope"]!==undefined?"":(props.mod.parameters["register-client-auth-scope"] = []);
     props.mod.parameters["register-client-credentials-scope"]!==undefined?"":(props.mod.parameters["register-client-credentials-scope"] = []);
+    props.mod.parameters["register-client-scope-one-use"]!==undefined?"":(props.mod.parameters["register-client-scope-one-use"] = true);
     props.mod.parameters["register-client-management-allowed"]!==undefined?"":(props.mod.parameters["register-client-management-allowed"] = true);
     props.mod.parameters["register-resource-specify-allowed"]!==undefined?"":(props.mod.parameters["register-resource-specify-allowed"] = false);
     props.mod.parameters["register-resource-default"]!==undefined?"":(props.mod.parameters["register-resource-default"] = []);
@@ -226,6 +227,7 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["register-client-management-allowed"]!==undefined?"":(nextProps.mod.parameters["register-client-management-allowed"] = true);
     nextProps.mod.parameters["register-resource-specify-allowed"]!==undefined?"":(nextProps.mod.parameters["register-resource-specify-allowed"] = false);
     nextProps.mod.parameters["register-resource-default"]!==undefined?"":(nextProps.mod.parameters["register-resource-default"] = []);
+    nextProps.mod.parameters["register-client-scope-one-use"]!==undefined?"":(nextProps.mod.parameters["register-client-scope-one-use"] = true);
     nextProps.mod.parameters["session-management-allowed"]!==undefined?"":(nextProps.mod.parameters["session-management-allowed"] = false);
     nextProps.mod.parameters["client-pubkey-parameter"]!==undefined?"":(nextProps.mod.parameters["client-pubkey-parameter"] = "");
     nextProps.mod.parameters["client-jwks-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks-parameter"] = "jwks");
@@ -2483,6 +2485,10 @@ class GlwdOIDCParams extends Component {
                     </div>
                     {scopeRegisterClientListJsx}
                   </div>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-register-client-scope-one-use" onChange={(e) => this.toggleParam(e, "register-client-scope-one-use")} checked={this.state.mod.parameters["register-client-scope-one-use"]} disabled={!this.state.mod.parameters["register-client-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-register-client-scope-one-use">{i18next.t("admin.mod-glwd-register-client-scope-one-use")}</label>
                 </div>
                 <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-register-client-management-allowed" onChange={(e) => this.toggleParam(e, "register-client-management-allowed")} checked={this.state.mod.parameters["register-client-management-allowed"]} disabled={!this.state.mod.parameters["register-client-allowed"]} />
