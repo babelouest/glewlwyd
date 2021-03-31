@@ -4,7 +4,7 @@
  *
  * Copyright 2016-2021 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20210301
+ * Version 20210331
  *
  * The MIT License (MIT)
  * 
@@ -218,7 +218,7 @@ int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request
             o_free(response_value);
           } else {
             res = U_CALLBACK_CONTINUE;
-            response->shared_data = (void*)json_pack("{sssOsO*}", "sub", json_string_value(json_object_get(json_object_get(j_access_token, "grants"), "sub")), "scope", json_object_get(j_res_scope, "scope"), "jkt", json_object_get(json_object_get(json_object_get(j_access_token, "grants"), "cnf"), "jkt"));
+            response->shared_data = (void*)json_pack("{ss?sOsO*}", "sub", json_string_value(json_object_get(json_object_get(j_access_token, "grants"), "sub")), "scope", json_object_get(j_res_scope, "scope"), "jkt", json_object_get(json_object_get(json_object_get(j_access_token, "grants"), "cnf"), "jkt"));
             if (json_object_get(json_object_get(j_access_token, "grants"), "aud") != NULL) {
               json_object_set((void*)response->shared_data, "aud", json_object_get(json_object_get(j_access_token, "grants"), "aud"));
             }
