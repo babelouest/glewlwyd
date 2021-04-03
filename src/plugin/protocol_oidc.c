@@ -1092,7 +1092,9 @@ static json_t * oidc_verify_dpop_proof(struct _oidc_config * config, const struc
               break;
             }
             if ((alg = r_jwt_get_sign_alg(dpop_jwt)) != R_JWA_ALG_RS256 && alg != R_JWA_ALG_RS384 && alg != R_JWA_ALG_RS512 &&
-                alg != R_JWA_ALG_ES256 && alg != R_JWA_ALG_ES384 && alg != R_JWA_ALG_ES512 && alg != R_JWA_ALG_EDDSA && alg != R_JWA_ALG_ES256K) {
+                alg != R_JWA_ALG_ES256 && alg != R_JWA_ALG_ES384 && alg != R_JWA_ALG_ES512 &&
+                alg != R_JWA_ALG_PS256 && alg != R_JWA_ALG_PS384 && alg != R_JWA_ALG_PS512 &&
+                alg != R_JWA_ALG_EDDSA && alg != R_JWA_ALG_ES256K) {
               y_log_message(Y_LOG_LEVEL_DEBUG, "oidc_verify_dpop_proof - Invalid sign_alg");
               j_return = json_pack("{si}", "result", G_ERROR_PARAM);
               break;
@@ -2082,7 +2084,7 @@ static json_t * reduce_scope(const char * scope, json_t * scope_list) {
   char * scope_reduced = NULL, ** scope_array = NULL;
   json_t * j_return;
   size_t i;
-  
+
   if (split_string(scope, " ", &scope_array)) {
     for (i=0; scope_array[i]!=NULL; i++) {
       if (json_array_has_string(scope_list, scope_array[i])) {
@@ -2124,10 +2126,10 @@ static int serialize_pushed_request_uri(struct _oidc_config * config,
                                         struct _u_map * additional_parameters) {
   json_t * j_query, * j_last_id, * j_additional_parameters = NULL;
   int ret, res, i;
-  char * request_uri_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, request_uri), 
-      ** scope_array = NULL, 
-       * str_claims_request = NULL, 
-       * str_authorization_details = NULL, 
+  char * request_uri_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, request_uri),
+      ** scope_array = NULL,
+       * str_claims_request = NULL,
+       * str_authorization_details = NULL,
        * expires_at_clause,
        * str_additional_parameters = NULL;
   const char ** keys;
@@ -7572,7 +7574,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         break;
       }
     }
-    
+
     if (display != NULL) {
       u_map_put(&additional_parameters, "display", display);
     }
@@ -7727,8 +7729,8 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
     }
 
     // Check that the scope 'openid' is provided, otherwise return error
-    if ((!string_array_has_value((const char **)scope_list, "openid") && 
-         !config->allow_non_oidc) || 
+    if ((!string_array_has_value((const char **)scope_list, "openid") &&
+         !config->allow_non_oidc) ||
          (auth_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG && !string_array_has_value((const char **)scope_list, "openid"))) {
       // Scope openid missing
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - scope 'openid' missing, origin: %s", ip_source);
@@ -8912,7 +8914,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
   if (j_assertion_client != NULL) {
     client_id = json_string_value(json_object_get(j_assertion_client, "client_id"));
   }
-  
+
   if (client_id == NULL && u_map_get(request->map_post_body, "client_id") != NULL) {
     client_id = u_map_get(request->map_post_body, "client_id");
   }
@@ -8940,7 +8942,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
     u_map_remove_from_key(additional_parameters, "resource");
     u_map_remove_from_key(additional_parameters, "code_challenge");
     u_map_remove_from_key(additional_parameters, "code_challenge_method");
-    
+
     if (u_map_has_key(request->map_post_body, "claims") && o_strlen(u_map_get(request->map_post_body, "claims"))) {
       u_map_remove_from_key(additional_parameters, "claims");
       j_claims = json_loads(u_map_get(request->map_post_body, "claims"), JSON_DECODE_ANY, NULL);
@@ -10036,7 +10038,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         if (o_strlen(state)) {
           u_map_put(&map_query, "state", state_value);
         }
-        
+
         if (request_par && json_object_get(json_object_get(j_request, "request"), "additional_parameters") != NULL) {
           json_object_foreach(json_object_get(json_object_get(j_request, "request"), "additional_parameters"), key, j_element) {
             u_map_put(&map_query, key, json_string_value(j_element));
