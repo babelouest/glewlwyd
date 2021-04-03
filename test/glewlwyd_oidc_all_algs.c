@@ -351,11 +351,13 @@ START_TEST(test_oidc_all_algs_add_client_eddsa_ok)
 }
 END_TEST
 
+#if 0
 START_TEST(test_oidc_all_algs_add_client_es256k_ok)
 {
   add_client("ES256K");
 }
 END_TEST
+#endif
 #endif
 
 START_TEST(test_oidc_all_algs_delete_client)
@@ -491,9 +493,11 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_all_algs_add_client_eddsa_ok);
   tcase_add_test(tc_core, test_oidc_all_algs_test_client_ok);
   tcase_add_test(tc_core, test_oidc_all_algs_delete_client);
+#if 0
   tcase_add_test(tc_core, test_oidc_all_algs_add_client_es256k_ok);
   tcase_add_test(tc_core, test_oidc_all_algs_test_client_ok);
   tcase_add_test(tc_core, test_oidc_all_algs_delete_client);
+#endif
 #endif
   tcase_add_test(tc_core, test_oidc_all_algs_delete_module);
   tcase_set_timeout(tc_core, 30);

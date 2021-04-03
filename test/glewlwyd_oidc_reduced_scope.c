@@ -30,6 +30,7 @@
 #define SCOPE_1 "scope1"
 #define SCOPE_2 "scope2"
 #define SCOPE_3 "scope3"
+#define NONCE "nonce1234"
 #define SCOPE_LIST (SCOPE_OPENID " " SCOPE_1 " " SCOPE_2 " " SCOPE_3)
 #define CLIENT_ID "client_reduced"
 #define CLIENT_SECRET "password"
@@ -257,6 +258,7 @@ START_TEST(test_oidc_reduced_scope_par_scope_not_reduced)
                                 U_OPT_HTTP_VERB, "GET",
                                 U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/auth"),
                                 U_OPT_URL_PARAMETER, "client_id", CLIENT_ID,
+                                U_OPT_URL_PARAMETER, "nonce", NONCE,
                                 U_OPT_URL_PARAMETER, "request_uri", json_string_value(json_object_get(j_response, "request_uri")),
                                 U_OPT_URL_PARAMETER, "g_continue", NULL,
                                 U_OPT_NONE);
@@ -311,6 +313,7 @@ START_TEST(test_oidc_reduced_scope_par_scope_reduced)
                                 U_OPT_POST_BODY_PARAMETER, "response_type", "code token",
                                 U_OPT_AUTH_BASIC_USER, CLIENT_ID,
                                 U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                U_OPT_POST_BODY_PARAMETER, "nonce", NONCE,
                                 U_OPT_POST_BODY_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
                                 U_OPT_POST_BODY_PARAMETER, "scope", (SCOPE_OPENID " " SCOPE_1 " " SCOPE_3),
                                 U_OPT_NONE);

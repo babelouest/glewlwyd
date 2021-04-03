@@ -587,7 +587,7 @@ START_TEST(test_oidc_introspection_access_token_target_bearer_jwt)
   ck_assert_ptr_ne(NULL, j_response = r_jwt_get_full_claims_json_t(jwt));
   j_verify = json_pack("{sossssssssss}", "active", json_true(), "username", USERNAME, "client_id", CLIENT_CONFIDENTIAL_1, "token_type", TOKEN_TYPE_HINT_ACCESS, "scope", SCOPE_LIST, "iss", PLUGIN_ISS);
   ck_assert_ptr_ne(NULL, json_search(j_response, j_verify));
-  ck_assert_str_eq("introspection+jwt", r_jwt_get_header_str_value(jwt, "typ"));
+  ck_assert_str_eq("token-introspection+jwt", r_jwt_get_header_str_value(jwt, "typ"));
 
   r_jwt_free(jwt);
   json_decref(j_verify);
@@ -825,7 +825,7 @@ START_TEST(test_oidc_introspection_id_token)
   o_free(req.http_verb);
   o_free(req.http_url);
   req.http_verb = o_strdup("GET");
-  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=id_token&g_continue&client_id=" CLIENT_CONFIDENTIAL_1 "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=nonce1234&scope=openid");
+  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=id_token&nonce=nonce1234&g_continue&client_id=" CLIENT_CONFIDENTIAL_1 "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=nonce1234&scope=openid");
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "id_token="), NULL);

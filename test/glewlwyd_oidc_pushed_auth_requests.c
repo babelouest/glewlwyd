@@ -431,6 +431,7 @@ START_TEST(test_oidc_par_client_public)
                                 U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/par"),
                                 U_OPT_POST_BODY_PARAMETER, "response_type", RESPONSE_TYPE,
                                 U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT,
+                                U_OPT_POST_BODY_PARAMETER, "nonce", NONCE,
                                 U_OPT_POST_BODY_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
                                 U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
                                 U_OPT_NONE);
@@ -727,6 +728,7 @@ START_TEST(test_oidc_par_token_client_public_ok)
                                 U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/par"),
                                 U_OPT_POST_BODY_PARAMETER, "response_type", RESPONSE_TYPE,
                                 U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT,
+                                U_OPT_POST_BODY_PARAMETER, "nonce", NONCE,
                                 U_OPT_POST_BODY_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
                                 U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
                                 U_OPT_POST_BODY_PARAMETER, "code_challenge", CODE_CHALLENGE_VALID,
@@ -747,6 +749,7 @@ START_TEST(test_oidc_par_token_client_public_ok)
                                 U_OPT_HTTP_VERB, "GET",
                                 U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/auth"),
                                 U_OPT_URL_PARAMETER, "client_id", CLIENT,
+                                U_OPT_URL_PARAMETER, "nonce", NONCE,
                                 U_OPT_URL_PARAMETER, "request_uri", json_string_value(json_object_get(j_response, "request_uri")),
                                 U_OPT_NONE);
   ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
@@ -762,6 +765,7 @@ START_TEST(test_oidc_par_token_client_public_ok)
                                 U_OPT_HTTP_VERB, "GET",
                                 U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/auth"),
                                 U_OPT_URL_PARAMETER, "client_id", CLIENT,
+                                U_OPT_URL_PARAMETER, "nonce", NONCE,
                                 U_OPT_URL_PARAMETER, "request_uri", json_string_value(json_object_get(j_response, "request_uri")),
                                 U_OPT_URL_PARAMETER, "g_continue", NULL,
                                 U_OPT_NONE);
@@ -809,6 +813,7 @@ START_TEST(test_oidc_auth_client_public_ok)
                                 U_OPT_HTTP_VERB, "GET",
                                 U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/auth"),
                                 U_OPT_URL_PARAMETER, "client_id", CLIENT,
+                                U_OPT_URL_PARAMETER, "nonce", NONCE,
                                 U_OPT_URL_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
                                 U_OPT_URL_PARAMETER, "scope", SCOPE_LIST,
                                 U_OPT_URL_PARAMETER, "response_type", RESPONSE_TYPE,
@@ -826,6 +831,7 @@ START_TEST(test_oidc_auth_client_public_ok)
                                 U_OPT_HTTP_VERB, "GET",
                                 U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/auth"),
                                 U_OPT_URL_PARAMETER, "client_id", CLIENT,
+                                U_OPT_URL_PARAMETER, "nonce", NONCE,
                                 U_OPT_URL_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
                                 U_OPT_URL_PARAMETER, "scope", SCOPE_LIST,
                                 U_OPT_URL_PARAMETER, "response_type", RESPONSE_TYPE,
@@ -852,6 +858,7 @@ START_TEST(test_oidc_auth_client_public_error)
                                 U_OPT_HTTP_VERB, "GET",
                                 U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/auth"),
                                 U_OPT_URL_PARAMETER, "client_id", CLIENT,
+                                U_OPT_URL_PARAMETER, "nonce", NONCE,
                                 U_OPT_URL_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
                                 U_OPT_URL_PARAMETER, "scope", SCOPE_LIST,
                                 U_OPT_URL_PARAMETER, "response_type", RESPONSE_TYPE,
@@ -868,6 +875,7 @@ START_TEST(test_oidc_auth_client_public_error)
                                 U_OPT_HTTP_VERB, "GET",
                                 U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/auth"),
                                 U_OPT_URL_PARAMETER, "client_id", CLIENT,
+                                U_OPT_URL_PARAMETER, "nonce", NONCE,
                                 U_OPT_URL_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
                                 U_OPT_URL_PARAMETER, "scope", SCOPE_LIST,
                                 U_OPT_URL_PARAMETER, "response_type", RESPONSE_TYPE,

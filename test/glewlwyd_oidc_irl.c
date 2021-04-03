@@ -130,14 +130,14 @@ START_TEST(test_glwd_oidc_irl_run_workflow)
 
   // Test id_token framework
   redirect_uri_encoded = ulfius_url_encode(json_string_value(json_array_get(json_object_get(json_object_get(j_params, "client"), "redirect_uri"), 0)));
-  url = msprintf("%s/oidc/auth?response_type=id_token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce4321&scope=%s", SERVER_URI, json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")), redirect_uri_encoded, scope);
+  url = msprintf("%s/oidc/auth?response_type=id_token&nonce=nonce1234&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce4321&scope=%s", SERVER_URI, json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")), redirect_uri_encoded, scope);
   ck_assert_int_eq(run_simple_test(&auth_req, "GET", url, client_id, client_password, NULL, NULL, 302, NULL, NULL, "id_token="), 1);
   o_free(url);
   
   // Test code framework
   o_free(auth_req.http_verb);
   o_free(auth_req.http_url);
-  auth_req.http_url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&scope=%s", SERVER_URI, json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")), redirect_uri_encoded, scope);
+  auth_req.http_url = msprintf("%s/oidc/auth?response_type=code&nonce=nonce1234&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&scope=%s", SERVER_URI, json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")), redirect_uri_encoded, scope);
   auth_req.http_verb = o_strdup("GET");
   auth_req.auth_basic_user = o_strdup(client_id);
   auth_req.auth_basic_password = o_strdup(client_password);

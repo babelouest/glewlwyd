@@ -289,7 +289,7 @@ START_TEST(test_oidc_hybrid_token_code_scope_grant_none)
 
   // Try to get code
   code_req.http_verb = strdup("GET");
-  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&nonce=nonce1234&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "code="), NULL);
@@ -358,7 +358,7 @@ START_TEST(test_oidc_hybrid_token_code_scope_grant_all_authorize_partial)
 
   // Try to get response_type=%s
   code_req.http_verb = strdup("GET");
-  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&nonce=nonce1234&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "login.html"), NULL);

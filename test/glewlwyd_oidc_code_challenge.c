@@ -113,38 +113,38 @@ END_TEST
 
 START_TEST(test_oidc_code_code_challenge_invalid_code_challenge_method)
 {
-  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_VALID "&code_challenge_method=error&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_VALID "&code_challenge_method=error&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
 }
 END_TEST
 
 START_TEST(test_oidc_code_code_challenge_plain_invalid_code_challenge_method)
 {
-  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
 }
 END_TEST
 
 START_TEST(test_oidc_code_code_challenge_plain_invalid_length)
 {
-  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_INVALID_42 "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
-  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_INVALID_129 "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_INVALID_42 "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_INVALID_129 "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
 }
 END_TEST
 
 START_TEST(test_oidc_code_code_challenge_plain_invalid_charset)
 {
-  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_INVALID_CHARSET "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_INVALID_CHARSET "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
 }
 END_TEST
 
 START_TEST(test_oidc_code_code_challenge_plain_method_empty_ok)
 {
-  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_VALID "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_VALID "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
 }
 END_TEST
 
 START_TEST(test_oidc_code_code_challenge_plain_method_set_ok)
 {
-  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
 }
 END_TEST
 
@@ -158,7 +158,7 @@ START_TEST(test_oidc_code_code_challenge_plain_verifier_invalid_value)
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   o_free(user_req.http_url);
-  user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST);
+  user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST);
   
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
@@ -192,7 +192,7 @@ START_TEST(test_oidc_code_code_challenge_plain_verifier_ok)
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   o_free(user_req.http_url);
-  user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST);
+  user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST);
   
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
@@ -226,7 +226,7 @@ START_TEST(test_oidc_code_code_challenge_s256_invalid_length)
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   o_free(user_req.http_url);
-  user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_42 "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE_LIST);
+  user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_42 "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE_LIST);
   
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
@@ -260,7 +260,7 @@ START_TEST(test_oidc_code_code_challenge_s256_invalid_charset)
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   o_free(user_req.http_url);
-  user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_INVALID_CHARSET "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE_LIST);
+  user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_INVALID_CHARSET "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE_LIST);
   
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
@@ -294,7 +294,7 @@ START_TEST(test_oidc_code_code_challenge_s256_verifier_invalid_value)
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   o_free(user_req.http_url);
-  user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE_LIST);
+  user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE_LIST);
   
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
@@ -320,19 +320,19 @@ END_TEST
 
 START_TEST(test_oidc_code_code_challenge_s256_method_empty_invalid)
 {
-  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_VALID "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_VALID "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
 }
 END_TEST
 
 START_TEST(test_oidc_code_code_challenge_s256_method_set_plain_invalid)
 {
-  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
 }
 END_TEST
 
 START_TEST(test_oidc_code_code_challenge_s256_method_set_ok)
 {
-  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
 }
 END_TEST
 
@@ -346,7 +346,7 @@ START_TEST(test_oidc_code_code_challenge_s256_verifier_ok)
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   o_free(user_req.http_url);
-  user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE_LIST);
+  user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE_LIST);
   
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);

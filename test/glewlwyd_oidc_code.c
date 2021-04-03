@@ -128,7 +128,7 @@ START_TEST(test_oidc_code_ok)
   ck_assert_int_eq(o_base64url_decode((unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
   str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_payload = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
-  ck_assert_int_eq(json_object_size(j_payload), 10);
+  ck_assert_int_eq(json_object_size(j_payload), 11);
   ck_assert_ptr_ne(json_object_get(j_payload, "at_hash"), NULL);
   ck_assert_ptr_ne(json_object_get(j_payload, "c_hash"), NULL);
   
@@ -225,7 +225,7 @@ START_TEST(test_oidc_code_scope_grant_partial)
 
   // Get code
   code_req.http_verb = strdup("GET");
-  code_req.http_url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
+  code_req.http_url = msprintf("%s/oidc/auth?response_type=code&nonce=nonce1234&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "code="), NULL);
@@ -329,7 +329,7 @@ START_TEST(test_oidc_code_scope_grant_none)
 
   // Try to get code
   code_req.http_verb = strdup("GET");
-  code_req.http_url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
+  code_req.http_url = msprintf("%s/oidc/auth?response_type=code&nonce=nonce1234&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "code="), NULL);
@@ -398,7 +398,7 @@ START_TEST(test_oidc_code_scope_grant_all_authorize_partial)
 
   // Try to get code
   code_req.http_verb = strdup("GET");
-  code_req.http_url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
+  code_req.http_url = msprintf("%s/oidc/auth?response_type=code&nonce=nonce1234&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "login.html"), NULL);
@@ -509,7 +509,7 @@ START_TEST(test_oidc_code_retry_with_max_use)
 
   // Get code
   code_req.http_verb = strdup("GET");
-  code_req.http_url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST_MAX_USE);
+  code_req.http_url = msprintf("%s/oidc/auth?response_type=code&nonce=nonce1234&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST_MAX_USE);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "code="), NULL);
@@ -541,7 +541,7 @@ START_TEST(test_oidc_code_retry_with_max_use)
   o_free(code_req.http_verb);
   o_free(code_req.http_url);
   code_req.http_verb = strdup("GET");
-  code_req.http_url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST_MAX_USE);
+  code_req.http_url = msprintf("%s/oidc/auth?response_type=code&nonce=nonce1234&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST_MAX_USE);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "login.html"), NULL);
@@ -566,7 +566,7 @@ START_TEST(test_oidc_code_retry_with_max_use)
   o_free(code_req.http_verb);
   o_free(code_req.http_url);
   code_req.http_verb = strdup("GET");
-  code_req.http_url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST_MAX_USE);
+  code_req.http_url = msprintf("%s/oidc/auth?response_type=code&nonce=nonce1234&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, CLIENT, SCOPE_LIST_MAX_USE);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "code="), NULL);
@@ -714,7 +714,7 @@ int main(int argc, char *argv[])
         } else {
           ulfius_init_response(&code_resp);
           user_req.http_verb = strdup("GET");
-          user_req.http_url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
+          user_req.http_url = msprintf("%s/oidc/auth?response_type=code&nonce=nonce1234&g_continue&nonce=nonce1234&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
           if (ulfius_send_http_request(&user_req, &code_resp) != U_OK) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "Get code error");
           } else if (o_strstr(u_map_get(code_resp.map_header, "Location"), "code=") != NULL) {

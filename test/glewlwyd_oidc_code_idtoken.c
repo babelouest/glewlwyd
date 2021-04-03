@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
         } else {
           ulfius_init_response(&code_resp);
           user_req.http_verb = strdup("GET");
-          user_req.http_url = msprintf("%s/oidc/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
+          user_req.http_url = msprintf("%s/oidc/auth?response_type=code&nonce=nonce1234&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
           if (ulfius_send_http_request(&user_req, &code_resp) != U_OK) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "Get code error");
           } else if (o_strstr(u_map_get(code_resp.map_header, "Location"), "code=") != NULL) {

@@ -76,7 +76,7 @@ START_TEST(test_oidc_code_replay_test_revoked_tokens)
   ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
   ck_assert_int_eq(ulfius_set_request_properties(&req, 
       U_OPT_HTTP_VERB, "GET", 
-      U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=" RESPONSE_TYPE "&client_id=" CLIENT_ID "&redirect_uri=" CLIENT_REDIRECT_URI_ENCODED "&scope=" SCOPE_LIST "&g_continue", 
+      U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=" RESPONSE_TYPE "&nonce=nonce1234&client_id=" CLIENT_ID "&redirect_uri=" CLIENT_REDIRECT_URI_ENCODED "&scope=" SCOPE_LIST "&g_continue", 
       U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 302);
@@ -296,7 +296,7 @@ START_TEST(test_oidc_code_replay_test_non_revoked_tokens)
   ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
   ck_assert_int_eq(ulfius_set_request_properties(&req, 
       U_OPT_HTTP_VERB, "GET", 
-      U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=" RESPONSE_TYPE "&client_id=" CLIENT_ID "&redirect_uri=" CLIENT_REDIRECT_URI_ENCODED "&scope=" SCOPE_LIST "&g_continue", 
+      U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=" RESPONSE_TYPE "&nonce=nonce1234&client_id=" CLIENT_ID "&redirect_uri=" CLIENT_REDIRECT_URI_ENCODED "&scope=" SCOPE_LIST "&g_continue", 
       U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 302);

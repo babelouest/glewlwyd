@@ -85,7 +85,7 @@ END_TEST
 
 START_TEST(test_oidc_auth_code_ok_redirect_cb_with_code)
 {
-  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, RESPONSE_TYPE, SCOPE_LIST);
+  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client1_cb1&state=xyzabcd&nonce=noncexyzabcd1234&scope=%s", SERVER_URI, RESPONSE_TYPE, SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code=");
   o_free(url);
   ck_assert_int_eq(res, 1);
