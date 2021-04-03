@@ -282,7 +282,7 @@ START_TEST(test_oidc_client_certificate_add_client_with_certificate_dn)
                                 "scope", CLIENT_SCOPE,
                                 "confidential", json_true(),
                                 "authorization_type", "code", "client_credentials", "refresh_token", "password", "device_authorization",
-                                "token_endpoint_auth_methods_supported", "tls_client_auth",
+                                "token_endpoint_auth_method", "tls_client_auth",
                                 "tls_client_auth_subject_dn", CLIENT_SUBJECT_DN,
                                 "redirect_uri", CLIENT_REDIRECT_URI,
                                 "enabled", json_true());
@@ -300,7 +300,7 @@ START_TEST(test_oidc_client_certificate_add_client_with_invalid_certificate_dn)
                                 "scope", CLIENT_SCOPE,
                                 "confidential", json_true(),
                                 "authorization_type", "code", "client_credentials", "refresh_token", "password", "device_authorization",
-                                "token_endpoint_auth_methods_supported", "tls_client_auth",
+                                "token_endpoint_auth_method", "tls_client_auth",
                                 "tls_client_auth_subject_dn", CLIENT_SUBJECT_DN ",DN=error",
                                 "redirect_uri", CLIENT_REDIRECT_URI,
                                 "enabled", json_true());
@@ -318,7 +318,7 @@ START_TEST(test_oidc_client_certificate_add_client_with_san_dns)
                                 "scope", CLIENT_SCOPE,
                                 "confidential", json_true(),
                                 "authorization_type", "code", "client_credentials", "refresh_token", "password", "device_authorization",
-                                "token_endpoint_auth_methods_supported", "tls_client_auth",
+                                "token_endpoint_auth_method", "tls_client_auth",
                                 "tls_client_auth_san_dns", CLIENT_SAN_DNS,
                                 "redirect_uri", CLIENT_REDIRECT_URI,
                                 "enabled", json_true());
@@ -336,7 +336,7 @@ START_TEST(test_oidc_client_certificate_add_client_with_san_uri)
                                 "scope", CLIENT_SCOPE,
                                 "confidential", json_true(),
                                 "authorization_type", "code", "client_credentials", "refresh_token", "password", "device_authorization",
-                                "token_endpoint_auth_methods_supported", "tls_client_auth",
+                                "token_endpoint_auth_method", "tls_client_auth",
                                 "tls_client_auth_san_uri", CLIENT_SAN_URI,
                                 "redirect_uri", CLIENT_REDIRECT_URI,
                                 "enabled", json_true());
@@ -354,7 +354,7 @@ START_TEST(test_oidc_client_certificate_add_client_with_san_ipv4)
                                 "scope", CLIENT_SCOPE,
                                 "confidential", json_true(),
                                 "authorization_type", "code", "client_credentials", "refresh_token", "password", "device_authorization",
-                                "token_endpoint_auth_methods_supported", "tls_client_auth",
+                                "token_endpoint_auth_method", "tls_client_auth",
                                 "tls_client_auth_san_ip", CLIENT_SAN_IPV4,
                                 "redirect_uri", CLIENT_REDIRECT_URI,
                                 "enabled", json_true());
@@ -372,7 +372,7 @@ START_TEST(test_oidc_client_certificate_add_client_with_san_ipv6)
                                 "scope", CLIENT_SCOPE,
                                 "confidential", json_true(),
                                 "authorization_type", "code", "client_credentials", "refresh_token", "password", "device_authorization",
-                                "token_endpoint_auth_methods_supported", "tls_client_auth",
+                                "token_endpoint_auth_method", "tls_client_auth",
                                 "tls_client_auth_san_ip", CLIENT_SAN_IPV6,
                                 "redirect_uri", CLIENT_REDIRECT_URI,
                                 "enabled", json_true());
@@ -390,7 +390,7 @@ START_TEST(test_oidc_client_certificate_add_client_with_san_ipv6_localhost)
                                 "scope", CLIENT_SCOPE,
                                 "confidential", json_true(),
                                 "authorization_type", "code", "client_credentials", "refresh_token", "password", "device_authorization",
-                                "token_endpoint_auth_methods_supported", "tls_client_auth",
+                                "token_endpoint_auth_method", "tls_client_auth",
                                 "tls_client_auth_san_ip", CLIENT_SAN_IPV6_LOCALHOST,
                                 "redirect_uri", CLIENT_REDIRECT_URI,
                                 "enabled", json_true());
@@ -408,7 +408,7 @@ START_TEST(test_oidc_client_certificate_add_client_with_san_email)
                                 "scope", CLIENT_SCOPE,
                                 "confidential", json_true(),
                                 "authorization_type", "code", "client_credentials", "refresh_token", "password", "device_authorization",
-                                "token_endpoint_auth_methods_supported", "tls_client_auth",
+                                "token_endpoint_auth_method", "tls_client_auth",
                                 "tls_client_auth_san_email", CLIENT_SAN_EMAIL,
                                 "redirect_uri", CLIENT_REDIRECT_URI,
                                 "enabled", json_true());
@@ -434,7 +434,7 @@ START_TEST(test_oidc_client_certificate_add_client_with_self_signed_certificate)
                                 "scope", CLIENT_SCOPE,
                                 "confidential", json_true(),
                                 "authorization_type", "code", "client_credentials", "refresh_token", "password", "device_authorization",
-                                "token_endpoint_auth_methods_supported", "self_signed_tls_client_auth",
+                                "token_endpoint_auth_method", "self_signed_tls_client_auth",
                                 "jwks", r_jwks_export_to_json_t(jwks),
                                 "redirect_uri", CLIENT_REDIRECT_URI,
                                 "enabled", json_true());
@@ -455,7 +455,7 @@ START_TEST(test_oidc_client_certificate_add_client_with_invalid_san_dns)
                                 "scope", CLIENT_SCOPE,
                                 "confidential", json_true(),
                                 "authorization_type", "code", "client_credentials", "refresh_token", "password", "device_authorization",
-                                "token_endpoint_auth_methods_supported", "tls_client_auth",
+                                "token_endpoint_auth_method", "tls_client_auth",
                                 "tls_client_auth_san_dns", "error.error",
                                 "redirect_uri", CLIENT_REDIRECT_URI,
                                 "enabled", json_true());
@@ -473,7 +473,7 @@ START_TEST(test_oidc_client_certificate_add_client_with_invalid_san_uri)
                                 "scope", CLIENT_SCOPE,
                                 "confidential", json_true(),
                                 "authorization_type", "code", "client_credentials", "refresh_token", "password", "device_authorization",
-                                "token_endpoint_auth_methods_supported", "tls_client_auth",
+                                "token_endpoint_auth_method", "tls_client_auth",
                                 "tls_client_auth_san_uri", "https://error.error",
                                 "redirect_uri", CLIENT_REDIRECT_URI,
                                 "enabled", json_true());
@@ -491,7 +491,7 @@ START_TEST(test_oidc_client_certificate_add_client_with_invalid_san_ipv4)
                                 "scope", CLIENT_SCOPE,
                                 "confidential", json_true(),
                                 "authorization_type", "code", "client_credentials", "refresh_token", "password", "device_authorization",
-                                "token_endpoint_auth_methods_supported", "tls_client_auth",
+                                "token_endpoint_auth_method", "tls_client_auth",
                                 "tls_client_auth_san_ip", "2.6.8.10",
                                 "redirect_uri", CLIENT_REDIRECT_URI,
                                 "enabled", json_true());
@@ -509,7 +509,7 @@ START_TEST(test_oidc_client_certificate_add_client_with_invalid_san_ipv6)
                                 "scope", CLIENT_SCOPE,
                                 "confidential", json_true(),
                                 "authorization_type", "code", "client_credentials", "refresh_token", "password", "device_authorization",
-                                "token_endpoint_auth_methods_supported", "tls_client_auth",
+                                "token_endpoint_auth_method", "tls_client_auth",
                                 "tls_client_auth_san_ip", "2001:db6:85a3:8d1:1319:8a24:370:73e8",
                                 "redirect_uri", CLIENT_REDIRECT_URI,
                                 "enabled", json_true());
@@ -527,7 +527,7 @@ START_TEST(test_oidc_client_certificate_add_client_with_invalid_san_email)
                                 "scope", CLIENT_SCOPE,
                                 "confidential", json_true(),
                                 "authorization_type", "code", "client_credentials", "refresh_token", "password", "device_authorization",
-                                "token_endpoint_auth_methods_supported", "tls_client_auth",
+                                "token_endpoint_auth_method", "tls_client_auth",
                                 "tls_client_auth_san_email", "error@error.error",
                                 "redirect_uri", CLIENT_REDIRECT_URI,
                                 "enabled", json_true());
