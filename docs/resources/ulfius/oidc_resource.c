@@ -4,7 +4,7 @@
  *
  * Copyright 2016-2021 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20210331
+ * Version 20210402
  *
  * The MIT License (MIT)
  * 
@@ -280,7 +280,9 @@ json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, 
               break;
             }
             if ((alg = r_jwt_get_sign_alg(dpop_jwt)) != R_JWA_ALG_RS256 && alg != R_JWA_ALG_RS384 && alg != R_JWA_ALG_RS512 &&
-                alg != R_JWA_ALG_ES256 && alg != R_JWA_ALG_ES384 && alg != R_JWA_ALG_ES512 && alg != R_JWA_ALG_EDDSA && alg != R_JWA_ALG_ES256K) {
+                alg != R_JWA_ALG_ES256 && alg != R_JWA_ALG_ES384 && alg != R_JWA_ALG_ES512 && 
+                alg != R_JWA_ALG_PS256 && alg != R_JWA_ALG_PS384 && alg != R_JWA_ALG_PS512 &&
+                alg != R_JWA_ALG_EDDSA && alg != R_JWA_ALG_ES256K) {
               y_log_message(Y_LOG_LEVEL_DEBUG, "verify_dpop_proof - Invalid sign_alg");
               j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
               break;
