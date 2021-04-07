@@ -4,6 +4,7 @@
   "display_name":"Database",
   "order_rank":1,
   "parameters":{
+    "pbkdf2-iterations": 1,
     "use-glewlwyd-connection":true
   },
   "readonly":false,
