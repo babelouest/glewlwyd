@@ -44,6 +44,7 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["request-parameter-allow"]!==undefined?"":(props.mod.parameters["request-parameter-allow"] = true);
     props.mod.parameters["request-uri-allow-https-non-secure"]!==undefined?"":(props.mod.parameters["request-uri-allow-https-non-secure"] = false);
     props.mod.parameters["request-parameter-allow-encrypted"]!==undefined?"":(props.mod.parameters["request-parameter-allow-encrypted"] = true);
+    props.mod.parameters["request-parameter-ietf-strict"]!==undefined?"":(props.mod.parameters["request-parameter-ietf-strict"] = false);
     props.mod.parameters["secret-type"]?"":(props.mod.parameters["secret-type"] = "pairwise");
     props.mod.parameters["address-claim"]?"":(props.mod.parameters["address-claim"] = {type: "no", formatted: "", street_address: "", locality: "", region: "", postal_code: "", country: "", mandatory: false});
     props.mod.parameters["name-claim"]?"":(props.mod.parameters["name-claim"] = "on-demand");
@@ -207,6 +208,8 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["jwks-x5c"]!==undefined?"":(nextProps.mod.parameters["jwks-x5c"] = []);
     nextProps.mod.parameters["request-parameter-allow"]!==undefined?"":(nextProps.mod.parameters["request-parameter-allow"] = true);
     nextProps.mod.parameters["request-uri-allow-https-non-secure"]!==undefined?"":(nextProps.mod.parameters["request-uri-allow-https-non-secure"] = false);
+    nextProps.mod.parameters["request-parameter-allow-encrypted"]!==undefined?"":(nextProps.mod.parameters["request-parameter-allow-encrypted"] = true);
+    nextProps.mod.parameters["request-parameter-ietf-strict"]!==undefined?"":(nextProps.mod.parameters["request-parameter-ietf-strict"] = false);
     nextProps.mod.parameters["secret-type"]?"":(nextProps.mod.parameters["secret-type"] = "pairwise");
     nextProps.mod.parameters["address-claim"]?"":(nextProps.mod.parameters["address-claim"] = {type: "no", formatted: "", street_address: "", locality: "", region: "", postal_code: "", country: "", mandatory: false});
     nextProps.mod.parameters["name-claim"]?"":(nextProps.mod.parameters["name-claim"] = "on-demand");
@@ -2259,6 +2262,10 @@ class GlwdOIDCParams extends Component {
                 <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-request-parameter-allow" onChange={(e) => this.toggleParam(e, "request-parameter-allow")} checked={this.state.mod.parameters["request-parameter-allow"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-request-parameter-allow">{i18next.t("admin.mod-glwd-request-parameter-allow")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-request-parameter-ietf-strict" onChange={(e) => this.toggleParam(e, "request-parameter-ietf-strict")} checked={this.state.mod.parameters["request-parameter-ietf-strict"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-request-parameter-ietf-strict">{i18next.t("admin.mod-glwd-request-parameter-ietf-strict")}</label>
                 </div>
                 <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-request-parameter-allow-encrypted" onChange={(e) => this.toggleParam(e, "request-parameter-allow-encrypted")} checked={this.state.mod.parameters["request-parameter-allow-encrypted"]} />
