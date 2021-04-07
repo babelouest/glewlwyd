@@ -424,6 +424,10 @@ static json_t * check_parameters (json_t * j_params) {
       ret = G_ERROR_PARAM;
     }
     if (json_object_get(j_params, "request-parameter-allow") == json_true()) {
+      if (json_object_get(j_params, "request-parameter-ietf-strict") != NULL && !json_is_boolean(json_object_get(j_params, "request-parameter-ietf-strict"))) {
+        json_array_append_new(j_error, json_string("Property 'request-parameter-ietf-strict' is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
       if (json_object_get(j_params, "request-uri-allow-https-non-secure") != NULL && !json_is_boolean(json_object_get(j_params, "request-uri-allow-https-non-secure"))) {
         json_array_append_new(j_error, json_string("Property 'request-uri-allow-https-non-secure' is optional and must be a boolean"));
         ret = G_ERROR_PARAM;
@@ -4174,6 +4178,7 @@ static char * get_request_from_uri(struct _oidc_config * config, const char * re
   struct _u_request req;
   struct _u_response resp;
   char * str_request = NULL;
+  int valid_ct = 1;
 
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
@@ -4187,12 +4192,19 @@ static char * get_request_from_uri(struct _oidc_config * config, const char * re
   if (ulfius_send_http_request(&req, &resp) != U_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error ulfius_send_http_request");
   } else if (resp.status == 200) {
-    str_request = o_malloc(resp.binary_body_length + 1);
-    if (str_request != NULL) {
-      memcpy(str_request, resp.binary_body, resp.binary_body_length);
-      str_request[resp.binary_body_length] = '\0';
+    if (json_object_get(config->j_params, "request-parameter-ietf-strict") == json_true()) {
+      valid_ct = !o_strcmp(u_map_get(resp.map_header, ULFIUS_HTTP_HEADER_CONTENT), "application/oauth-authz-req+jwt") || !o_strcmp(u_map_get(resp.map_header, ULFIUS_HTTP_HEADER_CONTENT), "application/jwt");
+    }
+    if (valid_ct) {
+      str_request = o_malloc(resp.binary_body_length + 1);
+      if (str_request != NULL) {
+        memcpy(str_request, resp.binary_body, resp.binary_body_length);
+        str_request[resp.binary_body_length] = '\0';
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error allocating resources for str_request");
+      }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error allocating resources for str_request");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error invalid content type");
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error ulfius_send_http_request response status is %d", resp.status);
@@ -4389,9 +4401,10 @@ static int decrypt_request_token(struct _oidc_config * config, jwt_t * jwt) {
 /**
  * validate a request object in jwt format
  */
-static json_t * validate_jwt_auth_request(struct _oidc_config * config, const char * jwt_request, const char * ip_source) {
+static json_t * validate_jwt_auth_request(struct _oidc_config * config, const char * jwt_request, const char * client_id, const char * ip_source) {
   json_t * j_return, * j_result;
   jwt_t * jwt = NULL;
+  int valid_ietf = 1;
 
   if (jwt_request != NULL) {
     if (r_jwt_init(&jwt) == RHN_OK && r_jwt_parse(jwt, jwt_request, 0) == RHN_OK && decrypt_request_token(config, jwt) == G_OK) {
@@ -4399,7 +4412,17 @@ static json_t * validate_jwt_auth_request(struct _oidc_config * config, const ch
       if (r_jwt_get_claim_str_value(jwt, "request") == NULL && r_jwt_get_claim_str_value(jwt, "request_uri") == NULL) {
         j_result = verify_request_signature(config, jwt, r_jwt_get_claim_str_value(jwt, "client_id"), ip_source);
         if (check_result_value(j_result, G_OK)) {
-          j_return = json_pack("{sisosOsOsi}", "result", G_OK, "request", r_jwt_get_full_claims_json_t(jwt), "client", json_object_get(j_result, "client"), "client_auth_method", json_object_get(j_result, "client_auth_method"), "type", r_jwt_get_type(jwt));
+          if (json_object_get(config->j_params, "request-parameter-ietf-strict") == json_true()) {
+            if (0 != o_strcmp(client_id, r_jwt_get_claim_str_value(jwt, "client_id")) || 0 != o_strcmp("oauth-authz-req+jwt", r_jws_get_header_str_value(jwt->jws, "typ"))) {
+              valid_ietf = 0;
+            }
+          }
+          if (valid_ietf) {
+            j_return = json_pack("{sisosOsOsi}", "result", G_OK, "request", r_jwt_get_full_claims_json_t(jwt), "client", json_object_get(j_result, "client"), "client_auth_method", json_object_get(j_result, "client_auth_method"), "type", r_jwt_get_type(jwt));
+          } else {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "validate_jwt_auth_request - Error jwt_request is not compatible with IETF format, origin: %s", ip_source);
+            j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+          }
         } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         } else {
@@ -8968,7 +8991,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
         break;
       } else if (o_strlen(u_map_get(request->map_post_body, "request"))) {
         u_map_remove_from_key(additional_parameters, "request");
-        j_request = validate_jwt_auth_request(config, u_map_get(request->map_post_body, "request"), ip_source);
+        j_request = validate_jwt_auth_request(config, u_map_get(request->map_post_body, "request"), u_map_get(request->map_post_body, "client_id"), ip_source);
         if (check_result_value(j_request, G_ERROR_UNAUTHORIZED) || check_result_value(j_request, G_ERROR_PARAM)) {
           response->status = 403;
           break;
@@ -9919,12 +9942,12 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         }
         ret = G_ERROR_PARAM;
       } else {
-        j_request = validate_jwt_auth_request(config, str_request, ip_source);
+        j_request = validate_jwt_auth_request(config, str_request, u_map_get(map, "client_id"), ip_source);
         check_request = 1;
       }
       o_free(str_request);
     } else if (ret == G_OK && o_strlen(u_map_get(map, "request"))) {
-      j_request = validate_jwt_auth_request(config, u_map_get(map, "request"), ip_source);
+      j_request = validate_jwt_auth_request(config, u_map_get(map, "request"), u_map_get(map, "client_id"), ip_source);
       check_request = 1;
     }
   }
