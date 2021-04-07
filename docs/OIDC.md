@@ -37,6 +37,7 @@ The following OpenID Connect and OAuth2 functionalities are currently supported:
 - [Resource Indicators for OAuth 2.0](https://tools.ietf.org/html/rfc8707)
 - [OAuth 2.0 Rich Authorization Requests Draft 03](https://www.ietf.org/archive/id/draft-ietf-oauth-rar-03.html)
 - [OAuth 2.0 Pushed Authorization Requests Draft 05](https://tools.ietf.org/html/draft-ietf-oauth-par-05)
+- [OAuth 2.0 JWT Secured Authorization Request (JAR) Draft 32](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwsreq-32)
 
 The following OpenID Connect functionalities are not supported yet:
 
@@ -483,6 +484,17 @@ To have a claim available in the claim request, it must be set to `on-demand` in
 ### Allow passing request parameter as JWT
 
 Allow using request parameters as JWT with `request` objects or `request_uri` links.
+
+### Strict compliance with IETF request parameter
+
+If this is set, the JWT requests must be strictly compliant with the [IETF definition](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwsreq-32) rather than the [OIDC definition](https://openid.net/specs/openid-connect-core-1_0.html#JWTRequests). The main difference are:
+- The `client_id` value present in the JWT and the url
+- The JWT `typ` header value must be `oauth-authz-req+jwt`
+- The response content-type when using a `request_uri` must be `application/oauth-authz-req+jwt` or `application/jwt`
+
+### Allow encrypted request parameter as JWT
+
+The client can send a nested JWT by using its secret value or the server public keys to encrypt the claims.
 
 ### Allow request_uri and jwks_uri to a unsecured https:// uri
 
