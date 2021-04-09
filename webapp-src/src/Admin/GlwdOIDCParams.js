@@ -66,6 +66,7 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["register-client-management-allowed"]!==undefined?"":(props.mod.parameters["register-client-management-allowed"] = true);
     props.mod.parameters["register-resource-specify-allowed"]!==undefined?"":(props.mod.parameters["register-resource-specify-allowed"] = false);
     props.mod.parameters["register-resource-default"]!==undefined?"":(props.mod.parameters["register-resource-default"] = []);
+    props.mod.parameters["register-default-properties"]!==undefined?"":(props.mod.parameters["register-default-properties"] = {});
     props.mod.parameters["session-management-allowed"]!==undefined?"":(props.mod.parameters["session-management-allowed"] = false);
     props.mod.parameters["client-pubkey-parameter"]!==undefined?"":(props.mod.parameters["client-pubkey-parameter"] = "");
     props.mod.parameters["client-jwks-parameter"]!==undefined?"":(props.mod.parameters["client-jwks-parameter"] = "jwks");
@@ -115,7 +116,8 @@ class GlwdOIDCParams extends Component {
       newResourceScope: false,
       newRar: "",
       newRarExists: false,
-      newRarInvalidChar: false
+      newRarInvalidChar: false,
+      newDefaultProperty: false
     };
 
     if (this.state.check) {
@@ -167,6 +169,9 @@ class GlwdOIDCParams extends Component {
     this.addResourceScope = this.addResourceScope.bind(this);
     this.changeResourceScopeUrls = this.changeResourceScopeUrls.bind(this);
     this.addRAR = this.addRAR.bind(this);
+    this.setNewDefaultProperty = this.setNewDefaultProperty.bind(this);
+    this.addDefaultProperty = this.addDefaultProperty.bind(this);
+    this.deleteRegisterDefaultProperty = this.deleteRegisterDefaultProperty.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -230,6 +235,7 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["register-client-management-allowed"]!==undefined?"":(nextProps.mod.parameters["register-client-management-allowed"] = true);
     nextProps.mod.parameters["register-resource-specify-allowed"]!==undefined?"":(nextProps.mod.parameters["register-resource-specify-allowed"] = false);
     nextProps.mod.parameters["register-resource-default"]!==undefined?"":(nextProps.mod.parameters["register-resource-default"] = []);
+    nextProps.mod.parameters["register-default-properties"]!==undefined?"":(nextProps.mod.parameters["register-default-properties"] = {});
     nextProps.mod.parameters["register-client-token-one-use"]!==undefined?"":(nextProps.mod.parameters["register-client-token-one-use"] = true);
     nextProps.mod.parameters["session-management-allowed"]!==undefined?"":(nextProps.mod.parameters["session-management-allowed"] = false);
     nextProps.mod.parameters["client-pubkey-parameter"]!==undefined?"":(nextProps.mod.parameters["client-pubkey-parameter"] = "");
@@ -658,7 +664,7 @@ class GlwdOIDCParams extends Component {
     var newRarExists = false;
     var newRarInvalidChar = false;
     var regexp = /^[a-zA-Z0-9-_\$]+$/;
-    
+
     if (this.state.mod.parameters["rar-types"][e.target.value]) {
       newRarExists = true;
     }
@@ -681,7 +687,7 @@ class GlwdOIDCParams extends Component {
       this.setState({mod: mod, newRar: ""});
     }
   }
-  
+
   changeRarParameter(e, type, parameter) {
     var mod = this.state.mod;
     if (parameter === "description") {
@@ -691,24 +697,57 @@ class GlwdOIDCParams extends Component {
     }
     this.setState({mod: mod});
   }
-  
+
   deleteRar(e, type) {
     var mod = this.state.mod;
     delete(mod.parameters["rar-types"][type]);
     this.setState({mod: mod});
   }
-  
+
   addRarTypeScope(e, type, scope) {
     var mod = this.state.mod;
     mod.parameters["rar-types"][type].scopes.push(scope);
     this.setState({mod: mod});
   }
-  
+
   deleteRarTypeScope(e, type, scope) {
     e.preventDefault();
     var mod = this.state.mod;
     mod.parameters["rar-types"][type].scopes.splice(mod.parameters["rar-types"][type].scopes.indexOf(scope), 1);
     this.setState({mod: mod});
+  }
+
+  setNewDefaultProperty(e, name, label, list) {
+    e.preventDefault();
+    this.setState({newDefaultProperty: {name: name, label: label, list: list}});
+  }
+
+  addDefaultProperty() {
+    var mod = this.state.mod;
+    var value;
+    if (this.state.newDefaultProperty.list) {
+      value = [];
+    } else {
+      value = "";
+    }
+    mod.parameters["register-default-properties"][this.state.newDefaultProperty.name] = {label: this.state.newDefaultProperty.label, value: value};
+    this.setState({mod: mod, newDefaultProperty: false});
+  }
+
+  changeRegisterDefaultProperty(e, name) {
+    var mod = this.state.mod;
+    if (Array.isArray(mod.parameters["register-default-properties"][name].value)) {
+      mod.parameters["register-default-properties"][name].value = e.target.value.split("\n");
+    } else {
+      mod.parameters["register-default-properties"][name].value = e.target.value;
+    }
+    this.setState({mod: mod, newDefaultProperty: false});
+  }
+  
+  deleteRegisterDefaultProperty(e, name) {
+    var mod = this.state.mod;
+    delete(mod.parameters["register-default-properties"][name]);
+    this.setState({mod: mod, newDefaultProperty: false});
   }
 
   checkParameters() {
@@ -936,6 +975,15 @@ class GlwdOIDCParams extends Component {
         errorList["rar-types-client-property"] = i18next.t("admin.mod-glwd-rar-types-client-property-error");
         errorList["oauth-rar"] = true;
       }
+    }
+    if (this.state.mod.parameters["register-client-allowed"]) {
+      Object.keys(this.state.mod.parameters["register-default-properties"]).forEach((key) => {
+        if (!this.state.mod.parameters["register-default-properties"][key].value) {
+          hasError = true;
+          errorList["register-default-properties"] = i18next.t("admin.mod-glwd-register-default-properties-error");
+          errorList["registration"] = true;
+        }
+      });
     }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
@@ -1334,6 +1382,40 @@ class GlwdOIDCParams extends Component {
         </div>
     }
 
+    var registerDefaultProperties = [], availableProperties = [];
+    Object.keys(this.state.mod.parameters["register-default-properties"]).forEach((name, index) => {
+      var value = this.state.mod.parameters["register-default-properties"][name].value;
+      var label = this.state.mod.parameters["register-default-properties"][name].label;
+      var valueInput;
+      if (Array.isArray(value)) {
+        valueInput = <textarea className="form-control" id={"register-default-properties-"+name} onChange={(e) => this.changeRegisterDefaultProperty(e, name)} placeholder={i18next.t("admin.mod-glwd-register-default-properties-values-ph")} value={value.length?value.join("\n"):""} disabled={!this.state.mod.parameters["register-client-allowed"]}></textarea>
+      } else {
+        valueInput = <input type="text" className="form-control" id={"register-default-properties-"+name} onChange={(e) => this.changeRegisterDefaultProperty(e, name)} value={value} placeholder={i18next.t("admin.mod-glwd-register-default-properties-value-ph")} disabled={!this.state.mod.parameters["register-client-allowed"]}/>
+      }
+      registerDefaultProperties.push(
+        <div className="form-group" key={name}>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text">{i18next.t(label)}</label>
+            </div>
+            {valueInput}
+            <div className="input-group-postpend">
+              <button type="button" className="btn btn-secondary" onClick={(e) => this.deleteRegisterDefaultProperty(e, name)} title={i18next.t("admin.mod-glwd-register-default-properties-delete")}>
+                <i className="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    });
+    this.state.config.pattern.client.forEach((pattern, index) => {
+      if (!this.state.mod.parameters["register-default-properties"][pattern.name] && pattern.name !== "client_id" && pattern.name !== "enabled" && pattern.name !== "client_id" && pattern.name !== "scope" && pattern.name !== "redirect_uri" && pattern.name !== "confidential" && pattern.name !== "client_secret" && pattern.name !== "password") {
+        availableProperties.push(
+          <a key={index} className="dropdown-item" href="#" onClick={(e) => this.setNewDefaultProperty(e, pattern.name, pattern.label, !!pattern.list)}>{i18next.t(pattern.label)}</a>
+        );
+      }
+    });
+
     var scopeIntrospectList = [], defaultScopeIntrospectList = [];
     this.state.config.pattern.user.forEach((pattern) => {
       if (pattern.name === "scope") {
@@ -1473,10 +1555,10 @@ class GlwdOIDCParams extends Component {
       var typeScopeAvailable = [], typeScopeAdded = [];
       this.state.config.scopes.forEach((scope, index) => {
         if (rarType.scopes.indexOf(scope.name) === -1) {
-          typeScopeAvailable.push(<a key={index} 
-                                     className="dropdown-item" 
-                                     href="#" 
-                                     onClick={(e) => this.addRarTypeScope(e, type, scope.name)} 
+          typeScopeAvailable.push(<a key={index}
+                                     className="dropdown-item"
+                                     href="#"
+                                     onClick={(e) => this.addRarTypeScope(e, type, scope.name)}
                                      disabled={!this.state.mod.parameters["oauth-rar-allowed"]}>
                                     {scope.name}
                                   </a>);
@@ -2521,6 +2603,33 @@ class GlwdOIDCParams extends Component {
                     </textarea>
                   </div>
                 </div>
+                <hr/>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <p>{i18next.t("admin.mod-glwd-register-default-properties")}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="btn-group" role="group">
+                    <div className="btn-group" role="group">
+                      <div className="dropdown">
+                        <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-mod-glwd-register-default-properties-add" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.mod.parameters["register-client-allowed"]}>
+                          {this.state.newDefaultProperty?i18next.t(this.state.newDefaultProperty.label):i18next.t("admin.mod-glwd-register-default-properties-btn")}
+                        </button>
+                        <div className="dropdown-menu" aria-labelledby="mod-glwd-register-default-properties-add">
+                          {availableProperties}
+                        </div>
+                      </div>
+                    </div>
+                    <button type="button" className="btn btn-secondary" onClick={this.addDefaultProperty} title={i18next.t("admin.mod-glwd-register-default-properties-add")} disabled={!this.state.newDefaultProperty || !this.state.mod.parameters["register-client-allowed"]}>
+                      <i className="fas fa-plus"></i>
+                    </button>
+                  </div>
+                  {registerDefaultProperties}
+                  {this.state.errorList["register-default-properties"]?<span className="error-input">{i18next.t(this.state.errorList["register-default-properties"])}</span>:""}
+                </div>
               </div>
             </div>
           </div>
@@ -2802,11 +2911,11 @@ class GlwdOIDCParams extends Component {
                          onChange={(e) => this.setNewRar(e)}
                          disabled={!this.state.mod.parameters["oauth-rar-allowed"]}/>
                   <div className="input-group-append">
-                    <button type="button" 
+                    <button type="button"
                             id="mod-glwd-new-rar-btn"
-                            className="btn btn-secondary" 
-                            onClick={this.addRAR} 
-                            title={i18next.t("admin.add")} 
+                            className="btn btn-secondary"
+                            onClick={this.addRAR}
+                            title={i18next.t("admin.add")}
                             disabled={!this.state.newRar || !this.state.mod.parameters["oauth-rar-allowed"] || this.state.newRarExists}>
                       <i className="fas fa-plus"></i>
                     </button>
