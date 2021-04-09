@@ -226,7 +226,7 @@ static int get_key_size_from_alg(const char * str_alg) {
  * verify input parameters for the plugin instance
  */
 static json_t * check_parameters (json_t * j_params) {
-  json_t * j_element = NULL, * j_return = NULL, * j_error = json_array(), * j_scope, * j_rar_type;
+  json_t * j_element = NULL, * j_return = NULL, * j_error = json_array(), * j_scope, * j_rar_type, * j_property = NULL;
   size_t index = 0, indexScope = 0;
   const char * key = NULL;
   int ret = G_OK, has_openid = 0;
@@ -801,6 +801,19 @@ static json_t * check_parameters (json_t * j_params) {
               ret = G_ERROR_PARAM;
             }
           }
+        }
+      }
+      json_object_foreach(json_object_get(j_params, "register-default-properties"), key, j_property) {
+        if (json_is_array(json_object_get(j_property, "value"))) {
+          json_array_foreach(json_object_get(j_property, "value"), index, j_element) {
+            if (!json_string_length(j_element)) {
+              json_array_append_new(j_error, json_string("Property values in a 'register-default-properties' object is mandatory and must be a non empty string"));
+              ret = G_ERROR_PARAM;
+            }
+          }
+        } else if (!json_string_length(json_object_get(j_property, "value"))) {
+          json_array_append_new(j_error, json_string("Property value in a 'register-default-properties' object is mandatory and must be a non empty string"));
+          ret = G_ERROR_PARAM;
         }
       }
     }
@@ -5200,14 +5213,17 @@ static int serialize_client_register(struct _oidc_config * config, const struct 
 }
 
 static json_t * client_register(struct _oidc_config * config, const struct _u_request * request, json_t * j_registration, int update) {
-  json_t * j_client, * j_return = NULL;
+  json_t * j_client, * j_return = NULL, * j_element = NULL;
   char client_id[GLEWLWYD_CLIENT_ID_LENGTH+1] = {}, client_secret[GLEWLWYD_CLIENT_SECRET_LENGTH+1] = {}, client_management_at[GLEWLWYD_CLIENT_MANAGEMENT_AT_LENGTH+1] = {};
   char * plugin_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, config->name);
-  const char * token_endpoint_auth_method;
+  const char * token_endpoint_auth_method, * key = NULL;
 
   if (!update) {
     rand_string_from_charset(client_id, GLEWLWYD_CLIENT_ID_LENGTH, "abcdefghijklmnopqrstuvwxyz0123456789");
     if (o_strlen(client_id)) {
+      json_object_foreach(json_object_get(config->j_params, "register-default-properties"), key, j_element) {
+        json_object_set(j_registration, key, json_object_get(j_element, "value"));
+      }
       json_object_set_new(j_registration, "client_id", json_string(client_id));
       if (json_object_get(config->j_params, "register-client-management-allowed") == json_true()) {
         rand_string(client_management_at, GLEWLWYD_CLIENT_SECRET_LENGTH);
