@@ -619,6 +619,10 @@ Default scopes that will be added to the registered clients, can be empty. This 
 
 Add endpoints for clients to manage their registration as defined in [OAuth 2.0 Dynamic Client Registration Management Protocol](https://tools.ietf.org/html/rfc7592).
 
+### Default properties
+
+Add default properties and values to clients during registration.
+
 ## Device Authorization management
 
 ### Code expiration (seconds)
