@@ -138,23 +138,20 @@ int run_simple_test(struct _u_request * req, const char * method, const char * u
   
   if (req != NULL) {
     request = ulfius_duplicate_request(req);
-    o_free(request->http_verb);
-    o_free(request->http_url);
   } else {
     request = o_malloc(sizeof (struct _u_request));
     ulfius_init_request(request);
   }
-  request->http_verb = o_strdup(method);
-  request->http_url = o_strdup(url);
+  ulfius_set_request_properties(request, U_OPT_HTTP_VERB, method,
+                                         U_OPT_HTTP_URL, url,
+                                         U_OPT_AUTH_BASIC_USER, auth_basic_user,
+                                         U_OPT_AUTH_BASIC_PASSWORD, auth_basic_password,
+                                         U_OPT_NONE);
   if (body != NULL) {
     u_map_copy_into(request->map_post_body, body);
   } else if (json_body != NULL) {
-    ulfius_set_json_body_request(request, json_body);
+    ulfius_set_request_properties(request, U_OPT_JSON_BODY, json_body, U_OPT_NONE);
   }
-  o_free(request->auth_basic_user);
-  o_free(request->auth_basic_password);
-  request->auth_basic_user = o_strdup(auth_basic_user);
-  request->auth_basic_password = o_strdup(auth_basic_password);
   
   res = test_request(request, expected_status, expected_json_body, exptected_string_body, expected_redirect_uri_contains);
   
