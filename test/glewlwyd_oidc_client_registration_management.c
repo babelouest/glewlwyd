@@ -57,6 +57,11 @@
 #define CLIENT_POLICY_URI                       "https://client.tld/policy"
 #define CLIENT_TOS_URI                          "https://client.tld/tos"
 #define CLIENT_JWKS_URI                         "https://client.tld/jwks"
+#define CLIENT_DEFAULT_KEY_1                    "key1"
+#define CLIENT_DEFAULT_KEY_2                    "key2"
+#define CLIENT_DEFAULT_VALUE_1                  "value1"
+#define CLIENT_DEFAULT_VALUE_2                  "value2"
+#define CLIENT_DEFAULT_VALUE_3                  "value3"
 
 const char jwk_pubkey_ecdsa_str[] = "{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4\","\
                                     "\"y\":\"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM\",\"use\":\"enc\",\"kid\":\"1\"}]}";
@@ -65,7 +70,7 @@ struct _u_request admin_req;
 
 START_TEST(test_oidc_registration_plugin_add_using_management)
 {
-  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososos[s]s[s]so}}",
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososos[s]s[s]sos{s{ss}s{s[ss]}}}}",
                                 "module", PLUGIN_MODULE,
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_DISPLAY_NAME,
@@ -87,7 +92,15 @@ START_TEST(test_oidc_registration_plugin_add_using_management)
                                   "register-client-allowed", json_true(),
                                   "register-client-auth-scope", PLUGIN_REGISTER_AUTH_SCOPE,
                                   "register-client-credentials-scope", PLUGIN_REGISTER_DEFAULT_SCOPE,
-                                  "register-client-management-allowed", json_true());
+                                  "register-client-management-allowed", json_true(),
+                                  "register-default-properties",
+                                    CLIENT_DEFAULT_KEY_1, 
+                                      "value",
+                                      CLIENT_DEFAULT_VALUE_1,
+                                    CLIENT_DEFAULT_KEY_2,
+                                      "value",
+                                        CLIENT_DEFAULT_VALUE_2,
+                                        CLIENT_DEFAULT_VALUE_3);
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -897,7 +910,10 @@ START_TEST(test_oidc_registration_auth_register_client_management_update)
   ck_assert_ptr_eq(json_object_get(j_result_get, "client_id_issued_at"), NULL);
   ck_assert_ptr_eq(json_object_get(j_result_get, "client_secret_expires_at"), NULL);
   json_object_set_new(j_client_update, "client_secret", json_object_get(j_result_get, "client_secret"));
-  ck_assert_int_eq(json_equal(j_client_update, j_result_get), 1);
+  ck_assert_str_eq(json_string_value(json_object_get(j_result_get, CLIENT_DEFAULT_KEY_1)), CLIENT_DEFAULT_VALUE_1);
+  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result_get, CLIENT_DEFAULT_KEY_2), 0)), CLIENT_DEFAULT_VALUE_2);
+  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result_get, CLIENT_DEFAULT_KEY_2), 1)), CLIENT_DEFAULT_VALUE_3);
+  ck_assert_ptr_ne(json_search(j_result_get, j_client_update), NULL);
   ulfius_clean_request(&req_reg);
   ulfius_clean_response(&resp);
 

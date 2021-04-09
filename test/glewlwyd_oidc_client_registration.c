@@ -57,6 +57,13 @@
 #define CLIENT_TOS_URI                          "https://client.tld/tos"
 #define CLIENT_JWKS_URI                         "https://client.tld/jwks"
 #define CLIENT_RESOURCE_IDENTIFIER              "https://resource.tld/"
+#define CLIENT_DEFAULT_KEY_1                    "key1"
+#define CLIENT_DEFAULT_KEY_2                    "key2"
+#define CLIENT_DEFAULT_KEY_OVERWRITTEN          "redirect_uri"
+#define CLIENT_DEFAULT_VALUE_1                  "value1"
+#define CLIENT_DEFAULT_VALUE_2                  "value2"
+#define CLIENT_DEFAULT_VALUE_3                  "value3"
+#define CLIENT_DEFAULT_VALUE_OVERWRITTEN        "overwrite-me"
 
 const char jwk_pubkey_ecdsa_str[] = "{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4\","\
                                     "\"y\":\"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM\",\"use\":\"enc\",\"kid\":\"1\"}]}";
@@ -65,67 +72,7 @@ struct _u_request admin_req;
 
 START_TEST(test_oidc_registration_plugin_add_using_no_auth_scope)
 {
-  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososos[]s[s]}}",
-                                "module", PLUGIN_MODULE,
-                                "name", PLUGIN_NAME,
-                                "display_name", PLUGIN_DISPLAY_NAME,
-                                "enabled", json_true(),
-                                "parameters",
-                                  "iss", PLUGIN_ISS,
-                                  "jwt-type", PLUGIN_JWT_TYPE,
-                                  "jwt-key-size", PLUGIN_JWT_KEY_SIZE,
-                                  "key", PLUGIN_KEY,
-                                  "code-duration", PLUGIN_CODE_DURATION,
-                                  "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
-                                  "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
-                                  "allow-non-oidc", json_true(),
-                                  "auth-type-client-enabled", json_true(),
-                                  "auth-type-code-enabled", json_true(),
-                                  "auth-type-implicit-enabled", json_true(),
-                                  "auth-type-password-enabled", json_true(),
-                                  "auth-type-refresh-enabled", json_true(),
-                                  "register-client-allowed", json_true(),
-                                  "register-client-auth-scope",
-                                  "register-client-credentials-scope", PLUGIN_REGISTER_DEFAULT_SCOPE);
-
-  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
-  json_decref(j_parameters);
-}
-END_TEST
-
-START_TEST(test_oidc_registration_plugin_add_using_auth_scope)
-{
-  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososos[s]s[s]}}",
-                                "module", PLUGIN_MODULE,
-                                "name", PLUGIN_NAME,
-                                "display_name", PLUGIN_DISPLAY_NAME,
-                                "enabled", json_true(),
-                                "parameters",
-                                  "iss", PLUGIN_ISS,
-                                  "jwt-type", PLUGIN_JWT_TYPE,
-                                  "jwt-key-size", PLUGIN_JWT_KEY_SIZE,
-                                  "key", PLUGIN_KEY,
-                                  "code-duration", PLUGIN_CODE_DURATION,
-                                  "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
-                                  "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
-                                  "allow-non-oidc", json_true(),
-                                  "auth-type-client-enabled", json_true(),
-                                  "auth-type-code-enabled", json_true(),
-                                  "auth-type-implicit-enabled", json_true(),
-                                  "auth-type-password-enabled", json_true(),
-                                  "auth-type-refresh-enabled", json_true(),
-                                  "register-client-allowed", json_true(),
-                                  "register-client-auth-scope", PLUGIN_REGISTER_AUTH_SCOPE,
-                                  "register-client-credentials-scope", PLUGIN_REGISTER_DEFAULT_SCOPE);
-
-  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
-  json_decref(j_parameters);
-}
-END_TEST
-
-START_TEST(test_oidc_registration_plugin_add_using_no_auth_scope_allow_add_resource)
-{
-  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososos[]s[s]so}}",
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososos[]s[s]s{s{ss}s{s[ss]}s{s[s]}}}}",
                                 "module", PLUGIN_MODULE,
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_DISPLAY_NAME,
@@ -147,7 +94,94 @@ START_TEST(test_oidc_registration_plugin_add_using_no_auth_scope_allow_add_resou
                                   "register-client-allowed", json_true(),
                                   "register-client-auth-scope",
                                   "register-client-credentials-scope", PLUGIN_REGISTER_DEFAULT_SCOPE,
-                                  "register-resource-specify-allowed", json_true());
+                                  "register-default-properties",
+                                    CLIENT_DEFAULT_KEY_1, 
+                                      "value",
+                                      CLIENT_DEFAULT_VALUE_1,
+                                    CLIENT_DEFAULT_KEY_2,
+                                      "value",
+                                        CLIENT_DEFAULT_VALUE_2,
+                                        CLIENT_DEFAULT_VALUE_3,
+                                    CLIENT_DEFAULT_KEY_OVERWRITTEN,
+                                      "value",
+                                        CLIENT_DEFAULT_VALUE_OVERWRITTEN);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_oidc_registration_plugin_add_using_auth_scope)
+{
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososos[s]s[s]s{s{ss}s{s[ss]}}}}",
+                                "module", PLUGIN_MODULE,
+                                "name", PLUGIN_NAME,
+                                "display_name", PLUGIN_DISPLAY_NAME,
+                                "enabled", json_true(),
+                                "parameters",
+                                  "iss", PLUGIN_ISS,
+                                  "jwt-type", PLUGIN_JWT_TYPE,
+                                  "jwt-key-size", PLUGIN_JWT_KEY_SIZE,
+                                  "key", PLUGIN_KEY,
+                                  "code-duration", PLUGIN_CODE_DURATION,
+                                  "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
+                                  "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
+                                  "allow-non-oidc", json_true(),
+                                  "auth-type-client-enabled", json_true(),
+                                  "auth-type-code-enabled", json_true(),
+                                  "auth-type-implicit-enabled", json_true(),
+                                  "auth-type-password-enabled", json_true(),
+                                  "auth-type-refresh-enabled", json_true(),
+                                  "register-client-allowed", json_true(),
+                                  "register-client-auth-scope", PLUGIN_REGISTER_AUTH_SCOPE,
+                                  "register-client-credentials-scope", PLUGIN_REGISTER_DEFAULT_SCOPE,
+                                  "register-default-properties",
+                                    CLIENT_DEFAULT_KEY_1, 
+                                      "value",
+                                      CLIENT_DEFAULT_VALUE_1,
+                                    CLIENT_DEFAULT_KEY_2,
+                                      "value",
+                                        CLIENT_DEFAULT_VALUE_2,
+                                        CLIENT_DEFAULT_VALUE_3);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_oidc_registration_plugin_add_using_no_auth_scope_allow_add_resource)
+{
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososos[]s[s]sos{s{ss}s{s[ss]}}}}",
+                                "module", PLUGIN_MODULE,
+                                "name", PLUGIN_NAME,
+                                "display_name", PLUGIN_DISPLAY_NAME,
+                                "enabled", json_true(),
+                                "parameters",
+                                  "iss", PLUGIN_ISS,
+                                  "jwt-type", PLUGIN_JWT_TYPE,
+                                  "jwt-key-size", PLUGIN_JWT_KEY_SIZE,
+                                  "key", PLUGIN_KEY,
+                                  "code-duration", PLUGIN_CODE_DURATION,
+                                  "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
+                                  "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
+                                  "allow-non-oidc", json_true(),
+                                  "auth-type-client-enabled", json_true(),
+                                  "auth-type-code-enabled", json_true(),
+                                  "auth-type-implicit-enabled", json_true(),
+                                  "auth-type-password-enabled", json_true(),
+                                  "auth-type-refresh-enabled", json_true(),
+                                  "register-client-allowed", json_true(),
+                                  "register-client-auth-scope",
+                                  "register-client-credentials-scope", PLUGIN_REGISTER_DEFAULT_SCOPE,
+                                  "register-resource-specify-allowed", json_true(),
+                                  "register-default-properties",
+                                    CLIENT_DEFAULT_KEY_1, 
+                                      "value",
+                                      CLIENT_DEFAULT_VALUE_1,
+                                    CLIENT_DEFAULT_KEY_2,
+                                      "value",
+                                        CLIENT_DEFAULT_VALUE_2,
+                                        CLIENT_DEFAULT_VALUE_3);
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -156,7 +190,7 @@ END_TEST
 
 START_TEST(test_oidc_registration_plugin_add_using_no_auth_scope_resource_default)
 {
-  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososos[]s[s]sos[s]}}",
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososos[]s[s]sos[s]s{s{ss}s{s[ss]}}}}",
                                 "module", PLUGIN_MODULE,
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_DISPLAY_NAME,
@@ -179,7 +213,15 @@ START_TEST(test_oidc_registration_plugin_add_using_no_auth_scope_resource_defaul
                                   "register-client-auth-scope",
                                   "register-client-credentials-scope", PLUGIN_REGISTER_DEFAULT_SCOPE,
                                   "register-resource-specify-allowed", json_false(),
-                                  "register-resource-default", CLIENT_RESOURCE_IDENTIFIER);
+                                  "register-resource-default", CLIENT_RESOURCE_IDENTIFIER,
+                                  "register-default-properties",
+                                    CLIENT_DEFAULT_KEY_1, 
+                                      "value",
+                                      CLIENT_DEFAULT_VALUE_1,
+                                    CLIENT_DEFAULT_KEY_2,
+                                      "value",
+                                        CLIENT_DEFAULT_VALUE_2,
+                                        CLIENT_DEFAULT_VALUE_3);
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -632,6 +674,10 @@ START_TEST(test_oidc_registration_no_auth_register_client_properties_validated)
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "tos_uri")), CLIENT_TOS_URI);
   ck_assert_ptr_eq(json_object_get(j_result, "enabled"), json_true());
   ck_assert_int_eq(json_equal(json_object_get(j_result, "jwks"), j_jwks), 1);
+  ck_assert_str_eq(json_string_value(json_object_get(j_result, CLIENT_DEFAULT_KEY_1)), CLIENT_DEFAULT_VALUE_1);
+  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, CLIENT_DEFAULT_KEY_2), 0)), CLIENT_DEFAULT_VALUE_2);
+  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, CLIENT_DEFAULT_KEY_2), 1)), CLIENT_DEFAULT_VALUE_3);
+  ck_assert_str_ne(json_string_value(json_array_get(json_object_get(j_result, CLIENT_DEFAULT_KEY_OVERWRITTEN), 0)), CLIENT_DEFAULT_VALUE_OVERWRITTEN);
   json_decref(j_result);
   
   json_decref(j_client);
@@ -697,6 +743,9 @@ START_TEST(test_oidc_registration_no_auth_register_minimal_client_properties_val
   ck_assert_int_eq(json_array_size(json_object_get(j_result, "authorization_type")), 1);
   ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "authorization_type"), 0)), CLIENT_RESPONSE_TYPE_CODE);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "application_type")), CLIENT_APP_TYPE_WEB);
+  ck_assert_str_eq(json_string_value(json_object_get(j_result, CLIENT_DEFAULT_KEY_1)), CLIENT_DEFAULT_VALUE_1);
+  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, CLIENT_DEFAULT_KEY_2), 0)), CLIENT_DEFAULT_VALUE_2);
+  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, CLIENT_DEFAULT_KEY_2), 1)), CLIENT_DEFAULT_VALUE_3);
   json_decref(j_result);
   
   json_decref(j_client);
@@ -757,6 +806,9 @@ START_TEST(test_oidc_registration_no_auth_register_public_client_properties_vali
   ck_assert_int_eq(json_array_size(json_object_get(j_result, "authorization_type")), 1);
   ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, "authorization_type"), 0)), CLIENT_RESPONSE_TYPE_CODE);
   ck_assert_str_eq(json_string_value(json_object_get(j_result, "application_type")), CLIENT_APP_TYPE_WEB);
+  ck_assert_str_eq(json_string_value(json_object_get(j_result, CLIENT_DEFAULT_KEY_1)), CLIENT_DEFAULT_VALUE_1);
+  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, CLIENT_DEFAULT_KEY_2), 0)), CLIENT_DEFAULT_VALUE_2);
+  ck_assert_str_eq(json_string_value(json_array_get(json_object_get(j_result, CLIENT_DEFAULT_KEY_2), 1)), CLIENT_DEFAULT_VALUE_3);
   json_decref(j_result);
   
   json_decref(j_client);
