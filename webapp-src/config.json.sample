@@ -84,6 +84,39 @@
       "label": "admin.client-name",
       "placeholder": "admin.client-name-ph"
     },{
+      "name": "enabled",
+      "type": "boolean",
+      "defaultValue": true,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-enabled"
+    },{
+      "name": "scope",
+      "list": true,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-scope"
+    },{
+      "name": "redirect_uri",
+      "list": true,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-redirect-uri",
+      "placeholder": "admin.client-redirect-uri-ph"
+    },{
+      "name": "authorization_type",
+      "list": true,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-authorization-type",
+      "listElements": ["code","token","id_token","password","none","client_credentials","refresh_token","delete_token","device_authorization"]
+    },{
+      "name": "sector_identifier_uri",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-sector-identifier-uri",
+      "placeholder": "admin.client-sector-identifier-uri-ph"
+    },{
       "name": "confidential",
       "edit": true,
       "defaultValue": false,
@@ -92,10 +125,11 @@
       "label": "admin.client-confidential"
     },{
       "name": "token_endpoint_auth_method",
+      "list": true,
       "edit": true,
       "forceShow": true,
       "label": "admin.client-token_endpoint_auth_method",
-      "listElements": ["", "none", "client_secret_post", "client_secret_basic", "client_secret_jwt", "private_key_jwt", "tls_client_auth", "tls_client_auth"]
+      "listElements": ["", "none", "client_secret_post", "client_secret_basic", "client_secret_jwt", "private_key_jwt", "tls_client_auth", "self_signed_tls_client_auth"]
     },{
       "name": "client_secret",
       "edit": true,
@@ -136,14 +170,14 @@
       "forceShow": true,
       "label": "admin.client-enc",
       "placeholder": "admin.client-enc-ph",
-      "listElements": ["A128CBC-HS256","A192CBC-HS384","A256CBC-HS512","A128GCM","A256GCM"]
+      "listElements": ["A128CBC-HS256","A192CBC-HS384","A256CBC-HS512","A128GCM","A192GCM","A256GCM"]
     },{
       "name": "alg",
       "edit": true,
       "forceShow": true,
       "label": "admin.client-alg",
       "placeholder": "admin.client-alg-ph",
-      "listElements": ["RSA1_5","dir","A128GCMKW","A192GCMKW","A256GCMKW"]
+      "listElements": ["RSA1_5","RSA-OAEP","RSA-OAEP-256","A128KW","A192KW","A256KW","dir","ECDH-ES","ECDH-ES+A128KW","ECDH-ES+A192KW","ECDH-ES+A256KW","A128GCMKW","A192GCMKW","A256GCMKW","PBES2-HS256+A128KW","PBES2-HS384+A192KW","PBES2-HS512+A256KW"]
     },{
       "name": "alg_kid",
       "edit": true,
@@ -181,39 +215,6 @@
       "label": "admin.client-encrypt_refresh_token",
       "listElements": ["no","yes"]
     },{
-      "name": "scope",
-      "list": true,
-      "edit": true,
-      "forceShow": true,
-      "label": "admin.client-scope"
-    },{
-      "name": "redirect_uri",
-      "list": true,
-      "edit": true,
-      "forceShow": true,
-      "label": "admin.client-redirect-uri",
-      "placeholder": "admin.client-redirect-uri-ph"
-    },{
-      "name": "authorization_type",
-      "list": true,
-      "edit": true,
-      "forceShow": true,
-      "label": "admin.client-authorization-type",
-      "listElements": ["code","token","id_token","password","none","client_credentials","refresh_token","delete_token","device_authorization"]
-    },{
-      "name": "sector_identifier_uri",
-      "edit": true,
-      "forceShow": true,
-      "label": "admin.client-sector-identifier-uri",
-      "placeholder": "admin.client-sector-identifier-uri-ph"
-    },{
-      "name": "enabled",
-      "type": "boolean",
-      "defaultValue": true,
-      "edit": true,
-      "forceShow": true,
-      "label": "admin.client-enabled"
-    },{
       "name": "resource",
       "edit": true,
       "forceShow": true,
@@ -227,6 +228,30 @@
       "forceShow": true,
       "label": "admin.client-authorization-data-types",
       "placeholder": "admin.client-authorization-data-types-ph"
+    },{
+      "name": "tls_client_auth_san_dns",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-tls_client_auth_san_dns",
+      "placeholder": "admin.client-tls_client_auth_san_dns-ph"
+    },{
+      "name": "tls_client_auth_san_uri",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-tls_client_auth_san_uri",
+      "placeholder": "admin.client-tls_client_auth_san_uri-ph"
+    },{
+      "name": "tls_client_auth_san_ip",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-tls_client_auth_san_ip",
+      "placeholder": "admin.client-tls_client_auth_san_ip-ph"
+    },{
+      "name": "tls_client_auth_san_email",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-tls_client_auth_san_email",
+      "placeholder": "admin.client-tls_client_auth_san_email-ph"
     }]
   },
   "defaultScheme": "",
