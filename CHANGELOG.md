@@ -11,6 +11,7 @@
 - Implement [OAuth 2.0 JWT Secured Authorization Request (JAR) Draft 32](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwsreq-32)
 - Allow default properties on client registration
 - Allow access tokens use in clent registration to be used only once
+- Improve client and client grant management in the profile page
 
 ## 2.5.2
 
