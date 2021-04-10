@@ -82,27 +82,12 @@
       "label": "admin.client-name",
       "placeholder": "admin.client-name-ph"
     },{
-      "name": "confidential",
-      "edit": true,
-      "defaultValue": false,
-      "forceShow": true,
+      "name": "enabled",
       "type": "boolean",
-      "label": "admin.client-confidential"
-    },{
-      "name": "client_secret",
+      "defaultValue": true,
       "edit": true,
       "forceShow": true,
-      "label": "admin.client-secret",
-      "placeholder": "admin.client-secret-ph"
-    },{
-      "name": "password",
-      "type": "password",
-      "profile": false,
-      "edit": true,
-      "forceShow": true,
-      "label": "admin.client-password",
-      "placeholder": "admin.client-password-ph",
-      "placeholderConfirm": "admin.client-password-confirm-ph"
+      "label": "admin.client-enabled"
     },{
       "name": "scope",
       "list": true,
@@ -122,7 +107,7 @@
       "edit": true,
       "forceShow": true,
       "label": "admin.client-authorization-type",
-      "listElements": ["code","token","id_token","password","none","client_credentials","refresh_token","delete_token"]
+      "listElements": ["code","token","id_token","password","none","client_credentials","refresh_token","delete_token","device_authorization"]
     },{
       "name": "sector_identifier_uri",
       "edit": true,
@@ -130,12 +115,141 @@
       "label": "admin.client-sector-identifier-uri",
       "placeholder": "admin.client-sector-identifier-uri-ph"
     },{
-      "name": "enabled",
+      "name": "confidential",
+      "edit": true,
+      "defaultValue": false,
+      "forceShow": true,
       "type": "boolean",
-      "defaultValue": true,
+      "label": "admin.client-confidential"
+    },{
+      "name": "token_endpoint_auth_method",
+      "list": true,
       "edit": true,
       "forceShow": true,
-      "label": "admin.client-enabled"
+      "label": "admin.client-token_endpoint_auth_method",
+      "listElements": ["", "none", "client_secret_post", "client_secret_basic", "client_secret_jwt", "private_key_jwt", "tls_client_auth", "self_signed_tls_client_auth"]
+    },{
+      "name": "client_secret",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-secret",
+      "placeholder": "admin.client-secret-ph"
+    },{
+      "name": "password",
+      "type": "password",
+      "profile": false,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-password",
+      "placeholder": "admin.client-password-ph",
+      "placeholderConfirm": "admin.client-password-confirm-ph"
+    },{
+      "name": "jwks",
+      "type": "jwks",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-jwks",
+      "placeholder": "admin.client-jwks-ph"
+    },{
+      "name": "jwks_uri",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-jwks_uri",
+      "placeholder": "admin.client-jwks_uri-ph"
+    },{
+      "name": "pubkey",
+      "type": "file",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-pubkey"
+    },{
+      "name": "enc",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-enc",
+      "placeholder": "admin.client-enc-ph",
+      "listElements": ["A128CBC-HS256","A192CBC-HS384","A256CBC-HS512","A128GCM","A192GCM","A256GCM"]
+    },{
+      "name": "alg",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-alg",
+      "placeholder": "admin.client-alg-ph",
+      "listElements": ["RSA1_5","RSA-OAEP","RSA-OAEP-256","A128KW","A192KW","A256KW","dir","ECDH-ES","ECDH-ES+A128KW","ECDH-ES+A192KW","ECDH-ES+A256KW","A128GCMKW","A192GCMKW","A256GCMKW","PBES2-HS256+A128KW","PBES2-HS384+A192KW","PBES2-HS512+A256KW"]
+    },{
+      "name": "alg_kid",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-alg_kid",
+      "placeholder": "admin.client-alg_kid-ph"
+    },{
+      "name": "encrypt_code",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-encrypt_code",
+      "listElements": ["no","yes"]
+    },{
+      "name": "encrypt_at",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-encrypt_at",
+      "listElements": ["no","yes"]
+    },{
+      "name": "encrypt_userinfo",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-encrypt_userinfo",
+      "listElements": ["no","yes"]
+    },{
+      "name": "encrypt_id_token",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-encrypt_id_token",
+      "listElements": ["no","yes"]
+    },{
+      "name": "encrypt_refresh_token",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-encrypt_refresh_token",
+      "listElements": ["no","yes"]
+    },{
+      "name": "resource",
+      "edit": true,
+      "forceShow": true,
+      "type": "textarea",
+      "list": true,
+      "label": "admin.client-resource"
+    },{
+      "name": "authorization_data_types",
+      "list": true,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-authorization-data-types",
+      "placeholder": "admin.client-authorization-data-types-ph"
+    },{
+      "name": "tls_client_auth_san_dns",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-tls_client_auth_san_dns",
+      "placeholder": "admin.client-tls_client_auth_san_dns-ph"
+    },{
+      "name": "tls_client_auth_san_uri",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-tls_client_auth_san_uri",
+      "placeholder": "admin.client-tls_client_auth_san_uri-ph"
+    },{
+      "name": "tls_client_auth_san_ip",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-tls_client_auth_san_ip",
+      "placeholder": "admin.client-tls_client_auth_san_ip-ph"
+    },{
+      "name": "tls_client_auth_san_email",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-tls_client_auth_san_email",
+      "placeholder": "admin.client-tls_client_auth_san_email-ph"
     }]
   },
   "defaultScheme": "",
