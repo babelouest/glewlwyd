@@ -39,6 +39,7 @@
   - [Add or update additional properties for users and clients](#add-or-update-additional-properties-for-users-and-clients)
   - [Non-password authentication](#non-password-authentication)
   - [Multiple password authentication](#multiple-password-authentication)
+  - [Test a client configuration with Idwcc](#test-a-client-configuration-with-idwcc)
 - [Troubleshooting](#troubleshooting)
   - [Impossible to log in as administrator - N-factor issue](#impossible-to-log-in-as-administrator---n-factor-issue)
   - [Impossible to log in as administrator - Password lost](#impossible-to-log-in-as-administrator---password-lost)
@@ -657,6 +658,14 @@ This feature is new since Glewlwyd 2.5. If this option is enabled in a user back
 The use-case why this feature was added is when the user backend is LDAP and this LDAP service is used to authenticate to other services than Glewlwyd, such as an IMAP service or network login. All those services can use different passwords, and those different passwords don't have to be remembered by the user if the user uses a password vault. Also, if one password is compromised, you can change only the compromised password without having to change the password in all the services.
 
 Be careful that every password will allow the same access level to your Glewlwyd service, so all of them must be strong enough to avoid being guessed.
+
+### Test a client configuration with Idwcc
+
+The tool [idwcc](https://github.com/babelouest/iddawc/tree/master/tools/idwcc) is available via the library [iddawc](https://github.com/babelouest/iddawc) to test a client configuration with Glewlwyd (or any other OAuth2/OIDC provider).
+
+You can build the tool yourself, install it via a [pre-compiled package](https://github.com/babelouest/iddawc/releases/latest), or use the [docker image](https://github.com/babelouest/iddawc/tree/master/tools/idwcc#docker-image) available.
+
+See the [idwcc readme](https://github.com/babelouest/iddawc/blob/master/tools/idwcc/README.md) for more details.
 
 ## Troubleshooting
 
