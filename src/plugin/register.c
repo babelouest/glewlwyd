@@ -1026,7 +1026,7 @@ static int register_update_email_verify(struct _register_config * config, const 
               json_decref(j_query);
               if (res == H_OK) {
                 ret = G_OK;
-                y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' updated its e-mail address to '%s'", config->name, json_string_value(json_object_get(json_array_get(j_result, 0), "username")), json_string_value(json_object_get(json_array_get(j_result, 0), "email")));
+                y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' updated its e-mail address to '%s', origin: %s", config->name, json_string_value(json_object_get(json_array_get(j_result, 0), "username")), json_string_value(json_object_get(json_array_get(j_result, 0), "email")), ip_source);
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "register_update_email_verify - Error executing j_query (2)");
                 ret = G_ERROR_DB;
@@ -1993,7 +1993,7 @@ static int callback_register_complete_registration(const struct _u_request * req
                                           "/", 
                                           config->glewlwyd_config->glewlwyd_config->cookie_secure, 
                                           0);
-            y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' registered", config->name, json_string_value(json_object_get((json_t *)response->shared_data, "username")));
+            y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' registered, origin: %s", config->name, json_string_value(json_object_get((json_t *)response->shared_data, "username")), get_ip_source(request));
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_complete_registration - Error register_user_set");
             response->status = 500;
@@ -2227,7 +2227,7 @@ static int callback_register_reset_credentials_email_verify(const struct _u_requ
                                     "/", 
                                     config->glewlwyd_config->glewlwyd_config->cookie_secure, 
                                     0);
-      y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' opened a reset credential session with e-mail token", config->name, json_string_value(json_object_get(j_result, "username")));
+      y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' opened a reset credential session with e-mail token, origin: %s", config->name, json_string_value(json_object_get(j_result, "username")), get_ip_source(request));
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_reset_credentials_email_verify - Error reset_credentials_create_session");
       response->status = 500;
@@ -2270,7 +2270,7 @@ static int callback_register_reset_credentials_code_verify(const struct _u_reque
                                     "/", 
                                     config->glewlwyd_config->glewlwyd_config->cookie_secure, 
                                     0);
-      y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' opened a reset credential session with code", config->name, json_string_value(json_object_get(j_parameters, "username")));
+      y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' opened a reset credential session with code, origin: %s", config->name, json_string_value(json_object_get(j_parameters, "username")), get_ip_source(request));
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_reset_credentials_code_verify - Error reset_credentials_create_session");
       response->status = 500;

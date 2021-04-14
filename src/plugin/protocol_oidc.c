@@ -1674,7 +1674,8 @@ static char * generate_client_access_token(struct _oidc_config * config,
                                            const char * resource,
                                            time_t now,
                                            char * jti,
-                                           const char * x5t_s256) {
+                                           const char * x5t_s256,
+                                           const char * ip_source) {
   jwt_t * jwt;
   jwk_t * jwk;
   char * token = NULL;
@@ -1721,7 +1722,7 @@ static char * generate_client_access_token(struct _oidc_config * config,
     if (token == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - oidc - Error generating token");
     } else {
-      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token generated for client '%s' with scope list '%s'", config->name, json_string_value(json_object_get(j_client, "client_id")), scope_list);
+      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token generated for client '%s' with scope list '%s', origin: %s", config->name, json_string_value(json_object_get(j_client, "client_id")), scope_list, ip_source);
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - oidc - Error cloning jwt");
@@ -2340,7 +2341,8 @@ static char * generate_id_token(struct _oidc_config * config,
                                 const char * access_token,
                                 const char * code,
                                 const char * scopes,
-                                json_t * j_claims_request) {
+                                json_t * j_claims_request,
+                                const char * ip_source) {
   jwt_t * jwt = NULL;
   jwk_t * jwk = NULL;
   char * token = NULL, at_hash_encoded[128] = {0}, c_hash_encoded[128] = {0}, * sub = get_sub(config, username, j_client);
@@ -2433,7 +2435,7 @@ static char * generate_id_token(struct _oidc_config * config,
             if (token == NULL) {
               y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - oidc - Error r_jwt_serialize_signed");
             } else {
-              y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - id_token generated for client '%s' granted by user '%s'", config->name, json_string_value(json_object_get(j_client, "client_id")), username);
+              y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - id_token generated for client '%s' granted by user '%s', origin: %s", config->name, json_string_value(json_object_get(j_client, "client_id")), username, ip_source);
             }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - oidc - Error jwt_add_grants_json");
@@ -2591,7 +2593,8 @@ static char * generate_access_token(struct _oidc_config * config,
                                     char * jti,
                                     const char * x5t_s256,
                                     const char * dpop_jkt,
-                                    json_t * j_authorization_details) {
+                                    json_t * j_authorization_details,
+                                    const char * ip_source) {
   jwt_t * jwt = NULL;
   jwk_t * jwk = NULL;
   char * token = NULL, * property = NULL, * sub = get_sub(config, username, j_client);
@@ -2670,7 +2673,7 @@ static char * generate_access_token(struct _oidc_config * config,
         if ((token = r_jwt_serialize_signed(jwt, jwk, 0)) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - oidc - Error r_jwt_serialize_signed");
         } else {
-          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token generated for client '%s' granted by user '%s' with scope list '%s'", config->name, json_string_value(json_object_get(j_client, "client_id")), username, scope_list);
+          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token generated for client '%s' granted by user '%s' with scope list '%s', origin: %s", config->name, json_string_value(json_object_get(j_client, "client_id")), username, scope_list, ip_source);
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_access_token - oidc - Error no jwk to sign");
@@ -3559,7 +3562,7 @@ static json_t * get_refresh_token_duration_rolling(struct _oidc_config * config,
   return j_return;
 }
 
-static int revoke_tokens_from_code(struct _oidc_config * config, json_int_t gpoc_id) {
+static int revoke_tokens_from_code(struct _oidc_config * config, json_int_t gpoc_id, const char * ip_source) {
   int ret, res;
   char * query;
   json_t * j_result, * j_result_r, * j_element = NULL;
@@ -3570,7 +3573,7 @@ static int revoke_tokens_from_code(struct _oidc_config * config, json_int_t gpoc
   o_free(query);
   if (res == H_OK) {
     json_array_foreach(j_result, index, j_element) {
-      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token jti '%s' generated for client '%s' revoked", config->name, json_string_value(json_object_get(j_element, "jti")), json_string_value(json_object_get(j_element, "client_id")));
+      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token jti '%s' generated for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(j_element, "jti")), json_string_value(json_object_get(j_element, "client_id")), ip_source);
     }
     json_decref(j_result);
     query = msprintf("SELECT gpor_client_id AS client_id FROM " GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN " WHERE gpoc_id=%" JSON_INTEGER_FORMAT " AND gpor_enabled=1", gpoc_id);
@@ -3578,7 +3581,7 @@ static int revoke_tokens_from_code(struct _oidc_config * config, json_int_t gpoc
     o_free(query);
     if (res == H_OK) {
       if (json_array_size(j_result_r)) {
-        y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' revoked", config->name, json_string_value(json_object_get(json_array_get(j_result_r, 0), "client_id")));
+        y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_array_get(j_result_r, 0), "client_id")), ip_source);
       }
       json_decref(j_result_r);
       query = msprintf("UPDATE " GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN " SET gpoa_enabled='0' WHERE gpor_id IN (SELECT gpor_id FROM " GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN " WHERE gpoc_id=%" JSON_INTEGER_FORMAT ")", gpoc_id);
@@ -3612,9 +3615,17 @@ static int revoke_tokens_from_code(struct _oidc_config * config, json_int_t gpoc
 /**
  * verify that the auth code is valid
  */
-static json_t * validate_authorization_code(struct _oidc_config * config, const char * code, const char * client_id, const char * redirect_uri, const char * code_verifier) {
-  char * code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code), * expiration_clause = NULL, * scope_list = NULL, * tmp;
-  json_t * j_query, * j_result = NULL, * j_result_scope = NULL, * j_return, * j_element = NULL, * j_scope_param;
+static json_t * validate_authorization_code(struct _oidc_config * config, const char * code, const char * client_id, const char * redirect_uri, const char * code_verifier, const char * ip_source) {
+  char * code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code),
+       * expiration_clause = NULL,
+       * scope_list = NULL,
+       * tmp;
+  json_t * j_query,
+         * j_result = NULL,
+         * j_result_scope = NULL,
+         * j_return,
+         * j_element = NULL,
+         * j_scope_param;
   int res, has_scope_openid = 0;
   size_t index = 0;
   json_int_t maximum_duration = config->refresh_token_duration, maximum_duration_override = -1;
@@ -3733,7 +3744,7 @@ static json_t * validate_authorization_code(struct _oidc_config * config, const 
           json_decref(j_result_scope);
         } else {
           if (json_true() == json_object_get(config->j_params, "auth-type-code-revoke-replayed")) {
-            if (revoke_tokens_from_code(config, json_integer_value(json_object_get(json_array_get(j_result, 0), "gpoc_id"))) != G_OK) {
+            if (revoke_tokens_from_code(config, json_integer_value(json_object_get(json_array_get(j_result, 0), "gpoc_id")), ip_source) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_authorization_code - Error revoke_tokens_from_code");
             }
           }
@@ -5993,7 +6004,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
                                                     json_string_value(json_object_get(j_jkt, "jkt")),
                                                     ip_source)) == G_OK) {
                             if ((refresh_token = generate_refresh_token()) != NULL) {
-                              y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s'", config->name, client_id, username, scope);
+                              y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s', origin: %s", config->name, client_id, username, scope, get_ip_source(request));
                               if (o_strlen(resource)) {
                                 if ((res = verify_resource(config, resource, json_object_get(j_client, "client"), scope)) == G_OK) {
                                   resource_checked = 1;
@@ -6044,7 +6055,8 @@ static int check_auth_type_device_code(const struct _u_request * request,
                                                                             jti,
                                                                             x5t_s256,
                                                                             json_string_value(json_object_get(j_jkt, "jkt")),
-                                                                            json_object_get(json_array_get(j_result, 0), "authorization_details"))) != NULL) {
+                                                                            json_object_get(json_array_get(j_result, 0), "authorization_details"),
+                                                                            get_ip_source(request))) != NULL) {
                                     if (serialize_access_token(config,
                                                                GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION,
                                                                json_integer_value(json_object_get(j_refresh_token, "gpgr_id")),
@@ -6069,7 +6081,8 @@ static int check_auth_type_device_code(const struct _u_request * request,
                                                                         access_token,
                                                                         NULL,
                                                                         scope,
-                                                                        NULL)) != NULL) {
+                                                                        NULL,
+                                                                        ip_source)) != NULL) {
                                         if (serialize_id_token(config,
                                                                GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION,
                                                                id_token,
@@ -6765,7 +6778,7 @@ static json_t * authorization_details_element_access_enrich(json_t * j_rar_eleme
   return j_rar_element;
 }
 
-static int authorization_details_set_consent(struct _oidc_config * config, const char * type, const char * client_id, const char * username, int consent) {
+static int authorization_details_set_consent(struct _oidc_config * config, const char * type, const char * client_id, const char * username, int consent, const char * ip_source) {
   json_t * j_query;
   int res, ret;
 
@@ -6782,7 +6795,7 @@ static int authorization_details_set_consent(struct _oidc_config * config, const
   res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Rich Authorization Request consent type '%s' set to %s by user '%s' to client '%s'", config->name, type, consent?"true":"false", username, client_id);
+    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Rich Authorization Request consent type '%s' set to %s by user '%s' to client '%s', origin: %s", config->name, type, consent?"true":"false", username, client_id, ip_source);
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "authorization_details_set_consent - Error executing j_query");
@@ -6791,7 +6804,7 @@ static int authorization_details_set_consent(struct _oidc_config * config, const
   return ret;
 }
 
-static int authorization_details_add_consent(struct _oidc_config * config, const char * type, const char * client_id, const char * username, int consent) {
+static int authorization_details_add_consent(struct _oidc_config * config, const char * type, const char * client_id, const char * username, int consent, const char * ip_source) {
   json_t * j_query;
   int res, ret;
 
@@ -6807,7 +6820,7 @@ static int authorization_details_add_consent(struct _oidc_config * config, const
   res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Rich Authorization Request consent type '%s' set to %s by user '%s' to client '%s'", config->name, type, consent?"true":"false", username, client_id);
+    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Rich Authorization Request consent type '%s' set to %s by user '%s' to client '%s', origin: %s", config->name, type, consent?"true":"false", username, client_id, ip_source);
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "authorization_details_add_consent - Error executing j_query");
@@ -6816,7 +6829,7 @@ static int authorization_details_add_consent(struct _oidc_config * config, const
   return ret;
 }
 
-static int authorization_details_delete_consent(struct _oidc_config * config, const char * type, const char * client_id, const char * username) {
+static int authorization_details_delete_consent(struct _oidc_config * config, const char * type, const char * client_id, const char * username, const char * ip_source) {
   json_t * j_query;
   int res, ret;
 
@@ -6831,7 +6844,7 @@ static int authorization_details_delete_consent(struct _oidc_config * config, co
   res = h_delete(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Rich Authorization Request consent type '%s' deleted by user '%s' to client '%s'", config->name, type, username, client_id);
+    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Rich Authorization Request consent type '%s' deleted by user '%s' to client '%s', origin: %s", config->name, type, username, client_id, ip_source);
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "authorization_details_delete_consent - Error executing j_query");
@@ -7120,7 +7133,7 @@ static int callback_client_registration_management_update(const struct _u_reques
     if (check_result_value(j_result, G_OK)) {
       ulfius_set_json_body_response(response, 200, json_object_get(j_result, "client"));
       redirect_uri = json_dumps(json_object_get(json_object_get(j_result, "client"), "redirect_uris"), JSON_COMPACT);
-      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - client '%s' registration updated with redirect_uri %s", config->name, u_map_get(request->map_url, "client_id"), redirect_uri);
+      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - client '%s' registration updated with redirect_uri %s, origin: %s", config->name, u_map_get(request->map_url, "client_id"), redirect_uri, get_ip_source(request));
       o_free(redirect_uri);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_client_registration_management_update - Error client_register");
@@ -7146,7 +7159,7 @@ static int callback_client_registration_management_delete(const struct _u_reques
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_client_registration_management_read - Error registration_management_delete");
     response->status = 500;
   } else {
-    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - client '%s' deleted", config->name, u_map_get(request->map_url, "client_id"));
+    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - client '%s' deleted, origin: %s", config->name, u_map_get(request->map_url, "client_id"), get_ip_source(request));
   }
   return U_CALLBACK_CONTINUE;
 }
@@ -7181,7 +7194,7 @@ static int callback_client_registration(const struct _u_request * request, struc
     if (check_result_value(j_result, G_OK)) {
       ulfius_set_json_body_response(response, 200, json_object_get(j_result, "client"));
       redirect_uri = json_dumps(json_object_get(json_object_get(j_result, "client"), "redirect_uris"), JSON_COMPACT);
-      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - client '%s' registered with redirect_uri %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "client"), "client_id")), redirect_uri);
+      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - client '%s' registered with redirect_uri %s, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "client"), "client_id")), redirect_uri, get_ip_source(request));
       o_free(redirect_uri);
       if (config->client_register_resource_config->oauth_scope != NULL && json_object_get(config->j_params, "register-client-token-one-use") == json_true()) {
         if (revoke_access_token(config, (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER))) != G_OK) {
@@ -7237,21 +7250,21 @@ static int callback_revocation(const struct _u_request * request, struct _u_resp
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_refresh_token");
           response->status = 500;
         } else {
-          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' revoked", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")));
+          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request));
         }
       } else if (0 == o_strcmp("access_token", json_string_value(json_object_get(json_object_get(j_result, "token"), "token_type")))) {
         if (revoke_access_token(config, u_map_get(request->map_post_body, "token")) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_access_token");
           response->status = 500;
         } else {
-          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token jti '%s' generated for client '%s' revoked", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "jti")), json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")));
+          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token jti '%s' generated for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "jti")), json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request));
         }
       } else {
         if (revoke_id_token(config, u_map_get(request->map_post_body, "token")) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_id_token");
           response->status = 500;
         } else {
-          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - id_token generated for client '%s' revoked", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")));
+          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - id_token generated for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request));
         }
       }
     }
@@ -8168,7 +8181,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
       j_client = check_client_valid(config, client_id, client_secret, redirect_uri, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG, 0, ip_source);
     }
     if (check_result_value(j_client, G_OK) && is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
-      j_code = validate_authorization_code(config, code, client_id, redirect_uri, code_verifier);
+      j_code = validate_authorization_code(config, code, client_id, redirect_uri, code_verifier, ip_source);
       if (check_result_value(j_code, G_OK)) {
         j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token");
         if (check_result_value(j_jkt, G_OK)) {
@@ -8211,7 +8224,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
               if (check_result_value(j_user, G_OK)) {
                 time(&now);
                 if ((refresh_token = generate_refresh_token()) != NULL) {
-                  y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s'", config->name, client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")));
+                  y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s', origin: %s", config->name, client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), get_ip_source(request));
                   j_refresh_token = serialize_refresh_token(config,
                                                             GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE,
                                                             json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpoc_id")),
@@ -8242,7 +8255,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                                                               jti,
                                                               x5t_s256,
                                                               json_string_value(json_object_get(j_jkt, "jkt")),
-                                                              j_authorization_details_processed)) != NULL) {
+                                                              j_authorization_details_processed,
+                                                              get_ip_source(request))) != NULL) {
                       if (serialize_access_token(config,
                                                  GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE,
                                                  json_integer_value(json_object_get(j_refresh_token, "gpor_id")),
@@ -8272,7 +8286,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                                                               access_token,
                                                               code,
                                                               json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")),
-                                                              json_object_get(j_claims_request, "id_token"))) != NULL) {
+                                                              json_object_get(j_claims_request, "id_token"),
+                                                              ip_source)) != NULL) {
                               if (serialize_id_token(config,
                                                      GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE,
                                                      id_token,
@@ -8552,7 +8567,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
           time(&now);
           if (check_result_value(j_refresh, G_OK)) {
             if ((refresh_token = generate_refresh_token()) != NULL) {
-              y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s'", config->name, client_id, username, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")));
+              y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s', origin: %s", config->name, client_id, username, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), get_ip_source(request));
               j_refresh_token = serialize_refresh_token(config,
                                                         GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS,
                                                         0,
@@ -8584,7 +8599,8 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
                                                             jti,
                                                             x5t_s256,
                                                             NULL,
-                                                            NULL)) != NULL) {
+                                                            NULL,
+                                                            get_ip_source(request))) != NULL) {
                     if (serialize_access_token(config,
                                                GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS,
                                                json_integer_value(json_object_get(j_refresh_token, "gpgr_id")),
@@ -8611,7 +8627,8 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
                                                           access_token,
                                                           NULL,
                                                           json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")),
-                                                          NULL)) != NULL) {
+                                                          NULL,
+                                                          ip_source)) != NULL) {
                           if (serialize_id_token(config,
                                                  GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS,
                                                  id_token,
@@ -8861,7 +8878,8 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
                                                              resource,
                                                              now,
                                                              jti,
-                                                             x5t_s256)) != NULL) {
+                                                             x5t_s256,
+                                                             ip_source)) != NULL) {
               if (serialize_access_token(config,
                                          GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS,
                                          0,
@@ -9495,7 +9513,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
             y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh oidc - Error generate_refresh_token");
             has_error = 1;
           } else {
-            y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s'", config->name, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), json_string_value(json_object_get(json_object_get(j_refresh, "token"), "username")), scope_joined);
+            y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s', origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), json_string_value(json_object_get(json_object_get(j_refresh, "token"), "username")), scope_joined, get_ip_source(request));
             j_refresh_scope = get_refresh_token_duration_rolling(config, scope_joined);
             if (check_result_value(j_refresh_scope, G_OK)) {
               j_refresh_serialize = serialize_refresh_token(config,
@@ -9554,7 +9572,8 @@ static int get_access_token_from_refresh (const struct _u_request * request,
                                                       jti,
                                                       x5t_s256,
                                                       json_string_value(json_object_get(json_object_get(j_refresh, "token"), "dpop_jkt")),
-                                                      j_authorization_details_processed)) != NULL) {
+                                                      j_authorization_details_processed,
+                                                      get_ip_source(request))) != NULL) {
               if (serialize_access_token(config,
                                         GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN,
                                         gpor_id,
@@ -10241,7 +10260,8 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                                                       jti,
                                                       NULL,
                                                       NULL,
-                                                      j_authorization_details_processed)) != NULL) {
+                                                      j_authorization_details_processed,
+                                                      get_ip_source(request))) != NULL) {
               if (serialize_access_token(config,
                                          auth_type,
                                          0,
@@ -10330,7 +10350,8 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                                               access_token,
                                               authorization_code,
                                               json_string_value(json_object_get(json_object_get(j_auth_result, "session"), "scope_filtered")),
-                                              json_object_get(json_object_get(j_auth_result, "claims"), "id_token"))) != NULL) {
+                                              json_object_get(json_object_get(j_auth_result, "claims"), "id_token"),
+                                              ip_source)) != NULL) {
               if (serialize_id_token(config,
                                      GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE,
                                      id_token,
@@ -11238,7 +11259,8 @@ static int callback_rar_get_consent(const struct _u_request * request, struct _u
                                                 u_map_get(request->map_url, "type"),
                                                 u_map_get(request->map_url, "client_id"),
                                                 json_string_value(json_object_get((json_t *)response->shared_data, "username")),
-                                                0) != G_OK) {
+                                                0,
+                                                get_ip_source(request)) != G_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_rar_get_consent - Error authorization_details_add_consent (1)");
             response->status = 500;
           }
@@ -11280,7 +11302,8 @@ static int callback_rar_set_consent(const struct _u_request * request, struct _u
                                           u_map_get(request->map_url, "type"),
                                           u_map_get(request->map_url, "client_id"),
                                           json_string_value(json_object_get((json_t *)response->shared_data, "username")),
-                                          0==o_strcmp("1", u_map_get(request->map_url, "consent"))) != G_OK) {
+                                          0==o_strcmp("1", u_map_get(request->map_url, "consent")),
+                                          get_ip_source(request)) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_rar_get_consent - Error authorization_details_set_consent");
       response->status = 500;
     }
@@ -11297,7 +11320,8 @@ static int callback_rar_set_consent(const struct _u_request * request, struct _u
                                                 u_map_get(request->map_url, "type"),
                                                 u_map_get(request->map_url, "client_id"),
                                                 json_string_value(json_object_get((json_t *)response->shared_data, "username")),
-                                                0==o_strcmp("1", u_map_get(request->map_url, "consent"))) != G_OK) {
+                                                0==o_strcmp("1", u_map_get(request->map_url, "consent")),
+                                                get_ip_source(request)) != G_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_rar_get_consent - Error authorization_details_add_consent (1)");
             response->status = 500;
           }
@@ -11309,7 +11333,8 @@ static int callback_rar_set_consent(const struct _u_request * request, struct _u
                                               u_map_get(request->map_url, "type"),
                                               u_map_get(request->map_url, "client_id"),
                                               json_string_value(json_object_get((json_t *)response->shared_data, "username")),
-                                              0==o_strcmp("1", u_map_get(request->map_url, "consent"))) != G_OK) {
+                                              0==o_strcmp("1", u_map_get(request->map_url, "consent")),
+                                              get_ip_source(request)) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_rar_get_consent - Error authorization_details_add_consent (2)");
           response->status = 500;
         }
@@ -11336,7 +11361,8 @@ static int callback_rar_delete_consent(const struct _u_request * request, struct
     if (authorization_details_delete_consent(config,
                                           u_map_get(request->map_url, "type"),
                                           u_map_get(request->map_url, "client_id"),
-                                          json_string_value(json_object_get((json_t *)response->shared_data, "username"))) != G_OK) {
+                                          json_string_value(json_object_get((json_t *)response->shared_data, "username")),
+                                          get_ip_source(request)) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_rar_delete_consent - Error authorization_details_delete_consent");
       response->status = 500;
     }
@@ -11411,7 +11437,7 @@ static int jwt_autocheck(struct _oidc_config * config) {
   int ret;
 
   time(&now);
-  token = generate_access_token(config, GLEWLWYD_CHECK_JWT_USERNAME, NULL, NULL, GLEWLWYD_CHECK_JWT_SCOPE, NULL, GLEWLWYD_CHECK_JWT_SCOPE, now, jti, NULL, NULL, NULL);
+  token = generate_access_token(config, GLEWLWYD_CHECK_JWT_USERNAME, NULL, NULL, GLEWLWYD_CHECK_JWT_SCOPE, NULL, GLEWLWYD_CHECK_JWT_SCOPE, now, jti, NULL, NULL, NULL, NULL);
   if (token != NULL) {
     jwt = r_jwt_copy(config->oidc_resource_config->jwt);
     if (r_jwt_parse(jwt, token, 0) == RHN_OK && r_jwt_verify_signature(jwt, config->oidc_resource_config->jwk_verify_default, 0) == RHN_OK) {
