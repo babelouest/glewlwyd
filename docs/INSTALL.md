@@ -1195,6 +1195,7 @@ Event log messages have the following format:
 ```
 <date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Refresh token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
 <date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Access token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
+<date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Access token generated for client '<client_id>' with scope list '<scope_list>'
 <date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Refresh token generated for client '<client_id>' revoked
 <date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Access token generated for client '<client_id>' revoked
 ```
@@ -1204,6 +1205,7 @@ Event log messages have the following format:
 ```
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Refresh token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Access token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
+<date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Access token generated for client '<client_id>' with scope list '<scope_list>'
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - id_token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - client '<client_id>' registration updated with redirect_uri <redirect_uri_list>
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - client '<client_id>' registered with redirect_uri <redirect_uri_list>
@@ -1222,6 +1224,22 @@ Event log messages have the following format:
 <date_timestamp> - Glewlwyd INFO: Event register - Plugin '<plugin_name>' - user '<username>' updated its e-mail address to '<e-mail>'
 <date_timestamp> - Glewlwyd INFO: Event register - Plugin '<plugin_name>' - user '<username>' opened a reset credential session with e-mail token
 <date_timestamp> - Glewlwyd INFO: Event register - Plugin '<plugin_name>' - user '<username>' opened a reset credential session with code
+```
+
+#### Security events
+
+```
+<date_timestamp> - Glewlwyd WARNING: Security - Authorization invalid for username <username> at IP Address <HOST>
+<date_timestamp> - Glewlwyd WARNING: Security - Authorization invalid for client_id <client_id> at IP Address <HOST>
+<date_timestamp> - Glewlwyd WARNING: Security - Code invalid at IP Address <HOST>
+<date_timestamp> - Glewlwyd WARNING: Security - Token invalid at IP Address <HOST>
+<date_timestamp> - Glewlwyd WARNING: Security - Scheme email - code sent for username <username> at IP Address <HOST>
+<date_timestamp> - Glewlwyd WARNING: Security - Register new user - code sent to email <email> at IP Address <HOST>
+<date_timestamp> - Glewlwyd WARNING: Security - Verify e-mail - code invalid at IP Address <HOST>
+<date_timestamp> - Glewlwyd WARNING: Security - Update e-mail - token sent to email <email> at IP Address <HOST>
+<date_timestamp> - Glewlwyd WARNING: Security - Update e-mail - token invalid at IP Address <HOST>
+<date_timestamp> - Glewlwyd WARNING: Security - Reset credentials - token invalid at IP Address <HOST>
+<date_timestamp> - Glewlwyd WARNING: Security - Reset credentials - code invalid at IP Address <HOST>
 ```
 
 ## Run Glewlwyd
