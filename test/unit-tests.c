@@ -1,3 +1,4 @@
+/* Public domain, no copyright. Use at your own risk. */
 
 #include <string.h>
 #include <ctype.h>

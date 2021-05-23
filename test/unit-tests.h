@@ -1,3 +1,4 @@
+/* Public domain, no copyright. Use at your own risk. */
 
 #include <jansson.h>
 #include <ulfius.h>
