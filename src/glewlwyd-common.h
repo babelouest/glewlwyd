@@ -265,6 +265,14 @@ struct _plugin_module_instance {
   short int               enabled;
 };
 
+struct _glwd_metrics {
+  int           type;
+  char        * name;
+  char        * help;
+  struct _u_map labels;
+  size_t        counter;
+};
+
 /**
  * Structure used to store the global application config
  */
@@ -272,6 +280,7 @@ struct config_elements {
   char *                                         config_file;
   unsigned int                                   port;
   char *                                         bind_address;
+  char *                                         bind_address_metrics;
   char *                                         external_url;
   char *                                         api_prefix;
   char *                                         cookie_domain;
@@ -292,6 +301,8 @@ struct config_elements {
   struct _h_connection *                         conn;
   struct _u_instance *                           instance;
   unsigned int                                   instance_initialized;
+  struct _u_instance *                           instance_metrics;
+  unsigned int                                   instance_metrics_initialized;
   char *                                         session_key;
   unsigned int                                   session_expiration;
   unsigned int                                   salt_length;
@@ -312,6 +323,11 @@ struct config_elements {
   struct _pointer_list *                         plugin_module_instance_list;
   struct config_plugin *                         config_p;
   struct config_module *                         config_m;
+  unsigned short                                 metrics_endpoint;
+  unsigned int                                   metrics_endpoint_port;
+  unsigned short                                 metrics_endpoint_admin_session;
+  pthread_mutex_t                                metrics_lock;
+  struct _pointer_list *                         metrics_list;
 };
 
 /**

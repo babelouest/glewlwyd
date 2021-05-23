@@ -59,6 +59,7 @@
 
 // Configuration default values
 #define GLEWLWYD_DEFAULT_PORT                              4593
+#define GLEWLWYD_DEFAULT_METRICS_PORT                      4594
 #define GLEWLWYD_DEFAULT_API_PREFIX                        "api"
 #define GLEWLWYD_DEFAULT_ALLOW_ORIGIN                      "*"
 #define GLEWLWYD_DEFAULT_ADMIN_SCOPE                       "g_admin"
@@ -132,6 +133,10 @@
 #define GLEWLWYD_ENV_DATABASE_MARIADB_PORT      "GLWD_DATABASE_MARIADB_PORT"
 #define GLEWLWYD_ENV_DATABASE_SQLITE3_PATH      "GLWD_DATABASE_SQLITE3_PATH"
 #define GLEWLWYD_ENV_DATABASE_POSTGRE_CONNINFO  "GLWD_DATABASE_POSTGRE_CONNINFO"
+#define GLEWLWYD_ENV_METRICS                    "GLWD_METRICS"
+#define GLEWLWYD_ENV_METRICS_PORT               "GLWD_METRICS_PORT"
+#define GLEWLWYD_ENV_METRICS_ADMIN              "GLWD_METRICS_ADMIN"
+#define GLEWLWYD_ENV_METRICS_BIND_ADDRESS       "GLWD_METRICS_BIND_ADDRESS"
 
 // Main functions and misc functions
 int build_config_from_env(struct config_elements * config);
@@ -410,6 +415,8 @@ int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u
 int callback_glewlwyd_get_api_key_list (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 int callback_glewlwyd_delete_api_key (const struct _u_request * request, struct _u_response * response, void * plugin_data);
 int callback_glewlwyd_add_api_key (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+
+int callback_metrics (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_404_if_necessary (const struct _u_request * request, struct _u_response * response, void * user_data);

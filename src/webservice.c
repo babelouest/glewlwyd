@@ -31,9 +31,9 @@
 int callback_glewlwyd_options (const struct _u_request * request, struct _u_response * response, void * user_data) {
   UNUSED(request);
   UNUSED(user_data);
-  u_map_put(response->map_header, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  u_map_put(response->map_header, "Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Bearer, Authorization");
-  u_map_put(response->map_header, "Access-Control-Max-Age", "1800");
+  ulfius_add_header_to_response(response, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  ulfius_add_header_to_response(response, "Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Bearer, Authorization");
+  ulfius_add_header_to_response(response, "Access-Control-Max-Age", "1800");
   return U_CALLBACK_COMPLETE;
 }
 
@@ -2430,5 +2430,12 @@ int callback_glewlwyd_delete_api_key (const struct _u_request * request, struct 
   } else {
     y_log_message(Y_LOG_LEVEL_INFO, "Event - API key disabled by user '%s'", json_string_value(json_object_get((json_t *)response->shared_data, "username")));
   }
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_metrics (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  UNUSED(response);
+  UNUSED(user_data);
   return U_CALLBACK_CONTINUE;
 }

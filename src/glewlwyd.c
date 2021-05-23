@@ -5,7 +5,7 @@
  * Authentiation server
  * Users are authenticated via various backend available: database, ldap
  * Using various authentication methods available: password, OTP, send code, etc.
- * 
+ *
  * main functions definitions
  * and main process start
  *
@@ -47,7 +47,7 @@ static pthread_cond_t  global_handler_close_cond;
 /**
  *
  * Main function
- * 
+ *
  * Initialize config structure, parse the arguments and the config file
  * Then run the webservice
  *
@@ -56,9 +56,10 @@ int main (int argc, char ** argv) {
   struct config_elements * config = o_malloc(sizeof(struct config_elements));
   struct _http_compression_config http_comression_config;
   int res, use_config_file = 0, use_config_env = 0;
-  struct sockaddr_in bind_address;
+  struct sockaddr_in bind_address, bind_address_metrics;
   pthread_t signal_thread_id;
   static sigset_t close_signals;
+  pthread_mutexattr_t mutexattr;
   char * tmp, * tmp2;
 
   if (config == NULL) {
@@ -122,8 +123,11 @@ int main (int argc, char ** argv) {
   config->config_file = NULL;
   config->port = 0;
   config->bind_address = NULL;
+  config->bind_address_metrics = NULL;
   config->instance = NULL;
+  config->instance_metrics = NULL;
   config->instance_initialized = 0;
+  config->instance_metrics_initialized = 0;
   config->api_prefix = o_strdup(GLEWLWYD_DEFAULT_API_PREFIX);
   config->external_url = NULL;
   config->cookie_domain = NULL;
@@ -159,6 +163,9 @@ int main (int argc, char ** argv) {
   config->plugin_module_instance_list = NULL;
   config->admin_scope = o_strdup(GLEWLWYD_DEFAULT_ADMIN_SCOPE);
   config->profile_scope = o_strdup(GLEWLWYD_DEFAULT_PROFILE_SCOPE);
+  config->metrics_endpoint = 0;
+  config->metrics_endpoint_port = GLEWLWYD_DEFAULT_METRICS_PORT;
+  config->metrics_endpoint_admin_session = 1;
   http_comression_config.allow_gzip = 1;
   http_comression_config.allow_deflate = 1;
 
@@ -177,7 +184,7 @@ int main (int argc, char ** argv) {
     return 2;
   }
 
-  if (pthread_mutex_init(&global_handler_close_lock, NULL) || 
+  if (pthread_mutex_init(&global_handler_close_lock, NULL) ||
       pthread_cond_init(&global_handler_close_cond, NULL)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "init - Error initializing global_handler_close_lock or global_handler_close_cond");
   }
@@ -234,7 +241,7 @@ int main (int argc, char ** argv) {
     fprintf(stderr, "Error initializing logs\n");
     return 0;
   }
-  
+
   if (config->bind_address != NULL) {
     bind_address.sin_family = AF_INET;
     bind_address.sin_port = htons(config->port);
@@ -250,7 +257,32 @@ int main (int argc, char ** argv) {
     }
   }
   config->instance_initialized = 1;
-
+  
+  if (config->metrics_endpoint) {
+    if (config->bind_address_metrics != NULL) {
+      bind_address_metrics.sin_family = AF_INET;
+      bind_address_metrics.sin_port = htons(config->metrics_endpoint_port);
+      inet_aton(config->bind_address_metrics, (struct in_addr *)&bind_address_metrics.sin_addr.s_addr);
+      if (ulfius_init_instance(config->instance, config->metrics_endpoint_port, &bind_address_metrics, NULL) != U_OK) {
+        fprintf(stderr, "Error initializing metrics instance with bind address %s\n", config->bind_address_metrics);
+        exit_server(&config, GLEWLWYD_ERROR);
+      }
+    } else {
+      if (ulfius_init_instance(config->instance, config->metrics_endpoint_port, NULL, NULL) != U_OK) {
+        fprintf(stderr, "Error initializing metrics instance\n");
+        exit_server(&config, GLEWLWYD_ERROR);
+      }
+    }
+    pthread_mutexattr_init ( &mutexattr );
+    pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
+    if (pthread_mutex_init(&config->metrics_lock, &mutexattr) != 0) {
+      fprintf(stderr, "Error initializing metrics_lock\n");
+      exit_server(&config, GLEWLWYD_ERROR);
+    }
+    pthread_mutexattr_destroy(&mutexattr);
+    config->instance_metrics_initialized = 1;
+  }
+  
   // Initialize module config structure
   config->config_m->external_url = config->external_url;
   config->config_m->login_url = config->login_url;
@@ -299,7 +331,7 @@ int main (int argc, char ** argv) {
     exit_server(&config, GLEWLWYD_ERROR);
   }
 
-  // At this point, we declare all API endpoints and configure 
+  // At this point, we declare all API endpoints and configure
 
   // Authentication
   ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_auth, (void*)config);
@@ -421,7 +453,7 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/key/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_api_key_list, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/key/:key_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_api_key, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/key/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_api_key, (void*)config);
-  
+
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/config", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", "/config", NULL, GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
@@ -436,6 +468,15 @@ int main (int argc, char ** argv) {
   u_map_put(config->instance->default_headers, "Cache-Control", "no-store");
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
 
+  // metrics endpoint configuration
+  if (config->metrics_endpoint) {
+    if (config->metrics_endpoint_admin_session) {
+      ulfius_add_endpoint_by_val(config->instance_metrics, "GET", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session, (void*)config);
+      ulfius_add_endpoint_by_val(config->instance_metrics, "GET", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_glewlwyd_close_check_session, (void*)config);
+    }
+    ulfius_add_endpoint_by_val(config->instance_metrics, "GET", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_metrics, (void*)config);
+    ulfius_set_default_endpoint(config->instance_metrics, &callback_default, (void*)config);
+  }
   // Check if cookie domain (if set) is the same domain as in external_url
   if (o_strlen(config->cookie_domain)) {
     if (0 == o_strncmp("http://", config->external_url, o_strlen("http://"))) {
@@ -468,7 +509,7 @@ int main (int argc, char ** argv) {
       o_free(tmp);
     }
   }
-  
+
   y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd started on port %d, prefix: %s, secure: %s, bind address: %s, external URL: %s", config->instance->port, config->api_prefix, config->use_secure_connection?"true":"false", config->bind_address!=NULL?config->bind_address:"no", config->external_url);
 
   if (config->use_secure_connection) {
@@ -496,7 +537,7 @@ int main (int argc, char ** argv) {
   } else {
     res = ulfius_start_framework(config->instance);
   }
-  
+
   if (res == U_OK) {
     ulfius_global_init();
     // Wait until stop signal is broadcasted
@@ -520,36 +561,44 @@ int main (int argc, char ** argv) {
  */
 void exit_server(struct config_elements ** config, int exit_value) {
   int close_logs = 0;
-  
+
   if (config != NULL && *config != NULL) {
     close_logs = ((*config)->log_mode != Y_LOG_MODE_NONE && (*config)->log_level != Y_LOG_LEVEL_NONE);
-    
+
     close_user_module_instance_list(*config);
     close_user_module_list(*config);
-    
+
     close_client_module_instance_list(*config);
     close_client_module_list(*config);
-    
+
     close_user_auth_scheme_module_instance_list(*config);
     close_user_auth_scheme_module_list(*config);
-    
+
     close_plugin_module_instance_list(*config);
     close_plugin_module_list(*config);
-    
+
     /* stop framework */
     if ((*config)->instance_initialized) {
       ulfius_stop_framework((*config)->instance);
       ulfius_clean_instance((*config)->instance);
     }
+    
+    if ((*config)->instance_metrics_initialized) {
+      ulfius_stop_framework((*config)->instance_metrics);
+      ulfius_clean_instance((*config)->instance_metrics);
+      pthread_mutex_destroy(&(*config)->metrics_lock);
+    }
+    
     h_close_db((*config)->conn);
     h_clean_connection((*config)->conn);
     ulfius_global_close();
-    
+
     // Cleaning data
     o_free((*config)->instance);
-    
+    o_free((*config)->instance_metrics);
+
     y_log_message(Y_LOG_LEVEL_INFO, "Glewlwyd stopped");
-    
+
     o_free((*config)->config_file);
     o_free((*config)->api_prefix);
     o_free((*config)->cookie_domain);
@@ -568,13 +617,13 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free((*config)->user_auth_scheme_module_path);
     o_free((*config)->plugin_module_path);
     o_free((*config)->bind_address);
-    
+
     if ((*config)->static_file_config != NULL) {
       o_free((*config)->static_file_config->files_path);
       u_clean_compressed_inmemory_website_config((*config)->static_file_config);
       o_free((*config)->static_file_config);
     }
-    
+
     o_free((*config)->config_p);
     o_free((*config)->config_m);
     o_free(*config);
@@ -605,11 +654,11 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
     {"version", no_argument, NULL, 'v'},
     {NULL, 0, NULL, 0}
   };
-  
+
   if (config != NULL) {
     do {
       next_option = getopt_long(argc, argv, short_options, long_options, NULL);
-      
+
       switch (next_option) {
         case 'c':
           if (optarg != NULL) {
@@ -710,7 +759,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
           exit_server(&config, 0);
           break;
       }
-      
+
     } while (next_option != -1);
   } else {
     ret = G_ERROR;
@@ -723,22 +772,33 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
  * Read the config file, get mandatory variables and devices
  */
 int build_config_from_file(struct config_elements * config) {
-  
+
   config_t cfg;
-  config_setting_t * root = NULL, * database = NULL, * mime_type_list = NULL, * mime_type = NULL;
-  const char * str_value = NULL, * str_value_2 = NULL, * str_value_3 = NULL, * str_value_4 = NULL, * str_value_5 = NULL;
-  int int_value = 0, i, ret = G_OK;
+  config_setting_t * root = NULL,
+                   * database = NULL,
+                   * mime_type_list = NULL,
+                   * mime_type = NULL;
+  const char * str_value = NULL,
+             * str_value_2 = NULL,
+             * str_value_3 = NULL,
+             * str_value_4 = NULL,
+             * str_value_5 = NULL;
+  int int_value = 0,
+      int_value_2 = 0,
+      int_value_3 = 0,
+      i,
+      ret = G_OK;
   char * one_log_mode;
-  
+
   config_init(&cfg);
-  
+
   do {
     if (!config_read_file(&cfg, config->config_file)) {
       fprintf(stderr, "Error parsing config file %s\nOn line %d error: %s, exiting\n", config_error_file(&cfg), config_error_line(&cfg), config_error_text(&cfg));
       ret = G_ERROR_PARAM;
       break;
     }
-    
+
     // Get Port number to listen to
     if (!config->port && config_lookup_int(&cfg, "port", &int_value) == CONFIG_TRUE) {
       config->port = (uint)int_value;
@@ -752,7 +812,7 @@ int build_config_from_file(struct config_elements * config) {
         break;
       }
     }
-    
+
     if (config_lookup_string(&cfg, "api_prefix", &str_value) == CONFIG_TRUE) {
       o_free(config->api_prefix);
       config->api_prefix = o_strdup(str_value);
@@ -776,7 +836,7 @@ int build_config_from_file(struct config_elements * config) {
     if (config_lookup_int(&cfg, "cookie_secure", &int_value) == CONFIG_TRUE) {
       config->cookie_secure = (uint)int_value;
     }
-    
+
     // Get log mode
     if (!config->log_mode_args && config_lookup_string(&cfg, "log_mode", &str_value) == CONFIG_TRUE) {
       config->log_mode = Y_LOG_MODE_NONE;
@@ -812,7 +872,7 @@ int build_config_from_file(struct config_elements * config) {
         break;
       }
     }
-    
+
     // Get log level
     if (!config->log_level_args && config_lookup_string(&cfg, "log_level", &str_value) == CONFIG_TRUE) {
       config->log_level = Y_LOG_LEVEL_NONE;
@@ -837,7 +897,7 @@ int build_config_from_file(struct config_elements * config) {
         break;
       }
     }
-    
+
     if (config_lookup_string(&cfg, "session_key", &str_value) == CONFIG_TRUE) {
       o_free(config->session_key);
       config->session_key = o_strdup(str_value);
@@ -846,7 +906,7 @@ int build_config_from_file(struct config_elements * config) {
     if (config_lookup_int(&cfg, "session_expiration", &int_value) == CONFIG_TRUE) {
       config->session_expiration = (uint)int_value;
     }
-    
+
     if (config_lookup_string(&cfg, "external_url", &str_value) == CONFIG_TRUE) {
       o_free(config->external_url);
       config->external_url = o_strdup(str_value);
@@ -856,7 +916,7 @@ int build_config_from_file(struct config_elements * config) {
         break;
       }
     }
-    
+
     if (config_lookup_string(&cfg, "login_url", &str_value) == CONFIG_TRUE) {
       o_free(config->login_url);
       config->login_url = o_strdup(str_value);
@@ -866,7 +926,7 @@ int build_config_from_file(struct config_elements * config) {
         break;
       }
     }
-    
+
     if (config_lookup_string(&cfg, "delete_profile", &str_value) == CONFIG_TRUE) {
       if (0 == o_strcmp("no", str_value)) {
         config->delete_profile = GLEWLWYD_PROFILE_DELETE_UNAUTHORIZED;
@@ -891,7 +951,7 @@ int build_config_from_file(struct config_elements * config) {
         break;
       }
     }
-    
+
     // Populate mime types u_map
     mime_type_list = config_lookup(&cfg, "static_files_mime_types");
     if (mime_type_list != NULL) {
@@ -899,12 +959,12 @@ int build_config_from_file(struct config_elements * config) {
       for (i=0; i<len; i++) {
         mime_type = config_setting_get_elem(mime_type_list, i);
         if (mime_type != NULL) {
-          if (config_setting_lookup_string(mime_type, "extension", &str_value) == CONFIG_TRUE && 
+          if (config_setting_lookup_string(mime_type, "extension", &str_value) == CONFIG_TRUE &&
               config_setting_lookup_string(mime_type, "mime_type", &str_value_2) == CONFIG_TRUE) {
             u_map_put(&config->static_file_config->mime_types, str_value, str_value_2);
             if (config_setting_lookup_int(mime_type, "compress", &int_value) == CONFIG_TRUE) {
               if (int_value && u_add_mime_types_compressed(config->static_file_config, str_value_2) != U_OK) {
-                fprintf(stderr, "Error setting mime_type %s to compressed list (env), exiting\n", str_value_2);
+                fprintf(stderr, "Error setting mime_type %s to compressed list, exiting\n", str_value_2);
                 ret = G_ERROR_PARAM;
                 break;
               }
@@ -913,9 +973,9 @@ int build_config_from_file(struct config_elements * config) {
         }
       }
     }
-    
+
     if (config_lookup_bool(&cfg, "use_secure_connection", &int_value) == CONFIG_TRUE) {
-      if (config_lookup_string(&cfg, "secure_connection_key_file", &str_value) == CONFIG_TRUE && 
+      if (config_lookup_string(&cfg, "secure_connection_key_file", &str_value) == CONFIG_TRUE &&
           config_lookup_string(&cfg, "secure_connection_pem_file", &str_value_2) == CONFIG_TRUE) {
         config->use_secure_connection = int_value;
         config->secure_connection_key_file = o_strdup(str_value);
@@ -929,7 +989,7 @@ int build_config_from_file(struct config_elements * config) {
         break;
       }
     }
-    
+
     // Get token hash algorithm
     if (config_lookup_string(&cfg, "hash_algorithm", &str_value) == CONFIG_TRUE) {
       if (!o_strcmp("SHA1", str_value)) {
@@ -950,7 +1010,7 @@ int build_config_from_file(struct config_elements * config) {
         break;
       }
     }
-    
+
     root = config_root_setting(&cfg);
     database = config_setting_get_member(root, "database");
     if (database != NULL) {
@@ -1020,31 +1080,51 @@ int build_config_from_file(struct config_elements * config) {
       o_free(config->admin_scope);
       config->admin_scope = o_strdup(str_value);
     }
-    
+
     if (config_lookup_string(&cfg, "profile_scope", &str_value) == CONFIG_TRUE) {
       o_free(config->profile_scope);
       config->profile_scope = o_strdup(str_value);
     }
-    
+
     if (config_lookup_string(&cfg, "user_module_path", &str_value) == CONFIG_TRUE) {
       o_free(config->user_module_path);
       config->user_module_path = o_strdup(str_value);
     }
-    
+
     if (config_lookup_string(&cfg, "client_module_path", &str_value) == CONFIG_TRUE) {
       o_free(config->client_module_path);
       config->client_module_path = o_strdup(str_value);
     }
-    
+
     if (config_lookup_string(&cfg, "user_auth_scheme_module_path", &str_value) == CONFIG_TRUE) {
       o_free(config->user_auth_scheme_module_path);
       config->user_auth_scheme_module_path = o_strdup(str_value);
     }
-    
+
     if (config_lookup_string(&cfg, "plugin_module_path", &str_value) == CONFIG_TRUE) {
       o_free(config->plugin_module_path);
       config->plugin_module_path = o_strdup(str_value);
     }
+
+    if (config_lookup_bool(&cfg, "metrics_endpoint", &int_value) == CONFIG_TRUE) {
+      config->metrics_endpoint = (ushort)int_value;
+      
+      if (config_lookup_string(&cfg, "metrics_bind_address", &str_value) == CONFIG_TRUE) {
+        config->bind_address_metrics = o_strdup(str_value);
+        if (config->bind_address_metrics == NULL) {
+          fprintf(stderr, "Error allocating config->bind_address_metrics, exiting\n");
+          ret = G_ERROR_PARAM;
+          break;
+        }
+      }
+      
+      if (config_lookup_int(&cfg, "metrics_endpoint_port", &int_value_2) == CONFIG_TRUE &&
+          config_lookup_bool(&cfg, "metrics_endpoint_admin_session", &int_value_3) == CONFIG_TRUE) {
+        config->metrics_endpoint_port = (uint)int_value_2;
+        config->metrics_endpoint_admin_session = (ushort)int_value_3;
+      }
+    }
+
   } while (0);
   config_destroy(&cfg);
   return ret;
@@ -1059,7 +1139,7 @@ int build_config_from_env(struct config_elements * config) {
   int ret = G_OK;
   json_t * j_mime_types, * j_element;
   size_t index;
-  
+
   if (!config->port && (value = getenv(GLEWLWYD_ENV_PORT)) != NULL && o_strlen(value)) {
     endptr = NULL;
     lvalue = strtol(value, &endptr, 10);
@@ -1070,7 +1150,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_BIND_ADDRESS)) != NULL && o_strlen(value)) {
     o_free(config->bind_address);
     config->bind_address = o_strdup(value);
@@ -1079,7 +1159,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_API_PREFIX)) != NULL && o_strlen(value)) {
     o_free(config->api_prefix);
     config->api_prefix = o_strdup(value);
@@ -1088,7 +1168,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_EXTERNAL_URL)) != NULL && o_strlen(value)) {
     o_free(config->external_url);
     config->external_url = o_strdup(value);
@@ -1097,7 +1177,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_LOGIN_URL)) != NULL && o_strlen(value)) {
     o_free(config->login_url);
     config->login_url = o_strdup(value);
@@ -1106,7 +1186,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_PROFILE_DELETE)) != NULL && o_strlen(value)) {
     if (0 == o_strcmp("no", value)) {
       config->delete_profile = GLEWLWYD_PROFILE_DELETE_UNAUTHORIZED;
@@ -1119,7 +1199,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_STATIC_FILES_PATH)) != NULL && o_strlen(value)) {
     o_free(config->static_file_config->files_path);
     config->static_file_config->files_path = o_strdup(value);
@@ -1128,7 +1208,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES)) != NULL && o_strlen(value)) {
     j_mime_types = json_loads(value, JSON_DECODE_ANY, NULL);
     if (json_is_array(j_mime_types)) {
@@ -1154,7 +1234,7 @@ int build_config_from_env(struct config_elements * config) {
     }
     json_decref(j_mime_types);
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_ALLOW_ORIGIN)) != NULL && o_strlen(value)) {
     o_free(config->allow_origin);
     config->allow_origin = o_strdup(value);
@@ -1163,7 +1243,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if (!config->log_mode_args && (value = getenv(GLEWLWYD_ENV_LOG_MODE)) != NULL && o_strlen(value)) {
     config->log_mode = Y_LOG_MODE_NONE;
     one_log_mode = strtok((char *)value, ",");
@@ -1218,7 +1298,7 @@ int build_config_from_env(struct config_elements * config) {
   if ((value = getenv(GLEWLWYD_ENV_COOKIE_SECURE)) != NULL) {
     config->cookie_secure = (uint)(o_strcmp(value, "1")==0);
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_SESSION_EXPIRATION)) != NULL && o_strlen(value)) {
     endptr = NULL;
     lvalue = strtol(value, &endptr, 10);
@@ -1229,7 +1309,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_SESSION_KEY)) != NULL && o_strlen(value)) {
     o_free(config->session_key);
     config->session_key = o_strdup(value);
@@ -1238,7 +1318,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_ADMIN_SCOPE)) != NULL && o_strlen(value)) {
     o_free(config->admin_scope);
     config->admin_scope = o_strdup(value);
@@ -1247,7 +1327,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_PROFILE_SCOPE)) != NULL && o_strlen(value)) {
     o_free(config->profile_scope);
     config->profile_scope = o_strdup(value);
@@ -1256,7 +1336,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_USER_MODULE_PATH)) != NULL && o_strlen(value)) {
     o_free(config->user_module_path);
     config->user_module_path = o_strdup(value);
@@ -1265,7 +1345,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_CLIENT_MODULE_PATH)) != NULL && o_strlen(value)) {
     o_free(config->client_module_path);
     config->client_module_path = o_strdup(value);
@@ -1274,7 +1354,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_AUTH_SCHEME_MODULE_PATH)) != NULL && o_strlen(value)) {
     o_free(config->user_auth_scheme_module_path);
     config->user_auth_scheme_module_path = o_strdup(value);
@@ -1283,7 +1363,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_PLUGIN_MODULE_PATH)) != NULL && o_strlen(value)) {
     o_free(config->plugin_module_path);
     config->plugin_module_path = o_strdup(value);
@@ -1292,11 +1372,11 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_USE_SECURE_CONNECTION)) != NULL) {
     config->use_secure_connection = (uint)(o_strcmp(value, "1")==0);
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_SECURE_CONNECTION_KEY_FILE)) != NULL && o_strlen(value)) {
     o_free(config->secure_connection_key_file);
     config->secure_connection_key_file = o_strdup(value);
@@ -1305,7 +1385,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_SECURE_CONNECTION_PEM_FILE)) != NULL && o_strlen(value)) {
     o_free(config->secure_connection_pem_file);
     config->secure_connection_pem_file = o_strdup(value);
@@ -1314,7 +1394,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_SECURE_CONNECTION_CA_FILE)) != NULL && o_strlen(value)) {
     o_free(config->secure_connection_ca_file);
     config->secure_connection_ca_file = o_strdup(value);
@@ -1323,7 +1403,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_HASH_ALGORITHM)) != NULL && o_strlen(value)) {
     if (!o_strcmp("SHA1", value)) {
       config->hash_algorithm = digest_SHA1;
@@ -1342,7 +1422,7 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
   if ((value = getenv(GLEWLWYD_ENV_DATABASE_TYPE)) != NULL && o_strlen(value)) {
     if (config->conn != NULL) {
       h_close_db(config->conn);
@@ -1381,7 +1461,28 @@ int build_config_from_env(struct config_elements * config) {
       ret = G_ERROR_PARAM;
     }
   }
-  
+
+  if ((value = getenv(GLEWLWYD_ENV_METRICS)) != NULL) {
+    config->metrics_endpoint = (ushort)(o_strcmp(value, "1")==0);
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_METRICS_PORT)) != NULL) {
+    config->metrics_endpoint_port = (uint)(o_strcmp(value, "1")==0);
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_METRICS_ADMIN)) != NULL) {
+    config->metrics_endpoint_admin_session = (ushort)(o_strcmp(value, "1")==0);
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_METRICS_BIND_ADDRESS)) != NULL && o_strlen(value)) {
+    o_free(config->bind_address_metrics);
+    config->bind_address_metrics = o_strdup(value);
+    if (config->bind_address_metrics == NULL) {
+      fprintf(stderr, "Error allocating config->bind_address_metrics (env), exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+
   return ret;
 }
 
@@ -1391,41 +1492,41 @@ int build_config_from_env(struct config_elements * config) {
  */
 int check_config(struct config_elements * config) {
   int ret = G_OK;
-  
+
   if (!o_strlen(config->external_url)) {
     fprintf(stderr, "Error - configuration external_url mandatory\n");
     ret = G_ERROR_PARAM;
   }
-  
+
   if (!o_strlen(config->user_module_path)) {
     fprintf(stderr, "Error - configuration user_module_path mandatory\n");
     ret = G_ERROR_PARAM;
   }
-  
+
   if (!o_strlen(config->client_module_path)) {
     fprintf(stderr, "Error - configuration client_module_path mandatory\n");
     ret = G_ERROR_PARAM;
   }
-  
+
   if (!o_strlen(config->user_auth_scheme_module_path)) {
     fprintf(stderr, "Error - configuration user_auth_scheme_module_path mandatory\n");
     ret = G_ERROR_PARAM;
   }
-  
+
   if (!o_strlen(config->plugin_module_path)) {
     fprintf(stderr, "Error - configuration plugin_module_path mandatory\n");
     ret = G_ERROR_PARAM;
   }
-  
+
   if (config->conn == NULL) {
     fprintf(stderr, "Error - no database configuration specified\n");
     ret = G_ERROR_PARAM;
   }
-  
+
   if (!config->port) {
     config->port = GLEWLWYD_DEFAULT_PORT;
   }
-  
+
   return ret;
 }
 
@@ -1510,7 +1611,7 @@ int module_instance_parameters_check(const char * module_parameters, const char 
   json_t * j_parameters = json_loads(module_parameters, JSON_DECODE_ANY, NULL), * j_instance_parameters = json_loads(instance_parameters, JSON_DECODE_ANY, NULL), * j_parameter, * j_value;
   int ret = G_OK;
   const char * key;
-  
+
   json_object_foreach(j_parameters, key, j_parameter) {
     if (json_object_get(j_parameter, "mandatory") == json_true() && json_object_get(j_instance_parameters, key) == NULL) {
       ret = G_ERROR_PARAM;
@@ -1530,7 +1631,7 @@ int module_instance_parameters_check(const char * module_parameters, const char 
   }
   json_decref(j_parameters);
   json_decref(j_instance_parameters);
-  
+
   return ret;
 }
 
@@ -1539,9 +1640,9 @@ static int load_user_module_file(struct config_elements * config, const char * f
   struct _user_module * cur_user_module = NULL;
   int ret;
   json_t * j_parameters;
-  
+
   file_handle = dlopen(file_path, RTLD_LAZY);
-  
+
   if (file_handle != NULL) {
     cur_user_module = o_malloc(sizeof(struct _user_module));
     if (cur_user_module != NULL) {
@@ -1563,7 +1664,7 @@ static int load_user_module_file(struct config_elements * config, const char * f
       *(void **) (&cur_user_module->user_module_delete) = dlsym(file_handle, "user_module_delete");
       *(void **) (&cur_user_module->user_module_check_password) = dlsym(file_handle, "user_module_check_password");
       *(void **) (&cur_user_module->user_module_update_password) = dlsym(file_handle, "user_module_update_password");
-      
+
       if (cur_user_module->user_module_load != NULL &&
           cur_user_module->user_module_unload != NULL &&
           cur_user_module->user_module_init != NULL &&
@@ -1657,7 +1758,7 @@ static int load_user_module_file(struct config_elements * config, const char * f
     y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_file - Error opening module file %s, reason: %s", file_path, dlerror());
     ret = G_ERROR;
   }
-  
+
   return ret;
 }
 
@@ -1668,7 +1769,7 @@ int init_user_module_list(struct config_elements * config) {
   char * file_path;
   struct stat u_stat;
   memset(&u_stat, 0, sizeof(struct stat));
-  
+
   config->user_module_list = o_malloc(sizeof(struct _pointer_list));
   if (config->user_module_list != NULL) {
     pointer_list_init(config->user_module_list);
@@ -1704,7 +1805,7 @@ int init_user_module_list(struct config_elements * config) {
     y_log_message(Y_LOG_LEVEL_ERROR, "init_user_module_list - Error allocating resources for config->user_module_list");
     ret = G_ERROR_MEMORY;
   }
-  
+
   return ret;
 }
 
@@ -1715,7 +1816,7 @@ int load_user_module_instance_list(struct config_elements * config) {
   struct _user_module_instance * cur_instance;
   struct _user_module * module = NULL;
   char * message;
-  
+
   config->user_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->user_module_instance_list != NULL) {
     pointer_list_init(config->user_module_instance_list);
@@ -1828,7 +1929,7 @@ struct _user_module * get_user_module_lib(struct config_elements * config, const
 
 void close_user_module_instance_list(struct config_elements * config) {
   size_t i;
-  
+
   for (i=0; i<pointer_list_size(config->user_module_instance_list); i++) {
     struct _user_module_instance * instance = (struct _user_module_instance *)pointer_list_get_at(config->user_module_instance_list, i);
     if (instance != NULL) {
@@ -1845,14 +1946,14 @@ void close_user_module_instance_list(struct config_elements * config) {
 
 void close_user_module_list(struct config_elements * config) {
   size_t i;
-  
+
   for (i=0; i<pointer_list_size(config->user_module_list); i++) {
     struct _user_module * module = (struct _user_module *)pointer_list_get_at(config->user_module_list, i);
     if (module != NULL) {
       if (module->user_module_unload(config->config_m) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_list - Error user_module_unload for module '%s'", module->name);
       }
-/* 
+/*
 * dlclose() makes valgrind not useful when it comes to libraries
 * they say it's not relevant to use it anyway
 * I'll let it here until I'm sure
@@ -1879,7 +1980,7 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
   json_t * j_module;
 
   file_handle = dlopen(file_path, RTLD_LAZY);
-  
+
   if (file_handle != NULL) {
     cur_user_auth_scheme_module = o_malloc(sizeof(struct _user_auth_scheme_module));
     if (cur_user_auth_scheme_module != NULL) {
@@ -1897,7 +1998,7 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
       *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_trigger) = dlsym(file_handle, "user_auth_scheme_module_trigger");
       *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_can_use) = dlsym(file_handle, "user_auth_scheme_module_can_use");
       *(void **) (&cur_user_auth_scheme_module->user_auth_scheme_module_identify) = dlsym(file_handle, "user_auth_scheme_module_identify");
-      
+
       if (cur_user_auth_scheme_module->user_auth_scheme_module_load != NULL &&
           cur_user_auth_scheme_module->user_auth_scheme_module_unload != NULL &&
           cur_user_auth_scheme_module->user_auth_scheme_module_init != NULL &&
@@ -1972,7 +2073,7 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
     y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_file - Error opening module file %s, reason: %s", file_path, dlerror());
     ret = G_ERROR;
   }
-  
+
   return ret;
 }
 
@@ -1983,7 +2084,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
   char * file_path;
   struct stat u_stat;
   memset(&u_stat, 0, sizeof(struct stat));
-  
+
   config->user_auth_scheme_module_list = o_malloc(sizeof(struct _pointer_list));
   if (config->user_auth_scheme_module_list != NULL) {
     pointer_list_init(config->user_auth_scheme_module_list);
@@ -2019,7 +2120,7 @@ int init_user_auth_scheme_module_list(struct config_elements * config) {
     y_log_message(Y_LOG_LEVEL_ERROR, "init_user_auth_scheme_module_list - Error allocating resources for config->user_auth_scheme_module_list");
     ret = G_ERROR_MEMORY;
   }
-  
+
   return ret;
 }
 
@@ -2030,7 +2131,7 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
   struct _user_auth_scheme_module_instance * cur_instance;
   struct _user_auth_scheme_module * module = NULL;
   char * message;
-  
+
   config->user_auth_scheme_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->user_auth_scheme_module_instance_list != NULL) {
     pointer_list_init(config->user_auth_scheme_module_instance_list);
@@ -2146,7 +2247,7 @@ struct _user_auth_scheme_module * get_user_auth_scheme_module_lib(struct config_
 
 void close_user_auth_scheme_module_instance_list(struct config_elements * config) {
   size_t i;
-  
+
   for (i=0; i<pointer_list_size(config->user_auth_scheme_module_instance_list); i++) {
     struct _user_auth_scheme_module_instance * instance = (struct _user_auth_scheme_module_instance *)pointer_list_get_at(config->user_auth_scheme_module_instance_list, i);
     if (instance != NULL) {
@@ -2163,7 +2264,7 @@ void close_user_auth_scheme_module_instance_list(struct config_elements * config
 
 void close_user_auth_scheme_module_list(struct config_elements * config) {
   size_t i;
-  
+
   for (i=0; i<pointer_list_size(config->user_auth_scheme_module_list); i++) {
     struct _user_auth_scheme_module * module = (struct _user_auth_scheme_module *)pointer_list_get_at(config->user_auth_scheme_module_list, i);
     if (module != NULL) {
@@ -2192,7 +2293,7 @@ static int load_client_module_file(struct config_elements * config, const char *
   json_t * j_parameters;
 
   file_handle = dlopen(file_path, RTLD_LAZY);
-  
+
   if (file_handle != NULL) {
     cur_client_module = o_malloc(sizeof(struct _client_module));
     if (cur_client_module != NULL) {
@@ -2211,7 +2312,7 @@ static int load_client_module_file(struct config_elements * config, const char *
       *(void **) (&cur_client_module->client_module_update) = dlsym(file_handle, "client_module_update");
       *(void **) (&cur_client_module->client_module_delete) = dlsym(file_handle, "client_module_delete");
       *(void **) (&cur_client_module->client_module_check_password) = dlsym(file_handle, "client_module_check_password");
-      
+
       if (cur_client_module->client_module_load != NULL &&
           cur_client_module->client_module_unload != NULL &&
           cur_client_module->client_module_init != NULL &&
@@ -2298,7 +2399,7 @@ int init_client_module_list(struct config_elements * config) {
   char * file_path;
   struct stat u_stat;
   memset(&u_stat, 0, sizeof(struct stat));
-  
+
   config->client_module_list = o_malloc(sizeof(struct _pointer_list));
   if (config->client_module_list != NULL) {
     pointer_list_init(config->client_module_list);
@@ -2334,7 +2435,7 @@ int init_client_module_list(struct config_elements * config) {
     y_log_message(Y_LOG_LEVEL_ERROR, "init_client_module_list - Error allocating resources for config->client_module_list");
     ret = G_ERROR_MEMORY;
   }
-  
+
   return ret;
 }
 
@@ -2344,7 +2445,7 @@ int load_client_module_instance_list(struct config_elements * config) {
   size_t index, i;
   struct _client_module_instance * cur_instance;
   struct _client_module * module = NULL;
-  
+
   config->client_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->client_module_instance_list != NULL) {
     pointer_list_init(config->client_module_instance_list);
@@ -2452,7 +2553,7 @@ struct _client_module * get_client_module_lib(struct config_elements * config, c
 
 void close_client_module_instance_list(struct config_elements * config) {
   size_t i;
-  
+
   for (i=0; i<pointer_list_size(config->client_module_instance_list); i++) {
     struct _client_module_instance * instance = (struct _client_module_instance *)pointer_list_get_at(config->client_module_instance_list, i);
     if (instance != NULL) {
@@ -2469,14 +2570,14 @@ void close_client_module_instance_list(struct config_elements * config) {
 
 void close_client_module_list(struct config_elements * config) {
   size_t i;
-  
+
   for (i=0; i<pointer_list_size(config->client_module_list); i++) {
     struct _client_module * module = (struct _client_module *)pointer_list_get_at(config->client_module_list, i);
     if (module != NULL) {
       if (module->client_module_unload(config->config_m) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_list - Error client_module_unload for module '%s'", module->name);
       }
-/* 
+/*
 * dlclose() makes valgrind not useful when it comes to libraries
 * they say it's not relevant to use it anyway
 * I'll let it here until I'm sure
@@ -2503,7 +2604,7 @@ static int load_plugin_module_file(struct config_elements * config, const char *
   json_t * j_result;
 
   file_handle = dlopen(file_path, RTLD_LAZY);
-  
+
   if (file_handle != NULL) {
     cur_plugin_module = o_malloc(sizeof(struct _plugin_module));
     if (cur_plugin_module != NULL) {
@@ -2514,7 +2615,7 @@ static int load_plugin_module_file(struct config_elements * config, const char *
       *(void **) (&cur_plugin_module->plugin_module_unload) = dlsym(file_handle, "plugin_module_unload");
       *(void **) (&cur_plugin_module->plugin_module_init) = dlsym(file_handle, "plugin_module_init");
       *(void **) (&cur_plugin_module->plugin_module_close) = dlsym(file_handle, "plugin_module_close");
-      
+
       if (cur_plugin_module->plugin_module_load != NULL &&
           cur_plugin_module->plugin_module_unload != NULL &&
           cur_plugin_module->plugin_module_init != NULL &&
@@ -2588,7 +2689,7 @@ int init_plugin_module_list(struct config_elements * config) {
   char * file_path;
   struct stat u_stat;
   memset(&u_stat, 0, sizeof(struct stat));
-  
+
   config->plugin_module_list = o_malloc(sizeof(struct _pointer_list));
   if (config->plugin_module_list != NULL) {
     pointer_list_init(config->plugin_module_list);
@@ -2624,7 +2725,7 @@ int init_plugin_module_list(struct config_elements * config) {
     y_log_message(Y_LOG_LEVEL_ERROR, "init_plugin_module_list - Error allocating resources for config->client_module_list");
     ret = G_ERROR_MEMORY;
   }
-  
+
   return ret;
 }
 
@@ -2635,7 +2736,7 @@ int load_plugin_module_instance_list(struct config_elements * config) {
   struct _plugin_module_instance * cur_instance;
   struct _plugin_module * module = NULL;
   char * message;
-  
+
   config->plugin_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->plugin_module_instance_list != NULL) {
     pointer_list_init(config->plugin_module_instance_list);
@@ -2743,7 +2844,7 @@ struct _plugin_module * get_plugin_module_lib(struct config_elements * config, c
 
 void close_plugin_module_instance_list(struct config_elements * config) {
   size_t i;
-  
+
   for (i=0; i<pointer_list_size(config->plugin_module_instance_list); i++) {
     struct _plugin_module_instance * instance = (struct _plugin_module_instance *)pointer_list_get_at(config->plugin_module_instance_list, i);
     if (instance != NULL) {
@@ -2760,7 +2861,7 @@ void close_plugin_module_instance_list(struct config_elements * config) {
 
 void close_plugin_module_list(struct config_elements * config) {
   size_t i;
-  
+
   for (i=0; i<pointer_list_size(config->plugin_module_list); i++) {
     struct _plugin_module * module = (struct _plugin_module *)pointer_list_get_at(config->plugin_module_list, i);
     if (module != NULL) {
