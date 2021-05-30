@@ -1,5 +1,9 @@
 # Glewlwyd Changelog
 
+## 2.5.4
+
+- Add option to forbid a scheme to be registered in the profile and/or the reset credentials pages
+
 ## 2.5.3
 
 - Fix UI bugs
