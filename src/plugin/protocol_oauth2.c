@@ -3144,8 +3144,11 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
       if (check_result_value(j_session, G_OK)) {
         j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, u_map_get(request->map_url, "impersonate"));
         if (check_result_value(j_user, G_OK)) {
-          response->shared_data = json_pack("{ss}", "username", u_map_get(request->map_url, "impersonate"));
-          ret = U_CALLBACK_CONTINUE;
+          if (ulfius_set_response_shared_data(response, json_pack("{ss}", "username", u_map_get(request->map_url, "impersonate")), (void (*)(void *))&json_decref) != U_OK) {
+            ret = U_CALLBACK_ERROR;
+          } else {
+            ret = U_CALLBACK_CONTINUE;
+          }
         }
         json_decref(j_user);
       }
@@ -3153,8 +3156,11 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
     } else {
       j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, NULL);
       if (check_result_value(j_session, G_OK)) {
-        response->shared_data = json_pack("{ss}", "username", json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
-        ret = U_CALLBACK_CONTINUE;
+        if (ulfius_set_response_shared_data(response, json_pack("{ss}", "username", json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username"))), (void (*)(void *))&json_decref) != U_OK) {
+          ret = U_CALLBACK_ERROR;
+        } else {
+          ret = U_CALLBACK_CONTINUE;
+        }
       }
       json_decref(j_session);
     }
@@ -3336,15 +3342,6 @@ static int callback_oauth2_disable_refresh_token(const struct _u_request * reque
     response->status = 500;
   }
   return U_CALLBACK_CONTINUE;
-}
-
-static int callback_oauth2_clean(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  UNUSED(request);
-  UNUSED(user_data);
-  if (response->shared_data != NULL) {
-    json_decref((json_t *)response->shared_data);
-  }
-  return U_CALLBACK_COMPLETE;
 }
 
 /**
@@ -3749,8 +3746,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
          config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) != G_OK || 
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_get_profile, (void*)*cls) != G_OK || 
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "profile/token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_refresh_token_list_get, (void*)*cls) != G_OK || 
-         config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "profile/token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_disable_refresh_token, (void*)*cls) != G_OK || 
-         config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "profile/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oauth2_clean, NULL) != G_OK) {
+         config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "profile/token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_disable_refresh_token, (void*)*cls) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init - oauth2 - Error adding endpoints");
         j_return = json_pack("{si}", "result", G_ERROR);
         break;
@@ -3779,10 +3775,8 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         if (
           config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "introspect/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_intropect_revoke, (void*)*cls) != G_OK || 
           config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "introspect/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_introspection, (void*)*cls) != G_OK || 
-          config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "introspect/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oauth2_clean, NULL) != G_OK ||
           config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_intropect_revoke, (void*)*cls) != G_OK || 
-          config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_revocation, (void*)*cls) != G_OK ||
-          config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_oauth2_clean, NULL) != G_OK
+          config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "revoke/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_revocation, (void*)*cls) != G_OK
           ) {
           y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init - oauth2 - oauth2 - Error adding introspect/revoke endpoints");
           j_return = json_pack("{si}", "result", G_ERROR);

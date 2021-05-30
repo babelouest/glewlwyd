@@ -1563,7 +1563,9 @@ static int callback_register_update_email_check_session(const struct _u_request 
   
   json_t * j_session = register_check_session(config, u_map_get(request->map_cookie, json_string_value(json_object_get(config->j_parameters, "session-key"))));
   if (check_result_value(j_session, G_OK)) {
-    response->shared_data = json_incref(json_object_get(j_session, "user"));
+    if (ulfius_set_response_shared_data(response, json_deep_copy(json_object_get(j_session, "user")), (void (*)(void *))&json_decref) != U_OK) {
+      ret = U_CALLBACK_ERROR;
+    }
   } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
     ret = U_CALLBACK_UNAUTHORIZED;
   } else {
@@ -1870,7 +1872,10 @@ static int callback_register_get_scheme_registration(const struct _u_request * r
   struct _register_config * config = (struct _register_config *)user_data;
   json_t * j_parameters = ulfius_get_json_body_request(request, NULL), * j_response;
   
-  if (json_string_length(json_object_get(j_parameters, "scheme_name")) && json_string_length(json_object_get(j_parameters, "username")) && 0 == o_strcmp(json_string_value(json_object_get(j_parameters, "username")), json_string_value(json_object_get((json_t *)response->shared_data, "username"))) && can_register_scheme(config, request, json_string_value(json_object_get(j_parameters, "scheme_name")))) {
+  if (json_string_length(json_object_get(j_parameters, "scheme_name")) && 
+      json_string_length(json_object_get(j_parameters, "username")) && 
+      0 == o_strcmp(json_string_value(json_object_get(j_parameters, "username")), json_string_value(json_object_get((json_t *)response->shared_data, "username"))) && 
+      can_register_scheme(config, request, json_string_value(json_object_get(j_parameters, "scheme_name")))) {
     j_response = config->glewlwyd_config->glewlwyd_plugin_callback_scheme_register_get(config->glewlwyd_config, json_string_value(json_object_get(j_parameters, "scheme_name")), request, json_string_value(json_object_get((json_t *)response->shared_data, "username")));
     if (check_result_value(j_response, G_OK)) {
       if (json_object_get(j_response, "response") != NULL) {
@@ -1896,11 +1901,37 @@ static int callback_register_get_scheme_registration(const struct _u_request * r
   return U_CALLBACK_CONTINUE;
 }
 
+static int callback_register_check_forbid_reset_credential(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct _register_config * config = (struct _register_config *)user_data;
+  json_t * j_parameters = ulfius_get_json_body_request(request, NULL),
+         * j_result = config->glewlwyd_config->glewlwyd_plugin_callback_get_scheme_module(config->glewlwyd_config, json_string_value(json_object_get(j_parameters, "scheme_name")));
+  int ret = U_CALLBACK_CONTINUE;
+  
+  if (check_result_value(j_result, G_OK)) {
+    if (json_object_get(json_object_get(j_result, "module"), "forbid_user_reset_credential") == json_true()) {
+      response->status = 403;
+      ret = U_CALLBACK_COMPLETE;
+    }
+  } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_check_forbid_reset_credential - Error auth_register_get_user_scheme");
+    response->status = 500;
+  }
+  json_decref(j_parameters);
+  json_decref(j_result);
+  return ret;
+}
+
 static int callback_register_update_scheme_registration(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _register_config * config = (struct _register_config *)user_data;
   json_t * j_parameters = ulfius_get_json_body_request(request, NULL), * j_response;
   
-  if (json_string_length(json_object_get(j_parameters, "scheme_name")) && json_is_object(json_object_get(j_parameters, "value")) && json_string_length(json_object_get(j_parameters, "username")) && 0 == o_strcmp(json_string_value(json_object_get(j_parameters, "username")), json_string_value(json_object_get((json_t *)response->shared_data, "username"))) && can_register_scheme(config, request, json_string_value(json_object_get(j_parameters, "scheme_name")))) {
+  if (json_string_length(json_object_get(j_parameters, "scheme_name")) &&
+      json_is_object(json_object_get(j_parameters, "value")) &&
+      json_string_length(json_object_get(j_parameters, "username")) &&
+      0 == o_strcmp(json_string_value(json_object_get(j_parameters, "username")), json_string_value(json_object_get((json_t *)response->shared_data, "username"))) && 
+      can_register_scheme(config, request, json_string_value(json_object_get(j_parameters, "scheme_name")))) {
     j_response = config->glewlwyd_config->glewlwyd_plugin_callback_scheme_register(config->glewlwyd_config, json_string_value(json_object_get(j_parameters, "scheme_name")), request, json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_object_get(j_parameters, "value"));
     if (check_result_value(j_response, G_ERROR_PARAM)) {
       if (json_object_get(j_response, "response") != NULL) {
@@ -2018,18 +2049,6 @@ static int callback_register_complete_registration(const struct _u_request * req
   return U_CALLBACK_CONTINUE;
 }
 
-static int callback_register_clean_session(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  UNUSED(user_data);
-  UNUSED(request);
-  if (response->shared_data != NULL) {
-    json_decref((json_t *)response->shared_data);
-  }
-  if (request->callback_position < 2) {
-    ulfius_set_empty_body_response(response, 404);
-  }
-  return U_CALLBACK_COMPLETE;
-}
-
 /**
  * verify that the http request is authorized based on the session
  */
@@ -2040,8 +2059,11 @@ static int callback_check_glewlwyd_session(const struct _u_request * request, st
   
   j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, NULL);
   if (check_result_value(j_session, G_OK)) {
-    response->shared_data = json_pack("{ss}", "username", json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
-    ret = U_CALLBACK_CONTINUE;
+    if (ulfius_set_response_shared_data(response, json_pack("{ss}", "username", json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username"))), (void (*)(void *))&json_decref) != U_OK) {
+      ret = U_CALLBACK_ERROR;
+    } else {
+      ret = U_CALLBACK_CONTINUE;
+    }
   }
   json_decref(j_session);
   return ret;
@@ -2084,22 +2106,15 @@ static int callback_register_update_email_verify(const struct _u_request * reque
   return U_CALLBACK_CONTINUE;
 }
 
-static int callback_register_clean(const struct _u_request * request, struct _u_response * response, void * user_data) {
-  UNUSED(request);
-  UNUSED(user_data);
-  if (response->shared_data != NULL) {
-    json_decref((json_t *)response->shared_data);
-  }
-  return U_CALLBACK_COMPLETE;
-}
-
 static int callback_register_reset_credentials_check_session(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _register_config * config = (struct _register_config *)user_data;
   int ret = U_CALLBACK_CONTINUE;
   
   json_t * j_session = reset_credentials_check_session(config, u_map_get(request->map_cookie, json_string_value(json_object_get(config->j_parameters, "reset-credentials-session-key"))));
   if (check_result_value(j_session, G_OK)) {
-    response->shared_data = json_incref(json_object_get(j_session, "user"));
+    if (ulfius_set_response_shared_data(response, json_deep_copy(json_object_get(j_session, "user")), (void (*)(void *))&json_decref) != U_OK) {
+      ret = U_CALLBACK_ERROR;
+    }
   } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
     ret = U_CALLBACK_UNAUTHORIZED;
   } else {
@@ -2609,8 +2624,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                 config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "profile/scheme/register", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_get_scheme_registration, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "profile/scheme/register", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_scheme_registration, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "profile/scheme/register/canuse", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_canuse_scheme_registration, (void*)register_config) == G_OK &&
-                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "profile/complete", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_complete_registration, (void*)register_config) == G_OK &&
-                config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "profile/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_register_clean_session, NULL) == G_OK) {
+                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "profile/complete", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_complete_registration, (void*)register_config) == G_OK) {
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init register - Error glewlwyd_callback_add_plugin_endpoint");
               registration_ok = 0;
@@ -2619,7 +2633,6 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           if (json_object_get(j_parameters, "update-email") == json_true()) {
             if (config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "update-email", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "update-email", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_email_trigger, (void*)register_config) == G_OK &&
-                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "update-email", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_register_clean, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "update-email/:token", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_email_verify, (void*)register_config) == G_OK) {
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init update-email - Error glewlwyd_callback_add_plugin_endpoint");
@@ -2630,11 +2643,11 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
             if (config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "reset-credentials/profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_register_reset_credentials_check_session, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "reset-credentials/profile/password", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_reset_credentials_update_password, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "reset-credentials/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_get_profile, (void*)register_config) == G_OK &&
+                config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "reset-credentials/profile/scheme/register/*", GLEWLWYD_CALLBACK_PRIORITY_PRE_APPLICATION, &callback_register_check_forbid_reset_credential, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "reset-credentials/profile/scheme/register", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_get_scheme_registration, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "reset-credentials/profile/scheme/register", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_scheme_registration, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "reset-credentials/profile/scheme/register/canuse", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_canuse_scheme_registration, (void*)register_config) == G_OK &&
-                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "reset-credentials/profile/complete", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_reset_credentials_complete_registration, (void*)register_config) == G_OK &&
-                config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "reset-credentials/profile/*", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_register_clean_session, NULL) == G_OK) {
+                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "reset-credentials/profile/complete", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_reset_credentials_complete_registration, (void*)register_config) == G_OK) {
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init reset-credentials - Error glewlwyd_callback_add_plugin_endpoint");
               update_email_ok = 0;
@@ -2650,8 +2663,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
             if (json_object_get(j_parameters, "reset-credentials-code") == json_true()) {
               if (config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "reset-credentials-code", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_reset_credentials_code_verify, (void*)register_config) == G_OK &&
                   config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "reset-credentials-code", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session, (void*)register_config) == G_OK &&
-                  config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "reset-credentials-code", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_reset_credentials_code_generate, (void*)register_config) == G_OK &&
-                  config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "reset-credentials-code", GLEWLWYD_CALLBACK_PRIORITY_CLOSE, &callback_register_clean_session, NULL) == G_OK) {
+                  config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "reset-credentials-code", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_reset_credentials_code_generate, (void*)register_config) == G_OK) {
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init reset-credentials-code - Error glewlwyd_callback_add_plugin_endpoint");
                 update_email_ok = 0;
@@ -2707,6 +2719,7 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
       config->glewlwyd_callback_remove_plugin_endpoint(config, "PUT", name, "update-email/:token");
     }
     if (json_object_get(((struct _register_config *)cls)->j_parameters, "reset-credentials") == json_true()) {
+      config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "reset-credentials/profile/scheme/register/*");
       config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "reset-credentials/profile/*");
       config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "reset-credentials/profile/password");
       config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "reset-credentials/profile/");

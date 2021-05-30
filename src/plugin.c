@@ -546,6 +546,14 @@ int glewlwyd_plugin_callback_delete_client(struct config_plugin * config, const 
   return delete_client(config->glewlwyd_config, client_id, NULL);
 }
 
+json_t * glewlwyd_plugin_callback_get_scheme_module(struct config_plugin * config, const char * mod_name) {
+  if (o_strlen(mod_name)) {
+    return get_user_auth_scheme_module(config->glewlwyd_config, mod_name);
+  } else {
+    return json_pack("{si}", "result", G_ERROR_PARAM);
+  }
+}
+
 json_t * glewlwyd_plugin_callback_get_scheme_list(struct config_plugin * config, const char * username) {
   if (o_strlen(username)) {
     return get_scheme_list_for_user(config->glewlwyd_config, username);
