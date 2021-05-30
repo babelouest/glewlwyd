@@ -1221,7 +1221,7 @@
     "reset-credentials-complete-message": "After changing your password and/or restoring your credentials, you can reconnect to the application using the following link",
     "session-client-grant-table": "Client grants",
     "session-remove-scope-grant-title": "Remove grant",
-    "session-remove-scope-grant-message": "Do you want to remove this grant?"
+    "session-remove-scope-grant-message": "Do you want to remove this grant?",
     "scheme-register-forbidden": "The administrator forbids to register or get the registration of this scheme"
   },
   "callback": {
