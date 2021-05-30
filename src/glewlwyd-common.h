@@ -5,7 +5,7 @@
  * Authentiation server
  * Users are authenticated via various backend available: database, ldap
  * Using various authentication methods available: password, OTP, send code, etc.
- * 
+ *
  * Declarations for common constants and prototypes used in Glewlwyd main program and modules
  *
  * Copyright 2016-2021 Nicolas Mora <mail@babelouest.org>
@@ -54,14 +54,14 @@
 /**
  * Callback priority
  */
-#define GLEWLWYD_CALLBACK_PRIORITY_ZERO           0
-#define GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION 1
-#define GLEWLWYD_CALLBACK_PRIORITY_APPLICATION    2
-#define GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION    3
-#define GLEWLWYD_CALLBACK_PRIORITY_CLOSE          4
-#define GLEWLWYD_CALLBACK_PRIORITY_PLUGIN         5
-#define GLEWLWYD_CALLBACK_PRIORITY_FILE           100
-#define GLEWLWYD_CALLBACK_PRIORITY_POST_FILE      101
+#define GLEWLWYD_CALLBACK_PRIORITY_ZERO            0
+#define GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION  1
+#define GLEWLWYD_CALLBACK_PRIORITY_PRE_APPLICATION 2
+#define GLEWLWYD_CALLBACK_PRIORITY_APPLICATION     3
+#define GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION     4
+#define GLEWLWYD_CALLBACK_PRIORITY_PLUGIN          5
+#define GLEWLWYD_CALLBACK_PRIORITY_FILE            100
+#define GLEWLWYD_CALLBACK_PRIORITY_POST_FILE       101
 
 /**
  * Modes available when adding or modifying a user
@@ -234,6 +234,8 @@ struct _user_auth_scheme_module_instance {
   json_int_t                        guasmi_expiration;
   json_int_t                        guasmi_max_use;
   short int                         guasmi_allow_user_register;
+  short int                         guasmi_forbid_user_profile;
+  short int                         guasmi_forbid_user_reset_credential;
   void                            * cls;
   short int                         enabled;
 };
@@ -338,17 +340,17 @@ struct config_plugin {
   struct config_elements * glewlwyd_config;
   int      (* glewlwyd_callback_add_plugin_endpoint)(struct config_plugin * config, const char * method, const char * name, const char * url, unsigned int priority, int (* callback)(const struct _u_request * request, struct _u_response * response, void * user_data), void * user_data);
   int      (* glewlwyd_callback_remove_plugin_endpoint)(struct config_plugin * config, const char * method, const char * name, const char * url);
-  
+
   // Session callback functions
   json_t * (* glewlwyd_callback_check_session_valid)(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
   json_t * (* glewlwyd_callback_check_user_valid)(struct config_plugin * config, const char * username, const char * password, const char * scope_list);
   json_t * (* glewlwyd_callback_check_client_valid)(struct config_plugin * config, const char * client_id, const char * password);
   int      (* glewlwyd_callback_trigger_session_used)(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
   time_t   (* glewlwyd_callback_get_session_age)(struct config_plugin * config, const struct _u_request * request, const char * scope_list);
-  
+
   // Client callback functions
   json_t * (* glewlwyd_callback_get_client_granted_scopes)(struct config_plugin * config, const char * client_id, const char * username, const char * scope_list);
-  
+
   // User CRUD
   json_t * (* glewlwyd_plugin_callback_get_user_list)(struct config_plugin * config, const char * pattern, size_t offset, size_t limit);
   json_t * (* glewlwyd_plugin_callback_get_user)(struct config_plugin * config, const char * username);
@@ -358,7 +360,7 @@ struct config_plugin {
   int      (* glewlwyd_plugin_callback_set_user)(struct config_plugin * config, const char * username, json_t * j_user);
   int      (* glewlwyd_plugin_callback_user_update_password)(struct config_plugin * config, const char * username, const char * password);
   int      (* glewlwyd_plugin_callback_delete_user)(struct config_plugin * config, const char * username);
-  
+
   // Client CRUD
   json_t * (* glewlwyd_plugin_callback_get_client_list)(struct config_plugin * config, const char * pattern, size_t offset, size_t limit);
   json_t * (* glewlwyd_plugin_callback_get_client)(struct config_plugin * config, const char * client_id);
@@ -368,12 +370,13 @@ struct config_plugin {
   int      (* glewlwyd_plugin_callback_delete_client)(struct config_plugin * config, const char * client_id);
 
   // Register scheme functions
+  json_t * (* glewlwyd_plugin_callback_get_scheme_module)(struct config_plugin * config, const char * mod_name);
   json_t * (* glewlwyd_plugin_callback_get_scheme_list)(struct config_plugin * config, const char * username);
   json_t * (* glewlwyd_plugin_callback_scheme_register)(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username, json_t * j_scheme_data);
   json_t * (* glewlwyd_plugin_callback_scheme_register_get)(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username);
   int      (* glewlwyd_plugin_callback_scheme_deregister)(struct config_plugin * config, const char * mod_name, const char * username);
   int      (* glewlwyd_plugin_callback_scheme_can_use)(struct config_plugin * config, const char * mod_name, const char * username);
-  
+
   // Misc functions
   char   * (* glewlwyd_callback_get_plugin_external_url)(struct config_plugin * config, const char * name);
   char   * (* glewlwyd_callback_get_login_url)(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url, struct _u_map * additional_parameters);

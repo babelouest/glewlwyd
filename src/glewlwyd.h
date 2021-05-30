@@ -28,7 +28,7 @@
 #ifndef __GLEWLWYD_H_
 #define __GLEWLWYD_H_
 
-#define _GLEWLWYD_VERSION_ "2.5.3"
+#define _GLEWLWYD_VERSION_ "2.5.4"
 
 #include <jansson.h>
 
@@ -288,6 +288,7 @@ json_t * glewlwyd_plugin_callback_is_client_valid(struct config_plugin * config,
 int glewlwyd_plugin_callback_add_client(struct config_plugin * config, json_t * j_client);
 int glewlwyd_plugin_callback_set_client(struct config_plugin * config, const char * client_id, json_t * j_client);
 int glewlwyd_plugin_callback_delete_client(struct config_plugin * config, const char * client_id);
+json_t * glewlwyd_plugin_callback_get_scheme_module(struct config_plugin * config, const char * mod_name);
 json_t * glewlwyd_plugin_callback_get_scheme_list(struct config_plugin * config, const char * username);
 json_t * glewlwyd_plugin_callback_scheme_register(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username, json_t * j_scheme_data);
 json_t * glewlwyd_plugin_callback_scheme_register_get(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username);
@@ -334,7 +335,6 @@ int callback_glewlwyd_check_user_session (const struct _u_request * request, str
 int callback_glewlwyd_check_admin_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_check_admin_session_or_api_key (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_check_admin_session_delegate (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_close_check_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_check_user_profile_valid (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_response * response, void * user_data);
@@ -353,6 +353,7 @@ int callback_glewlwyd_user_get_scheme_list (const struct _u_request * request, s
 int callback_glewlwyd_delete_session (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_auth_register (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_auth_register_get (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_scheme_check_forbid_profile (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_glewlwyd_user_auth_register_delegate (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_user_auth_register_get_delegate (const struct _u_request * request, struct _u_response * response, void * user_data);

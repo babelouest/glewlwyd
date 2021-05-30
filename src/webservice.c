@@ -81,8 +81,11 @@ int callback_glewlwyd_check_user_profile_valid (const struct _u_request * reques
     j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if ((res = is_scope_list_valid_for_session(config, config->profile_scope, session_uid)) == G_OK) {
-        response->shared_data = json_incref(json_object_get(j_user, "user"));
-        ret = U_CALLBACK_IGNORE;
+        if (ulfius_set_response_shared_data(response, json_deep_copy(json_object_get(j_user, "user")), (void (*)(void *))&json_decref) != U_OK) {
+          res = U_CALLBACK_ERROR;
+        } else {
+          ret = U_CALLBACK_IGNORE;
+        }
       } else {
         if (res == G_ERROR) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_user_session - Error is_scope_list_valid_for_session");
@@ -109,8 +112,11 @@ int callback_glewlwyd_check_user_session (const struct _u_request * request, str
   if ((session_uid = get_session_id(config, request)) != NULL) {
     j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
-      response->shared_data = json_incref(json_object_get(j_user, "user"));
-      ret = U_CALLBACK_IGNORE;
+      if (ulfius_set_response_shared_data(response, json_deep_copy(json_object_get(j_user, "user")), (void (*)(void *))&json_decref) != U_OK) {
+        ret = U_CALLBACK_ERROR;
+      } else {
+        ret = U_CALLBACK_IGNORE;
+      }
     } else {
       ret = U_CALLBACK_UNAUTHORIZED;
     }
@@ -132,8 +138,11 @@ int callback_glewlwyd_check_admin_session (const struct _u_request * request, st
     j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if ((res = is_scope_list_valid_for_session(config, config->admin_scope, session_uid)) == G_OK) {
-        response->shared_data = json_incref(json_object_get(j_user, "user"));
-        ret = U_CALLBACK_IGNORE;
+        if (ulfius_set_response_shared_data(response, json_deep_copy(json_object_get(j_user, "user")), (void (*)(void *))&json_decref) != U_OK) {
+          res = U_CALLBACK_ERROR;
+        } else {
+          ret = U_CALLBACK_IGNORE;
+        }
       } else {
         if (res == G_ERROR) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_admin_session - Error is_scope_list_valid_for_session");
@@ -160,8 +169,11 @@ int callback_glewlwyd_check_admin_session_or_api_key (const struct _u_request * 
   
   if (NULL != api_key && 0 == o_strncmp(GLEWLWYD_API_KEY_HEADER_PREFIX, api_key, o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) {
     if ((res = verify_api_key(config, api_key + o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) == G_OK) {
-      response->shared_data = json_pack("{so}", "username", json_null());
-      ret = U_CALLBACK_IGNORE;
+      if (ulfius_set_response_shared_data(response, json_pack("{so}", "username", json_null()), (void (*)(void *))&json_decref) != U_OK) {
+        res = U_CALLBACK_ERROR;
+      } else {
+        ret = U_CALLBACK_IGNORE;
+      }
     } else if (res == G_ERROR_UNAUTHORIZED) {
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - API key invalid at IP Address %s", ip_source);
       ret = U_CALLBACK_UNAUTHORIZED;
@@ -173,8 +185,11 @@ int callback_glewlwyd_check_admin_session_or_api_key (const struct _u_request * 
     j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if ((res = is_scope_list_valid_for_session(config, config->admin_scope, session_uid)) == G_OK) {
-        response->shared_data = json_incref(json_object_get(j_user, "user"));
-        ret = U_CALLBACK_IGNORE;
+        if (ulfius_set_response_shared_data(response, json_deep_copy(json_object_get(j_user, "user")), (void (*)(void *))&json_decref) != U_OK) {
+          res = U_CALLBACK_ERROR;
+        } else {
+          ret = U_CALLBACK_IGNORE;
+        }
       } else {
         if (res == G_ERROR) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_admin_session_or_api_key - Error is_scope_list_valid_for_session");
@@ -204,8 +219,11 @@ int callback_glewlwyd_check_admin_session_delegate (const struct _u_request * re
       if (is_scope_list_valid_for_session(config, config->admin_scope, session_uid) == G_OK) {
         j_delegate = get_user(config, u_map_get(request->map_url, "username"), NULL);
         if (check_result_value(j_delegate, G_OK)) {
-          response->shared_data = json_incref(json_object_get(j_delegate, "user"));
-          ret = U_CALLBACK_IGNORE;
+          if (ulfius_set_response_shared_data(response, json_deep_copy(json_object_get(j_delegate, "user")), (void (*)(void *))&json_decref) != U_OK) {
+            ret = U_CALLBACK_ERROR;
+          } else {
+            ret = U_CALLBACK_IGNORE;
+          }
         } else {
           ret = U_CALLBACK_UNAUTHORIZED;
         }
@@ -222,15 +240,6 @@ int callback_glewlwyd_check_admin_session_delegate (const struct _u_request * re
   }
   o_free(session_uid);
   return ret;
-}
-
-int callback_glewlwyd_close_check_session (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  UNUSED(request);
-  UNUSED(user_data);
-  if (response->shared_data != NULL) {
-    json_decref((json_t *)response->shared_data);
-  }
-  return U_CALLBACK_IGNORE;
 }
 
 int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_response * response, void * user_data) {
@@ -501,6 +510,27 @@ int callback_glewlwyd_user_auth_register_get (const struct _u_request * request,
   }
   json_decref(j_param);
   return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_scheme_check_forbid_profile (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_param = ulfius_get_json_body_request(request, NULL), * j_scheme = get_user_auth_scheme_module(config, json_string_value(json_object_get(j_param, "scheme_name")));
+  int ret = U_CALLBACK_CONTINUE;
+  
+  if (check_result_value(j_scheme, G_OK)) {
+    if (json_object_get(json_object_get(j_scheme, "module"), "forbid_user_profile") == json_true()) {
+      response->status = 403;
+      ret = U_CALLBACK_COMPLETE;
+    }
+  } else if (check_result_value(j_scheme, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth_register_get - Error auth_register_get_user_scheme");
+    response->status = 500;
+  }
+  json_decref(j_param);
+  json_decref(j_scheme);
+  return ret;
 }
 
 int callback_glewlwyd_user_auth_register_delegate (const struct _u_request * request, struct _u_response * response, void * user_data) {

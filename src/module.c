@@ -516,7 +516,7 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters, * j_element;
   size_t index;
   
-  j_query = json_pack("{sss[ssssssss]ss}",
+  j_query = json_pack("{sss[ssssssssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "columns",
@@ -527,6 +527,8 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
                         "guasmi_expiration AS expiration",
                         "guasmi_max_use AS max_use",
                         "guasmi_allow_user_register",
+                        "guasmi_forbid_user_profile",
+                        "guasmi_forbid_user_reset_credential",
                         "guasmi_enabled",
                       "order_by",
                       "guasmi_module");
@@ -542,8 +544,12 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
         json_object_set_new(j_element, "parameters", json_null());
       }
       json_object_set(j_element, "allow_user_register", json_integer_value(json_object_get(j_element, "guasmi_allow_user_register"))?json_true():json_false());
+      json_object_set(j_element, "forbid_user_profile", json_integer_value(json_object_get(j_element, "guasmi_forbid_user_profile"))?json_true():json_false());
+      json_object_set(j_element, "forbid_user_reset_credential", json_integer_value(json_object_get(j_element, "guasmi_forbid_user_reset_credential"))?json_true():json_false());
       json_object_del(j_element, "guasmi_parameters");
       json_object_del(j_element, "guasmi_allow_user_register");
+      json_object_del(j_element, "guasmi_forbid_user_profile");
+      json_object_del(j_element, "guasmi_forbid_user_reset_credential");
       
       json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "guasmi_enabled"))?json_true():json_false());
       json_object_del(j_element, "guasmi_enabled");
@@ -561,7 +567,7 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
   
-  j_query = json_pack("{sss[ssssssss]s{ss}}",
+  j_query = json_pack("{sss[ssssssssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "columns",
@@ -572,6 +578,8 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
                         "guasmi_expiration AS expiration",
                         "guasmi_max_use AS max_use",
                         "guasmi_allow_user_register",
+                        "guasmi_forbid_user_profile",
+                        "guasmi_forbid_user_reset_credential",
                         "guasmi_enabled",
                       "where",
                         "guasmi_name",
@@ -588,8 +596,12 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
         json_object_set_new(json_array_get(j_result, 0), "parameters", json_null());
       }
       json_object_set(json_array_get(j_result, 0), "allow_user_register", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_allow_user_register"))?json_true():json_false());
+      json_object_set(json_array_get(j_result, 0), "forbid_user_profile", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_forbid_user_profile"))?json_true():json_false());
+      json_object_set(json_array_get(j_result, 0), "forbid_user_reset_credential", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_forbid_user_reset_credential"))?json_true():json_false());
       json_object_del(json_array_get(j_result, 0), "guasmi_parameters");
       json_object_del(json_array_get(j_result, 0), "guasmi_allow_user_register");
+      json_object_del(json_array_get(j_result, 0), "guasmi_forbid_user_profile");
+      json_object_del(json_array_get(j_result, 0), "guasmi_forbid_user_reset_credential");
       
       json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_enabled"))?json_true():json_false());
       json_object_del(json_array_get(j_result, 0), "guasmi_enabled");
@@ -652,7 +664,7 @@ json_t * is_user_auth_scheme_module_valid(struct config_elements * config, json_
       if (json_object_get(j_module, "display_name") != NULL && (!json_is_string(json_object_get(j_module, "display_name")) || json_string_length(json_object_get(j_module, "display_name")) > 256)) {
         json_array_append_new(j_error_list, json_string("display_name is optional and must be a string of at most 256 characters"));
       }
-      if (json_object_get(j_module, "expiration") == NULL || !json_is_integer(json_object_get(j_module, "expiration")) || json_integer_value(json_object_get(j_module, "expiration")) <= 0) {
+      if (json_string_length(json_object_get(j_module, "expiration")) || !json_is_integer(json_object_get(j_module, "expiration")) || json_integer_value(json_object_get(j_module, "expiration")) <= 0) {
         json_array_append_new(j_error_list, json_string("expiration is mandatory and must be a non null positive integer"));
       }
       if (json_object_get(j_module, "max_use") == NULL || !json_is_integer(json_object_get(j_module, "max_use")) || json_integer_value(json_object_get(j_module, "max_use")) < 0) {
@@ -694,7 +706,7 @@ json_t * add_user_auth_scheme_module(struct config_elements * config, json_t * j
   size_t i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
-  j_query = json_pack("{sss{sOsOsOsssOsOsisi}}",
+  j_query = json_pack("{sss{sOsOsOsssOsOsisisisi}}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "values",
@@ -712,6 +724,10 @@ json_t * add_user_auth_scheme_module(struct config_elements * config, json_t * j
                         json_object_get(j_module, "max_use"),
                         "guasmi_allow_user_register",
                         json_object_get(j_module, "allow_user_register")==json_false()?0:1,
+                        "guasmi_forbid_user_profile",
+                        json_object_get(j_module, "forbid_user_profile")==json_true()?1:0,
+                        "guasmi_forbid_user_reset_credential",
+                        json_object_get(j_module, "forbid_user_reset_credential")==json_true()?1:0,
                         "guasmi_enabled",
                         1);
   res = h_insert(config->conn, j_query, NULL);
@@ -738,6 +754,8 @@ json_t * add_user_auth_scheme_module(struct config_elements * config, json_t * j
           cur_instance->guasmi_expiration = json_integer_value(json_object_get(j_module, "expiration"));
           cur_instance->guasmi_max_use = json_integer_value(json_object_get(j_module, "max_use"));
           cur_instance->guasmi_allow_user_register = json_object_get(j_module, "allow_user_register")!=json_false();
+          cur_instance->guasmi_forbid_user_profile = json_object_get(j_module, "forbid_user_profile")==json_true();
+          cur_instance->guasmi_forbid_user_reset_credential = json_object_get(j_module, "forbid_user_reset_credential")==json_true();
           cur_instance->enabled = 0;
           if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
             j_result = module->user_auth_scheme_module_init(config->config_m, json_object_get(j_module, "parameters"), cur_instance->name, &cur_instance->cls);
@@ -783,7 +801,7 @@ int set_user_auth_scheme_module(struct config_elements * config, const char * na
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _user_auth_scheme_module_instance * scheme_instance = NULL;
   
-  j_query = json_pack("{sss{sOsssOsOsisi}s{ss}}",
+  j_query = json_pack("{sss{sOsssOsOsisisisi}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
                       "set",
@@ -797,6 +815,10 @@ int set_user_auth_scheme_module(struct config_elements * config, const char * na
                         json_object_get(j_module, "max_use"),
                         "guasmi_allow_user_register",
                         json_object_get(j_module, "allow_user_register")==json_false()?0:1,
+                        "guasmi_forbid_user_profile",
+                        json_object_get(j_module, "forbid_user_profile")==json_true()?1:0,
+                        "guasmi_forbid_user_reset_credential",
+                        json_object_get(j_module, "forbid_user_reset_credential")==json_true()?1:0,
                         "guasmi_enabled",
                         json_object_get(j_module, "enabled")==json_false()?0:1,
                       "where",
@@ -811,6 +833,8 @@ int set_user_auth_scheme_module(struct config_elements * config, const char * na
       scheme_instance->guasmi_expiration = json_integer_value(json_object_get(j_module, "expiration"));
       scheme_instance->guasmi_max_use = json_integer_value(json_object_get(j_module, "max_use"));
       scheme_instance->guasmi_allow_user_register = json_object_get(j_module, "allow_user_register")!=json_false();
+      scheme_instance->guasmi_forbid_user_profile = json_object_get(j_module, "forbid_user_profile")==json_true();
+      scheme_instance->guasmi_forbid_user_reset_credential = json_object_get(j_module, "forbid_user_reset_credential")==json_true();
       ret = G_OK;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "set_user_auth_scheme_module - Error get_user_auth_scheme_module_instance");
