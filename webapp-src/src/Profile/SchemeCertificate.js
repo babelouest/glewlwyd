@@ -26,7 +26,8 @@ class SchemeCertificate extends Component {
       activeCert: false,
       downloadCert: false,
       canAddCert: false,
-      canRequestCert: false
+      canRequestCert: false,
+      forbidden: false
     };
     
     this.getRegister = this.getRegister.bind(this);
@@ -58,19 +59,24 @@ class SchemeCertificate extends Component {
       activeCert: false,
       downloadCert: false,
       canAddCert: false,
-      canRequestCert: false
+      canRequestCert: false,
+      forbidden: false
+    }, () => {
+      this.getRegister();
     });
   }
   
   getRegister() {
     if (this.state.profile) {
-      return apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name})
+      return apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name, forbidden: false})
       .then((res) => {
         this.setState({certificateList: res.certificate||[], dn: res.dn||false, canAddCert: res["add-certificate"], certFile: false, canRequestCert: res["request-certificate"], fileName: false, activeCert: false, downloadCert: false});
       })
       .fail((err) => {
-        this.setState({certificateList: [], dn: false, canAddCert: false, canRequestCert: false, certFile: false, fileName: false, downloadCert: false}, () => {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        this.setState({certificateList: [], dn: false, canAddCert: false, canRequestCert: false, certFile: false, fileName: false, downloadCert: false, forbidden: err.status === 403}, () => {
+          if (err.status !== 403) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          }
         });
       });
     } else {
@@ -201,7 +207,7 @@ class SchemeCertificate extends Component {
   }
   
 	render() {
-    var certificateList = [];
+    var certificateList = [], forbiddenJsx;
     this.state.certificateList.forEach((cert, index) => {
       var expiration = new Date(cert.expiration * 1000), lastUsed = new Date(cert.last_used * 1000);
       var buttons, checked;
@@ -285,6 +291,9 @@ class SchemeCertificate extends Component {
         </tr>
       );
     }
+    if (this.state.forbidden) {
+      forbiddenJsx = <h4 className="alert alert-danger">{i18next.t("profile.scheme-register-forbidden")}</h4>;
+    }
     return (
       <div>
         <div className="row">
@@ -292,16 +301,17 @@ class SchemeCertificate extends Component {
             <h4>{i18next.t("profile.scheme-certificate-title", {module: this.state.module, name: this.state.name})}</h4>
           </div>
         </div>
+        {forbiddenJsx}
         <div className="row">
           <div className="col-md-6">
             <div className="input-group mb-3">
               <div className="input-group-prepend">
-                <button className="btn btn-outline-secondary" type="button" disabled={!this.state.canAddCert} id="addCertificateFromFile" title={i18next.t("profile.scheme-certificate-add-from-file")} onClick={this.addCertificateFile}>
+                <button className="btn btn-outline-secondary" type="button" disabled={!this.state.canAddCert||this.state.forbidden} id="addCertificateFromFile" title={i18next.t("profile.scheme-certificate-add-from-file")} onClick={this.addCertificateFile}>
                   {i18next.t("upload")}
                 </button>
               </div>
               <div className="custom-file">
-                <input type="file" disabled={!this.state.canAddCert} className="custom-file-input" id="addCertificateFromFileInput" aria-describedby="addCertificateFromFile" onChange={(e) => this.selectCertFile(e)} />
+                <input type="file" disabled={!this.state.canAddCert||this.state.forbidden} className="custom-file-input" id="addCertificateFromFileInput" aria-describedby="addCertificateFromFile" onChange={(e) => this.selectCertFile(e)} />
                 <label className="custom-file-label" htmlFor="addCertificateFromFile">
                   {this.state.fileName||i18next.t("browse")}
                 </label>
@@ -310,13 +320,13 @@ class SchemeCertificate extends Component {
           </div>
           <div className="col-md-6">
             <div className="btn-group" role="group" aria-label="current-certificate">
-              <button type="button" className="btn btn-outline-secondary" disabled={!this.state.canAddCert} onClick={this.addCertificateFromRequest} title={i18next.t("profile.scheme-certificate-add-from-request")}>
+              <button type="button" className="btn btn-outline-secondary" disabled={!this.state.canAddCert||this.state.forbidden} onClick={this.addCertificateFromRequest} title={i18next.t("profile.scheme-certificate-add-from-request")}>
                 <i className="fas fa-file-code-o"></i>
               </button>
-              <button type="button" className="btn btn-outline-secondary" onClick={this.testCertificate} title={i18next.t("profile.scheme-certificate-test")}>
+              <button type="button" className="btn btn-outline-secondary" disabled={this.state.forbidden} onClick={this.testCertificate} title={i18next.t("profile.scheme-certificate-test")}>
                 <i className="fas fa-question-circle"></i>
               </button>
-              <button type="button" className="btn btn-outline-secondary" onClick={this.getRegister} title={i18next.t("profile.scheme-certificate-refresh")}>
+              <button type="button" className="btn btn-outline-secondary" disabled={this.state.forbidden} onClick={this.getRegister} title={i18next.t("profile.scheme-certificate-refresh")}>
                 <i className="fas fa-sync"></i>
               </button>
             </div>

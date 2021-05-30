@@ -23,7 +23,7 @@ var initApp = () => {
   apiManager.request("config.json")
   .then((frontEndConfig) => {
     if (!frontEndConfig.lang) {
-      frontEndConfig.lang = ["en","fr","nl"];
+      frontEndConfig.lang = ["en","fr","nl","de"];
     }
     apiManager.request(frontEndConfig.GlewlwydUrl + "config/")
     .then((serverConfig) => {

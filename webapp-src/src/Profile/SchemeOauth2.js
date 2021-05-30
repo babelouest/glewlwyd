@@ -16,7 +16,8 @@ class SchemeOauth2 extends Component {
       profile: props.profile,
       schemePrefix: props.schemePrefix,
       registerList: [],
-      removeProvdier: false
+      removeProvdier: false,
+      forbidden: false
     };
     
     this.getRegister = this.getRegister.bind(this);
@@ -31,7 +32,8 @@ class SchemeOauth2 extends Component {
       module: nextProps.module,
       name: nextProps.name,
       profile: nextProps.profile,
-      schemePrefix: nextProps.schemePrefix
+      schemePrefix: nextProps.schemePrefix,
+      forbidden: false
     }, () => {
       this.getRegister();
     });
@@ -41,14 +43,15 @@ class SchemeOauth2 extends Component {
     if (this.state.profile) {
       apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name}, true)
       .then((res) => {
-        this.setState({registerList: res});
+        this.setState({registerList: res, forbidden: false});
       })
       .fail((err) => {
+        this.setState({forbidden: err.status === 403});
         if (err.status === 400) {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.scheme-oauth2-registration-invalid")});
         } else if (err.status === 401) {
           messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
-        } else {
+        } else if (err.status !== 403) {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         }
       });
@@ -108,7 +111,7 @@ class SchemeOauth2 extends Component {
   }
   
 	render() {
-    var registerList = [];
+    var registerList = [], forbiddenJsx;
     this.state.registerList.forEach((register, index) => {
       var logo, createdAt, lastSession, regButton;
       if (register.logo_uri) {
@@ -124,12 +127,12 @@ class SchemeOauth2 extends Component {
           lastSession = i18next.t("profile.scheme-oauth2-registration-invalid");
         }
         regButton = 
-        <button type="button" className="btn btn-primary" onClick={(e) => this.removeRegistration(register.provider)} title={i18next.t("profile.scheme-oauth2-btn-remove")}>
+        <button type="button" className="btn btn-primary" onClick={(e) => this.removeRegistration(register.provider)} title={i18next.t("profile.scheme-oauth2-btn-remove")} disabled={this.state.forbidden}>
           <i className="fas fa-trash"></i>
         </button>;
       } else {
         regButton = 
-        <button type="button" className="btn btn-primary" onClick={(e) => this.addRegistration(register.provider)} title={i18next.t("profile.scheme-oauth2-btn-add")}>
+        <button type="button" className="btn btn-primary" onClick={(e) => this.addRegistration(register.provider)} title={i18next.t("profile.scheme-oauth2-btn-add")} disabled={this.state.forbidden}>
           <i className="fas fa-plus"></i>
         </button>;
       }
@@ -155,6 +158,9 @@ class SchemeOauth2 extends Component {
         </tr>
       );
     });
+    if (this.state.forbidden) {
+      forbiddenJsx = <h4 className="alert alert-danger">{i18next.t("profile.scheme-register-forbidden")}</h4>;
+    }
     return (
       <div>
         <div className="row">
@@ -162,6 +168,7 @@ class SchemeOauth2 extends Component {
             <h4>{i18next.t("profile.scheme-oauth2-title")}</h4>
           </div>
         </div>
+        {forbiddenJsx}
         <div className="row">
           <div className="col-md-12">
             <table className="table table-responsive table-striped">

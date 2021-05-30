@@ -205,6 +205,18 @@ class ModEdit extends Component {
     this.setState({mod: mod});
   }
   
+  toggleForbidUserProfile() {
+    var mod = this.state.mod;
+    mod.forbid_user_profile = !mod.forbid_user_profile;
+    this.setState({mod: mod});
+  }
+  
+  toggleForbidUserResetCredential() {
+    var mod = this.state.mod;
+    mod.forbid_user_reset_credential = !mod.forbid_user_reset_credential;
+    this.setState({mod: mod});
+  }
+  
 	render() {
     var typeList = [];
     var modType;
@@ -281,6 +293,14 @@ class ModEdit extends Component {
             </div>
             <input type="number" min="0" step="1" className="form-control" id="mod-max-use" placeholder={i18next.t("admin.mod-max-use-ph")} value={this.state.mod.max_use} onChange={(e) => this.changeMaxUse(e)}/>
           </div>
+        </div>
+        <div className="form-group form-check">
+          <input type="checkbox" className="form-check-input" id="mod-forbid-user-profile" onChange={(e) => this.toggleForbidUserProfile(e)} checked={this.state.mod.forbid_user_profile||false} />
+          <label className="form-check-label" htmlFor="mod-forbid-user-profile">{i18next.t("admin.mod-forbid-user-profile")}</label>
+        </div>
+        <div className="form-group form-check">
+          <input type="checkbox" className="form-check-input" id="mod-forbid-user-reset-credential" onChange={(e) => this.toggleForbidUserResetCredential(e)} checked={this.state.mod.forbid_user_reset_credential||false} />
+          <label className="form-check-label" htmlFor="mod-forbid-user-reset-credential">{i18next.t("admin.mod-forbid-user-reset-credential")}</label>
         </div>
         <div className="form-group form-check">
           <input type="checkbox" className="form-check-input" id="mod-allow-user-register" onChange={(e) => this.toggleAllowUserRegister(e)} checked={this.state.mod.allow_user_register} />

@@ -16,7 +16,8 @@ class SchemeMock extends Component {
       profile: props.profile,
       schemePrefix: props.schemePrefix,
       registered: false,
-      registration: false
+      registration: false,
+      forbidden: false
     };
     
     this.getRegister = this.getRegister.bind(this);
@@ -33,7 +34,8 @@ class SchemeMock extends Component {
       profile: nextProps.profile,
       schemePrefix: nextProps.schemePrefix,
       registered: false,
-      registration: false
+      registration: false,
+      forbidden: false
     }, () => {
       this.getRegister();
     });
@@ -43,13 +45,15 @@ class SchemeMock extends Component {
     if (this.state.profile) {
       apiManager.glewlwydRequest(this.state.schemePrefix+"/scheme/register/", "PUT", {username: this.state.profile.username, scheme_type: this.state.module, scheme_name: this.state.name}, true)
       .then((res) => {
-        this.setState({registration: i18next.t("profile.scheme-mock-register-status-registered"), registered: true});
+        this.setState({registration: i18next.t("profile.scheme-mock-register-status-registered"), registered: true, forbidden: false});
       })
       .fail((err) => {
         if (err.status === 400) {
-          this.setState({registration: i18next.t("profile.scheme-mock-register-status-not-registered"), registered: false});
+          this.setState({registration: i18next.t("profile.scheme-mock-register-status-not-registered"), registered: false, forbidden: false});
         } else if (err.status === 401) {
           messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+        } else if (err.status === 403) {
+          this.setState({registration: i18next.t("profile.scheme-register-forbidden"), registered: false, forbidden: true});
         } else {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         }
@@ -73,9 +77,21 @@ class SchemeMock extends Component {
   }
   
 	render() {
-    var registration;
-    if (this.state.registration) {
-      registration = <div><h4>{i18next.t("profile.scheme-mock-register-status")}</h4><span className="badge badge-primary">{this.state.registration}</span></div>;
+    var jsxRegistration, jsxButton;
+    if (!this.state.forbidden) {
+      jsxButton =
+        <div className="row">
+          <div className="col-md-12">
+            <div className="btn-group" role="group">
+              <button type="button" className="btn btn-primary" onClick={(e) => this.register(e)}>{this.state.registered?i18next.t("profile.scheme-mock-deregister"):i18next.t("profile.scheme-mock-register")}</button>
+            </div>
+          </div>
+        </div>;
+      if (this.state.registration) {
+        jsxRegistration = <div><h4>{i18next.t("profile.scheme-mock-register-status")}</h4><span className="badge badge-primary">{this.state.registration}</span></div>;
+      }
+    } else {
+      jsxRegistration = <div><h4>{i18next.t("profile.scheme-mock-register-status")}</h4><span className="badge badge-danger">{this.state.registration}</span></div>;
     }
     return (
       <div>
@@ -86,7 +102,7 @@ class SchemeMock extends Component {
         </div>
         <div className="row">
           <div className="col-md-12">
-            {registration}
+            {jsxRegistration}
           </div>
         </div>
         <div className="row">
@@ -94,13 +110,7 @@ class SchemeMock extends Component {
             <hr/>
           </div>
         </div>
-        <div className="row">
-          <div className="col-md-12">
-            <div className="btn-group" role="group">
-              <button type="button" className="btn btn-primary" onClick={(e) => this.register(e)}>{this.state.registered?i18next.t("profile.scheme-mock-deregister"):i18next.t("profile.scheme-mock-register")}</button>
-            </div>
-          </div>
-        </div>
+        {jsxButton}
       </div>
     );
   }

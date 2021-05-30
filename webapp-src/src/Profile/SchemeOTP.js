@@ -21,7 +21,8 @@ class SchemeOTP extends Component {
       otpUrl: false,
       qrcode: "",
       allowHotp: false,
-      allowTotp: false
+      allowTotp: false,
+      showForbidMessage: false
     };
     
     this.getRegister = this.getRegister.bind(this);
@@ -61,11 +62,13 @@ class SchemeOTP extends Component {
         } else {
           myOtp = res;
         }
-        this.setState({myOtp: myOtp, allowHotp: res["hotp-allow"], allowTotp: res["totp-allow"]});
+        this.setState({showForbidMessage: false, myOtp: myOtp, allowHotp: res["hotp-allow"], allowTotp: res["totp-allow"]});
       })
       .fail((err) => {
         if (err.status === 401) {
           messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
+        } else if (err.status === 403) {
+          this.setState({showForbidMessage: true});
         } else {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         }
@@ -205,7 +208,7 @@ class SchemeOTP extends Component {
   }
   
 	render() {
-    var jsxHOTP, jsxTOTP, secretJsx, jsxHotpOption, jsxTotpOption, jsxQrcode;
+    var jsxHOTP, jsxTOTP, secretJsx, jsxHotpOption, jsxTotpOption, jsxQrcode, jsxForbidMessage;
     secretJsx = 
       <div className="row">
         <div className="col-md-12">
@@ -273,6 +276,9 @@ class SchemeOTP extends Component {
           </div>
         </div>
     }
+    if (this.state.showForbidMessage) {
+      jsxForbidMessage = <h4 className="alert alert-danger">{i18next.t("profile.scheme-register-forbidden")}</h4>
+    }
 
     return (
       <div>
@@ -289,7 +295,7 @@ class SchemeOTP extends Component {
               </div>
               <div className="dropdown">
                 <button className="btn btn-secondary dropdown-toggle" type="button" id="scheme-otp-type" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  {i18next.t("profile.scheme-otp-type-" + this.state.myOtp.type)}
+                  {i18next.t("profile.scheme-otp-type-" + (this.state.myOtp.type||"NONE"))}
                 </button>
                 <div className="dropdown-menu" aria-labelledby="scheme-otp-type">
                   {jsxTotpOption}
@@ -303,6 +309,7 @@ class SchemeOTP extends Component {
         {jsxHOTP}
         {jsxTOTP}
         {jsxQrcode}
+        {jsxForbidMessage}
         <div className="row">
           <div className="col-md-12">
             <hr/>

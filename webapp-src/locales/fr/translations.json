@@ -313,6 +313,8 @@
     "mod-max-use": "Nombre maximal d'utilisation par session (0: illimité)",
     "mod-max-use-ph": "Ex: 2",
     "mod-allow-user-register": "Autoriser les utilisateurs à s'enregistrer",
+    "mod-forbid-user-profile": "Interdire les utilisateurs à s'enregistrer sur la page de profil",
+    "mod-forbid-user-reset-credential": "Interdire les utilisateurs à s'enregistrer sur la page de récupération des informations d'authentification",
     "mod-type": "Type",
     "mod-type-select": "Choisir un type",
     "mod-readonly": "Lecture seule",
@@ -1220,7 +1222,8 @@
     "reset-credentials-complete-message": "Après avoir mis à jour votre mot de passe et/ou récupéré vos schémas d'authentification, vous pouvez vous reconnecter à l'application en suivant le lien suivant",
     "session-client-grant-table": "Autorisations clients",
     "session-remove-scope-grant-title": "Supprimer l'autorisation",
-    "session-remove-scope-grant-message": "Voulez-vous supprimer cette autorisation pour ce client?"
+    "session-remove-scope-grant-message": "Voulez-vous supprimer cette autorisation pour ce client?",
+    "scheme-register-forbidden": "L'administrateur a désactivé la possibilité d'accéder ou de mettre à jour la configuration de ce schéma"
   },
   "callback": {
     "button-login": "Retourner à la page de connexion",

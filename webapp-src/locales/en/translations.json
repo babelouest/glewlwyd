@@ -313,6 +313,8 @@
     "mod-max-use": "Max use per session (0: unlimited)",
     "mod-max-use-ph": "e.g. 2",
     "mod-allow-user-register": "Allow users to register",
+    "mod-forbid-user-profile": "Forbid users to register on the profile page",
+    "mod-forbid-user-reset-credential": "Forbid users to register on the reset credential page",
     "mod-type": "Type",
     "mod-type-select": "Choose a type",
     "mod-readonly": "Read only",
@@ -1220,6 +1222,7 @@
     "session-client-grant-table": "Client grants",
     "session-remove-scope-grant-title": "Remove grant",
     "session-remove-scope-grant-message": "Do you want to remove this grant?"
+    "scheme-register-forbidden": "The administrator forbids to register or get the registration of this scheme"
   },
   "callback": {
     "button-login": "Back to login page",

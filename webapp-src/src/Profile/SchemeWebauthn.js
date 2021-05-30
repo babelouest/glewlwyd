@@ -23,7 +23,8 @@ class SchemeWebauthn extends Component {
       editValue: "",
       removeIndex: -1,
       credAssertion: false,
-      webauthnEnabled: !!window.PublicKeyCredential
+      webauthnEnabled: !!window.PublicKeyCredential,
+      forbidden: false
     };
     
     this.getCredentials = this.getCredentials.bind(this);
@@ -48,7 +49,8 @@ class SchemeWebauthn extends Component {
       profile: nextProps.profile,
       schemePrefix: nextProps.schemePrefix,
       registered: false,
-      registration: false
+      registration: false,
+      forbidden: false
     }, () => {
       this.getCredentials();
     });
@@ -74,12 +76,14 @@ class SchemeWebauthn extends Component {
             credentialAvailable = true;
           }
         });
-        this.setState({credentialList: res, credentialAvailable: credentialAvailable, credAssertion: false});
+        this.setState({credentialList: res, credentialAvailable: credentialAvailable, credAssertion: false, forbidden: false});
       })
       .fail((err) => {
         if (err.status === 401) {
           messageDispatcher.sendMessage('App', {type: "loggedIn", loggedIn: false});
-          this.setState({registration: i18next.t("profile.scheme-webauthn-register-status-not-registered"), registered: false, credentialList: [], credAssertion: false});
+          this.setState({registration: i18next.t("profile.scheme-webauthn-register-status-not-registered"), registered: false, credentialList: [], credAssertion: false, forbidden: false});
+        } else if (err.status === 403) {
+          this.setState({ registered: false, forbidden: true});
         } else {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
         }
@@ -522,6 +526,14 @@ class SchemeWebauthn extends Component {
           </div>
         </div>
     }
+    if (this.state.forbidden) {
+      disabledMessage = 
+        <div className="row">
+          <div className="col-md-12">
+            <div className="alert alert-danger" role="alert">{i18next.t("profile.scheme-register-forbidden")}</div>
+          </div>
+        </div>
+    }
     return (
       <div>
         <div className="row">
@@ -532,7 +544,7 @@ class SchemeWebauthn extends Component {
         {disabledMessage}
         <div className="row">
           <div className="col-md-12">
-            <button type="button" className="btn btn-primary" onClick={(e) => this.getCredentials(e)}>{i18next.t("login.btn-reload")}</button>
+            <button type="button" className="btn btn-primary" onClick={(e) => this.getCredentials(e)} disabled={this.state.forbidden}>{i18next.t("login.btn-reload")}</button>
           </div>
         </div>
         <div className="row">
@@ -567,8 +579,8 @@ class SchemeWebauthn extends Component {
         <div className="row">
           <div className="col-md-12">
             <div className="btn-group" role="group">
-              <button type="button" disabled={!this.state.webauthnEnabled} className="btn btn-primary" onClick={(e) => this.createCredential(e)} title={i18next.t("profile.scheme-webauthn-register-title")}>{i18next.t("profile.scheme-webauthn-register")}</button>
-              <button type="button" className="btn btn-primary" onClick={(e) => this.testAssertion(e)} disabled={!this.state.credentialAvailable||!this.state.webauthnEnabled} title={i18next.t("profile.scheme-webauthn-test-registration-title")}>{i18next.t("profile.scheme-webauthn-test-registration")}</button>
+              <button type="button" disabled={!this.state.webauthnEnabled || this.state.forbidden} className="btn btn-primary" onClick={(e) => this.createCredential(e)} title={i18next.t("profile.scheme-webauthn-register-title")}>{i18next.t("profile.scheme-webauthn-register")}</button>
+              <button type="button" className="btn btn-primary" onClick={(e) => this.testAssertion(e)} disabled={!this.state.credentialAvailable||!this.state.webauthnEnabled||this.state.forbidden} title={i18next.t("profile.scheme-webauthn-test-registration-title")}>{i18next.t("profile.scheme-webauthn-test-registration")}</button>
             </div>
           </div>
         </div>

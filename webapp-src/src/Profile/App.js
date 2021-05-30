@@ -175,6 +175,7 @@ class App extends Component {
         });
       } else if (this.state.config.params.resetCredentials) {
         if (this.state.config.register) {
+          console.log("plop");
           if (this.state.config.params.token) {
             apiManager.glewlwydRequest("/" + this.state.config.params.resetCredentials + "/reset-credentials-email/" + encodeURI(this.state.config.params.token), "PUT")
             .then(() => {
