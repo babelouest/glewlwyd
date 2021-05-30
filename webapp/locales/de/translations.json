@@ -292,6 +292,8 @@
     "mod-max-use": "Maximale Nutzung pro Sitzung (0: unlimitiert)",
     "mod-max-use-ph": "z.B.: 2",
     "mod-allow-user-register": "Benutzern erlauben sich zu registrieren",
+    "mod-forbid-user-profile": "Benutzern verbieten selbst Registrierungen auf der Profilseite vorzunehmen",
+    "mod-forbid-user-reset-credential": "Benutzern verbieten beim Zurücksetzen seiner Zugangsdaten Registrierungen vorzunehmen",
     "mod-type": "Typ",
     "mod-type-select": "Wähle einen Typ",
     "mod-readonly": "schreibgeschützt",
@@ -1127,7 +1129,8 @@
     "reset-credentials-email-token-error": "Ungültiger E-Mail Code",
     "reset-credentials-hello": "Zugangsdaten zurücksetzen: {{-name}}",
     "reset-credentials-error": "Sitzungsfehler, bitte neu verbinden",
-    "reset-credentials-complete-message": "Nach dem Ändern der Zugangsdaten kannst du zur App mit folgenden Link zurückkehren"
+    "reset-credentials-complete-message": "Nach dem Ändern der Zugangsdaten kannst du zur App mit folgenden Link zurückkehren",
+    "scheme-register-forbidden": "Der Administrator erlaubt es nicht Registrierungen dieses Schemas abzurufen oder anzulegen"
   },
   "callback": {
     "button-login": "Zurück zum Login",
