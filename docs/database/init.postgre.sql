@@ -83,6 +83,8 @@ CREATE TABLE g_user_auth_scheme_module_instance (
   guasmi_expiration INTEGER NOT NULL DEFAULT 0,
   guasmi_max_use INTEGER DEFAULT 0, -- 0: unlimited
   guasmi_allow_user_register SMALLINT DEFAULT 1,
+  guasmi_forbid_user_profile SMALLINT DEFAULT 0,
+  guasmi_forbid_user_reset_credential SMALLINT DEFAULT 0,
   guasmi_name VARCHAR(128) NOT NULL,
   guasmi_display_name VARCHAR(256) DEFAULT '',
   guasmi_parameters TEXT,
