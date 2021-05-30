@@ -199,10 +199,10 @@ int callback_check_glewlwyd_access_token (const struct _u_request * request, str
             u_map_put(response->map_header, HEADER_RESPONSE, response_value);
             o_free(response_value);
           } else {
-            res = U_CALLBACK_CONTINUE;
-            response->shared_data = (void*)json_pack("{sssO}", "username", json_string_value(json_object_get(json_object_get(j_access_token, "grants"), "username")), "scope", json_object_get(j_res_scope, "scope"));
-            if (response->shared_data == NULL) {
+            if (ulfius_set_response_shared_data(response, json_pack("{sssO}", "username", json_string_value(json_object_get(json_object_get(j_access_token, "grants"), "username")), "scope", json_object_get(j_res_scope, "scope")), (void (*)(void *))&json_decref) != U_OK) {
               res = U_CALLBACK_ERROR;
+            } else {
+              res = U_CALLBACK_CONTINUE;
             }
           }
           json_decref(j_res_scope);

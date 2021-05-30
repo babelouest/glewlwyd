@@ -217,19 +217,19 @@ int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request
             u_map_put(response->map_header, HEADER_RESPONSE, response_value);
             o_free(response_value);
           } else {
-            res = U_CALLBACK_CONTINUE;
-            response->shared_data = (void*)json_pack("{ss?sOsO*}", "sub", json_string_value(json_object_get(json_object_get(j_access_token, "grants"), "sub")), "scope", json_object_get(j_res_scope, "scope"), "jkt", json_object_get(json_object_get(json_object_get(j_access_token, "grants"), "cnf"), "jkt"));
-            if (json_object_get(json_object_get(j_access_token, "grants"), "aud") != NULL) {
-              json_object_set((void*)response->shared_data, "aud", json_object_get(json_object_get(j_access_token, "grants"), "aud"));
-            }
-            if (json_object_get(json_object_get(j_access_token, "grants"), "client_id") != NULL) {
-              json_object_set((void*)response->shared_data, "client_id", json_object_get(json_object_get(j_access_token, "grants"), "client_id"));
-            }
-            if (json_object_get(json_object_get(j_access_token, "grants"), "claims") != NULL) {
-              json_object_set((void*)response->shared_data, "claims", json_object_get(json_object_get(j_access_token, "grants"), "claims"));
-            }
-            if (response->shared_data == NULL) {
+            if (ulfius_set_response_shared_data(response, json_pack("{ss?sOsO*}", "sub", json_string_value(json_object_get(json_object_get(j_access_token, "grants"), "sub")), "scope", json_object_get(j_res_scope, "scope"), "jkt", json_object_get(json_object_get(json_object_get(j_access_token, "grants"), "cnf"), "jkt")), (void (*)(void *))&json_decref) != U_OK) {
               res = U_CALLBACK_ERROR;
+            } else {
+              res = U_CALLBACK_CONTINUE;
+              if (json_object_get(json_object_get(j_access_token, "grants"), "aud") != NULL) {
+                json_object_set((void*)response->shared_data, "aud", json_object_get(json_object_get(j_access_token, "grants"), "aud"));
+              }
+              if (json_object_get(json_object_get(j_access_token, "grants"), "client_id") != NULL) {
+                json_object_set((void*)response->shared_data, "client_id", json_object_get(json_object_get(j_access_token, "grants"), "client_id"));
+              }
+              if (json_object_get(json_object_get(j_access_token, "grants"), "claims") != NULL) {
+                json_object_set((void*)response->shared_data, "claims", json_object_get(json_object_get(j_access_token, "grants"), "claims"));
+              }
             }
           }
           json_decref(j_res_scope);
