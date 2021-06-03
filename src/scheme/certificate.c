@@ -33,7 +33,7 @@
 #include <jansson.h>
 #include <yder.h>
 #include <orcania.h>
-#include "../glewlwyd-common.h"
+#include "glewlwyd-common.h"
 
 #define GLEWLWYD_SCHEME_CERTIFICATE_TABLE_USER_CERTIFICATE "gs_user_certificate"
 

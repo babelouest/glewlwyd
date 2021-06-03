@@ -32,7 +32,7 @@
 #include <liboath/oath.h>
 #include <yder.h>
 #include <orcania.h>
-#include "../glewlwyd-common.h"
+#include "glewlwyd-common.h"
 
 #define GLEWLWYD_TABLE_OTP "gs_otp"
 

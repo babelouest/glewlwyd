@@ -28,7 +28,7 @@
 
 #include <ctype.h>
 #include <jansson.h>
-#include "../glewlwyd-common.h"
+#include "glewlwyd-common.h"
 
 #define GLEWLWYD_PLUGIN_REGSITER_DEFAULT_SESSION_DURATION 3600
 #define GLEWLWYD_PLUGIN_REGSITER_DEFAULT_CODE_LENGTH 8

@@ -30,7 +30,7 @@
 #include <yder.h>
 #include <orcania.h>
 #include <hoel.h>
-#include "../glewlwyd-common.h"
+#include "glewlwyd-common.h"
 
 #define G_TABLE_USER "g_user"
 #define G_TABLE_USER_SCOPE "g_user_scope"

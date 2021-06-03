@@ -19,10 +19,11 @@
 # License along with this library.	If not, see <http://www.gnu.org/licenses/>.
 #
 
+GLWD_SRC=..
 DESTDIR=/usr/local
 MODULES_TARGET=$(DESTDIR)/lib/glewlwyd/client
 CC=gcc
-CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(ADDITIONALFLAGS)
+CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas -I$(GLWD_SRC) $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(ADDITIONALFLAGS)
 LIBS=$(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs jansson) -ldl
 TARGET=libmoddatabase.so libmodldap.so
 
@@ -31,16 +32,16 @@ all: release
 %.o: %.c ../glewlwyd-common.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
-misc.o: ../misc.c ../glewlwyd-common.h
-	$(CC) $(CFLAGS) $(CPPFLAGS) ../misc.c
+misc.o: $(GLWD_SRC)/misc.c $(GLWD_SRC)/glewlwyd-common.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(GLWD_SRC)/misc.c
 
-libmodmock.so: ../glewlwyd-common.h mock.o misc.o
+libmodmock.so: $(GLWD_SRC)/glewlwyd-common.h mock.o misc.o
 	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o misc.o $(LIBS)
 
-libmoddatabase.so: ../glewlwyd-common.h database.o misc.o
+libmoddatabase.so: $(GLWD_SRC)/glewlwyd-common.h database.o misc.o
 	$(CC) -shared -Wl,-soname,libmoddatabase.so -o libmoddatabase.so database.o misc.o $(LIBS) $(shell pkg-config --libs libhoel)
 
-libmodldap.so: ../glewlwyd-common.h ldap.o misc.o
+libmodldap.so: $(GLWD_SRC)/glewlwyd-common.h ldap.o misc.o
 	$(CC) -shared -Wl,-soname,libmodldap.so -o libmodldap.so ldap.o misc.o $(LIBS) -lldap -lcrypt
 
 clean:

@@ -29,7 +29,7 @@
 #include <jansson.h>
 #include <yder.h>
 #include <orcania.h>
-#include "../glewlwyd-common.h"
+#include "glewlwyd-common.h"
 
 #define LDAP_DEFAULT_PAGE_SIZE 50
 

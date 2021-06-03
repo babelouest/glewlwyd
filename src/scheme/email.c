@@ -30,7 +30,7 @@
 #include <yder.h>
 #include <orcania.h>
 #include <ulfius.h>
-#include "../glewlwyd-common.h"
+#include "glewlwyd-common.h"
 
 #define GLEWLWYD_SCHEME_CODE_TABLE "gs_code"
 

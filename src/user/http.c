@@ -30,7 +30,7 @@
 #include <yder.h>
 #include <orcania.h>
 #include <ulfius.h>
-#include "../glewlwyd-common.h"
+#include "glewlwyd-common.h"
 
 json_t * user_module_load(struct config_module * config) {
   UNUSED(config);

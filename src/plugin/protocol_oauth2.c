@@ -33,8 +33,8 @@
 #include <orcania.h>
 #include <ulfius.h>
 #include <rhonabwy.h>
-#include "../glewlwyd-common.h"
-#include "../../docs/resources/ulfius/glewlwyd_resource.h"
+#include "glewlwyd-common.h"
+#include "glewlwyd_resource.h"
 
 #define OAUTH2_SALT_LENGTH 16
 

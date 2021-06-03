@@ -38,8 +38,8 @@
 #include <orcania.h>
 #include <ulfius.h>
 #include <rhonabwy.h>
-#include "../glewlwyd-common.h"
-#include "../../docs/resources/ulfius/oidc_resource.h"
+#include "glewlwyd-common.h"
+#include "oidc_resource.h"
 
 #define OIDC_SALT_LENGTH               16
 #define OIDC_JTI_LENGTH                32

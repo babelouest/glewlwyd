@@ -14,7 +14,7 @@
  *
  */
 
-#include "../glewlwyd-common.h"
+#include "glewlwyd-common.h"
 
 /**
  *

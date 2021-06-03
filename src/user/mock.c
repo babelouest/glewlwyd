@@ -18,7 +18,7 @@
 #include <jansson.h>
 #include <yder.h>
 #include <orcania.h>
-#include "../glewlwyd-common.h"
+#include "glewlwyd-common.h"
 
 /**
  *

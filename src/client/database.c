@@ -29,7 +29,7 @@
 #include <yder.h>
 #include <orcania.h>
 #include <hoel.h>
-#include "../glewlwyd-common.h"
+#include "glewlwyd-common.h"
 
 #define G_TABLE_CLIENT "g_client"
 #define G_TABLE_CLIENT_SCOPE "g_client_scope"

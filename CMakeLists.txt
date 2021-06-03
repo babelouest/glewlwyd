@@ -121,22 +121,24 @@ endif ()
 
 # build
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_executable(glewlwyd ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/static_compressed_inmemory_website_callback.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/http_compression_callback.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/client.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/module.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/plugin.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/scope.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/session.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/static_compressed_inmemory_website_callback.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/http_compression_callback.c#
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/user.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/api_key.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/webservice.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.c )
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/static_compressed_inmemory_website_callback.h
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/http_compression_callback.h
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/client.c
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/module.c
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/plugin.c
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/scope.c
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/session.c
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/static_compressed_inmemory_website_callback.c
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/http_compression_callback.c
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/user.c
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/api_key.c
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/metrics.c
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/webservice.c
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.c )
 
 set(SEARCH_ORCANIA OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during orcania search and download
 set(SEARCH_YDER OFF CACHE BOOL "Force to false") # Avoid to search and download yder during ulfius and hoel search and download

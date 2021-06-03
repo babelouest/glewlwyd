@@ -31,7 +31,7 @@
 #include <orcania.h>
 #include <rhonabwy.h>
 #include <iddawc.h>
-#include "../glewlwyd-common.h"
+#include "glewlwyd-common.h"
 
 #define GLEWLWYD_SCHEME_OAUTH2_REGISTRATION_TABLE "gs_oauth2_registration"
 #define GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE "gs_oauth2_session"

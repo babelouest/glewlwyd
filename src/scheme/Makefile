@@ -19,20 +19,21 @@
 # License along with this library.	If not, see <http://www.gnu.org/licenses/>.
 #
 
+GLWD_SRC=..
 DESTDIR=/usr/local
 MODULES_TARGET=$(DESTDIR)/lib/glewlwyd/scheme
 CC=gcc
-CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(shell pkg-config --cflags librhonabwy) $(shell pkg-config --cflags libiddawc) $(shell pkg-config --cflags libcbor) $(ADDITIONALFLAGS)
+CFLAGS=-c -fPIC -Wall -Werror -Wextra -Wno-unknown-pragmas -D_REENTRANT -Wno-pragmas -I$(GLWD_SRC) $(shell pkg-config --cflags liborcania) $(shell pkg-config --cflags libyder) $(shell pkg-config --cflags jansson) $(shell pkg-config --cflags libhoel) $(shell pkg-config --cflags librhonabwy) $(shell pkg-config --cflags libiddawc) $(shell pkg-config --cflags libcbor) $(ADDITIONALFLAGS)
 LIBS=$(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs libhoel) $(shell pkg-config --libs jansson) -ldl
 TARGET=libmodemail.so libmodwebauthn.so libmodotp.so libmodpassword.so libmodcertificate.so libmodhttp.so libmodoauth2.so
 
 all: release
 
-%.o: %.c ../glewlwyd.h
+%.o: %.c $(GLWD_SRC)/glewlwyd.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
-misc.o: ../misc.c ../glewlwyd-common.h
-	$(CC) $(CFLAGS) $(CPPFLAGS) ../misc.c
+misc.o: $(GLWD_SRC)/misc.c $(GLWD_SRC)/glewlwyd-common.h
+	$(CC) $(CFLAGS) $(CPPFLAGS) $(GLWD_SRC)/misc.c
 
 libmodmock.so: mock.o misc.o
 	$(CC) -shared -Wl,-soname,libmodmock.so -o libmodmock.so mock.o misc.o $(LIBS)
