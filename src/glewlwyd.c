@@ -59,8 +59,9 @@ int main (int argc, char ** argv) {
   struct sockaddr_in bind_address, bind_address_metrics;
   pthread_t signal_thread_id;
   static sigset_t close_signals;
-  pthread_mutexattr_t mutexattr;
   char * tmp, * tmp2;
+
+  ulfius_global_init();
 
   if (config == NULL) {
     fprintf(stderr, "Memory error - config\n");
@@ -258,32 +259,43 @@ int main (int argc, char ** argv) {
     }
   }
   config->instance_initialized = 1;
-  
+
   if (config->metrics_endpoint) {
+    config->instance_metrics = o_malloc(sizeof(struct _u_instance));
+    if (config->instance_metrics == NULL) {
+      fprintf(stderr, "Error allocating resources for config->instance_metrics, aborting\n");
+      exit_server(&config, GLEWLWYD_ERROR);
+    }
     if (config->bind_address_metrics != NULL) {
       bind_address_metrics.sin_family = AF_INET;
       bind_address_metrics.sin_port = htons(config->metrics_endpoint_port);
       inet_aton(config->bind_address_metrics, (struct in_addr *)&bind_address_metrics.sin_addr.s_addr);
-      if (ulfius_init_instance(config->instance, config->metrics_endpoint_port, &bind_address_metrics, NULL) != U_OK) {
-        fprintf(stderr, "Error initializing metrics instance with bind address %s\n", config->bind_address_metrics);
+      if (ulfius_init_instance(config->instance_metrics, config->metrics_endpoint_port, &bind_address_metrics, NULL) != U_OK) {
+        fprintf(stderr, "Error initializing metrics instance_metrics with bind address %s\n", config->bind_address_metrics);
         exit_server(&config, GLEWLWYD_ERROR);
       }
     } else {
-      if (ulfius_init_instance(config->instance, config->metrics_endpoint_port, NULL, NULL) != U_OK) {
-        fprintf(stderr, "Error initializing metrics instance\n");
+      if (ulfius_init_instance(config->instance_metrics, config->metrics_endpoint_port, NULL, NULL) != U_OK) {
+        fprintf(stderr, "Error initializing metrics instance_metrics\n");
         exit_server(&config, GLEWLWYD_ERROR);
       }
     }
-    pthread_mutexattr_init ( &mutexattr );
-    pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
-    if (pthread_mutex_init(&config->metrics_lock, &mutexattr) != 0) {
-      fprintf(stderr, "Error initializing metrics_lock\n");
+    if (glewlwyd_metrics_init(config) != 0) {
+      fprintf(stderr, "Error initializing metrics\n");
       exit_server(&config, GLEWLWYD_ERROR);
     }
-    pthread_mutexattr_destroy(&mutexattr);
     config->instance_metrics_initialized = 1;
   }
-  
+
+  glewlwyd_metrics_add_metric(config, GLWD_METRICS_AUTH_USER_VALID, "Total number of successful authentication");
+  glewlwyd_metrics_add_metric(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, "Total number of successful authentication by scheme");
+  glewlwyd_metrics_add_metric(config, GLWD_METRICS_AUTH_USER_INVALID, "Total number of invalid authentication");
+  glewlwyd_metrics_add_metric(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, "Total number of invalid authentication by scheme");
+  glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_VALID, 0, NULL);
+  glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_INVALID, 0, NULL);
+  glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", "password", NULL);
+  glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", "password", NULL);
+
   // Initialize module config structure
   config->config_m->external_url = config->external_url;
   config->config_m->login_url = config->login_url;
@@ -469,7 +481,12 @@ int main (int argc, char ** argv) {
     }
     ulfius_add_endpoint_by_val(config->instance_metrics, "GET", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_metrics, (void*)config);
     ulfius_set_default_endpoint(config->instance_metrics, &callback_default, (void*)config);
+    if (ulfius_start_framework(config->instance_metrics) != U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "Error starting metrics webservice instance_metrics");
+      exit_server(&config, GLEWLWYD_ERROR);
+    }
   }
+  
   // Check if cookie domain (if set) is the same domain as in external_url
   if (o_strlen(config->cookie_domain)) {
     if (0 == o_strncmp("http://", config->external_url, o_strlen("http://"))) {
@@ -532,7 +549,6 @@ int main (int argc, char ** argv) {
   }
 
   if (res == U_OK) {
-    ulfius_global_init();
     // Wait until stop signal is broadcasted
     pthread_mutex_lock(&global_handler_close_lock);
     pthread_cond_wait(&global_handler_close_cond, &global_handler_close_lock);
@@ -575,13 +591,13 @@ void exit_server(struct config_elements ** config, int exit_value) {
       ulfius_stop_framework((*config)->instance);
       ulfius_clean_instance((*config)->instance);
     }
-    
+
     if ((*config)->instance_metrics_initialized) {
       ulfius_stop_framework((*config)->instance_metrics);
       ulfius_clean_instance((*config)->instance_metrics);
       pthread_mutex_destroy(&(*config)->metrics_lock);
     }
-    
+
     h_close_db((*config)->conn);
     h_clean_connection((*config)->conn);
     ulfius_global_close();
@@ -616,6 +632,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
       u_clean_compressed_inmemory_website_config((*config)->static_file_config);
       o_free((*config)->static_file_config);
     }
+    glewlwyd_metrics_close((*config));
 
     o_free((*config)->config_p);
     o_free((*config)->config_m);
@@ -1101,7 +1118,7 @@ int build_config_from_file(struct config_elements * config) {
 
     if (config_lookup_bool(&cfg, "metrics_endpoint", &int_value) == CONFIG_TRUE) {
       config->metrics_endpoint = (ushort)int_value;
-      
+
       if (config_lookup_string(&cfg, "metrics_bind_address", &str_value) == CONFIG_TRUE) {
         config->bind_address_metrics = o_strdup(str_value);
         if (config->bind_address_metrics == NULL) {
@@ -1110,10 +1127,12 @@ int build_config_from_file(struct config_elements * config) {
           break;
         }
       }
-      
-      if (config_lookup_int(&cfg, "metrics_endpoint_port", &int_value_2) == CONFIG_TRUE &&
-          config_lookup_bool(&cfg, "metrics_endpoint_admin_session", &int_value_3) == CONFIG_TRUE) {
+
+      if (config_lookup_int(&cfg, "metrics_endpoint_port", &int_value_2) == CONFIG_TRUE) {
         config->metrics_endpoint_port = (uint)int_value_2;
+      }
+
+      if (config_lookup_bool(&cfg, "metrics_endpoint_admin_session", &int_value_3) == CONFIG_TRUE) {
         config->metrics_endpoint_admin_session = (ushort)int_value_3;
       }
     }
@@ -1569,7 +1588,7 @@ void print_help(FILE * output) {
  * handles signal catch to exit properly when ^C is used for example
  * I don't like global variables but it looks fine to people who designed this
  */
-void* signal_thread(void *arg) {
+void * signal_thread(void *arg) {
   sigset_t *sigs = arg;
   int res, signum;
 
@@ -2169,6 +2188,8 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
                 if (j_parameters != NULL) {
                   j_init = module->user_auth_scheme_module_init(config->config_m, j_parameters, cur_instance->name, &cur_instance->cls);
                   if (check_result_value(j_init, G_OK)) {
+                    glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
+                    glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
                     cur_instance->enabled = 1;
                   } else {
                     y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));

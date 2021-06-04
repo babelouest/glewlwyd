@@ -267,12 +267,24 @@ struct _plugin_module_instance {
   short int               enabled;
 };
 
-struct _glwd_metrics {
-  int           type;
-  char        * name;
-  char        * help;
-  struct _u_map labels;
-  size_t        counter;
+#define GLWD_METRICS_AUTH_USER_VALID          "glewlwyd_auth_user_valid"
+#define GLWD_METRICS_AUTH_USER_VALID_SCHEME   "glewlwyd_auth_user_valid_scheme"
+#define GLWD_METRICS_AUTH_USER_INVALID        "glewlwyd_auth_user_invalid"
+#define GLWD_METRICS_AUTH_USER_INVALID_SCHEME "glewlwyd_auth_user_invalid_scheme"
+
+/**
+ * Structure used to store a prometheus metrics
+ */
+struct _glwd_metrics_data {
+  char * label;
+  size_t counter;
+};
+
+struct _glwd_metric {
+  char                      * name;
+  char                      * help;
+  struct _glwd_metrics_data * data;
+  size_t                      data_size;
 };
 
 /**
@@ -329,7 +341,7 @@ struct config_elements {
   unsigned int                                   metrics_endpoint_port;
   unsigned short                                 metrics_endpoint_admin_session;
   pthread_mutex_t                                metrics_lock;
-  struct _pointer_list *                         metrics_list;
+  struct _pointer_list                           metrics_list;
 };
 
 /**

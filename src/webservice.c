@@ -272,6 +272,8 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' authenticated with password", json_string_value(json_object_get(j_param, "username")));
             }
             o_free(session_uid);
+            glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_VALID, 1, NULL);
+            glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 1, "scheme_type", "password", NULL);
           } else {
             if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
               y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", json_string_value(json_object_get(j_param, "username")), ip_source);
@@ -281,6 +283,8 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             }
             o_free(session_uid);
             response->status = 401;
+            glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_INVALID, 1, NULL);
+            glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 1, "scheme_type", "password", NULL);
           }
           json_decref(j_result);
         } else if (json_object_get(j_param, "password") != NULL && !json_is_string(json_object_get(j_param, "password"))) {
@@ -313,6 +317,8 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
           } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
             y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", json_string_value(json_object_get(j_param, "username")), ip_source);
             response->status = 401;
+            glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_INVALID, 1, NULL);
+            glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 1, "scheme_type", json_string_value(json_object_get(j_param, "scheme_type")), "scheme_name", json_string_value(json_object_get(j_param, "scheme_name")), NULL);
           } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
             response->status = 404;
           } else if (check_result_value(j_result, G_OK)) {
@@ -327,6 +333,8 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' authenticated with scheme '%s/%s'", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")));
             }
             o_free(session_uid);
+            glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_VALID, 1, NULL);
+            glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 1, "scheme_type", json_string_value(json_object_get(j_param, "scheme_type")), "scheme_name", json_string_value(json_object_get(j_param, "scheme_name")), NULL);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error auth_check_user_scheme");
             response->status = 500;
@@ -2465,7 +2473,31 @@ int callback_glewlwyd_delete_api_key (const struct _u_request * request, struct 
 
 int callback_metrics (const struct _u_request * request, struct _u_response * response, void * user_data) {
   UNUSED(request);
-  UNUSED(response);
-  UNUSED(user_data);
+  struct config_elements * config = (struct config_elements *)user_data;
+  size_t i, j;
+  char * content = o_strdup("# We have seen handsome noble-looking men but I have never seen a man like the one who now stands at the entrance of the gate.\n");
+  struct _glwd_metric * metric;
+  
+  if (!pthread_mutex_lock(&config->metrics_lock)) {
+    u_map_put(response->map_header, ULFIUS_HTTP_HEADER_CONTENT, "text/plain; charset=utf-8");
+    for (i=0; i<pointer_list_size(&config->metrics_list); i++) {
+      metric = (struct _glwd_metric *)pointer_list_get_at(&config->metrics_list, i);
+      content = mstrcatf(content, "# HELP %s %s\n", metric->name, metric->help);
+      content = mstrcatf(content, "# TYPE %s counter\n", metric->name);
+      for (j=0; j<metric->data_size; j++) {
+        if (metric->data[j].label != NULL) {
+          content = mstrcatf(content, "%s{%s} %zu\n", metric->name, metric->data[j].label, metric->data[j].counter);
+        } else {
+          content = mstrcatf(content, "%s %zu\n", metric->name, metric->data[j].counter);
+        }
+      }
+    }
+    ulfius_set_string_body_response(response, 200, content);
+    o_free(content);
+    pthread_mutex_unlock(&config->metrics_lock);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_metrics - Error lock");
+    response->status = 500;
+  }
   return U_CALLBACK_CONTINUE;
 }

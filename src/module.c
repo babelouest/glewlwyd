@@ -760,6 +760,8 @@ json_t * add_user_auth_scheme_module(struct config_elements * config, json_t * j
           if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
             j_result = module->user_auth_scheme_module_init(config->config_m, json_object_get(j_module, "parameters"), cur_instance->name, &cur_instance->cls);
             if (check_result_value(j_result, G_OK)) {
+              glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
+              glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
               cur_instance->enabled = 1;
               j_return = json_pack("{si}", "result", G_OK);
             } else if (check_result_value(j_result, G_ERROR_PARAM)) {
@@ -892,6 +894,8 @@ json_t * manage_user_auth_scheme_module(struct config_elements * config, const c
       if (!instance->enabled) {
         j_result = instance->module->user_auth_scheme_module_init(config->config_m, json_object_get(json_object_get(j_module, "module"), "parameters"), instance->name, &instance->cls);
         if (check_result_value(j_result, G_OK)) {
+          glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", instance->module->name, "scheme_name", instance->name, NULL);
+          glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", instance->module->name, "scheme_name", instance->name, NULL);
           instance->enabled = 1;
           json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
           if (set_user_auth_scheme_module(config, name, json_object_get(j_module, "module")) == G_OK) {

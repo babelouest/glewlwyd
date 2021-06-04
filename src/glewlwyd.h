@@ -307,6 +307,7 @@ json_t * glewlwyd_module_callback_get_user(struct config_module * config, const 
 int glewlwyd_module_callback_set_user(struct config_module * config, const char * username, json_t * j_user);
 int glewlwyd_module_callback_check_user_password(struct config_module * config, const char * username, const char * password);
 json_t * glewlwyd_module_callback_check_user_session(struct config_module * config, const struct _u_request * request, const char * username);
+int glewlwyd_module_metrics_increment_counter(struct config_module * config, const char * metrics_name, size_t inc, const char * module_type, const char * module_name);
 
 // Client CRUD functions
 json_t * get_client_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit, const char * source);
@@ -329,6 +330,13 @@ int verify_api_key(struct config_elements * config, const char * api_key);
 json_t * get_api_key_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit);
 json_t * generate_api_key(struct config_elements * config, const char * username, const char * issued_for, const char * user_agent);
 int disable_api_key(struct config_elements * config, const char * token_hash);
+
+// Metrics functions
+void glewlwyd_metrics_close(struct config_elements * config);
+int glewlwyd_metrics_init(struct config_elements * config);
+void free_glwd_metrics(void * data);
+int glewlwyd_metrics_add_metric(struct config_elements * config, const char * name, const char * help);
+int glewlwyd_metrics_increment_counter(struct config_elements * config, const char * name, size_t inc, ...);
 
 // Callback functions
 int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);
