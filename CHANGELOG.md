@@ -1,8 +1,9 @@
 # Glewlwyd Changelog
 
-## 2.5.4
+## 2.6.0
 
 - Add option to forbid a scheme to be registered in the profile and/or the reset credentials pages
+- Add prometheus metrics endpoint
 
 ## 2.5.3
 
