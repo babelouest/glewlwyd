@@ -616,6 +616,7 @@ if (WITH_PLUGIN_OAUTH2)
     endif ()
   endif ()
 
+  include_directories(${RESOURCES_SRC_PATH})
   set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oauth2.c ${RESOURCES_SRC_PATH}/glewlwyd_resource.c ${RESOURCES_SRC_PATH}/glewlwyd_resource.h)
 
   add_library(protocol_oauth2 MODULE ${LIB_SRC})
@@ -653,6 +654,7 @@ if (WITH_PLUGIN_OIDC)
     endif ()
   endif ()
 
+  include_directories(${RESOURCES_SRC_PATH})
   set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oidc.c ${RESOURCES_SRC_PATH}/oidc_resource.c ${RESOURCES_SRC_PATH}/oidc_resource.h)
 
   add_library(protocol_oidc MODULE ${LIB_SRC})
