@@ -104,6 +104,12 @@ database =
 #  conninfo = "dbname = glewlwyd"
 #}
 
+# Prometheus metrics parameters
+metrics_endpoint = false
+#metrics_bind_address = "127.0.0.1"
+metrics_endpoint_port = 4594
+metrics_endpoint_admin_session = false
+
 # mime types for webapp files
 static_files_mime_types =
 (

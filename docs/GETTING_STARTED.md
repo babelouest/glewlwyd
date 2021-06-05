@@ -31,6 +31,7 @@
     - [Setup the required scopes for a user](#setup-the-required-scopes-for-a-user)
   - [Access to administration API via API keys](#access-to-administration-api-via-api-keys)
     - [Use an API key in a script](#use-an-api-key-in-a-script)
+  - [Prometheus metrics](#prometheus-metrics)
 - [How-Tos](#how-tos)
   - [Use case: Configure Glewlwyd to authenticate with Taliesin](#use-case-configure-glewlwyd-to-authenticate-with-taliesin)
   - [Use case: Configure a registration process with a confirmed e-mail address and OTP, WebAuthn or OAuth2 Client schemes](#use-case-configure-a-registration-process-with-a-confirmed-e-mail-address-and-otp-webauthn-or-oauth2-client-schemes)
@@ -295,6 +296,52 @@ Example: getting the list of users using an API key in a curl command:
 
 ```shell
 $ curl 'http://localhost:4593/api/user' -H 'Authorization: token XJcv1MRnK33EHAedPGELl0yXx2W6vUPu'
+```
+
+### Prometheus metrics
+
+If the Prometheus endpoint is enabled, then you can access the prometheus metrics via the default url [http://localhost:4594/](http://localhost:4594/).
+By default, Glewlwyd logs the following metrics:
+
+```
+General
+- Total number of successful authentication
+- Total number of successful authentication by scheme
+- Total number of invalid authentication
+- Total number of invalid authentication by scheme
+
+OAuth2 plugin
+- Total number of code provided
+- Total number of device code provided
+- Total number of refresh tokens provided
+- Total number of access tokens provided
+- Total number of client tokens provided
+- Total number of unauthorized client attempt
+- Total number of invalid code
+- Total number of invalid device code
+- Total number of invalid refresh token
+- Total number of invalid access token
+
+OIDC plugin
+- Total number of code provided
+- Total number of device code provided
+- Total number of id_token provided
+- Total number of refresh tokens provided
+- Total number of access tokens provided
+- Total number of client tokens provided
+- Total number of unauthorized client attempt
+- Total number of invalid code
+- Total number of invalid device code
+- Total number of invalid refresh token
+- Total number of invalid access token
+
+Registration plugin
+- Total number of registration started
+- Total number of registration completed
+- Total number of registration cancelled
+- Total number of e-mails updated
+- Total number of reset credentials started
+- Total number of reset credentials completed
 ```
 
 ## How-Tos

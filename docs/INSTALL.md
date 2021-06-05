@@ -3,6 +3,7 @@
 [![License: CC BY 4.0](https://licensebuttons.net/l/by/4.0/80x15.png)](https://creativecommons.org/licenses/by/4.0/)
 
 1.  [Upgrade Glewlwyd](#upgrade-glewlwyd)
+    * [Upgrade to Glewlwyd 2.6.0](#upgrade-to-glewlwyd-260)
     * [Upgrade to Glewlwyd 2.5.0](#upgrade-to-glewlwyd-250)
     * [Upgrade to Glewlwyd 2.4.0](#upgrade-to-glewlwyd-240)
     * [Upgrade to Glewlwyd 2.3.3](#upgrade-to-glewlwyd-233)
@@ -36,6 +37,7 @@
     * [Digest algorithm](#digest-algorithm)
     * [SSL/TLS](#ssltls)
     * [Database back-end initialisation](#database-back-end-initialisation)
+    * [Prometheus metrics endpoint](#prometheus-metrics-endpoint)
 7.  [Initialise database](#initialise-database)
 8.  [Install as a service](#install-as-a-service)
 9.  [Reverse proxy configuration](#reverse-proxy-configuration)
@@ -54,6 +56,30 @@
 ## Upgrade Glewlwyd
 
 Glewlwyd upgrades usually come with database changes. It is highly recommended to backup your database before performing the upgrade. You must perform the database upgrades in the correct order. i.e. if you upgrade from Glewlwyd 2.1 to Glewlwyd 2.3, you must first install the 2.2 upgrade, then the 2.3.
+
+### Upgrade to Glewlwyd 2.6.0
+
+If your current version is prior to 2.5.0, first follow the security instructions in the paragraph [Upgrade to Glewlwyd 2.5.0](#upgrade-to-glewlwyd-250).
+
+Some changes were added to the core tables. You must execute the script depending on your database backend:
+
+- MariaDB: [upgrade-2.6-core.mariadb.sql](database/upgrade-2.6-core.mariadb.sql)
+
+```shell
+$ mysql glewlwyd < docs/database/upgrade-2.5-core.mariadb.sql
+```
+
+- SQLite3: [upgrade-2.6-core.sqlite3.sql](database/upgrade-2.6-core.sqlite3.sql)
+
+```shell
+$ sqlite3 /path/to/glewlwyd.db < docs/database/upgrade-2.6-core.sqlite3.sql
+```
+
+- PostgreSQL: [upgrade-2.6-core.postgresql.sql](database/upgrade-2.6-core.postgresql.sql)
+
+```shell
+$ psql glewlwyd < docs/database/upgrade-2.6-core.postgresql.sql
+```
 
 ### Upgrade to Glewlwyd 2.5.0
 
@@ -751,6 +777,22 @@ GLWD_DATABASE_POSTGRE_CONNINFO
 ```
 
 Database configuration is mandatory.
+
+### Prometheus metrics endpoint
+
+Prometheus endpoint will listen on another TCP port (default 4594) than default Glewlwyd endpoint (default 4593). To enable Prometheus metrics and its endpoint, you must set the configuration value `metrics_endpoint` to `true`.
+
+The configuration values available for Prometheus metrics are:
+
+```
+# Prometheus metrics parameters
+metrics_endpoint = true                # default false
+metrics_bind_address = "127.0.0.1"     # default disabled
+metrics_endpoint_port = 4594           # default 4594
+metrics_endpoint_admin_session = false # default false, if true, then an admin session cookie or a valid API key must be used to authorize access
+```
+
+Then, the metrics endpoint will be available at the following address: [http://localhost:4594/](http://localhost:4594/)
 
 ## Initialise database
 
