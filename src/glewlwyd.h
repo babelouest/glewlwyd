@@ -294,6 +294,8 @@ json_t * glewlwyd_plugin_callback_scheme_register(struct config_plugin * config,
 json_t * glewlwyd_plugin_callback_scheme_register_get(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username);
 int glewlwyd_plugin_callback_scheme_can_use(struct config_plugin * config, const char * mod_name, const char * username);
 int glewlwyd_plugin_callback_scheme_deregister(struct config_plugin * config, const char * mod_name, const char * username);
+int glewlwyd_plugin_callback_metrics_add_metric(struct config_plugin * config, const char * name, const char * help);
+int glewlwyd_plugin_callback_metrics_increment_counter(struct config_plugin * config, const char * name, size_t inc, ...);
 
 // User CRUD functions
 json_t * get_user_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit, const char * source);
@@ -336,7 +338,8 @@ void glewlwyd_metrics_close(struct config_elements * config);
 int glewlwyd_metrics_init(struct config_elements * config);
 void free_glwd_metrics(void * data);
 int glewlwyd_metrics_add_metric(struct config_elements * config, const char * name, const char * help);
-int glewlwyd_metrics_increment_counter(struct config_elements * config, const char * name, size_t inc, ...);
+int glewlwyd_metrics_increment_counter_va(struct config_elements * config, const char * name, size_t inc, ...);
+int glewlwyd_metrics_increment_counter(struct config_elements * config, const char * name, const char * label, size_t inc);
 
 // Callback functions
 int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);

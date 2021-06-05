@@ -44,6 +44,13 @@
 #define GLEWLWYD_PLUGIN_REGISTER_TABLE_RESET_CREDENTIALS_SESSION "gpr_reset_credentials_session"
 #define GLEWLWYD_PLUGIN_REGISTER_TABLE_RESET_CREDENTIALS_EMAIL "gpr_reset_credentials_email"
 
+#define GLWD_METRICS_REGISTRATION_STARTED        "glewlwyd_registration_started"
+#define GLWD_METRICS_REGISTRATION_COMPLETED      "glewlwyd_registration_completed"
+#define GLWD_METRICS_REGISTRATION_CANCELLED      "glewlwyd_registration_cancelled"
+#define GLWD_METRICS_EMAIL_UPDATED               "glewlwyd_email_updated"
+#define GLWD_METRICS_RESET_CREDENTIALS_STARTED   "glewlwyd_reset_credentials_started"
+#define GLWD_METRICS_RESET_CREDENTIALS_COMPLETED "glewlwyd_reset_credentials_completed"
+
 struct _register_config {
   struct config_plugin * glewlwyd_config;
   pthread_mutex_t        insert_lock;
@@ -1648,6 +1655,7 @@ static int callback_register_register_user(const struct _u_request * request, st
                                         "/", 
                                         config->glewlwyd_config->glewlwyd_config->cookie_secure, 
                                         0);
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_REGISTRATION_STARTED, 1, "plugin", config->name, NULL);
         } else if (check_result_value(j_result, G_ERROR_PARAM)) {
           response->status = 400;
         } else {
@@ -1863,6 +1871,7 @@ static int callback_register_cancel(const struct _u_request * request, struct _u
                                   "/", 
                                   config->glewlwyd_config->glewlwyd_config->cookie_secure, 
                                   0);
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_REGISTRATION_CANCELLED, 1, "plugin", config->name, NULL);
   }
   
   return U_CALLBACK_CONTINUE;
@@ -2025,6 +2034,7 @@ static int callback_register_complete_registration(const struct _u_request * req
                                           config->glewlwyd_config->glewlwyd_config->cookie_secure, 
                                           0);
             y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' registered, origin: %s", config->name, json_string_value(json_object_get((json_t *)response->shared_data, "username")), get_ip_source(request));
+            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_REGISTRATION_COMPLETED, 1, "plugin", config->name, NULL);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_complete_registration - Error register_user_set");
             response->status = 500;
@@ -2102,6 +2112,8 @@ static int callback_register_update_email_verify(const struct _u_request * reque
   } else if (ret != G_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_update_email_verify - Error register_update_email_verify");
     response->status = 500;
+  } else {
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_EMAIL_UPDATED, 1, "plugin", config->name, NULL);
   }
   return U_CALLBACK_CONTINUE;
 }
@@ -2185,6 +2197,7 @@ static int callback_reset_credentials_complete_registration(const struct _u_requ
                                   "/",
                                   config->glewlwyd_config->glewlwyd_config->cookie_secure,
                                   0);
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_RESET_CREDENTIALS_COMPLETED, 1, "plugin", config->name, NULL);
   } else if (res == G_ERROR_PARAM) {
     response->status = 400;
   } else {
@@ -2243,6 +2256,7 @@ static int callback_register_reset_credentials_email_verify(const struct _u_requ
                                     config->glewlwyd_config->glewlwyd_config->cookie_secure, 
                                     0);
       y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' opened a reset credential session with e-mail token, origin: %s", config->name, json_string_value(json_object_get(j_result, "username")), get_ip_source(request));
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_RESET_CREDENTIALS_STARTED, 1, "plugin", config->name, "verification", "email", NULL);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_reset_credentials_email_verify - Error reset_credentials_create_session");
       response->status = 500;
@@ -2286,6 +2300,7 @@ static int callback_register_reset_credentials_code_verify(const struct _u_reque
                                     config->glewlwyd_config->glewlwyd_config->cookie_secure, 
                                     0);
       y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' opened a reset credential session with code, origin: %s", config->name, json_string_value(json_object_get(j_parameters, "username")), get_ip_source(request));
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_RESET_CREDENTIALS_STARTED, 1, "plugin", config->name, "verification", "code", NULL);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_reset_credentials_code_verify - Error reset_credentials_create_session");
       response->status = 500;
@@ -2612,6 +2627,12 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "config", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_config, (void*)register_config) == G_OK) {
           if (json_object_get(j_parameters, "registration") == json_true() || json_object_get(j_parameters, "registration") == NULL) {
             y_log_message(Y_LOG_LEVEL_INFO, "Add registration endpoints with plugin prefix %s", name);
+            config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_REGISTRATION_STARTED, "Total number of registration started");
+            config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_REGISTRATION_COMPLETED, "Total number of registration completed");
+            config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_REGISTRATION_CANCELLED, "Total number of registration cancelled");
+            config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_REGISTRATION_STARTED, 0, "plugin", name, NULL);
+            config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_REGISTRATION_COMPLETED, 0, "plugin", name, NULL);
+            config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_REGISTRATION_CANCELLED, 0, "plugin", name, NULL);
             if (config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "username", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_check_username, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "register", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_register_user, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "verify", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_send_email_verification, (void*)register_config) == G_OK &&
@@ -2631,6 +2652,8 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
             }
           }
           if (json_object_get(j_parameters, "update-email") == json_true()) {
+            config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_EMAIL_UPDATED, "Total number of e-mails updated");
+            config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_EMAIL_UPDATED, 0, "plugin", name, NULL);
             if (config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "update-email", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "update-email", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_email_trigger, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "update-email/:token", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_email_verify, (void*)register_config) == G_OK) {
@@ -2640,6 +2663,9 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
             }
           }
           if (json_object_get(j_parameters, "reset-credentials") == json_true()) {
+            config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_RESET_CREDENTIALS_STARTED, "Total number of reset credentials started");
+            config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_RESET_CREDENTIALS_COMPLETED, "Total number of reset credentials completed");
+            config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_RESET_CREDENTIALS_COMPLETED, 0, "plugin", name, NULL);
             if (config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "reset-credentials/profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_register_reset_credentials_check_session, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "reset-credentials/profile/password", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_reset_credentials_update_password, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "reset-credentials/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_get_profile, (void*)register_config) == G_OK &&
@@ -2647,26 +2673,25 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
                 config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "reset-credentials/profile/scheme/register", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_get_scheme_registration, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "reset-credentials/profile/scheme/register", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_update_scheme_registration, (void*)register_config) == G_OK &&
                 config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "reset-credentials/profile/scheme/register/canuse", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_canuse_scheme_registration, (void*)register_config) == G_OK &&
-                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "reset-credentials/profile/complete", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_reset_credentials_complete_registration, (void*)register_config) == G_OK) {
-            } else {
+                config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "reset-credentials/profile/complete", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_reset_credentials_complete_registration, (void*)register_config) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init reset-credentials - Error glewlwyd_callback_add_plugin_endpoint");
-              update_email_ok = 0;
+              reset_credentials_ok = 0;
             }
             if (json_object_get(j_parameters, "reset-credentials-email") == json_true()) {
+              config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_RESET_CREDENTIALS_STARTED, 0, "plugin", name, "verification", "email", NULL);
               if (config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "reset-credentials-email", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_reset_credentials_email_trigger, (void*)register_config) == G_OK &&
-                  config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "reset-credentials-email/:token", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_reset_credentials_email_verify, (void*)register_config) == G_OK) {
-              } else {
+                  config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "reset-credentials-email/:token", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_reset_credentials_email_verify, (void*)register_config) != G_OK) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init reset-credentials-email - Error glewlwyd_callback_add_plugin_endpoint");
-                update_email_ok = 0;
+                reset_credentials_ok = 0;
               }
             }
             if (json_object_get(j_parameters, "reset-credentials-code") == json_true()) {
+              config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_RESET_CREDENTIALS_STARTED, 0, "plugin", name, "verification", "code", NULL);
               if (config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "reset-credentials-code", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_reset_credentials_code_verify, (void*)register_config) == G_OK &&
                   config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "reset-credentials-code", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session, (void*)register_config) == G_OK &&
-                  config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "reset-credentials-code", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_reset_credentials_code_generate, (void*)register_config) == G_OK) {
-              } else {
+                  config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "reset-credentials-code", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_register_reset_credentials_code_generate, (void*)register_config) != G_OK) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "plugin_module_init reset-credentials-code - Error glewlwyd_callback_add_plugin_endpoint");
-                update_email_ok = 0;
+                reset_credentials_ok = 0;
               }
             }
           }

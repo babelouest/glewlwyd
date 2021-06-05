@@ -388,6 +388,10 @@ struct config_plugin {
   json_t * (* glewlwyd_plugin_callback_scheme_register_get)(struct config_plugin * config, const char * mod_name, const struct _u_request * http_request, const char * username);
   int      (* glewlwyd_plugin_callback_scheme_deregister)(struct config_plugin * config, const char * mod_name, const char * username);
   int      (* glewlwyd_plugin_callback_scheme_can_use)(struct config_plugin * config, const char * mod_name, const char * username);
+  
+  // Prometheus metrics functions
+  int      (* glewlwyd_plugin_callback_metrics_add_metric)(struct config_plugin * config, const char * name, const char * help);
+  int      (* glewlwyd_plugin_callback_metrics_increment_counter)(struct config_plugin * config, const char * name, size_t inc, ...);
 
   // Misc functions
   char   * (* glewlwyd_callback_get_plugin_external_url)(struct config_plugin * config, const char * name);

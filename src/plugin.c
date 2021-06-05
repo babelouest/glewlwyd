@@ -605,3 +605,42 @@ int glewlwyd_plugin_callback_scheme_deregister(struct config_plugin * config, co
   }
   return ret;
 }
+
+int glewlwyd_plugin_callback_metrics_add_metric(struct config_plugin * config, const char * name, const char * help) {
+  if (config != NULL) {
+    return glewlwyd_metrics_add_metric(config->glewlwyd_config, name, help);
+  } else {
+    return G_ERROR_PARAM;
+  }
+}
+
+int glewlwyd_plugin_callback_metrics_increment_counter(struct config_plugin * config, const char * name, size_t inc, ...) {
+  va_list vl;
+  const char * label_arg;
+  char * label = NULL;
+  int ret = G_OK, flag = 0;
+
+  if (config != NULL && o_strlen(name)) {
+    va_start(vl, inc);
+    for (label_arg = va_arg(vl, const char *); label_arg != NULL && ret == G_OK; label_arg = va_arg(vl, const char *)) {
+      if (!flag) {
+        if (label == NULL) {
+          label = msprintf("%s=", label_arg);
+        } else {
+          label = mstrcatf(label, ", %s=", label_arg);
+        }
+      } else {
+        label = mstrcatf(label, "%s", label_arg);
+      }
+      flag = !flag;
+    }
+    va_end(vl);
+    
+    ret = glewlwyd_metrics_increment_counter(config->glewlwyd_config, name, label, inc);
+    o_free(label);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_plugin_callback_metrics_increment_counter - Error input values");
+    ret = G_ERROR_PARAM;
+  }
+  return ret;
+}

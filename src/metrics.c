@@ -25,6 +25,8 @@
  *
  */
 
+#include <sched.h>
+
 #include "glewlwyd.h"
 
 struct _glwd_increment_counter_data {
@@ -72,14 +74,51 @@ void * glewlwyd_metrics_increment_counter_thread(void * args) {
   pthread_exit(NULL);
 }
 
-int glewlwyd_metrics_increment_counter(struct config_elements * config, const char * name, size_t inc, ...) {
+int glewlwyd_metrics_increment_counter(struct config_elements * config, const char * name, const char * label, size_t inc) {
+  struct _glwd_increment_counter_data * data;
+  pthread_t thread_metrics;
+  int thread_ret, thread_detach;
+  pthread_attr_t attr;
+  struct sched_param param;
+  int ret;
+
+  if (config != NULL && o_strlen(name)) {
+    if ((data = o_malloc(sizeof(struct _glwd_increment_counter_data))) != NULL) {
+      data->config = config;
+      data->name = o_strdup(name);
+      data->label = o_strdup(label);
+      data->inc = inc;
+      pthread_attr_init (&attr);
+      pthread_attr_getschedparam (&attr, &param);
+      param.sched_priority = 0;
+      pthread_attr_setschedparam (&attr, &param);
+      thread_ret = pthread_create(&thread_metrics, &attr, glewlwyd_metrics_increment_counter_thread, (void *)data);
+      thread_detach = pthread_detach(thread_metrics);
+      if (thread_ret || thread_detach) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_metrics_increment_counter - Error thread");
+        ret = G_ERROR_MEMORY;
+        o_free(data->name);
+        o_free(data->label);
+        o_free(data);
+      } else {
+        ret = G_OK;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_metrics_increment_counter - Error allocating resources for struct _glwd_increment_counter_data");
+      ret = G_ERROR_MEMORY;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_metrics_increment_counter - Error input values");
+    ret = G_ERROR_PARAM;
+  }
+  return ret;
+}
+
+int glewlwyd_metrics_increment_counter_va(struct config_elements * config, const char * name, size_t inc, ...) {
   va_list vl;
   const char * label_arg;
   char * label = NULL;
   int ret = G_OK, flag = 0;
-  struct _glwd_increment_counter_data * data;
-  pthread_t thread_metrics;
-  int thread_ret, thread_detach;
 
   if (config != NULL && o_strlen(name)) {
     va_start(vl, inc);
@@ -97,26 +136,10 @@ int glewlwyd_metrics_increment_counter(struct config_elements * config, const ch
     }
     va_end(vl);
     
-    if ((data = o_malloc(sizeof(struct _glwd_increment_counter_data))) != NULL) {
-      data->config = config;
-      data->name = o_strdup(name);
-      data->label = label;
-      data->inc = inc;
-      thread_ret = pthread_create(&thread_metrics, NULL, glewlwyd_metrics_increment_counter_thread, (void *)data);
-      thread_detach = pthread_detach(thread_metrics);
-      if (thread_ret || thread_detach) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_module_metrics_increment_counter - Error thread");
-        ret = G_ERROR_MEMORY;
-        o_free(data->name);
-        o_free(data->label);
-        o_free(data);
-      }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_module_metrics_increment_counter - Error allocating resources for struct _glwd_increment_counter_data");
-      ret = G_ERROR_MEMORY;
-    }
+    ret = glewlwyd_metrics_increment_counter(config, name, label, inc);
+    o_free(label);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_module_metrics_increment_counter - Error input values");
+    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_metrics_increment_counter_va - Error input values");
     ret = G_ERROR_PARAM;
   }
   return ret;
@@ -126,7 +149,6 @@ void free_glwd_metrics(void * data) {
   struct _glwd_metric * glwd_metrics = (struct _glwd_metric *)data;
   size_t i;
   
-  y_log_message(Y_LOG_LEVEL_DEBUG, "Close metric %s", glwd_metrics->name);
   if (glwd_metrics != NULL) {
     o_free(glwd_metrics->name);
     o_free(glwd_metrics->help);
@@ -178,7 +200,6 @@ int glewlwyd_metrics_init(struct config_elements * config) {
 
 void glewlwyd_metrics_close(struct config_elements * config) {
   if (config->metrics_endpoint) {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "Close metrics");
     pointer_list_clean_free(&config->metrics_list, &free_glwd_metrics);
     pthread_mutex_destroy(&config->metrics_lock);
   }

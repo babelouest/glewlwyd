@@ -110,6 +110,8 @@ int main (int argc, char ** argv) {
   config->config_p->glewlwyd_plugin_callback_scheme_can_use = &glewlwyd_plugin_callback_scheme_can_use;
   config->config_p->glewlwyd_plugin_callback_get_scheme_list = &glewlwyd_plugin_callback_get_scheme_list;
   config->config_p->glewlwyd_plugin_callback_get_scheme_module = &glewlwyd_plugin_callback_get_scheme_module;
+  config->config_p->glewlwyd_plugin_callback_metrics_add_metric = &glewlwyd_plugin_callback_metrics_add_metric;
+  config->config_p->glewlwyd_plugin_callback_metrics_increment_counter = &glewlwyd_plugin_callback_metrics_increment_counter;
 
   // Init config structure with default values
   config->config_m->external_url = NULL;
@@ -291,10 +293,10 @@ int main (int argc, char ** argv) {
   glewlwyd_metrics_add_metric(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, "Total number of successful authentication by scheme");
   glewlwyd_metrics_add_metric(config, GLWD_METRICS_AUTH_USER_INVALID, "Total number of invalid authentication");
   glewlwyd_metrics_add_metric(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, "Total number of invalid authentication by scheme");
-  glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_VALID, 0, NULL);
-  glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_INVALID, 0, NULL);
-  glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", "password", NULL);
-  glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", "password", NULL);
+  glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_VALID, 0, NULL);
+  glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID, 0, NULL);
+  glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", "password", NULL);
+  glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", "password", NULL);
 
   // Initialize module config structure
   config->config_m->external_url = config->external_url;
@@ -480,6 +482,7 @@ int main (int argc, char ** argv) {
       ulfius_add_endpoint_by_val(config->instance_metrics, "GET", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session, (void*)config);
     }
     ulfius_add_endpoint_by_val(config->instance_metrics, "GET", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_metrics, (void*)config);
+    ulfius_add_endpoint_by_val(config->instance_metrics, "GET", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
     ulfius_set_default_endpoint(config->instance_metrics, &callback_default, (void*)config);
     if (ulfius_start_framework(config->instance_metrics) != U_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "Error starting metrics webservice instance_metrics");
@@ -2188,8 +2191,8 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
                 if (j_parameters != NULL) {
                   j_init = module->user_auth_scheme_module_init(config->config_m, j_parameters, cur_instance->name, &cur_instance->cls);
                   if (check_result_value(j_init, G_OK)) {
-                    glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
-                    glewlwyd_metrics_increment_counter(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
+                    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
+                    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
                     cur_instance->enabled = 1;
                   } else {
                     y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));

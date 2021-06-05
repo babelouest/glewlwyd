@@ -56,6 +56,17 @@
 #define GLEWLWYD_PLUGIN_OAUTH2_TABLE_DEVICE_AUTHORIZATION       "gpg_device_authorization"
 #define GLEWLWYD_PLUGIN_OAUTH2_TABLE_DEVICE_AUTHORIZATION_SCOPE "gpg_device_authorization_scope"
 
+#define GLWD_METRICS_OAUTH2_CODE                        "glewlwyd_oauth2_code"
+#define GLWD_METRICS_OAUTH2_DEVICE_CODE                 "glewlwyd_oauth2_device_code"
+#define GLWD_METRICS_OAUTH2_REFRESH_TOKEN               "glewlwyd_oauth2_refresh_token"
+#define GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN           "glewlwyd_oauth2_access_token"
+#define GLWD_METRICS_OAUTH2_CLIENT_ACCESS_TOKEN         "glewlwyd_oauth2_client_token"
+#define GLWD_METRICS_OAUTH2_UNAUTHORIZED_CLIENT         "glewlwyd_oauth2_unauthorized_client"
+#define GLWD_METRICS_OAUTH2_INVALID_CODE                "glewlwyd_oauth2_invalid_code"
+#define GLWD_METRICS_OAUTH2_INVALID_DEVICE_CODE         "glewlwyd_oauth2_invalid_device_code"
+#define GLWD_METRICS_OAUTH2_INVALID_REFRESH_TOKEN       "glewlwyd_oauth2_invalid_refresh_token"
+#define GLWD_METRICS_OAUTH2_INVALID_ACCESS_TOKEN        "glewlwyd_oauth2_invalid_acccess_token"
+
 // Authorization types available
 #define GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE                  0
 #define GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT                            1
@@ -2148,6 +2159,8 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
                                                scope);
                             ulfius_set_json_body_response(response, 200, j_body);
                             json_decref(j_body);
+                            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_REFRESH_TOKEN, 1, "plugin", config->name, "response_type", "device_code", NULL);
+                            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 1, "plugin", config->name, "response_type", "device_code", NULL);
                           } else {
                             y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oauth2 - Error serialize_access_token");
                             j_body = json_pack("{ss}", "error", "server_error");
@@ -2252,6 +2265,7 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
       j_body = json_pack("{ss}", "error", "unauthorized_client");
       ulfius_set_json_body_response(response, 403, j_body);
       json_decref(j_body);
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
     }
     json_decref(j_client);
   } else {
@@ -2376,6 +2390,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
                     ulfius_add_header_to_response(response, "Location", redirect_url);
                     response->status = 302;
                     o_free(redirect_url);
+                    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_CODE, 1, "plugin", config->name, NULL);
                   } else {
                     redirect_url = msprintf("%s%serror=server_error", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"));
                     ulfius_add_header_to_response(response, "Location", redirect_url);
@@ -2461,6 +2476,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
     redirect_url = msprintf("%s%serror=unauthorized_client%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
     ulfius_add_header_to_response(response, "Location", redirect_url);
     o_free(redirect_url);
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
   }
   o_free(state_param);
   json_decref(j_client);
@@ -2523,6 +2539,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                                           json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")));
                     ulfius_set_json_body_response(response, 200, j_body);
                     json_decref(j_body);
+                    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_REFRESH_TOKEN, 1, "plugin", config->name, "response_type", "code", NULL);
+                    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 1, "plugin", config->name, "response_type", "code", NULL);
                   } else {
                     y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - oauth2 - Error disable_authorization_code");
                     j_body = json_pack("{ss}", "error", "server_error");
@@ -2568,14 +2586,16 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
         j_body = json_pack("{ss}", "error", "invalid_code");
         ulfius_set_json_body_response(response, 403, j_body);
         json_decref(j_body);
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_INVALID_CODE, 1, "plugin", config->name, NULL);
       } else if (check_result_value(j_code, G_ERROR_PARAM)) {
         y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request));
         j_body = json_pack("{ss}", "error", "invalid_request");
         ulfius_set_json_body_response(response, 403, j_body);
         json_decref(j_body);
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_INVALID_CODE, 1, "plugin", config->name, NULL);
       } else {
         j_body = json_pack("{ss}", "error", "server_error");
-        ulfius_set_json_body_response(response, 403, j_body);
+        ulfius_set_json_body_response(response, 500, j_body);
         json_decref(j_body);
       }
       json_decref(j_code);
@@ -2583,6 +2603,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
       j_body = json_pack("{ss}", "error", "unauthorized_client");
       ulfius_set_json_body_response(response, 403, j_body);
       json_decref(j_body);
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
     }
     json_decref(j_client);
   }
@@ -2825,6 +2846,8 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
                                      json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")));
                   ulfius_set_json_body_response(response, 200, j_body);
                   json_decref(j_body);
+                  config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_REFRESH_TOKEN, 1, "plugin", config->name, "response_type", "password", NULL);
+                  config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 1, "plugin", config->name, "response_type", "password", NULL);
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - oauth2 - Error serialize_access_token");
                   j_body = json_pack("{ss}", "error", "server_error");
@@ -2942,6 +2965,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
                                     "scope", scope_joined);
               ulfius_set_json_body_response(response, 200, json_body);
               json_decref(json_body);
+              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_CLIENT_ACCESS_TOKEN, 1, "plugin", config->name, NULL);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant - oauth2 - Error serialize_access_token");
               response->status = 500;
@@ -2962,6 +2986,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
     } else {
       y_log_message(Y_LOG_LEVEL_DEBUG, "check_auth_type_client_credentials_grant - oauth2 - Error client_id '%s' invalid", request->auth_basic_user);
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", request->auth_basic_user, ip_source);
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
       response->status = 403;
     }
     json_decref(j_client);
@@ -3040,6 +3065,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
                                     "iat", now);
               ulfius_set_json_body_response(response, 200, json_body);
               json_decref(json_body);
+              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 1, "plugin", config->name, "response_type", "refresh_token", NULL);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - oauth2 - Error serialize_access_token");
               response->status = 500;
@@ -3063,6 +3089,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
     } else if (check_result_value(j_refresh, G_ERROR_NOT_FOUND)) {
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request));
       response->status = 400;
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_INVALID_REFRESH_TOKEN, 1, "plugin", config->name, NULL);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh - oauth2 - Error validate_refresh_token");
       response->status = 500;
@@ -3115,6 +3142,7 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
     } else if (check_result_value(j_refresh, G_ERROR_NOT_FOUND)) {
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request));
       response->status = 400;
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_INVALID_REFRESH_TOKEN, 1, "plugin", config->name, NULL);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "delete_refresh_token - oauth2 - Error validate_refresh_token");
       response->status = 500;
@@ -3385,6 +3413,7 @@ static int callback_oauth2_device_authorization(const struct _u_request * reques
           json_decref(j_body);
           o_free(verification_uri);
           o_free(verification_uri_complete);
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_DEVICE_CODE, 1, "plugin", config->name, NULL);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_oauth2_device_authorization oauth2 - Error generate_device_authorization");
         j_body = json_pack("{ss}", "error", "server_error");
@@ -3396,6 +3425,7 @@ static int callback_oauth2_device_authorization(const struct _u_request * reques
       j_body = json_pack("{ss}", "error", "unauthorized_client");
       ulfius_set_json_body_response(response, 403, j_body);
       json_decref(j_body);
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
     }
     json_decref(j_client);
   } else {
@@ -3437,6 +3467,7 @@ static int callback_oauth2_device_verification(const struct _u_request * request
       ulfius_add_header_to_response(response, "Location", redirect_url);
       o_free(redirect_url);
       u_map_clean(&param);
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_INVALID_DEVICE_CODE, 1, "plugin", config->name, NULL);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_oauth2_device_verification - Error u_map_init");
       response->status = 500;
@@ -3454,6 +3485,8 @@ static int callback_oauth2_device_verification(const struct _u_request * request
               redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
               ulfius_add_header_to_response(response, "Location", redirect_url);
               o_free(redirect_url);
+              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_REFRESH_TOKEN, 1, "plugin", config->name, "response_type", "device_code", NULL);
+              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 1, "plugin", config->name, "response_type", "device_code", NULL);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_oauth2_device_verification - Error validate_device_authorization_scope");
               response->status = 302;
@@ -3491,6 +3524,7 @@ static int callback_oauth2_device_verification(const struct _u_request * request
         redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_INVALID_DEVICE_CODE, 1, "plugin", config->name, NULL);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_oauth2_device_verification - Error validate_device_auth_user_code");
         response->status = 302;
@@ -3799,6 +3833,48 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         if (json_object_get(p_config->j_params, "device-authorization-interval") == NULL) {
           json_object_set_new(p_config->j_params, "device-authorization-interval", json_integer(GLEWLWYD_DEVICE_AUTH_DEFAUT_INTERVAL));
         }
+      }
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OAUTH2_CODE, "Total number of code provided");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OAUTH2_DEVICE_CODE, "Total number of device code provided");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OAUTH2_REFRESH_TOKEN, "Total number of refresh tokens provided");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, "Total number of access tokens provided");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OAUTH2_CLIENT_ACCESS_TOKEN, "Total number of client tokens provided");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OAUTH2_UNAUTHORIZED_CLIENT, "Total number of unauthorized client attempt");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OAUTH2_INVALID_CODE, "Total number of invalid code");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OAUTH2_INVALID_DEVICE_CODE, "Total number of invalid device code");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OAUTH2_INVALID_REFRESH_TOKEN, "Total number of invalid refresh token");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OAUTH2_INVALID_ACCESS_TOKEN, "Total number of invalid access token");
+      config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_CODE, 0, "plugin", name, NULL);
+      config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_REFRESH_TOKEN, 0, "plugin", name, NULL);
+      config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 0, "plugin", name, NULL);
+      if (json_object_get(p_config->j_params, "auth-type-code-enabled") == json_true()) {
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_REFRESH_TOKEN, 0, "plugin", name, "response_type", "code", NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 0, "plugin", name, "response_type", "code", NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_INVALID_CODE, 0, "plugin", name, NULL);
+      }
+      if (json_object_get(p_config->j_params, "auth-type-password-enabled") == json_true()) {
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_REFRESH_TOKEN, 0, "plugin", name, "response_type", "password", NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 0, "plugin", name, "response_type", "password", NULL);
+      }
+      if (json_object_get(p_config->j_params, "auth-type-client-enabled") == json_true()) {
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_CLIENT_ACCESS_TOKEN, 0, "plugin", name, NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_UNAUTHORIZED_CLIENT, 0, "plugin", name, NULL);
+      }
+      if (json_object_get(p_config->j_params, "auth-type-implicit-enabled") == json_true()) {
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 0, "plugin", name, "response_type", "token", NULL);
+      }
+      if (json_object_get(p_config->j_params, "auth-type-device-enabled") == json_true()) {
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_DEVICE_CODE, 0, "plugin", name, NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_INVALID_DEVICE_CODE, 0, "plugin", name, NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_REFRESH_TOKEN, 0, "plugin", name, "response_type", "device_code", NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 0, "plugin", name, "response_type", "device_code", NULL);
+      }
+      if (json_object_get(p_config->j_params, "auth-type-refresh-enabled") == json_true()) {
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 0, "plugin", name, "response_type", "refresh_token", NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_INVALID_REFRESH_TOKEN, 0, "plugin", name, NULL);
+      }
+      if (json_object_get(p_config->j_params, "introspection-revocation-allowed") == json_true()) {
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OAUTH2_INVALID_ACCESS_TOKEN, 0, "plugin", name, NULL);
       }
       
     } while (0);

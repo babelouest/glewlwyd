@@ -135,6 +135,18 @@
 #define GLEWLWYD_REFRESH_TOKEN_ONE_USE_CLIENT_DRIVEN 1
 #define GLEWLWYD_REFRESH_TOKEN_ONE_USE_ALWAYS        2
 
+#define GLWD_METRICS_OIDC_CODE                        "glewlwyd_oidc_code"
+#define GLWD_METRICS_OIDC_DEVICE_CODE                 "glewlwyd_oidc_device_code"
+#define GLWD_METRICS_OIDC_ID_TOKEN                    "glewlwyd_oidc_id_token"
+#define GLWD_METRICS_OIDC_REFRESH_TOKEN               "glewlwyd_oidc_refresh_token"
+#define GLWD_METRICS_OIDC_USER_ACCESS_TOKEN           "glewlwyd_oidc_access_token"
+#define GLWD_METRICS_OIDC_CLIENT_ACCESS_TOKEN         "glewlwyd_oidc_client_token"
+#define GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT         "glewlwyd_oidc_unauthorized_client"
+#define GLWD_METRICS_OIDC_INVALID_CODE                "glewlwyd_oidc_invalid_code"
+#define GLWD_METRICS_OIDC_INVALID_DEVICE_CODE         "glewlwyd_oidc_invalid_device_code"
+#define GLWD_METRICS_OIDC_INVALID_REFRESH_TOKEN       "glewlwyd_oidc_invalid_refresh_token"
+#define GLWD_METRICS_OIDC_INVALID_ACCESS_TOKEN        "glewlwyd_oidc_invalid_acccess_token"
+
 /**
  * Structure used to store all the plugin parameters and data duringexecution
  */
@@ -1266,6 +1278,7 @@ static int check_dpop_jti(struct _oidc_config * config,
     } else {
       y_log_message(Y_LOG_LEVEL_WARNING, "jti already used for client %s at IP Address %s", client_id, ip_source);
       ret = G_ERROR_UNAUTHORIZED;
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
     }
     json_decref(j_result);
   } else {
@@ -4259,12 +4272,15 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
             y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt has an invalid signature (client_secret), origin: %s", ip_source);
             y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
             j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
           }
           r_jwk_free(jwk);
         } else {
           y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - client has no attribute 'client_secret', origin: %s", ip_source);
           y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
         }
       } else if (alg == R_JWA_ALG_ES256 || alg == R_JWA_ALG_ES384 || alg == R_JWA_ALG_ES512 || alg == R_JWA_ALG_RS256 || alg == R_JWA_ALG_RS384 || alg == R_JWA_ALG_RS512 || alg == R_JWA_ALG_PS256 || alg == R_JWA_ALG_PS384 || alg == R_JWA_ALG_PS512 || alg == R_JWA_ALG_EDDSA) {
         if (json_string_length(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))) && o_strlen(kid)) {
@@ -4295,17 +4311,20 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
             y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt has an invalid signature (pubkey)", ip_source);
             y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
             j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
           }
           r_jwk_free(jwk);
         } else {
           y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - invalid pubkey, origin: %s", ip_source);
           y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
         }
       } else {
         y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt has unsupported algorithm: %s, origin: %s", r_jwa_alg_to_str(alg), ip_source);
         y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
       }
     } else {
       // jwt_header must have alg set to "none"
@@ -4315,6 +4334,7 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
         y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt alg is not none although the client is not confidential, origin: %s", ip_source);
         y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
       }
     }
   } else if (check_result_value(j_client, G_ERROR_NOT_FOUND) || check_result_value(j_client, G_ERROR_PARAM)) {
@@ -6125,6 +6145,9 @@ static int check_auth_type_device_code(const struct _u_request * request,
                                                            json_object_get(json_array_get(j_result, 0), "authorization_details"));
                                         ulfius_set_json_body_response(response, 200, j_body);
                                         json_decref(j_body);
+                                        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_ID_TOKEN, 1, "plugin", "response_type", "device_code", config->name, NULL);
+                                        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_REFRESH_TOKEN, 1, "plugin", "response_type", "device_code", config->name, NULL);
+                                        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, 1, "plugin", "response_type", "device_code", config->name, NULL);
                                       } else {
                                         y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oidc - Error encrypt_token_if_required");
                                         j_body = json_pack("{ss}", "error", "server_error");
@@ -6182,6 +6205,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
                           j_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
                           ulfius_set_json_body_response(response, 403, j_body);
                           json_decref(j_body);
+                          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
                         } else {
                           y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oidc - Error oidc_verify_dpop_proof");
                           j_body = json_pack("{ss}", "error", "server_error");
@@ -6281,6 +6305,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
       j_body = json_pack("{ss}", "error", "unauthorized_client");
       ulfius_set_json_body_response(response, 403, j_body);
       json_decref(j_body);
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
     }
     json_decref(j_client);
   } else {
@@ -6367,6 +6392,7 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
                   } else {
                     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
                     y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", u_map_get(http_request->map_post_body, "client_id"), ip_source);
+                    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
                   }
                   gnutls_free(cert_dn.data);
                 } else {
@@ -6426,6 +6452,7 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
                 } else {
                   y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", u_map_get(http_request->map_post_body, "client_id"), ip_source);
                   j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+                  config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
                 }
               }
             } else if (is_client_auth_method_allowed(json_object_get(j_client, "client"), GLEWLWYD_CLIENT_AUTH_METHOD_SELF_SIGNED_TLS) && json_object_get(config->j_params, "client-cert-self-signed-allowed") == json_true()) {
@@ -6482,6 +6509,7 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
                 } else {
                   y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", u_map_get(http_request->map_post_body, "client_id"), ip_source);
                   j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+                  config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
                 }
               }
             }
@@ -7182,6 +7210,7 @@ static int callback_check_registration_management(const struct _u_request * requ
   }
   if (ret == U_CALLBACK_UNAUTHORIZED) {
     y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request));
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_ACCESS_TOKEN, 1, "plugin", config->name, NULL);
   }
   return ret;
 }
@@ -7234,6 +7263,7 @@ static int callback_check_registration(const struct _u_request * request, struct
       ret = callback_check_glewlwyd_oidc_access_token(request, response, (void*)config->client_register_resource_config);
       if (ret == U_CALLBACK_UNAUTHORIZED) {
         y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request));
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_ACCESS_TOKEN, 1, "plugin", config->name, "endpoint", "register", NULL);
       }
     }
     json_decref(j_introspect);
@@ -7430,6 +7460,9 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
       }
     }
     json_decref(j_assertion);
+  }
+  if (ret == U_CALLBACK_UNAUTHORIZED) {
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_ACCESS_TOKEN, 1, "plugin", config->name, "endpoint", o_strstr(request->url_path, "/introspect")!=NULL?"introspect":"revoke", NULL);
   }
   return ret;
 }
@@ -7741,6 +7774,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
       } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - error client %s is not allowed to claim scopes '%s'", client_id, scope);
         y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
         if (form_post) {
           build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
         } else {
@@ -8320,6 +8354,9 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                                                           j_authorization_details_processed);
                                     ulfius_set_json_body_response(response, 200, j_body);
                                     json_decref(j_body);
+                                    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_ID_TOKEN, 1, "plugin", config->name, "response_type", "code", NULL);
+                                    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_REFRESH_TOKEN, 1, "plugin", config->name, "response_type", "code", NULL);
+                                    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, 1, "plugin", config->name, "response_type", "code", NULL);
                                   } else {
                                     y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_access_token_request - Error encrypt_token_if_required");
                                     j_body = json_pack("{ss}", "error", "server_error");
@@ -8374,6 +8411,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                                                   j_authorization_details_processed);
                             ulfius_set_json_body_response(response, 200, j_body);
                             json_decref(j_body);
+                            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_REFRESH_TOKEN, 1, "plugin", config->name, "response_type", "code", NULL);
+                            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, 1, "plugin", config->name, "response_type", "code", NULL);
                           } else {
                             y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_access_token_request - Error disable_authorization_code");
                             j_body = json_pack("{ss}", "error", "server_error");
@@ -8436,6 +8475,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
           j_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
           ulfius_set_json_body_response(response, 403, j_body);
           json_decref(j_body);
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - Error oidc_verify_dpop_proof");
           j_body = json_pack("{ss}", "error", "server_error");
@@ -8448,6 +8488,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
         j_body = json_pack("{ss}", "error", "invalid_code");
         ulfius_set_json_body_response(response, 403, j_body);
         json_decref(j_body);
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_CODE, 1, "plugin", config->name, NULL);
       }
       json_decref(j_code);
       json_decref(j_claims_request);
@@ -8455,6 +8496,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
       j_body = json_pack("{ss}", "error", "unauthorized_client");
       ulfius_set_json_body_response(response, 403, j_body);
       json_decref(j_body);
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_CODE, 1, "plugin", config->name, NULL);
     }
     json_decref(j_client);
   }
@@ -8660,6 +8702,9 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
                                                  json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")));
                               ulfius_set_json_body_response(response, 200, j_body);
                               json_decref(j_body);
+                              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_ID_TOKEN, 1, "plugin", config->name, "response_type", "password", NULL);
+                              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_REFRESH_TOKEN, 1, "plugin", config->name, "response_type", "password", NULL);
+                              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, 1, "plugin", config->name, "response_type", "password", NULL);
                             } else {
                               y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error encrypt_token_if_required");
                               j_body = json_pack("{ss}", "error", "server_error");
@@ -8701,6 +8746,8 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
                                              json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")));
                           ulfius_set_json_body_response(response, 200, j_body);
                           json_decref(j_body);
+                          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_REFRESH_TOKEN, 1, "plugin", config->name, "response_type", "password", NULL);
+                          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, 1, "plugin", config->name, "response_type", "password", NULL);
                         } else {
                           y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error encrypt_token_if_required");
                           j_body = json_pack("{ss}", "error", "server_error");
@@ -8763,6 +8810,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_auth_type_resource_owner_pwd_cred - Error user '%s'", username);
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", username, ip_source);
       response->status = 403;
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - glewlwyd_callback_check_user_valid");
       response->status = 403;
@@ -8904,6 +8952,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
                                         "scope", scope_joined);
                   ulfius_set_json_body_response(response, 200, json_body);
                   json_decref(json_body);
+                  config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_CLIENT_ACCESS_TOKEN, 1, "plugin", config->name, NULL);
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_client_credentials_grant - Error encrypt_token_if_required");
                   response->status = 500;
@@ -8930,11 +8979,13 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_auth_type_client_credentials_grant - Error client_id '%s' invalid", request->auth_basic_user);
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", request->auth_basic_user, ip_source);
       response->status = 403;
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
     }
     json_decref(j_client);
   } else {
     y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
     response->status = 403;
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
   }
   o_free(issued_for);
   return U_CALLBACK_CONTINUE;
@@ -9142,6 +9193,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_pushed_authorization_request - error client %s is not allowed to claim scopes '%s'", client_id, scope);
         y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
         response->status = 403;
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_pushed_authorization_request - error reduce_scope");
         response->status = 500;
@@ -9321,6 +9373,7 @@ static json_t * verify_pushed_authorization_request(struct _oidc_config * config
       } else {
         y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
       }
       json_decref(j_result);
     } else {
@@ -9330,6 +9383,7 @@ static json_t * verify_pushed_authorization_request(struct _oidc_config * config
   } else {
     y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", "(none)", ip_source);
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
   }
   return j_return;
 }
@@ -9604,6 +9658,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
                       if ((new_refresh_token_out = encrypt_token_if_required(config, new_refresh_token, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_REFRESH_TOKEN)) != NULL) {
                         json_object_set_new(json_body, "refresh_token", json_string(new_refresh_token_out));
                         ulfius_set_json_body_response(response, 200, json_body);
+                        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, 1, "plugin", config->name, NULL);
                       } else {
                         y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh oidc - Error encrypt_token_if_required (1)");
                         response->status = 500;
@@ -9630,6 +9685,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
                                           j_authorization_details_processed);
                     ulfius_set_json_body_response(response, 200, json_body);
                     json_decref(json_body);
+                    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, 1, "plugin", config->name, NULL);
                   } else {
                     y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh oidc - Error encrypt_token_if_required (3)");
                     response->status = 500;
@@ -9681,9 +9737,11 @@ static int get_access_token_from_refresh (const struct _u_request * request,
         y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh oidc - Error disable_refresh_token_by_jti");
       }
       json_decref(j_client);
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_REFRESH_TOKEN, 1, "plugin", config->name, NULL);
     } else if (check_result_value(j_refresh, G_ERROR_NOT_FOUND)) {
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request));
       response->status = 400;
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_REFRESH_TOKEN, 1, "plugin", config->name, NULL);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh oidc - Error validate_refresh_token");
       response->status = 500;
@@ -9735,9 +9793,11 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
         if (!check_result_value(j_client, G_OK) && is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "oidc delete_refresh_token - client '%s' is invalid, origin: %s", request->auth_basic_user, ip_source);
           has_issues = 1;
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
         } else if (request->auth_basic_user == NULL && request->auth_basic_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "oidc delete_refresh_token - client '%s' is invalid or is not confidential, origin: %s", request->auth_basic_user, ip_source);
           has_issues = 1;
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
         }
         json_decref(j_client);
       }
@@ -9755,6 +9815,7 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
     } else if (check_result_value(j_refresh, G_ERROR_NOT_FOUND) || check_result_value(j_refresh, G_ERROR_UNAUTHORIZED)) {
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request));
       response->status = 400;
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_REFRESH_TOKEN, 1, "plugin", config->name, NULL);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "oidc delete_refresh_token - Error validate_refresh_token");
       response->status = 500;
@@ -9779,6 +9840,8 @@ static int callback_check_userinfo(const struct _u_request * request, struct _u_
     j_introspect = get_token_metadata(config, (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER)), "access_token", NULL);
     if (check_result_value(j_introspect, G_OK) && json_object_get(json_object_get(j_introspect, "token"), "active") == json_true()) {
       ret = callback_check_glewlwyd_oidc_access_token(request, response, (void*)config->oidc_resource_config);
+    } else {
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_ACCESS_TOKEN, 1, "plugin", config->name, "endpoint", "userinfo", NULL);
     }
     json_decref(j_introspect);
   }
@@ -10237,6 +10300,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                 ret = G_ERROR;
               }
               o_free(authorization_code_out);
+              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_CODE, 1, "plugin", config->name, NULL);
             }
           } else {
             if (redirect_uri != NULL) {
@@ -10313,6 +10377,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                   ret = G_ERROR;
                 }
                 o_free(access_token_out);
+                config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, 1, "plugin", config->name, NULL);
               }
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_implicit_grant - Error generate_access_token");
@@ -10390,6 +10455,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                   ret = G_ERROR;
                 }
                 o_free(id_token_out);
+                config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_ID_TOKEN, 1, "plugin", config->name, "response_type", response_type, NULL);
               }
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_access_token_request - Error generate_id_token");
@@ -11022,6 +11088,7 @@ static int callback_oidc_device_authorization(const struct _u_request * request,
             j_body = json_pack("{ss}", "error", "invalid_scope");
             ulfius_set_json_body_response(response, 403, j_body);
             json_decref(j_body);
+            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_authorization - error reduce_scope");
             j_body = json_pack("{ss}", "error", "server_error");
@@ -11082,6 +11149,7 @@ static int callback_oidc_device_authorization(const struct _u_request * request,
                 json_decref(j_body);
                 o_free(verification_uri);
                 o_free(verification_uri_complete);
+                config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_DEVICE_CODE, 1, "plugin", config->name, NULL);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_authorization oidc - Error generate_device_authorization");
               j_body = json_pack("{ss}", "error", "server_error");
@@ -11096,6 +11164,7 @@ static int callback_oidc_device_authorization(const struct _u_request * request,
         j_body = json_pack("{ss}", "error", "unauthorized_client");
         ulfius_set_json_body_response(response, 403, j_body);
         json_decref(j_body);
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
       }
       json_decref(j_client);
     } else {
@@ -11148,6 +11217,7 @@ static int callback_oidc_device_verification(const struct _u_request * request, 
       ulfius_add_header_to_response(response, "Location", redirect_url);
       o_free(redirect_url);
       u_map_clean(&param);
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_DEVICE_CODE, 1, "plugin", config->name, NULL);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error u_map_init");
       response->status = 500;
@@ -11202,6 +11272,7 @@ static int callback_oidc_device_verification(const struct _u_request * request, 
         redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_DEVICE_CODE, 1, "plugin", config->name, NULL);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error validate_device_auth_user_code");
         u_map_put(&param, "prompt", "deviceServerError");
@@ -12164,6 +12235,53 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error generate_discovery_content");
         j_return = json_pack("{si}", "result", G_ERROR);
         break;
+      }
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OIDC_CODE, "Total number of code provided");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OIDC_DEVICE_CODE, "Total number of device code provided");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OIDC_ID_TOKEN, "Total number of id_token provided");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OIDC_REFRESH_TOKEN, "Total number of refresh tokens provided");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, "Total number of access tokens provided");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OIDC_CLIENT_ACCESS_TOKEN, "Total number of client tokens provided");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, "Total number of unauthorized client attempt");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OIDC_INVALID_CODE, "Total number of invalid code");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OIDC_INVALID_DEVICE_CODE, "Total number of invalid device code");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OIDC_INVALID_REFRESH_TOKEN, "Total number of invalid refresh token");
+      config->glewlwyd_plugin_callback_metrics_add_metric(config, GLWD_METRICS_OIDC_INVALID_ACCESS_TOKEN, "Total number of invalid access token");
+      config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_CODE, 0, "plugin", name, NULL);
+      config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_ID_TOKEN, 0, "plugin", name, NULL);
+      config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_REFRESH_TOKEN, 0, "plugin", name, NULL);
+      config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, 0, "plugin", name, NULL);
+      if (json_object_get(p_config->j_params, "auth-type-code-enabled") == json_true()) {
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_ID_TOKEN, 0, "plugin", name, "response_type", "code", NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_REFRESH_TOKEN, 0, "plugin", name, "response_type", "code", NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, 0, "plugin", name, "response_type", "code", NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_INVALID_CODE, 0, "plugin", name, NULL);
+      }
+      if (json_object_get(p_config->j_params, "auth-type-password-enabled") == json_true()) {
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_ID_TOKEN, 0, "plugin", name, "response_type", "password", NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_REFRESH_TOKEN, 0, "plugin", name, "response_type", "password", NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, 0, "plugin", name, "response_type", "password", NULL);
+      }
+      if (json_object_get(p_config->j_params, "auth-type-client-enabled") == json_true()) {
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_CLIENT_ACCESS_TOKEN, 0, "plugin", name, NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 0, "plugin", name, NULL);
+      }
+      if (json_object_get(p_config->j_params, "auth-type-implicit-enabled") == json_true()) {
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, 0, "plugin", name, "response_type", "token", NULL);
+      }
+      if (json_object_get(p_config->j_params, "auth-type-device-enabled") == json_true()) {
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_DEVICE_CODE, 0, "plugin", name, NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_INVALID_DEVICE_CODE, 0, "plugin", name, NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_ID_TOKEN, 0, "plugin", name, "response_type", "device_code", NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_REFRESH_TOKEN, 0, "plugin", name, "response_type", "device_code", NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, 0, "plugin", name, "response_type", "device_code", NULL);
+      }
+      if (json_object_get(p_config->j_params, "auth-type-refresh-enabled") == json_true()) {
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_USER_ACCESS_TOKEN, 0, "plugin", name, "response_type", "refresh_token", NULL);
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_INVALID_REFRESH_TOKEN, 0, "plugin", name, NULL);
+      }
+      if (json_object_get(p_config->j_params, "introspection-revocation-allowed") == json_true()) {
+        config->glewlwyd_plugin_callback_metrics_increment_counter(config, GLWD_METRICS_OIDC_INVALID_ACCESS_TOKEN, 0, "plugin", name, NULL);
       }
     } while (0);
     json_decref(j_result);
