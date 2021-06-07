@@ -31,6 +31,7 @@ all: release
 clean:
 	rm -f *.o glewlwyd valgrind.txt
 	cd user && $(MAKE) clean
+	cd user_middleware && $(MAKE) clean
 	cd client && $(MAKE) clean
 	cd scheme && $(MAKE) clean
 	cd plugin && $(MAKE) clean
@@ -39,6 +40,7 @@ debug: ADDITIONALFLAGS=-Wunreachable-code -DDEBUG -g -O0
 
 debug: glewlwyd
 	cd user && $(MAKE) debug
+	cd user_middleware && $(MAKE) debug
 	cd client && $(MAKE) debug
 	cd scheme && $(MAKE) debug
 	cd plugin && $(MAKE) debug
@@ -47,6 +49,7 @@ release: ADDITIONALFLAGS=-O3
 
 release: glewlwyd
 	cd user && $(MAKE)
+	cd user_middleware && $(MAKE)
 	cd client && $(MAKE)
 	cd scheme && $(MAKE)
 	cd plugin && $(MAKE)
@@ -66,6 +69,7 @@ test-debug: debug
 install: glewlwyd
 	install glewlwyd $(DESTDIR)/bin
 	cd user && $(MAKE) install DESTDIR=$(DESTDIR)
+	cd user_middleware && $(MAKE) install DESTDIR=$(DESTDIR)
 	cd client && $(MAKE) install DESTDIR=$(DESTDIR)
 	cd scheme && $(MAKE) install DESTDIR=$(DESTDIR)
 	cd plugin && $(MAKE) install DESTDIR=$(DESTDIR)

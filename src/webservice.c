@@ -792,6 +792,9 @@ int callback_glewlwyd_reload_modules (const struct _u_request * request, struct 
   close_user_module_instance_list(config);
   close_user_module_list(config);
   
+  close_user_middleware_module_instance_list(config);
+  close_user_middleware_module_list(config);
+  
   close_client_module_instance_list(config);
   close_client_module_list(config);
   
@@ -801,7 +804,6 @@ int callback_glewlwyd_reload_modules (const struct _u_request * request, struct 
   close_plugin_module_instance_list(config);
   close_plugin_module_list(config);
   
-  
   // Initialize user modules
   if (init_user_module_list(config) != G_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing user modules");
@@ -809,6 +811,16 @@ int callback_glewlwyd_reload_modules (const struct _u_request * request, struct 
   }
   if (load_user_module_instance_list(config) != G_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "Error loading user modules instances");
+    response->status = 500;
+  }
+
+  // Initialize user modules
+  if (init_user_middleware_module_list(config) != G_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error initializing user middleware modules");
+    response->status = 500;
+  }
+  if (load_user_middleware_module_instance_list(config) != G_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "Error loading user middleware modules instances");
     response->status = 500;
   }
 
@@ -1047,6 +1059,214 @@ int callback_glewlwyd_manage_user_module (const struct _u_request * request, str
     response->status = 404;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_module - Error get_user_module");
+    response->status = 500;
+  }
+  json_decref(j_search_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_get_user_middleware_module_list (const struct _u_request * request, struct _u_response * response, void * user_middleware_data) {
+  UNUSED(request);
+  struct config_elements * config = (struct config_elements *)user_middleware_data;
+  json_t * j_module;
+  
+  j_module = get_user_middleware_module_list(config);
+  if (check_result_value(j_module, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_module, "module"));
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_middleware_module_list - Error get_user_middleware_module_list");
+    response->status = 500;
+  }
+  json_decref(j_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_get_user_middleware_module (const struct _u_request * request, struct _u_response * response, void * user_middleware_data) {
+  struct config_elements * config = (struct config_elements *)user_middleware_data;
+  json_t * j_module;
+  
+  j_module = get_user_middleware_module(config, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_module, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_module, "module"));
+  } else if (check_result_value(j_module, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_middleware_module - Error get_user_middleware_module");
+    response->status = 500;
+  }
+  json_decref(j_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_add_user_middleware_module (const struct _u_request * request, struct _u_response * response, void * user_middleware_data) {
+  struct config_elements * config = (struct config_elements *)user_middleware_data;
+  json_t * j_module, * j_module_valid, * j_result;
+  
+  j_module = ulfius_get_json_body_request(request, NULL);
+  if (j_module != NULL) {
+    j_module_valid = is_user_middleware_module_valid(config, j_module, 1);
+    if (check_result_value(j_module_valid, G_OK)) {
+      j_result = add_user_middleware_module(config, j_module);
+      if (check_result_value(j_result, G_ERROR_PARAM)) {
+        if (json_object_get(j_result, "error") != NULL) {
+          ulfius_set_json_body_response(response, 400, json_object_get(j_result, "error"));
+        } else {
+          response->status = 400;
+        }
+      } else if (!check_result_value(j_result, G_OK)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user_middleware_module - Error add_user_middleware_module");
+        response->status = 500;
+      } else {
+        y_log_message(Y_LOG_LEVEL_INFO, "Event - User backend module '%s' added (%s)", json_string_value(json_object_get(j_module, "name")), json_string_value(json_object_get(j_module, "module")));
+      }
+      json_decref(j_result);
+    } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
+      if (json_object_get(j_module_valid, "error") != NULL) {
+        ulfius_set_json_body_response(response, 400, json_object_get(j_module_valid, "error"));
+      } else {
+        response->status = 400;
+      }
+    } else if (!check_result_value(j_module_valid, G_OK)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_user_middleware_module - Error is_user_middleware_module_valid");
+      response->status = 500;
+    }
+    json_decref(j_module_valid);
+  } else {
+    response->status = 400;
+  }
+  json_decref(j_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_set_user_middleware_module (const struct _u_request * request, struct _u_response * response, void * user_middleware_data) {
+  struct config_elements * config = (struct config_elements *)user_middleware_data;
+  json_t * j_module, * j_module_valid, * j_search_module;
+  
+  j_search_module = get_user_middleware_module(config, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_search_module, G_OK)) {
+    j_module = ulfius_get_json_body_request(request, NULL);
+    if (j_module != NULL) {
+      json_object_del(j_module, "enabled");
+      j_module_valid = is_user_middleware_module_valid(config, j_module, 0);
+      if (check_result_value(j_module_valid, G_OK)) {
+        if (set_user_middleware_module(config, u_map_get(request->map_url, "name"), j_module) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_middleware_module - Error set_user_middleware_module");
+          response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event - User backend module '%s' updated", u_map_get(request->map_url, "name"));
+        }
+      } else if (check_result_value(j_module_valid, G_ERROR_PARAM)) {
+        if (json_object_get(j_module_valid, "error") != NULL) {
+          ulfius_set_json_body_response(response, 400, json_object_get(j_module_valid, "error"));
+        } else {
+          response->status = 400;
+        }
+      } else if (!check_result_value(j_module_valid, G_OK)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_middleware_module - Error is_user_middleware_module_valid");
+        response->status = 500;
+      }
+      json_decref(j_module_valid);
+    } else {
+      response->status = 400;
+    }
+    json_decref(j_module);
+  } else if (check_result_value(j_search_module, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_user_middleware_module - Error get_user_middleware_module");
+    response->status = 500;
+  }
+  json_decref(j_search_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_delete_user_middleware_module (const struct _u_request * request, struct _u_response * response, void * user_middleware_data) {
+  struct config_elements * config = (struct config_elements *)user_middleware_data;
+  json_t * j_search_module;
+  
+  j_search_module = get_user_middleware_module(config, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_search_module, G_OK)) {
+    if (delete_user_middleware_module(config, u_map_get(request->map_url, "name")) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_user_middleware_module - Error delete_user_middleware_module");
+      response->status = 500;
+    } else {
+      y_log_message(Y_LOG_LEVEL_INFO, "Event - User backend module '%s' removed", u_map_get(request->map_url, "name"));
+    }
+  } else if (check_result_value(j_search_module, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_user_middleware_module - Error get_user_middleware_module");
+    response->status = 500;
+  }
+  json_decref(j_search_module);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_manage_user_middleware_module (const struct _u_request * request, struct _u_response * response, void * user_middleware_data) {
+  struct config_elements * config = (struct config_elements *)user_middleware_data;
+  json_t * j_search_module, * j_result, * j_result2;
+  
+  j_search_module = get_user_middleware_module(config, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_search_module, G_OK)) {
+    if (0 == o_strcmp("enable", u_map_get(request->map_url, "action"))) {
+      j_result = manage_user_middleware_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_START);
+      if (check_result_value(j_result, G_ERROR_PARAM)) {
+        if (json_object_get(j_result, "error") != NULL) {
+          ulfius_set_json_body_response(response, 400, json_object_get(j_result, "error"));
+        } else {
+          response->status = 400;
+        }
+      } else if (!check_result_value(j_result, G_OK)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_middleware_module - Error manage_user_middleware_module enable");
+        response->status = 500;
+      }
+      json_decref(j_result);
+    } else if (0 == o_strcmp("disable", u_map_get(request->map_url, "action"))) {
+      j_result = manage_user_middleware_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_STOP);
+      if (check_result_value(j_result, G_ERROR_PARAM)) {
+        if (json_object_get(j_result, "error") != NULL) {
+          ulfius_set_json_body_response(response, 400, json_object_get(j_result, "error"));
+        } else {
+          response->status = 400;
+        }
+      } else if (!check_result_value(j_result, G_OK)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_middleware_module - Error manage_user_middleware_module disable");
+        response->status = 500;
+      }
+      json_decref(j_result);
+    } else if (0 == o_strcmp("reset", u_map_get(request->map_url, "action"))) {
+      j_result = manage_user_middleware_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_STOP);
+      if (check_result_value(j_result, G_ERROR_PARAM)) {
+        if (json_object_get(j_result, "error") != NULL) {
+          ulfius_set_json_body_response(response, 400, json_object_get(j_result, "error"));
+        } else {
+          response->status = 400;
+        }
+      } else if (!check_result_value(j_result, G_OK)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_middleware_module - Error manage_user_middleware_module reset (1)");
+        response->status = 500;
+      } else {
+        j_result2 = manage_user_middleware_module(config, u_map_get(request->map_url, "name"), GLEWLWYD_MODULE_ACTION_START);
+        if (check_result_value(j_result2, G_ERROR_PARAM)) {
+          if (json_object_get(j_result2, "error") != NULL) {
+            ulfius_set_json_body_response(response, 400, json_object_get(j_result2, "error"));
+          } else {
+            response->status = 400;
+          }
+        } else if (!check_result_value(j_result2, G_OK)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_middleware_module - Error manage_user_middleware_module reset (2)");
+          response->status = 500;
+        }
+        json_decref(j_result2);
+      }
+      json_decref(j_result);
+    } else {
+      response->status = 400;
+    }
+  } else if (check_result_value(j_search_module, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_manage_user_middleware_module - Error get_user_middleware_module");
     response->status = 500;
   }
   json_decref(j_search_module);

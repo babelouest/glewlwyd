@@ -156,6 +156,9 @@ int main (int argc, char ** argv) {
   config->user_module_path = NULL;
   config->user_module_list = NULL;
   config->user_module_instance_list = NULL;
+  config->user_middleware_module_path = NULL;
+  config->user_middleware_module_list = NULL;
+  config->user_middleware_module_instance_list = NULL;
   config->client_module_path = NULL;
   config->client_module_list = NULL;
   config->client_module_instance_list = NULL;
@@ -316,6 +319,16 @@ int main (int argc, char ** argv) {
     exit_server(&config, GLEWLWYD_ERROR);
   }
 
+  // Initialize user middleware modules
+  if (init_user_middleware_module_list(config) != G_OK) {
+    fprintf(stderr, "Error initializing user middleware modules\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  if (load_user_middleware_module_instance_list(config) != G_OK) {
+    fprintf(stderr, "Error loading user middleware modules instances\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+
   // Initialize client modules
   if (init_client_module_list(config) != G_OK) {
     fprintf(stderr, "Error initializing client modules\n");
@@ -403,6 +416,14 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/user/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user_module, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/mod/user/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_user_module, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/user/:name/:action", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_manage_user_module, (void*)config);
+
+  // User middleware modules management
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/user_middleware/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_middleware_module_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/user_middleware/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_middleware_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/mod/user_middleware/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_user_middleware_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/user_middleware/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_user_middleware_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/mod/user_middleware/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_user_middleware_module, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/mod/user_middleware/:name/:action", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_manage_user_middleware_module, (void*)config);
 
   // User auth scheme modules management
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/mod/scheme/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_user_auth_scheme_module_list, (void*)config);
@@ -625,6 +646,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free((*config)->session_key);
     o_free((*config)->login_url);
     o_free((*config)->user_module_path);
+    o_free((*config)->user_middleware_module_path);
     o_free((*config)->client_module_path);
     o_free((*config)->user_auth_scheme_module_path);
     o_free((*config)->plugin_module_path);
@@ -1104,6 +1126,11 @@ int build_config_from_file(struct config_elements * config) {
       config->user_module_path = o_strdup(str_value);
     }
 
+    if (config_lookup_string(&cfg, "user_middleware_module_path", &str_value) == CONFIG_TRUE) {
+      o_free(config->user_middleware_module_path);
+      config->user_middleware_module_path = o_strdup(str_value);
+    }
+
     if (config_lookup_string(&cfg, "client_module_path", &str_value) == CONFIG_TRUE) {
       o_free(config->client_module_path);
       config->client_module_path = o_strdup(str_value);
@@ -1357,6 +1384,15 @@ int build_config_from_env(struct config_elements * config) {
     config->user_module_path = o_strdup(value);
     if (config->user_module_path == NULL) {
       fprintf(stderr, "Error allocating config->user_module_path (env), exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_USER_MIDDLEWARE_MODULE_PATH)) != NULL && o_strlen(value)) {
+    o_free(config->user_middleware_module_path);
+    config->user_middleware_module_path = o_strdup(value);
+    if (config->user_middleware_module_path == NULL) {
+      fprintf(stderr, "Error allocating config->user_middleware_module_path (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -1986,6 +2022,326 @@ void close_user_module_list(struct config_elements * config) {
   }
   pointer_list_clean(config->user_module_list);
   o_free(config->user_module_list);
+}
+
+static int load_user_middleware_module_file(struct config_elements * config, const char * file_path) {
+  void * file_handle;
+  struct _user_middleware_module * cur_user_middleware_module = NULL;
+  int ret;
+  json_t * j_parameters;
+
+  file_handle = dlopen(file_path, RTLD_LAZY);
+
+  if (file_handle != NULL) {
+    cur_user_middleware_module = o_malloc(sizeof(struct _user_middleware_module));
+    if (cur_user_middleware_module != NULL) {
+      cur_user_middleware_module->name = NULL;
+      cur_user_middleware_module->file_handle = file_handle;
+      cur_user_middleware_module->api_version = 0.0;
+      *(void **) (&cur_user_middleware_module->user_middleware_module_load) = dlsym(file_handle, "user_middleware_module_load");
+      *(void **) (&cur_user_middleware_module->user_middleware_module_unload) = dlsym(file_handle, "user_middleware_module_unload");
+      *(void **) (&cur_user_middleware_module->user_middleware_module_init) = dlsym(file_handle, "user_middleware_module_init");
+      *(void **) (&cur_user_middleware_module->user_middleware_module_close) = dlsym(file_handle, "user_middleware_module_close");
+      *(void **) (&cur_user_middleware_module->user_middleware_module_get_list) = dlsym(file_handle, "user_middleware_module_get_list");
+      *(void **) (&cur_user_middleware_module->user_middleware_module_get) = dlsym(file_handle, "user_middleware_module_get");
+      *(void **) (&cur_user_middleware_module->user_middleware_module_get_profile) = dlsym(file_handle, "user_middleware_module_get_profile");
+      *(void **) (&cur_user_middleware_module->user_middleware_module_update) = dlsym(file_handle, "user_middleware_module_update");
+      *(void **) (&cur_user_middleware_module->user_middleware_module_delete) = dlsym(file_handle, "user_middleware_module_delete");
+
+      if (cur_user_middleware_module->user_middleware_module_load != NULL &&
+          cur_user_middleware_module->user_middleware_module_unload != NULL &&
+          cur_user_middleware_module->user_middleware_module_init != NULL &&
+          cur_user_middleware_module->user_middleware_module_close != NULL &&
+          cur_user_middleware_module->user_middleware_module_get_list != NULL &&
+          cur_user_middleware_module->user_middleware_module_get != NULL &&
+          cur_user_middleware_module->user_middleware_module_get_profile != NULL &&
+          cur_user_middleware_module->user_middleware_module_update != NULL &&
+          cur_user_middleware_module->user_middleware_module_delete != NULL) {
+        j_parameters = cur_user_middleware_module->user_middleware_module_load(config->config_m);
+        if (check_result_value(j_parameters, G_OK)) {
+          cur_user_middleware_module->name = o_strdup(json_string_value(json_object_get(j_parameters, "name")));
+          cur_user_middleware_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
+          cur_user_middleware_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
+          cur_user_middleware_module->api_version = json_real_value(json_object_get(j_parameters, "api_version"));
+          if (o_strlen(cur_user_middleware_module->name) && get_user_middleware_module_lib(config, cur_user_middleware_module->name) == NULL) {
+            if (cur_user_middleware_module->api_version >= _GLEWLWYD_USER_MODULE_VERSION) {
+              if (pointer_list_append(config->user_middleware_module_list, (void*)cur_user_middleware_module)) {
+                y_log_message(Y_LOG_LEVEL_INFO, "Loading user middleware module %s - %s", file_path, cur_user_middleware_module->name);
+                ret = G_OK;
+              } else {
+                cur_user_middleware_module->user_middleware_module_unload(config->config_m);
+                dlclose(file_handle);
+                o_free(cur_user_middleware_module->name);
+                o_free(cur_user_middleware_module->display_name);
+                o_free(cur_user_middleware_module->description);
+                o_free(cur_user_middleware_module);
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_file - Error pointer_list_append");
+                ret = G_ERROR;
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_file - User module with name '%s' has invalid api_version: %.2f, minimum required: %.2f", cur_user_middleware_module->name, cur_user_middleware_module->api_version, _GLEWLWYD_USER_MODULE_VERSION);
+              cur_user_middleware_module->user_middleware_module_unload(config->config_m);
+              dlclose(file_handle);
+              o_free(cur_user_middleware_module->name);
+              o_free(cur_user_middleware_module->display_name);
+              o_free(cur_user_middleware_module->description);
+              o_free(cur_user_middleware_module);
+              ret = G_ERROR_PARAM;
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_file - User module with name '%s' already present or name empty", cur_user_middleware_module->name);
+            cur_user_middleware_module->user_middleware_module_unload(config->config_m);
+            dlclose(file_handle);
+            o_free(cur_user_middleware_module->name);
+            o_free(cur_user_middleware_module->display_name);
+            o_free(cur_user_middleware_module->description);
+            o_free(cur_user_middleware_module);
+            ret = G_ERROR_PARAM;
+          }
+        } else {
+          dlclose(file_handle);
+          o_free(cur_user_middleware_module);
+          y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_file - Error user_middleware_module_load for module %s", file_path);
+          ret = G_ERROR_MEMORY;
+        }
+        json_decref(j_parameters);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_file - Error module %s has not all required functions", file_path);
+        y_log_message(Y_LOG_LEVEL_ERROR, " - user_middleware_module_load: %s", (cur_user_middleware_module->user_middleware_module_load != NULL?"found":"not found"));
+        y_log_message(Y_LOG_LEVEL_ERROR, " - user_middleware_module_unload: %s", (cur_user_middleware_module->user_middleware_module_unload != NULL?"found":"not found"));
+        y_log_message(Y_LOG_LEVEL_ERROR, " - user_middleware_module_init: %s", (cur_user_middleware_module->user_middleware_module_init != NULL?"found":"not found"));
+        y_log_message(Y_LOG_LEVEL_ERROR, " - user_middleware_module_close: %s", (cur_user_middleware_module->user_middleware_module_close != NULL?"found":"not found"));
+        y_log_message(Y_LOG_LEVEL_ERROR, " - user_middleware_module_get_list: %s", (cur_user_middleware_module->user_middleware_module_get_list != NULL?"found":"not found"));
+        y_log_message(Y_LOG_LEVEL_ERROR, " - user_middleware_module_get: %s", (cur_user_middleware_module->user_middleware_module_get != NULL?"found":"not found"));
+        y_log_message(Y_LOG_LEVEL_ERROR, " - user_middleware_module_get_profile: %s", (cur_user_middleware_module->user_middleware_module_get_profile != NULL?"found":"not found"));
+        y_log_message(Y_LOG_LEVEL_ERROR, " - user_middleware_module_update: %s", (cur_user_middleware_module->user_middleware_module_update != NULL?"found":"not found"));
+        y_log_message(Y_LOG_LEVEL_ERROR, " - user_middleware_module_delete: %s", (cur_user_middleware_module->user_middleware_module_delete != NULL?"found":"not found"));
+        dlclose(file_handle);
+        o_free(cur_user_middleware_module);
+        ret = G_ERROR;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_file - Error allocating resources for cur_user_middleware_module");
+      dlclose(file_handle);
+      ret = G_ERROR_MEMORY;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_file - Error opening module file %s, reason: %s", file_path, dlerror());
+    ret = G_ERROR;
+  }
+
+  return ret;
+}
+
+int init_user_middleware_module_list(struct config_elements * config) {
+  int ret = G_OK, is_reg;
+  DIR * modules_directory;
+  struct dirent * in_file;
+  char * file_path;
+  struct stat u_stat;
+  memset(&u_stat, 0, sizeof(struct stat));
+
+  config->user_middleware_module_list = o_malloc(sizeof(struct _pointer_list));
+  if (config->user_middleware_module_list != NULL) {
+    pointer_list_init(config->user_middleware_module_list);
+    if (o_strlen(config->user_middleware_module_path)) {
+      // read module_path and load modules
+      if (NULL == (modules_directory = opendir(config->user_middleware_module_path))) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "init_user_middleware_module_list - Error reading libraries folder %s", config->user_middleware_module_path);
+        ret = G_ERROR;
+      } else {
+        while ((in_file = readdir(modules_directory))) {
+          is_reg = 0;
+          file_path = NULL;
+          if (in_file->d_type == DT_REG) {
+            is_reg = 1;
+            file_path = msprintf("%s/%s", config->user_middleware_module_path, in_file->d_name);
+          } else if (in_file->d_type == DT_UNKNOWN) {
+            file_path = msprintf("%s/%s", config->user_middleware_module_path, in_file->d_name);
+            if (!stat(file_path, &u_stat)) {
+              if (S_ISREG(u_stat.st_mode)) {
+                is_reg = 1;
+              }
+            }
+          }
+          if (is_reg) {
+            if (load_user_middleware_module_file(config, file_path) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "init_user_middleware_module_list - Error opening module file %s", file_path);
+            }
+          }
+          o_free(file_path);
+        }
+        closedir(modules_directory);
+      }
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "init_user_middleware_module_list - Error allocating resources for config->user_middleware_module_list");
+    ret = G_ERROR_MEMORY;
+  }
+
+  return ret;
+}
+
+int load_user_middleware_module_instance_list(struct config_elements * config) {
+  json_t * j_query, * j_result, * j_instance, * j_parameters, * j_init;
+  int res, ret;
+  size_t index, i;
+  struct _user_middleware_module_instance * cur_instance;
+  struct _user_middleware_module * module = NULL;
+  char * message;
+
+  config->user_middleware_module_instance_list = o_malloc(sizeof(struct _pointer_list));
+  if (config->user_middleware_module_instance_list != NULL) {
+    pointer_list_init(config->user_middleware_module_instance_list);
+    if (o_strlen(config->user_middleware_module_path)) {
+      j_query = json_pack("{sss[sssss]ss}",
+                          "table",
+                          GLEWLWYD_TABLE_USER_MIDDLEWARE_MODULE_INSTANCE,
+                          "columns",
+                            "gummi_module AS module",
+                            "gummi_name AS name",
+                            "gummi_order AS order_by",
+                            "gummi_parameters AS parameters",
+                            "gummi_enabled AS enabled",
+                          "order_by",
+                          "gummi_order");
+      res = h_select(config->conn, j_query, &j_result, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        json_array_foreach(j_result, index, j_instance) {
+          module = NULL;
+          for (i=0; i<pointer_list_size(config->user_middleware_module_list); i++) {
+            module = (struct _user_middleware_module *)pointer_list_get_at(config->user_middleware_module_list, i);
+            if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
+              break;
+            } else {
+              module = NULL;
+            }
+          }
+          if (module != NULL) {
+            cur_instance = o_malloc(sizeof(struct _user_middleware_module_instance));
+            if (cur_instance != NULL) {
+              cur_instance->cls = NULL;
+              cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+              cur_instance->module = module;
+              if (pointer_list_append(config->user_middleware_module_instance_list, cur_instance)) {
+                if (json_integer_value(json_object_get(j_instance, "enabled"))) {
+                  j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+                  if (j_parameters != NULL) {
+                    j_init = module->user_middleware_module_init(config->config_m, j_parameters, &cur_instance->cls);
+                    if (check_result_value(j_init, G_OK)) {
+                      cur_instance->enabled = 1;
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                      message = json_dumps(j_init, JSON_INDENT(2));
+                      y_log_message(Y_LOG_LEVEL_DEBUG, message);
+                      o_free(message);
+                      cur_instance->enabled = 0;
+                    }
+                    json_decref(j_init);
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error parsing module parameters %s/%s: %s", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
+                    cur_instance->enabled = 0;
+                  }
+                  json_decref(j_parameters);
+                } else {
+                  cur_instance->enabled = 0;
+                }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error reallocating resources for user_middleware_module_instance_list");
+                o_free(cur_instance->name);
+              }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error allocating resources for cur_instance");
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
+          }
+        }
+        json_decref(j_result);
+        ret = G_OK;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error executing j_query");
+        ret = G_ERROR;
+      }
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error allocating resource for config->user_middleware_module_instance_list");
+    ret = G_ERROR_MEMORY;
+  }
+  return ret;
+}
+
+struct _user_middleware_module_instance * get_user_middleware_module_instance(struct config_elements * config, const char * name) {
+  size_t i;
+  struct _user_middleware_module_instance * cur_instance;
+
+  for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
+    cur_instance = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
+    if (cur_instance != NULL && 0 == o_strcmp(cur_instance->name, name)) {
+      return cur_instance;
+    }
+  }
+  return NULL;
+}
+
+struct _user_middleware_module * get_user_middleware_module_lib(struct config_elements * config, const char * name) {
+  size_t i;
+  struct _user_middleware_module * module;
+
+  for (i=0; i<pointer_list_size(config->user_middleware_module_list); i++) {
+    module = (struct _user_middleware_module *)pointer_list_get_at(config->user_middleware_module_list, i);
+    if (module != NULL && 0 == o_strcmp(module->name, name)) {
+      return module;
+    }
+  }
+  return NULL;
+}
+
+void close_user_middleware_module_instance_list(struct config_elements * config) {
+  size_t i;
+
+  for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
+    struct _user_middleware_module_instance * instance = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
+    if (instance != NULL) {
+      if (instance->enabled && instance->module->user_middleware_module_close(config->config_m, instance->cls) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_middleware_module_instance_list - Error user_middleware_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+      }
+      o_free(instance->name);
+      o_free(instance);
+    }
+  }
+  pointer_list_clean(config->user_middleware_module_instance_list);
+  o_free(config->user_middleware_module_instance_list);
+}
+
+void close_user_middleware_module_list(struct config_elements * config) {
+  size_t i;
+
+  for (i=0; i<pointer_list_size(config->user_middleware_module_list); i++) {
+    struct _user_middleware_module * module = (struct _user_middleware_module *)pointer_list_get_at(config->user_middleware_module_list, i);
+    if (module != NULL) {
+      if (module->user_middleware_module_unload(config->config_m) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_middleware_module_list - Error user_middleware_module_unload for module '%s'", module->name);
+      }
+/*
+* dlclose() makes valgrind not useful when it comes to libraries
+* they say it's not relevant to use it anyway
+* I'll let it here until I'm sure
+*/
+#ifndef DEBUG
+      if (dlclose(module->file_handle)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_middleware_module_list - Error dlclose for module '%s'", module->name);
+      }
+#endif
+      o_free(module->name);
+      o_free(module->display_name);
+      o_free(module->description);
+      o_free(module);
+    }
+  }
+  pointer_list_clean(config->user_middleware_module_list);
+  o_free(config->user_middleware_module_list);
 }
 
 static int load_user_auth_scheme_module_file(struct config_elements * config, const char * file_path) {

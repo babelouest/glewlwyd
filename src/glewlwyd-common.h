@@ -10,18 +10,25 @@
  *
  * Copyright 2016-2021 Nicolas Mora <mail@babelouest.org>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software Foundation;
- * version 2.1 of the License.
- *
- * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU GENERAL PUBLIC LICENSE for more details.
- *
- * You should have received a copy of the GNU General Public
- * License along with this library.  If not, see <http://www.gnu.org/licenses/>.
+ * The MIT License (MIT)
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
  */
 
@@ -154,7 +161,27 @@ struct _user_module {
   int      (* user_module_delete)(struct config_module * config, const char * username, void * cls);
   int      (* user_module_check_password)(struct config_module * config, const char * username, const char * password, void * cls);
   int      (* user_module_update_password)(struct config_module * config, const char * username, const char ** new_passwords, size_t new_passwords_len, void * cls);
-  };
+};
+
+/**
+ * Structure used to store a user middleware module
+ */
+struct _user_middleware_module {
+  void      * file_handle;
+  char      * name;
+  char      * display_name;
+  char      * description;
+  double      api_version;
+  json_t * (* user_middleware_module_load)(struct config_module * config);
+  int      (* user_middleware_module_unload)(struct config_module * config);
+  json_t * (* user_middleware_module_init)(struct config_module * config, json_t * j_parameters, void ** cls);
+  int      (* user_middleware_module_close)(struct config_module * config, void * cls);
+  int      (* user_middleware_module_get_list)(struct config_module * config, json_t * j_user_list, void * cls);
+  int      (* user_middleware_module_get)(struct config_module * config, const char * username, json_t * j_user, void * cls);
+  int      (* user_middleware_module_get_profile)(struct config_module * config, const char * username, json_t * j_user, void * cls);
+  int      (* user_middleware_module_update)(struct config_module * config, const char * username, json_t * j_user, void * cls);
+  int      (* user_middleware_module_delete)(struct config_module * config, const char * username, json_t * j_user, void * cls);
+};
 
 /**
  * Structure used to store a user module instance
@@ -166,6 +193,16 @@ struct _user_module_instance {
   short int             enabled;
   short int             readonly;
   short int             multiple_passwords;
+};
+
+/**
+ * Structure used to store a user middleware module instance
+ */
+struct _user_middleware_module_instance {
+  char                           * name;
+  struct _user_middleware_module * module;
+  void                           * cls;
+  short int                        enabled;
 };
 
 /**
@@ -326,6 +363,9 @@ struct config_elements {
   char *                                         user_module_path;
   struct _pointer_list *                         user_module_list;
   struct _pointer_list *                         user_module_instance_list;
+  char *                                         user_middleware_module_path;
+  struct _pointer_list *                         user_middleware_module_list;
+  struct _pointer_list *                         user_middleware_module_instance_list;
   char *                                         client_module_path;
   struct _pointer_list *                         client_module_list;
   struct _pointer_list *                         client_module_instance_list;

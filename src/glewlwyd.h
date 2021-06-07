@@ -82,6 +82,7 @@
 
 // Data tables
 #define GLEWLWYD_TABLE_USER_MODULE_INSTANCE                    "g_user_module_instance"
+#define GLEWLWYD_TABLE_USER_MIDDLEWARE_MODULE_INSTANCE         "g_user_middleware_module_instance"
 #define GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE        "g_user_auth_scheme_module_instance"
 #define GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE                  "g_client_module_instance"
 #define GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE                  "g_plugin_module_instance"
@@ -98,45 +99,46 @@
 #define GLEWLWYD_MODULE_ACTION_START 1
 
 // Environment variables names
-#define GLEWLWYD_ENV_PORT                       "GLWD_PORT"
-#define GLEWLWYD_ENV_BIND_ADDRESS               "GLWD_BIND_ADDRESS"
-#define GLEWLWYD_ENV_API_PREFIX                 "GLWD_API_PREFIX"
-#define GLEWLWYD_ENV_EXTERNAL_URL               "GLWD_EXTERNAL_URL"
-#define GLEWLWYD_ENV_LOGIN_URL                  "GLWD_LOGIN_URL"
-#define GLEWLWYD_ENV_PROFILE_DELETE             "GLWD_PROFILE_DELETE"
-#define GLEWLWYD_ENV_STATIC_FILES_PATH          "GLWD_STATIC_FILES_PATH"
-#define GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES    "GLWD_STATIC_FILES_MIME_TYPES"
-#define GLEWLWYD_ENV_ALLOW_ORIGIN               "GLWD_ALLOW_ORIGIN"
-#define GLEWLWYD_ENV_LOG_MODE                   "GLWD_LOG_MODE"
-#define GLEWLWYD_ENV_LOG_LEVEL                  "GLWD_LOG_LEVEL"
-#define GLEWLWYD_ENV_LOG_FILE                   "GLWD_LOG_FILE"
-#define GLEWLWYD_ENV_COOKIE_DOMAIN              "GLWD_COOKIE_DOMAIN"
-#define GLEWLWYD_ENV_COOKIE_SECURE              "GLWD_COOKIE_SECURE"
-#define GLEWLWYD_ENV_SESSION_EXPIRATION         "GLWD_SESSION_EXPIRATION"
-#define GLEWLWYD_ENV_SESSION_KEY                "GLWD_SESSION_KEY"
-#define GLEWLWYD_ENV_ADMIN_SCOPE                "GLWD_ADMIN_SCOPE"
-#define GLEWLWYD_ENV_PROFILE_SCOPE              "GLWD_PROFILE_SCOPE"
-#define GLEWLWYD_ENV_USER_MODULE_PATH           "GLWD_USER_MODULE_PATH"
-#define GLEWLWYD_ENV_CLIENT_MODULE_PATH         "GLWD_CLIENT_MODULE_PATH"
-#define GLEWLWYD_ENV_AUTH_SCHEME_MODULE_PATH    "GLWD_AUTH_SCHEME_MODULE_PATH"
-#define GLEWLWYD_ENV_PLUGIN_MODULE_PATH         "GLWD_PLUGIN_MODULE_PATH"
-#define GLEWLWYD_ENV_USE_SECURE_CONNECTION      "GLWD_USE_SECURE_CONNECTION"
-#define GLEWLWYD_ENV_SECURE_CONNECTION_KEY_FILE "GLWD_SECURE_CONNECTION_KEY_FILE"
-#define GLEWLWYD_ENV_SECURE_CONNECTION_PEM_FILE "GLWD_SECURE_CONNECTION_PEM_FILE"
-#define GLEWLWYD_ENV_SECURE_CONNECTION_CA_FILE  "GLWD_SECURE_CONNECTION_CA_FILE"
-#define GLEWLWYD_ENV_HASH_ALGORITHM             "GLWD_HASH_ALGORITHM"
-#define GLEWLWYD_ENV_DATABASE_TYPE              "GLWD_DATABASE_TYPE"
-#define GLEWLWYD_ENV_DATABASE_MARIADB_HOST      "GLWD_DATABASE_MARIADB_HOST"
-#define GLEWLWYD_ENV_DATABASE_MARIADB_USER      "GLWD_DATABASE_MARIADB_USER"
-#define GLEWLWYD_ENV_DATABASE_MARIADB_PASSWORD  "GLWD_DATABASE_MARIADB_PASSWORD"
-#define GLEWLWYD_ENV_DATABASE_MARIADB_DBNAME    "GLWD_DATABASE_MARIADB_DBNAME"
-#define GLEWLWYD_ENV_DATABASE_MARIADB_PORT      "GLWD_DATABASE_MARIADB_PORT"
-#define GLEWLWYD_ENV_DATABASE_SQLITE3_PATH      "GLWD_DATABASE_SQLITE3_PATH"
-#define GLEWLWYD_ENV_DATABASE_POSTGRE_CONNINFO  "GLWD_DATABASE_POSTGRE_CONNINFO"
-#define GLEWLWYD_ENV_METRICS                    "GLWD_METRICS"
-#define GLEWLWYD_ENV_METRICS_PORT               "GLWD_METRICS_PORT"
-#define GLEWLWYD_ENV_METRICS_ADMIN              "GLWD_METRICS_ADMIN"
-#define GLEWLWYD_ENV_METRICS_BIND_ADDRESS       "GLWD_METRICS_BIND_ADDRESS"
+#define GLEWLWYD_ENV_PORT                        "GLWD_PORT"
+#define GLEWLWYD_ENV_BIND_ADDRESS                "GLWD_BIND_ADDRESS"
+#define GLEWLWYD_ENV_API_PREFIX                  "GLWD_API_PREFIX"
+#define GLEWLWYD_ENV_EXTERNAL_URL                "GLWD_EXTERNAL_URL"
+#define GLEWLWYD_ENV_LOGIN_URL                   "GLWD_LOGIN_URL"
+#define GLEWLWYD_ENV_PROFILE_DELETE              "GLWD_PROFILE_DELETE"
+#define GLEWLWYD_ENV_STATIC_FILES_PATH           "GLWD_STATIC_FILES_PATH"
+#define GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES     "GLWD_STATIC_FILES_MIME_TYPES"
+#define GLEWLWYD_ENV_ALLOW_ORIGIN                "GLWD_ALLOW_ORIGIN"
+#define GLEWLWYD_ENV_LOG_MODE                    "GLWD_LOG_MODE"
+#define GLEWLWYD_ENV_LOG_LEVEL                   "GLWD_LOG_LEVEL"
+#define GLEWLWYD_ENV_LOG_FILE                    "GLWD_LOG_FILE"
+#define GLEWLWYD_ENV_COOKIE_DOMAIN               "GLWD_COOKIE_DOMAIN"
+#define GLEWLWYD_ENV_COOKIE_SECURE               "GLWD_COOKIE_SECURE"
+#define GLEWLWYD_ENV_SESSION_EXPIRATION          "GLWD_SESSION_EXPIRATION"
+#define GLEWLWYD_ENV_SESSION_KEY                 "GLWD_SESSION_KEY"
+#define GLEWLWYD_ENV_ADMIN_SCOPE                 "GLWD_ADMIN_SCOPE"
+#define GLEWLWYD_ENV_PROFILE_SCOPE               "GLWD_PROFILE_SCOPE"
+#define GLEWLWYD_ENV_USER_MODULE_PATH            "GLWD_USER_MODULE_PATH"
+#define GLEWLWYD_ENV_USER_MIDDLEWARE_MODULE_PATH "GLWD_USER_MIDDLEWARE_MODULE_PATH"
+#define GLEWLWYD_ENV_CLIENT_MODULE_PATH          "GLWD_CLIENT_MODULE_PATH"
+#define GLEWLWYD_ENV_AUTH_SCHEME_MODULE_PATH     "GLWD_AUTH_SCHEME_MODULE_PATH"
+#define GLEWLWYD_ENV_PLUGIN_MODULE_PATH          "GLWD_PLUGIN_MODULE_PATH"
+#define GLEWLWYD_ENV_USE_SECURE_CONNECTION       "GLWD_USE_SECURE_CONNECTION"
+#define GLEWLWYD_ENV_SECURE_CONNECTION_KEY_FILE  "GLWD_SECURE_CONNECTION_KEY_FILE"
+#define GLEWLWYD_ENV_SECURE_CONNECTION_PEM_FILE  "GLWD_SECURE_CONNECTION_PEM_FILE"
+#define GLEWLWYD_ENV_SECURE_CONNECTION_CA_FILE   "GLWD_SECURE_CONNECTION_CA_FILE"
+#define GLEWLWYD_ENV_HASH_ALGORITHM              "GLWD_HASH_ALGORITHM"
+#define GLEWLWYD_ENV_DATABASE_TYPE               "GLWD_DATABASE_TYPE"
+#define GLEWLWYD_ENV_DATABASE_MARIADB_HOST       "GLWD_DATABASE_MARIADB_HOST"
+#define GLEWLWYD_ENV_DATABASE_MARIADB_USER       "GLWD_DATABASE_MARIADB_USER"
+#define GLEWLWYD_ENV_DATABASE_MARIADB_PASSWORD   "GLWD_DATABASE_MARIADB_PASSWORD"
+#define GLEWLWYD_ENV_DATABASE_MARIADB_DBNAME     "GLWD_DATABASE_MARIADB_DBNAME"
+#define GLEWLWYD_ENV_DATABASE_MARIADB_PORT       "GLWD_DATABASE_MARIADB_PORT"
+#define GLEWLWYD_ENV_DATABASE_SQLITE3_PATH       "GLWD_DATABASE_SQLITE3_PATH"
+#define GLEWLWYD_ENV_DATABASE_POSTGRE_CONNINFO   "GLWD_DATABASE_POSTGRE_CONNINFO"
+#define GLEWLWYD_ENV_METRICS                     "GLWD_METRICS"
+#define GLEWLWYD_ENV_METRICS_PORT                "GLWD_METRICS_PORT"
+#define GLEWLWYD_ENV_METRICS_ADMIN               "GLWD_METRICS_ADMIN"
+#define GLEWLWYD_ENV_METRICS_BIND_ADDRESS        "GLWD_METRICS_BIND_ADDRESS"
 
 // Main functions and misc functions
 int build_config_from_env(struct config_elements * config);
@@ -149,6 +151,8 @@ void print_help(FILE * output);
 char * get_file_content(const char * file_path);
 int    load_user_module_instance_list(struct config_elements * config);
 int    init_user_module_list(struct config_elements * config);
+int    load_user_middleware_module_instance_list(struct config_elements * config);
+int    init_user_middleware_module_list(struct config_elements * config);
 int    load_user_auth_scheme_module_instance_list(struct config_elements * config);
 int    init_user_auth_scheme_module_list(struct config_elements * config);
 int    init_client_module_list(struct config_elements * config);
@@ -159,6 +163,8 @@ struct _client_module_instance * get_client_module_instance(struct config_elemen
 struct _client_module * get_client_module_lib(struct config_elements * config, const char * name);
 struct _user_module_instance * get_user_module_instance(struct config_elements * config, const char * name);
 struct _user_module * get_user_module_lib(struct config_elements * config, const char * name);
+struct _user_middleware_module_instance * get_user_middleware_module_instance(struct config_elements * config, const char * name);
+struct _user_middleware_module * get_user_middleware_module_lib(struct config_elements * config, const char * name);
 struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * name);
 struct _user_auth_scheme_module * get_user_auth_scheme_module_lib(struct config_elements * config, const char * name);
 struct _plugin_module_instance * get_plugin_module_instance(struct config_elements * config, const char * name);
@@ -227,6 +233,17 @@ int delete_user_module(struct config_elements * config, const char * name);
 json_t * manage_user_module(struct config_elements * config, const char * name, int action);
 void close_user_module_instance_list(struct config_elements * config);
 void close_user_module_list(struct config_elements * config);
+
+// User middleware module functions
+json_t * get_user_middleware_module_list(struct config_elements * config);
+json_t * get_user_middleware_module(struct config_elements * config, const char * name);
+json_t * is_user_middleware_module_valid(struct config_elements * config, json_t * j_module, int add);
+json_t * add_user_middleware_module(struct config_elements * config, json_t * j_module);
+int set_user_middleware_module(struct config_elements * config, const char * name, json_t * j_module);
+int delete_user_middleware_module(struct config_elements * config, const char * name);
+json_t * manage_user_middleware_module(struct config_elements * config, const char * name, int action);
+void close_user_middleware_module_instance_list(struct config_elements * config);
+void close_user_middleware_module_list(struct config_elements * config);
 
 // User auth scheme module functions
 json_t * get_user_auth_scheme_module_list(struct config_elements * config);
@@ -385,48 +402,55 @@ int callback_glewlwyd_set_user_module (const struct _u_request * request, struct
 int callback_glewlwyd_delete_user_module (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_manage_user_module (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int callback_glewlwyd_get_user_auth_scheme_module_list (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data);
-int callback_glewlwyd_get_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data);
-int callback_glewlwyd_add_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data);
-int callback_glewlwyd_set_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data);
-int callback_glewlwyd_delete_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data);
-int callback_glewlwyd_manage_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_auth_scheme_data);
+int callback_glewlwyd_get_user_middleware_module_list (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_user_middleware_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_add_user_middleware_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_user_middleware_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_user_middleware_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_manage_user_middleware_module (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int callback_glewlwyd_get_client_module_list (const struct _u_request * request, struct _u_response * response, void * client_data);
-int callback_glewlwyd_get_client_module (const struct _u_request * request, struct _u_response * response, void * client_data);
-int callback_glewlwyd_add_client_module (const struct _u_request * request, struct _u_response * response, void * client_data);
-int callback_glewlwyd_set_client_module (const struct _u_request * request, struct _u_response * response, void * client_data);
-int callback_glewlwyd_delete_client_module (const struct _u_request * request, struct _u_response * response, void * client_data);
-int callback_glewlwyd_manage_client_module (const struct _u_request * request, struct _u_response * response, void * client_data);
+int callback_glewlwyd_get_user_auth_scheme_module_list (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_add_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_manage_user_auth_scheme_module (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int callback_glewlwyd_get_plugin_module_list (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_get_plugin_module (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_add_plugin_module (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_set_plugin_module (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_delete_plugin_module (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_manage_plugin_module (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_get_client_module_list (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_client_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_add_client_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_client_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_client_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_manage_client_module (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int callback_glewlwyd_get_user_list (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_get_user (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_add_user (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_set_user (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_get_plugin_module_list (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_plugin_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_add_plugin_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_plugin_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_plugin_module (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_manage_plugin_module (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int callback_glewlwyd_get_client_list (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_add_client (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_set_client (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_delete_client (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_get_user_list (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_add_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_user (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_user (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int callback_glewlwyd_get_scope_list (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_get_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_set_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_get_client_list (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_client (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_add_client (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_client (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_client (const struct _u_request * request, struct _u_response * response, void * user_data);
 
-int callback_glewlwyd_get_api_key_list (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_delete_api_key (const struct _u_request * request, struct _u_response * response, void * plugin_data);
-int callback_glewlwyd_add_api_key (const struct _u_request * request, struct _u_response * response, void * plugin_data);
+int callback_glewlwyd_get_scope_list (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_scope (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_add_scope (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_scope (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+int callback_glewlwyd_get_api_key_list (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_api_key (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_add_api_key (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_metrics (const struct _u_request * request, struct _u_response * response, void * user_data);
 
