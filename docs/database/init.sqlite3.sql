@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS g_user_session_scheme;
 DROP TABLE IF EXISTS g_scope;
 DROP TABLE IF EXISTS g_plugin_module_instance;
 DROP TABLE IF EXISTS g_user_module_instance;
+DROP TABLE IF EXISTS g_user_middleware_module_instance;
 DROP TABLE IF EXISTS g_user_auth_scheme_module_instance;
 DROP TABLE IF EXISTS g_client_module_instance;
 DROP TABLE IF EXISTS g_user_session;
@@ -74,6 +75,16 @@ CREATE TABLE g_user_module_instance (
   gumi_parameters TEXT,
   gumi_readonly INTEGER DEFAULT 0,
   gumi_multiple_passwords INTEGER DEFAULT 0,
+  gumi_enabled INTEGER DEFAULT 1
+);
+
+CREATE TABLE g_user_middleware_module_instance (
+  gumi_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gumi_module TEXT NOT NULL,
+  gumi_order INTEGER NOT NULL,
+  gumi_name TEXT NOT NULL,
+  gumi_display_name TEXT DEFAULT '',
+  gumi_parameters TEXT,
   gumi_enabled INTEGER DEFAULT 1
 );
 

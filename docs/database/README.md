@@ -26,6 +26,38 @@ The initialized database will contain the user `admin` using the password `passw
 - [Postgre SQL upgrade](upgrade-2.2-core.postgre.sql)
 - [SQlite 3 upgrade](upgrade-2.2-core.sqlite3.sql)
 
+## Upgrade Glewlwyd from 2.2.x to 2.3.x
+
+### Upgrade core tables structure
+
+- [MariaDB/MySQL upgrade](upgrade-2.3-core.mariadb.sql)
+- [Postgre SQL upgrade](upgrade-2.3-core.postgre.sql)
+- [SQlite 3 upgrade](upgrade-2.3-core.sqlite3.sql)
+
+## Upgrade Glewlwyd from 2.3.x to 2.4.x
+
+### Upgrade core tables structure
+
+- [MariaDB/MySQL upgrade](upgrade-2.4-core.mariadb.sql)
+- [Postgre SQL upgrade](upgrade-2.4-core.postgre.sql)
+- [SQlite 3 upgrade](upgrade-2.4-core.sqlite3.sql)
+
+## Upgrade Glewlwyd from 2.4.x to 2.5.x
+
+### Upgrade core tables structure
+
+- [MariaDB/MySQL upgrade](upgrade-2.5-core.mariadb.sql)
+- [Postgre SQL upgrade](upgrade-2.5-core.postgre.sql)
+- [SQlite 3 upgrade](upgrade-2.5-core.sqlite3.sql)
+
+## Upgrade Glewlwyd from 2.5.x to 2.6.x
+
+### Upgrade core tables structure
+
+- [MariaDB/MySQL upgrade](upgrade-2.6-core.mariadb.sql)
+- [Postgre SQL upgrade](upgrade-2.6-core.postgre.sql)
+- [SQlite 3 upgrade](upgrade-2.6-core.sqlite3.sql)
+
 ### Install tables for OAuth2/OIDC scheme
 
 - [MariaDB/MySQL upgrade](../../src/scheme/oauth2.mariadb.sql)
