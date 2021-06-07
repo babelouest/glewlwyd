@@ -74,6 +74,9 @@ void * glewlwyd_metrics_increment_counter_thread(void * args) {
   pthread_exit(NULL);
 }
 
+/**
+ * Runs a single thread with a low priority to increment a metrics value
+ */
 int glewlwyd_metrics_increment_counter(struct config_elements * config, const char * name, const char * label, size_t inc) {
   struct _glwd_increment_counter_data * data;
   pthread_t thread_metrics;
@@ -82,34 +85,36 @@ int glewlwyd_metrics_increment_counter(struct config_elements * config, const ch
   struct sched_param param;
   int ret;
 
-  if (config != NULL && o_strlen(name)) {
-    if ((data = o_malloc(sizeof(struct _glwd_increment_counter_data))) != NULL) {
-      data->config = config;
-      data->name = o_strdup(name);
-      data->label = o_strdup(label);
-      data->inc = inc;
-      pthread_attr_init (&attr);
-      pthread_attr_getschedparam (&attr, &param);
-      param.sched_priority = 0;
-      pthread_attr_setschedparam (&attr, &param);
-      thread_ret = pthread_create(&thread_metrics, &attr, glewlwyd_metrics_increment_counter_thread, (void *)data);
-      thread_detach = pthread_detach(thread_metrics);
-      if (thread_ret || thread_detach) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_metrics_increment_counter - Error thread");
-        ret = G_ERROR_MEMORY;
-        o_free(data->name);
-        o_free(data->label);
-        o_free(data);
+  if (config->metrics_endpoint) {
+    if (config != NULL && o_strlen(name)) {
+      if ((data = o_malloc(sizeof(struct _glwd_increment_counter_data))) != NULL) {
+        data->config = config;
+        data->name = o_strdup(name);
+        data->label = o_strdup(label);
+        data->inc = inc;
+        pthread_attr_init (&attr);
+        pthread_attr_getschedparam (&attr, &param);
+        param.sched_priority = 0;
+        pthread_attr_setschedparam (&attr, &param);
+        thread_ret = pthread_create(&thread_metrics, &attr, glewlwyd_metrics_increment_counter_thread, (void *)data);
+        thread_detach = pthread_detach(thread_metrics);
+        if (thread_ret || thread_detach) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_metrics_increment_counter - Error thread");
+          ret = G_ERROR_MEMORY;
+          o_free(data->name);
+          o_free(data->label);
+          o_free(data);
+        } else {
+          ret = G_OK;
+        }
       } else {
-        ret = G_OK;
+        y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_metrics_increment_counter - Error allocating resources for struct _glwd_increment_counter_data");
+        ret = G_ERROR_MEMORY;
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_metrics_increment_counter - Error allocating resources for struct _glwd_increment_counter_data");
-      ret = G_ERROR_MEMORY;
+      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_metrics_increment_counter - Error input values");
+      ret = G_ERROR_PARAM;
     }
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_metrics_increment_counter - Error input values");
-    ret = G_ERROR_PARAM;
   }
   return ret;
 }
@@ -120,27 +125,29 @@ int glewlwyd_metrics_increment_counter_va(struct config_elements * config, const
   char * label = NULL;
   int ret = G_OK, flag = 0;
 
-  if (config != NULL && o_strlen(name)) {
-    va_start(vl, inc);
-    for (label_arg = va_arg(vl, const char *); label_arg != NULL && ret == G_OK; label_arg = va_arg(vl, const char *)) {
-      if (!flag) {
-        if (label == NULL) {
-          label = msprintf("%s=", label_arg);
+  if (config->metrics_endpoint) {
+    if (config != NULL && o_strlen(name)) {
+      va_start(vl, inc);
+      for (label_arg = va_arg(vl, const char *); label_arg != NULL && ret == G_OK; label_arg = va_arg(vl, const char *)) {
+        if (!flag) {
+          if (label == NULL) {
+            label = msprintf("%s=", label_arg);
+          } else {
+            label = mstrcatf(label, ", %s=", label_arg);
+          }
         } else {
-          label = mstrcatf(label, ", %s=", label_arg);
+          label = mstrcatf(label, "%s", label_arg);
         }
-      } else {
-        label = mstrcatf(label, "%s", label_arg);
+        flag = !flag;
       }
-      flag = !flag;
+      va_end(vl);
+      
+      ret = glewlwyd_metrics_increment_counter(config, name, label, inc);
+      o_free(label);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_metrics_increment_counter_va - Error input values");
+      ret = G_ERROR_PARAM;
     }
-    va_end(vl);
-    
-    ret = glewlwyd_metrics_increment_counter(config, name, label, inc);
-    o_free(label);
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_metrics_increment_counter_va - Error input values");
-    ret = G_ERROR_PARAM;
   }
   return ret;
 }
