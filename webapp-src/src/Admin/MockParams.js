@@ -19,6 +19,7 @@ class MockParams extends Component {
     }
     
     this.changeMockUserValue = this.changeMockUserValue.bind(this);
+    this.changeMockUserMiddlewareValue = this.changeMockUserMiddlewareValue.bind(this);
     this.changeMockClientValue = this.changeMockClientValue.bind(this);
     this.changeMockSchemeValue = this.changeMockSchemeValue.bind(this);
     this.checkParameters = this.checkParameters.bind(this);
@@ -43,6 +44,12 @@ class MockParams extends Component {
     this.setState({mod: mod});
   }
   
+  changeMockUserMiddlewareValue(e) {
+    var mod = this.state.mod;
+    mod.parameters["middleware"] = e.target.value;
+    this.setState({mod: mod});
+  }
+  
   changeMockClientValue(e) {
     var mod = this.state.mod;
     mod.parameters["client-id-prefix"] = e.target.value;
@@ -59,6 +66,10 @@ class MockParams extends Component {
     var errorList = {}, hasError = false;
     if (this.state.role === "scheme") {
       if (!this.state.mod.parameters["mock-value"]) {
+        hasError = true;
+      }
+    } else if (this.state.role === "userMiddleware") {
+      if (!this.state.mod.parameters["middleware"]) {
         hasError = true;
       }
     }
@@ -87,6 +98,22 @@ class MockParams extends Component {
               <label className="input-group-text" htmlFor="mod-mock-username-prefix">{i18next.t("admin.mod-username-prefix")}</label>
             </div>
             <input type="text" className={"form-control" + validInput} id="mod-mock-username-prefix" placeholder={i18next.t("admin.mod-username-prefix-ph")} maxLength="256" value={this.state.mod.parameters["username-prefix"]||""} onChange={(e) => this.changeMockUserValue(e)}/>
+            {errorJsx}
+          </div>
+        </div>
+      );
+    } else if (this.state.role === "userMiddleware") {
+      if (this.state.hasError) {
+        validInput = " is-invalid";
+        errorJsx = <span className="error-input">{i18next.t("admin.mod-mock-middleware-required")}</span>
+      }
+      return (
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="mod-mock-middleware">{i18next.t("admin.mod-middleware")}</label>
+            </div>
+            <input type="text" className={"form-control" + validInput} id="mod-mock-middleware" placeholder={i18next.t("admin.mod-middleware-ph")} maxLength="256" value={this.state.mod.parameters["middleware"]||""} onChange={(e) => this.changeMockUserMiddlewareValue(e)}/>
             {errorJsx}
           </div>
         </div>

@@ -237,6 +237,8 @@ class Navbar extends Component {
               <a className={"dropdown-item" + (this.state.curNav==="users-mod"?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "users-mod", true)}>{i18next.t("admin.menu-users-mod")}</a>
               <a className={"dropdown-item" + (this.state.curNav==="clients-mod"?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "clients-mod", true)}>{i18next.t("admin.menu-clients-mod")}</a>
               <div className="dropdown-divider"></div>
+              <a className={"dropdown-item" + (this.state.curNav==="users-middleware-mod"?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "users-middleware-mod", true)}>{i18next.t("admin.menu-users-middleware-mod")}</a>
+              <div className="dropdown-divider"></div>
               <a className={"dropdown-item" + (this.state.curNav==="auth-schemes"?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "auth-schemes", true)}>{i18next.t("admin.menu-auth-schemes")}</a>
               <div className="dropdown-divider"></div>
               <a className={"dropdown-item" + (this.state.curNav==="plugins"?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "plugins", true)}>{i18next.t("admin.menu-plugins")}</a>

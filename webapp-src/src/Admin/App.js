@@ -15,6 +15,7 @@ import Clients from './Clients';
 import Scopes from './Scopes';
 import UserMod from './UserMod';
 import ClientMod from './ClientMod';
+import UserMiddlewareMod from './UserMiddlewareMod';
 import SchemeMod from './SchemeMod';
 import Plugin from './Plugin';
 import ScopeEdit from './ScopeEdit';
@@ -46,6 +47,7 @@ class App extends Component {
       scopeModal: {title: "", data: {name: "", display_name: "", description: "", password_required: true, scheme: {}}, callback: false, add: false},
       curMod: false,
       modUsers: [],
+      modUsersMiddleware: [],
       ModModal: {title: "", role: false, data: {}, types: [], add: false, callback: false},
       modClients: [],
       modSchemes: [],
@@ -81,6 +83,7 @@ class App extends Component {
 
     this.fetchModTypes = this.fetchModTypes.bind(this);
     this.fetchUserMods = this.fetchUserMods.bind(this);
+    this.fetchUserMiddlewareMods = this.fetchUserMiddlewareMods.bind(this);
     this.fetchClientMods = this.fetchClientMods.bind(this);
     this.fetchSchemeMods = this.fetchSchemeMods.bind(this);
     this.fetchPlugins = this.fetchPlugins.bind(this);
@@ -88,6 +91,10 @@ class App extends Component {
     this.confirmAddUserMod = this.confirmAddUserMod.bind(this);
     this.confirmEditUserMod = this.confirmEditUserMod.bind(this);
     this.confirmDeleteUserMod = this.confirmDeleteUserMod.bind(this);
+
+    this.confirmAddUserMiddlewareMod = this.confirmAddUserMiddlewareMod.bind(this);
+    this.confirmEditUserMiddlewareMod = this.confirmEditUserMiddlewareMod.bind(this);
+    this.confirmDeleteUserMiddlewareMod = this.confirmDeleteUserMiddlewareMod.bind(this);
 
     this.confirmAddClientMod = this.confirmAddClientMod.bind(this);
     this.confirmEditClientMod = this.confirmEditClientMod.bind(this);
@@ -150,6 +157,15 @@ class App extends Component {
             title: i18next.t("admin.confirm-delete-mod-title", {mod: message.mod.display_name}),
             message: i18next.t("admin.confirm-delete-mod", {mod: message.mod.display_name}),
             callback: this.confirmDeleteUserMod
+          }
+          this.setState({confirmModal: confirmModal, curMod: message.mod}, () => {
+            $("#confirmModal").modal({keyboard: false, show: true});
+          });
+        } else if (message.role === 'userMiddlewareMod') {
+          var confirmModal = {
+            title: i18next.t("admin.confirm-delete-mod-title", {mod: message.mod.display_name}),
+            message: i18next.t("admin.confirm-delete-mod", {mod: message.mod.display_name}),
+            callback: this.confirmDeleteUserMiddlewareMod
           }
           this.setState({confirmModal: confirmModal, curMod: message.mod}, () => {
             $("#confirmModal").modal({keyboard: false, show: true});
@@ -236,6 +252,17 @@ class App extends Component {
           this.setState({ModModal: ModModal, savedRecord: JSON.stringify(message.mod), savedIndex: message.index}, () => {
             $("#editModModal").modal({keyboard: false, show: true});
           });
+        } else if (message.role === 'userMiddlewareMod') {
+          var ModModal = {
+            title: i18next.t("admin.edit-mod-title", {mod: message.mod.display_name}),
+            data: message.mod,
+            role: "userMiddleware",
+            types: this.state.modTypes.user_middleware,
+            callback: this.confirmEditUserMiddlewareMod
+          }
+          this.setState({ModModal: ModModal, savedRecord: JSON.stringify(message.mod), savedIndex: message.index}, () => {
+            $("#editModModal").modal({keyboard: false, show: true});
+          });
         } else if (message.role === 'clientMod') {
           var ModModal = {
             title: i18next.t("admin.edit-mod-title", {mod: message.mod.display_name}),
@@ -318,6 +345,18 @@ class App extends Component {
           this.setState({ModModal: ModModal}, () => {
             $("#editModModal").modal({keyboard: false, show: true});
           });
+        } else if (message.role === 'userMiddlewareMod') {
+          var ModModal = {
+            title: i18next.t("admin.add-mod-title"),
+            data: {order_rank: this.state.modUsersMiddleware.length, parameters: {}},
+            types: this.state.modTypes.user_middleware,
+            role: "userMiddleware",
+            callback: this.confirmAddUserMiddlewareMod,
+            add: true
+          }
+          this.setState({ModModal: ModModal}, () => {
+            $("#editModModal").modal({keyboard: false, show: true});
+          });
         } else if (message.role === 'clientMod') {
           var ModModal = {
             title: i18next.t("admin.add-mod-title"),
@@ -374,6 +413,7 @@ class App extends Component {
                   scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
                   apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
                   modUsers: [],
+                  modUsersMiddleware: [],
                   modClients: [],
                   modSchemes: [],
                   plugins: [],
@@ -395,6 +435,7 @@ class App extends Component {
                 scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
                 apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
                 modUsers: [],
+                modUsersMiddleware: [],
                 modClients: [],
                 modSchemes: [],
                 plugins: [],
@@ -403,7 +444,58 @@ class App extends Component {
             }
           })
           .always(() => {
-            this.fetchUserMods()
+            this.fetchUserMods();
+            this.fetchUsers();
+          });
+        } else if (message.role === 'userMiddlewareMod') {
+          apiManager.glewlwydRequest("/mod/user_middleware/" + encodeURIComponent(message.mod.name), "PUT", message.mod)
+          .then(() => {
+            return apiManager.glewlwydRequest("/mod/user_middleware/" + encodeURIComponent(message.previousMod.name), "PUT", message.previousMod)
+            .fail((err) => {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+              if (err.status !== 401) {
+                messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+              } else {
+                this.setState({
+                  loggedIn: false,
+                  modTypes: {user: [], client: [], scheme: [], plugin: []},
+                  users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                  clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                  scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                  apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                  modUsers: [],
+                  modUsersMiddleware: [],
+                  modClients: [],
+                  modSchemes: [],
+                  plugins: [],
+                  invalidCredentialMessage: true
+                });
+              }
+            })
+          })
+          .fail((err) => {
+            if (err.status !== 401) {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+            } else {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+              this.setState({
+                loggedIn: false,
+                modTypes: {user: [], client: [], scheme: [], plugin: []},
+                users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+                modUsers: [],
+                modUsersMiddleware: [],
+                modClients: [],
+                modSchemes: [],
+                plugins: [],
+                invalidCredentialMessage: true
+              });
+            }
+          })
+          .always(() => {
+            this.fetchUserMiddlewareMods();
             this.fetchUsers();
           });
         } else if (message.role === 'clientMod') {
@@ -423,6 +515,7 @@ class App extends Component {
                   scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
                   apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
                   modUsers: [],
+                  modUsersMiddleware: [],
                   modClients: [],
                   modSchemes: [],
                   plugins: [],
@@ -444,6 +537,7 @@ class App extends Component {
                 scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
                 apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
                 modUsers: [],
+                modUsersMiddleware: [],
                 modClients: [],
                 modSchemes: [],
                 plugins: [],
@@ -487,6 +581,8 @@ class App extends Component {
           this.fetchSchemeMods();
         } else if (message.role === 'userMod') {
           this.fetchUserMods();
+        } else if (message.role === 'userMiddlewareMod') {
+          this.fetchUserMiddlewareMods();
         } else if (message.role === 'clientMod') {
           this.fetchClientMods();
         } else if (message.role === 'pluginMod') {
@@ -505,6 +601,7 @@ class App extends Component {
     .then(() => {
       this.fetchModTypes();
       this.fetchUserMods();
+      this.fetchUserMiddlewareMods();
       this.fetchClientMods();
       this.fetchSchemeMods();
       this.fetchPlugins();
@@ -527,6 +624,7 @@ class App extends Component {
             });
             this.fetchModTypes();
             this.fetchUserMods();
+            this.fetchUserMiddlewareMods();
             this.fetchClientMods();
             this.fetchSchemeMods();
             this.fetchPlugins();
@@ -709,6 +807,32 @@ class App extends Component {
     });
   }
 
+  fetchUserMiddlewareMods () {
+    return apiManager.glewlwydRequest("/mod/user_middleware")
+    .then((modUsersMiddleware) => {
+      this.setState({modUsersMiddleware: modUsersMiddleware});
+    }).fail((err) => {
+      if (err.status !== 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      } else {
+        this.setState({
+          loggedIn: false,
+          modTypes: {user: [], client: [], scheme: [], plugin: []},
+          users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          modUsers: [],
+          modUsersMiddleware: [],
+          modClients: [],
+          modSchemes: [],
+          plugins: [],
+          invalidCredentialMessage: true
+        });
+      }
+    });
+  }
+
   fetchModTypes () {
     return apiManager.glewlwydRequest("/mod/type")
     .then((modTypes) => {
@@ -725,6 +849,7 @@ class App extends Component {
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
+          modUsersMiddleware: [],
           modClients: [],
           modSchemes: [],
           plugins: [],
@@ -750,6 +875,7 @@ class App extends Component {
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
+          modUsersMiddleware: [],
           modClients: [],
           modSchemes: [],
           plugins: [],
@@ -775,6 +901,7 @@ class App extends Component {
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
+          modUsersMiddleware: [],
           modClients: [],
           modSchemes: [],
           plugins: [],
@@ -800,6 +927,7 @@ class App extends Component {
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
+          modUsersMiddleware: [],
           modClients: [],
           modSchemes: [],
           plugins: [],
@@ -829,6 +957,7 @@ class App extends Component {
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
+          modUsersMiddleware: [],
           modClients: [],
           modSchemes: [],
           plugins: [],
@@ -858,6 +987,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -900,6 +1030,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -942,6 +1073,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -984,6 +1116,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1028,6 +1161,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1072,6 +1206,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1117,6 +1252,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1160,6 +1296,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1202,6 +1339,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1324,6 +1462,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1369,6 +1508,7 @@ class App extends Component {
               scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
               apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
               modUsers: [],
+              modUsersMiddleware: [],
               modClients: [],
               modSchemes: [],
               plugins: [],
@@ -1391,6 +1531,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1436,6 +1577,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1445,6 +1587,167 @@ class App extends Component {
       })
       .always(() => {
         this.fetchUserMods()
+        .always(() => {
+          this.setState({confirmModal: {title: "", message: ""}}, () => {
+            $("#confirmModal").modal("hide");
+            this.fetchUsers();
+          });
+        });
+      });
+    } else {
+      this.setState({confirmModal: {title: "", message: ""}}, () => {
+        $("#confirmModal").modal("hide");
+      });
+    }
+  }
+
+  confirmAddUserMiddlewareMod(result, mod) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/user_middleware/", "POST", mod)
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-add-mod")});
+      })
+      .fail((err) => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-add-mod")});
+        if (err.status === 400) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+        } else if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modUsersMiddleware: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
+      })
+      .always(() => {
+        this.fetchUserMiddlewareMods()
+        .always(() => {
+          this.setState({ModModal: {data: {}, callback: false, types: []}}, () => {
+            $("#editModModal").modal("hide");
+            this.fetchUsers();
+          });
+        });
+      });
+    } else {
+      $("#editModModal").modal("hide");
+    }
+  }
+
+  confirmEditUserMiddlewareMod(result, mod) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/user_middleware/" + encodeURIComponent(mod.name), "PUT", mod)
+      .then(() => {
+        apiManager.glewlwydRequest("/mod/user_middleware/" + encodeURIComponent(mod.name) + "/reset/", "PUT")
+        .then(() => {
+          messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-edit-mod")});
+        })
+        .fail((err) => {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+          if (err.status === 400) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: JSON.stringify(err.responseJSON)});
+          } else if (err.status !== 401) {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          } else {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+            this.setState({
+              loggedIn: false,
+              modTypes: {user: [], client: [], scheme: [], plugin: []},
+              users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+              modUsers: [],
+              modUsersMiddleware: [],
+              modClients: [],
+              modSchemes: [],
+              plugins: [],
+              invalidCredentialMessage: true
+            });
+          }
+        })
+      })
+      .fail((err) => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-edit-mod")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modUsersMiddleware: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
+      })
+      .always(() => {
+        this.fetchUserMiddlewareMods()
+        .always(() => {
+          this.setState({ModModal: {data: {}, callback: false, types: [], savedRecord: false, savedIndex: -1}}, () => {
+            $("#editModModal").modal("hide");
+            this.fetchUsers();
+          });
+        });
+      });
+    } else {
+      var modUsers = this.state.modUsers;
+      modUsers[this.state.savedIndex] = JSON.parse(this.state.savedRecord);
+      this.setState({modUsers: modUsers, savedRecord: false, savedIndex: -1}, () => {
+        $("#editModModal").modal("hide");
+      });
+    }
+  }
+
+  confirmDeleteUserMiddlewareMod(result) {
+    if (result) {
+      apiManager.glewlwydRequest("/mod/user_middleware/" + encodeURIComponent(this.state.curMod.name), "DELETE")
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-delete-mod")});
+      })
+      .fail((err) => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-delete-mod")});
+        if (err.status !== 401) {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+        } else {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+          this.setState({
+            loggedIn: false,
+            modTypes: {user: [], client: [], scheme: [], plugin: []},
+            users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+            modUsers: [],
+            modUsersMiddleware: [],
+            modClients: [],
+            modSchemes: [],
+            plugins: [],
+            invalidCredentialMessage: true
+          });
+        }
+      })
+      .always(() => {
+        this.fetchUserMiddlewareMods()
         .always(() => {
           this.setState({confirmModal: {title: "", message: ""}}, () => {
             $("#confirmModal").modal("hide");
@@ -1481,6 +1784,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1526,6 +1830,7 @@ class App extends Component {
               scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
               apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
               modUsers: [],
+              modUsersMiddleware: [],
               modClients: [],
               modSchemes: [],
               plugins: [],
@@ -1548,6 +1853,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1593,6 +1899,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1638,6 +1945,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1682,6 +1990,7 @@ class App extends Component {
                 scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
                 apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
                 modUsers: [],
+                modUsersMiddleware: [],
                 modClients: [],
                 modSchemes: [],
                 plugins: [],
@@ -1707,6 +2016,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1748,6 +2058,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1792,6 +2103,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1836,6 +2148,7 @@ class App extends Component {
               scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
               apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
               modUsers: [],
+              modUsersMiddleware: [],
               modClients: [],
               modSchemes: [],
               plugins: [],
@@ -1858,6 +2171,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1902,6 +2216,7 @@ class App extends Component {
             scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
             modUsers: [],
+            modUsersMiddleware: [],
             modClients: [],
             modSchemes: [],
             plugins: [],
@@ -1949,6 +2264,7 @@ class App extends Component {
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
+          modUsersMiddleware: [],
           modClients: [],
           modSchemes: [],
           plugins: [],
@@ -1976,6 +2292,7 @@ class App extends Component {
           scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
           modUsers: [],
+          modUsersMiddleware: [],
           modClients: [],
           modSchemes: [],
           plugins: [],
@@ -2019,6 +2336,9 @@ class App extends Component {
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="clients-mod"?" active":"")}>
                     <ClientMod mods={this.state.modClients} types={this.state.modTypes.client} loggedIn={this.state.loggedIn} />
+                  </div>
+                  <div className={"carousel-item" + (this.state.curNav==="users-middleware-mod"?" active":"")}>
+                    <UserMiddlewareMod mods={this.state.modUsersMiddleware} types={this.state.modTypes.user_middleware} loggedIn={this.state.loggedIn} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="auth-schemes"?" active":"")}>
                     <SchemeMod mods={this.state.modSchemes} types={this.state.modTypes.scheme} loggedIn={this.state.loggedIn} />
