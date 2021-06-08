@@ -502,6 +502,19 @@ int      user_module_check_password(struct config_module * config, const char * 
 int      user_module_update_password(struct config_module * config, const char * username, const char ** new_passwords, size_t new_passwords_len, void * cls);
 
 /**
+ * User middleware functions prototype
+ */
+json_t * user_middleware_module_load(struct config_module * config);
+int      user_middleware_module_unload(struct config_module * config);
+json_t * user_middleware_module_init(struct config_module * config, json_t * j_parameters, void ** cls);
+int      user_middleware_module_close(struct config_module * config, void * cls);
+int      user_middleware_module_get_list(struct config_module * config, json_t * j_user_list, void * cls);
+int      user_middleware_module_get(struct config_module * config, const char * username, json_t * j_user, void * cls);
+int      user_middleware_module_get_profile(struct config_module * config, const char * username, json_t * j_user, void * cls);
+int      user_middleware_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls);
+int      user_middleware_module_delete(struct config_module * config, const char * username, json_t * j_user, void * cls);
+
+/**
  * Client functions prototypes
  */
 json_t * client_module_load(struct config_module * config);

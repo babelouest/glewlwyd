@@ -56,7 +56,7 @@ int user_middleware_module_unload(struct config_module * config) {
 json_t * user_middleware_module_init(struct config_module * config, json_t * j_parameters, void ** cls) {
   UNUSED(config);
   if (json_object_get(j_parameters, "middleware") != NULL && !json_is_string(json_object_get(j_parameters, "middleware"))) {
-    return json_pack("{si}", "result", G_ERROR_PARAM);
+    return json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "middleware must be a string");
   } else {
     *cls = json_incref(j_parameters);
     return json_pack("{si}", "result", G_OK);

@@ -601,6 +601,9 @@ void exit_server(struct config_elements ** config, int exit_value) {
     close_user_module_instance_list(*config);
     close_user_module_list(*config);
 
+    close_user_middleware_module_instance_list(*config);
+    close_user_middleware_module_list(*config);
+
     close_client_module_instance_list(*config);
     close_client_module_list(*config);
 
@@ -2208,6 +2211,7 @@ int load_user_middleware_module_instance_list(struct config_elements * config) {
       res = h_select(config->conn, j_query, &j_result, NULL);
       json_decref(j_query);
       if (res == H_OK) {
+        ret = G_OK;
         json_array_foreach(j_result, index, j_instance) {
           module = NULL;
           for (i=0; i<pointer_list_size(config->user_middleware_module_list); i++) {
@@ -2237,6 +2241,7 @@ int load_user_middleware_module_instance_list(struct config_elements * config) {
                       y_log_message(Y_LOG_LEVEL_DEBUG, message);
                       o_free(message);
                       cur_instance->enabled = 0;
+                      ret = G_ERROR_PARAM;
                     }
                     json_decref(j_init);
                   } else {
@@ -2259,7 +2264,6 @@ int load_user_middleware_module_instance_list(struct config_elements * config) {
           }
         }
         json_decref(j_result);
-        ret = G_OK;
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error executing j_query");
         ret = G_ERROR;

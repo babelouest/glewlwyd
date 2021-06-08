@@ -514,11 +514,11 @@ json_t * manage_user_module(struct config_elements * config, const char * name, 
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error action not found");
-      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "Error action not found");
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error action not found");
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error module not found");
-    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "Error module not found");
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error module not found");
   }
   json_decref(j_module);
   return j_return;
@@ -686,12 +686,9 @@ json_t * is_user_middleware_module_valid(struct config_elements * config, json_t
 }
 
 json_t * add_user_middleware_module(struct config_elements * config, json_t * j_module) {
-  struct _user_middleware_module * module;
-  struct _user_middleware_module_instance * cur_instance;
   json_t * j_query;
   int res;
-  size_t i, order;
-  json_t * j_return, * j_result;
+  json_t * j_return;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   
   j_query = json_pack("{sss{sOsOsOsiss}}",
@@ -710,57 +707,14 @@ json_t * add_user_middleware_module(struct config_elements * config, json_t * j_
                         parameters);
   if (json_object_get(j_module, "order_rank") != NULL) {
     json_object_set(json_object_get(j_query, "values"), "gummi_order", json_object_get(j_module, "order_rank"));
-    order = (size_t)json_integer_value(json_object_get(j_module, "order_rank"));
   } else {
     json_object_set_new(json_object_get(j_query, "values"), "gummi_order", json_integer(pointer_list_size(config->user_middleware_module_list)));
-    order = pointer_list_size(config->user_middleware_module_list);
   }
   res = h_insert(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    module = NULL;
-    for (i=0; i<pointer_list_size(config->user_middleware_module_list); i++) {
-      module = (struct _user_middleware_module *)pointer_list_get_at(config->user_middleware_module_list, i);
-      if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_module, "module")))) {
-        break;
-      } else {
-        module = NULL;
-      }
-    }
-    if (module != NULL) {
-      cur_instance = o_malloc(sizeof(struct _user_middleware_module_instance));
-      if (cur_instance != NULL) {
-        cur_instance->cls = NULL;
-        cur_instance->name = o_strdup(json_string_value(json_object_get(j_module, "name")));
-        cur_instance->module = module;
-        cur_instance->enabled = 0;
-        if (pointer_list_insert_at(config->user_middleware_module_instance_list, cur_instance, order)) {
-          j_result = module->user_middleware_module_init(config->config_m, json_object_get(j_module, "parameters"), &cur_instance->cls);
-          if (check_result_value(j_result, G_OK)) {
-              close_user_middleware_module_instance_list(config);
-              close_user_middleware_module_list(config);
-              cur_instance->enabled = 1;
-            j_return = json_pack("{si}", "result", G_OK);
-          } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-            j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "add_user_middleware_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
-            j_return = json_pack("{sis[s]}", "result", G_ERROR, "error", "internal error");
-          }
-          json_decref(j_result);
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "add_user_middleware_module - Error reallocating resources for user_middleware_module_instance_list");
-          o_free(cur_instance->name);
-          j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
-        }
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "add_user_middleware_module - Error allocating resources for cur_instance");
-        j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
-      }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "add_user_middleware_module - Module '%s' not found", json_string_value(json_object_get(j_module, "module")));
-      j_return = json_pack("{si}", "result", G_ERROR);
-    }
+    close_user_middleware_module_instance_list(config);
+    j_return = json_pack("{si}", "result", load_user_middleware_module_instance_list(config));
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "add_user_middleware_module - Error executing j_query");
     j_return = json_pack("{si}", "result", G_ERROR_DB);
@@ -773,7 +727,6 @@ int set_user_middleware_module(struct config_elements * config, const char * nam
   json_t * j_query;
   int res, ret;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
-  struct _user_middleware_module_instance * cur_instance;
   
   j_query = json_pack("{sss{sOsiss}s{ss}}",
                       "table",
@@ -793,20 +746,12 @@ int set_user_middleware_module(struct config_elements * config, const char * nam
   } else {
     json_object_set_new(json_object_get(j_query, "set"), "gummi_order", json_integer(pointer_list_size(config->user_middleware_module_list)));
   }
-  if (json_object_get(j_module, "readonly") != NULL) {
-    json_object_set_new(json_object_get(j_query, "set"), "gummi_readonly", json_object_get(j_module, "readonly")==json_true()?json_integer(1):json_integer(0));
-  }
   res = h_update(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    if ((cur_instance = get_user_middleware_module_instance(config, name)) != NULL) {
-      close_user_middleware_module_instance_list(config);
-      close_user_middleware_module_list(config);
-      ret = G_OK;
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "add_user_middleware_module - Error get_user_middleware_module_instance");
-      ret = G_ERROR;
-    }
+    close_user_middleware_module_instance_list(config);
+    load_user_middleware_module_instance_list(config);
+    ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "add_user_middleware_module - Error executing j_query");
     ret = G_ERROR_DB;
@@ -816,44 +761,27 @@ int set_user_middleware_module(struct config_elements * config, const char * nam
 }
 
 int delete_user_middleware_module(struct config_elements * config, const char * name) {
-  int ret, res, error = 0;
-  json_t * j_query, * j_result;
+  int ret, res;
+  json_t * j_query;
   struct _user_middleware_module_instance * instance;
   
   instance = get_user_middleware_module_instance(config, name);
   if (instance != NULL) {
-    if (instance->enabled) {
-      j_result = manage_user_middleware_module(config, name, GLEWLWYD_MODULE_ACTION_STOP);
-      error = (!check_result_value(j_result, G_OK));
-      json_decref(j_result);
-    }
-    if (!error) {
-      if (pointer_list_remove_pointer(config->user_middleware_module_instance_list, instance)) {
-        o_free(instance->name);
-        o_free(instance);
-        j_query = json_pack("{sss{ss}}",
-                            "table",
-                            GLEWLWYD_TABLE_USER_MIDDLEWARE_MODULE_INSTANCE,
-                            "where",
-                              "gummi_name",
-                              name);
-        res = h_delete(config->conn, j_query, NULL);
-        json_decref(j_query);
-        if (res == H_OK) {
-          close_user_middleware_module_instance_list(config);
-          close_user_middleware_module_list(config);
-          ret = G_OK;
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_middleware_module - Error executing j_query");
-          ret = G_ERROR_DB;
-        }
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_middleware_module - Error pointer_list_remove_pointer");
-        ret = G_ERROR;
-      }
+    j_query = json_pack("{sss{ss}}",
+                        "table",
+                        GLEWLWYD_TABLE_USER_MIDDLEWARE_MODULE_INSTANCE,
+                        "where",
+                          "gummi_name",
+                          name);
+    res = h_delete(config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      close_user_middleware_module_instance_list(config);
+      load_user_middleware_module_instance_list(config);
+      ret = G_OK;
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_middleware_module - Error manage_user_middleware_module");
-      ret = G_ERROR;
+      y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_middleware_module - Error executing j_query");
+      ret = G_ERROR_DB;
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_middleware_module - Error module not found");
@@ -880,7 +808,7 @@ json_t * manage_user_middleware_module(struct config_elements * config, const ch
             j_return = json_pack("{si}", "result", G_ERROR);
           }
         } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-          j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
+          j_return = json_pack("{sisO*}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_middleware_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
           j_return = json_pack("{si}", "result", G_ERROR);
@@ -909,11 +837,11 @@ json_t * manage_user_middleware_module(struct config_elements * config, const ch
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_middleware_module - Error action not found");
-      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "Error action not found");
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error action not found");
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_middleware_module - Error module not found");
-    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "Error module not found");
+    j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "Error module not found");
   }
   json_decref(j_module);
   return j_return;
