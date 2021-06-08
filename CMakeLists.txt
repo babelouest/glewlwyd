@@ -39,6 +39,9 @@ set(JANSSON_VERSION_REQUIRED "2.11")
 set(USER_MODULES_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/user/")
 set(USER_MODULES "")
 
+set(USER_MIDDLEWARE_MODULES_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/user_middleware/")
+set(USER_MIDDLEWARE_MODULES "")
+
 set(CLIENT_MODULES_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/client/")
 set(CLIENT_MODULES "")
 
@@ -328,6 +331,19 @@ if (WITH_USER_HTTP)
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user")
   target_link_libraries(usermodhttp ${GLWD_LIBS})
   set(USER_MODULES ${USER_MODULES} usermodhttp)
+endif ()
+
+# user middleware modules
+
+if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
+  set(MOCK_LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${USER_MIDDLEWARE_MODULES_SRC_PATH}/mock.c)
+
+  add_library(usermidmodmock MODULE ${MOCK_LIB_SRC})
+  set_target_properties(usermidmodmock PROPERTIES
+      COMPILE_OPTIONS -Wextra
+      LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user_middleware")
+  target_link_libraries(usermidmodmock ${GLWD_LIBS})
+  set(USER_MIDDLEWARE_MODULES ${USER_MIDDLEWARE_MODULES} usermidmodmock)
 endif ()
 
 # clients modules
@@ -707,6 +723,7 @@ if (BUILD_GLEWLWYD_TESTING)
 
     set(TESTS glewlwyd_admin_mod_type
               glewlwyd_admin_mod_user
+              glewlwyd_admin_mod_user_middleware
               glewlwyd_admin_mod_user_auth_scheme
               glewlwyd_admin_mod_client
               glewlwyd_admin_mod_plugin
@@ -930,6 +947,8 @@ install(FILES webapp/config.json.sample
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/glewlwyd/webapp/ RENAME config.json COMPONENT runtime)
 install(TARGETS ${USER_MODULES}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/user)
+install(TARGETS ${USER_MIDDLEWARE_MODULES}
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/user_middleware)
 install(TARGETS ${CLIENT_MODULES}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/glewlwyd/client)
 install(TARGETS ${SCHEME_MODULES}
