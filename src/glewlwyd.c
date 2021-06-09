@@ -172,7 +172,7 @@ int main (int argc, char ** argv) {
   config->profile_scope = o_strdup(GLEWLWYD_DEFAULT_PROFILE_SCOPE);
   config->metrics_endpoint = 0;
   config->metrics_endpoint_port = GLEWLWYD_DEFAULT_METRICS_PORT;
-  config->metrics_endpoint_admin_session = 1;
+  config->metrics_endpoint_admin_session = 0;
   http_comression_config.allow_gzip = 1;
   http_comression_config.allow_deflate = 1;
 
