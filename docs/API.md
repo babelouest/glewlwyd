@@ -19,6 +19,11 @@ This document is intended to describe Glewlwyd's core API endpoints. Glewlwyd's 
   - [Update an existing user module instance](#update-an-existing-user-module-instance)
   - [Delete an existing user module instance](#delete-an-existing-user-module-instance)
   - [Enable or disable an existing user module instance](#enable-or-disable-an-existing-user-module-instance)
+  - [Get a user middleware module instance](#get-a-user-middleware-module-instance)
+  - [Add a new user middleware module instance](#add-a-new-user-middleware-module-instance)
+  - [Update an existing user middleware module instance](#update-an-existing-user-middleware-module-instance)
+  - [Delete an existing user middleware module instance](#delete-an-existing-user-middleware-module-instance)
+  - [Enable or disable an existing user middleware module instance](#enable-or-disable-an-existing-user-middleware-module-instance)
   - [Get all client module instances available](#get-all-client-module-instances-available)
   - [Get a client module instance](#get-a-client-module-instance)
   - [Add a new client module instance](#add-a-new-client-module-instance)
@@ -522,6 +527,261 @@ Instance not found
 #### URL
 
 `/api/mod/user/{name}/{action}`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_admin` authorized or valid API key header.
+
+#### URL Parameters
+
+`name`: name of the instance
+`action`: either `enable` or `disable` or `reset`
+
+#### Success response
+
+Code 200
+
+Action executed
+
+Code 404
+
+Instance not found
+
+### Get all user middleware module instances available
+
+Return the list of all instances available for user middleware modules
+
+#### URL
+
+`/api/mod/user_middleware/`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_admin` authorized or valid API key header.
+
+#### URL Parameters
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+[{
+  module: string, name of the module
+  name: string, name of the instance
+  display_name: string
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number
+  enabled: boolean
+}]
+```
+
+Example
+
+```javascript
+[
+  {
+    "module":"mock",
+    "name":"mock",
+    "display_name":"Mock user middleware module",
+    "order_rank":0,
+    "parameters":{
+      "username-prefix":"",
+      "password":"password"
+    },
+    "enabled":true
+  }
+]
+```
+
+### Get a user middleware module instance
+
+Return the details of a user middleware module instance
+
+#### URL
+
+`/api/mod/user_middleware/{name}`
+
+#### Method
+
+`GET`
+
+#### Security
+
+User with scope `g_admin` authorized or valid API key header.
+
+#### URL Parameters
+
+`name`: name of the instance
+
+#### Success response
+
+Code 200
+
+Content
+
+```javascript
+{
+  module: string, name of the module
+  name: string, name of the instance
+  display_name: string
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number
+  enabled: boolean
+}
+```
+
+Example
+
+```javascript
+{
+  "module":"mock",
+  "name":"mock",
+  "display_name":"Mock user module",
+  "order_rank":0,
+  "parameters":{
+    "username-prefix":"",
+    "password":"password"
+  },
+  "enabled":true
+}
+```
+
+Code 404
+
+Module not found
+
+### Add a new user middleware module instance
+
+Add a new user middleware module instance
+
+#### URL
+
+`/api/mod/user_middleware/`
+
+#### Method
+
+`POST`
+
+#### Security
+
+User with scope `g_admin` authorized or valid API key header.
+
+#### Body Parameters
+
+```javascript
+{
+  module: string, name of the module, must be an existing user module available
+  name: string, name of the instance, maximum 128 characters
+  display_name: string, long name of the instance, maximum 256 characters
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number, priority of this instance to get a user
+}
+```
+
+#### Success response
+
+Code 200
+
+Instance added
+
+Code 400
+
+Error input parameters
+
+Content
+
+A JSON array with the error messages
+
+### Update an existing user middleware module instance
+
+#### URL
+
+`/api/mod/user_middleware/{name}`
+
+#### Method
+
+`PUT`
+
+#### Security
+
+User with scope `g_admin` authorized or valid API key header.
+
+#### URL Parameters
+
+`name`: name of the instance
+
+#### Body Parameters
+
+```javascript
+{
+  display_name: string, long name of the instance, maximum 256 characters
+  parameters: object, parameters used for the initialization of this instance
+  order_rank: number, priority of this instance to get a user
+}
+```
+
+#### Success response
+
+Code 200
+
+Instance updated
+
+Code 404
+
+Instance not found
+
+Code 400
+
+Error input parameters
+
+Content
+
+A JSON array with the error messages
+
+### Delete an existing user middleware module instance
+
+#### URL
+
+`/api/mod/user_middleware/{name}`
+
+#### Method
+
+`DELETE`
+
+#### Security
+
+User with scope `g_admin` authorized or valid API key header.
+
+#### URL Parameters
+
+`name`: name of the instance
+
+#### Success response
+
+Code 200
+
+Instance removed
+
+Code 404
+
+Instance not found
+
+### Enable or disable an existing user middleware module instance
+
+#### URL
+
+`/api/mod/user_middleware/{name}/{action}`
 
 #### Method
 
