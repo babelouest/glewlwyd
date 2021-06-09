@@ -2702,13 +2702,13 @@ int callback_metrics (const struct _u_request * request, struct _u_response * re
     u_map_put(response->map_header, ULFIUS_HTTP_HEADER_CONTENT, "text/plain; charset=utf-8");
     for (i=0; i<pointer_list_size(&config->metrics_list); i++) {
       metric = (struct _glwd_metric *)pointer_list_get_at(&config->metrics_list, i);
-      content = mstrcatf(content, "# HELP %s %s\n", metric->name, metric->help);
-      content = mstrcatf(content, "# TYPE %s counter\n", metric->name);
+      content = mstrcatf(content, "# HELP %s_total %s\n", metric->name, metric->help);
+      content = mstrcatf(content, "# TYPE %s_total counter\n", metric->name);
       for (j=0; j<metric->data_size; j++) {
         if (metric->data[j].label != NULL) {
-          content = mstrcatf(content, "%s{%s} %zu\n", metric->name, metric->data[j].label, metric->data[j].counter);
+          content = mstrcatf(content, "%s_total{%s} %zu\n", metric->name, metric->data[j].label, metric->data[j].counter);
         } else {
-          content = mstrcatf(content, "%s %zu\n", metric->name, metric->data[j].counter);
+          content = mstrcatf(content, "%s_total %zu\n", metric->name, metric->data[j].counter);
         }
       }
     }

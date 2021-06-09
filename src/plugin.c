@@ -630,7 +630,7 @@ int glewlwyd_plugin_callback_metrics_increment_counter(struct config_plugin * co
           label = mstrcatf(label, ", %s=", label_arg);
         }
       } else {
-        label = mstrcatf(label, "%s", label_arg);
+        label = mstrcatf(label, "\"%s\"", label_arg);
       }
       flag = !flag;
     }

@@ -136,7 +136,7 @@ int glewlwyd_metrics_increment_counter_va(struct config_elements * config, const
             label = mstrcatf(label, ", %s=", label_arg);
           }
         } else {
-          label = mstrcatf(label, "%s", label_arg);
+          label = mstrcatf(label, "\"%s\"", label_arg);
         }
         flag = !flag;
       }
