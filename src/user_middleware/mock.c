@@ -75,7 +75,7 @@ int user_middleware_module_get_list(struct config_module * config, json_t * j_us
   size_t index = 0;
   
   json_array_foreach(j_user_list, index, j_element) {
-    json_object_set_new(j_element, "middleware", json_deep_copy(json_object_get((json_t *)cls, "middleware")));
+    json_object_set_new(j_element, "middleware", json_pack("s++", json_string_value(json_object_get((json_t *)cls, "middleware")), "-", json_string_value(json_object_get(j_element, "username"))));
   }
   return G_OK;
 }
@@ -83,14 +83,14 @@ int user_middleware_module_get_list(struct config_module * config, json_t * j_us
 int user_middleware_module_get(struct config_module * config, const char * username, json_t * j_user, void * cls) {
   UNUSED(config);
   UNUSED(username);
-  json_object_set_new(j_user, "middleware", json_deep_copy(json_object_get((json_t *)cls, "middleware")));
+  json_object_set_new(j_user, "middleware", json_pack("s++", json_string_value(json_object_get((json_t *)cls, "middleware")), "-", username));
   return G_OK;
 }
 
 int user_middleware_module_get_profile(struct config_module * config, const char * username, json_t * j_user, void * cls) {
   UNUSED(config);
   UNUSED(username);
-  json_object_set_new(j_user, "middleware", json_deep_copy(json_object_get((json_t *)cls, "middleware")));
+  json_object_set_new(j_user, "middleware", json_pack("s+++", json_string_value(json_object_get((json_t *)cls, "middleware")), "-", username, "-profile"));
   return G_OK;
 }
 
