@@ -96,6 +96,7 @@ glewlwyd_auth_profile_impersonate
 glewlwyd_profile_delete
 
 glewlwyd_crud_user
+glewlwyd_crud_user_middleware
 glewlwyd_crud_client
 glewlwyd_crud_scope
 

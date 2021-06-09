@@ -738,6 +738,7 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_auth_session_manage
               glewlwyd_auth_profile_get_scheme_available
               glewlwyd_crud_user
+              glewlwyd_crud_user_middleware
               glewlwyd_crud_client
               glewlwyd_crud_scope
               glewlwyd_mod_user_http

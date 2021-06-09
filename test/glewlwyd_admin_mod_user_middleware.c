@@ -20,6 +20,7 @@
 #define MODULE_NAME "test_middleware"
 #define MODULE_NAME_WITH_ERRORS "test_middleware_with_errors"
 #define MODULE_DISPLAY_NAME "test_middleware name"
+#define MODULE_MIDDLEWARE_VALUE "wizard"
 
 struct _u_request admin_req;
 
@@ -44,23 +45,23 @@ START_TEST(test_glwd_admin_get_mod_user_middleware_add_error_param)
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/user_middleware/", NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssssssis{ss}}", "module", "error", "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sssssssis{ss}}", "module", "error", "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "middleware", MODULE_MIDDLEWARE_VALUE);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/user_middleware/", NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssisssis{ss}}", "module", MODULE_MODULE, "name", 42, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sssisssis{ss}}", "module", MODULE_MODULE, "name", 42, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "middleware", MODULE_MIDDLEWARE_VALUE);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/user_middleware/", NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssssisis{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", 42, "order_rank", 0, "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sssssisis{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", 42, "order_rank", 0, "parameters", "middleware", MODULE_MIDDLEWARE_VALUE);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/user_middleware/", NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssssssss{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", "error", "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sssssssss{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", "error", "parameters", "middleware", MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/user_middleware/", NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssssssis{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", -42, "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sssssssis{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", -42, "parameters", "middleware", MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/user_middleware/", NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
@@ -72,7 +73,7 @@ END_TEST
 
 START_TEST(test_glwd_admin_get_mod_user_middleware_add_OK)
 {
-  json_t * j_parameters = json_pack("{sssssssis{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "mock-value", MODULE_NAME);
+  json_t * j_parameters = json_pack("{sssssssis{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "middleware", MODULE_MIDDLEWARE_VALUE);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/user_middleware/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
 
@@ -83,7 +84,7 @@ END_TEST
 
 START_TEST(test_glwd_admin_get_mod_user_middleware_get)
 {
-  json_t * j_parameters = json_pack("{sssssssis{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "mock-value", MODULE_NAME);
+  json_t * j_parameters = json_pack("{sssssssis{ss}}", "module", MODULE_MODULE, "name", MODULE_NAME, "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "middleware", MODULE_MIDDLEWARE_VALUE);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/mod/user_middleware/" MODULE_NAME, NULL, NULL, NULL, NULL, 200, j_parameters, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/mod/user_middleware/error", NULL, NULL, NULL, NULL, 404, NULL, NULL, NULL), 1);
@@ -98,15 +99,15 @@ START_TEST(test_glwd_admin_get_mod_user_middleware_set_error_param)
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/mod/user_middleware/" MODULE_NAME, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sis{ss}}", "display_name", 42, "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sis{ss}}", "display_name", 42, "parameters", "middleware", MODULE_NAME);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/mod/user_middleware/" MODULE_NAME, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssis{ss}}", "display_name", MODULE_DISPLAY_NAME, "order_rank", -42, "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sssis{ss}}", "display_name", MODULE_DISPLAY_NAME, "order_rank", -42, "parameters", "middleware", MODULE_MIDDLEWARE_VALUE);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/mod/user_middleware/" MODULE_NAME, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
-  j_parameters = json_pack("{sssss{ss}}", "display_name", MODULE_DISPLAY_NAME, "order_rank", json_false(), "parameters", "mock-value", MODULE_NAME);
+  j_parameters = json_pack("{sssss{ss}}", "display_name", MODULE_DISPLAY_NAME, "order_rank", json_false(), "parameters", "middleware", MODULE_MIDDLEWARE_VALUE);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/mod/user_middleware/" MODULE_NAME, NULL, NULL, j_parameters, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
   
@@ -118,7 +119,7 @@ END_TEST
 
 START_TEST(test_glwd_admin_get_mod_user_middleware_set_OK)
 {
-  json_t * j_parameters = json_pack("{sssis{ss}}", "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "mock-value", MODULE_NAME);
+  json_t * j_parameters = json_pack("{sssis{ss}}", "display_name", MODULE_DISPLAY_NAME, "order_rank", 0, "parameters", "middleware", MODULE_MIDDLEWARE_VALUE);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/mod/user_middleware/" MODULE_NAME, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   
