@@ -4,15 +4,15 @@ A Glewlwyd module is built as a library and loaded at startup. It must contain a
 
 A Glewlwyd module can access the entire data and functions available to Glewlwyd service. There is no limitation to its access. Therefore, Glewlwyd modules must be carefully designed and considered friendly. All data returned as `json_t *` or `char *` must be dynamically allocated, because they will be cleaned up by Glewlwyd after use.
 
-A user middleware module is intended to enhace a user data by updating its attributes (add, update or remove attributes), for example, adding groups and access-levels to an existing user when these metadata are not stored in the LDAP backend but in a different location.
+A user middleware module is intended to improve and extend a user object by updating its attributes (add, update or remove attributes), for example, adding groups and access-levels to an existing user when these metadata are not stored in the LDAP backend but in a different location.
 
 Currently, the following user middleware backend modules are available:
 
 A user middleware backend module is used to manage users in a specific backend environment.
 It is intended to:
-- update a list user data
-- update a specific user data
-- store an updated user data
+- update a list user object returned by the user backend
+- update a specific user object returned by the user backend
+- update a user object returned by the API to be stored by the user backend
 
 A user is defined by attributes. The following attributes are mandatory for every user:
 
@@ -57,12 +57,12 @@ struct config_module {
 };
 ```
 
-A user module must have the following functions defined and available:
+A user middleware module must have the following functions defined and available:
 
 ```C
 /**
  * 
- * user_module_load
+ * user_middleware_module_load
  * 
  * Executed once when Glewlwyd service is started
  * Used to identify the module and to show its parameters on init
@@ -70,39 +70,39 @@ A user module must have the following functions defined and available:
  * instance modules for example
  * 
  * @return value: a json_t * value with the following pattern:
- * {
- *   result: number (G_OK on success, another value on error)
- *   name: string, mandatory, name of the module, must be unique among other scheme modules
- *   display_name: string, optional, long name of the module
- *   description: string, optional, description for the module
- *   parameters: object, optional, parameters description for the module
- * }
- *
- * Example:
- * {
- *   result: G_OK,
- *   name: "mock",
- *   display_name: "Mock scheme module",
- *   description: "Mock scheme module for glewlwyd tests",
- *   parameters: {
- *     mock-value: {
- *       type: "string",
- *       mandatory: true
- *     }
- *   }
- * }
+ *                {
+ *                  result: number (G_OK on success, another value on error)
+ *                  name: string, mandatory, name of the module, must be unique among other scheme modules
+ *                  display_name: string, optional, long name of the module
+ *                  description: string, optional, description for the module
+ *                  parameters: object, optional, parameters description for the module
+ *                }
+ * 
+ *                Example:
+ *                {
+ *                  result: G_OK,
+ *                  name: "mock",
+ *                  display_name: "Mock scheme module",
+ *                  description: "Mock scheme module for glewlwyd tests",
+ *                  parameters: {
+ *                    mock-value: {
+ *                      type: "string",
+ *                      mandatory: true
+ *                    }
+ *                  }
+ *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
  * 
  */
-json_t * user_module_load(struct config_module * config);
+json_t * user_middleware_module_load(struct config_module * config);
 ```
 
 ```C
 /**
  * 
- * user_module_unload
+ * user_middleware_module_unload
  * 
  * Executed once when Glewlwyd service is stopped
  * You can use it to release resources that are required once for all
@@ -114,23 +114,23 @@ json_t * user_module_load(struct config_module * config);
  *                    service and data
  * 
  */
-int user_module_unload(struct config_module * config);
+int user_middleware_module_unload(struct config_module * config);
 ```
 
 ```C
 /**
  * 
- * user_module_init
+ * user_middleware_module_init
  * 
  * Initialize an instance of this module declared in Glewlwyd service.
  * If required, you must dynamically allocate a pointer to the configuration
  * for this instance and pass it to *cls
  * 
  * @return value: a json_t * value with the following pattern:
- * {
- *   result: number (G_OK on success, G_ERROR_PARAM on input parameters error, another value on error)
- *   error: array of strings containg the list of input errors, mandatory on result G_ERROR_PARAM, ignored otherwise
- * }
+ *                {
+ *                  result: number (G_OK on success, G_ERROR_PARAM on input parameters error, another value on error)
+ *                  error: array of strings containg the list of input errors, mandatory on result G_ERROR_PARAM, ignored otherwise
+ *                }
  * 
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
@@ -140,13 +140,13 @@ int user_module_unload(struct config_module * config);
  *                 as void * in all module functions
  * 
  */
-json_t * user_module_init(struct config_module * config, int readonly, json_t * j_parameters, void ** cls);
+json_t * user_middleware_module_init(struct config_module * config, json_t * j_parameters, void ** cls);
 ```
 
 ```C
 /**
  * 
- * user_module_close
+ * user_middleware_module_close
  * 
  * Close an instance of this module declared in Glewlwyd service.
  * You must free the memory previously allocated in
@@ -159,251 +159,101 @@ json_t * user_module_init(struct config_module * config, int readonly, json_t * 
  * @parameter cls: pointer to the void * cls value allocated in user_module_init
  * 
  */
-int user_module_close(struct config_module * config, void * cls);
+int user_middleware_module_close(struct config_module * config, void * cls);
 ```
 
 ```C
 /**
  *
- * user_module_count_total
+ * user_middleware_module_get_list
  *
- * Return the total number of users handled by this module corresponding
- * to the given pattern
+ * Update a list of users returned by user_get_list
  *
- * @return value: The total of corresponding users
+ * @return value: G_OK on success, another value on error
  *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
- * @parameter pattern: The pattern to match for the users. How the
- *                     pattern is used is up to the implementation.
- *                     Glewlwyd recommends to match the pattern with the
- *                     username, name and e-mail value for each users
+ * @parameter j_user_list: The list of users returned by the user backend modules
  * @parameter cls: pointer to the void * cls value allocated in user_module_init
  * 
  */
-size_t user_module_count_total(struct config_module * config, const char * pattern, void * cls);
+int user_middleware_module_get_list(struct config_module * config, json_t * j_user_list, void * cls);
 ```
 
 ```C
 /**
  *
- * user_module_get_list
+ * user_middleware_module_get
  *
- * Return a list of users handled by this module corresponding
- * to the given pattern between the specified offset and limit
- * These are the user objects returned to the administrator
+ * Update a user returned by user_get
  *
- * @return value: A list of corresponding users or an empty list
- *                using the following JSON format: {"result":G_OK,"list":[{user object}]}
- *                On error, this function must return another value for "result"
+ * @return value: G_OK on success, another value on error
  *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
- * @parameter pattern: The pattern to match for the users. How the
- *                     pattern is used is up to the implementation.
- *                     Glewlwyd recommends to match the pattern with the
- *                     username, name and e-mail value for each users
- * @pattern offset: The offset to reduce the returned list among the total list
- * @pattern limit: The maximum number of users to return
+ * @parameter username: the username corresponding to the j_user object
+ * @parameter j_user: The user returned by the user backend module
  * @parameter cls: pointer to the void * cls value allocated in user_module_init
  * 
  */
-json_t * user_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls);
+int user_middleware_module_get(struct config_module * config, const char * username, json_t * j_user, void * cls);
 ```
 
 ```C
 /**
  *
- * user_module_get
+ * user_middleware_module_get_profile
  *
- * Return a user object handled by this module corresponding
- * to the username specified
- * This is the user object returned to the administrator
+ * Update a user returned by user_get_profile
  *
- * @return value: G_OK and the corresponding user
- *                G_ERROR_NOT_FOUND if username is not found
- *                The returned format is {"result":G_OK,"user":{user object}}
- *                On error, this function must return another value for "result"
+ * @return value: G_OK on success, another value on error
  *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
- * @parameter username: the username to match, must be case insensitive
+ * @parameter username: the username corresponding to the j_user object
+ * @parameter j_user: The user returned by the user backend module
  * @parameter cls: pointer to the void * cls value allocated in user_module_init
  * 
  */
-json_t * user_module_get(struct config_module * config, const char * username, void * cls);
+int user_middleware_module_get_profile(struct config_module * config, const char * username, json_t * j_user, void * cls);
 ```
 
 ```C
 /**
  *
- * user_module_get_profile
+ * user_middleware_module_update
  *
- * Return a user object handled by this module corresponding
- * to the username specified.
- * This is the user object returned to the connected user, may be different from the 
- * user_module_get object format if a connected user must have access to different data
+ * Update a user before being passed to the backend functions
+ * user_module_add, user_module_update, user_module_update_profile
+ * or user_module_is_valid
  *
- * @return value: G_OK and the corresponding user
- *                G_ERROR_NOT_FOUND if username is not found
- *                The returned format is {"result":G_OK,"user":{user object}}
- *                On error, this function must return another value for "result"
+ * @return value: G_OK on success, another value on error
  *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
- * @parameter username: the username to match, must be case insensitive
+ * @parameter username: the username corresponding to the j_user object
+ * @parameter j_user: The user returned by the API
  * @parameter cls: pointer to the void * cls value allocated in user_module_init
  * 
  */
-json_t * user_module_get_profile(struct config_module * config, const char * username, void * cls);
+int user_middleware_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls);
 ```
 
 ```C
 /**
  *
- * user_module_is_valid
+ * user_middleware_module_delete
+ * 
+ * Update a user before being passed to the backend function user_module_delete
  *
- * Validate if a user is valid to be saved for the specified mode
- *
- * @return value: G_OK if the user is valid
- *                G_ERROR_PARAM and an array containing the errors in string format
- *                The returned format is {"result":G_OK} on success
- *                {"result":G_ERROR_PARAM,"error":["error 1","error 2"]} on error
+ * @return value: G_OK on success, another value on error
  *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
- * @parameter username: the username to match, must be case insensitive
- * @parameter j_user: The user to validate
- * @parameter mode: The mode corresponding to the context, values available are:
- *                  - GLEWLWYD_IS_VALID_MODE_ADD: Add a user by an administrator
- *                    Note: in this mode, the module musn't check for already existing user,
- *                          This is already handled by Glewlwyd
- *                  - GLEWLWYD_IS_VALID_MODE_UPDATE: Update a user by an administrator
- *                  - GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE: Update a user by him or 
- *                                                           herself in the profile context
+ * @parameter username: the username corresponding to the j_user object
+ * @parameter j_user: The user returned by the API
  * @parameter cls: pointer to the void * cls value allocated in user_module_init
  * 
  */
-json_t * user_module_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls);
-```
-
-```C
-/**
- *
- * user_module_add
- *
- * Add a new user by an administrator
- *
- * @return value: G_OK on success
- *                Another value on error
- *
- * @parameter config: a struct config_module with acess to some Glewlwyd
- *                    service and data
- * @parameter j_user: The user to add
- * @parameter cls: pointer to the void * cls value allocated in user_module_init
- * 
- */
-int user_module_add(struct config_module * config, json_t * j_user, void * cls);
-```
-
-```C
-/**
- *
- * user_module_update
- *
- * Update an existing user by an administrator
- *
- * @return value: G_OK on success
- *                Another value on error
- *
- * @parameter config: a struct config_module with acess to some Glewlwyd
- *                    service and data
- * @parameter username: the username to match, must be case insensitive
- * @parameter j_user: The user to update. If this function must replace all values or 
- *                    only the given ones or any other solution is up to the implementation
- * @parameter cls: pointer to the void * cls value allocated in user_module_init
- * 
- */
-int user_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls);
-```
-
-```C
-/**
- *
- * user_module_update_profile
- *
- * Update an existing user in the profile context
- *
- * @return value: G_OK on success
- *                Another value on error
- *
- * @parameter config: a struct config_module with acess to some Glewlwyd
- *                    service and data
- * @parameter username: the username to match, must be case insensitive
- * @parameter j_user: The user to update. If this function must replace all values or 
- *                    only the given ones or any other solution is up to the implementation
- * @parameter cls: pointer to the void * cls value allocated in user_module_init
- * 
- */
-int user_module_update_profile(struct config_module * config, const char * username, json_t * j_user, void * cls);
-```
-
-```C
-
-/**
- *
- * user_module_delete
- *
- * Delete an existing user by an administrator
- *
- * @return value: G_OK on success
- *                Another value on error
- *
- * @parameter config: a struct config_module with acess to some Glewlwyd
- *                    service and data
- * @parameter username: the username to match, must be case insensitive
- * @parameter cls: pointer to the void * cls value allocated in user_module_init
- * 
- */
-int user_module_delete(struct config_module * config, const char * username, void * cls);
-```
-
-```C
-/**
- *
- * user_module_check_password
- *
- * Validate the password of an existing user
- *
- * @return value: G_OK on success
- *                Another value on error
- *
- * @parameter config: a struct config_module with acess to some Glewlwyd
- *                    service and data
- * @parameter username: the username to match, must be case insensitive
- * @parameter password: the password to validate
- * @parameter cls: pointer to the void * cls value allocated in user_module_init
- * 
- */
-int user_module_check_password(struct config_module * config, const char * username, const char * password, void * cls);
-```
-
-```C
-/**
- *
- * user_module_update_password
- *
- * Update the password only of an existing user
- *
- * @return value: G_OK on success
- *                Another value on error
- *
- * @parameter config: a struct config_module with acess to some Glewlwyd
- *                    service and data
- * @parameter username: the username to match, must be case insensitive
- * @parameter new_password: the new password
- * @parameter cls: pointer to the void * cls value allocated in user_module_init
- * 
- */
-int user_module_update_password(struct config_module * config, const char * username, const char * new_password, void * cls);
+int user_middleware_module_delete(struct config_module * config, const char * username, json_t * j_user, void * cls);
 ```
