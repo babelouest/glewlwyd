@@ -579,14 +579,26 @@ json_t * get_user_list(struct config_elements * config, const char * pattern, si
 
 json_t * is_user_valid(struct config_elements * config, const char * username, json_t * j_user, int add, const char * source) {
   int found = 0;
-  json_t * j_return = NULL, * j_error_list, * j_module_list, * j_module;
+  json_t * j_return = NULL, * j_error_list, * j_module_list, * j_module, * j_user_copy = json_deep_copy(j_user);
   struct _user_module_instance * user_module;
-  size_t index;
+  struct _user_middleware_module_instance * user_middleware_module;
+  size_t index, i;
   
+  for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
+    user_middleware_module = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
+    if (user_middleware_module != NULL && user_middleware_module->enabled) {
+      if (user_middleware_module->module->user_middleware_module_update(config->config_m, username, j_user_copy, user_middleware_module->cls) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error user_middleware_module_update at index %zu for user %s", i, username);
+        break;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "is_user_valid - Error pointer_list_get_at for user_middleware module at index %zu", i);
+    }
+  }
   if (source != NULL) {
     user_module = get_user_module_instance(config, source);
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
-      j_error_list = user_module->module->user_module_is_valid(config->config_m, username, j_user, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, user_module->cls);
+      j_error_list = user_module->module->user_module_is_valid(config->config_m, username, j_user_copy, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, user_module->cls);
       if (check_result_value(j_error_list, G_ERROR_PARAM)) {
         j_return = json_incref(j_error_list);
       } else if (check_result_value(j_error_list, G_OK)) {
@@ -612,7 +624,7 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
           user_module = get_user_module_instance(config, json_string_value(json_object_get(j_module, "name")));
           if (user_module != NULL && user_module->enabled && !user_module->readonly) {
             found = 1;
-            j_error_list = user_module->module->user_module_is_valid(config->config_m, username, j_user, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, user_module->cls);
+            j_error_list = user_module->module->user_module_is_valid(config->config_m, username, j_user_copy, add?GLEWLWYD_IS_VALID_MODE_ADD:GLEWLWYD_IS_VALID_MODE_UPDATE, user_module->cls);
             if (check_result_value(j_error_list, G_ERROR_PARAM)) {
               j_return = json_incref(j_error_list);
             } else if (check_result_value(j_error_list, G_OK)) {
@@ -638,6 +650,7 @@ json_t * is_user_valid(struct config_elements * config, const char * username, j
   } else {
     j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "user", "source parameter is mandatory");
   }
+  json_decref(j_user_copy);
   return j_return;
 }
 
