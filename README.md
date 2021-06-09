@@ -91,6 +91,7 @@ The full core REST API documentation is available in the [API documentation](doc
 
 You can update the existing plugins or add new ones depending on your needs, check out the documentation available for each type of plugin:
 - [User backend modules](src/user/)
+- [User middleware backend modules](src/user_middleware/)
 - [Client backend modules](src/client/)
 - [Authentication schemes modules](src/scheme/)
 - [Plugins](src/plugin/) (Register, OAuth2 or OIDC plugins)
