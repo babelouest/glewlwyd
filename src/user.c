@@ -322,7 +322,7 @@ json_t * get_user(struct config_elements * config, const char * username, const 
         result = G_OK;
         for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
           user_middleware_module = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
-          if (user_middleware_module != NULL) {
+          if (user_middleware_module != NULL && user_middleware_module->enabled) {
             if ((result = user_middleware_module->module->user_middleware_module_get(config->config_m, username, json_object_get(j_user, "user"), user_middleware_module->cls)) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error user_middleware_module_get at index %zu for user %s", i, username);
               break;
@@ -361,7 +361,7 @@ json_t * get_user(struct config_elements * config, const char * username, const 
                 result = G_OK;
                 for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
                   user_middleware_module = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
-                  if (user_middleware_module != NULL) {
+                  if (user_middleware_module != NULL && user_middleware_module->enabled) {
                     if ((result = user_middleware_module->module->user_middleware_module_get(config->config_m, username, json_object_get(j_user, "user"), user_middleware_module->cls)) != G_OK) {
                       y_log_message(Y_LOG_LEVEL_ERROR, "get_user - Error user_middleware_module_get at index %zu for user %s", i, username);
                       break;
@@ -413,7 +413,7 @@ json_t * get_user_profile(struct config_elements * config, const char * username
         result = G_OK;
         for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
           user_middleware_module = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
-          if (user_middleware_module != NULL) {
+          if (user_middleware_module != NULL && user_middleware_module->enabled) {
             if ((result = user_middleware_module->module->user_middleware_module_get_profile(config->config_m, username, json_object_get(j_profile, "user"), user_middleware_module->cls)) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "get_user_profile - Error user_middleware_module_get_profile at index %zu for user %s", i, username);
               break;
@@ -450,7 +450,7 @@ json_t * get_user_profile(struct config_elements * config, const char * username
                 result = G_OK;
                 for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
                   user_middleware_module = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
-                  if (user_middleware_module != NULL) {
+                  if (user_middleware_module != NULL && user_middleware_module->enabled) {
                     if ((result = user_middleware_module->module->user_middleware_module_get_profile(config->config_m, username, json_object_get(j_profile, "user"), user_middleware_module->cls)) != G_OK) {
                       y_log_message(Y_LOG_LEVEL_ERROR, "get_user_profile - Error user_middleware_module_get_profile at index %d for user %s", i, username);
                       break;
@@ -562,7 +562,7 @@ json_t * get_user_list(struct config_elements * config, const char * pattern, si
     result = G_OK;
     for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
       user_middleware_module = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
-      if (user_middleware_module != NULL) {
+      if (user_middleware_module != NULL && user_middleware_module->enabled) {
         if ((result = user_middleware_module->module->user_middleware_module_get_list(config->config_m, json_object_get(j_return, "user"), user_middleware_module->cls)) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_user_list - Error user_middleware_module_get_list at index %zu", i);
           json_decref(j_return);
@@ -653,7 +653,7 @@ int add_user(struct config_elements * config, json_t * j_user, const char * sour
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
       for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
         user_middleware_module = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
-        if (user_middleware_module != NULL) {
+        if (user_middleware_module != NULL && user_middleware_module->enabled) {
           if ((result = user_middleware_module->module->user_middleware_module_update(config->config_m, json_string_value(json_object_get(j_user, "username")), j_user, user_middleware_module->cls)) != G_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error user_middleware_module_get_list at index %zu for user %s", i, json_string_value(json_object_get(j_user, "username")));
             break;
@@ -687,7 +687,7 @@ int add_user(struct config_elements * config, json_t * j_user, const char * sour
           if (user_module != NULL && user_module->enabled && !user_module->readonly) {
             for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
               user_middleware_module = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
-              if (user_middleware_module != NULL) {
+              if (user_middleware_module != NULL && user_middleware_module->enabled) {
                 if ((result = user_middleware_module->module->user_middleware_module_update(config->config_m, json_string_value(json_object_get(j_user, "username")), j_user, user_middleware_module->cls)) != G_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error user_middleware_module_get_list at index %zu for user %s", i, json_string_value(json_object_get(j_user, "username")));
                   break;
@@ -735,7 +735,7 @@ int set_user(struct config_elements * config, const char * username, json_t * j_
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
       for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
         user_middleware_module = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
-        if (user_middleware_module != NULL) {
+        if (user_middleware_module != NULL && user_middleware_module->enabled) {
           if ((result = user_middleware_module->module->user_middleware_module_update(config->config_m, username, j_user, user_middleware_module->cls)) != G_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "set_user - Error user_middleware_module_update at index %zu for user %s", i, username);
             break;
@@ -787,7 +787,7 @@ int delete_user(struct config_elements * config, const char * username, const ch
       if (check_result_value(j_cur_user, G_OK)) {
         for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
           user_middleware_module = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
-          if (user_middleware_module != NULL) {
+          if (user_middleware_module != NULL && user_middleware_module->enabled) {
             if ((result = user_middleware_module->module->user_middleware_module_delete(config->config_m, username, j_cur_user, user_middleware_module->cls)) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error user_middleware_module_delete at index %zu for user %s", i, username);
               break;
