@@ -327,6 +327,8 @@ int glewlwyd_module_callback_set_user(struct config_module * config, const char 
 int glewlwyd_module_callback_check_user_password(struct config_module * config, const char * username, const char * password);
 json_t * glewlwyd_module_callback_check_user_session(struct config_module * config, const struct _u_request * request, const char * username);
 int glewlwyd_module_metrics_increment_counter(struct config_module * config, const char * metrics_name, size_t inc, const char * module_type, const char * module_name);
+int glewlwyd_module_callback_metrics_add_metric(struct config_module * config, const char * name, const char * help);
+int glewlwyd_module_callback_metrics_increment_counter(struct config_module * config, const char * name, size_t inc, ...);
 
 // Client CRUD functions
 json_t * get_client_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit, const char * source);
