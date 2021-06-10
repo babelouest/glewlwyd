@@ -184,6 +184,7 @@ static json_t * get_otp(struct config_module * config, json_t * j_params, const 
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_otp - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -228,6 +229,7 @@ static int update_otp(struct config_module * config, json_t * j_params, const ch
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "update_otp - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   json_decref(j_query);

@@ -73,6 +73,8 @@ static int generate_new_code(struct config_module * config, json_t * j_param, co
         if (res == H_OK) {
           ret = G_OK;
         } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_code - Error executing j_query (1)");
+          config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           ret = G_ERROR_DB;
         }
         o_free(code_hash);
@@ -85,7 +87,8 @@ static int generate_new_code(struct config_module * config, json_t * j_param, co
       ret = G_ERROR;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_code - Error executing j_query (1)");
+    y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_code - Error executing j_query (2)");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -147,6 +150,7 @@ static int check_code(struct config_module * config, json_t * j_param, const cha
           ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "check_code - Error executing j_query (2)");
+          config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           ret = G_ERROR_DB;
         }
       } else {
@@ -155,6 +159,7 @@ static int check_code(struct config_module * config, json_t * j_param, const cha
       json_decref(j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "check_code - Error executing j_query (1)");
+      config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
     o_free(code_hash);

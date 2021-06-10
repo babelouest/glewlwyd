@@ -357,6 +357,7 @@ void free_glwd_metrics(void * data);
 int glewlwyd_metrics_add_metric(struct config_elements * config, const char * name, const char * help);
 int glewlwyd_metrics_increment_counter_va(struct config_elements * config, const char * name, size_t inc, ...);
 int glewlwyd_metrics_increment_counter(struct config_elements * config, const char * name, const char * label, size_t inc);
+char * glewlwyd_metrics_build_label(va_list vl_label);
 
 // Callback functions
 int callback_glewlwyd_check_user_session (const struct _u_request * request, struct _u_response * response, void * user_data);

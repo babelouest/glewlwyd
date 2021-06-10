@@ -356,6 +356,7 @@ static json_t * complete_session_identify(struct config_module * config, struct 
                   json_decref(j_query);
                   if (res != H_OK) {
                     y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error executing j_query (1)");
+                    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                     j_return = json_pack("{si}", "result", G_ERROR_DB);
                   } else {
                     j_return = json_pack("{sisO}", "result", G_OK, "username", json_object_get(json_array_get(j_result_sub, 0), "username"));
@@ -375,6 +376,7 @@ static json_t * complete_session_identify(struct config_module * config, struct 
                   json_decref(j_query);
                   if (res != H_OK) {
                     y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error executing j_query (2)");
+                    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                     j_return = json_pack("{si}", "result", G_ERROR_DB);
                   } else {
                     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
@@ -383,6 +385,7 @@ static json_t * complete_session_identify(struct config_module * config, struct 
                 json_decref(j_result_sub);
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error executing j_query (3)");
+                config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                 j_return = json_pack("{si}", "result", G_ERROR_DB);
               }
             } else {
@@ -399,6 +402,7 @@ static json_t * complete_session_identify(struct config_module * config, struct 
               json_decref(j_query);
               if (res != H_OK) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error executing j_query (4)");
+                config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                 j_return = json_pack("{si}", "result", G_ERROR_DB);
               } else {
                 j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
@@ -428,6 +432,7 @@ static json_t * complete_session_identify(struct config_module * config, struct 
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Error executing j_query (5)");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -482,6 +487,7 @@ static json_t * add_session_identify(struct config_module * config, struct _oaut
                 j_return = json_pack("{siss}", "result", G_OK, "session", i_get_str_parameter(&i_session, I_OPT_REDIRECT_TO));
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "add_session_for_user - Error executing j_query (2)");
+                config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                 j_return = json_pack("{si}", "result", G_ERROR_DB);
               }
             } else {
@@ -593,6 +599,7 @@ static json_t * add_session_for_user(struct config_module * config, struct _oaut
                   j_return = json_pack("{siss}", "result", G_OK, "session", i_get_str_parameter(&i_session, I_OPT_REDIRECT_TO));
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "add_session_for_user - Error executing j_query (2)");
+                  config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                   j_return = json_pack("{si}", "result", G_ERROR_DB);
                 }
               } else {
@@ -625,6 +632,7 @@ static json_t * add_session_for_user(struct config_module * config, struct _oaut
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "add_session_for_user - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -659,6 +667,7 @@ static json_t * get_last_session_for_registration(struct config_module * config,
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_last_session_for_registration - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -712,6 +721,7 @@ static json_t * get_registration_for_user(struct config_module * config, struct 
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_registration_for_user - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -784,10 +794,12 @@ static json_t * add_registration_for_user(struct config_module * config, struct 
                     j_return = json_pack("{siss}", "result", G_OK, "registration", i_get_str_parameter(&i_session, I_OPT_REDIRECT_TO));
                   } else {
                     y_log_message(Y_LOG_LEVEL_ERROR, "add_registration_for_user - Error executing j_query (2)");
+                    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                     j_return = json_pack("{si}", "result", G_ERROR_DB);
                   }
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "add_registration_for_user - Error executing j_query (1)");
+                  config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                   j_return = json_pack("{si}", "result", G_ERROR_DB);
                 }
               } else {
@@ -847,6 +859,7 @@ static int delete_registration_for_user(struct config_module * config, struct _o
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "delete_registration_for_user - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -986,6 +999,7 @@ static int complete_session_for_user(struct config_module * config, const char *
                 json_decref(j_query);
                 if (res != H_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error executing j_query (2)");
+                  config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                   ret = G_ERROR_DB;
                 }
               } else {
@@ -1006,6 +1020,7 @@ static int complete_session_for_user(struct config_module * config, const char *
               json_decref(j_query);
               if (res != H_OK) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error executing j_query (3)");
+                config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                 ret = G_ERROR_DB;
               }
             } else {
@@ -1022,6 +1037,7 @@ static int complete_session_for_user(struct config_module * config, const char *
               json_decref(j_query);
               if (res != H_OK) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error executing j_query (3)");
+                config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                 ret = G_ERROR_DB;
               }
             }
@@ -1048,6 +1064,7 @@ static int complete_session_for_user(struct config_module * config, const char *
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Error executing j_query (1)");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;

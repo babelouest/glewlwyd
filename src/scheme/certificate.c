@@ -254,6 +254,7 @@ static int update_user_certificate_enabled_scheme_storage(struct config_module *
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_DEBUG, "toggle_enabled_user_certificate_scheme_storage - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -294,6 +295,7 @@ static int update_user_certificate_last_used_scheme_storage(struct config_module
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_DEBUG, "toggle_enabled_user_certificate_scheme_storage - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -319,6 +321,7 @@ static int delete_user_certificate_scheme_storage(struct config_module * config,
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_DEBUG, "delete_user_certificate_scheme_storage - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -470,6 +473,7 @@ static json_t * get_user_certificate_from_id_scheme_storage(struct config_module
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_DEBUG, "get_user_certificate_from_id_scheme_storage - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -517,6 +521,7 @@ static json_t * get_user_certificate_list_scheme_storage(struct config_module * 
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_user_certificate_list - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -591,6 +596,7 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
           ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "add_user_certificate_scheme_storage - Error executing j_query");
+          config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           ret = G_ERROR_DB;
         }
       } else if (check_result_value(j_result, G_OK)) {

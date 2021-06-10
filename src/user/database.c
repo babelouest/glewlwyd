@@ -41,12 +41,13 @@
 #define G_PBKDF2_ITERATOR_SEP ','
 
 struct mod_parameters {
-  int use_glewlwyd_connection;
-  digest_algorithm hash_algorithm;
+  int                    use_glewlwyd_connection;
+  digest_algorithm       hash_algorithm;
   struct _h_connection * conn;
-  json_t * j_params;
-  int multiple_passwords;
-  unsigned int PBKDF2_iterations;
+  json_t               * j_params;
+  int                    multiple_passwords;
+  unsigned int           PBKDF2_iterations;
+  struct config_module * config_glewlwyd;
 };
 
 static json_t * is_user_database_parameters_valid(json_t * j_params) {
@@ -235,6 +236,7 @@ static int append_user_properties(struct mod_parameters * param, json_t * j_user
       json_decref(j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "append_user_properties database - Error executing j_query");
+      param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   } else {
@@ -278,6 +280,7 @@ static int append_user_properties(struct mod_parameters * param, json_t * j_user
       json_decref(j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "append_user_properties database - Error executing j_query");
+      param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   }
@@ -321,6 +324,7 @@ static json_t * database_user_scope_get(struct mod_parameters * param, json_int_
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "database_user_scope_get database - Error executing j_query");
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -378,8 +382,9 @@ static json_t * database_user_get(const char * username, void * cls, int profile
     }
     json_decref(j_result);
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_DB);
     y_log_message(Y_LOG_LEVEL_ERROR, "database_user_get database - Error executing j_query");
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
 }
@@ -437,6 +442,7 @@ static int update_password_list(struct mod_parameters * param, json_int_t gu_id,
       ret = G_OK;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "update_password_list - Error executing j_query (1)");
+      param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   } else {
@@ -476,15 +482,18 @@ static int update_password_list(struct mod_parameters * param, json_int_t gu_id,
           ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "update_password_list - Error executing j_query (4)");
+          param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           ret = G_ERROR_DB;
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "update_password_list - Error executing j_query (3)");
+        param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         ret = G_ERROR_DB;
       }
       json_decref(j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "update_password_list - Error executing j_query (2)");
+      param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   }
@@ -669,6 +678,7 @@ static int save_user_properties(struct mod_parameters * param, json_t * j_user, 
           ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "insert_user_properties database - Error executing j_query insert");
+          param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           ret = G_ERROR_DB;
         }
       } else {
@@ -676,6 +686,7 @@ static int save_user_properties(struct mod_parameters * param, json_t * j_user, 
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "insert_user_properties database - Error executing j_query delete");
+      param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
     json_decref(j_array);
@@ -782,6 +793,7 @@ static int save_user_scope(struct mod_parameters * param, json_t * j_scope, json
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "save_user_scope database - Error executing j_query delete");
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   
@@ -815,6 +827,7 @@ json_t * user_module_init(struct config_module * config, int readonly, int multi
       ((struct mod_parameters *)*cls)->j_params = json_incref(j_parameters);
       ((struct mod_parameters *)*cls)->hash_algorithm = config->hash_algorithm;
       ((struct mod_parameters *)*cls)->multiple_passwords = multiple_passwords;
+      ((struct mod_parameters *)*cls)->config_glewlwyd = config;
       if (json_object_get(j_parameters, "use-glewlwyd-connection") != json_false()) {
           ((struct mod_parameters *)*cls)->use_glewlwyd_connection = 0;
           ((struct mod_parameters *)*cls)->conn = config->conn;
@@ -865,6 +878,7 @@ int user_module_close(struct config_module * config, void * cls) {
     if (((struct mod_parameters *)cls)->use_glewlwyd_connection) {
       if (h_close_db(((struct mod_parameters *)cls)->conn) != H_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_close database - Error h_close_db");
+        config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         ret = G_ERROR_DB;
       } else {
         ret = G_OK;
@@ -962,8 +976,9 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
     j_return = json_pack("{sisO}", "result", G_OK, "list", j_result);
     json_decref(j_result);
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_DB);
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list database - Error executing j_query");
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+    j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
 }
@@ -1101,9 +1116,11 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
     j_gu_id = h_last_insert_id(param->conn);
     if (save_user_properties(param, j_user, json_integer_value(j_gu_id), 0) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_properties");
+      param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     } else if (json_object_get(j_user, "scope") != NULL && save_user_scope(param, json_object_get(j_user, "scope"), json_integer_value(j_gu_id)) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_scope");
+      param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     } else {
       if (param->multiple_passwords) {
@@ -1131,6 +1148,7 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
     json_decref(j_gu_id);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error executing j_query insert");
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -1179,9 +1197,11 @@ int user_module_update(struct config_module * config, const char * username, jso
     if (res == H_OK) {
       if (save_user_properties(param, j_user, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), 0) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_properties");
+        param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         ret = G_ERROR_DB;
       } else if (json_object_get(j_user, "scope") != NULL && save_user_scope(param, json_object_get(j_user, "scope"), json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id"))) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error save_user_scope");
+        param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         ret = G_ERROR_DB;
       } else {
         if (param->multiple_passwords) {
@@ -1209,6 +1229,7 @@ int user_module_update(struct config_module * config, const char * username, jso
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error executing j_query update");
+      param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   } else {
@@ -1249,6 +1270,7 @@ int user_module_update_profile(struct config_module * config, const char * usern
           ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_profile database - Error executing j_query update");
+          param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           ret = G_ERROR_DB;
         }
       } else {
@@ -1258,6 +1280,7 @@ int user_module_update_profile(struct config_module * config, const char * usern
       if (res == H_OK) {
         if (save_user_properties(param, j_user, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), 0) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_profile database - Error save_user_properties");
+          param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           ret = G_ERROR_DB;
         } else {
           ret = G_OK;
@@ -1269,6 +1292,7 @@ int user_module_update_profile(struct config_module * config, const char * usern
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_profile database - Error executing j_query select");
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   json_decref(j_result);
@@ -1301,6 +1325,7 @@ int user_module_delete(struct config_module * config, const char * username, voi
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_delete database - Error executing j_query");
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -1346,6 +1371,7 @@ int user_module_check_password(struct config_module * config, const char * usern
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_check_password database - Error executing j_query");
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -1384,6 +1410,7 @@ int user_module_update_password(struct config_module * config, const char * user
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update_password database - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   

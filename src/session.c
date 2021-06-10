@@ -61,6 +61,7 @@ json_t * get_session_scheme(struct config_elements * config, json_int_t gus_id) 
     j_return = json_pack("{siso}", "result", G_OK, "scheme", j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_session_scheme - Error executing j_query");
+    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -128,6 +129,7 @@ json_t * get_session_for_username(struct config_elements * config, const char * 
       json_decref(j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_session_for_username - Error executing j_query");
+      glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       j_return = json_pack("{si}", "result", G_ERROR_DB);
     }
     o_free(session_uid_hash);
@@ -206,6 +208,7 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
         json_decref(j_result);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_users_for_session - Error executing j_query");
+        glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else {
@@ -266,6 +269,7 @@ json_t * get_current_user_for_session(struct config_elements * config, const cha
         json_decref(j_result);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_current_user_for_session - Error executing j_query");
+        glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else if (session_uid == NULL) {
@@ -347,10 +351,12 @@ int user_session_update(struct config_elements * config, const char * session_ui
           j_session = get_session_for_username(config, session_uid, username);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error h_insert session");
+          glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           j_session = json_pack("{si}", "result", G_ERROR_DB);
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error h_update session (0)");
+        glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         j_session = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else {
@@ -407,10 +413,12 @@ int user_session_update(struct config_elements * config, const char * session_ui
           j_session = get_session_for_username(config, session_uid, username);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error h_update session (2)");
+          glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           j_session = json_pack("{si}", "result", G_ERROR_DB);
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error h_update session (1)");
+        glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         j_session = json_pack("{si}", "result", G_ERROR_DB);
       }
     }
@@ -471,10 +479,12 @@ int user_session_update(struct config_elements * config, const char * session_ui
                 ret = G_OK;
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error executing j_query (1)");
+                glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                 ret = G_ERROR_DB;
               }
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error executing j_query (2)");
+              glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
               ret = G_ERROR_DB;
             }
           } else {
@@ -531,10 +541,12 @@ int user_session_update(struct config_elements * config, const char * session_ui
               ret = G_OK;
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error executing j_query (3)");
+              glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
               ret = G_ERROR_DB;
             }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error executing j_query (4)");
+            glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
             ret = G_ERROR_DB;
           }
         }
@@ -596,6 +608,7 @@ int user_session_delete(struct config_elements * config, const char * session_ui
           ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_session_delete - Error executing j_query (2)");
+          glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           ret = G_ERROR_DB;
         }
       } else {
@@ -603,6 +616,7 @@ int user_session_delete(struct config_elements * config, const char * session_ui
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_session_delete - Error executing j_query (1)");
+      glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
     o_free(session_uid_hash);
@@ -681,6 +695,7 @@ json_t * get_user_session_list(struct config_elements * config, const char * use
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_session_delete - Error executing j_query");
+    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -723,6 +738,7 @@ int delete_user_session_from_hash(struct config_elements * config, const char * 
           ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_session_from_hash - Error executing j_query (2)");
+          glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           ret = G_ERROR_DB;
         }
       } else {
@@ -731,6 +747,7 @@ int delete_user_session_from_hash(struct config_elements * config, const char * 
       json_decref(j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_session_from_hash - Error executing j_query (1)");
+      glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   } else {

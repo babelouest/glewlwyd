@@ -71,6 +71,7 @@ static json_t * get_current_session(struct config_elements * config, const char 
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_current_session - Error executing j_query");
+    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   json_decref(j_result);
@@ -162,6 +163,7 @@ json_t * get_scope_list(struct config_elements * config, const char * pattern, s
     j_return = json_pack("{siso}", "result", G_OK, "scope", j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_scope_list - Error executing j_query");
+    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -207,6 +209,7 @@ json_t * get_scope(struct config_elements * config, const char * scope) {
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_scope - Error executing j_query");
+    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   json_decref(j_result);
@@ -265,6 +268,7 @@ json_t * get_auth_scheme_list_from_scope(struct config_elements * config, const 
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_auth_scheme_list_from_scope - Error executing str_query");
+        glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
       json_decref(j_result);
@@ -364,6 +368,7 @@ static json_t * is_scheme_valid_for_session(struct config_elements * config, jso
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "is_password_valid_for_session - Error executing j_query");
+      glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       j_return = json_pack("{si}", "result", G_ERROR_DB);
     }
     json_decref(j_result);
@@ -556,6 +561,7 @@ json_t * get_client_user_scope_grant(struct config_elements * config, const char
         j_return = json_pack("{sisO}", "result", G_OK, "scope", j_result);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_client_user_scope_grant - Error executing j_query");
+        glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
       json_decref(j_result);
@@ -697,6 +703,7 @@ json_t * get_client_grant_list(struct config_elements * config, const char * use
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_client_grant_list - Error executing j_query (1)");
+    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -746,6 +753,7 @@ int set_granted_scopes_for_client(struct config_elements * config, json_t * j_us
               res = h_insert(config->conn, j_query, NULL);
               if (res != H_OK) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "set_granted_scopes_for_client - Error executing j_query (2)");
+                glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                 ret = G_ERROR_DB;
               }
               json_decref(j_query);
@@ -765,6 +773,7 @@ int set_granted_scopes_for_client(struct config_elements * config, json_t * j_us
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "set_granted_scopes_for_client - Error executing j_query (1)");
+    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -952,16 +961,19 @@ static int add_scope_scheme_groups(struct config_elements * config, const char *
           json_decref(j_query);
           if (res != H_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "add_scope_scheme_groups - Error executing j_query (2)");
+            glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
             ret = G_ERROR_DB;
           }
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "add_scope_scheme_groups - Error h_last_insert_id");
+        glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         ret = G_ERROR_DB;
       }
       json_decref(j_scope_group_id);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "add_scope_scheme_groups - Error executing j_query (1)");
+      glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   }
@@ -1003,6 +1015,7 @@ int add_scope(struct config_elements * config, json_t * j_scope) {
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "add_scope - Error executing j_query");
+    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -1055,10 +1068,12 @@ int set_scope(struct config_elements * config, const char * scope, json_t * j_sc
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "set_scope - Error executing j_query (2)");
+      glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "set_scope - Error executing j_query (1)");
+    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -1080,6 +1095,7 @@ int delete_scope(struct config_elements * config, const char * scope) {
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "delete_scope - Error executing j_query");
+    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;

@@ -1061,3 +1061,30 @@ json_t * glewlwyd_module_callback_check_user_session(struct config_module * conf
   o_free(session_uid);
   return j_return;
 }
+
+int glewlwyd_module_callback_metrics_add_metric(struct config_module * config, const char * name, const char * help) {
+  if (config != NULL) {
+    return glewlwyd_metrics_add_metric(config->glewlwyd_config, name, help);
+  } else {
+    return G_ERROR_PARAM;
+  }
+}
+
+int glewlwyd_module_callback_metrics_increment_counter(struct config_module * config, const char * name, size_t inc, ...) {
+  va_list vl;
+  char * label = NULL;
+  int ret = G_OK;
+
+  if (config != NULL && o_strlen(name)) {
+    va_start(vl, inc);
+    label = glewlwyd_metrics_build_label(vl);
+    va_end(vl);
+    
+    ret = glewlwyd_metrics_increment_counter(config->glewlwyd_config, name, label, inc);
+    o_free(label);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_module_callback_metrics_increment_counter - Error input values");
+    ret = G_ERROR_PARAM;
+  }
+  return ret;
+}

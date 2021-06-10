@@ -308,6 +308,7 @@ struct _plugin_module_instance {
 #define GLWD_METRICS_AUTH_USER_VALID_SCHEME   "glewlwyd_auth_user_valid_scheme"
 #define GLWD_METRICS_AUTH_USER_INVALID        "glewlwyd_auth_user_invalid"
 #define GLWD_METRICS_AUTH_USER_INVALID_SCHEME "glewlwyd_auth_user_invalid_scheme"
+#define GLWD_METRICS_DATABSE_ERROR            "glewlwyd_database_error"
 
 /**
  * Structure used to store a prometheus metrics
@@ -455,6 +456,8 @@ struct config_module {
   int                    (* glewlwyd_module_callback_set_user)(struct config_module * config, const char * username, json_t * j_user);
   int                    (* glewlwyd_module_callback_check_user_password)(struct config_module * config, const char * username, const char * password);
   json_t               * (* glewlwyd_module_callback_check_user_session)(struct config_module * config, const struct _u_request * request, const char * username);
+  int                    (* glewlwyd_module_callback_metrics_add_metric)(struct config_module * config, const char * name, const char * help);
+  int                    (* glewlwyd_module_callback_metrics_increment_counter)(struct config_module * config, const char * name, size_t inc, ...);
 };
 
 /**

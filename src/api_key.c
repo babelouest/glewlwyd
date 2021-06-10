@@ -68,6 +68,7 @@ int verify_api_key(struct config_elements * config, const char * token) {
           ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "verify_api_key - Error executing j_query (2)");
+          glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           ret = G_ERROR_DB;
         }
       } else {
@@ -76,6 +77,7 @@ int verify_api_key(struct config_elements * config, const char * token) {
       json_decref(j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "verify_api_key - Error executing j_query (1)");
+      glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   } else {
@@ -125,6 +127,7 @@ json_t * get_api_key_list(struct config_elements * config, const char * pattern,
     j_return = json_pack("{siso}", "result", G_OK, "api_key", j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_api_key_list - Error executing j_query");
+    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -160,6 +163,7 @@ json_t * generate_api_key(struct config_elements * config, const char * username
       j_return = json_pack("{sis{ss}}", "result", G_OK, "api_key", "key", token);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "generate_api_key - Error executing j_query");
+      glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       j_return = json_pack("{si}", "result", G_ERROR_DB);
     }
   } else {
@@ -191,6 +195,7 @@ int disable_api_key(struct config_elements * config, const char * token_hash) {
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "disable_api_key - Error executing j_query");
+    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;

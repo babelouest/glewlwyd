@@ -394,6 +394,7 @@ static int serialize_access_token(struct _oauth2_config * config, uint auth_type
                   ret = G_OK;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - oauth2 - Error executing j_query (2)");
+                  config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                   ret = G_ERROR_DB;
                 }
               } else {
@@ -407,11 +408,13 @@ static int serialize_access_token(struct _oauth2_config * config, uint auth_type
             free_string_array(scope_array);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - oauth2 - Error h_last_insert_id");
+            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
             ret = G_ERROR_DB;
           }
           json_decref(j_last_id);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - oauth2 - Error executing j_query (1)");
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           ret = G_ERROR_DB;
         }
       } else {
@@ -599,6 +602,7 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
                 j_return = json_pack("{sisO}", "result", G_OK, "gpgr_id", j_last_id);
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - oauth2 - Error executing j_query (2)");
+                config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                 j_return = json_pack("{si}", "result", G_ERROR_DB);
               }
             } else {
@@ -612,11 +616,13 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
           free_string_array(scope_array);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - oauth2 - Error h_last_insert_id");
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           j_return = json_pack("{si}", "result", G_ERROR_DB);
         }
         json_decref(j_last_id);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - oauth2 - Error executing j_query (1)");
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else {
@@ -881,6 +887,7 @@ static int disable_authorization_code(struct _oauth2_config * config, json_int_t
     return G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "disable_authorization_code - oauth2 - Error executing j_query");
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     return G_ERROR_DB;
   }
 }
@@ -982,18 +989,22 @@ static int revoke_tokens_from_code(struct _oauth2_config * config, json_int_t gp
           ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "revoke_tokens_from_code - oauth2 - Error executing query (4)");
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           ret = G_ERROR_DB;
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "revoke_tokens_from_code - oauth2 - Error executing query (3)");
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         ret = G_ERROR_DB;
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "oidc revoke_tokens_from_code - Error executing query (2)");
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "oidc revoke_tokens_from_code - Error executing query (1)");
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -1093,6 +1104,7 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
               }
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - oauth2 - Error executing j_query (2)");
+              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
               j_return = json_pack("{si}", "result", G_ERROR_DB);
             }
             json_decref(j_result_scope);
@@ -1117,6 +1129,7 @@ static json_t * validate_authorization_code(struct _oauth2_config * config, cons
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "validate_authorization_code - oauth2 - Error executing j_query (1)");
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       j_return = json_pack("{si}", "result", G_ERROR_DB);
     }
     json_decref(j_result);
@@ -1301,6 +1314,7 @@ static json_t * validate_refresh_token(struct _oauth2_config * config, const cha
             json_decref(j_result_scope);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "validate_refresh_token - oauth2 - Error executing j_query (2)");
+            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
             j_return = json_pack("{si}", "result", G_ERROR_DB);
           }
         } else {
@@ -1309,6 +1323,7 @@ static json_t * validate_refresh_token(struct _oauth2_config * config, const cha
         json_decref(j_result);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "validate_refresh_token - oauth2 - Error executing j_query (1)");
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else {
@@ -1398,6 +1413,7 @@ static json_t * refresh_token_list_get(struct _oauth2_config * config, const cha
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_list_get - Error executing j_query");
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -1450,6 +1466,7 @@ static int refresh_token_disable(struct _oauth2_config * config, const char * us
             ret = G_OK;
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "update_refresh_token - oauth2 - Error executing j_query (2)");
+            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
             ret = G_ERROR_DB;
           }
         } else {
@@ -1463,6 +1480,7 @@ static int refresh_token_disable(struct _oauth2_config * config, const char * us
       json_decref(j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "update_refresh_token - oauth2 - Error executing j_query (1)");
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   } else {
@@ -1517,6 +1535,7 @@ static int update_refresh_token(struct _oauth2_config * config, json_int_t gpgr_
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "update_refresh_token - oauth2 - Error executing j_query");
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -1616,6 +1635,7 @@ static int revoke_refresh_token(struct _oauth2_config * config, const char * tok
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "revoke_refresh_token - Error executing j_query");
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -1644,6 +1664,7 @@ static int revoke_access_token(struct _oauth2_config * config, const char * toke
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "revoke_access_token - Error executing j_query");
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -1731,6 +1752,7 @@ static json_t * get_token_metadata(struct _oauth2_config * config, const char * 
               j_return = json_pack("{sisO}", "result", G_OK, "token", json_array_get(j_result, 0));
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "validate_refresh_token - oauth2 - Error executing j_query scope refresh_token");
+              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
               j_return = json_pack("{si}", "result", G_ERROR_DB);
             }
           } else {
@@ -1740,6 +1762,7 @@ static json_t * get_token_metadata(struct _oauth2_config * config, const char * 
         json_decref(j_result);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_token_metadata - Error executing j_query refresh_token");
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
     }
@@ -1803,6 +1826,7 @@ static json_t * get_token_metadata(struct _oauth2_config * config, const char * 
               j_return = json_pack("{sisO}", "result", G_OK, "token", json_array_get(j_result, 0));
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "oauth2 validate_refresh_token - Error executing j_query scope access_token");
+              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
               j_return = json_pack("{si}", "result", G_ERROR_DB);
             }
           } else {
@@ -1812,6 +1836,7 @@ static json_t * get_token_metadata(struct _oauth2_config * config, const char * 
         json_decref(j_result);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_token_metadata - Error executing j_query access_token");
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
     }
@@ -1903,6 +1928,7 @@ static json_t * generate_device_authorization(struct _oauth2_config * config, co
               j_return = json_pack("{sis{ssss}}", "result", G_OK, "authorization", "device_code", device_code, "user_code", user_code);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "generate_device_authorization - Error executing j_query (2)");
+              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
               j_return = json_pack("{si}", "result", G_ERROR_DB);
             }
           } else {
@@ -1912,11 +1938,13 @@ static json_t * generate_device_authorization(struct _oauth2_config * config, co
           free_string_array(scope_array);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_device_authorization - Error h_last_insert_id");
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           j_return = json_pack("{si}", "result", G_ERROR_DB);
         }
         json_decref(j_device_auth_id);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_device_authorization - Error executing j_query (1)");
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else {
@@ -1958,10 +1986,12 @@ static int validate_device_authorization_scope(struct _oauth2_config * config, j
         ret = G_OK;
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "validate_device_authorization_scope - Error executing query (2)");
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         ret = G_ERROR_DB;
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "validate_device_authorization_scope - Error executing query (1)");
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   } else {
@@ -2040,6 +2070,7 @@ static json_t * validate_device_auth_user_code(struct _oauth2_config * config, c
           json_decref(j_result_scope);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "validate_device_auth_user_code - Error executing j_query (2)");
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           j_return = json_pack("{si}", "result", G_ERROR_DB);
         }
       } else {
@@ -2048,6 +2079,7 @@ static json_t * validate_device_auth_user_code(struct _oauth2_config * config, c
       json_decref(j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "validate_device_auth_user_code - Error executing j_query (1)");
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       j_return = json_pack("{si}", "result", G_ERROR_DB);
     }
   } else {

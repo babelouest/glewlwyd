@@ -39,11 +39,12 @@
 #define G_PBKDF2_ITERATOR_SEP ','
 
 struct mod_parameters {
-  int use_glewlwyd_connection;
-  digest_algorithm hash_algorithm;
+  int                    use_glewlwyd_connection;
+  digest_algorithm       hash_algorithm;
   struct _h_connection * conn;
-  json_t * j_params;
-  unsigned int PBKDF2_iterations;
+  json_t               * j_params;
+  unsigned int           PBKDF2_iterations;
+  struct config_module * config_glewlwyd;
 };
 
 static json_t * is_client_database_parameters_valid(json_t * j_params) {
@@ -233,6 +234,7 @@ static int append_client_properties(struct mod_parameters * param, json_t * j_cl
       json_decref(j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "append_client_properties database - Error executing j_query");
+      param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   } else {
@@ -286,6 +288,7 @@ static int append_client_properties(struct mod_parameters * param, json_t * j_cl
       json_decref(j_result);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "append_client_properties database - Error executing j_query");
+      param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   }
@@ -329,6 +332,7 @@ static json_t * database_client_scope_get(struct mod_parameters * param, json_in
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "database_client_scope_get database - Error executing j_query");
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -387,6 +391,7 @@ static json_t * database_client_get(const char * client_id, void * cls, int prof
     json_decref(j_result);
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_DB);
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     y_log_message(Y_LOG_LEVEL_ERROR, "database_client_get database - Error executing j_query");
   }
   return j_return;
@@ -577,6 +582,7 @@ static int save_client_properties(struct mod_parameters * param, json_t * j_clie
           ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "insert_client_properties database - Error executing j_query insert");
+          param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           ret = G_ERROR_DB;
         }
       } else {
@@ -584,6 +590,7 @@ static int save_client_properties(struct mod_parameters * param, json_t * j_clie
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "insert_client_properties database - Error executing j_query delete");
+      param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
     json_decref(j_array);
@@ -690,6 +697,7 @@ static int save_client_scope(struct mod_parameters * param, json_t * j_scope, js
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "save_client_scope database - Error executing j_query delete");
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   
@@ -721,6 +729,7 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
     if (*cls != NULL) {
       ((struct mod_parameters *)*cls)->j_params = json_incref(j_parameters);
       ((struct mod_parameters *)*cls)->hash_algorithm = config->hash_algorithm;
+      ((struct mod_parameters *)*cls)->config_glewlwyd = config;
       if (json_object_get(j_parameters, "use-glewlwyd-connection") != json_false()) {
           ((struct mod_parameters *)*cls)->use_glewlwyd_connection = 0;
           ((struct mod_parameters *)*cls)->conn = config->conn;
@@ -771,6 +780,7 @@ int client_module_close(struct config_module * config, void * cls) {
     if (((struct mod_parameters *)cls)->use_glewlwyd_connection) {
       if (h_close_db(((struct mod_parameters *)cls)->conn) != H_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "client_module_close database - Error h_close_db");
+        config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         ret = G_ERROR_DB;
       } else {
         ret = G_OK;
@@ -869,6 +879,7 @@ json_t * client_module_get_list(struct config_module * config, const char * patt
     json_decref(j_result);
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_DB);
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list database - Error executing j_query");
   }
   return j_return;
@@ -1007,9 +1018,11 @@ int client_module_add(struct config_module * config, json_t * j_client, void * c
     j_gc_id = h_last_insert_id(param->conn);
     if (save_client_properties(param, j_client, json_integer_value(j_gc_id)) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_properties");
+      param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     } else if (json_object_get(j_client, "scope") != NULL && save_client_scope(param, json_object_get(j_client, "scope"), json_integer_value(j_gc_id)) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_scope");
+      param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     } else {
       ret = G_OK;
@@ -1017,6 +1030,7 @@ int client_module_add(struct config_module * config, json_t * j_client, void * c
     json_decref(j_gc_id);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error executing j_query insert");
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -1072,15 +1086,18 @@ int client_module_update(struct config_module * config, const char * client_id, 
     if (res == H_OK) {
       if (save_client_properties(param, j_client, json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id"))) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_properties");
+        param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         ret = G_ERROR_DB;
       } else if (json_object_get(j_client, "scope") != NULL && save_client_scope(param, json_object_get(j_client, "scope"), json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id"))) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error save_client_scope");
+        param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         ret = G_ERROR_DB;
       } else {
         ret = G_OK;
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "client_module_add database - Error executing j_query update");
+      param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
   } else {
@@ -1116,6 +1133,7 @@ int client_module_delete(struct config_module * config, const char * client_id, 
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "client_module_delete database - Error executing j_query");
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -1161,6 +1179,7 @@ int client_module_check_password(struct config_module * config, const char * cli
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "client_module_check_password database - Error executing j_query");
+    param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;

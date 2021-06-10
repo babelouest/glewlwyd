@@ -288,6 +288,7 @@ static json_t * get_user_id_from_username(struct config_module * config, json_t 
           j_return = json_pack("{siss}", "result", G_OK, "user_id", new_user_id_b64);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_user_id_from_username - Error executing j_query insert");
+          config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           j_return = json_pack("{si}", "result", G_ERROR_DB);
         }
       } else {
@@ -300,6 +301,7 @@ static json_t * get_user_id_from_username(struct config_module * config, json_t 
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_user_id_from_username - Error executing j_query select");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -366,6 +368,7 @@ static json_t * get_credential_list(struct config_module * config, json_t * j_pa
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_credential_list - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -427,10 +430,12 @@ static json_t * generate_new_credential(struct config_module * config, json_t * 
             j_return = json_pack("{sis{ssss}}", "result", G_OK, "credential", "session", session, "challenge", challenge_b64);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_credential - Error executing j_query insert");
+            config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
             j_return = json_pack("{si}", "result", G_ERROR_DB);
           }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_credential - Error executing j_query update");
+          config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
           j_return = json_pack("{si}", "result", G_ERROR_DB);
         }
         o_free(username_clause);
@@ -512,10 +517,12 @@ static json_t * generate_new_assertion(struct config_module * config, json_t * j
               j_return = json_pack("{sis{ssss}}", "result", G_OK, "assertion", "session", session, "challenge", challenge_b64);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_assertion - Error executing j_query insert");
+              config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
               j_return = json_pack("{si}", "result", G_ERROR_DB);
             }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "generate_new_assertion - Error executing j_query update");
+            config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
             j_return = json_pack("{si}", "result", G_ERROR_DB);
           }
           o_free(username_clause);
@@ -602,6 +609,7 @@ static json_t * get_credential_from_session(struct config_module * config, json_
         json_decref(j_result);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_credential_from_session - Error executing j_query");
+        config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else {
@@ -657,6 +665,7 @@ static json_t * get_credential(struct config_module * config, json_t * j_params,
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_credential - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
   return j_return;
@@ -693,6 +702,7 @@ static int update_credential(struct config_module * config, json_t * j_params, c
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_credential - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -729,6 +739,7 @@ static int update_credential_name(struct config_module * config, json_t * j_para
     ret = G_OK;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_credential - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -795,6 +806,7 @@ static json_t * get_assertion_from_session(struct config_module * config, json_t
         json_decref(j_result);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_assertion_from_session - Error executing j_query");
+        config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
     } else {
@@ -847,6 +859,7 @@ static int check_certificate(struct config_module * config, json_t * j_params, c
     json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "check_credential_id - Error executing j_query");
+    config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     ret = G_ERROR_DB;
   }
   return ret;
@@ -2382,6 +2395,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       json_decref(j_query);
       if (res != H_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error executing j_query (1)");
+        config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         ret = G_ERROR_DB;
       } else {
         // Update counter in credential if necessary
@@ -2399,6 +2413,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
           json_decref(j_query);
           if (res != H_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error executing j_query (2)");
+            config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
             ret = G_ERROR_DB;
           }
         }
@@ -2419,6 +2434,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       json_decref(j_query);
       if (res != H_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error executing j_query (3)");
+        config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         ret = G_ERROR_DB;
       }
     } else {
@@ -2437,6 +2453,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       json_decref(j_query);
       if (res != H_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error executing j_query (4)");
+        config->glewlwyd_module_callback_metrics_increment_counter(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         ret = G_ERROR_DB;
       }
     }

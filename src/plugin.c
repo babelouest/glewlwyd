@@ -286,6 +286,7 @@ int glewlwyd_callback_trigger_session_used(struct config_plugin * config, const 
             json_decref(j_query);
             if (res != H_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_trigger_session_used - Error h_update for password scheme");
+              glewlwyd_metrics_increment_counter_va(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
               ret = G_ERROR_DB;
             }
           }
@@ -329,6 +330,7 @@ int glewlwyd_callback_trigger_session_used(struct config_plugin * config, const 
                 json_decref(j_query);
                 if (res != H_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_trigger_session_used - Error h_update for scheme %s/%s", json_string_value(json_object_get(j_scheme, "scheme_type")), json_string_value(json_object_get(j_scheme, "scheme_name")));
+                  glewlwyd_metrics_increment_counter_va(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
                   ret = G_ERROR_DB;
                 }
               }
@@ -616,24 +618,12 @@ int glewlwyd_plugin_callback_metrics_add_metric(struct config_plugin * config, c
 
 int glewlwyd_plugin_callback_metrics_increment_counter(struct config_plugin * config, const char * name, size_t inc, ...) {
   va_list vl;
-  const char * label_arg;
   char * label = NULL;
-  int ret = G_OK, flag = 0;
+  int ret = G_OK;
 
   if (config != NULL && o_strlen(name)) {
     va_start(vl, inc);
-    for (label_arg = va_arg(vl, const char *); label_arg != NULL && ret == G_OK; label_arg = va_arg(vl, const char *)) {
-      if (!flag) {
-        if (label == NULL) {
-          label = msprintf("%s=", label_arg);
-        } else {
-          label = mstrcatf(label, ", %s=", label_arg);
-        }
-      } else {
-        label = mstrcatf(label, "\"%s\"", label_arg);
-      }
-      flag = !flag;
-    }
+    label = glewlwyd_metrics_build_label(vl);
     va_end(vl);
     
     ret = glewlwyd_metrics_increment_counter(config->glewlwyd_config, name, label, inc);

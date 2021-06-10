@@ -121,25 +121,13 @@ int glewlwyd_metrics_increment_counter(struct config_elements * config, const ch
 
 int glewlwyd_metrics_increment_counter_va(struct config_elements * config, const char * name, size_t inc, ...) {
   va_list vl;
-  const char * label_arg;
   char * label = NULL;
-  int ret = G_OK, flag = 0;
+  int ret = G_OK;
 
   if (config->metrics_endpoint) {
     if (config != NULL && o_strlen(name)) {
       va_start(vl, inc);
-      for (label_arg = va_arg(vl, const char *); label_arg != NULL && ret == G_OK; label_arg = va_arg(vl, const char *)) {
-        if (!flag) {
-          if (label == NULL) {
-            label = msprintf("%s=", label_arg);
-          } else {
-            label = mstrcatf(label, ", %s=", label_arg);
-          }
-        } else {
-          label = mstrcatf(label, "\"%s\"", label_arg);
-        }
-        flag = !flag;
-      }
+      label = glewlwyd_metrics_build_label(vl);
       va_end(vl);
       
       ret = glewlwyd_metrics_increment_counter(config, name, label, inc);
@@ -210,4 +198,24 @@ void glewlwyd_metrics_close(struct config_elements * config) {
     pointer_list_clean_free(&config->metrics_list, &free_glwd_metrics);
     pthread_mutex_destroy(&config->metrics_lock);
   }
+}
+
+char * glewlwyd_metrics_build_label(va_list vl_label) {
+  const char * label_arg;
+  char * label = NULL;
+  int flag = 0;
+
+  for (label_arg = va_arg(vl_label, const char *); label_arg != NULL; label_arg = va_arg(vl_label, const char *)) {
+    if (!flag) {
+      if (label == NULL) {
+        label = msprintf("%s=", label_arg);
+      } else {
+        label = mstrcatf(label, ", %s=", label_arg);
+      }
+    } else {
+      label = mstrcatf(label, "\"%s\"", label_arg);
+    }
+    flag = !flag;
+  }
+  return label;
 }

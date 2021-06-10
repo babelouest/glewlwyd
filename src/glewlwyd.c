@@ -296,10 +296,12 @@ int main (int argc, char ** argv) {
   glewlwyd_metrics_add_metric(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, "Total number of successful authentication by scheme");
   glewlwyd_metrics_add_metric(config, GLWD_METRICS_AUTH_USER_INVALID, "Total number of invalid authentication");
   glewlwyd_metrics_add_metric(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, "Total number of invalid authentication by scheme");
+  glewlwyd_metrics_add_metric(config, GLWD_METRICS_DATABSE_ERROR, "Total number of database errors");
   glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_VALID, 0, NULL);
   glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID, 0, NULL);
   glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", "password", NULL);
   glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", "password", NULL);
+  glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 0, NULL);
 
   // Initialize module config structure
   config->config_m->external_url = config->external_url;
