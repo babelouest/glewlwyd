@@ -436,7 +436,11 @@ static int update_password_list(struct mod_parameters * param, json_int_t gu_id,
       json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIs{ss}}", "gu_id", gu_id, "guw_password", "raw", clause_password));
       o_free(clause_password);
     }
-    res = h_insert(param->conn, j_query, NULL);
+    if (json_array_size(json_object_get(j_query, "values"))) {
+      res = h_insert(param->conn, j_query, NULL);
+    } else {
+      res = H_OK;
+    }
     json_decref(j_query);
     if (res == H_OK) {
       ret = G_OK;
@@ -476,7 +480,11 @@ static int update_password_list(struct mod_parameters * param, json_int_t gu_id,
             json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIsO}", "gu_id", gu_id, "guw_password", json_object_get(json_array_get(j_result, i), "guw_password")));
           }
         }
-        res = h_insert(param->conn, j_query, NULL);
+        if (json_array_size(json_object_get(j_query, "values"))) {
+          res = h_insert(param->conn, j_query, NULL);
+        } else {
+          res = H_OK;
+        }
         json_decref(j_query);
         if (res == H_OK) {
           ret = G_OK;
