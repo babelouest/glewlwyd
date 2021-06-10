@@ -533,7 +533,7 @@ int callback_glewlwyd_scheme_check_forbid_profile (const struct _u_request * req
   } else if (check_result_value(j_scheme, G_ERROR_NOT_FOUND)) {
     response->status = 404;
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth_register_get - Error auth_register_get_user_scheme");
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_scheme_check_forbid_profile - Error auth_register_get_user_scheme");
     response->status = 500;
   }
   json_decref(j_param);
