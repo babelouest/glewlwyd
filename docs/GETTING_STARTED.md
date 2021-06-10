@@ -309,6 +309,7 @@ General
 - Total number of successful authentication by scheme
 - Total number of invalid authentication
 - Total number of invalid authentication by scheme
+- Total number of database errors
 
 OAuth2 plugin
 - Total number of code provided
