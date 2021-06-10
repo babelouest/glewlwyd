@@ -914,55 +914,59 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
   
-  j_query = json_pack("{sss[ssssssssss]s{ss}}",
-                      "table",
-                      GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
-                      "columns",
-                        "guasmi_module AS module",
-                        "guasmi_name AS name",
-                        "guasmi_display_name AS display_name",
-                        "guasmi_parameters",
-                        "guasmi_expiration AS expiration",
-                        "guasmi_max_use AS max_use",
-                        "guasmi_allow_user_register",
-                        "guasmi_forbid_user_profile",
-                        "guasmi_forbid_user_reset_credential",
-                        "guasmi_enabled",
-                      "where",
-                        "guasmi_name",
-                        name);
-  res = h_select(config->conn, j_query, &j_result, NULL);
-  json_decref(j_query);
-  if (res == H_OK) {
-    if (json_array_size(j_result) > 0) {
-      j_parameters = json_loads(json_string_value(json_object_get(json_array_get(j_result, 0), "guasmi_parameters")), JSON_DECODE_ANY, NULL);
-      if (j_parameters != NULL) {
-        json_object_set_new(json_array_get(j_result, 0), "parameters", j_parameters);
-      } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module_list - Error parsing parameters for module %s", json_string_value(json_object_get(json_array_get(j_result, 0), "name")));
-        json_object_set_new(json_array_get(j_result, 0), "parameters", json_null());
-      }
-      json_object_set(json_array_get(j_result, 0), "allow_user_register", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_allow_user_register"))?json_true():json_false());
-      json_object_set(json_array_get(j_result, 0), "forbid_user_profile", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_forbid_user_profile"))?json_true():json_false());
-      json_object_set(json_array_get(j_result, 0), "forbid_user_reset_credential", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_forbid_user_reset_credential"))?json_true():json_false());
-      json_object_del(json_array_get(j_result, 0), "guasmi_parameters");
-      json_object_del(json_array_get(j_result, 0), "guasmi_allow_user_register");
-      json_object_del(json_array_get(j_result, 0), "guasmi_forbid_user_profile");
-      json_object_del(json_array_get(j_result, 0), "guasmi_forbid_user_reset_credential");
-      
-      json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_enabled"))?json_true():json_false());
-      json_object_del(json_array_get(j_result, 0), "guasmi_enabled");
+  if (o_strlen(name)) {
+    j_query = json_pack("{sss[ssssssssss]s{ss}}",
+                        "table",
+                        GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
+                        "columns",
+                          "guasmi_module AS module",
+                          "guasmi_name AS name",
+                          "guasmi_display_name AS display_name",
+                          "guasmi_parameters",
+                          "guasmi_expiration AS expiration",
+                          "guasmi_max_use AS max_use",
+                          "guasmi_allow_user_register",
+                          "guasmi_forbid_user_profile",
+                          "guasmi_forbid_user_reset_credential",
+                          "guasmi_enabled",
+                        "where",
+                          "guasmi_name",
+                          name);
+    res = h_select(config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      if (json_array_size(j_result) > 0) {
+        j_parameters = json_loads(json_string_value(json_object_get(json_array_get(j_result, 0), "guasmi_parameters")), JSON_DECODE_ANY, NULL);
+        if (j_parameters != NULL) {
+          json_object_set_new(json_array_get(j_result, 0), "parameters", j_parameters);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module_list - Error parsing parameters for module %s", json_string_value(json_object_get(json_array_get(j_result, 0), "name")));
+          json_object_set_new(json_array_get(j_result, 0), "parameters", json_null());
+        }
+        json_object_set(json_array_get(j_result, 0), "allow_user_register", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_allow_user_register"))?json_true():json_false());
+        json_object_set(json_array_get(j_result, 0), "forbid_user_profile", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_forbid_user_profile"))?json_true():json_false());
+        json_object_set(json_array_get(j_result, 0), "forbid_user_reset_credential", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_forbid_user_reset_credential"))?json_true():json_false());
+        json_object_del(json_array_get(j_result, 0), "guasmi_parameters");
+        json_object_del(json_array_get(j_result, 0), "guasmi_allow_user_register");
+        json_object_del(json_array_get(j_result, 0), "guasmi_forbid_user_profile");
+        json_object_del(json_array_get(j_result, 0), "guasmi_forbid_user_reset_credential");
+        
+        json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_enabled"))?json_true():json_false());
+        json_object_del(json_array_get(j_result, 0), "guasmi_enabled");
 
-      j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
+        j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
+      } else {
+        j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+      }
+      json_decref(j_result);
     } else {
-      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module_list - Error executing j_query");
+      glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+      j_return = json_pack("{si}", "result", G_ERROR_DB);
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module_list - Error executing j_query");
-    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
-    j_return = json_pack("{si}", "result", G_ERROR_DB);
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
-  json_decref(j_result);
   return j_return;
 }
 
