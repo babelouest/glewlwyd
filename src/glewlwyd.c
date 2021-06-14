@@ -58,6 +58,7 @@ int main (int argc, char ** argv) {
   int res, use_config_file = 0, use_config_env = 0;
   struct sockaddr_in bind_address, bind_address_metrics;
   pthread_t signal_thread_id;
+  pthread_mutexattr_t mutexattr;
   static sigset_t close_signals;
   char * tmp, * tmp2;
 
@@ -305,7 +306,15 @@ int main (int argc, char ** argv) {
   glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", "password", NULL);
   glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 0, NULL);
 
-  // Initialize module config structure
+  // Initialize module lock
+  pthread_mutexattr_init ( &mutexattr );
+  pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
+  if (pthread_mutex_init(&config->module_lock, &mutexattr) != 0) {
+    fprintf(stderr, "Error initializing modules mutex\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  pthread_mutexattr_destroy(&mutexattr);
+
   config->config_m->external_url = config->external_url;
   config->config_m->login_url = config->login_url;
   config->config_m->admin_scope = config->admin_scope;
@@ -616,6 +625,8 @@ void exit_server(struct config_elements ** config, int exit_value) {
 
     close_plugin_module_instance_list(*config);
     close_plugin_module_list(*config);
+    
+    pthread_mutex_destroy(&(*config)->module_lock);
 
     /* stop framework */
     if ((*config)->instance_initialized) {
@@ -626,7 +637,6 @@ void exit_server(struct config_elements ** config, int exit_value) {
     if ((*config)->instance_metrics_initialized) {
       ulfius_stop_framework((*config)->instance_metrics);
       ulfius_clean_instance((*config)->instance_metrics);
-      pthread_mutex_destroy(&(*config)->metrics_lock);
     }
 
     h_close_db((*config)->conn);
@@ -1746,9 +1756,21 @@ static int load_user_module_file(struct config_elements * config, const char * f
           cur_user_module->api_version = json_real_value(json_object_get(j_parameters, "api_version"));
           if (o_strlen(cur_user_module->name) && get_user_module_lib(config, cur_user_module->name) == NULL) {
             if (cur_user_module->api_version >= _GLEWLWYD_USER_MODULE_VERSION) {
-              if (pointer_list_append(config->user_module_list, (void*)cur_user_module)) {
-                y_log_message(Y_LOG_LEVEL_INFO, "Loading user module %s - %s", file_path, cur_user_module->name);
-                ret = G_OK;
+              if (!pthread_mutex_lock(&config->module_lock)) {
+                if (pointer_list_append(config->user_module_list, (void*)cur_user_module)) {
+                  y_log_message(Y_LOG_LEVEL_INFO, "Loading user module %s - %s", file_path, cur_user_module->name);
+                  ret = G_OK;
+                } else {
+                  cur_user_module->user_module_unload(config->config_m);
+                  dlclose(file_handle);
+                  o_free(cur_user_module->name);
+                  o_free(cur_user_module->display_name);
+                  o_free(cur_user_module->description);
+                  o_free(cur_user_module);
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_file - Error pointer_list_append");
+                  ret = G_ERROR;
+                }
+                pthread_mutex_unlock(&config->module_lock);
               } else {
                 cur_user_module->user_module_unload(config->config_m);
                 dlclose(file_handle);
@@ -1756,7 +1778,7 @@ static int load_user_module_file(struct config_elements * config, const char * f
                 o_free(cur_user_module->display_name);
                 o_free(cur_user_module->description);
                 o_free(cur_user_module);
-                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_file - Error pointer_list_append");
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_file - Error pthread_mutex_lock");
                 ret = G_ERROR;
               }
             } else {
@@ -1894,60 +1916,66 @@ int load_user_module_instance_list(struct config_elements * config) {
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {
-      json_array_foreach(j_result, index, j_instance) {
-        module = NULL;
-        for (i=0; i<pointer_list_size(config->user_module_list); i++) {
-          module = (struct _user_module *)pointer_list_get_at(config->user_module_list, i);
-          if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
-            break;
-          } else {
-            module = NULL;
+      if (!pthread_mutex_lock(&config->module_lock)) {
+        ret = G_OK;
+        json_array_foreach(j_result, index, j_instance) {
+          module = NULL;
+          for (i=0; i<pointer_list_size(config->user_module_list); i++) {
+            module = (struct _user_module *)pointer_list_get_at(config->user_module_list, i);
+            if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
+              break;
+            } else {
+              module = NULL;
+            }
           }
-        }
-        if (module != NULL) {
-          cur_instance = o_malloc(sizeof(struct _user_module_instance));
-          if (cur_instance != NULL) {
-            cur_instance->cls = NULL;
-            cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
-            cur_instance->module = module;
-            cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
-            cur_instance->multiple_passwords = json_integer_value(json_object_get(j_instance, "multiple_passwords"));
-            if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
-              if (json_integer_value(json_object_get(j_instance, "enabled"))) {
-                j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
-                if (j_parameters != NULL) {
-                  j_init = module->user_module_init(config->config_m, cur_instance->readonly, cur_instance->multiple_passwords, j_parameters, &cur_instance->cls);
-                  if (check_result_value(j_init, G_OK)) {
-                    cur_instance->enabled = 1;
+          if (module != NULL) {
+            cur_instance = o_malloc(sizeof(struct _user_module_instance));
+            if (cur_instance != NULL) {
+              cur_instance->cls = NULL;
+              cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+              cur_instance->module = module;
+              cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
+              cur_instance->multiple_passwords = json_integer_value(json_object_get(j_instance, "multiple_passwords"));
+              if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
+                if (json_integer_value(json_object_get(j_instance, "enabled"))) {
+                  j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+                  if (j_parameters != NULL) {
+                    j_init = module->user_module_init(config->config_m, cur_instance->readonly, cur_instance->multiple_passwords, j_parameters, &cur_instance->cls);
+                    if (check_result_value(j_init, G_OK)) {
+                      cur_instance->enabled = 1;
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                      message = json_dumps(j_init, JSON_INDENT(2));
+                      y_log_message(Y_LOG_LEVEL_DEBUG, message);
+                      o_free(message);
+                      cur_instance->enabled = 0;
+                    }
+                    json_decref(j_init);
                   } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
-                    message = json_dumps(j_init, JSON_INDENT(2));
-                    y_log_message(Y_LOG_LEVEL_DEBUG, message);
-                    o_free(message);
+                    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error parsing module parameters %s/%s: %s", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                     cur_instance->enabled = 0;
                   }
-                  json_decref(j_init);
+                  json_decref(j_parameters);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error parsing module parameters %s/%s: %s", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                   cur_instance->enabled = 0;
                 }
-                json_decref(j_parameters);
               } else {
-                cur_instance->enabled = 0;
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error reallocating resources for user_module_instance_list");
+                o_free(cur_instance->name);
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error reallocating resources for user_module_instance_list");
-              o_free(cur_instance->name);
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error allocating resources for cur_instance");
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error allocating resources for cur_instance");
+            y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
           }
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
         }
+        json_decref(j_result);
+        pthread_mutex_unlock(&config->module_lock);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error pthread_mutex_lock");
+        ret = G_ERROR;
       }
-      json_decref(j_result);
-      ret = G_OK;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error executing j_query");
       ret = G_ERROR;
@@ -1988,47 +2016,57 @@ struct _user_module * get_user_module_lib(struct config_elements * config, const
 void close_user_module_instance_list(struct config_elements * config) {
   size_t i;
 
-  for (i=0; i<pointer_list_size(config->user_module_instance_list); i++) {
-    struct _user_module_instance * instance = (struct _user_module_instance *)pointer_list_get_at(config->user_module_instance_list, i);
-    if (instance != NULL) {
-      if (instance->enabled && instance->module->user_module_close(config->config_m, instance->cls) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_instance_list - Error user_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+  if (!pthread_mutex_lock(&config->module_lock)) {
+    for (i=0; i<pointer_list_size(config->user_module_instance_list); i++) {
+      struct _user_module_instance * instance = (struct _user_module_instance *)pointer_list_get_at(config->user_module_instance_list, i);
+      if (instance != NULL) {
+        if (instance->enabled && instance->module->user_module_close(config->config_m, instance->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_instance_list - Error user_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        }
+        o_free(instance->name);
+        o_free(instance);
       }
-      o_free(instance->name);
-      o_free(instance);
     }
+    pointer_list_clean(config->user_module_instance_list);
+    o_free(config->user_module_instance_list);
+    pthread_mutex_unlock(&config->module_lock);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_instance_list - Error pthread_mutex_lock");
   }
-  pointer_list_clean(config->user_module_instance_list);
-  o_free(config->user_module_instance_list);
 }
 
 void close_user_module_list(struct config_elements * config) {
   size_t i;
 
-  for (i=0; i<pointer_list_size(config->user_module_list); i++) {
-    struct _user_module * module = (struct _user_module *)pointer_list_get_at(config->user_module_list, i);
-    if (module != NULL) {
-      if (module->user_module_unload(config->config_m) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_list - Error user_module_unload for module '%s'", module->name);
+  if (!pthread_mutex_lock(&config->module_lock)) {
+    for (i=0; i<pointer_list_size(config->user_module_list); i++) {
+      struct _user_module * module = (struct _user_module *)pointer_list_get_at(config->user_module_list, i);
+      if (module != NULL) {
+        if (module->user_module_unload(config->config_m) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_list - Error user_module_unload for module '%s'", module->name);
+        }
+  /*
+  * dlclose() makes valgrind not useful when it comes to libraries
+  * they say it's not relevant to use it anyway
+  * I'll let it here until I'm sure
+  */
+  #ifndef DEBUG
+        if (dlclose(module->file_handle)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_list - Error dlclose for module '%s'", module->name);
+        }
+  #endif
+        o_free(module->name);
+        o_free(module->display_name);
+        o_free(module->description);
+        o_free(module);
       }
-/*
-* dlclose() makes valgrind not useful when it comes to libraries
-* they say it's not relevant to use it anyway
-* I'll let it here until I'm sure
-*/
-#ifndef DEBUG
-      if (dlclose(module->file_handle)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_list - Error dlclose for module '%s'", module->name);
-      }
-#endif
-      o_free(module->name);
-      o_free(module->display_name);
-      o_free(module->description);
-      o_free(module);
     }
+    pointer_list_clean(config->user_module_list);
+    o_free(config->user_module_list);
+    pthread_mutex_unlock(&config->module_lock);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_list - Error pthread_mutex_lock");
   }
-  pointer_list_clean(config->user_module_list);
-  o_free(config->user_module_list);
 }
 
 static int load_user_middleware_module_file(struct config_elements * config, const char * file_path) {
@@ -2072,9 +2110,21 @@ static int load_user_middleware_module_file(struct config_elements * config, con
           cur_user_middleware_module->api_version = json_real_value(json_object_get(j_parameters, "api_version"));
           if (o_strlen(cur_user_middleware_module->name) && get_user_middleware_module_lib(config, cur_user_middleware_module->name) == NULL) {
             if (cur_user_middleware_module->api_version >= _GLEWLWYD_USER_MODULE_VERSION) {
-              if (pointer_list_append(config->user_middleware_module_list, (void*)cur_user_middleware_module)) {
-                y_log_message(Y_LOG_LEVEL_INFO, "Loading user middleware module %s - %s", file_path, cur_user_middleware_module->name);
-                ret = G_OK;
+              if (!pthread_mutex_lock(&config->module_lock)) {
+                if (pointer_list_append(config->user_middleware_module_list, (void*)cur_user_middleware_module)) {
+                  y_log_message(Y_LOG_LEVEL_INFO, "Loading user middleware module %s - %s", file_path, cur_user_middleware_module->name);
+                  ret = G_OK;
+                } else {
+                  cur_user_middleware_module->user_middleware_module_unload(config->config_m);
+                  dlclose(file_handle);
+                  o_free(cur_user_middleware_module->name);
+                  o_free(cur_user_middleware_module->display_name);
+                  o_free(cur_user_middleware_module->description);
+                  o_free(cur_user_middleware_module);
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_file - Error pointer_list_append");
+                  ret = G_ERROR;
+                }
+                pthread_mutex_unlock(&config->module_lock);
               } else {
                 cur_user_middleware_module->user_middleware_module_unload(config->config_m);
                 dlclose(file_handle);
@@ -2082,7 +2132,7 @@ static int load_user_middleware_module_file(struct config_elements * config, con
                 o_free(cur_user_middleware_module->display_name);
                 o_free(cur_user_middleware_module->description);
                 o_free(cur_user_middleware_module);
-                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_file - Error pointer_list_append");
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_file - Error pthread_mutex_lock");
                 ret = G_ERROR;
               }
             } else {
@@ -2216,58 +2266,64 @@ int load_user_middleware_module_instance_list(struct config_elements * config) {
       json_decref(j_query);
       if (res == H_OK) {
         ret = G_OK;
-        json_array_foreach(j_result, index, j_instance) {
-          module = NULL;
-          for (i=0; i<pointer_list_size(config->user_middleware_module_list); i++) {
-            module = (struct _user_middleware_module *)pointer_list_get_at(config->user_middleware_module_list, i);
-            if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
-              break;
-            } else {
-              module = NULL;
+        if (!pthread_mutex_lock(&config->module_lock)) {
+          json_array_foreach(j_result, index, j_instance) {
+            module = NULL;
+            for (i=0; i<pointer_list_size(config->user_middleware_module_list); i++) {
+              module = (struct _user_middleware_module *)pointer_list_get_at(config->user_middleware_module_list, i);
+              if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
+                break;
+              } else {
+                module = NULL;
+              }
             }
-          }
-          if (module != NULL) {
-            cur_instance = o_malloc(sizeof(struct _user_middleware_module_instance));
-            if (cur_instance != NULL) {
-              cur_instance->cls = NULL;
-              cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
-              cur_instance->module = module;
-              if (pointer_list_append(config->user_middleware_module_instance_list, cur_instance)) {
-                if (json_integer_value(json_object_get(j_instance, "enabled"))) {
-                  j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
-                  if (j_parameters != NULL) {
-                    j_init = module->user_middleware_module_init(config->config_m, j_parameters, &cur_instance->cls);
-                    if (check_result_value(j_init, G_OK)) {
-                      cur_instance->enabled = 1;
+            if (module != NULL) {
+              cur_instance = o_malloc(sizeof(struct _user_middleware_module_instance));
+              if (cur_instance != NULL) {
+                cur_instance->cls = NULL;
+                cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+                cur_instance->module = module;
+                if (pointer_list_append(config->user_middleware_module_instance_list, cur_instance)) {
+                  if (json_integer_value(json_object_get(j_instance, "enabled"))) {
+                    j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+                    if (j_parameters != NULL) {
+                      j_init = module->user_middleware_module_init(config->config_m, j_parameters, &cur_instance->cls);
+                      if (check_result_value(j_init, G_OK)) {
+                        cur_instance->enabled = 1;
+                      } else {
+                        y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                        message = json_dumps(j_init, JSON_INDENT(2));
+                        y_log_message(Y_LOG_LEVEL_DEBUG, message);
+                        o_free(message);
+                        cur_instance->enabled = 0;
+                        ret = G_ERROR_PARAM;
+                      }
+                      json_decref(j_init);
                     } else {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
-                      message = json_dumps(j_init, JSON_INDENT(2));
-                      y_log_message(Y_LOG_LEVEL_DEBUG, message);
-                      o_free(message);
+                      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error parsing module parameters %s/%s: %s", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                       cur_instance->enabled = 0;
-                      ret = G_ERROR_PARAM;
                     }
-                    json_decref(j_init);
+                    json_decref(j_parameters);
                   } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error parsing module parameters %s/%s: %s", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                     cur_instance->enabled = 0;
                   }
-                  json_decref(j_parameters);
                 } else {
-                  cur_instance->enabled = 0;
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error reallocating resources for user_middleware_module_instance_list");
+                  o_free(cur_instance->name);
                 }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error reallocating resources for user_middleware_module_instance_list");
-                o_free(cur_instance->name);
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error allocating resources for cur_instance");
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error allocating resources for cur_instance");
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
             }
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
           }
+          json_decref(j_result);
+          pthread_mutex_unlock(&config->module_lock);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error pthread_mutex_lock");
+          ret = G_ERROR;
         }
-        json_decref(j_result);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error executing j_query");
         ret = G_ERROR;
@@ -2309,47 +2365,57 @@ struct _user_middleware_module * get_user_middleware_module_lib(struct config_el
 void close_user_middleware_module_instance_list(struct config_elements * config) {
   size_t i;
 
-  for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
-    struct _user_middleware_module_instance * instance = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
-    if (instance != NULL) {
-      if (instance->enabled && instance->module->user_middleware_module_close(config->config_m, instance->cls) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_middleware_module_instance_list - Error user_middleware_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+  if (!pthread_mutex_lock(&config->module_lock)) {
+    for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
+      struct _user_middleware_module_instance * instance = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
+      if (instance != NULL) {
+        if (instance->enabled && instance->module->user_middleware_module_close(config->config_m, instance->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_middleware_module_instance_list - Error user_middleware_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        }
+        o_free(instance->name);
+        o_free(instance);
       }
-      o_free(instance->name);
-      o_free(instance);
     }
+    pointer_list_clean(config->user_middleware_module_instance_list);
+    o_free(config->user_middleware_module_instance_list);
+    pthread_mutex_unlock(&config->module_lock);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "close_user_middleware_module_instance_list - Error pthread_mutex_lock");
   }
-  pointer_list_clean(config->user_middleware_module_instance_list);
-  o_free(config->user_middleware_module_instance_list);
 }
 
 void close_user_middleware_module_list(struct config_elements * config) {
   size_t i;
 
-  for (i=0; i<pointer_list_size(config->user_middleware_module_list); i++) {
-    struct _user_middleware_module * module = (struct _user_middleware_module *)pointer_list_get_at(config->user_middleware_module_list, i);
-    if (module != NULL) {
-      if (module->user_middleware_module_unload(config->config_m) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_middleware_module_list - Error user_middleware_module_unload for module '%s'", module->name);
+  if (!pthread_mutex_lock(&config->module_lock)) {
+    for (i=0; i<pointer_list_size(config->user_middleware_module_list); i++) {
+      struct _user_middleware_module * module = (struct _user_middleware_module *)pointer_list_get_at(config->user_middleware_module_list, i);
+      if (module != NULL) {
+        if (module->user_middleware_module_unload(config->config_m) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_middleware_module_list - Error user_middleware_module_unload for module '%s'", module->name);
+        }
+  /*
+  * dlclose() makes valgrind not useful when it comes to libraries
+  * they say it's not relevant to use it anyway
+  * I'll let it here until I'm sure
+  */
+  #ifndef DEBUG
+        if (dlclose(module->file_handle)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_middleware_module_list - Error dlclose for module '%s'", module->name);
+        }
+  #endif
+        o_free(module->name);
+        o_free(module->display_name);
+        o_free(module->description);
+        o_free(module);
       }
-/*
-* dlclose() makes valgrind not useful when it comes to libraries
-* they say it's not relevant to use it anyway
-* I'll let it here until I'm sure
-*/
-#ifndef DEBUG
-      if (dlclose(module->file_handle)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_middleware_module_list - Error dlclose for module '%s'", module->name);
-      }
-#endif
-      o_free(module->name);
-      o_free(module->display_name);
-      o_free(module->description);
-      o_free(module);
     }
+    pointer_list_clean(config->user_middleware_module_list);
+    o_free(config->user_middleware_module_list);
+    pthread_mutex_unlock(&config->module_lock);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "close_user_middleware_module_list - Error pthread_mutex_lock");
   }
-  pointer_list_clean(config->user_middleware_module_list);
-  o_free(config->user_middleware_module_list);
 }
 
 static int load_user_auth_scheme_module_file(struct config_elements * config, const char * file_path) {
@@ -2396,9 +2462,21 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
           cur_user_auth_scheme_module->description = o_strdup(json_string_value(json_object_get(j_module, "description")));
           cur_user_auth_scheme_module->api_version = json_real_value(json_object_get(j_module, "api_version"));
           if (o_strlen(cur_user_auth_scheme_module->name) && get_user_auth_scheme_module_lib(config, cur_user_auth_scheme_module->name) == NULL) {
-            if (pointer_list_append(config->user_auth_scheme_module_list, cur_user_auth_scheme_module)) {
-              y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s - %s", file_path, cur_user_auth_scheme_module->name);
-              ret = G_OK;
+            if (!pthread_mutex_lock(&config->module_lock)) {
+              if (pointer_list_append(config->user_auth_scheme_module_list, cur_user_auth_scheme_module)) {
+                y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s - %s", file_path, cur_user_auth_scheme_module->name);
+                ret = G_OK;
+              } else {
+                cur_user_auth_scheme_module->user_auth_scheme_module_unload(config->config_m);
+                dlclose(file_handle);
+                o_free(cur_user_auth_scheme_module->name);
+                o_free(cur_user_auth_scheme_module->display_name);
+                o_free(cur_user_auth_scheme_module->description);
+                o_free(cur_user_auth_scheme_module);
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_file - Error reallocating resources for user_auth_scheme_module_list");
+                ret = G_ERROR_MEMORY;
+              }
+              pthread_mutex_unlock(&config->module_lock);
             } else {
               cur_user_auth_scheme_module->user_auth_scheme_module_unload(config->config_m);
               dlclose(file_handle);
@@ -2406,7 +2484,7 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
               o_free(cur_user_auth_scheme_module->display_name);
               o_free(cur_user_auth_scheme_module->description);
               o_free(cur_user_auth_scheme_module);
-              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_file - Error reallocating resources for user_auth_scheme_module_list");
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_file - Error pthread_mutex_lock");
               ret = G_ERROR_MEMORY;
             }
           } else {
@@ -2529,66 +2607,72 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {
-      json_array_foreach(j_result, index, j_instance) {
-        module = NULL;
-        for (i=0; i<pointer_list_size(config->user_auth_scheme_module_list); i++) {
-          module = (struct _user_auth_scheme_module *)pointer_list_get_at(config->user_auth_scheme_module_list, i);
-          if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
-            break;
-          } else {
-            module = NULL;
+      if (!pthread_mutex_lock(&config->module_lock)) {
+        ret = G_OK;
+        json_array_foreach(j_result, index, j_instance) {
+          module = NULL;
+          for (i=0; i<pointer_list_size(config->user_auth_scheme_module_list); i++) {
+            module = (struct _user_auth_scheme_module *)pointer_list_get_at(config->user_auth_scheme_module_list, i);
+            if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
+              break;
+            } else {
+              module = NULL;
+            }
           }
-        }
-        if (module != NULL) {
-          cur_instance = o_malloc(sizeof(struct _user_auth_scheme_module_instance));
-          if (cur_instance != NULL) {
-            cur_instance->cls = NULL;
-            cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
-            cur_instance->module = module;
-            cur_instance->guasmi_id = json_integer_value(json_object_get(j_instance, "guasmi_id"));
-            cur_instance->guasmi_expiration = json_integer_value(json_object_get(j_instance, "guasmi_expiration"));
-            cur_instance->guasmi_max_use = json_integer_value(json_object_get(j_instance, "guasmi_max_use"));
-            cur_instance->guasmi_allow_user_register = json_integer_value(json_object_get(j_instance, "guasmi_allow_user_register"));
-            if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
-              if (json_integer_value(json_object_get(j_instance, "enabled"))) {
-                j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
-                if (j_parameters != NULL) {
-                  j_init = module->user_auth_scheme_module_init(config->config_m, j_parameters, cur_instance->name, &cur_instance->cls);
-                  if (check_result_value(j_init, G_OK)) {
-                    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
-                    glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
-                    cur_instance->enabled = 1;
-                  } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
-                    if (check_result_value(j_init, G_ERROR_PARAM)) {
-                      message = json_dumps(json_object_get(j_init, "error"), JSON_INDENT(2));
-                      y_log_message(Y_LOG_LEVEL_DEBUG, message);
-                      o_free(message);
+          if (module != NULL) {
+            cur_instance = o_malloc(sizeof(struct _user_auth_scheme_module_instance));
+            if (cur_instance != NULL) {
+              cur_instance->cls = NULL;
+              cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+              cur_instance->module = module;
+              cur_instance->guasmi_id = json_integer_value(json_object_get(j_instance, "guasmi_id"));
+              cur_instance->guasmi_expiration = json_integer_value(json_object_get(j_instance, "guasmi_expiration"));
+              cur_instance->guasmi_max_use = json_integer_value(json_object_get(j_instance, "guasmi_max_use"));
+              cur_instance->guasmi_allow_user_register = json_integer_value(json_object_get(j_instance, "guasmi_allow_user_register"));
+              if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
+                if (json_integer_value(json_object_get(j_instance, "enabled"))) {
+                  j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+                  if (j_parameters != NULL) {
+                    j_init = module->user_auth_scheme_module_init(config->config_m, j_parameters, cur_instance->name, &cur_instance->cls);
+                    if (check_result_value(j_init, G_OK)) {
+                      glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
+                      glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
+                      cur_instance->enabled = 1;
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                      if (check_result_value(j_init, G_ERROR_PARAM)) {
+                        message = json_dumps(json_object_get(j_init, "error"), JSON_INDENT(2));
+                        y_log_message(Y_LOG_LEVEL_DEBUG, message);
+                        o_free(message);
+                      }
+                      cur_instance->enabled = 0;
                     }
-                    cur_instance->enabled = 0;
+                    json_decref(j_init);
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error parsing parameters for module %s: '%s'", cur_instance->name, json_string_value(json_object_get(j_instance, "parameters")));
+                    o_free(cur_instance->name);
                   }
-                  json_decref(j_init);
+                  json_decref(j_parameters);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error parsing parameters for module %s: '%s'", cur_instance->name, json_string_value(json_object_get(j_instance, "parameters")));
-                  o_free(cur_instance->name);
+                  cur_instance->enabled = 0;
                 }
-                json_decref(j_parameters);
               } else {
-                cur_instance->enabled = 0;
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error reallocating resources for user_auth_scheme_module_instance_list");
+                o_free(cur_instance->name);
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error reallocating resources for user_auth_scheme_module_instance_list");
-              o_free(cur_instance->name);
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error allocating resources for cur_instance");
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error allocating resources for cur_instance");
+            y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
           }
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
         }
+        json_decref(j_result);
+        pthread_mutex_unlock(&config->module_lock);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error pthread_mutex_lock");
+        ret = G_ERROR;
       }
-      json_decref(j_result);
-      ret = G_OK;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error executing j_query");
       ret = G_ERROR;
@@ -2629,42 +2713,52 @@ struct _user_auth_scheme_module * get_user_auth_scheme_module_lib(struct config_
 void close_user_auth_scheme_module_instance_list(struct config_elements * config) {
   size_t i;
 
-  for (i=0; i<pointer_list_size(config->user_auth_scheme_module_instance_list); i++) {
-    struct _user_auth_scheme_module_instance * instance = (struct _user_auth_scheme_module_instance *)pointer_list_get_at(config->user_auth_scheme_module_instance_list, i);
-    if (instance != NULL) {
-      if (instance->enabled && instance->module->user_auth_scheme_module_close(config->config_m, instance->cls) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_auth_scheme_module_instance_list - Error user_auth_scheme_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+  if (!pthread_mutex_lock(&config->module_lock)) {
+    for (i=0; i<pointer_list_size(config->user_auth_scheme_module_instance_list); i++) {
+      struct _user_auth_scheme_module_instance * instance = (struct _user_auth_scheme_module_instance *)pointer_list_get_at(config->user_auth_scheme_module_instance_list, i);
+      if (instance != NULL) {
+        if (instance->enabled && instance->module->user_auth_scheme_module_close(config->config_m, instance->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_auth_scheme_module_instance_list - Error user_auth_scheme_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        }
+        o_free(instance->name);
+        o_free(instance);
       }
-      o_free(instance->name);
-      o_free(instance);
     }
+    pointer_list_clean(config->user_auth_scheme_module_instance_list);
+    o_free(config->user_auth_scheme_module_instance_list);
+    pthread_mutex_unlock(&config->module_lock);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "close_user_auth_scheme_module_instance_list - Error pthread_mutex_lock");
   }
-  pointer_list_clean(config->user_auth_scheme_module_instance_list);
-  o_free(config->user_auth_scheme_module_instance_list);
 }
 
 void close_user_auth_scheme_module_list(struct config_elements * config) {
   size_t i;
 
-  for (i=0; i<pointer_list_size(config->user_auth_scheme_module_list); i++) {
-    struct _user_auth_scheme_module * module = (struct _user_auth_scheme_module *)pointer_list_get_at(config->user_auth_scheme_module_list, i);
-    if (module != NULL) {
-      if (module->user_auth_scheme_module_unload(config->config_m) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_auth_scheme_module_list - Error user_auth_scheme_module_unload for module '%s'", module->name);
+  if (!pthread_mutex_lock(&config->module_lock)) {
+    for (i=0; i<pointer_list_size(config->user_auth_scheme_module_list); i++) {
+      struct _user_auth_scheme_module * module = (struct _user_auth_scheme_module *)pointer_list_get_at(config->user_auth_scheme_module_list, i);
+      if (module != NULL) {
+        if (module->user_auth_scheme_module_unload(config->config_m) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_auth_scheme_module_list - Error user_auth_scheme_module_unload for module '%s'", module->name);
+        }
+  #ifndef DEBUG
+        if (dlclose(module->file_handle)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_auth_scheme_module_list - Error dlclose for module '%s'", module->name);
+        }
+  #endif
+        o_free(module->name);
+        o_free(module->display_name);
+        o_free(module->description);
+        o_free(module);
       }
-#ifndef DEBUG
-      if (dlclose(module->file_handle)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_user_auth_scheme_module_list - Error dlclose for module '%s'", module->name);
-      }
-#endif
-      o_free(module->name);
-      o_free(module->display_name);
-      o_free(module->description);
-      o_free(module);
     }
+    pointer_list_clean(config->user_auth_scheme_module_list);
+    o_free(config->user_auth_scheme_module_list);
+    pthread_mutex_unlock(&config->module_lock);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "close_user_auth_scheme_module_list - Error pthread_mutex_lock");
   }
-  pointer_list_clean(config->user_auth_scheme_module_list);
-  o_free(config->user_auth_scheme_module_list);
 }
 
 static int load_client_module_file(struct config_elements * config, const char * file_path) {
@@ -2713,9 +2807,21 @@ static int load_client_module_file(struct config_elements * config, const char *
           cur_client_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
           cur_client_module->api_version = json_real_value(json_object_get(j_parameters, "api_version"));
           if (o_strlen(cur_client_module->name) && get_client_module_lib(config, cur_client_module->name) == NULL) {
-            if (pointer_list_append(config->client_module_list, cur_client_module)) {
-              y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_client_module->name);
-              ret = G_OK;
+            if (!pthread_mutex_lock(&config->module_lock)) {
+              if (pointer_list_append(config->client_module_list, cur_client_module)) {
+                y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_client_module->name);
+                ret = G_OK;
+              } else {
+                cur_client_module->client_module_unload(config->config_m);
+                dlclose(file_handle);
+                o_free(cur_client_module->name);
+                o_free(cur_client_module->display_name);
+                o_free(cur_client_module->description);
+                o_free(cur_client_module);
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_file - Error reallocating resources for client_module_list");
+                ret = G_ERROR_MEMORY;
+              }
+              pthread_mutex_unlock(&config->module_lock);
             } else {
               cur_client_module->client_module_unload(config->config_m);
               dlclose(file_handle);
@@ -2723,7 +2829,7 @@ static int load_client_module_file(struct config_elements * config, const char *
               o_free(cur_client_module->display_name);
               o_free(cur_client_module->description);
               o_free(cur_client_module);
-              y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_file - Error reallocating resources for client_module_list");
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_file - Error pthread_mutex_lock");
               ret = G_ERROR_MEMORY;
             }
           } else {
@@ -2845,56 +2951,62 @@ int load_client_module_instance_list(struct config_elements * config) {
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {
-      json_array_foreach(j_result, index, j_instance) {
-        module = NULL;
-        for (i=0; i<pointer_list_size(config->client_module_list); i++) {
-          module = pointer_list_get_at(config->client_module_list, i);
-          if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
-            break;
-          } else {
-            module = NULL;
+      if (!pthread_mutex_lock(&config->module_lock)) {
+        ret = G_OK;
+        json_array_foreach(j_result, index, j_instance) {
+          module = NULL;
+          for (i=0; i<pointer_list_size(config->client_module_list); i++) {
+            module = pointer_list_get_at(config->client_module_list, i);
+            if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
+              break;
+            } else {
+              module = NULL;
+            }
           }
-        }
-        if (module != NULL) {
-          cur_instance = o_malloc(sizeof(struct _client_module_instance));
-          if (cur_instance != NULL) {
-            cur_instance->cls = NULL;
-            cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
-            cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
-            cur_instance->module = module;
-            if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
-              if (json_integer_value(json_object_get(j_instance, "enabled"))) {
-                j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
-                if (j_parameters != NULL) {
-                  j_init = module->client_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls);
-                  if (check_result_value(j_init, G_OK)) {
-                    cur_instance->enabled = 1;
+          if (module != NULL) {
+            cur_instance = o_malloc(sizeof(struct _client_module_instance));
+            if (cur_instance != NULL) {
+              cur_instance->cls = NULL;
+              cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+              cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
+              cur_instance->module = module;
+              if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
+                if (json_integer_value(json_object_get(j_instance, "enabled"))) {
+                  j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+                  if (j_parameters != NULL) {
+                    j_init = module->client_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls);
+                    if (check_result_value(j_init, G_OK)) {
+                      cur_instance->enabled = 1;
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                      cur_instance->enabled = 0;
+                    }
+                    json_decref(j_init);
                   } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                    y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error parsing module parameters %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                     cur_instance->enabled = 0;
                   }
-                  json_decref(j_init);
+                  json_decref(j_parameters);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error parsing module parameters %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                   cur_instance->enabled = 0;
                 }
-                json_decref(j_parameters);
               } else {
-                cur_instance->enabled = 0;
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error reallocating resources for client_module_instance_list");
+                o_free(cur_instance->name);
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error reallocating resources for client_module_instance_list");
-              o_free(cur_instance->name);
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error allocating resources for cur_instance");
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error allocating resources for cur_instance");
+            y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
           }
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
         }
+        json_decref(j_result);
+        pthread_mutex_unlock(&config->module_lock);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error pthread_mutex_lock");
+        ret = G_ERROR;
       }
-      json_decref(j_result);
-      ret = G_OK;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error executing j_query");
       ret = G_ERROR;
@@ -2935,47 +3047,57 @@ struct _client_module * get_client_module_lib(struct config_elements * config, c
 void close_client_module_instance_list(struct config_elements * config) {
   size_t i;
 
-  for (i=0; i<pointer_list_size(config->client_module_instance_list); i++) {
-    struct _client_module_instance * instance = (struct _client_module_instance *)pointer_list_get_at(config->client_module_instance_list, i);
-    if (instance != NULL) {
-      if (instance->enabled && instance->module->client_module_close(config->config_m, instance->cls) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_instance_list - Error client_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+  if (!pthread_mutex_lock(&config->module_lock)) {
+    for (i=0; i<pointer_list_size(config->client_module_instance_list); i++) {
+      struct _client_module_instance * instance = (struct _client_module_instance *)pointer_list_get_at(config->client_module_instance_list, i);
+      if (instance != NULL) {
+        if (instance->enabled && instance->module->client_module_close(config->config_m, instance->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_instance_list - Error client_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        }
+        o_free(instance->name);
+        o_free(instance);
       }
-      o_free(instance->name);
-      o_free(instance);
     }
+    pointer_list_clean(config->client_module_instance_list);
+    o_free(config->client_module_instance_list);
+    pthread_mutex_unlock(&config->module_lock);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_instance_list - Error pthread_mutex_lock");
   }
-  pointer_list_clean(config->client_module_instance_list);
-  o_free(config->client_module_instance_list);
 }
 
 void close_client_module_list(struct config_elements * config) {
   size_t i;
 
-  for (i=0; i<pointer_list_size(config->client_module_list); i++) {
-    struct _client_module * module = (struct _client_module *)pointer_list_get_at(config->client_module_list, i);
-    if (module != NULL) {
-      if (module->client_module_unload(config->config_m) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_list - Error client_module_unload for module '%s'", module->name);
+  if (!pthread_mutex_lock(&config->module_lock)) {
+    for (i=0; i<pointer_list_size(config->client_module_list); i++) {
+      struct _client_module * module = (struct _client_module *)pointer_list_get_at(config->client_module_list, i);
+      if (module != NULL) {
+        if (module->client_module_unload(config->config_m) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_list - Error client_module_unload for module '%s'", module->name);
+        }
+  /*
+  * dlclose() makes valgrind not useful when it comes to libraries
+  * they say it's not relevant to use it anyway
+  * I'll let it here until I'm sure
+  */
+  #ifndef DEBUG
+        if (dlclose(module->file_handle)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_list - Error dlclose for module '%s'", module->name);
+        }
+  #endif
+        o_free(module->name);
+        o_free(module->display_name);
+        o_free(module->description);
+        o_free(module);
       }
-/*
-* dlclose() makes valgrind not useful when it comes to libraries
-* they say it's not relevant to use it anyway
-* I'll let it here until I'm sure
-*/
-#ifndef DEBUG
-      if (dlclose(module->file_handle)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_list - Error dlclose for module '%s'", module->name);
-      }
-#endif
-      o_free(module->name);
-      o_free(module->display_name);
-      o_free(module->description);
-      o_free(module);
     }
+    pointer_list_clean(config->client_module_list);
+    o_free(config->client_module_list);
+    pthread_mutex_unlock(&config->module_lock);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_list - Error close_client_module_list");
   }
-  pointer_list_clean(config->client_module_list);
-  o_free(config->client_module_list);
 }
 
 static int load_plugin_module_file(struct config_elements * config, const char * file_path) {
@@ -3008,9 +3130,21 @@ static int load_plugin_module_file(struct config_elements * config, const char *
           cur_plugin_module->description = o_strdup(json_string_value(json_object_get(j_result, "description")));
           cur_plugin_module->api_version = json_real_value(json_object_get(j_result, "api_version"));
           if (o_strlen(cur_plugin_module->name) && get_plugin_module_lib(config, cur_plugin_module->name) == NULL) {
-            if (pointer_list_append(config->plugin_module_list, cur_plugin_module)) {
-              y_log_message(Y_LOG_LEVEL_INFO, "Loading plugin module %s - %s", file_path, cur_plugin_module->name);
-              ret = G_OK;
+            if (!pthread_mutex_lock(&config->module_lock)) {
+              if (pointer_list_append(config->plugin_module_list, cur_plugin_module)) {
+                y_log_message(Y_LOG_LEVEL_INFO, "Loading plugin module %s - %s", file_path, cur_plugin_module->name);
+                ret = G_OK;
+              } else {
+                cur_plugin_module->plugin_module_unload(config->config_p);
+                dlclose(file_handle);
+                o_free(cur_plugin_module->name);
+                o_free(cur_plugin_module->display_name);
+                o_free(cur_plugin_module->description);
+                o_free(cur_plugin_module);
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_file - Error reallocating resources for client_module_list");
+                ret = G_ERROR_MEMORY;
+              }
+              pthread_mutex_unlock(&config->module_lock);
             } else {
               cur_plugin_module->plugin_module_unload(config->config_p);
               dlclose(file_handle);
@@ -3018,7 +3152,7 @@ static int load_plugin_module_file(struct config_elements * config, const char *
               o_free(cur_plugin_module->display_name);
               o_free(cur_plugin_module->description);
               o_free(cur_plugin_module);
-              y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_file - Error reallocating resources for client_module_list");
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_file - Error pthread_mutex_lock");
               ret = G_ERROR_MEMORY;
             }
           } else {
@@ -3132,60 +3266,66 @@ int load_plugin_module_instance_list(struct config_elements * config) {
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {
-      json_array_foreach(j_result, index, j_instance) {
-        module = NULL;
-        for (i=0; i<pointer_list_size(config->plugin_module_list); i++) {
-          module = pointer_list_get_at(config->plugin_module_list, i);
-          if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
-            break;
-          } else {
-            module = NULL;
+      if (!pthread_mutex_lock(&config->module_lock)) {
+        ret = G_OK;
+        json_array_foreach(j_result, index, j_instance) {
+          module = NULL;
+          for (i=0; i<pointer_list_size(config->plugin_module_list); i++) {
+            module = pointer_list_get_at(config->plugin_module_list, i);
+            if (0 == o_strcmp(module->name, json_string_value(json_object_get(j_instance, "module")))) {
+              break;
+            } else {
+              module = NULL;
+            }
           }
-        }
-        if (module != NULL) {
-          cur_instance = o_malloc(sizeof(struct _plugin_module_instance));
-          if (cur_instance != NULL) {
-            cur_instance->cls = NULL;
-            cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
-            cur_instance->module = module;
-            if (pointer_list_append(config->plugin_module_instance_list, cur_instance)) {
-              if (json_integer_value(json_object_get(j_instance, "enabled"))) {
-                j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
-                if (j_parameters != NULL) {
-                  j_init = module->plugin_module_init(config->config_p, cur_instance->name, j_parameters, &cur_instance->cls);
-                  if (check_result_value(j_init, G_OK)) {
-                    cur_instance->enabled = 1;
-                  } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
-                    if (check_result_value(j_init, G_ERROR_PARAM)) {
-                      message = json_dumps(json_object_get(j_init, "error"), JSON_INDENT(2));
-                      y_log_message(Y_LOG_LEVEL_DEBUG, message);
-                      o_free(message);
+          if (module != NULL) {
+            cur_instance = o_malloc(sizeof(struct _plugin_module_instance));
+            if (cur_instance != NULL) {
+              cur_instance->cls = NULL;
+              cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
+              cur_instance->module = module;
+              if (pointer_list_append(config->plugin_module_instance_list, cur_instance)) {
+                if (json_integer_value(json_object_get(j_instance, "enabled"))) {
+                  j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+                  if (j_parameters != NULL) {
+                    j_init = module->plugin_module_init(config->config_p, cur_instance->name, j_parameters, &cur_instance->cls);
+                    if (check_result_value(j_init, G_OK)) {
+                      cur_instance->enabled = 1;
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                      if (check_result_value(j_init, G_ERROR_PARAM)) {
+                        message = json_dumps(json_object_get(j_init, "error"), JSON_INDENT(2));
+                        y_log_message(Y_LOG_LEVEL_DEBUG, message);
+                        o_free(message);
+                      }
+                      cur_instance->enabled = 0;
                     }
+                    json_decref(j_init);
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error parsing parameters for module %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                     cur_instance->enabled = 0;
                   }
-                  json_decref(j_init);
+                  json_decref(j_parameters);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error parsing parameters for module %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                   cur_instance->enabled = 0;
                 }
-                json_decref(j_parameters);
               } else {
-                cur_instance->enabled = 0;
+                y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error reallocating resources for client_module_instance_list");
+                o_free(cur_instance->name);
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error reallocating resources for client_module_instance_list");
-              o_free(cur_instance->name);
+              y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error allocating resources for cur_instance");
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error allocating resources for cur_instance");
+            y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
           }
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error module %s not found", json_string_value(json_object_get(j_instance, "module")));
         }
+        json_decref(j_result);
+        pthread_mutex_unlock(&config->module_lock);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error pthread_mutex_lock");
+        ret = G_ERROR;
       }
-      json_decref(j_result);
-      ret = G_OK;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error executing j_query");
       ret = G_ERROR;
@@ -3226,40 +3366,50 @@ struct _plugin_module * get_plugin_module_lib(struct config_elements * config, c
 void close_plugin_module_instance_list(struct config_elements * config) {
   size_t i;
 
-  for (i=0; i<pointer_list_size(config->plugin_module_instance_list); i++) {
-    struct _plugin_module_instance * instance = (struct _plugin_module_instance *)pointer_list_get_at(config->plugin_module_instance_list, i);
-    if (instance != NULL) {
-      if (instance->enabled && instance->module->plugin_module_close(config->config_p, instance->name, instance->cls) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_plugin_module_instance_list - Error plugin_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+  if (!pthread_mutex_lock(&config->module_lock)) {
+    for (i=0; i<pointer_list_size(config->plugin_module_instance_list); i++) {
+      struct _plugin_module_instance * instance = (struct _plugin_module_instance *)pointer_list_get_at(config->plugin_module_instance_list, i);
+      if (instance != NULL) {
+        if (instance->enabled && instance->module->plugin_module_close(config->config_p, instance->name, instance->cls) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_plugin_module_instance_list - Error plugin_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        }
+        o_free(instance->name);
+        o_free(instance);
       }
-      o_free(instance->name);
-      o_free(instance);
     }
+    pointer_list_clean(config->plugin_module_instance_list);
+    o_free(config->plugin_module_instance_list);
+    pthread_mutex_unlock(&config->module_lock);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "close_plugin_module_instance_list - Error pthread_mutex_lock");
   }
-  pointer_list_clean(config->plugin_module_instance_list);
-  o_free(config->plugin_module_instance_list);
 }
 
 void close_plugin_module_list(struct config_elements * config) {
   size_t i;
 
-  for (i=0; i<pointer_list_size(config->plugin_module_list); i++) {
-    struct _plugin_module * module = (struct _plugin_module *)pointer_list_get_at(config->plugin_module_list, i);
-    if (module != NULL) {
-      if (module->plugin_module_unload(config->config_p) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_plugin_module_list - Error plugin_module_unload for module '%s'", module->name);
+  if (!pthread_mutex_lock(&config->module_lock)) {
+    for (i=0; i<pointer_list_size(config->plugin_module_list); i++) {
+      struct _plugin_module * module = (struct _plugin_module *)pointer_list_get_at(config->plugin_module_list, i);
+      if (module != NULL) {
+        if (module->plugin_module_unload(config->config_p) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_plugin_module_list - Error plugin_module_unload for module '%s'", module->name);
+        }
+  #ifndef DEBUG
+        if (dlclose(module->file_handle)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_plugin_module_list - Error dlclose for module '%s'", module->name);
+        }
+  #endif
+        o_free(module->name);
+        o_free(module->display_name);
+        o_free(module->description);
+        o_free(module);
       }
-#ifndef DEBUG
-      if (dlclose(module->file_handle)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "close_plugin_module_list - Error dlclose for module '%s'", module->name);
-      }
-#endif
-      o_free(module->name);
-      o_free(module->display_name);
-      o_free(module->description);
-      o_free(module);
     }
+    pointer_list_clean(config->plugin_module_list);
+    o_free(config->plugin_module_list);
+    pthread_mutex_unlock(&config->module_lock);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "close_plugin_module_list - Error pthread_mutex_lock");
   }
-  pointer_list_clean(config->plugin_module_list);
-  o_free(config->plugin_module_list);
 }

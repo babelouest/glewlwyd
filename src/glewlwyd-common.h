@@ -361,6 +361,7 @@ struct config_elements {
   digest_algorithm                               hash_algorithm;
   char *                                         login_url;
   unsigned int                                   delete_profile;
+  pthread_mutex_t                                module_lock;
   char *                                         user_module_path;
   struct _pointer_list *                         user_module_list;
   struct _pointer_list *                         user_module_instance_list;
