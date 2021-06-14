@@ -435,7 +435,7 @@ class SchemeWebauthn extends Component {
             </td>
             <td>
               <form className="needs-validation" noValidate onSubmit={(e) => this.saveName(e, index)}>
-                <input type="text" className="form-control" value={this.state.editValue} onChange={(e) => this.changeName(e, index)} placeholder={i18next.t("profile.webauthn-edit-placeholder")} />
+                <input type="text" className="form-control" value={this.state.editValue} onChange={(e) => this.changeName(e, index)} placeholder={i18next.t("profile.scheme-webauthn-edit-placeholder")} />
               </form>
             </td>
             <td className="d-none d-md-block">
