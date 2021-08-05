@@ -1343,7 +1343,7 @@ START_TEST(test_oidc_rar_at_unsigned_error)
   r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
   r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
   ck_assert_int_eq(r_jwt_set_claim_json_t_value(jwt_request, "authorization_details", j_rar), RHN_OK);
-  ck_assert_ptr_ne(NULL, request = r_jwt_serialize_signed(jwt_request, NULL, 0));
+  ck_assert_ptr_ne(NULL, request = r_jwt_serialize_signed_unsecure(jwt_request, NULL, 0));
   ck_assert_ptr_ne(request, NULL);
   url = msprintf(SERVER_URI"/"PLUGIN_NAME"/auth?g_continue&request=%s", request);
   

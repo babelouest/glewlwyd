@@ -340,7 +340,7 @@ START_TEST(test_oidc_jwt_encrypted_token_id_token_valid)
   
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
-  user_req.http_url = msprintf("%s/%s/auth?response_type=id_token token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
+  user_req.http_url = msprintf(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=id_token token&g_continue&client_id=" CLIENT_ID "&redirect_uri=" CLIENT_REDIRECT "&state=xyzabcd&nonce=nonce1234&scope=" SCOPE_LIST);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -1155,7 +1155,7 @@ START_TEST(test_oidc_jwt_encrypted_id_token_valid_jwks)
   }
   ck_assert_int_eq(r_jwt_init(&jwt_idt), RHN_OK);
   ck_assert_int_eq(r_jwks_init(&jwks), RHN_OK);
-  ck_assert_int_eq(r_jwks_import_from_str(jwks, jwks_privkey), RHN_OK);
+  ck_assert_int_eq(r_jwks_import_from_json_str(jwks, jwks_privkey), RHN_OK);
   
   ck_assert_int_eq(r_jwt_parse(jwt_idt, id_token, 0), RHN_OK);
   ck_assert_int_eq(R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT, r_jwt_get_type(jwt_idt));

@@ -385,7 +385,7 @@ START_TEST(test_oidc_all_algs_test_client_ok)
   ck_assert_ptr_ne(j_jwks = ulfius_get_json_body_response(&resp, NULL), NULL);
   ck_assert_int_eq(r_jwks_init(&jwks_verify), RHN_OK);
   ck_assert_int_eq(r_jwks_import_from_json_t(jwks_verify, j_jwks), RHN_OK);
-  ck_assert_int_eq(r_jwks_import_from_str(jwks_verify, hmac_keys_list), RHN_OK);
+  ck_assert_int_eq(r_jwks_import_from_json_str(jwks_verify, hmac_keys_list), RHN_OK);
   json_decref(j_jwks);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
