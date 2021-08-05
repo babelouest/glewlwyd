@@ -2,8 +2,12 @@
 
 ## 2.6.0
 
+The `"Green Zone Release"`
+
 - Add option to forbid a scheme to be registered in the profile and/or the reset credentials pages
 - Add prometheus metrics endpoint
+- Fix webauthn bug to support Feitian keys
+- Improve security when updating modules
 
 ## 2.5.3
 
