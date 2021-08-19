@@ -519,7 +519,7 @@ Optional, use this address to bind incoming connections, can be use to restrict 
 - Config file variable: `external_url`
 - Environment variable: `GLWD_EXTERNAL_URL`
 
-Mandatory, exact value of the external URL where this instance will be accessible to users, ex `https://glewlwyd.tld`
+Mandatory, exact value of the external URL, including protocol, where this instance will be accessible, ex `https://glewlwyd.tld`
 
 ### API Prefix
 
