@@ -175,7 +175,6 @@ class App extends Component {
         });
       } else if (this.state.config.params.resetCredentials) {
         if (this.state.config.register) {
-          console.log("plop");
           if (this.state.config.params.token) {
             apiManager.glewlwydRequest("/" + this.state.config.params.resetCredentials + "/reset-credentials-email/" + encodeURI(this.state.config.params.token), "PUT")
             .then(() => {
@@ -582,7 +581,7 @@ class App extends Component {
           <Edit title={this.state.editModal.title}
                 message={this.state.editModal.message}
                 value={this.state.editModal.value}
-                placeHolder={this.state.editModal.placeHolder}
+                placeholder={this.state.editModal.placeHolder}
                 callback={this.state.editModal.callback} />
         </div>
       );
