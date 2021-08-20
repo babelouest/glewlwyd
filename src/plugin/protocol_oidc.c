@@ -3494,24 +3494,27 @@ static int validate_code_challenge(json_t * j_result_code, const char * code_ver
             if (0 == o_strcmp(json_string_value(json_object_get(j_result_code, "code_challenge"))+o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX), (const char *)code_verifier_hash_b64)) {
               ret = G_OK;
             } else {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_code_challenge - Invalid code_challenge value");
               ret = G_ERROR_UNAUTHORIZED;
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "validate_code_challenge - Error o_base64url_encode");
+            y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_code_challenge - Error o_base64url_encode");
             ret = G_ERROR;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "validate_code_challenge - Error gnutls_fingerprint");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_code_challenge - Error gnutls_fingerprint");
           ret = G_ERROR;
         }
       } else {
         if (0 == o_strcmp(json_string_value(json_object_get(j_result_code, "code_challenge")), code_verifier)) {
           ret = G_OK;
         } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_code_challenge - Invalid code_challenge value");
           ret = G_ERROR_PARAM;
         }
       }
     } else {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_code_challenge - Invalid code_challenge character set");
       ret = G_ERROR_PARAM;
     }
   } else {
@@ -3530,9 +3533,11 @@ static int is_code_challenge_valid(struct _oidc_config * config, const char * co
             o_strcpy(code_challenge_stored, code_challenge);
             ret = G_OK;
           } else {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "oidc is_code_challenge_valid - pkce has invalid characters");
             ret = G_ERROR_PARAM;
           }
         } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc is_code_challenge_valid - pkce plain not allowed");
           ret = G_ERROR_PARAM;
         }
       } else if (0 == o_strcmp("S256", code_challenge_method)) {
@@ -3541,12 +3546,15 @@ static int is_code_challenge_valid(struct _oidc_config * config, const char * co
           o_strcpy(code_challenge_stored + o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX), code_challenge);
           ret = G_OK;
         } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc is_code_challenge_valid - pkce code challenge has invalid length");
           ret = G_ERROR_PARAM;
         }
       } else {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc is_code_challenge_valid - pkce invalid method");
         ret = G_ERROR_PARAM;
       }
     } else {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc is_code_challenge_valid - pkce not allowed");
       ret = G_ERROR_PARAM;
     }
   } else {
