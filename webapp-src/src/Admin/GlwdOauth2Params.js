@@ -475,7 +475,15 @@ class GlwdOauth2Params extends Component {
     });
     this.state.mod.parameters["introspection-revocation-auth-scope"].forEach((scope, index) => {
       if (this.state.mod.parameters["introspection-revocation-allowed"]) {
-        defaultScopeList.push(<a className="btn-icon-right" href="#" onClick={(e) => this.deleteScope(e, index)} key={index} ><span className="badge badge-primary">{scope}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>);
+        defaultScopeList.push(
+          <a className="btn-icon-right" href="#" onClick={(e) => this.deleteScope(e, index)} key={index} >
+            <span className="badge badge-primary">{scope}
+              <span className="badge badge-light btn-icon-right">
+                <i className="fas fa-times"></i>
+              </span>
+            </span>
+          </a>
+        );
       } else {
         defaultScopeList.push(<span key={index} className="badge badge-primary btn-icon-right">{scope}</span>);
       }
