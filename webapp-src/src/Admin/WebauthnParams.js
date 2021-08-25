@@ -50,6 +50,7 @@ class WebauthnParams extends Component {
         "android-key": false,
         "android-safetynet": true,
         "fido-u2f": true,
+        "apple": true,
         "none": false
       };
     }
@@ -60,6 +61,14 @@ class WebauthnParams extends Component {
     
     if (props.mod.parameters["root-ca-list"] === undefined) {
       props.mod.parameters["root-ca-list"] = [];
+    }
+    
+    if (props.mod.parameters["google-root-ca-r2"] === undefined) {
+      props.mod.parameters["google-root-ca-r2"] = "";
+    }
+    
+    if (props.mod.parameters["apple-root-ca"] === undefined) {
+      props.mod.parameters["apple-root-ca"] = "";
     }
     
     this.state = {
@@ -292,6 +301,12 @@ class WebauthnParams extends Component {
               </label>
             </li>
             <li>
+              <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-fmt-apple" checked={this.state.mod.parameters.fmt["apple"]} onChange={(e) => this.toggleFmt(e, "apple")}/>
+              <label className="form-check-label" htmlFor="mod-webauthn-fmt-apple">
+                {i18next.t("admin.mod-webauthn-fmt-apple-label")}
+              </label>
+            </li>
+            <li>
               <input className="form-check-input" type="checkbox" value="" id="mod-webauthn-fmt-none" checked={this.state.mod.parameters.fmt["none"]} onChange={(e) => this.toggleFmt(e, "none")}/>
               <label className="form-check-label" htmlFor="mod-webauthn-fmt-none">
                 {i18next.t("admin.mod-webauthn-fmt-none-label")}
@@ -399,6 +414,12 @@ class WebauthnParams extends Component {
           <label htmlFor="mod-google-root-ca-r2">{i18next.t("admin.mod-webauthn-google-root-ca-r2")}</label>
           <a href="https://pki.goog/" className="badge badge-primary" target="_blank">{i18next.t("admin.mod-webauthn-google-root-ca-r2-download-link")}<i className="fas fa-external-link-alt btn-icon-right"></i></a>
           <input type="text" className="form-control" id="mod-google-root-ca-r2" onChange={(e) => this.changeParam(e, "google-root-ca-r2")} value={this.state.mod.parameters["google-root-ca-r2"]} placeholder={i18next.t("admin.mod-webauthn-google-root-ca-r2-ph")} />
+        </div>
+        <hr/>
+        <div className="form-group">
+          <label htmlFor="mod-webauthn-apple-root-ca">{i18next.t("admin.mod-webauthn-apple-root-ca")}</label>
+          <a href="https://www.apple.com/certificateauthority/private/" className="badge badge-primary" target="_blank">{i18next.t("admin.mod-webauthn-apple-root-ca-download-link")}<i className="fas fa-external-link-alt btn-icon-right"></i></a>
+          <input type="text" className="form-control" id="mod-webauthn-apple-root-ca" onChange={(e) => this.changeParam(e, "apple-root-ca")} value={this.state.mod.parameters["apple-root-ca"]} placeholder={i18next.t("admin.mod-webauthn-apple-root-ca-ph")} />
         </div>
       </div>
     );
