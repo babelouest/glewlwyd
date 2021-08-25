@@ -747,6 +747,7 @@
     "mod-webauthn-fmt-android-key-label": "Android Key",
     "mod-webauthn-fmt-android-safetynet-label": "Android Safetynet",
     "mod-webauthn-fmt-fido-u2f-label": "FIDO U2F",
+    "mod-webauthn-fmt-apple-label": "Apple",
     "mod-webauthn-fmt-none-label": "None",
     "mod-webauthn-unsupported": "Unsupported",
     "mod-webauthn-rp-origin": "Relying party",
