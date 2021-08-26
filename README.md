@@ -17,7 +17,7 @@
 ## User authentication via multiple factors:
 - [Password](https://xkcd.com/936/)
 - [One-time password (TOTP/HOTP)](docs/OTP.md)
-- [WebAuthn (Yubikey, Android devices)](docs/WEBAUTHN.md)
+- [WebAuthn (Yubikey, Android and Apple fingerprint or face id, etc.)](docs/WEBAUTHN.md)
 - [One-time password sent via e-mail](docs/EMAIL.md)
 - [TLS Certificate](docs/CERTIFICATE.md)
 - [External OAuth2/OIDC providers](docs/OAUTH2.md)

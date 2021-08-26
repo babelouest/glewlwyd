@@ -163,7 +163,7 @@ Read the full [documentation](EMAIL.md).
 
 #### WebAuthn scheme
 
-The WebAuthn Schema implements authentication based on the [WebAuthn API](https://w3c.github.io/webauthn/). This allows users to authenticate to Glewlwyd using physical devices: Android phones, Yubikeys, etc.
+The WebAuthn Schema implements authentication based on the [WebAuthn API](https://w3c.github.io/webauthn/). This allows users to authenticate to Glewlwyd using physical devices: Android or Apple phones, Yubikeys, etc.
 
 Read the full [documentation](WEBAUTHN.md).
 

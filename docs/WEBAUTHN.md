@@ -4,13 +4,15 @@
 
 ![scheme-webauthn](screenshots/scheme-webauthn.png)
 
-The WebAuthn Schema implements authentication based on the [WebAuthn API](https://w3c.github.io/webauthn/). This allows users to authenticate to Glewlwyd using physical devices: Android phones, Yubikeys, etc.
+The WebAuthn Schema implements authentication based on the [WebAuthn API](https://w3c.github.io/webauthn/). This allows users to authenticate to Glewlwyd using physical devices: Android or Apple phones with fingerprint or face id, Yubikeys, etc.
 
-The user needs to register its device to Glewlwyd first, then when a webauthn authentication is required, the user plugs its device, end the authentication process is validated without the users need to enter a password.
+The user needs to register its device to Glewlwyd first, then when a webauthn authentication is required, the user plugs its device, and the authentication process is validated without the users need to enter a password.
 
 As for now, the following attestation formats are supported by Glewlwyd:
-- Android Safetynet Attestation (Android devices with fingerprint or secret code)
+- Android Safetynet Attestation (Android devices with fingerprint, face id or secret code, depending on the device)
+- Apple Attestation (Apple devices with fingerprint, face id, depending on the device)
 - FIDO U2F Attestation (ex: Yubikeys)
+- Packed
 
 ## Installation
 
