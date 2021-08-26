@@ -407,4 +407,97 @@ else
   RET=$STATUS
 fi
 
+# CA apple
+$CERTTOOL --generate-privkey --outfile $DEST/apple.key $ECDSA --sec-param High 2>>$DEST/certtool.log
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  printf "apple.key          \033[0;32mOK\033[0m\n"
+else
+  printf "apple.key          \033[0;31mError\033[0m\n"
+  RET=$STATUS
+fi
+$CERTTOOL --generate-self-signed --load-privkey $DEST/apple.key --outfile $DEST/apple.crt --template $DEST/template-ca-apple.cfg 2>>$DEST/certtool.log
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  printf "apple.crt          \033[0;32mOK\033[0m\n"
+else
+  printf "apple.crt          \033[0;31mError\033[0m\n"
+  RET=$STATUS
+fi
+
+# CA intermediate apple
+$CERTTOOL --generate-privkey --outfile $DEST/apple-int.key $ECDSA --sec-param High 2>>$DEST/certtool.log
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  printf "apple-int.key      \033[0;32mOK\033[0m\n"
+else
+  printf "apple-int.key      \033[0;31mError\033[0m\n"
+  RET=$STATUS
+fi
+$CERTTOOL --generate-certificate --load-privkey $DEST/apple-int.key --load-ca-certificate $DEST/apple.crt --load-ca-privkey $DEST/apple.key --outfile $DEST/apple-int.crt --template $DEST/template-int-apple.cfg 2>>$DEST/certtool.log
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  printf "apple-int.crt      \033[0;32mOK\033[0m\n"
+else
+  printf "apple-int.crt      \033[0;31mError\033[0m\n"
+  RET=$STATUS
+fi
+$CERTTOOL --certificate-info --infile $DEST/apple-int.crt --outder | base64 > $DEST/apple-int.crt.der 2>>$DEST/certtool.log
+
+# CA intermediate 2 apple
+$CERTTOOL --generate-privkey --outfile $DEST/apple-int2.key $ECDSA --sec-param High 2>>$DEST/certtool.log
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  printf "apple-int2.key     \033[0;32mOK\033[0m\n"
+else
+  printf "apple-int2.key     \033[0;31mError\033[0m\n"
+  RET=$STATUS
+fi
+$CERTTOOL --generate-certificate --load-privkey $DEST/apple-int2.key --load-ca-certificate $DEST/apple-int.crt --load-ca-privkey $DEST/apple-int.key --outfile $DEST/apple-int2.crt --template $DEST/template-int-apple.cfg 2>>$DEST/certtool.log
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  printf "apple-int2.crt     \033[0;32mOK\033[0m\n"
+else
+  printf "apple-int2.crt     \033[0;31mError\033[0m\n"
+  RET=$STATUS
+fi
+$CERTTOOL --certificate-info --infile $DEST/apple-int.crt --outder | base64 > $DEST/apple-int.crt.der 2>>$DEST/certtool.log
+
+# CA apple 2
+$CERTTOOL --generate-privkey --outfile $DEST/apple2.key $ECDSA --sec-param High 2>>$DEST/certtool.log
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  printf "apple2.key         \033[0;32mOK\033[0m\n"
+else
+  printf "apple2.key         \033[0;31mError\033[0m\n"
+  RET=$STATUS
+fi
+$CERTTOOL --generate-self-signed --load-privkey $DEST/apple2.key --outfile $DEST/apple2.crt --template $DEST/template-ca-apple.cfg 2>>$DEST/certtool.log
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  printf "apple2.crt         \033[0;32mOK\033[0m\n"
+else
+  printf "apple2.crt         \033[0;31mError\033[0m\n"
+  RET=$STATUS
+fi
+
+# CA intermediate apple 2
+$CERTTOOL --generate-privkey --outfile $DEST/apple2-int.key $ECDSA --sec-param High 2>>$DEST/certtool.log
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  printf "apple2-int.key     \033[0;32mOK\033[0m\n"
+else
+  printf "apple2-int.key     \033[0;31mError\033[0m\n"
+  RET=$STATUS
+fi
+$CERTTOOL --generate-certificate --load-privkey $DEST/apple2-int.key --load-ca-certificate $DEST/apple2.crt --load-ca-privkey $DEST/apple2.key --outfile $DEST/apple2-int.crt --template $DEST/template-int-apple.cfg 2>>$DEST/certtool.log
+STATUS=$?
+if [ $STATUS -eq 0 ]; then
+  printf "apple2-int.crt     \033[0;32mOK\033[0m\n"
+else
+  printf "apple2-int.crt     \033[0;31mError\033[0m\n"
+  RET=$STATUS
+fi
+$CERTTOOL --certificate-info --infile $DEST/apple-int.crt --outder | base64 > $DEST/apple-int.crt.der 2>>$DEST/certtool.log
+
 exit $RET
