@@ -1,10 +1,10 @@
--- ----------------------------------------------------- --
---                 SQlite3 Database                      --
--- Initialize Glewlwyd Database for the backend server   --
--- The administration client app                         --
--- Copyright 2020 Nicolas Mora <mail@babelouest.org>     --
--- License: MIT                                          --
--- ----------------------------------------------------- --
+-- ------------------------------------------------------ --
+--                 SQlite3 Database                       --
+-- Initialize Glewlwyd Database for the backend server    --
+-- The administration client app                          --
+-- Copyright 2020-2021 Nicolas Mora <mail@babelouest.org> --
+-- License: MIT                                           --
+-- ------------------------------------------------------ --
 
 DROP TABLE IF EXISTS g_api_key;
 DROP TABLE IF EXISTS g_client_user_scope;
