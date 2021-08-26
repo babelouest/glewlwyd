@@ -74,7 +74,7 @@ Value of the relying party that will be used and compared to during the registra
 
 Select the formats you want your WebAuthn scheme to support. You must select at least one format. Format TPM and Android Key are not supported yet.
 
-**Security warning**: To avoid man in the middle attacks, it's **recommended** to disable format `none`, because it's impossible to verify if a trusted device created the credentials without certificate validation.
+**Security warning**: To avoid man in the middle attacks, it's **highly recommended** to disable format `none`, because it's impossible to verify if a trusted device created the credentials without certificate validation.
 
 ### Signature algorithm
 
@@ -93,7 +93,18 @@ More information is available in this [android developer](https://developer.andr
 
 ### Server local path to the root certificate 'GlobalSign Root CA - R2'
 
-This is used during the registration of an android device using webauthn. The device certificate will be validated with the 'GlobalSign Root CA certificate - R2'.
-It is highly recommended to [download](https://pki.goog/) this certificate to the server hosting Glewlwyd in DER format and fill this option.
+This is used during the registration of an Android device using webauthn. The device certificate will be validated with the 'GlobalSign Root CA certificate - R2'.
+It is highly recommended to [save](https://pki.goog/) this certificate in the server hosting Glewlwyd and fill this option.
 
-The reason why this certificate isn't hard-coded in Glewlwyd source code or isn't shipped with Glewlwyd package is because Google won't allow to redistribute the certificate in terms compatible with [Glewlwyd's license](../LICENSE).
+The reason why this certificate isn't hard-coded in Glewlwyd source code or isn't shipped with Glewlwyd package is because Google won't allow to redistribute the certificate in terms compatible with [Glewlwyd's license](../LICENSE). Also, the certificate may change and it should be possible to use a new one if required.
+
+Please note that if this option is not set, no certificate chain verification will be done during the registration process, the other verification of the registration process will be executed though, but one can forge a fake android safetynet registration if the official Google certificate isn't used.
+
+### Server local path to the root certificate 'Apple WebAuthn Root CA'
+
+This is used during the registration of an Apple device using webauthn. The device certificate will be validated with the 'Apple WebAuthn Root CA'.
+It is highly recommended to [save](https://www.apple.com/certificateauthority/private/) this certificate in the server hosting Glewlwyd and fill this option.
+
+The reason why this certificate isn't hard-coded in Glewlwyd source code or isn't shipped with Glewlwyd package is because Apple won't allow to redistribute the certificate in terms compatible with [Glewlwyd's license](../LICENSE). Also, the certificate may change and it should be possible to use a new one if required.
+
+Please note that if this option is not set, no certificate chain verification will be done during the registration process, the other verification of the registration process will be executed though, but one can forge a fake apple registration if the official Apple certificate isn't used.
