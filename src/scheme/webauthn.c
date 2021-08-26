@@ -1185,13 +1185,13 @@ static int validate_packed_leaf_certificate(gnutls_x509_crt_t cert, unsigned cha
 static json_t * check_attestation_apple(json_t * j_params, cbor_item_t * auth_data, cbor_item_t * att_stmt, const unsigned char * client_data, gnutls_pubkey_t g_key) {
   json_t * j_error = json_array(), * j_return;
   cbor_item_t * key, * x5c_array = NULL, * cert_leaf = NULL;
-  size_t client_data_hash_len = 32, nonce_base_len = 0, expected_nonce_len = 32, cert_nonce_len = 32, cert_export_len = 128, cert_export_b64_len = 0;
+  size_t client_data_hash_len = 32, nonce_base_len = 0, expected_nonce_len = 32, cert_nonce_len = 64, cert_export_len = 128, cert_export_b64_len = 0;
   char * message;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
   gnutls_datum_t cert_dat;
   int ret;
-  unsigned char client_data_hash[32], * nonce_base = NULL, expected_nonce[32], cert_nonce[32], cert_export[128], cert_export_b64[256];
+  unsigned char client_data_hash[32], * nonce_base = NULL, expected_nonce[32], cert_nonce[64], cert_export[128], cert_export_b64[256];
   const unsigned char apple_aaguid[] = {0xf2, 0x4a, 0x8e, 0x70, 0xd0, 0xd3, 0xf8, 0x2c, 0x29, 0x37, 0x32, 0x52, 0x3c, 0xc4, 0xde, 0x5a};
   unsigned int bits = 0;
   gnutls_datum_t x, y, g_x, g_y;
@@ -1229,6 +1229,8 @@ static json_t * check_attestation_apple(json_t * j_params, cbor_item_t * auth_da
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_apple - Error o_malloc nonce_base");
         break;
       }
+      memcpy(nonce_base, cbor_bytestring_handle(auth_data), cbor_bytestring_length(auth_data));
+      memcpy(nonce_base+cbor_bytestring_length(auth_data), client_data_hash, client_data_hash_len);
 
       if (!generate_digest_raw(digest_SHA256, nonce_base, nonce_base_len, expected_nonce, &expected_nonce_len)) {
         json_array_append_new(j_error, json_string("Internal error"));
@@ -1255,7 +1257,7 @@ static json_t * check_attestation_apple(json_t * j_params, cbor_item_t * auth_da
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_apple - Error gnutls_x509_crt_import: %d", ret);
         break;
       }
-
+      
       if (gnutls_pubkey_init(&pubkey)) {
         json_array_append_new(j_error, json_string("check_attestation_apple - Error gnutls_pubkey_init"));
         break;
@@ -1298,17 +1300,21 @@ static json_t * check_attestation_apple(json_t * j_params, cbor_item_t * auth_da
       }
 
       if (gnutls_x509_crt_get_extension_by_oid(cert, G_APPLE_ANONYMOUS_ATTESTATION_OID, 0, cert_nonce, &cert_nonce_len, NULL) >= 0) {
-        if (cert_nonce_len != expected_nonce_len) {
+        if (cert_nonce_len != expected_nonce_len+6) {
           json_array_append_new(j_error, json_string("Error invalid x509 certificate"));
-          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_apple - Invalid aaguid_oid_len size %zu", cert_nonce_len);
+          y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_apple - Invalid cert_nonce_len %zu", cert_nonce_len);
           break;
         }
 
-        if (memcmp(expected_nonce, cert_nonce, cert_nonce_len)) {
+        if (memcmp(expected_nonce, cert_nonce+6, expected_nonce_len)) {
           json_array_append_new(j_error, json_string("Error invalid x509 certificate"));
           y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_apple - Invalid cert_nonce match");
           break;
         }
+      } else {
+        json_array_append_new(j_error, json_string("Error invalid x509 certificate"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_apple - Error getting AppleAnonymousAttestation OID 1.2.840.113635.100.8.2 extension");
+        break;
       }
 
       if (memcmp((cbor_bytestring_handle(auth_data)+ATTESTED_CRED_DATA_OFFSET), apple_aaguid, AAGUID_LEN)) {
@@ -1317,7 +1323,7 @@ static json_t * check_attestation_apple(json_t * j_params, cbor_item_t * auth_da
         break;
       }
 
-      if (json_object_get(j_params, "apple-root-ca-content") != NULL) {
+      if (json_object_get(j_params, "apple-root-ca-content") != json_null()) {
         if (validate_apple_certificate_chain(j_params, cert, x5c_array) != G_OK) {
           json_array_append_new(j_error, json_string("Invalid certificate chain"));
           break;
