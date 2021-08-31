@@ -17,6 +17,9 @@
 #define USERNAME "user1"
 #define PASSWORD "password"
 #define SCOPE_LIST "openid"
+#define SCOPE1_REQUIRED "scope1"
+#define SCOPE2_REQUIRED "scope2"
+#define SCOPE_NOT_REQUIRED "scope3"
 #define CLIENT "client1_id"
 #define REDIRECT_URI "..%2f..%2ftest-oidc.html?param=client1_cb1"
 #define REDIRECT_URI_DECODED "../../test-oidc.html?param=client1_cb1"
@@ -99,6 +102,65 @@ START_TEST(test_oidc_code_code_challenge_add_plugin_without_plain)
                                   "auth-type-refresh-enabled", json_true(),
                                   "pkce-allowed", json_true(),
                                   "pkce-method-plain-allowed", json_false());
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_oidc_code_code_challenge_add_plugin_required)
+{
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisosososososososo}}",
+                                "module", PLUGIN_MODULE,
+                                "name", PLUGIN_NAME,
+                                "display_name", PLUGIN_DISPLAY_NAME,
+                                "enabled", json_true(),
+                                "parameters",
+                                  "iss", PLUGIN_ISS,
+                                  "jwt-type", PLUGIN_JWT_TYPE,
+                                  "jwt-key-size", PLUGIN_JWT_KEY_SIZE,
+                                  "key", PLUGIN_KEY,
+                                  "code-duration", PLUGIN_CODE_DURATION,
+                                  "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
+                                  "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
+                                  "auth-type-client-enabled", json_true(),
+                                  "auth-type-code-enabled", json_true(),
+                                  "auth-type-implicit-enabled", json_true(),
+                                  "auth-type-password-enabled", json_true(),
+                                  "auth-type-refresh-enabled", json_true(),
+                                  "pkce-allowed", json_true(),
+                                  "pkce-method-plain-allowed", json_false(),
+                                  "pkce-required", json_true());
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_oidc_code_code_challenge_add_plugin_required_with_scopes)
+{
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisosososososososos[ss]}}",
+                                "module", PLUGIN_MODULE,
+                                "name", PLUGIN_NAME,
+                                "display_name", PLUGIN_DISPLAY_NAME,
+                                "enabled", json_true(),
+                                "parameters",
+                                  "iss", PLUGIN_ISS,
+                                  "jwt-type", PLUGIN_JWT_TYPE,
+                                  "jwt-key-size", PLUGIN_JWT_KEY_SIZE,
+                                  "key", PLUGIN_KEY,
+                                  "code-duration", PLUGIN_CODE_DURATION,
+                                  "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
+                                  "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
+                                  "auth-type-client-enabled", json_true(),
+                                  "auth-type-code-enabled", json_true(),
+                                  "auth-type-implicit-enabled", json_true(),
+                                  "auth-type-password-enabled", json_true(),
+                                  "auth-type-refresh-enabled", json_true(),
+                                  "pkce-allowed", json_true(),
+                                  "pkce-method-plain-allowed", json_false(),
+                                  "pkce-required", json_false(),
+                                  "pkce-scopes", SCOPE1_REQUIRED, SCOPE2_REQUIRED);
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -370,6 +432,36 @@ START_TEST(test_oidc_code_code_challenge_s256_verifier_ok)
 }
 END_TEST
 
+START_TEST(test_oidc_code_code_challenge_missing_ok)
+{
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
+}
+END_TEST
+
+START_TEST(test_oidc_code_code_challenge_missing_error)
+{
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
+}
+END_TEST
+
+START_TEST(test_oidc_code_code_challenge_scopes_required_ok)
+{
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE1_REQUIRED " " SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
+}
+END_TEST
+
+START_TEST(test_oidc_code_code_challenge_scopes_required_error)
+{
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE1_REQUIRED " " SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
+}
+END_TEST
+
+START_TEST(test_oidc_code_code_challenge_scopes_not_required_ok)
+{
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE_NOT_REQUIRED " " SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -378,6 +470,7 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd oidc code_challenge");
   tc_core = tcase_create("test_oidc_code_challenge");
   tcase_add_test(tc_core, test_oidc_code_code_challenge_add_plugin_with_plain);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_invalid_code_challenge_method);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_plain_invalid_length);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_plain_invalid_charset);
@@ -392,6 +485,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_verifier_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_remove_plugin);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_add_plugin_without_plain);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_plain_invalid_code_challenge_method);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_invalid_length);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_invalid_charset);
@@ -400,6 +494,15 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_method_set_plain_invalid);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_method_set_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_verifier_ok);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_remove_plugin);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_add_plugin_required);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_verifier_ok);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_error);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_remove_plugin);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_add_plugin_required_with_scopes);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_scopes_required_ok);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_scopes_required_error);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_scopes_not_required_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_remove_plugin);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
