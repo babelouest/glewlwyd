@@ -562,7 +562,7 @@ This section is used to configure [Proof Key for Code Exchange by OAuth Public C
 
 ### PKCE allowed
 
-Enable this feature if you want to support code challenge.
+Allow if you want to support code challenge.
 
 ### Method plain allowed
 
@@ -576,6 +576,14 @@ permitted to use "plain" only if they cannot support "S256" for some
 technical reason and know via out-of-band configuration that the
 server supports "plain".
 ```
+
+#### Scopes where PKCE is mandatory
+
+Select the scopes for which PKCE is mandatory when using `auth` or `par` requests.
+
+#### PKCE required
+
+Allow if you want to require all clients to use PKCE when using `auth` or `par` requests.
 
 ## Tokens Introspection (RFC 7662) and Revocation (RFC 7009)
 
