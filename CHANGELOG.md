@@ -8,6 +8,7 @@ The `"Green Zone Release"`
 - Add prometheus metrics endpoint
 - Fix webauthn bug to support Feitian keys
 - Improve security when updating modules
+- Allow to force PKCE all the time or when use specified scopes
 
 ## 2.5.3
 
