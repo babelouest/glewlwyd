@@ -734,9 +734,21 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("Property 'pkce-allowed' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
-    if (json_object_get(j_params, "pkce-method-plain-allowed") != NULL && json_object_get(j_params, "pkce-allowed") == json_true() && !json_is_boolean(json_object_get(j_params, "pkce-method-plain-allowed"))) {
-      json_array_append_new(j_error, json_string("Property 'pkce-method-plain-allowed' is optional and must be a boolean"));
-      ret = G_ERROR_PARAM;
+    if (json_object_get(j_params, "pkce-allowed") == json_true()) {
+      if (json_object_get(j_params, "pkce-method-plain-allowed") != NULL && !json_is_boolean(json_object_get(j_params, "pkce-method-plain-allowed"))) {
+        json_array_append_new(j_error, json_string("Property 'pkce-method-plain-allowed' is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "pkce-mandatory") != NULL && !json_is_boolean(json_object_get(j_params, "pkce-mandatory"))) {
+        json_array_append_new(j_error, json_string("Property 'pkce-mandatory' is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
+      json_array_foreach(json_object_get(j_params, "pkce-scopes"), index, j_element) {
+        if (!json_string_length(j_element)) {
+          json_array_append_new(j_error, json_string("Property 'pkce-scopes' is optional and must be a JSON array of strings"));
+          ret = G_ERROR_PARAM;
+        }
+      }
     }
     if (json_object_get(j_params, "introspection-revocation-allowed") != NULL && !json_is_boolean(json_object_get(j_params, "introspection-revocation-allowed"))) {
       json_array_append_new(j_error, json_string("Property 'introspection-revocation-allowed' is optional and must be a boolean"));
@@ -3523,8 +3535,12 @@ static int validate_code_challenge(json_t * j_result_code, const char * code_ver
   return ret;
 }
 
-static int is_code_challenge_valid(struct _oidc_config * config, const char * code_challenge, const char * code_challenge_method, char * code_challenge_stored) {
+static int is_code_challenge_valid(struct _oidc_config * config, const char * scope, const char * code_challenge, const char * code_challenge_method, char * code_challenge_stored) {
   int ret;
+  char ** scope_list = NULL;
+  size_t index = 0;
+  json_t * j_scope = NULL;
+  
   if (o_strlen(code_challenge)) {
     if (json_object_get(config->j_params, "pkce-allowed") == json_true()) {
       if (!o_strlen(code_challenge_method) || 0 == o_strcmp("plain", code_challenge_method)) {
@@ -3558,8 +3574,27 @@ static int is_code_challenge_valid(struct _oidc_config * config, const char * co
       ret = G_ERROR_PARAM;
     }
   } else {
-    // No pkce
-    ret = G_OK;
+    if (json_object_get(config->j_params, "pkce-required") == json_true()) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc is_code_challenge_valid - pkce required");
+      ret = G_ERROR_PARAM;
+    } else if (json_array_size(json_object_get(config->j_params, "pkce-scopes"))) {
+      if (split_string(scope, " ", &scope_list)) {
+        ret = G_OK;
+        json_array_foreach(json_object_get(config->j_params, "pkce-scopes"), index, j_scope) {
+          if (string_array_has_value((const char **)scope_list, json_string_value(j_scope))) {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "oidc is_code_challenge_valid - pkce required to use with scope %s", json_string_value(j_scope));
+            ret = G_ERROR_PARAM;
+          }
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc is_code_challenge_valid - Error split_string");
+        ret = G_ERROR;
+      }
+      free_string_array(scope_list);
+    } else {
+      // No pkce
+      ret = G_OK;
+    }
   }
   return ret;
 }
@@ -6732,6 +6767,9 @@ static int generate_discovery_content(struct _oidc_config * config) {
       if (json_object_get(config->j_params, "pkce-method-plain-allowed") == json_true()) {
         json_array_append_new(json_object_get(j_discovery, "code_challenge_methods_supported"), json_string("plain"));
       }
+      if (json_object_get(config->j_params, "pkce-required") == json_true()) {
+        json_object_set_new(j_discovery, "require_code_challenge", json_true());
+      }
     }
     if (json_object_get(config->j_params, "introspection-revocation-allowed") == json_true()) {
       json_object_set_new(j_discovery, "revocation_endpoint", json_pack("s+", plugin_url, "/revoke"));
@@ -7753,7 +7791,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
     }
 
     // Check code_challenge if necessary
-    if ((res = is_code_challenge_valid(config, code_challenge, code_challenge_method, code_challenge_stored)) == G_ERROR_PARAM) {
+    if ((res = is_code_challenge_valid(config, scope, code_challenge, code_challenge_method, code_challenge_stored)) == G_ERROR_PARAM) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - code challenge invalid");
       if (form_post) {
         build_form_post_error_response(map, response, "error", "invalid_request", NULL);
@@ -9278,7 +9316,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
     }
 
     // Check code_challenge if necessary
-    if ((res = is_code_challenge_valid(config, code_challenge, code_challenge_method, code_challenge_stored)) == G_ERROR_PARAM) {
+    if ((res = is_code_challenge_valid(config, scope, code_challenge, code_challenge_method, code_challenge_stored)) == G_ERROR_PARAM) {
       response->status = 403;
       break;
     } else if (res != G_OK) {
