@@ -662,6 +662,8 @@
     "mod-glwd-pkce-title": "PKCE - Code challenge (RFC 7636)",
     "mod-glwd-pkce-allowed": "PKCE autorisé",
     "mod-glwd-pkce-method-plain-allowed": "Méthode plain autorisée",
+    "mod-glwd-pkce-scopes": "Scopes pour lesquels PKCE est requis",
+    "mod-glwd-pkce-required": "PKCE Toujours requis",
     "mod-glwd-introspection-revocation-title": "Introspection (RFC 7662) et Révocation (RFC 7009) des tokens",
     "mod-glwd-introspection-revocation-allowed": "Autoriser l'introspection ou la révocation des tokens",
     "mod-glwd-introspection-revocation-allow-target-client": "Autoriser pour le client du token",

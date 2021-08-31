@@ -56,6 +56,8 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["allowed-scope"]?"":(props.mod.parameters["allowed-scope"] = ["openid"]);
     props.mod.parameters["pkce-allowed"]!==undefined?"":(props.mod.parameters["pkce-allowed"] = false);
     props.mod.parameters["pkce-method-plain-allowed"]!==undefined?"":(props.mod.parameters["pkce-method-plain-allowed"] = false);
+    props.mod.parameters["pkce-required"]!==undefined?"":(props.mod.parameters["pkce-required"] = false);
+    props.mod.parameters["pkce-scopes"]!==undefined?"":(props.mod.parameters["pkce-scopes"] = []);
     props.mod.parameters["introspection-revocation-allowed"]!==undefined?"":(props.mod.parameters["introspection-revocation-allowed"] = false);
     props.mod.parameters["introspection-revocation-auth-scope"]!==undefined?"":(props.mod.parameters["introspection-revocation-auth-scope"] = []);
     props.mod.parameters["introspection-revocation-allow-target-client"]!==undefined?"":(props.mod.parameters["introspection-revocation-allow-target-client"] = true);
@@ -226,6 +228,8 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["allowed-scope"]?"":(nextProps.mod.parameters["allowed-scope"] = ["openid"]);
     nextProps.mod.parameters["pkce-allowed"]!==undefined?"":(nextProps.mod.parameters["pkce-allowed"] = false);
     nextProps.mod.parameters["pkce-method-plain-allowed"]!==undefined?"":(nextProps.mod.parameters["pkce-method-plain-allowed"] = false);
+    nextProps.mod.parameters["pkce-required"]!==undefined?"":(nextProps.mod.parameters["pkce-required"] = false);
+    nextProps.mod.parameters["pkce-scopes"]!==undefined?"":(nextProps.mod.parameters["pkce-scopes"] = []);
     nextProps.mod.parameters["introspection-revocation-allowed"]!==undefined?"":(nextProps.mod.parameters["introspection-revocation-allowed"] = false);
     nextProps.mod.parameters["introspection-revocation-auth-scope"]!==undefined?"":(nextProps.mod.parameters["introspection-revocation-auth-scope"] = []);
     nextProps.mod.parameters["introspection-revocation-allow-target-client"]!==undefined?"":(nextProps.mod.parameters["introspection-revocation-allow-target-client"] = true);
@@ -743,11 +747,26 @@ class GlwdOIDCParams extends Component {
     }
     this.setState({mod: mod, newDefaultProperty: false});
   }
-  
+
   deleteRegisterDefaultProperty(e, name) {
     var mod = this.state.mod;
     delete(mod.parameters["register-default-properties"][name]);
     this.setState({mod: mod, newDefaultProperty: false});
+  }
+
+  addPkceScope(e, scope) {
+    var mod = this.state.mod;
+    mod.parameters["pkce-scopes"].push(scope);
+    this.setState({mod: mod});
+  }
+
+  deletePkceScope(e, scope) {
+    e.preventDefault();
+    if (this.state.mod.parameters["pkce-allowed"] && !this.state.mod.parameters["pkce-required"]) {
+      var mod = this.state.mod;
+      mod.parameters["pkce-scopes"].splice(mod.parameters["pkce-scopes"].indexOf(scope), 1);
+      this.setState({mod: mod});
+    }
   }
 
   checkParameters() {
@@ -1681,6 +1700,50 @@ class GlwdOIDCParams extends Component {
       i++;
     });
 
+    var pkceScopeAvailable = [], pkceScopeAdded = [];
+    this.state.config.scopes.forEach((scope, index) => {
+      if (this.state.mod.parameters["pkce-scopes"].indexOf(scope.name) === -1) {
+        pkceScopeAvailable.push(<a key={index}
+                                   className="dropdown-item"
+                                   href="#"
+                                   onClick={(e) => this.addPkceScope(e, scope.name)}>
+                                  {scope.name}
+                                </a>);
+      } else {
+        pkceScopeAdded.push(
+          <a href="#" onClick={(e) => this.deletePkceScope(e, scope.name)} key={index}>
+            <span className="badge badge-primary btn-icon-right">{scope.name}
+              <span className="badge badge-light btn-icon-right">
+                <i className="fas fa-times"></i>
+              </span>
+            </span>
+          </a>
+        );
+      }
+    });
+
+    var pkceScopeJsx =
+      <div className="input-group mb-3">
+        <div className="input-group-prepend">
+          <label className="input-group-text" htmlFor="mod-pkce-scopes">{i18next.t("admin.mod-glwd-pkce-scopes")}</label>
+        </div>
+        <div className="btn-group" role="group">
+          <button className="btn btn-secondary dropdown-toggle"
+                  type="button"
+                  id="mod-pkce-scopes"
+                  disabled={!this.state.mod.parameters["pkce-allowed"] || this.state.mod.parameters["pkce-required"]}
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false">
+              {i18next.t("admin.mod-glwd-scope")}
+            </button>
+          <div className="dropdown-menu" aria-labelledby="mod-pkce-scopes">
+            {pkceScopeAvailable}
+          </div>
+          {pkceScopeAdded}
+        </div>
+      </div>
+
     return (
       <div>
         <div className="form-group">
@@ -2503,6 +2566,11 @@ class GlwdOIDCParams extends Component {
                 <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-pkce-method-plain-allowed" onChange={(e) => this.toggleParam(e, "pkce-method-plain-allowed")} checked={this.state.mod.parameters["pkce-method-plain-allowed"]} disabled={!this.state.mod.parameters["pkce-allowed"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-pkce-method-plain-allowed">{i18next.t("admin.mod-glwd-pkce-method-plain-allowed")}</label>
+                </div>
+                {pkceScopeJsx}
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-pkce-required" onChange={(e) => this.toggleParam(e, "pkce-required")} checked={this.state.mod.parameters["pkce-required"]} disabled={!this.state.mod.parameters["pkce-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-pkce-required">{i18next.t("admin.mod-glwd-pkce-required")}</label>
                 </div>
               </div>
             </div>
