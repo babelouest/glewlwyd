@@ -509,6 +509,7 @@ int main (int argc, char ** argv) {
   u_map_put(config->instance->default_headers, "Access-Control-Allow-Credentials", "true");
   u_map_put(config->instance->default_headers, "Cache-Control", "no-store");
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
+  u_map_put(config->instance->default_headers, "X-Frame-Options", "deny");
 
   // metrics endpoint configuration
   if (config->metrics_endpoint) {
