@@ -20,7 +20,7 @@
 - [WebAuthn (Yubikey, Android and Apple fingerprint or face id, etc.)](docs/WEBAUTHN.md)
 - [One-time password sent via e-mail](docs/EMAIL.md)
 - [TLS Certificate](docs/CERTIFICATE.md)
-- [External OAuth2/OIDC providers](docs/OAUTH2.md)
+- [External OAuth2/OIDC providers](docs/OAUTH2_SCHEME.md)
 - [HTTP Backend service providing Basic Authentication](docs/HTTP.md)
 
 ## Users and clients can be storage backends:
