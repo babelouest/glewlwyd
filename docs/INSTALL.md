@@ -3,6 +3,7 @@
 [![License: CC BY 4.0](https://licensebuttons.net/l/by/4.0/80x15.png)](https://creativecommons.org/licenses/by/4.0/)
 
 1.  [Upgrade Glewlwyd](#upgrade-glewlwyd)
+    * [Upgrade to Glewlwyd 2.5.4](#upgrade-to-glewlwyd-254)
     * [Upgrade to Glewlwyd 2.5.0](#upgrade-to-glewlwyd-250)
     * [Upgrade to Glewlwyd 2.4.0](#upgrade-to-glewlwyd-240)
     * [Upgrade to Glewlwyd 2.3.3](#upgrade-to-glewlwyd-233)
@@ -54,6 +55,10 @@
 ## Upgrade Glewlwyd
 
 Glewlwyd upgrades usually come with database changes. It is highly recommended to backup your database before performing the upgrade. You must perform the database upgrades in the correct order. i.e. if you upgrade from Glewlwyd 2.1 to Glewlwyd 2.3, you must first install the 2.2 upgrade, then the 2.3.
+
+### Upgrade to Glewlwyd 2.5.4
+
+This is a security release, please upgrade your Glewlwyd version.
 
 ### Upgrade to Glewlwyd 2.5.0
 
