@@ -1,5 +1,9 @@
 # Glewlwyd Changelog
 
+## 2.5.4
+
+- Fix possible buffer overflow in webauth registration (CVE-2021-40818)
+
 ## 2.5.3
 
 - Fix UI bugs
