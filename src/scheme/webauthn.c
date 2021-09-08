@@ -1530,7 +1530,7 @@ static json_t * check_attestation_fido_u2f(json_t * j_params, unsigned char * cr
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
   gnutls_datum_t cert_dat, data, signature, cert_issued_by;
-  unsigned char data_signed[200], client_data_hash[32], cert_export[32], cert_export_b64[64];
+  unsigned char * data_signed = NULL, client_data_hash[32], cert_export[32], cert_export_b64[64];
   size_t data_signed_offset = 0, client_data_hash_len = 32, cert_export_len = 32, cert_export_b64_len = 0;
   
   if (j_error != NULL) {
@@ -1619,6 +1619,12 @@ static json_t * check_attestation_fido_u2f(json_t * j_params, unsigned char * cr
         break;
       }
       
+      if ((data_signed = o_malloc(rpid_hash_len+client_data_hash_len+credential_id_len+cert_x_len+cert_y_len+2)) == NULL) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_fido_u2f - Error allocating data_signed");
+        json_array_append_new(j_error, json_string("Internal error"));
+        break;
+      }
+      
       // Build bytestring to verify signature
       data_signed[0] = 0x0;
       data_signed_offset = 1;
@@ -1653,6 +1659,7 @@ static json_t * check_attestation_fido_u2f(json_t * j_params, unsigned char * cr
       }
       
     } while (0);
+    o_free(data_signed);
     
     if (json_array_size(j_error)) {
       j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", j_error);
