@@ -107,6 +107,9 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["oauth-par-request_uri-prefix"]!==undefined?"":(props.mod.parameters["oauth-par-request_uri-prefix"] = "urn:ietf:params:oauth:request_uri:");
     props.mod.parameters["prompt-continue-client-property"]!==undefined?"":(props.mod.parameters["prompt-continue-client-property"] = "");
     props.mod.parameters["restrict-scope-client-property"]!==undefined?"":(props.mod.parameters["restrict-scope-client-property"] = "");
+    props.mod.parameters["oauth-ciba-allowed"]!==undefined?"":(props.mod.parameters["oauth-ciba-allowed"] = false);
+    props.mod.parameters["oauth-ciba-default-expiry"]!==undefined?"":(props.mod.parameters["oauth-ciba-default-expiry"] = 600);
+    props.mod.parameters["oauth-ciba-maximum-expiry"]!==undefined?"":(props.mod.parameters["oauth-ciba-maximum-expiry"] = 1200);
 
     this.state = {
       config: props.config,
@@ -279,6 +282,9 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["oauth-par-request_uri-prefix"]!==undefined?"":(nextProps.mod.parameters["oauth-par-request_uri-prefix"] = "urn:ietf:params:oauth:request_uri:");
     nextProps.mod.parameters["prompt-continue-client-property"]!==undefined?"":(nextProps.mod.parameters["prompt-continue-client-property"] = "");
     nextProps.mod.parameters["restrict-scope-client-property"]!==undefined?"":(nextProps.mod.parameters["restrict-scope-client-property"] = "");
+    nextProps.mod.parameters["oauth-ciba-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-allowed"] = false);
+    nextProps.mod.parameters["oauth-ciba-default-expiry"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-default-expiry"] = 600);
+    nextProps.mod.parameters["oauth-ciba-maximum-expiry"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-maximum-expiry"] = 1200);
 
     this.setState({
       config: nextProps.config,
@@ -3043,6 +3049,45 @@ class GlwdOIDCParams extends Component {
                       <label className="input-group-text" htmlFor="mod-glwd-oauth-par-duration">{i18next.t("admin.mod-glwd-oauth-par-duration")}</label>
                     </div>
                     <input type="number" min="1" step="1" className="form-control" id="mod-glwd-oauth-par-duration" onChange={(e) => this.changeNumberParam(e, "oauth-par-duration")} value={this.state.mod.parameters["oauth-par-duration"]} placeholder={i18next.t("admin.mod-glwd-oauth-par-duration-ph")} disabled={!this.state.mod.parameters["oauth-par-allowed"]} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionCIBA">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseCIBA" aria-expanded="true" aria-controls="collapseCIBA">
+                  {i18next.t("admin.mod-glwd-oauth-ciba-title")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapseCIBA" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionCIBA">
+              <div className="card-body">
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-ciba-allowed"
+                         onChange={(e) => this.toggleParam(e, "oauth-ciba-allowed")}
+                         checked={this.state.mod.parameters["oauth-ciba-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-ciba-allowed">{i18next.t("admin.mod-glwd-oauth-ciba-allowed")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-oauth-ciba-default-expiry">{i18next.t("admin.mod-glwd-oauth-ciba-default-expiry")}</label>
+                    </div>
+                    <input type="number" min="1" step="1" className="form-control" id="mod-glwd-oauth-ciba-default-expiry" onChange={(e) => this.changeNumberParam(e, "oauth-ciba-default-expiry")} value={this.state.mod.parameters["oauth-ciba-default-expiry"]} placeholder={i18next.t("admin.mod-glwd-oauth-ciba-default-expiry-ph")} disabled={!this.state.mod.parameters["oauth-ciba-allowed"]} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-oauth-ciba-maximum-expiry">{i18next.t("admin.mod-glwd-oauth-ciba-maximum-expiry")}</label>
+                    </div>
+                    <input type="number" min="1" step="1" className="form-control" id="mod-glwd-oauth-ciba-maximum-expiry" onChange={(e) => this.changeNumberParam(e, "oauth-ciba-maximum-expiry")} value={this.state.mod.parameters["oauth-ciba-maximum-expiry"]} placeholder={i18next.t("admin.mod-glwd-oauth-ciba-maximum-expiry-ph")} disabled={!this.state.mod.parameters["oauth-ciba-allowed"]} />
                   </div>
                 </div>
               </div>

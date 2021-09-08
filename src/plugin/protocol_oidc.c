@@ -5478,7 +5478,8 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
           0 != o_strcmp("client_credentials", json_string_value(j_element)) &&
           0 != o_strcmp("refresh_token", json_string_value(j_element)) &&
           0 != o_strcmp("delete_token", json_string_value(j_element)) &&
-          0 != o_strcmp("device_authorization", json_string_value(j_element))) {
+          0 != o_strcmp("device_authorization", json_string_value(j_element)) &&
+          0 != o_strcmp("urn:openid:params:grant-type:ciba", json_string_value(j_element))) {
         if (j_error == NULL) {
           j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "grant_types must have one of the following values: 'authorization_code', 'implicit', 'password', 'client_credentials', 'refresh_token', 'delete_token', 'device_authorization'");
         }
