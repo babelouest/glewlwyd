@@ -1155,7 +1155,7 @@ START_TEST(test_oidc_jwt_encrypted_id_token_valid_jwks)
   }
   ck_assert_int_eq(r_jwt_init(&jwt_idt), RHN_OK);
   ck_assert_int_eq(r_jwks_init(&jwks), RHN_OK);
-  ck_assert_int_eq(r_jwks_import_from_str(jwks, jwks_privkey), RHN_OK);
+  ck_assert_int_eq(r_jwks_import_from_json_str(jwks, jwks_privkey), RHN_OK);
   
   ck_assert_int_eq(r_jwt_parse(jwt_idt, id_token, 0), RHN_OK);
   ck_assert_int_eq(R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT, r_jwt_get_type(jwt_idt));
