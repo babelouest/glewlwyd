@@ -4420,7 +4420,7 @@ static json_t * validate_jwt_auth_request(struct _oidc_config * config, const ch
   int valid_ietf = 1;
 
   if (jwt_request != NULL) {
-    if (r_jwt_init(&jwt) == RHN_OK && r_jwt_parse(jwt, jwt_request, 0) == RHN_OK && decrypt_request_token(config, jwt) == G_OK) {
+    if (r_jwt_init(&jwt) == RHN_OK && r_jwt_parse_unsecure(jwt, jwt_request, 0) == RHN_OK && decrypt_request_token(config, jwt) == G_OK) {
       // request or request_uri must not be present in the payload
       if (r_jwt_get_claim_str_value(jwt, "request") == NULL && r_jwt_get_claim_str_value(jwt, "request_uri") == NULL) {
         j_result = verify_request_signature(config, jwt, r_jwt_get_claim_str_value(jwt, "client_id"), ip_source);
