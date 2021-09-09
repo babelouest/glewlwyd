@@ -294,7 +294,7 @@ START_TEST(test_oidc_request_jwt_client_public_response_ok)
   r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
   r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
   r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
-  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
+  request = r_jwt_serialize_signed_unsecure(jwt_request, NULL, 0);
   ck_assert_ptr_ne(request, NULL);
   
   url = msprintf("%s/oidc/auth?g_continue&request=%s", SERVER_URI, request);
@@ -321,7 +321,7 @@ START_TEST(test_oidc_request_jwt_unsigned_error)
   r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
   r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
   r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
-  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
+  request = r_jwt_serialize_signed_unsecure(jwt_request, NULL, 0);
   ck_assert_ptr_ne(request, NULL);
   
   url = msprintf("%s/oidc/auth?g_continue&request=%s", SERVER_URI, request);
@@ -2362,7 +2362,7 @@ START_TEST(test_oidc_request_jwt_client_public_ietf_response_ok)
   r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
   r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
   r_jwt_set_header_str_value(jwt_request, "typ", "oauth-authz-req+jwt");
-  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
+  request = r_jwt_serialize_signed_unsecure(jwt_request, NULL, 0);
   ck_assert_ptr_ne(request, NULL);
   
   url = msprintf(SERVER_URI "/"PLUGIN_NAME"/auth?g_continue&request=%s&client_id=" CLIENT_PUBLIC, request);
@@ -2390,7 +2390,7 @@ START_TEST(test_oidc_request_jwt_client_public_ietf_response_invalid_client_id)
   r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
   r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
   r_jwt_set_header_str_value(jwt_request, "typ", "oauth-authz-req+jwt");
-  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
+  request = r_jwt_serialize_signed_unsecure(jwt_request, NULL, 0);
   ck_assert_ptr_ne(request, NULL);
   
   url = msprintf(SERVER_URI "/"PLUGIN_NAME"/auth?g_continue&request=%s&client_id=error", request);
@@ -2418,7 +2418,7 @@ START_TEST(test_oidc_request_jwt_client_public_ietf_response_invalid_client_id_2
   r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
   r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
   r_jwt_set_header_str_value(jwt_request, "typ", "oauth-authz-req+jwt");
-  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
+  request = r_jwt_serialize_signed_unsecure(jwt_request, NULL, 0);
   ck_assert_ptr_ne(request, NULL);
   
   url = msprintf(SERVER_URI "/"PLUGIN_NAME"/auth?g_continue&request=%s&client_id="CLIENT_PUBLIC, request);
@@ -2446,7 +2446,7 @@ START_TEST(test_oidc_request_jwt_client_public_ietf_response_invalid_typ)
   r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
   r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
   r_jwt_set_header_str_value(jwt_request, "typ", "error");
-  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
+  request = r_jwt_serialize_signed_unsecure(jwt_request, NULL, 0);
   ck_assert_ptr_ne(request, NULL);
   
   url = msprintf(SERVER_URI "/"PLUGIN_NAME"/auth?g_continue&request=%s&client_id=" CLIENT_PUBLIC, request);

@@ -1318,7 +1318,7 @@ START_TEST(test_oidc_claim_request_user1_request_jwt_id_token_claim_str_null)
   r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
   r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
   r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
-  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
+  request = r_jwt_serialize_signed_unsecure(jwt_request, NULL, 0);
   ck_assert_ptr_ne(request, NULL);
   
   ulfius_init_response(&resp);
@@ -1381,7 +1381,7 @@ START_TEST(test_oidc_claim_request_user1_request_jwt_id_token_claim_full)
   r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
   r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
   r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
-  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
+  request = r_jwt_serialize_signed_unsecure(jwt_request, NULL, 0);
   ck_assert_ptr_ne(request, NULL);
   
   ulfius_init_response(&resp);
