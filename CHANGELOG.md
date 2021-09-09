@@ -3,6 +3,7 @@
 ## 2.5.4
 
 - Fix possible buffer overflow in webauthn registration (CVE-2021-40818)
+- Update dependencies versions
 
 ## 2.5.3
 
