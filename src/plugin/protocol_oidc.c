@@ -269,7 +269,7 @@ static json_t * check_parameters (json_t * j_params) {
         }
         r_jwks_free(jwks);
       } else {
-        if (r_jwks_init(&jwks) != RHN_OK || r_jwks_import_from_str(jwks, json_string_value(json_object_get(j_params, "jwks-public"))) != RHN_OK) {
+        if (r_jwks_init(&jwks) != RHN_OK || r_jwks_import_from_json_str(jwks, json_string_value(json_object_get(j_params, "jwks-public"))) != RHN_OK) {
           json_array_append_new(j_error, json_string("jwks-public is an invalid jwks"));
           ret = G_ERROR_PARAM;
         }
@@ -292,7 +292,7 @@ static json_t * check_parameters (json_t * j_params) {
         }
         r_jwks_free(jwks);
       } else {
-        if (r_jwks_init(&jwks) != RHN_OK || r_jwks_import_from_str(jwks, json_string_value(json_object_get(j_params, "jwks-private"))) != RHN_OK) {
+        if (r_jwks_init(&jwks) != RHN_OK || r_jwks_import_from_json_str(jwks, json_string_value(json_object_get(j_params, "jwks-private"))) != RHN_OK) {
           json_array_append_new(j_error, json_string("jwks-private is an invalid jwks"));
           ret = G_ERROR_PARAM;
         }
@@ -11635,7 +11635,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
             p_config->jwks_str = r_jwks_export_to_json_str(jwks_specified, 0);
           }
         } else {
-          if (r_jwks_init(&jwks_specified) != RHN_OK || r_jwks_import_from_str(jwks_specified, json_string_value(json_object_get(p_config->j_params, "jwks-public"))) != RHN_OK) {
+          if (r_jwks_init(&jwks_specified) != RHN_OK || r_jwks_import_from_json_str(jwks_specified, json_string_value(json_object_get(p_config->j_params, "jwks-public"))) != RHN_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error importing jwks-public from data");
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
@@ -11666,8 +11666,8 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
             break;
           }
         } else {
-          if (r_jwks_import_from_str(jwks_privkey, json_string_value(json_object_get(p_config->j_params, "jwks-private"))) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwks_import_from_str");
+          if (r_jwks_import_from_json_str(jwks_privkey, json_string_value(json_object_get(p_config->j_params, "jwks-private"))) != RHN_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "protocol_init - oidc - Error r_jwks_import_from_json_str");
             j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "invalid jwks cntent");
             break;
           }
