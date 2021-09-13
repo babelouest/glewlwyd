@@ -1562,6 +1562,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
   cbor_item_t * key, * response = NULL;
   int i, ret;
   jwt_t * j_response = NULL;
+  jwk_t * jwk_pubkey_leaf = NULL;
   json_t * j_header_x5c = NULL, * j_cert = NULL, * j_header = NULL, * j_value = NULL;
   gnutls_datum_t cert_dat;
   int has_ver = 0;
@@ -1650,6 +1651,12 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
         break;
       }
 
+      if (r_jwk_init(&jwk_pubkey_leaf) != RHN_OK) {
+        json_array_append_new(j_error, json_string("Internal error"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwk_init");
+        break;
+      }
+
       if (r_jwt_parse(j_response, response_token, 0) != RHN_OK) {
         json_array_append_new(j_error, json_string("response invalid"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwt_parse");
@@ -1681,18 +1688,12 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
       json_decref(j_value);
       j_value = NULL;
 
-      if (r_jwt_verify_signature(j_response, NULL, 0) != RHN_OK) {
-        json_array_append_new(j_error, json_string("Invalid signature"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwt_verify_signature");
-        break;
-      }
-
       if ((j_header_x5c = r_jwt_get_header_json_t_value(j_response, "x5c")) == NULL) {
         json_array_append_new(j_error, json_string("response invalid"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error parsing x5c JSON");
         break;
       }
-
+      
       if (!json_is_string((j_cert = json_array_get(j_header_x5c, 0)))) {
         json_array_append_new(j_error, json_string("response invalid"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error x5c leaf not a string");
@@ -1727,6 +1728,18 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error gnutls_pcert_import_x509_raw: %d", ret);
         break;
       }
+      if (r_jwk_import_from_gnutls_x509_crt(jwk_pubkey_leaf, cert) != RHN_OK) {
+        json_array_append_new(j_error, json_string("Invalid signature"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwk_import_from_gnutls_x509_crt");
+        break;
+      }
+      
+      if (r_jwt_verify_signature(j_response, jwk_pubkey_leaf, 0) != RHN_OK) {
+        json_array_append_new(j_error, json_string("Invalid signature"));
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwt_verify_signature");
+        break;
+      }
+
       if ((ret = gnutls_pubkey_import_x509(pubkey, cert, 0)) < 0) {
         json_array_append_new(j_error, json_string("Error importing x509 certificate"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error gnutls_pubkey_import_x509: %d", ret);
@@ -1781,6 +1794,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
     gnutls_pubkey_deinit(pubkey);
     gnutls_x509_crt_deinit(cert);
     r_jwt_free(j_response);
+    r_jwk_free(jwk_pubkey_leaf);
     o_free(nonce_base);
     o_free(nonce_base_hash_b64);
     o_free(response_token);
