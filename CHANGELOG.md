@@ -6,9 +6,14 @@ The `"Green Zone Release"`
 
 - Add option to forbid a scheme to be registered in the profile and/or the reset credentials pages
 - Add prometheus metrics endpoint
-- Fix webauthn bug to support Feitian keys
 - Improve security when updating modules
 - Allow to force PKCE all the time or when use specified scopes
+- Implement [Client-Initiated Backchannel Authentication Flow](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html)
+
+## 2.5.4
+
+- Fix possible buffer overflow in webauthn registration (CVE-2021-40818)
+- Update dependencies versions
 
 ## 2.5.3
 
