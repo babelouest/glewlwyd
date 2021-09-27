@@ -550,8 +550,6 @@ int user_auth_scheme_module_deregister(struct config_module * config, const char
  * 
  */
 json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls) {
-  UNUSED(config);
-  UNUSED(http_request);
   UNUSED(j_scheme_trigger);
   json_t * j_user, * j_param = (json_t *)cls;
   int ret;
@@ -566,18 +564,18 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
         if (generate_new_code(config, j_param, username, code, json_integer_value(json_object_get(j_param, "code-length"))) == G_OK) {
           if ((body = str_replace(get_template_property(j_param, json_object_get(j_user, "user"), "body-pattern"), "{CODE}", code)) != NULL) {
             if (ulfius_send_smtp_rich_email(json_string_value(json_object_get(j_param, "host")),
-                                       json_integer_value(json_object_get(j_param, "port")),
-                                       json_object_get(j_param, "use-tls")==json_true()?1:0,
-                                       json_object_get(j_param, "verify-certificate")==json_false()?0:1,
-                                       json_string_length(json_object_get(j_param, "user"))?json_string_value(json_object_get(j_param, "user")):NULL,
-                                       json_string_length(json_object_get(j_param, "password"))?json_string_value(json_object_get(j_param, "password")):NULL,
-                                       json_string_value(json_object_get(j_param, "from")),
-                                       json_string_value(json_object_get(json_object_get(j_user, "user"), "email")),
-                                       NULL,
-                                       NULL,
-                                       json_string_length(json_object_get(j_param, "content-type"))?json_string_value(json_object_get(j_param, "content-type")):"text/plain; charset=utf-8",
-                                       get_template_property(j_param, json_object_get(j_user, "user"), "subject"),
-                                       body) == G_OK) {
+                                           json_integer_value(json_object_get(j_param, "port")),
+                                           json_object_get(j_param, "use-tls")==json_true()?1:0,
+                                           json_object_get(j_param, "verify-certificate")==json_false()?0:1,
+                                           json_string_length(json_object_get(j_param, "user"))?json_string_value(json_object_get(j_param, "user")):NULL,
+                                           json_string_length(json_object_get(j_param, "password"))?json_string_value(json_object_get(j_param, "password")):NULL,
+                                           json_string_value(json_object_get(j_param, "from")),
+                                           json_string_value(json_object_get(json_object_get(j_user, "user"), "email")),
+                                           NULL,
+                                           NULL,
+                                           json_string_length(json_object_get(j_param, "content-type"))?json_string_value(json_object_get(j_param, "content-type")):"text/plain; charset=utf-8",
+                                           get_template_property(j_param, json_object_get(j_user, "user"), "subject"),
+                                           body) == G_OK) {
               y_log_message(Y_LOG_LEVEL_WARNING, "Security - Scheme email - code sent for username %s at IP Address %s", username, ip_source);
               ret = G_OK;
             } else {
