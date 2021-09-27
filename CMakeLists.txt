@@ -31,8 +31,8 @@ set(ORCANIA_VERSION_REQUIRED "2.2.1")
 set(YDER_VERSION_REQUIRED "1.4.14")
 set(ULFIUS_VERSION_REQUIRED "2.7.4")
 set(HOEL_VERSION_REQUIRED "1.4.18")
-set(RHONABWY_VERSION_REQUIRED "1.0.0")
-set(IDDAWC_VERSION_REQUIRED "1.0.0")
+set(RHONABWY_VERSION_REQUIRED "1.1.0")
+set(IDDAWC_VERSION_REQUIRED "1.0.1")
 set(LIBCBOR_VERSION_REQUIRED "0.5.0")
 set(JANSSON_VERSION_REQUIRED "2.11")
 
@@ -566,6 +566,7 @@ if (WITH_SCHEME_OAUTH2)
   elseif (NOT IDDAWC_FOUND AND DOWNLOAD_DEPENDENCIES)
     include(DownloadProject)
     message(STATUS "Download Iddawc ${IDDAWC_VERSION_REQUIRED}")
+    set(BUILD_IDWCC OFF)
     download_project(PROJ iddawc # ... otherwise, download archive
         URL "https://github.com/babelouest/iddawc/archive/v${IDDAWC_VERSION_REQUIRED}.tar.gz"
         QUIET)
