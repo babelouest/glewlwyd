@@ -3585,7 +3585,7 @@ static int jwt_autocheck(struct _oauth2_config * config) {
   token = generate_access_token(config, GLEWLWYD_CHECK_JWT_USERNAME, NULL, NULL, GLEWLWYD_CHECK_JWT_SCOPE, now, NULL);
   if (token != NULL) {
     jwt = r_jwt_copy(config->glewlwyd_resource_config->jwt);
-    if (r_jwt_parse(jwt, token, 0) == RHN_OK && r_jwt_verify_signature(jwt, NULL, 0) == RHN_OK) {
+    if (r_jwt_advanced_parse(jwt, token, R_PARSE_NONE, 0) == RHN_OK && r_jwt_verify_signature(jwt, NULL, 0) == RHN_OK) {
       ret = RHN_OK;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "jwt_autocheck - oauth2 - Error verifying signature");
