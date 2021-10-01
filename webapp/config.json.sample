@@ -109,7 +109,7 @@
       "edit": true,
       "forceShow": true,
       "label": "admin.client-authorization-type",
-      "listElements": ["code","token","id_token","password","none","client_credentials","refresh_token","delete_token","device_authorization"]
+      "listElements": ["code","token","id_token","password","none","client_credentials","refresh_token","delete_token","device_authorization","urn:openid:params:grant-type:ciba"]
     },{
       "name": "sector_identifier_uri",
       "edit": true,
@@ -252,6 +252,24 @@
       "forceShow": true,
       "label": "admin.client-tls_client_auth_san_email",
       "placeholder": "admin.client-tls_client_auth_san_email-ph"
+    },{
+      "name": "backchannel_token_delivery_mode",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-backchannel_token_delivery_mode",
+      "listElements": ["poll","ping","push"]
+    },{
+      "name": "backchannel_client_notification_endpoint",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-backchannel_client_notification_endpoint",
+      "placeholder": "admin.client-backchannel_client_notification_endpoint-ph"
+    },{
+      "name": "backchannel_user_code_parameter",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-backchannel_user_code_parameter",
+      "listElements": ["no","yes"]
     }]
   },
   "defaultScheme": "",
