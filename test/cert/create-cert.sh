@@ -72,7 +72,7 @@ else
 fi
 
 # user 1
-$CERTTOOL --generate-privkey --outfile $DEST/user1.key --sec-param High 2>>$DEST/certtool.log
+$CERTTOOL --generate-privkey --outfile $DEST/user1.key $ECDSA --sec-param High 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "user1.key          \033[0;32mOK\033[0m\n"
@@ -98,7 +98,7 @@ else
 fi
 
 # user 2
-$CERTTOOL --generate-privkey --outfile $DEST/user2.key --sec-param High 2>>$DEST/certtool.log
+$CERTTOOL --generate-privkey --outfile $DEST/user2.key $ECDSA --sec-param High 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "user2.key          \033[0;32mOK\033[0m\n"
@@ -142,7 +142,7 @@ else
 fi
 
 # user 3
-$CERTTOOL --generate-privkey --outfile $DEST/user3.key --sec-param High 2>>$DEST/certtool.log
+$CERTTOOL --generate-privkey --outfile $DEST/user3.key $ECDSA --sec-param High 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "user3.key          \033[0;32mOK\033[0m\n"

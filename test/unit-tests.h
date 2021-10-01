@@ -3,6 +3,7 @@
 #include <jansson.h>
 #include <ulfius.h>
 
+char * read_file(const char * filename);
 char * print_map(const struct _u_map * map);
 void print_response(struct _u_response * response);
 int test_request(struct _u_request * req, long int expected_status, json_t * expected_json_body, const char * exptected_string_body, const char * expected_redirect_uri_contains);

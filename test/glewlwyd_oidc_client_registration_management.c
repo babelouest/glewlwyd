@@ -537,7 +537,7 @@ START_TEST(test_oidc_registration_auth_register_client_management_update_error_p
                        "tos_uri", CLIENT_TOS_URI,
                        "jwks", j_jwks);
   ck_assert_ptr_ne(j_client, NULL);
-  ck_assert_int_eq(run_simple_test(&req_reg, "PUT", registration_client_uri, NULL, NULL, j_client, NULL, 400, NULL, "\"grant_types must have one of the following values: 'authorization_code', 'implicit', 'password', 'client_credentials', 'refresh_token', 'delete_token', 'device_authorization'\"", NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req_reg, "PUT", registration_client_uri, NULL, NULL, j_client, NULL, 400, NULL, "\"grant_types must have one of the following values: 'authorization_code', 'implicit', 'password', 'client_credentials', 'refresh_token', 'delete_token', 'device_authorization', 'urn:openid:params:grant-type:ciba'\"", NULL), 1);
   json_decref(j_client);
 
   // Invaid application_type
