@@ -34,6 +34,9 @@ DROP TABLE IF EXISTS gpg_access_token;
 DROP TABLE IF EXISTS gpg_refresh_token_scope;
 DROP TABLE IF EXISTS gpg_refresh_token;
 DROP TABLE IF EXISTS gpg_code_scope;
+DROP TABLE IF EXISTS gpo_ciba_scope;
+DROP TABLE IF EXISTS gpo_ciba_scheme;
+DROP TABLE IF EXISTS gpo_ciba;
 DROP TABLE IF EXISTS gpo_par_scope;
 DROP TABLE IF EXISTS gpo_par;
 DROP TABLE IF EXISTS gpo_rar;
@@ -607,6 +610,44 @@ CREATE TABLE gpo_par_scope (
   gpop_id INT(11),
   gpops_scope VARCHAR(128) NOT NULL,
   FOREIGN KEY(gpop_id) REFERENCES gpo_par(gpop_id) ON DELETE CASCADE
+);
+
+CREATE TABLE gpo_ciba (
+  gpob_id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  gpob_plugin_name VARCHAR(256) NOT NULL,
+  gpob_client_id VARCHAR(256) NOT NULL,
+  gpob_x5t_s256 VARCHAR(64),
+  gpob_username VARCHAR(256) NOT NULL,
+  gpob_client_notification_token VARCHAR(1024),
+  gpob_jti_hash VARCHAR(512),
+  gpob_auth_req_id VARCHAR(128),
+  gpob_user_req_id VARCHAR(128),
+  gpob_binding_message VARCHAR(256),
+  gpob_status TINYINT(1) DEFAULT 0, -- 0: created, 1: accepted, 2: error, 3: closed
+  gpob_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gpob_issued_for VARCHAR(256), -- IP address or hostname
+  gpob_user_agent VARCHAR(256),
+  gpob_enabled TINYINT(1) DEFAULT 1
+);
+CREATE INDEX i_gpob_client_id ON gpo_ciba(gpob_client_id);
+CREATE INDEX i_gpob_jti_hash ON gpo_ciba(gpob_jti_hash);
+CREATE INDEX i_gpob_client_notification_token ON gpo_ciba(gpob_client_notification_token);
+CREATE INDEX i_gpob_auth_req_id ON gpo_ciba(gpob_auth_req_id);
+CREATE INDEX i_gpob_user_req_id ON gpo_ciba(gpob_user_req_id);
+
+CREATE TABLE gpo_ciba_scope (
+  gpocs_id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  gpob_id INT(11),
+  gpops_scope VARCHAR(128) NOT NULL,
+  gpobs_granted TINYINT(1) DEFAULT 0,
+  FOREIGN KEY(gpob_id) REFERENCES gpo_ciba(gpob_id) ON DELETE CASCADE
+);
+
+CREATE TABLE gpo_ciba_scheme (
+  gpobh_id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  gpob_id INT(11),
+  gpobh_scheme_module VARCHAR(128) NOT NULL,
+  FOREIGN KEY(gpob_id) REFERENCES gpo_ciba(gpob_id) ON DELETE CASCADE
 );
 
 CREATE TABLE gs_code (

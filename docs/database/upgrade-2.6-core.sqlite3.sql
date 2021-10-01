@@ -17,3 +17,43 @@ CREATE TABLE g_user_middleware_module_instance (
   gummi_parameters TEXT,
   gummi_enabled INTEGER DEFAULT 1
 );
+
+CREATE INDEX i_gpop_client_id ON gpo_par(gpop_client_id);
+
+CREATE TABLE gpo_ciba (
+  gpob_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpob_plugin_name TEXT NOT NULL,
+  gpob_client_id TEXT NOT NULL,
+  gpob_x5t_s256 TEXT,
+  gpob_username TEXT NOT NULL,
+  gpob_client_notification_token TEXT,
+  gpob_jti_hash TEXT,
+  gpob_auth_req_id TEXT,
+  gpob_user_req_id TEXT,
+  gpob_binding_message TEXT,
+  gpob_status INTEGER DEFAULT 0, -- 0: created, 1: accepted, 2: error, 3: closed
+  gpob_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  gpob_issued_for TEXT, -- IP address or hostname
+  gpob_user_agent TEXT,
+  gpob_enabled INTEGER DEFAULT 1
+);
+CREATE INDEX i_gpob_client_id ON gpo_ciba(gpob_client_id);
+CREATE INDEX i_gpob_jti_hash ON gpo_ciba(gpob_jti_hash);
+CREATE INDEX i_gpob_client_notification_token ON gpo_ciba(gpob_client_notification_token);
+CREATE INDEX i_gpob_auth_req_id ON gpo_ciba(gpob_auth_req_id);
+CREATE INDEX i_gpob_user_req_id ON gpo_ciba(gpob_user_req_id);
+
+CREATE TABLE gpo_ciba_scope (
+  gpocs_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpob_id INTEGER,
+  gpops_scope TEXT NOT NULL,
+  gpobs_granted INTEGER DEFAULT 0,
+  FOREIGN KEY(gpob_id) REFERENCES gpo_ciba(gpob_id) ON DELETE CASCADE
+);
+
+CREATE TABLE gpo_ciba_scheme (
+  gpobh_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpob_id INTEGER,
+  gpobh_scheme_module TEXT NOT NULL,
+  FOREIGN KEY(gpob_id) REFERENCES gpo_ciba(gpob_id) ON DELETE CASCADE
+);
