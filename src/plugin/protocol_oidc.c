@@ -278,6 +278,10 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("iss is mandatory must be a non empty string"));
       ret = G_ERROR_PARAM;
     }
+    if (json_object_get(j_params, "oauth-as-iss-id") != NULL && !json_is_boolean(json_object_get(j_params, "oauth-as-iss-id"))) {
+      json_array_append_new(j_error, json_string("Property 'oauth-as-iss-id' is optional and must be a boolean"));
+      ret = G_ERROR_PARAM;
+    }
     if (json_object_get(j_params, "restrict-scope-client-property") != NULL && !json_is_string(json_object_get(j_params, "restrict-scope-client-property"))) {
       json_array_append_new(j_error, json_string("restrict-scope-client-property is optional must be a string"));
       ret = G_ERROR_PARAM;
@@ -8281,7 +8285,8 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
                                        int client_auth_method,
                                        json_t * j_request,
                                        json_t * j_client_validated,
-                                       json_t * j_authorization_details) {
+                                       json_t * j_authorization_details,
+                                       const char * iss) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   char * redirect_url = NULL,
        * issued_for = NULL,
@@ -8341,7 +8346,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         build_form_post_error_response(map, response, "error", "server_error", NULL);
       } else {
         response->status = 302;
-        redirect_url = msprintf("%s%serror=server_error%s", u_map_get(map, "redirect_uri"), (o_strchr(u_map_get(map, "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
+        redirect_url = msprintf("%s%serror=server_error%s%s", u_map_get(map, "redirect_uri"), (o_strchr(u_map_get(map, "redirect_uri"), '?')!=NULL?"&":"?"), state_param, iss);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       }
@@ -8394,7 +8399,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
           build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "claims parameter not in JSON format", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s%serror=invalid_request%s&error_description=claims+parameter+not+in+JSON+format", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          redirect_url = msprintf("%s%serror=invalid_request%s%s&error_description=claims+parameter+not+in+JSON+format", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -8442,7 +8447,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         } else {
           response->status = 302;
           tmp = str_replace(json_string_value(json_object_get(j_client, "error_description")), " ", "+");
-          redirect_url = msprintf("%s%serror=unauthorized_client%s&error_description=%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, tmp);
+          redirect_url = msprintf("%s%serror=unauthorized_client%s%s&error_description=%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss, tmp);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
           o_free(tmp);
@@ -8458,7 +8463,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
           build_form_post_error_response(map, response, "error", "unauthorized_client", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s%serror=unauthorized_client%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          redirect_url = msprintf("%s%serror=unauthorized_client%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -8485,7 +8490,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "claims parameter invalid format", NULL);
       } else {
         response->status = 302;
-        redirect_url = msprintf("%s%serror=invalid_request%s&error_description=claims+parameter+invalid+format", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+        redirect_url = msprintf("%s%serror=invalid_request%s%s&error_description=claims+parameter+invalid+format", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       }
@@ -8500,7 +8505,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         build_form_post_error_response(map, response, "error", "invalid_request", NULL);
       } else {
         response->status = 302;
-        redirect_url = msprintf("%s%serror=invalid_request%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+        redirect_url = msprintf("%s%serror=invalid_request%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       }
@@ -8512,7 +8517,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         build_form_post_error_response(map, response, "error", "server_error", NULL);
       } else {
         response->status = 302;
-        redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+        redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       }
@@ -8563,7 +8568,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
       } else {
         response->status = 302;
-        redirect_url = msprintf("%s%serror=invalid_scope%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+        redirect_url = msprintf("%s%serror=invalid_scope%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       }
@@ -8583,7 +8588,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
           build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s%serror=invalid_scope%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          redirect_url = msprintf("%s%serror=invalid_scope%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -8595,7 +8600,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
           build_form_post_error_response(map, response, "error", "server_error", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s%serror=server_error%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -8613,7 +8618,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         build_form_post_error_response(map, response, "error", "server_error", NULL);
       } else {
         response->status = 302;
-        redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+        redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       }
@@ -8631,7 +8636,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
       } else {
         response->status = 302;
-        redirect_url = msprintf("%s%serror=invalid_scope%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+        redirect_url = msprintf("%s%serror=invalid_scope%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       }
@@ -8649,7 +8654,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
           build_form_post_error_response(map, response, "error", "interaction_required", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s%serror=interaction_required%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          redirect_url = msprintf("%s%serror=interaction_required%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -8671,7 +8676,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
           build_form_post_error_response(map, response, "error", "interaction_required", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s%serror=interaction_required%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          redirect_url = msprintf("%s%serror=interaction_required%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -8684,7 +8689,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
             build_form_post_error_response(map, response, "error", "invalid_scope", NULL);
           } else {
             response->status = 302;
-            redirect_url = msprintf("%s%serror=invalid_scope%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+            redirect_url = msprintf("%s%serror=invalid_scope%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
           }
@@ -8705,7 +8710,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         build_form_post_error_response(map, response, "error", "server_error", NULL);
       } else {
         response->status = 302;
-        redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+        redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       }
@@ -8737,7 +8742,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
                 build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "id_token invalid", NULL);
               } else {
                 response->status = 302;
-                redirect_url = msprintf("%s%serror=invalid_request%s&error_description=id_token+invalid", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+                redirect_url = msprintf("%s%serror=invalid_request%s%s&error_description=id_token+invalid", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 o_free(redirect_url);
               }
@@ -8750,7 +8755,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
               build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "id_token mandatory", NULL);
             } else {
               response->status = 302;
-              redirect_url = msprintf("%s%serror=invalid_request%s&error_description=id_token+mandatory", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+              redirect_url = msprintf("%s%serror=invalid_request%s%s&error_description=id_token+mandatory", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
               ulfius_add_header_to_response(response, "Location", redirect_url);
               o_free(redirect_url);
             }
@@ -8762,7 +8767,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
               build_form_post_error_response(map, response, "error", "server_error", NULL);
             } else {
               response->status = 302;
-              redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+              redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
               ulfius_add_header_to_response(response, "Location", redirect_url);
               o_free(redirect_url);
             }
@@ -8775,7 +8780,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
             build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "id_token invalid", NULL);
           } else {
             response->status = 302;
-            redirect_url = msprintf("%s%serror=invalid_request%s&error_description=id_token+invalid", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+            redirect_url = msprintf("%s%serror=invalid_request%s%s&error_description=id_token+invalid", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
           }
@@ -8788,7 +8793,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
           build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "id_token mandatory", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s%serror=invalid_request%s&error_description=id_token+mandatory", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          redirect_url = msprintf("%s%serror=invalid_request%s%s&error_description=id_token+mandatory", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -8806,7 +8811,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
           build_form_post_error_response(map, response, "error", "interaction_required", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s%serror=interaction_required%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          redirect_url = msprintf("%s%serror=interaction_required%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -8828,7 +8833,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
       if (form_post) {
         build_form_post_error_response(map, response, "error", "server_error", NULL);
       } else {
-        redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+        redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
         response->status = 302;
@@ -8843,7 +8848,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
       if (form_post) {
         build_form_post_error_response(map, response, "error", "server_error", NULL);
       } else {
-        redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+        redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
         response->status = 302;
@@ -8858,7 +8863,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
       if (form_post) {
         build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "nonce required", NULL);
       } else {
-        redirect_url = msprintf("%s%serror=invalid_request&error_description=nonce+required", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+        redirect_url = msprintf("%s%serror=invalid_request&error_description=nonce+required%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
         response->status = 302;
@@ -8875,7 +8880,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
           build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "authorization_details is invalid for client", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s%serror=invalid_request%s&error_description=authorization_details+is+invalid+for+client", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param);
+          redirect_url = msprintf("%s%serror=invalid_request%s%s&error_description=authorization_details+is+invalid+for+client", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -8897,7 +8902,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         if (form_post) {
           build_form_post_error_response(map, response, "error", "server_error", "error_description", "authorization_details invalid", NULL);
         } else {
-          redirect_url = msprintf("%s%serror=server_error&error_description=authorization_details+invalid", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+          redirect_url = msprintf("%s%serror=server_error&error_description=authorization_details+invalid%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
           response->status = 302;
@@ -8926,7 +8931,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
         if (form_post) {
           build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "nonce required", NULL);
         } else {
-          redirect_url = msprintf("%s%serror=invalid_request&error_description=nonce+required", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+          redirect_url = msprintf("%s%serror=invalid_request&error_description=nonce+required%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state_param, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
           response->status = 302;
@@ -11863,6 +11868,8 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
        * iat_str = NULL,
        * query_parameters = NULL,
        * state = NULL,
+       * iss_escaped = NULL,
+       * iss = NULL,
        * str_request = NULL,
        * access_token_out = NULL,
        * session_state = NULL,
@@ -11914,6 +11921,13 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   if (u_map_has_key(map, "resource") && json_object_get(config->j_params, "resource-allowed") == json_true()) {
     resource = u_map_get(map, "resource");
   }
+  if (json_object_get(config->j_params, "oauth-as-iss-id") == json_true()) {
+    iss_escaped = ulfius_url_encode(json_string_value(json_object_get(config->j_params, "iss")));
+    iss = msprintf("&iss=%s", iss_escaped);
+    o_free(iss_escaped);
+  } else {
+    iss = msprintf("");
+  }
   if (o_strlen(u_map_get(map, "authorization_details")) && json_object_get(config->j_params, "oauth-rar-allowed") == json_true() && json_object_get(config->j_params, "rar-allow-auth-unsigned") == json_true()) {
     if ((j_authorization_details = json_loads(u_map_get(map, "authorization_details"), JSON_DECODE_ANY, NULL)) == NULL) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - Invalid authorization_details, origin: %s", ip_source);
@@ -11922,7 +11936,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "Invalid authorization_details", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s#error=invalid_request%s&error_description=Invalid+authorization_details", u_map_get(map, "redirect_uri"), state);
+          redirect_url = msprintf("%s#error=invalid_request%s%s&error_description=Invalid+authorization_details", u_map_get(map, "redirect_uri"), state, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -11955,7 +11969,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "request_uri forbidden", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s#error=invalid_request%s&error_description=request_uri+forbidden", u_map_get(map, "redirect_uri"), state);
+          redirect_url = msprintf("%s#error=invalid_request%s%s&error_description=request_uri+forbidden", u_map_get(map, "redirect_uri"), state, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -11971,7 +11985,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
             build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "request_uri invalid", NULL);
           } else {
             response->status = 302;
-            redirect_url = msprintf("%s#error=invalid_request%s&error_description=request_uri+invalid", u_map_get(map, "redirect_uri"), state);
+            redirect_url = msprintf("%s#error=invalid_request%s%s&error_description=request_uri+invalid", u_map_get(map, "redirect_uri"), state, iss);
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
           }
@@ -12063,7 +12077,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "Invalid authorization_details content", NULL);
       } else {
         response->status = 302;
-        redirect_url = msprintf("%s#error=invalid_request%s&error_description=Invalid+authorization_details+content", u_map_get(map, "redirect_uri"), state);
+        redirect_url = msprintf("%s#error=invalid_request%s%s&error_description=Invalid+authorization_details+content", u_map_get(map, "redirect_uri"), state, iss);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
       }
@@ -12080,7 +12094,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "response_type missing", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s#error=invalid_request%s&error_description=response_type+missing", redirect_uri, state);
+          redirect_url = msprintf("%s#error=invalid_request%s%s&error_description=response_type+missing", redirect_uri, state, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -12111,7 +12125,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
             build_form_post_error_response(map, response, "error", "unsupported_response_type", NULL);
           } else {
             response->status = 302;
-            redirect_url = msprintf("%s#error=unsupported_response_type%s", redirect_uri, state);
+            redirect_url = msprintf("%s#error=unsupported_response_type%s%s", redirect_uri, state, iss);
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
           }
@@ -12123,7 +12137,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
             build_form_post_error_response(map, response, "error", "unsupported_response_type", NULL);
           } else {
             response->status = 302;
-            redirect_url = msprintf("%s#error=unsupported_response_type%s", redirect_uri, state);
+            redirect_url = msprintf("%s#error=unsupported_response_type%s%s", redirect_uri, state, iss);
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
           }
@@ -12149,7 +12163,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         }
 
         if (ret == G_OK) {
-          j_auth_result = validate_endpoint_auth(request, response, user_data, auth_type, client_auth_method, json_object_get(j_request, "request"), json_object_get(j_request, "client"), j_authorization_details);
+          j_auth_result = validate_endpoint_auth(request, response, user_data, auth_type, client_auth_method, json_object_get(j_request, "request"), json_object_get(j_request, "client"), j_authorization_details, iss);
           if (check_result_value(j_auth_result, G_ERROR_PARAM) || check_result_value(j_auth_result, G_ERROR_UNAUTHORIZED)) {
             ret = G_ERROR;
           } else if (!check_result_value(j_auth_result, G_OK)) {
@@ -12177,13 +12191,13 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         if (ret == G_OK && o_strlen(resource)) {
           if ((ret = verify_resource(config, resource, json_object_get(j_client, "client"), json_string_value(json_object_get(json_object_get(j_auth_result, "session"), "scope_filtered")))) == G_ERROR_PARAM) {
             response->status = 302;
-            redirect_url = msprintf("%s#error=invalid_target%s", redirect_uri, state);
+            redirect_url = msprintf("%s#error=invalid_target%s%s", redirect_uri, state, iss);
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
           } else if (ret != G_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_authorization - Error verify_resource");
             response->status = 302;
-            redirect_url = msprintf("%s#error=server_error%s", redirect_uri, state);
+            redirect_url = msprintf("%s#error=server_error%s%s", redirect_uri, state, iss);
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
           }
@@ -12211,7 +12225,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                 build_form_post_error_response(map, response, "error", "server_error", NULL);
               } else {
                 response->status = 302;
-                redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+                redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state, iss);
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 o_free(redirect_url);
               }
@@ -12224,7 +12238,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                   build_form_post_error_response(map, response, "error", "server_error", NULL);
                 } else {
                   response->status = 302;
-                  redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+                  redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state, iss);
                   ulfius_add_header_to_response(response, "Location", redirect_url);
                   o_free(redirect_url);
                 }
@@ -12239,7 +12253,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                 build_form_post_error_response(map, response, "error", "unsupported_response_type", NULL);
               } else {
                 response->status = 302;
-                redirect_url = msprintf("%s#error=unsupported_response_type%s", redirect_uri, state);
+                redirect_url = msprintf("%s#error=unsupported_response_type%s%s", redirect_uri, state, iss);
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 o_free(redirect_url);
               }
@@ -12284,7 +12298,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                   build_form_post_error_response(map, response, "error", "server_error", NULL);
                 } else {
                   response->status = 302;
-                  redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+                  redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state, iss);
                   ulfius_add_header_to_response(response, "Location", redirect_url);
                   o_free(redirect_url);
                 }
@@ -12302,7 +12316,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                   o_free(iat_str);
                 } else {
                   response->status = 302;
-                  redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+                  redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state, iss);
                   ulfius_add_header_to_response(response, "Location", redirect_url);
                   o_free(redirect_url);
                   ret = G_ERROR;
@@ -12316,7 +12330,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                 build_form_post_error_response(map, response, "error", "server_error", NULL);
               } else {
                 response->status = 302;
-                redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+                redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state, iss);
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 o_free(redirect_url);
               }
@@ -12329,7 +12343,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                 build_form_post_error_response(map, response, "error", "unsupported_response_type", NULL);
               } else {
                 response->status = 302;
-                redirect_url = msprintf("%s#error=unsupported_response_type%s", redirect_uri, state);
+                redirect_url = msprintf("%s#error=unsupported_response_type%s%s", redirect_uri, state, iss);
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 o_free(redirect_url);
               }
@@ -12372,7 +12386,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                   build_form_post_error_response(map, response, "error", "server_error", NULL);
                 } else {
                   response->status = 302;
-                  redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+                  redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state, iss);
                   ulfius_add_header_to_response(response, "Location", redirect_url);
                   o_free(redirect_url);
                 }
@@ -12382,7 +12396,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                   u_map_put(&map_query, "id_token", id_token_out);
                 } else {
                   response->status = 302;
-                  redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+                  redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state, iss);
                   ulfius_add_header_to_response(response, "Location", redirect_url);
                   o_free(redirect_url);
                   ret = G_ERROR;
@@ -12396,7 +12410,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                 build_form_post_error_response(map, response, "error", "server_error", NULL);
               } else {
                 response->status = 302;
-                redirect_url = msprintf("%s%serror=server_error", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"));
+                redirect_url = msprintf("%s%serror=server_error%s%s", redirect_uri, (o_strchr(redirect_uri, '?')!=NULL?"&":"?"), state, iss);
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 o_free(redirect_url);
               }
@@ -12408,7 +12422,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                 build_form_post_error_response(map, response, "error", "unsupported_response_type", NULL);
               } else {
                 response->status = 302;
-                redirect_url = msprintf("%s#error=unsupported_response_type%s", redirect_uri, state);
+                redirect_url = msprintf("%s#error=unsupported_response_type%s%s", redirect_uri, state, iss);
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 o_free(redirect_url);
               }
@@ -12426,7 +12440,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                 build_form_post_error_response(map, response, "error", "unsupported_response_type", NULL);
               } else {
                 response->status = 302;
-                redirect_url = msprintf("%s#error=unsupported_response_type%s", redirect_uri, state);
+                redirect_url = msprintf("%s#error=unsupported_response_type%s%s", redirect_uri, state, iss);
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 o_free(redirect_url);
               }
@@ -12443,7 +12457,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           } else {
             response->status = 302;
             query_parameters = generate_query_parameters(&map_query);
-            redirect_url = msprintf("%s%c%s", redirect_uri, get_url_separator(redirect_uri, implicit_flow), query_parameters);
+            redirect_url = msprintf("%s%c%s%s", redirect_uri, get_url_separator(redirect_uri, implicit_flow), query_parameters, iss);
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
             o_free(query_parameters);
@@ -12458,7 +12472,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                 build_form_post_error_response(map, response, "error", "server_error", NULL);
               } else {
                 response->status = 302;
-                redirect_url = msprintf("%s#error=server_error%s", redirect_uri, state);
+                redirect_url = msprintf("%s#error=server_error%s%s", redirect_uri, state, iss);
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 o_free(redirect_url);
               }
@@ -12481,7 +12495,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
             build_form_post_error_response(map, response, "error", "server_error", NULL);
           } else {
             response->status = 302;
-            redirect_url = msprintf("%s#error=server_error%s", redirect_uri, state);
+            redirect_url = msprintf("%s#error=server_error%s%s", redirect_uri, state, iss);
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
           }
@@ -12497,7 +12511,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           build_form_post_error_response(map, response, "error", "server_error", NULL);
         } else {
           response->status = 302;
-          redirect_url = msprintf("%s#error=server_error%s", redirect_uri, state);
+          redirect_url = msprintf("%s#error=server_error%s%s", redirect_uri, state, iss);
           ulfius_add_header_to_response(response, "Location", redirect_url);
           o_free(redirect_url);
         }
@@ -12507,6 +12521,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
     }
   }
   o_free(state);
+  o_free(iss);
   json_decref(j_request);
   json_decref(j_authorization_details);
 
