@@ -40,7 +40,10 @@ var initApp = () => {
           refresh_login: !!urlParams.get("refresh_login"),
           login_hint: urlParams.get("login_hint")||false,
           authorization_details: urlParams.get("authorization_details")||false,
-          plugin: urlParams.get("plugin")||false
+          plugin: urlParams.get("plugin")||false,
+          ciba_message: urlParams.get("ciba_message")||false,
+          ciba_binding_message: urlParams.get("ciba_binding_message")||false,
+          ciba_login_hint: urlParams.get("ciba_login_hint")||false
         }
       }, frontEndConfig, serverConfig);
       ReactDOM.render(<App config={config}/>, document.getElementById('root'));

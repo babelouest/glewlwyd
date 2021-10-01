@@ -13,6 +13,7 @@ import EndSession from './EndSession';
 import SessionClosed from './SessionClosed';
 import DeviceAuth from './DeviceAuth';
 import ResetCredentials from './ResetCredentials';
+import CibaMessage from './CibaMessage';
 
 import Message from '../Modal/Message';
 
@@ -45,6 +46,7 @@ class App extends Component {
       sessionClosed: false,
       deviceAuth: false,
       login_hint: props.config.params.login_hint||"",
+      ciba_message: props.config.params.ciba_message,
       errorScopesUnavailable: false,
       infoSomeScopeUnavailable: false,
       errorScheme: false,
@@ -400,7 +402,7 @@ class App extends Component {
 
 	render() {
     if (this.state.config) {
-      var body = "", message, scopeUnavailable;
+      var body = "", message, ciba_binding_message, ciba_login_hint, scopeUnavailable;
       if (this.state.loaded) {
         if (this.state.resetCredentialsShow) {
           body = <ResetCredentials config={this.state.config} resetCredentials={this.state.resetCredentials}/>;
@@ -410,6 +412,8 @@ class App extends Component {
           body = <SessionClosed config={this.state.config}/>;
         } else if (this.state.deviceAuth) {
           body = <DeviceAuth config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
+        } else if (this.state.ciba_message) {
+          body = <CibaMessage config={this.state.config} ciba_message={this.state.ciba_message}/>;
         } else {
           if (this.state.mustRegisterScheme && !this.state.errorScopesUnavailable) {
             message = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-not-registered-scheme")}</div>
@@ -424,6 +428,12 @@ class App extends Component {
               noScope = <div className="alert alert-warning" role="alert">{i18next.t("login.warning-no-scope")}</div>;
             }
             message = <div>{noCallback}{noScope}</div>;
+          }
+          if (this.state.config.params.ciba_binding_message) {
+            ciba_binding_message = <div className="alert alert-info" role="alert">{this.state.config.params.ciba_binding_message}</div>;
+          }
+          if (this.state.config.params.ciba_login_hint && this.state.config.params.login_hint !== this.state.currentUser.username) {
+            ciba_login_hint = <div className="alert alert-success" role="alert">{i18next.t("login.ciba-login-hint", {username: this.state.config.params.login_hint})}</div>;
           }
           if ((this.state.newUser || this.state.passwordRequired)) {
             if (!this.state.scheme) {
@@ -491,6 +501,8 @@ class App extends Component {
                 </div>
               </nav>
             </div>
+            {ciba_binding_message}
+            {ciba_login_hint}
             {message}
             <div className="card-body">
               {scopeUnavailable}

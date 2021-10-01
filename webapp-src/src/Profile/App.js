@@ -70,7 +70,8 @@ class App extends Component {
       updateEmailModule: false,
       register: false,
       schemePrefix: ((props.config && props.config.params.register)?"/" + props.config.params.register + "/profile":"/profile"),
-      resetCredentials: 0
+      resetCredentials: 0,
+      cibaList: []
     };
 
     this.fetchProfile = this.fetchProfile.bind(this);
@@ -351,6 +352,15 @@ class App extends Component {
           .fail((err) => {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           });
+          apiManager.glewlwydRequest("/" + plugin.name + "/ciba_user_list")
+          .then((cibaList) => {
+            this.setState({cibaList: cibaList});
+          })
+          .fail((err) => {
+            if (err.status !== 404) {
+              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+            }
+          });
         }
       });
       messageDispatcher.sendMessage('App', {type: "sessionComplete"});
@@ -519,7 +529,7 @@ class App extends Component {
 
 	render() {
     if (this.state.config) {
-      var userJsx = "", invalidMessage;
+      var userJsx = "", invalidMessage, cibaListJsx = [];
       if (this.state.invalidCredentialMessage) {
         invalidMessage = <div className="alert alert-danger" role="alert">{i18next.t("profile.error-credential-message")}</div>
       } else if (this.state.invalidDelegateMessage) {
@@ -534,6 +544,24 @@ class App extends Component {
       } else {
         userJsx = <User config={this.state.config} profile={(this.state.profileList[0]||false)} pattern={this.state.config?this.state.config.pattern.user:false} profileUpdate={this.state.profileUpdate} loggedIn={this.state.loggedIn} updateEmail={this.state.updateEmail}/>
       }
+      this.state.cibaList.forEach((ciba, index) => {
+        var bindingMessage;
+        if (ciba.binding_message) {
+          bindingMessage = <div>{ciba.binding_message}</div>;
+        }
+        cibaListJsx.push(
+          <div className="alert alert-info" role="alert" key={index}>
+            {i18next.t("profile.ciba-connect-message", {client: ciba.client_name||ciba.client_id})}
+            {bindingMessage}
+            <div>
+              <a href={ciba.connect_uri}>{i18next.t("profile.ciba-connect-link")}</a>
+            </div>
+            <div>
+              <a href={ciba.cancel_uri}>{i18next.t("profile.ciba-cancel-link")}</a>
+            </div>
+          </div>
+        );
+      });
       return (
         <div aria-live="polite" aria-atomic="true" className="glwd-container">
           <div className="card center glwd-card" id="userCard" tabIndex="-1" role="dialog">
@@ -548,6 +576,7 @@ class App extends Component {
                       registering={this.state.registering}/>
             </div>
             {invalidMessage}
+            {cibaListJsx}
             <div className="card-body">
               <div id="carouselBody" className="carousel slide" data-ride="carousel">
                 <div className="carousel-inner">

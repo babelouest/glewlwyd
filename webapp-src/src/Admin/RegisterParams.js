@@ -665,7 +665,7 @@ class RegisterParams extends Component {
             errorList["reset-credentials-subject"] += i18next.t("admin.mod-email-subject-error", {lang: lang});
             errorList["reset-credentials"] = true;
           }
-          if (!this.state.mod.parameters.templatesResetCredentials[lang]["body-pattern"] || !this.state.mod.parameters.templatesResetCredentials[lang]["body-pattern"].search("{TOKEN}")) {
+          if (this.state.mod.parameters.templatesResetCredentials[lang]["body-pattern"].search("{TOKEN}") === -1) {
             hasError = true;
             errorList["reset-credentials-body-pattern"] += i18next.t("admin.mod-email-body-pattern-error", {lang: lang});
             errorList["reset-credentials"] = true;

@@ -110,6 +110,32 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["oauth-ciba-allowed"]!==undefined?"":(props.mod.parameters["oauth-ciba-allowed"] = false);
     props.mod.parameters["oauth-ciba-default-expiry"]!==undefined?"":(props.mod.parameters["oauth-ciba-default-expiry"] = 600);
     props.mod.parameters["oauth-ciba-maximum-expiry"]!==undefined?"":(props.mod.parameters["oauth-ciba-maximum-expiry"] = 1200);
+    props.mod.parameters["oauth-ciba-mode-poll-allowed"]!==undefined?"":(props.mod.parameters["oauth-ciba-mode-poll-allowed"] = true);
+    props.mod.parameters["oauth-ciba-mode-ping-allowed"]!==undefined?"":(props.mod.parameters["oauth-ciba-mode-ping-allowed"] = true);
+    props.mod.parameters["oauth-ciba-mode-push-allowed"]!==undefined?"":(props.mod.parameters["oauth-ciba-mode-push-allowed"] = true);
+    props.mod.parameters["oauth-ciba-allow-https-non-secure"]!==undefined?"":(props.mod.parameters["oauth-ciba-allow-https-non-secure"] = false);
+    props.mod.parameters["oauth-ciba-user-code-allowed"]!==undefined?"":(props.mod.parameters["oauth-ciba-user-code-allowed"] = true);
+    props.mod.parameters["oauth-ciba-user-code-property"]!==undefined?"":(props.mod.parameters["oauth-ciba-user-code-property"] = "user-code");
+    props.mod.parameters["oauth-ciba-email-allowed"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-allowed"] = false);
+    props.mod.parameters["oauth-ciba-email-host"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-host"] = "");
+    props.mod.parameters["oauth-ciba-email-user"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-user"] = "");
+    props.mod.parameters["oauth-ciba-email-password"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-password"] = "");
+    props.mod.parameters["oauth-ciba-email-use-tls"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-use-tls"] = false);
+    props.mod.parameters["oauth-ciba-email-check-certificate"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-check-certificate"] = true);
+    props.mod.parameters["oauth-ciba-email-port"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-port"] = 0);
+    props.mod.parameters["oauth-ciba-email-from"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-from"] = "");
+    props.mod.parameters["oauth-ciba-email-user-lang-property"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-user-lang-property"] = "lang");
+    props.mod.parameters["oauth-ciba-email-content-type"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-content-type"] = "text/plain; charset=utf-8");
+    if (props.mod.parameters["oauth-ciba-email-templates"]===undefined) {
+      props.mod.parameters["oauth-ciba-email-templates"] = {};
+    }
+    if (!Object.keys(props.mod.parameters["oauth-ciba-email-templates"]).length) {
+      props.mod.parameters["oauth-ciba-email-templates"][i18next.language] = {
+        "oauth-ciba-email-subject": "",
+        "oauth-ciba-email-body-pattern": "",
+        "oauth-ciba-email-defaultLang": true
+      };
+    }
 
     this.state = {
       config: props.config,
@@ -122,7 +148,8 @@ class GlwdOIDCParams extends Component {
       newRar: "",
       newRarExists: false,
       newRarInvalidChar: false,
-      newDefaultProperty: false
+      newDefaultProperty: false,
+      currentLang: i18next.language
     };
 
     if (this.state.check) {
@@ -177,6 +204,7 @@ class GlwdOIDCParams extends Component {
     this.setNewDefaultProperty = this.setNewDefaultProperty.bind(this);
     this.addDefaultProperty = this.addDefaultProperty.bind(this);
     this.deleteRegisterDefaultProperty = this.deleteRegisterDefaultProperty.bind(this);
+    this.addLang = this.addLang.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -283,8 +311,34 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["prompt-continue-client-property"]!==undefined?"":(nextProps.mod.parameters["prompt-continue-client-property"] = "");
     nextProps.mod.parameters["restrict-scope-client-property"]!==undefined?"":(nextProps.mod.parameters["restrict-scope-client-property"] = "");
     nextProps.mod.parameters["oauth-ciba-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-allowed"] = false);
+    nextProps.mod.parameters["oauth-ciba-mode-poll-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-mode-poll-allowed"] = true);
+    nextProps.mod.parameters["oauth-ciba-mode-ping-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-mode-ping-allowed"] = true);
+    nextProps.mod.parameters["oauth-ciba-mode-push-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-mode-push-allowed"] = true);
+    nextProps.mod.parameters["oauth-ciba-allow-https-non-secure"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-allow-https-non-secure"] = false);
+    nextProps.mod.parameters["oauth-ciba-user-code-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-user-code-allowed"] = true);
+    nextProps.mod.parameters["oauth-ciba-user-code-property"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-user-code-property"] = "user-code");
     nextProps.mod.parameters["oauth-ciba-default-expiry"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-default-expiry"] = 600);
     nextProps.mod.parameters["oauth-ciba-maximum-expiry"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-maximum-expiry"] = 1200);
+    nextProps.mod.parameters["oauth-ciba-email-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-allowed"] = false);
+    nextProps.mod.parameters["oauth-ciba-email-host"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-host"] = "");
+    nextProps.mod.parameters["oauth-ciba-email-user"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-user"] = "");
+    nextProps.mod.parameters["oauth-ciba-email-password"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-password"] = "");
+    nextProps.mod.parameters["oauth-ciba-email-use-tls"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-use-tls"] = false);
+    nextProps.mod.parameters["oauth-ciba-email-check-certificate"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-check-certificate"] = true);
+    nextProps.mod.parameters["oauth-ciba-email-port"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-port"] = 0);
+    nextProps.mod.parameters["oauth-ciba-email-from"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-from"] = "");
+    nextProps.mod.parameters["oauth-ciba-email-user-lang-property"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-user-lang-property"] = "lang");
+    nextProps.mod.parameters["oauth-ciba-email-content-type"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-content-type"] = "text/plain; charset=utf-8");
+    if (nextProps.mod.parameters["oauth-ciba-email-templates"]===undefined) {
+      nextProps.mod.parameters["oauth-ciba-email-templates"] = {};
+    }
+    if (!Object.keys(nextProps.mod.parameters["oauth-ciba-email-templates"]).length) {
+      nextProps.mod.parameters["oauth-ciba-email-templates"][i18next.language] = {
+        "oauth-ciba-email-subject": "",
+        "body-pattern": "",
+        "oauth-ciba-email-defaultLang": true
+      };
+    }
 
     this.setState({
       config: nextProps.config,
@@ -775,6 +829,60 @@ class GlwdOIDCParams extends Component {
     }
   }
 
+  changeNewLang(e) {
+    this.setState({newLang: e.target.value});
+  }
+  
+  addLang() {
+    var mod = this.state.mod;
+    var found = false;
+    Object.keys(mod.parameters["oauth-ciba-email-templates"]).forEach(lang => {
+      if (lang === this.state.newLang) {
+        found = true;
+      }
+    });
+    if (!found && this.state.newLang) {
+      mod.parameters["oauth-ciba-email-templates"][this.state.newLang] = {"oauth-ciba-email-subject": "", "oauth-ciba-email-body-pattern": "", "oauth-ciba-email-defaultLang": false};
+      this.setState({mod: mod, newLang: "", currentLang: this.state.newLang});
+    }
+  }
+  
+  removeLang(lang) {
+    var mod = this.state.mod;
+    var currentLang = false;
+    delete(mod.parameters["oauth-ciba-email-templates"][lang]);
+    if (lang === this.state.currentLang) {
+      Object.keys(mod.parameters["oauth-ciba-email-templates"]).forEach(lang => {
+        if (!currentLang) {
+          currentLang = lang;
+        }
+      });
+      this.setState({mod: mod, currentLang: currentLang});
+    } else {
+      this.setState({mod: mod});
+    }
+  }
+  
+  changeLang(e, lang) {
+    this.setState({currentLang: lang});
+  }
+  
+  changeTemplate(e, param) {
+    var mod = this.state.mod;
+    mod.parameters["oauth-ciba-email-templates"][this.state.currentLang][param] = e.target.value;
+    this.setState({mod: mod});
+  }
+  
+  toggleLangDefault() {
+    var mod = this.state.mod;
+    Object.keys(mod.parameters["oauth-ciba-email-templates"]).forEach(objKey => {
+      if (objKey === this.state.currentLang) {
+        mod.parameters["oauth-ciba-email-templates"][objKey]["oauth-ciba-email-defaultLang"] = !mod.parameters["oauth-ciba-email-templates"][objKey]["oauth-ciba-email-defaultLang"];
+      }
+    });
+    this.setState({mod: mod});
+  }
+  
   checkParameters() {
     var errorList = {}, hasError = false;
     if (!this.state.mod.parameters["iss"]) {
@@ -1010,6 +1118,49 @@ class GlwdOIDCParams extends Component {
         }
       });
     }
+    if (this.state.mod.parameters["oauth-ciba-allowed"]) {
+      if (!this.state.mod.parameters["oauth-ciba-mode-poll-allowed"] && !this.state.mod.parameters["oauth-ciba-mode-ping-allowed"] && !this.state.mod.parameters["oauth-ciba-mode-push-allowed"]) {
+        hasError = true;
+        errorList["oauth-ciba-mode"] = i18next.t("admin.mod-glwd-oauth-ciba-mode-error");
+        errorList["oauth-ciba"] = true;
+      }
+      if (this.state.mod.parameters["oauth-ciba-user-code-allowed"] && !this.state.mod.parameters["oauth-ciba-user-code-property"]) {
+        hasError = true;
+        errorList["oauth-ciba-user-code-property"] = i18next.t("admin.mod-glwd-oauth-ciba-user-code-property-error");
+        errorList["oauth-ciba"] = true;
+      }
+      if (this.state.mod.parameters["oauth-ciba-email-allowed"]) {
+        if (!this.state.mod.parameters["oauth-ciba-email-host"]) {
+          hasError = true;
+          errorList["oauth-ciba-email-host"] = i18next.t("admin.mod-email-host-error");
+          errorList["oauth-ciba"] = true;
+        }
+        if (!this.state.mod.parameters["oauth-ciba-email-from"]) {
+          hasError = true;
+          errorList["oauth-ciba-email-from"] = i18next.t("admin.mod-email-from-error");
+          errorList["oauth-ciba"] = true;
+        }
+        if (!this.state.mod.parameters["oauth-ciba-email-content-type"]) {
+          hasError = true;
+          errorList["oauth-ciba-email-content-type"] = i18next.t("admin.mod-email-content-type-error");
+          errorList["oauth-ciba"] = true;
+        }
+        errorList["oauth-ciba-email-subject"] = "";
+        errorList["oauth-ciba-email-body-pattern"] = "";
+        Object.keys(this.state.mod.parameters["oauth-ciba-email-templates"]).forEach(lang => {
+          if (!this.state.mod.parameters["oauth-ciba-email-templates"][lang]["oauth-ciba-email-subject"]) {
+            hasError = true;
+            errorList["oauth-ciba-email-subject"] += i18next.t("admin.mod-email-subject-error", {lang: lang});
+            errorList["oauth-ciba"] = true;
+          }
+          if (this.state.mod.parameters["oauth-ciba-email-templates"][lang]["oauth-ciba-email-body-pattern"].search("{CONNECT_URL}") === -1) {
+            hasError = true;
+            errorList["oauth-ciba-email-body-pattern"] += i18next.t("admin.mod-glwd-oauth-ciba-email-body-pattern-error", {lang: lang});
+            errorList["oauth-ciba"] = true;
+          }
+        });
+      }
+    }
     if (!hasError) {
       this.setState({errorList: {}}, () => {
         messageDispatcher.sendMessage('ModPlugin', {type: "modValid"});
@@ -1025,6 +1176,7 @@ class GlwdOIDCParams extends Component {
     var keyJsx, certJsx, scopeOverrideList = [], scopeList = [], additionalParametersList = [], claimsList = [], x5cList = [], addressClaim;
     var baseApiUrl = document.location.href.split('?')[0].split('#')[0] + this.state.config.api_prefix + "/" + (this.state.mod.name||"");
     var urlOidcConfig = baseApiUrl + "/.well-known/openid-configuration", urlAuth = baseApiUrl + "/auth", urlToken = baseApiUrl + "/token", urlUserinfo = baseApiUrl + "/userinfo";
+
     if (this.state.mod.parameters["jwt-type"] === "sha") {
       keyJsx =
         <div className="form-group">
@@ -1066,6 +1218,7 @@ class GlwdOIDCParams extends Component {
           {this.state.errorList["cert"]?<span className="error-input">{this.state.errorList["cert"]}</span>:""}
         </div>;
     }
+
     this.state.config.pattern.user.forEach((pattern) => {
       if (pattern.name === "scope") {
         pattern.listElements.forEach((scope, index) => {
@@ -1090,6 +1243,7 @@ class GlwdOIDCParams extends Component {
           {scopeList}
         </div>
       </div>;
+
     this.state.mod.parameters["scope"].forEach((scope, index) => {
       scopeOverrideList.push(
       <div key={index}>
@@ -1749,6 +1903,31 @@ class GlwdOIDCParams extends Component {
           {pkceScopeAdded}
         </div>
       </div>
+    
+    // CIBA
+    var langList = [];
+    langList.push(
+    <div key={-2} className="form-group">
+      <div className="input-group mb-3">
+        <input type="text" className="form-control" id="mod-email-new-lang" placeholder={i18next.t("admin.mod-email-new-lang-ph")} value={this.state.newLang} onChange={(e) => this.changeNewLang(e)} />
+        <div className="input-group-append">
+          <button type="button" onClick={this.addLang} className="btn btn-outline-primary">{i18next.t("admin.mod-email-new-lang-add")}</button>
+        </div>
+      </div>
+    </div>
+    );
+    langList.push(<div key={-1} className="dropdown-divider"></div>);
+    Object.keys(this.state.mod.parameters["oauth-ciba-email-templates"]).forEach((lang, index) => {
+      langList.push(
+        <div key={index*2} className="btn-group btn-group-justified">
+          <button type="button" className="btn btn-primary" disabled={true}>{lang}</button>
+          <button type="button" onClick={(e) => this.removeLang(lang)} className="btn btn-primary" disabled={this.state.mod.parameters["oauth-ciba-email-templates"][lang]["oauth-ciba-email-defaultLang"]}>{i18next.t("admin.mod-email-new-lang-remove")}</button>
+          <button type="button" onClick={(e) => this.changeLang(e, lang)} className="btn btn-primary">{i18next.t("admin.mod-email-new-lang-select")}</button>
+        </div>
+      );
+      langList.push(<div key={(index*2)+1} className="dropdown-divider"></div>);
+    });
+    var emailTemplate = this.state.mod.parameters['oauth-ciba-email-templates'][this.state.currentLang]||{};
 
     return (
       <div>
@@ -3060,6 +3239,7 @@ class GlwdOIDCParams extends Component {
             <div className="card-header" id="addParamCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseCIBA" aria-expanded="true" aria-controls="collapseCIBA">
+                  {this.state.errorList["oauth-ciba"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-oauth-ciba-title")}
                 </button>
               </h2>
@@ -3074,12 +3254,81 @@ class GlwdOIDCParams extends Component {
                          checked={this.state.mod.parameters["oauth-ciba-allowed"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-oauth-ciba-allowed">{i18next.t("admin.mod-glwd-oauth-ciba-allowed")}</label>
                 </div>
+                {this.state.errorList["oauth-ciba-mode"]?<span className="error-input">{this.state.errorList["oauth-ciba-mode"]}</span>:""}
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-ciba-mode-ping-allowed"
+                         onChange={(e) => this.toggleParam(e, "oauth-ciba-mode-ping-allowed")}
+                         disabled={!this.state.mod.parameters["oauth-ciba-allowed"]}
+                         checked={this.state.mod.parameters["oauth-ciba-mode-ping-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-ciba-mode-ping-allowed">{i18next.t("admin.mod-glwd-oauth-ciba-mode-ping-allowed")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-ciba-mode-poll-allowed"
+                         onChange={(e) => this.toggleParam(e, "oauth-ciba-mode-poll-allowed")}
+                         disabled={!this.state.mod.parameters["oauth-ciba-allowed"]}
+                         checked={this.state.mod.parameters["oauth-ciba-mode-poll-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-ciba-mode-poll-allowed">{i18next.t("admin.mod-glwd-oauth-ciba-mode-poll-allowed")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-ciba-mode-push-allowed"
+                         onChange={(e) => this.toggleParam(e, "oauth-ciba-mode-push-allowed")}
+                         disabled={!this.state.mod.parameters["oauth-ciba-allowed"]}
+                         checked={this.state.mod.parameters["oauth-ciba-mode-push-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-ciba-mode-push-allowed">{i18next.t("admin.mod-glwd-oauth-ciba-mode-push-allowed")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-ciba-allow-https-non-secure"
+                         onChange={(e) => this.toggleParam(e, "oauth-ciba-allow-https-non-secure")}
+                         disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || (!this.state.mod.parameters["oauth-ciba-mode-push-allowed"] && !this.state.mod.parameters["oauth-ciba-mode-ping-allowed"])}
+                         checked={this.state.mod.parameters["oauth-ciba-allow-https-non-secure"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-ciba-allow-https-non-secure">{i18next.t("admin.mod-glwd-oauth-ciba-allow-https-non-secure")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-ciba-user-code-allowed"
+                         onChange={(e) => this.toggleParam(e, "oauth-ciba-user-code-allowed")}
+                         disabled={!this.state.mod.parameters["oauth-ciba-allowed"]}
+                         checked={this.state.mod.parameters["oauth-ciba-user-code-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-ciba-user-code-allowed">{i18next.t("admin.mod-glwd-oauth-ciba-user-code-allowed")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-oauth-ciba-user-code-property">{i18next.t("admin.mod-glwd-oauth-ciba-user-code-property")}</label>
+                    </div>
+                    <input type="text"
+                           className="form-control"
+                           id="mod-glwd-oauth-ciba-user-code-property"
+                           onChange={(e) => this.changeParam(e, "oauth-ciba-user-code-property")}
+                           value={this.state.mod.parameters["oauth-ciba-user-code-property"]}
+                           placeholder={i18next.t("admin.mod-glwd-oauth-ciba-user-code-property-ph")}
+                           disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-user-code-allowed"]} />
+                  </div>
+                  {this.state.errorList["oauth-ciba-user-code-property"]?<span className="error-input">{this.state.errorList["oauth-ciba-user-code-property"]}</span>:""}
+                </div>
                 <div className="form-group">
                   <div className="input-group mb-3">
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-glwd-oauth-ciba-default-expiry">{i18next.t("admin.mod-glwd-oauth-ciba-default-expiry")}</label>
                     </div>
-                    <input type="number" min="1" step="1" className="form-control" id="mod-glwd-oauth-ciba-default-expiry" onChange={(e) => this.changeNumberParam(e, "oauth-ciba-default-expiry")} value={this.state.mod.parameters["oauth-ciba-default-expiry"]} placeholder={i18next.t("admin.mod-glwd-oauth-ciba-default-expiry-ph")} disabled={!this.state.mod.parameters["oauth-ciba-allowed"]} />
+                    <input type="number"
+                           min="1"
+                           step="1"
+                           className="form-control"
+                           id="mod-glwd-oauth-ciba-default-expiry"
+                           onChange={(e) => this.changeNumberParam(e, "oauth-ciba-default-expiry")}
+                           value={this.state.mod.parameters["oauth-ciba-default-expiry"]}
+                           placeholder={i18next.t("admin.mod-glwd-oauth-ciba-default-expiry-ph")}
+                           disabled={!this.state.mod.parameters["oauth-ciba-allowed"]} />
                   </div>
                 </div>
                 <div className="form-group">
@@ -3087,8 +3336,202 @@ class GlwdOIDCParams extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-glwd-oauth-ciba-maximum-expiry">{i18next.t("admin.mod-glwd-oauth-ciba-maximum-expiry")}</label>
                     </div>
-                    <input type="number" min="1" step="1" className="form-control" id="mod-glwd-oauth-ciba-maximum-expiry" onChange={(e) => this.changeNumberParam(e, "oauth-ciba-maximum-expiry")} value={this.state.mod.parameters["oauth-ciba-maximum-expiry"]} placeholder={i18next.t("admin.mod-glwd-oauth-ciba-maximum-expiry-ph")} disabled={!this.state.mod.parameters["oauth-ciba-allowed"]} />
+                    <input type="number"
+                           min="1"
+                           step="1"
+                           className="form-control"
+                           id="mod-glwd-oauth-ciba-maximum-expiry"
+                           onChange={(e) => this.changeNumberParam(e, "oauth-ciba-maximum-expiry")}
+                           value={this.state.mod.parameters["oauth-ciba-maximum-expiry"]}
+                           placeholder={i18next.t("admin.mod-glwd-oauth-ciba-maximum-expiry-ph")}
+                           disabled={!this.state.mod.parameters["oauth-ciba-allowed"]} />
                   </div>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-ciba-email-allowed"
+                         onChange={(e) => this.toggleParam(e, "oauth-ciba-email-allowed")}
+                         checked={this.state.mod.parameters["oauth-ciba-email-allowed"]}
+                         disabled={!this.state.mod.parameters["oauth-ciba-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-ciba-email-allowed">{i18next.t("admin.mod-glwd-oauth-ciba-email-allowed")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="oauth-ciba-email-host">{i18next.t("admin.mod-email-host")}</label>
+                    </div>
+                    <input type="text"
+                           className={this.state.errorList["oauth-ciba-email-host"]?"form-control is-invalid":"form-control"}
+                           id="oauth-ciba-email-host"
+                           onChange={(e) => this.changeParam(e, "oauth-ciba-email-host")}
+                           value={this.state.mod.parameters["oauth-ciba-email-host"]}
+                           placeholder={i18next.t("admin.mod-email-host-ph")}
+                           disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"]}/>
+                  </div>
+                  {this.state.errorList["oauth-ciba-email-host"]?<span className="error-input">{this.state.errorList["oauth-ciba-email-host"]}</span>:""}
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="oauth-ciba-email-port">{i18next.t("admin.mod-email-port")}</label>
+                    </div>
+                    <input type="number"
+                           min="0"
+                           max="65536"
+                           step="1"
+                           className={this.state.errorList["oauth-ciba-email-port"]?"form-control is-invalid":"form-control"}
+                           id="oauth-ciba-email-port"
+                           onChange={(e) => this.changeParam(e, "oauth-ciba-email-port", true)}
+                           value={this.state.mod.parameters["oauth-ciba-email-port"]}
+                           placeholder={i18next.t("admin.mod-email-port-ph")}
+                           disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"]} />
+                  </div>
+                  {this.state.errorList["oauth-ciba-email-port"]?<span className="error-input">{this.state.errorList["oauth-ciba-email-port"]}</span>:""}
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-email-use-tls"
+                         onChange={(e) => this.toggleParam(e, "oauth-ciba-email-use-tls")}
+                         checked={this.state.mod.parameters["oauth-ciba-email-use-tls"]}
+                         disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-email-use-tls">{i18next.t("admin.mod-email-use-tls")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"] || !this.state.mod.parameters["oauth-ciba-email-use-tls"]}
+                         id="mod-email-check-certificate"
+                         onChange={(e) => this.toggleParam(e, "oauth-ciba-email-check-certificate")}
+                         checked={this.state.mod.parameters["oauth-ciba-email-check-certificate"]} />
+                  <label className="form-check-label" htmlFor="mod-email-check-certificate">{i18next.t("admin.mod-email-check-certificate")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="oauth-ciba-email-user">{i18next.t("admin.mod-email-user")}</label>
+                    </div>
+                    <input type="text"
+                           className={this.state.errorList["oauth-ciba-email-user"]?"form-control is-invalid":"form-control"}
+                           id="oauth-ciba-email-user"
+                           onChange={(e) => this.changeParam(e, "oauth-ciba-email-user")}
+                           value={this.state.mod.parameters["oauth-ciba-email-user"]}
+                           placeholder={i18next.t("admin.mod-email-user-ph")}
+                           disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"]} />
+                  </div>
+                  {this.state.errorList["oauth-ciba-email-user"]?<span className="error-input">{this.state.errorList["oauth-ciba-email-user"]}</span>:""}
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="oauth-ciba-email-password">{i18next.t("admin.mod-email-password")}</label>
+                    </div>
+                    <input type="password"
+                           className={this.state.errorList["password"]?"form-control is-invalid":"form-control"}
+                           id="oauth-ciba-email-password"
+                           onChange={(e) => this.changeParam(e, "oauth-ciba-email-password")}
+                           value={this.state.mod.parameters["oauth-ciba-email-password"]}
+                           placeholder={i18next.t("admin.mod-email-password-ph")}
+                           disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"]} />
+                  </div>
+                  {this.state.errorList["oauth-ciba-email-password"]?<span className="error-input">{this.state.errorList["oauth-ciba-email-password"]}</span>:""}
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="oauth-ciba-email-from">{i18next.t("admin.mod-email-from")}</label>
+                    </div>
+                    <input type="text"
+                           className={this.state.errorList["oauth-ciba-email-from"]?"form-control is-invalid":"form-control"}
+                           id="oauth-ciba-email-from"
+                           onChange={(e) => this.changeParam(e, "oauth-ciba-email-from")}
+                           value={this.state.mod.parameters["oauth-ciba-email-from"]}
+                           placeholder={i18next.t("admin.mod-email-from-ph")}
+                           disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"]} />
+                  </div>
+                  {this.state.errorList["oauth-ciba-email-from"]?<span className="error-input">{this.state.errorList["oauth-ciba-email-from"]}</span>:""}
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="oauth-ciba-email-content-type">{i18next.t("admin.mod-email-content-type")}</label>
+                    </div>
+                    <input type="text"
+                           className={this.state.errorList["oauth-ciba-email-content-type"]?"form-control is-invalid":"form-control"}
+                           id="oauth-ciba-email-content-type"
+                           onChange={(e) => this.changeParam(e, "oauth-ciba-email-content-type")}
+                           value={this.state.mod.parameters["oauth-ciba-email-content-type"]}
+                           placeholder={i18next.t("admin.mod-email-content-type-ph")}
+                           disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"]} />
+                  </div>
+                  {this.state.errorList["oauth-ciba-email-content-type"]?<span className="error-input">{this.state.errorList["oauth-ciba-email-content-type"]}</span>:""}
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="oauth-ciba-email-user-lang-property">{i18next.t("admin.mod-email-user-lang-property")}</label>
+                    </div>
+                    <input type="text"
+                           className={this.state.errorList["oauth-ciba-email-user-lang-property"]?"form-control is-invalid":"form-control"}
+                           id="oauth-ciba-email-user-lang-property"
+                           onChange={(e) => this.changeParam(e, "oauth-ciba-email-user-lang-property")}
+                           value={this.state.mod.parameters["oauth-ciba-email-user-lang-property"]}
+                           placeholder={i18next.t("admin.mod-email-user-lang-property-ph")}
+                           disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"]} />
+                  </div>
+                  {this.state.errorList["oauth-ciba-email-user-lang-property"]?<span className="error-input">{this.state.errorList["oauth-ciba-email-user-lang-property"]}</span>:""}
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-email-lang">{i18next.t("admin.mod-email-lang")}</label>
+                    </div>
+                    <div className="dropdown">
+                      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-email-lang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"]}>
+                        {this.state.currentLang}
+                      </button>
+                      <div className="dropdown-menu" aria-labelledby="mod-email-lang">
+                        {langList}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-email-lang-default"
+                         onChange={(e) => this.toggleLangDefault()}
+                         checked={emailTemplate["oauth-ciba-email-defaultLang"]}
+                         disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-email-lang-default">{i18next.t("admin.mod-email-lang-default")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-email-subject">{i18next.t("admin.mod-email-subject")}</label>
+                    </div>
+                    <input type="text"
+                           className={this.state.errorList["oauth-ciba-email-subject"]?"form-control is-invalid":"form-control"}
+                           id="mod-email-subject"
+                           onChange={(e) => this.changeTemplate(e, "oauth-ciba-email-subject")}
+                           value={emailTemplate["oauth-ciba-email-subject"]}
+                           placeholder={i18next.t("admin.mod-email-subject-ph")}
+                           disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"]} />
+                  </div>
+                  {this.state.errorList["oauth-ciba-email-subject"]?<span className="error-input">{this.state.errorList["oauth-ciba-email-subject"]}</span>:""}
+                </div>
+                <div className="form-group">
+                    <label className="input-group-text" htmlFor="mod-email-body-pattern">{i18next.t("admin.mod-glwd-oauth-ciba-email-body-pattern")}</label>
+                    <div>
+                    <textarea className={this.state.errorList["oauth-ciba-email-body-pattern"]?"form-control is-invalid":"form-control"}
+                              id="mod-email-body-pattern"
+                              onChange={(e) => this.changeTemplate(e, "oauth-ciba-email-body-pattern")}
+                              placeholder={i18next.t("admin.mod-glwd-oauth-ciba-email-body-pattern-ph")}
+                              value={emailTemplate["oauth-ciba-email-body-pattern"]}
+                              disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"]}></textarea>
+                  </div>
+                  {this.state.errorList["oauth-ciba-email-body-pattern"]?<span className="error-input">{this.state.errorList["oauth-ciba-email-body-pattern"]}</span>:""}
                 </div>
               </div>
             </div>

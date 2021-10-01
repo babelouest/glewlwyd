@@ -261,7 +261,7 @@ class EmailParams extends Component {
         hasError = true;
         errorList["subject"] += i18next.t("admin.mod-email-subject-error", {lang: lang})
       }
-      if (!this.state.mod.parameters.templates[lang]["body-pattern"] || !this.state.mod.parameters.templates[lang]["body-pattern"].search("{CODE}")) {
+      if (this.state.mod.parameters.templates[lang]["body-pattern"].search("{CODE}") === -1) {
         hasError = true;
         errorList["body-pattern"] += i18next.t("admin.mod-email-body-pattern-error", {lang: lang})
       }
@@ -298,6 +298,7 @@ class EmailParams extends Component {
       );
       langList.push(<div key={(index*2)+1} className="dropdown-divider"></div>);
     });
+    var template = this.state.mod.parameters.templates[this.state.currentLang]||{};
     return (
       <div>
         <div className="form-group">
@@ -405,7 +406,7 @@ class EmailParams extends Component {
           </div>
         </div>
         <div className="form-group form-check">
-          <input type="checkbox" className="form-check-input" id="mod-email-lang-default" onChange={(e) => this.toggleLangDefault()} checked={this.state.mod.parameters.templates[this.state.currentLang].defaultLang} />
+          <input type="checkbox" className="form-check-input" id="mod-email-lang-default" onChange={(e) => this.toggleLangDefault()} checked={template.defaultLang} />
           <label className="form-check-label" htmlFor="mod-email-lang-default">{i18next.t("admin.mod-email-lang-default")}</label>
         </div>
         <div className="form-group">
@@ -413,7 +414,7 @@ class EmailParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-email-subject">{i18next.t("admin.mod-email-subject")}</label>
             </div>
-            <input type="text" className={this.state.errorList["subject"]?"form-control is-invalid":"form-control"} id="mod-email-subject" onChange={(e) => this.changeTemplate(e, "subject")} value={this.state.mod.parameters.templates[this.state.currentLang]["subject"]} placeholder={i18next.t("admin.mod-email-subject-ph")} />
+            <input type="text" className={this.state.errorList["subject"]?"form-control is-invalid":"form-control"} id="mod-email-subject" onChange={(e) => this.changeTemplate(e, "subject")} value={template["subject"]} placeholder={i18next.t("admin.mod-email-subject-ph")} />
           </div>
           {this.state.errorList["subject"]?<span className="error-input">{this.state.errorList["subject"]}</span>:""}
         </div>
@@ -422,7 +423,7 @@ class EmailParams extends Component {
             <div className="input-group-prepend">
               <span className="input-group-text" >{i18next.t("admin.mod-email-body-pattern")}</span>
             </div>
-            <textarea className={this.state.errorList["body-pattern"]?"form-control is-invalid":"form-control"} id="mod-email-body-pattern" onChange={(e) => this.changeTemplate(e, "body-pattern")} placeholder={i18next.t("admin.mod-email-body-pattern-ph")} value={this.state.mod.parameters.templates[this.state.currentLang]["body-pattern"]}></textarea>
+            <textarea className={this.state.errorList["body-pattern"]?"form-control is-invalid":"form-control"} id="mod-email-body-pattern" onChange={(e) => this.changeTemplate(e, "body-pattern")} placeholder={i18next.t("admin.mod-email-body-pattern-ph")} value={template["body-pattern"]}></textarea>
           </div>
           {this.state.errorList["body-pattern"]?<span className="error-input">{this.state.errorList["body-pattern"]}</span>:""}
         </div>
