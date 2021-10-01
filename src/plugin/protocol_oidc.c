@@ -7500,6 +7500,9 @@ static int generate_discovery_content(struct _oidc_config * config) {
         if (json_object_get(config->j_params, "oauth-par-allowed") == json_true()) {
           json_object_set_new(json_object_get(j_discovery, "mtls_endpoint_aliases"), "pushed_authorization_request_endpoint", json_pack("s+", plugin_url, "/mtls/par"));
         }
+        if (json_object_get(config->j_params, "oauth-ciba-allowed") == json_true()) {
+          json_object_set_new(json_object_get(j_discovery, "mtls_endpoint_aliases"), "backchannel_authentication_endpoint", json_pack("s+", plugin_url, "/mtls/ciba"));
+        }
       }
       json_array_append_new(json_object_get(j_discovery, "token_endpoint_auth_methods_supported"), json_string("tls_client_auth"));
       if (json_object_get(config->j_params, "client-cert-self-signed-allowed") == json_true()) {
@@ -7537,6 +7540,8 @@ static int generate_discovery_content(struct _oidc_config * config) {
       json_array_extend(json_object_get(j_discovery, "backchannel_authentication_request_signing_alg_values_supported"), j_sign_pubkey);
       if (json_object_get(config->j_params, "oauth-ciba-user-code-allowed") == json_true()) {
         json_object_set_new(j_discovery, "backchannel_user_code_parameter_supported", json_true());
+      } else {
+        json_object_set_new(j_discovery, "backchannel_user_code_parameter_supported", json_false());
       }
       json_array_append_new(json_object_get(j_discovery, "grant_types_supported"), json_string(GLEWLWYD_CIBA_GRANT_TYPE));
     }
