@@ -830,6 +830,8 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_oidc_rich_auth_requests
               glewlwyd_oidc_pushed_auth_requests
               glewlwyd_oidc_reduced_scope
+              glewlwyd_oidc_all_algs
+              glewlwyd_oidc_ciba
               )
       set(TESTS_SSL ${TESTS_SSL} glewlwyd_oidc_client_certificate)
     endif ()
