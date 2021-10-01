@@ -8,6 +8,7 @@ class GlwdOIDCParams extends Component {
     super(props);
 
     props.mod.parameters?"":(props.mod.parameters = {});
+    props.mod.parameters["oauth-as-iss-id"]!==undefined?"":(props.mod.parameters["oauth-as-iss-id"] = false);
     props.mod.parameters["jwt-type"]?"":(props.mod.parameters["jwt-type"] = "rsa");
     props.mod.parameters["jwt-key-size"]!==undefined?"":(props.mod.parameters["jwt-key-size"] = "256");
     props.mod.parameters["jwks-uri"]?"":(props.mod.parameters["jwks-uri"] = "");
@@ -210,6 +211,7 @@ class GlwdOIDCParams extends Component {
   componentWillReceiveProps(nextProps) {
 
     nextProps.mod.parameters?"":(nextProps.mod.parameters = {});
+    nextProps.mod.parameters["oauth-as-iss-id"]!==undefined?"":(nextProps.mod.parameters["oauth-as-iss-id"] = false);
     nextProps.mod.parameters["jwt-type"]?"":(nextProps.mod.parameters["jwt-type"] = "rsa");
     nextProps.mod.parameters["jwt-key-size"]!==undefined?"":(nextProps.mod.parameters["jwt-key-size"] = "256");
     nextProps.mod.parameters["jwks-uri"]?"":(nextProps.mod.parameters["jwks-uri"] = "");
@@ -1989,9 +1991,22 @@ class GlwdOIDCParams extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-glwd-iss">{i18next.t("admin.mod-glwd-iss")}</label>
                     </div>
-                    <input type="text" className={this.state.errorList["iss"]?"form-control is-invalid":"form-control"} id="mod-glwd-iss" onChange={(e) => this.changeParam(e, "iss")} value={this.state.mod.parameters["iss"]} placeholder={i18next.t("admin.mod-glwd-iss-ph")} />
+                    <input type="text"
+                           className={this.state.errorList["iss"]?"form-control is-invalid":"form-control"}
+                           id="mod-glwd-iss"
+                           onChange={(e) => this.changeParam(e, "iss")}
+                           value={this.state.mod.parameters["iss"]}
+                           placeholder={i18next.t("admin.mod-glwd-iss-ph")} />
                   </div>
                   {this.state.errorList["iss"]?<span className="error-input">{this.state.errorList["iss"]}</span>:""}
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-as-iss-id"
+                         onChange={(e) => this.toggleParam(e, "oauth-as-iss-id")}
+                         checked={this.state.mod.parameters["oauth-as-iss-id"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-as-iss-id">{i18next.t("admin.mod-glwd-oauth-as-iss-id")}</label>
                 </div>
                 <div className="form-group">
                   <div className="input-group mb-3">

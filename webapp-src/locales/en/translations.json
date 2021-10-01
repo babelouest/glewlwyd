@@ -547,6 +547,7 @@
     "mod-glwd-code-duration-error": "Duration must be greater than 0",
     "mod-glwd-iss": "Issuer",
     "mod-glwd-iss-ph": "e.g. https://glewlwyd.tld",
+    "mod-glwd-oauth-as-iss-id": "Add issuer in /auth response",
     "mod-glwd-auth-type-token-enabled": "Authentication type token enabled",
     "mod-glwd-auth-type-id-token-enabled": "Authentication type ID Token enabled",
     "mod-glwd-auth-type-none-enabled": "Authentication type 'none' enabled",
