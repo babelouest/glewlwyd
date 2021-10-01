@@ -4,6 +4,7 @@
 
 1.  [Upgrade Glewlwyd](#upgrade-glewlwyd)
     * [Upgrade to Glewlwyd 2.6.0](#upgrade-to-glewlwyd-260)
+    * [Upgrade to Glewlwyd 2.5.4](#upgrade-to-glewlwyd-254)
     * [Upgrade to Glewlwyd 2.5.0](#upgrade-to-glewlwyd-250)
     * [Upgrade to Glewlwyd 2.4.0](#upgrade-to-glewlwyd-240)
     * [Upgrade to Glewlwyd 2.3.3](#upgrade-to-glewlwyd-233)
@@ -37,7 +38,6 @@
     * [Digest algorithm](#digest-algorithm)
     * [SSL/TLS](#ssltls)
     * [Database back-end initialisation](#database-back-end-initialisation)
-    * [Prometheus metrics endpoint](#prometheus-metrics-endpoint)
 7.  [Initialise database](#initialise-database)
 8.  [Install as a service](#install-as-a-service)
 9.  [Reverse proxy configuration](#reverse-proxy-configuration)
@@ -55,7 +55,7 @@
 
 ## Upgrade Glewlwyd
 
-Glewlwyd upgrades usually come with database changes. It is highly recommended to backup your database before performing the upgrade. You must perform the database upgrades in the correct order. i.e. if you upgrade from Glewlwyd 2.1 to Glewlwyd 2.3, you must first install the 2.2 upgrade, then the 2.3.
+Glewlwyd upgrades usually come with database changes. It is highly recommended to backup your database before performing the upgrade. You must perform the database upgrades in the correct order. i.e. if you upgrade from Glewlwyd 2.3 to Glewlwyd 2.6, you must first install the 2.4 upgrade, then the 2.5.
 
 ### Upgrade to Glewlwyd 2.6.0
 
@@ -63,10 +63,10 @@ If your current version is prior to 2.5.0, first follow the security instruction
 
 Some changes were added to the core tables. You must execute the script depending on your database backend:
 
-- MariaDB: [upgrade-2.6-core.mariadb.sql](database/upgrade-2.6-core.mariadb.sql)
+- MariaDB: [upgrade-2.6-core.mariadb.sql](database/upgrade-2.5-core.mariadb.sql)
 
 ```shell
-$ mysql glewlwyd < docs/database/upgrade-2.5-core.mariadb.sql
+$ mysql glewlwyd < docs/database/upgrade-2.6-core.mariadb.sql
 ```
 
 - SQLite3: [upgrade-2.6-core.sqlite3.sql](database/upgrade-2.6-core.sqlite3.sql)
@@ -75,11 +75,15 @@ $ mysql glewlwyd < docs/database/upgrade-2.5-core.mariadb.sql
 $ sqlite3 /path/to/glewlwyd.db < docs/database/upgrade-2.6-core.sqlite3.sql
 ```
 
-- PostgreSQL: [upgrade-2.6-core.postgresql.sql](database/upgrade-2.6-core.postgresql.sql)
+- PostgreSQL: [upgrade-2.5-core.postgresql.sql](database/upgrade-2.6-core.postgresql.sql)
 
 ```shell
 $ psql glewlwyd < docs/database/upgrade-2.6-core.postgresql.sql
 ```
+
+### Upgrade to Glewlwyd 2.5.4
+
+This is a security release, please upgrade your Glewlwyd version.
 
 ### Upgrade to Glewlwyd 2.5.0
 
@@ -519,7 +523,7 @@ Optional, use this address to bind incoming connections, can be use to restrict 
 - Config file variable: `external_url`
 - Environment variable: `GLWD_EXTERNAL_URL`
 
-Mandatory, exact value of the external URL, including protocol, where this instance will be accessible, ex `https://glewlwyd.tld`
+Mandatory, exact value of the external URL where this instance will be accessible to users, ex `https://glewlwyd.tld`
 
 ### API Prefix
 
@@ -777,22 +781,6 @@ GLWD_DATABASE_POSTGRE_CONNINFO
 ```
 
 Database configuration is mandatory.
-
-### Prometheus metrics endpoint
-
-Prometheus endpoint will listen on another TCP port (default 4594) than default Glewlwyd endpoint (default 4593). To enable Prometheus metrics and its endpoint, you must set the configuration value `metrics_endpoint` to `true`.
-
-The configuration values available for Prometheus metrics are:
-
-```
-# Prometheus metrics parameters
-metrics_endpoint = true                # default false
-metrics_bind_address = "127.0.0.1"     # default disabled
-metrics_endpoint_port = 4594           # default 4594
-metrics_endpoint_admin_session = false # default false, if true, then an admin session cookie or a valid API key must be used to authorize access
-```
-
-Then, the metrics endpoint will be available at the following address: [http://localhost:4594/](http://localhost:4594/)
 
 ## Initialise database
 
@@ -1237,7 +1225,6 @@ Event log messages have the following format:
 ```
 <date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Refresh token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
 <date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Access token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
-<date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Access token generated for client '<client_id>' with scope list '<scope_list>'
 <date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Refresh token generated for client '<client_id>' revoked
 <date_timestamp> - Glewlwyd INFO: Event oauth2 - Plugin '<plugin_name>' - Access token generated for client '<client_id>' revoked
 ```
@@ -1247,7 +1234,6 @@ Event log messages have the following format:
 ```
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Refresh token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Access token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
-<date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - Access token generated for client '<client_id>' with scope list '<scope_list>'
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - id_token generated for client '<client_id>' granted by user '<username>' with scope list '<scope_list>'
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - client '<client_id>' registration updated with redirect_uri <redirect_uri_list>
 <date_timestamp> - Glewlwyd INFO: Event oidc - Plugin '<plugin_name>' - client '<client_id>' registered with redirect_uri <redirect_uri_list>
@@ -1266,22 +1252,6 @@ Event log messages have the following format:
 <date_timestamp> - Glewlwyd INFO: Event register - Plugin '<plugin_name>' - user '<username>' updated its e-mail address to '<e-mail>'
 <date_timestamp> - Glewlwyd INFO: Event register - Plugin '<plugin_name>' - user '<username>' opened a reset credential session with e-mail token
 <date_timestamp> - Glewlwyd INFO: Event register - Plugin '<plugin_name>' - user '<username>' opened a reset credential session with code
-```
-
-#### Security events
-
-```
-<date_timestamp> - Glewlwyd WARNING: Security - Authorization invalid for username <username> at IP Address <HOST>
-<date_timestamp> - Glewlwyd WARNING: Security - Authorization invalid for client_id <client_id> at IP Address <HOST>
-<date_timestamp> - Glewlwyd WARNING: Security - Code invalid at IP Address <HOST>
-<date_timestamp> - Glewlwyd WARNING: Security - Token invalid at IP Address <HOST>
-<date_timestamp> - Glewlwyd WARNING: Security - Scheme email - code sent for username <username> at IP Address <HOST>
-<date_timestamp> - Glewlwyd WARNING: Security - Register new user - code sent to email <email> at IP Address <HOST>
-<date_timestamp> - Glewlwyd WARNING: Security - Verify e-mail - code invalid at IP Address <HOST>
-<date_timestamp> - Glewlwyd WARNING: Security - Update e-mail - token sent to email <email> at IP Address <HOST>
-<date_timestamp> - Glewlwyd WARNING: Security - Update e-mail - token invalid at IP Address <HOST>
-<date_timestamp> - Glewlwyd WARNING: Security - Reset credentials - token invalid at IP Address <HOST>
-<date_timestamp> - Glewlwyd WARNING: Security - Reset credentials - code invalid at IP Address <HOST>
 ```
 
 ## Run Glewlwyd

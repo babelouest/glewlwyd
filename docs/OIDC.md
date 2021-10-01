@@ -38,6 +38,7 @@ The following OpenID Connect and OAuth2 functionalities are currently supported:
 - [OAuth 2.0 Rich Authorization Requests Draft 03](https://www.ietf.org/archive/id/draft-ietf-oauth-rar-03.html)
 - [OAuth 2.0 Pushed Authorization Requests Draft 05](https://tools.ietf.org/html/draft-ietf-oauth-par-05)
 - [OAuth 2.0 JWT Secured Authorization Request (JAR) Draft 32](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwsreq-32)
+- [Client-Initiated Backchannel Authentication Flow](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html)
 
 The following OpenID Connect functionalities are not supported yet:
 
@@ -808,6 +809,114 @@ Value of the prefix that will be added to every request_uri.
 ### request_uri duration (seconds)
 
 Duration of a request_uri before user first accesses to the `/auth` using this `request_uri`.
+
+## Client-Initiated Backchannel Authentication Flow
+
+This settings is used to configure Client-Initiated Backchannel Authentication Flow (CIBA).
+
+### Allow Client-Initiated Backchannel Authentication Flow (CIBA)
+
+If this is set to true, clients will be allowed to initiate CIBA requests via the endpoint `POST /ciba`.
+
+### Ping mode allowed
+
+If this is set to true, clients will be allowed to use ping mode on CIBA requests.
+
+### Poll mode allowed
+
+If this is set to true, clients will be allowed to use poll mode on CIBA requests.
+
+### Push mode allowed
+
+If this is set to true, clients will be allowed to use push mode on CIBA requests.
+
+### Allow uot requests ping and push to a insecure https://
+
+If this is set to true, if a `backchannel_client_notification_endpoint` points to an invalid server certificate, the request will continue.
+
+### user_code parameter allowed
+
+If this is set to true, the client can use the `user_code` to verify the user identity.
+
+### user_code property
+
+User property to use to match the `user_code`.
+
+### Default expiration time (seconds)
+
+Default expiration time for a CIBA request when the client doesn't specify one.
+
+### Maximum duration expiration time (seconds)
+
+Maximum duration of a CIBA request if the client specify one.
+
+### Send an e-mail to the targeted user
+
+If this is set to true, an e-mail will be sent to the user when a CIBA request is created for this user.
+
+### SMTP Server
+
+Address of the SMTP server that will relay the messages to the users, mandatory.
+
+### Port SMTP (0: System default)
+
+TCP port the SMTP server is listening to. Must be between 0 and 65535. If 0 is set, Glewlwyd will use the system default port for SMTP, usually 25 or 587, mandatory.
+
+### Use a TLS connection
+
+Check this option if the SMTP server requires TLS to connect.
+
+### Check server certificate
+
+Check this option if you want Glewlwyd to check the SMTP server certificate before relaying the e-mail. This is highly recommended if TLS connection is checked, useless otherwise.
+
+### SMTP username (if required)
+
+username used to authenticate to the SMTP server if required by the SMTP server, optional.
+
+### SMTP password (if required)
+
+password used to authenticate to the SMTP server if required by the SMTP server, optional.
+
+### E-mail sender address
+
+Address used as sender in the e-mails, required.
+
+### Content-Type
+
+Content-Type for the e-mails, default is plain text but you can set an HTML body if youo need to.
+
+### User lang property
+
+User property which will contain the default lang value used for the e-mail templates. The lang value must be an exact match of the lang template. If the user lang doens't exist in the templates or if the user has no lang property, the e-mail template will use the default language.
+
+### Lang
+
+Dropdown value to select, add or remove lang templates for the e-mails.
+
+### Default lang
+
+Checkbox to specify what lang is the default language. In case the user has no language value or its language value doesn't exist in the templates.
+
+### E-mail subject
+
+Subject used on the e-mails for the current lang, required.
+
+### E-mail body template, {CONNECT_URL} required, {CANCEL_URL}, {CLIENT} and {BINDING_MESSAGE} optional
+
+The pattern for the body on the e-mails for the current lang, You must use at least once the pattern `{CONNECT_URL}` in the template to be replaced by the connection url. The patterns `{CLIENT}`, `{CANCEL_URL}` and `{BINDING_MESSAGE}` are optional.
+
+Example, by using the following e-mail pattern:
+
+```
+Your authorization is required by the client {CLIENT}.
+
+Message from the client: {BINDING_MESSAGE}.
+
+Click on the following link to accept: {CONNECT_URL}.
+
+Click on the following link to cancel: {CANCEL_URL}
+```
 
 ## Native Apps Guidelines
 
@@ -1635,7 +1744,7 @@ Both authentication methods are non exclusive and the administrator may enable o
 
 ##### URL
 
-`/api/glwd/introspect`
+`/api/oidc/introspect`
 
 ##### Method
 
@@ -1696,7 +1805,7 @@ Invalid parameters
 
 ##### URL
 
-`/api/glwd/revoke`
+`/api/oidc/revoke`
 
 ##### Method
 
@@ -1731,7 +1840,7 @@ Invalid parameters
 
 ##### URL
 
-`/api/glwd/register`
+`/api/oidc/register`
 
 ##### Method
 
@@ -1807,7 +1916,7 @@ This is the iframe content to be used by the client to verify if the user status
 
 ##### URL
 
-`/api/glwd/check_session_iframe`
+`/api/oidc/check_session_iframe`
 
 ##### Method
 
@@ -1827,7 +1936,7 @@ An HTML page adapted for check_session_iframe, this iframe is intended to indica
 
 ##### URL
 
-`/api/glwd/end_session`
+`/api/oidc/end_session`
 
 ##### Method
 
@@ -1850,3 +1959,92 @@ Optional
 Code 302
 
 Redirect the user to the login page with a end session prompt. If the user chooses to end the session, then the session will end and the user will be redirected to `post_logout_redirect_uri` if a valid one is given.
+
+### CIBA endpoints
+
+The following 2 endpoints are the 2 additional endpoints required for CIBA requests. The `/ciba` endpoint is not explained here as it is defined in its [Core document](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html).
+
+#### Get CIBA requests for the connected user
+
+##### URL
+
+`/api/oidc/check_session_iframe`
+
+##### Method
+
+`GET`
+
+##### Result
+
+##### Success response
+
+Code 200
+
+Content
+
+An HTML page adapted for check_session_iframe, this iframe is intended to indicate to the client web page that the user status has changed. Check [OIDC Session Status Change Notification](https://openid.net/specs/openid-connect-session-1_0.html#ChangeNotification) for more details and an example on how to use it.
+
+### End session
+
+##### URL
+
+`/api/oidc/ciba_user_list`
+
+##### Method
+
+`GET`
+
+#### Security
+
+User identified with its cookie session.
+
+##### Result
+
+##### Success response
+
+Code 200
+
+Content
+
+This is a non normative sample response.
+
+```javascript
+{
+  "client_name": "New Client",
+  "client_id": "i4bmq8izuc8c65p8", 
+  "client_description": "Client description",
+  "user_req_id": "abcd1234",
+  "binding_message": "xyz9876",
+  "scopes": ["openid", "scope1"]
+}
+```
+
+#### Check CIBA request for the connected user
+
+This endpoint behaves like the `/auth` endpoint. To validate the request, the session cookie used to authenticate must be for the user specified by the `login_hint`, with at least one of the specified scope granted and authorized.
+
+##### URL
+
+`/api/oidc/ciba_user_check`
+
+##### Method
+
+`GET`
+
+##### URL Parameters
+
+`user_req_id`: identifier of the request for the user, mandatory
+
+##### Result
+
+##### Success response
+
+Code 302
+
+If the user isn't fully authenticated yet, the endpoint redirects to `login.html` with the required scopes.
+
+If the user has no scope required, the endpoint redirects to `login.html` with an error message.
+
+If the is fully authenticated and at least one scope is granted to the client, the request is validated, and the endpoint redirects to `login.html` with a message "authentication complete".
+
+If the user cancels the request, the endpoint redirects to `login.html` with a message "authentication cancelled".
