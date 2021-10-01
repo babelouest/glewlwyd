@@ -11960,32 +11960,17 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
     }
   }
 
-  if (ret == G_OK && j_request == NULL && json_object_get(config->j_params, "request-parameter-allow") != json_false()) {
-    if (o_strlen(u_map_get(map, "request")) && o_strlen(u_map_get(map, "request_uri"))) {
-      client_auth_method = GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_JWT;
-      // parameters request and request_uri at the same time is forbidden
-      if (u_map_get(map, "redirect_uri") != NULL) {
-        if (form_post) {
-          build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "request_uri forbidden", NULL);
-        } else {
-          response->status = 302;
-          redirect_url = msprintf("%s#error=invalid_request%s%s&error_description=request_uri+forbidden", u_map_get(map, "redirect_uri"), state, iss);
-          ulfius_add_header_to_response(response, "Location", redirect_url);
-          o_free(redirect_url);
-        }
-      } else {
-        response->status = 403;
-      }
-      ret = G_ERROR_PARAM;
-    } else if (ret == G_OK && o_strlen(u_map_get(map, "request_uri"))) {
-      if ((str_request = get_request_from_uri(config, u_map_get(map, "request_uri"))) == NULL) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - Error getting request from uri %s, origin: %s", u_map_get(map, "request_uri"), ip_source);
+  if (ret == G_OK && j_request == NULL && (o_strlen(u_map_get(map, "request")) || o_strlen(u_map_get(map, "request_uri")))) {
+    if (json_object_get(config->j_params, "request-parameter-allow") != json_false()) {
+      if (o_strlen(u_map_get(map, "request")) && o_strlen(u_map_get(map, "request_uri"))) {
+        client_auth_method = GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_JWT;
+        // parameters request and request_uri at the same time is forbidden
         if (u_map_get(map, "redirect_uri") != NULL) {
           if (form_post) {
-            build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "request_uri invalid", NULL);
+            build_form_post_error_response(map, response, "error", "invalid_request", "error_description", "request_uri forbidden", NULL);
           } else {
             response->status = 302;
-            redirect_url = msprintf("%s#error=invalid_request%s%s&error_description=request_uri+invalid", u_map_get(map, "redirect_uri"), state, iss);
+            redirect_url = msprintf("%s#error=invalid_request%s%s&error_description=request_uri+forbidden", u_map_get(map, "redirect_uri"), state, iss);
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
           }
@@ -11993,20 +11978,76 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           response->status = 403;
         }
         ret = G_ERROR_PARAM;
-      } else {
-        j_request = validate_jwt_auth_request(config, str_request, u_map_get(map, "client_id"), ip_source);
+      } else if (ret == G_OK && o_strlen(u_map_get(map, "request_uri"))) {
+        if ((str_request = get_request_from_uri(config, u_map_get(map, "request_uri"))) == NULL) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - Error getting request from uri %s, origin: %s", u_map_get(map, "request_uri"), ip_source);
+          if (u_map_get(map, "redirect_uri") != NULL) {
+            if (form_post) {
+              build_form_post_error_response(map, response, "error", "invalid_request_uri", NULL);
+            } else {
+              response->status = 302;
+              redirect_url = msprintf("%s#error=invalid_request_uri%s%s", u_map_get(map, "redirect_uri"), state, iss);
+              ulfius_add_header_to_response(response, "Location", redirect_url);
+              o_free(redirect_url);
+            }
+          } else {
+            response->status = 403;
+          }
+          ret = G_ERROR_PARAM;
+        } else {
+          j_request = validate_jwt_auth_request(config, str_request, u_map_get(map, "client_id"), ip_source);
+          check_request = 1;
+        }
+        o_free(str_request);
+      } else if (ret == G_OK && o_strlen(u_map_get(map, "request"))) {
+        j_request = validate_jwt_auth_request(config, u_map_get(map, "request"), u_map_get(map, "client_id"), ip_source);
         check_request = 1;
       }
-      o_free(str_request);
-    } else if (ret == G_OK && o_strlen(u_map_get(map, "request"))) {
-      j_request = validate_jwt_auth_request(config, u_map_get(map, "request"), u_map_get(map, "client_id"), ip_source);
-      check_request = 1;
+    } else if (o_strlen(u_map_get(map, "request"))) {
+      if (u_map_get(map, "redirect_uri") != NULL) {
+        if (form_post) {
+          build_form_post_error_response(map, response, "error", "request_not_supported", NULL);
+        } else {
+          response->status = 302;
+          redirect_url = msprintf("%s#error=request_not_supported%s%s", u_map_get(map, "redirect_uri"), state, iss);
+          ulfius_add_header_to_response(response, "Location", redirect_url);
+          o_free(redirect_url);
+        }
+      } else {
+        response->status = 403;
+      }
+      ret = G_ERROR_PARAM;
+    } else if (o_strlen(u_map_get(map, "request_uri"))) {
+      if (u_map_get(map, "redirect_uri") != NULL) {
+        if (form_post) {
+          build_form_post_error_response(map, response, "error", "request_uri_not_supported", NULL);
+        } else {
+          response->status = 302;
+          redirect_url = msprintf("%s#error=request_uri_not_supported%s%s", u_map_get(map, "redirect_uri"), state, iss);
+          ulfius_add_header_to_response(response, "Location", redirect_url);
+          o_free(redirect_url);
+        }
+      } else {
+        response->status = 403;
+      }
+      ret = G_ERROR_PARAM;
     }
   }
 
   if (ret == G_OK && check_request) {
     if (check_result_value(j_request, G_ERROR_UNAUTHORIZED) || check_result_value(j_request, G_ERROR_PARAM)) {
-      response->status = 403;
+      if (u_map_get(map, "redirect_uri") != NULL) {
+        if (form_post) {
+          build_form_post_error_response(map, response, "error", "invalid_request_object", NULL);
+        } else {
+          response->status = 302;
+          redirect_url = msprintf("%s#error=invalid_request_object%s%s", u_map_get(map, "redirect_uri"), state, iss);
+          ulfius_add_header_to_response(response, "Location", redirect_url);
+          o_free(redirect_url);
+        }
+      } else {
+        response->status = 403;
+      }
       ret = G_ERROR_PARAM;
     } else if (!check_result_value(j_request, G_OK)) {
       response->status = 500;
