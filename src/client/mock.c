@@ -390,7 +390,7 @@ size_t client_module_count_total(struct config_module * config, const char * pat
  */
 json_t * client_module_get_list(struct config_module * config, const char * pattern, size_t offset, size_t limit, void * cls) {
   UNUSED(config);
-  json_t * j_user = NULL, * j_array, * j_array_pattern, * j_return;
+  json_t * j_user = NULL, * j_array, * j_array_pattern, * j_return, * j_user_copy;
   size_t index = 0, counter = 0;
 
   if (limit > 0) {
@@ -408,7 +408,9 @@ json_t * client_module_get_list(struct config_module * config, const char * patt
     if (j_array != NULL) {
       json_array_foreach(j_array_pattern, index, j_user) {
         if (index >= offset && (offset + counter) < json_array_size(j_array_pattern) && counter < limit) {
-          json_array_append(j_array, j_user);
+          j_user_copy = json_deep_copy(j_user);
+          json_object_del(j_user_copy, "password");
+          json_array_append_new(j_array, j_user_copy);
           counter++;
         }
       }
