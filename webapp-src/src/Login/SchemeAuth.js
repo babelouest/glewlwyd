@@ -61,13 +61,17 @@ class SchemeAuth extends Component {
           );
         });
       }
+      var btnTitleJsx = i18next.t("login.login-choose-scheme");
+      if (this.state.scheme) {
+        btnTitleJsx = this.state.scheme.scheme_display_name||this.state.scheme.scheme_name;
+      }
       return (
         <div>
           {schemeForm}
           {separator}
           <div className="btn-group" role="group">
             <button className="btn btn-primary dropdown-toggle" type="button" id="selectScheme" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              <i className="fas fa-user-lock btn-icon"></i>{i18next.t("login.login-choose-scheme")}
+              <i className="fas fa-user-lock btn-icon"></i>{btnTitleJsx}
             </button>
             <div className="dropdown-menu" aria-labelledby="selectScheme">
               {schemeList}

@@ -211,6 +211,7 @@ class Buttons extends Component {
           );
         });
       }
+      var btnTitleJsx = i18next.t("login.login-choose-scheme");
       var schemeList = [];
       if (this.state.config.sessionSchemes && this.state.config.sessionSchemes.length && !this.state.sessionClosed) {
         if (!this.state.newUserScheme) {
@@ -230,6 +231,9 @@ class Buttons extends Component {
         this.state.config.sessionSchemes.forEach((scheme, index) => {
           if (scheme.show_nopassword_form !== false) {
             if (scheme.scheme_name === this.state.newUserScheme) {
+              if (this.state.newUserScheme) {
+                btnTitleJsx = i18next.t(scheme.scheme_display_name);
+              }
               schemeList.push(
                 <a key={(index+2)} className="dropdown-item active" href="#" onClick={(e) => this.changeSessionScheme(e, scheme.scheme_name, !!scheme.identify)} alt={i18next.t(scheme.scheme_display_name)}>
                   {i18next.t(scheme.scheme_display_name)}
@@ -248,7 +252,7 @@ class Buttons extends Component {
           <div className="btn-group" role="group">
             <div className="btn-group" role="group">
               <button className="btn btn-primary dropdown-toggle" type="button" id="selectScheme" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i className="fas fa-user-lock btn-icon"></i>{i18next.t("login.login-choose-scheme")}
+                <i className="fas fa-user-lock btn-icon"></i>{btnTitleJsx}
               </button>
               <div className="dropdown-menu" aria-labelledby="selectScheme">
                 {schemeList}
