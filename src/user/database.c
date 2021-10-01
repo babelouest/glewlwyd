@@ -1213,24 +1213,28 @@ int user_module_update(struct config_module * config, const char * username, jso
         ret = G_ERROR_DB;
       } else {
         if (param->multiple_passwords) {
-          if ((passwords = o_malloc(json_array_size(json_object_get(j_user, "password"))*sizeof(char *))) != NULL) {
-            for (i=0; i<json_array_size(json_object_get(j_user, "password")); i++) {
-              passwords[i] = json_string_value(json_array_get(json_object_get(j_user, "password"), i));
+          if (json_array_size(json_object_get(j_user, "password"))) {
+            if ((passwords = o_malloc(json_array_size(json_object_get(j_user, "password"))*sizeof(char *))) != NULL) {
+              for (i=0; i<json_array_size(json_object_get(j_user, "password")); i++) {
+                passwords[i] = json_string_value(json_array_get(json_object_get(j_user, "password"), i));
+              }
+              ret = update_password_list(param, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), passwords, json_array_size(json_object_get(j_user, "password")), 0);
+              o_free(passwords);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error allocating resources for password");
+              ret = G_ERROR_MEMORY;
             }
-            ret = update_password_list(param, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), passwords, json_array_size(json_object_get(j_user, "password")), 0);
-            o_free(passwords);
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error allocating resources for password");
-            ret = G_ERROR_MEMORY;
           }
         } else {
-          if ((passwords = o_malloc(sizeof(char *))) != NULL) {
-            passwords[0] = json_string_value(json_object_get(j_user, "password"));
-            ret = update_password_list(param, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), passwords, 1, 0);
-            o_free(passwords);
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error allocating resources for password");
-            ret = G_ERROR_MEMORY;
+          if (json_string_length(json_object_get(j_user, "password"))) {
+            if ((passwords = o_malloc(sizeof(char *))) != NULL) {
+              passwords[0] = json_string_value(json_object_get(j_user, "password"));
+              ret = update_password_list(param, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), passwords, 1, 0);
+              o_free(passwords);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error allocating resources for password");
+              ret = G_ERROR_MEMORY;
+            }
           }
         }
         ret = G_OK;
