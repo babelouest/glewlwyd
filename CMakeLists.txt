@@ -832,6 +832,7 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_oidc_reduced_scope
               glewlwyd_oidc_all_algs
               glewlwyd_oidc_ciba
+              glewlwyd_oidc_auth_iss_is
               )
       set(TESTS_SSL ${TESTS_SSL} glewlwyd_oidc_client_certificate)
     endif ()
