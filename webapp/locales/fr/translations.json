@@ -547,6 +547,7 @@
     "mod-glwd-code-duration-error": "La durée de vie doit être supérieure à 0",
     "mod-glwd-iss": "Émetteur (Issuer)",
     "mod-glwd-iss-ph": "Ex: https://glewlwyd.tld",
+    "mod-glwd-oauth-as-iss-id": "Ajouter l'emetteur dans la réponse /auth",
     "mod-glwd-auth-type-token-enabled": "Type d'authentification token activé",
     "mod-glwd-auth-type-id-token-enabled": "Type d'authentification ID Token activé",
     "mod-glwd-auth-type-none-enabled": "Type d'authentification 'none' activé",
