@@ -58,7 +58,7 @@ class Users extends Component {
 
   searchUsers (e) {
     e.preventDefault();
-    messageDispatcher.sendMessage('App', {type: "search", role: "user", searchPattern: this.state.users.searchPattern, offset: this.state.users.offset, limit: this.state.users.limit});
+    messageDispatcher.sendMessage('App', {type: "search", role: "user", searchPattern: this.state.users.searchPattern, offset: 0, limit: this.state.users.limit});
   }
 
   navigate(e, direction) {

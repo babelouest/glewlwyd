@@ -54,7 +54,7 @@ class Clients extends Component {
 
   searchClients (e) {
     e.preventDefault();
-    messageDispatcher.sendMessage('App', {type: "search", role: "client", searchPattern: this.state.clients.searchPattern, offset: this.state.clients.offset, limit: this.state.clients.limit});
+    messageDispatcher.sendMessage('App', {type: "search", role: "client", searchPattern: this.state.clients.searchPattern, offset: 0, limit: this.state.clients.limit});
   }
 
   navigate(e, direction) {
