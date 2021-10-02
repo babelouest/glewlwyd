@@ -1015,6 +1015,17 @@ static json_t * check_parameters (json_t * j_params) {
               json_array_append_new(j_error, json_string("Property 'rar-types.identifier' is optional and must be a JSON string"));
               ret = G_ERROR_PARAM;
             }
+            if (json_object_get(j_rar_type, "privileges") != NULL && !json_is_array(json_object_get(j_rar_type, "privileges"))) {
+              json_array_append_new(j_error, json_string("Property 'rar-types.privileges' is optional and must be a JSON array of strings"));
+              ret = G_ERROR_PARAM;
+            } else {
+              json_array_foreach(json_object_get(j_rar_type, "privileges"), index, j_element) {
+                if (!json_string_length(j_element)) {
+                  json_array_append_new(j_error, json_string("Property 'rar-types.privileges' is optional and must be a JSON array of strings"));
+                  ret = G_ERROR_PARAM;
+                }
+              }
+            }
           }
         }
       }
@@ -7902,6 +7913,25 @@ static int authorization_details_validate(struct _oidc_config * config, json_t *
                         ret = G_ERROR_PARAM;
                       }
                     }
+                  }
+
+                  if (json_array_size(json_object_get(j_rar_type, "privileges"))) {
+                    if (json_is_array(json_object_get(j_rar_element, "privileges"))) {
+                      json_array_foreach(json_object_get(j_rar_element, "privileges"), index_param, j_element) {
+                        if (json_string_length(j_element)) {
+                          if (!json_array_has_string(json_object_get(j_rar_type, "privileges"), json_string_value(j_element))) {
+                            y_log_message(Y_LOG_LEVEL_DEBUG, "authorization_details_validate - Error authorization_details type %s has unauthorized privileges", json_string_value(json_object_get(j_rar_element, "type")));
+                            ret = G_ERROR_PARAM;
+                          }
+                        } else {
+                          y_log_message(Y_LOG_LEVEL_DEBUG, "authorization_details_validate - Error authorization_details type %s has invalid privileges", json_string_value(json_object_get(j_rar_element, "type")));
+                          ret = G_ERROR_PARAM;
+                        }
+                      }
+                    }
+                  } else if (json_array_size(json_object_get(j_rar_type, "privileges"))) {
+                    y_log_message(Y_LOG_LEVEL_DEBUG, "authorization_details_validate - Error authorization_details type %s privileges is mandatory", json_string_value(json_object_get(j_rar_element, "type")));
+                    ret = G_ERROR_PARAM;
                   }
 
                   if (json_object_get(j_rar_element, "identifier") != NULL && !json_string_length(json_object_get(j_rar_element, "identifier"))) {
