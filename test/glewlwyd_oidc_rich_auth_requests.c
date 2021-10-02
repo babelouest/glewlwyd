@@ -39,6 +39,8 @@
 #define RAR4 "type4"
 #define ENRICHED1 "name"
 #define ENRICHED2 "email"
+#define PRIVILEGE1 "read"
+#define PRIVILEGE2 "write"
 #define CLIENT_PUBKEY_ID "client_rar"
 #define CLIENT_SECRET "secret_string"
 #define CLIENT_AUTH_TOKEN_MAX_AGE 3600
@@ -192,7 +194,7 @@ struct _u_request user_req;
 
 START_TEST(test_oidc_rar_add_plugin_unsigned)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssisisisosososososososososososssosos{s{s[ss]s[ss]s[ss]s[ss]s[ss]}s{s[s]s[ss]s[ss]s[ss]s[s]}s{s[s]s[s]s[s]s[sss]s[s]}s{}}}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssisisisosososososososososososssosos{s{s[ss]s[ss]s[ss]s[ss]s[ss]s[s]}s{s[s]s[ss]s[ss]s[ss]s[s]s[s]}s{s[s]s[s]s[s]s[sss]s[s]s[ss]}s{}}}}",
                                 "module", PLUGIN_MODULE,
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_NAME,
@@ -235,6 +237,8 @@ START_TEST(test_oidc_rar_add_plugin_unsigned)
                                       "enriched",
                                         ENRICHED1,
                                         ENRICHED2,
+                                      "privileges",
+                                        PRIVILEGE1,
                                     RAR2,
                                       "scopes",
                                         SCOPE_1,
@@ -249,6 +253,8 @@ START_TEST(test_oidc_rar_add_plugin_unsigned)
                                         "type2-"RAR2,
                                       "enriched",
                                         ENRICHED1,
+                                      "privileges",
+                                        PRIVILEGE1,
                                     RAR3,
                                       "scopes",
                                         "g_admin",
@@ -262,6 +268,9 @@ START_TEST(test_oidc_rar_add_plugin_unsigned)
                                         "type3-"RAR3,
                                       "enriched",
                                         ENRICHED2,
+                                      "privileges",
+                                        PRIVILEGE1,
+                                        PRIVILEGE2,
                                     RAR4);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
@@ -270,7 +279,7 @@ END_TEST
 
 START_TEST(test_oidc_rar_add_plugin_signed_unencrypted)
 {
-  json_t * j_parameters = json_pack("{sssssssos{sssssssssssisisisososososososososososisssssssosssosos{s{s[ss]s[ss]s[ss]s[ss]s[ss]}s{s[s]s[ss]s[ss]s[ss]s[s]}s{s[s]s[s]s[s]s[sss]s[s]}s{}}}}",
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssssisisisososososososososososisssssssosssosos{s{s[ss]s[ss]s[ss]s[ss]s[ss]s[s]}s{s[s]s[ss]s[ss]s[ss]s[s]s[s]}s{s[s]s[s]s[s]s[sss]s[s]s[ss]}s{}}}}",
                                 "module", PLUGIN_MODULE,
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_NAME,
@@ -319,6 +328,8 @@ START_TEST(test_oidc_rar_add_plugin_signed_unencrypted)
                                       "enriched",
                                         ENRICHED1,
                                         ENRICHED2,
+                                      "privileges",
+                                        PRIVILEGE1,
                                     RAR2,
                                       "scopes",
                                         SCOPE_1,
@@ -333,6 +344,8 @@ START_TEST(test_oidc_rar_add_plugin_signed_unencrypted)
                                         "type2-"RAR2,
                                       "enriched",
                                         ENRICHED1,
+                                      "privileges",
+                                        PRIVILEGE1,
                                     RAR3,
                                       "scopes",
                                         "g_admin",
@@ -346,6 +359,9 @@ START_TEST(test_oidc_rar_add_plugin_signed_unencrypted)
                                         "type3-"RAR3,
                                       "enriched",
                                         ENRICHED2,
+                                      "privileges",
+                                        PRIVILEGE1,
+                                        PRIVILEGE2,
                                     RAR4);
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
@@ -355,7 +371,7 @@ END_TEST
 
 START_TEST(test_oidc_rar_add_plugin_signed_encrypted)
 {
-  json_t * j_parameters = json_pack("{sssssssos{sssssssssssisisisososososososososososisssssssosssosos{s{s[ss]s[ss]s[ss]s[ss]s[ss]}s{s[s]s[ss]s[ss]s[ss]s[s]}s{s[s]s[s]s[s]s[sss]s[s]}s{}}}}",
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssssisisisososososososososososisssssssosssosos{s{s[ss]s[ss]s[ss]s[ss]s[ss]s[s]}s{s[s]s[ss]s[ss]s[ss]s[s]s[s]}s{s[s]s[s]s[s]s[sss]s[s]s[ss]}s{}}}}",
                                 "module", PLUGIN_MODULE,
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_NAME,
@@ -404,6 +420,8 @@ START_TEST(test_oidc_rar_add_plugin_signed_encrypted)
                                       "enriched",
                                         ENRICHED1,
                                         ENRICHED2,
+                                      "privileges",
+                                        PRIVILEGE1,
                                     RAR2,
                                       "scopes",
                                         SCOPE_1,
@@ -418,6 +436,8 @@ START_TEST(test_oidc_rar_add_plugin_signed_encrypted)
                                         "type2-"RAR2,
                                       "enriched",
                                         ENRICHED1,
+                                      "privileges",
+                                        PRIVILEGE1,
                                     RAR3,
                                       "scopes",
                                         "g_admin",
@@ -431,6 +451,9 @@ START_TEST(test_oidc_rar_add_plugin_signed_encrypted)
                                         "type3-"RAR3,
                                       "enriched",
                                         ENRICHED2,
+                                      "privileges",
+                                        PRIVILEGE1,
+                                        PRIVILEGE2,
                                     RAR4);
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
@@ -446,7 +469,8 @@ END_TEST
 
 START_TEST(test_oidc_rar_send_invalid_requests)
 {
-  json_t * j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}}]",
+  // type invalid
+  json_t * j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}s[s]}]",
                               "type", "error",
                               "locations",
                                 "https://"RAR1"-1.resource.tld",
@@ -455,7 +479,9 @@ START_TEST(test_oidc_rar_send_invalid_requests)
                               "datatypes",
                                 "type1-"RAR1,
                               "access",
-                                ENRICHED1);
+                                ENRICHED1,
+                              "privileges",
+                                PRIVILEGE1);
   char * str_rar, * rar_encoded, * url;
   str_rar = json_dumps(j_rar, JSON_COMPACT);
   rar_encoded = ulfius_url_encode(str_rar);
@@ -466,7 +492,8 @@ START_TEST(test_oidc_rar_send_invalid_requests)
   o_free(rar_encoded);
   json_decref(j_rar);
 
-  j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}}]",
+  // locations invalid
+  j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}s[s]}]",
                               "type", RAR1,
                               "locations",
                                 "https://"RAR1"-1.resource.tld-error",
@@ -475,7 +502,9 @@ START_TEST(test_oidc_rar_send_invalid_requests)
                               "datatypes",
                                 "type1-"RAR1,
                               "access",
-                                ENRICHED1);
+                                ENRICHED1,
+                              "privileges",
+                                PRIVILEGE1);
   str_rar = json_dumps(j_rar, JSON_COMPACT);
   rar_encoded = ulfius_url_encode(str_rar);
   url = msprintf(SERVER_URI"/"PLUGIN_NAME"/auth?response_type="RESPONSE_TYPE"&g_continue&client_id="CLIENT"&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client3&state=xyzabcd&nonce=nonce1234&scope="SCOPE_LIST"&authorization_details=%s", rar_encoded);
@@ -485,7 +514,8 @@ START_TEST(test_oidc_rar_send_invalid_requests)
   o_free(rar_encoded);
   json_decref(j_rar);
 
-  j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}}]",
+  // actions invalid
+  j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}s[s]}]",
                               "type", RAR1,
                               "locations",
                                 "https://"RAR1"-1.resource.tld",
@@ -494,7 +524,9 @@ START_TEST(test_oidc_rar_send_invalid_requests)
                               "datatypes",
                                 "type1-"RAR1,
                               "access",
-                                ENRICHED1);
+                                ENRICHED1,
+                              "privileges",
+                                PRIVILEGE1);
   str_rar = json_dumps(j_rar, JSON_COMPACT);
   rar_encoded = ulfius_url_encode(str_rar);
   url = msprintf(SERVER_URI"/"PLUGIN_NAME"/auth?response_type="RESPONSE_TYPE"&g_continue&client_id="CLIENT"&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client3&state=xyzabcd&nonce=nonce1234&scope="SCOPE_LIST"&authorization_details=%s", rar_encoded);
@@ -504,7 +536,8 @@ START_TEST(test_oidc_rar_send_invalid_requests)
   o_free(rar_encoded);
   json_decref(j_rar);
 
-  j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}}]",
+  // datatypes invalid
+  j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}s[s]}]",
                               "type", RAR1,
                               "locations",
                                 "https://"RAR1"-1.resource.tld",
@@ -513,7 +546,9 @@ START_TEST(test_oidc_rar_send_invalid_requests)
                               "datatypes",
                                 "type1-error-"RAR1,
                               "access",
-                                ENRICHED1);
+                                ENRICHED1,
+                              "privileges",
+                                PRIVILEGE1);
   str_rar = json_dumps(j_rar, JSON_COMPACT);
   rar_encoded = ulfius_url_encode(str_rar);
   url = msprintf(SERVER_URI"/"PLUGIN_NAME"/auth?response_type="RESPONSE_TYPE"&g_continue&client_id="CLIENT"&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client3&state=xyzabcd&nonce=nonce1234&scope="SCOPE_LIST"&authorization_details=%s", rar_encoded);
@@ -523,7 +558,8 @@ START_TEST(test_oidc_rar_send_invalid_requests)
   o_free(rar_encoded);
   json_decref(j_rar);
 
-  j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}}]",
+  // access invalid
+  j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}s[s]}]",
                               "type", RAR1,
                               "locations",
                                 "https://"RAR1"-1.resource.tld",
@@ -532,6 +568,30 @@ START_TEST(test_oidc_rar_send_invalid_requests)
                               "datatypes",
                                 "type1-"RAR1,
                               "access",
+                                "error",
+                              "privileges",
+                                PRIVILEGE1);
+  str_rar = json_dumps(j_rar, JSON_COMPACT);
+  rar_encoded = ulfius_url_encode(str_rar);
+  url = msprintf(SERVER_URI"/"PLUGIN_NAME"/auth?response_type="RESPONSE_TYPE"&g_continue&client_id="CLIENT"&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client3&state=xyzabcd&nonce=nonce1234&scope="SCOPE_LIST"&authorization_details=%s", rar_encoded);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "invalid_request"), 1);
+  o_free(url);
+  o_free(str_rar);
+  o_free(rar_encoded);
+  json_decref(j_rar);
+
+  // privileges invalid
+  j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}s[s]}]",
+                              "type", RAR1,
+                              "locations",
+                                "https://"RAR1"-1.resource.tld",
+                              "actions",
+                                "action1-"RAR1,
+                              "datatypes",
+                                "type1-"RAR1,
+                              "access",
+                                ENRICHED1,
+                              "privileges",
                                 "error");
   str_rar = json_dumps(j_rar, JSON_COMPACT);
   rar_encoded = ulfius_url_encode(str_rar);
@@ -542,7 +602,7 @@ START_TEST(test_oidc_rar_send_invalid_requests)
   o_free(rar_encoded);
   json_decref(j_rar);
 
-  j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}}]",
+  j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}s[s]}]",
                               "type", RAR3,
                               "locations",
                                 "https://"RAR3".resource.tld",
@@ -551,7 +611,9 @@ START_TEST(test_oidc_rar_send_invalid_requests)
                               "datatypes",
                                 "type1-"RAR3,
                               "access",
-                                ENRICHED2);
+                                ENRICHED2,
+                              "privileges",
+                                PRIVILEGE1);
   str_rar = json_dumps(j_rar, JSON_COMPACT);
   rar_encoded = ulfius_url_encode(str_rar);
   url = msprintf(SERVER_URI"/"PLUGIN_NAME"/auth?response_type="RESPONSE_TYPE"&g_continue&client_id="CLIENT"&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client3&state=xyzabcd&nonce=nonce1234&scope="SCOPE_LIST"&authorization_details=%s", rar_encoded);
@@ -561,7 +623,7 @@ START_TEST(test_oidc_rar_send_invalid_requests)
   o_free(rar_encoded);
   json_decref(j_rar);
 
-  j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}}]",
+  j_rar = json_pack("[{sss[s]s[s]s[s]s{s[]}s[s]}]",
                               "type", RAR1,
                               "locations",
                                 "https://"RAR1"-1.resource.tld",
@@ -570,7 +632,9 @@ START_TEST(test_oidc_rar_send_invalid_requests)
                               "datatypes",
                                 "type1-"RAR1,
                               "access",
-                                ENRICHED1);
+                                ENRICHED1,
+                              "privileges",
+                                PRIVILEGE1);
   str_rar = json_dumps(j_rar, JSON_COMPACT);
   rar_encoded = ulfius_url_encode(str_rar);
   url = msprintf(SERVER_URI"/"PLUGIN_NAME"/auth?response_type="RESPONSE_TYPE"&g_continue&client_id="CLIENT"&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client3&state=xyzabcd&nonce=nonce1234&scope="SCOPE_3"&authorization_details=%s", rar_encoded);
