@@ -22,6 +22,7 @@
 #define PLUGIN_MODULE "oidc"
 #define PLUGIN_NAME "register"
 #define PLUGIN_ISS "https://glewlwyd.tld"
+#define PLUGIN_PAIRWISE "pairwise"
 #define PLUGIN_DISPLAY_NAME "Client registration test"
 #define PLUGIN_JWT_TYPE "sha"
 #define PLUGIN_JWT_KEY_SIZE "256"
@@ -64,11 +65,43 @@
 #define CLIENT_DEFAULT_VALUE_2                  "value2"
 #define CLIENT_DEFAULT_VALUE_3                  "value3"
 #define CLIENT_DEFAULT_VALUE_OVERWRITTEN        "overwrite-me"
+#define CLIENT_SECTOR_IDENTIFIER_URI            "https://localhost:7344/siu"
+#define CLIENT_SECTOR_IDENTIFIER_URI_2          "https://localhost:7344/siu/invalid_content_type"
+#define CLIENT_SECTOR_IDENTIFIER_URI_3          "https://localhost:7344/siu/invalid_format"
+#define CLIENT_SECTOR_IDENTIFIER_URI_4          "https://localhost:7344/siu/invalid_redirect_uri"
+#define CB_KEY "cert/server.key"
+#define CB_CRT "cert/server.crt"
 
 const char jwk_pubkey_ecdsa_str[] = "{\"keys\":[{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4\","\
                                     "\"y\":\"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM\",\"use\":\"enc\",\"kid\":\"1\"}]}";
 
 struct _u_request admin_req;
+
+static int callback_sector_identifier_uri_valid(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  json_t * j_response = json_pack("[ss]", CLIENT_REDIRECT_URI, "https://example.com");
+  ulfius_set_json_body_response(response, 200, j_response);
+  json_decref(j_response);
+  return U_CALLBACK_CONTINUE;
+}
+
+static int callback_sector_identifier_uri_invalid_content_type(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  ulfius_set_string_body_response(response, 200, "[\""CLIENT_REDIRECT_URI"\",\"https://example.com\"]");
+  return U_CALLBACK_CONTINUE;
+}
+
+static int callback_sector_identifier_uri_invalid_format(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  json_t * j_response = json_pack("{s[ss]}", "redirect_uri", CLIENT_REDIRECT_URI, "https://example.com");
+  ulfius_set_json_body_response(response, 200, j_response);
+  json_decref(j_response);
+  return U_CALLBACK_CONTINUE;
+}
+
+static int callback_sector_identifier_uri_invalid_redirect_uri(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  json_t * j_response = json_pack("[ss]", CLIENT_REDIRECT_URI "/error", "https://example.com");
+  ulfius_set_json_body_response(response, 200, j_response);
+  json_decref(j_response);
+  return U_CALLBACK_CONTINUE;
+}
 
 START_TEST(test_oidc_registration_plugin_add_using_no_auth_scope)
 {
@@ -222,6 +255,49 @@ START_TEST(test_oidc_registration_plugin_add_using_no_auth_scope_resource_defaul
                                       "value",
                                         CLIENT_DEFAULT_VALUE_2,
                                         CLIENT_DEFAULT_VALUE_3);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_oidc_registration_plugin_add_using_no_auth_scope_subject_type_pairwise)
+{
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssssisisisosososososososos[]s[s]s{s{ss}s{s[ss]}s{s[s]}}}}",
+                                "module", PLUGIN_MODULE,
+                                "name", PLUGIN_NAME,
+                                "display_name", PLUGIN_DISPLAY_NAME,
+                                "enabled", json_true(),
+                                "parameters",
+                                  "iss", PLUGIN_ISS,
+                                  "subject-type", PLUGIN_PAIRWISE,
+                                  "jwt-type", PLUGIN_JWT_TYPE,
+                                  "jwt-key-size", PLUGIN_JWT_KEY_SIZE,
+                                  "key", PLUGIN_KEY,
+                                  "code-duration", PLUGIN_CODE_DURATION,
+                                  "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
+                                  "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
+                                  "allow-non-oidc", json_true(),
+                                  "auth-type-client-enabled", json_true(),
+                                  "auth-type-code-enabled", json_true(),
+                                  "auth-type-implicit-enabled", json_true(),
+                                  "auth-type-password-enabled", json_true(),
+                                  "auth-type-refresh-enabled", json_true(),
+                                  "request-uri-allow-https-non-secure", json_true(),
+                                  "register-client-allowed", json_true(),
+                                  "register-client-auth-scope",
+                                  "register-client-credentials-scope", PLUGIN_REGISTER_DEFAULT_SCOPE,
+                                  "register-default-properties",
+                                    CLIENT_DEFAULT_KEY_1, 
+                                      "value",
+                                      CLIENT_DEFAULT_VALUE_1,
+                                    CLIENT_DEFAULT_KEY_2,
+                                      "value",
+                                        CLIENT_DEFAULT_VALUE_2,
+                                        CLIENT_DEFAULT_VALUE_3,
+                                    CLIENT_DEFAULT_KEY_OVERWRITTEN,
+                                      "value",
+                                        CLIENT_DEFAULT_VALUE_OVERWRITTEN);
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -1192,6 +1268,136 @@ START_TEST(test_oidc_registration_no_auth_register_client_no_specify_resource)
 }
 END_TEST
 
+START_TEST(test_oidc_registration_no_auth_register_client_with_sector_identifier_uri)
+{
+  json_t * j_client;
+  struct _u_instance instance;
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7344, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", NULL, "siu", 0, &callback_sector_identifier_uri_valid, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", NULL, "siu/invalid_content_type", 0, &callback_sector_identifier_uri_invalid_content_type, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", NULL, "siu/invalid_format", 0, &callback_sector_identifier_uri_invalid_format, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", NULL, "siu/invalid_redirect_uri", 0, &callback_sector_identifier_uri_invalid_redirect_uri, NULL), U_OK);
+
+  char * key_pem = read_file(CB_KEY);
+  char * cert_pem = read_file(CB_CRT);
+  ck_assert_int_eq(ulfius_start_secure_framework(&instance, key_pem, cert_pem), U_OK);
+  o_free(key_pem);
+  o_free(cert_pem);
+
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
+                       "response_types",
+                         CLIENT_RESPONSE_TYPE_CODE,
+                         CLIENT_RESPONSE_TYPE_TOKEN,
+                         CLIENT_RESPONSE_TYPE_ID_TOKEN,
+                       "application_type", CLIENT_APP_TYPE_WEB,
+                       "contacts",
+                         CLIENT_CONTACT,
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "sector_identifier_uri", CLIENT_SECTOR_IDENTIFIER_URI_2);
+  ck_assert_ptr_ne(j_client, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
+                       "response_types",
+                         CLIENT_RESPONSE_TYPE_CODE,
+                         CLIENT_RESPONSE_TYPE_TOKEN,
+                         CLIENT_RESPONSE_TYPE_ID_TOKEN,
+                       "application_type", CLIENT_APP_TYPE_WEB,
+                       "contacts",
+                         CLIENT_CONTACT,
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "sector_identifier_uri", CLIENT_SECTOR_IDENTIFIER_URI_3);
+  ck_assert_ptr_ne(j_client, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
+                       "response_types",
+                         CLIENT_RESPONSE_TYPE_CODE,
+                         CLIENT_RESPONSE_TYPE_TOKEN,
+                         CLIENT_RESPONSE_TYPE_ID_TOKEN,
+                       "application_type", CLIENT_APP_TYPE_WEB,
+                       "contacts",
+                         CLIENT_CONTACT,
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "sector_identifier_uri", CLIENT_SECTOR_IDENTIFIER_URI);
+  ck_assert_ptr_ne(j_client, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 200, j_client, NULL, NULL), 1);
+  json_decref(j_client);
+
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
+                       "response_types",
+                         CLIENT_RESPONSE_TYPE_CODE,
+                         CLIENT_RESPONSE_TYPE_TOKEN,
+                         CLIENT_RESPONSE_TYPE_ID_TOKEN,
+                       "application_type", CLIENT_APP_TYPE_WEB,
+                       "contacts",
+                         CLIENT_CONTACT,
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "sector_identifier_uri", CLIENT_SECTOR_IDENTIFIER_URI);
+  ck_assert_ptr_ne(j_client, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 200, j_client, NULL, NULL), 1);
+  json_decref(j_client);
+
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -1219,6 +1425,9 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_registration_plugin_add_using_no_auth_scope_resource_default);
   tcase_add_test(tc_core, test_oidc_registration_no_auth_register_client_specify_resource_ignored);
   tcase_add_test(tc_core, test_oidc_registration_no_auth_register_client_no_specify_resource);
+  tcase_add_test(tc_core, test_oidc_revocation_plugin_remove);
+  tcase_add_test(tc_core, test_oidc_registration_plugin_add_using_no_auth_scope_subject_type_pairwise);
+  tcase_add_test(tc_core, test_oidc_registration_no_auth_register_client_with_sector_identifier_uri);
   tcase_add_test(tc_core, test_oidc_revocation_plugin_remove);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
