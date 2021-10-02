@@ -748,7 +748,8 @@ class GlwdOIDCParams extends Component {
         locations: [],
         actions: [],
         datatypes: [],
-        enriched: []
+        enriched: [],
+        privileges: []
       };
       this.setState({mod: mod, newRar: ""});
     }
@@ -1851,6 +1852,20 @@ class GlwdOIDCParams extends Component {
                         onChange={(e) => this.changeRarParameter(e, type, "enriched")}
                         placeholder={i18next.t("admin.mod-glwd-rar-enriched-ph")}
                         value={rarType.enriched?rarType.enriched.join("\n"):""}>
+              </textarea>
+            </div>
+          </div>
+          <div className="form-group">
+            <div className="input-group mb-3">
+              <div className="input-group-prepend">
+                <span className="input-group-text">{i18next.t("admin.mod-glwd-rar-privileges")}
+                </span>
+              </div>
+              <textarea className="form-control"
+                        id={"mod-glwd-rar-privileges-"+type}
+                        onChange={(e) => this.changeRarParameter(e, type, "privileges")}
+                        placeholder={i18next.t("admin.mod-glwd-rar-privileges-ph")}
+                        value={rarType.privileges?rarType.privileges.join("\n"):""}>
               </textarea>
             </div>
           </div>

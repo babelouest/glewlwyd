@@ -109,8 +109,8 @@ class GrantScope extends Component {
       infoSomeScopeUnavailable = <div className="alert alert-info" role="alert">{i18next.t("login.info-some-scope-unavailable")}</div>
     }
     this.state.authDetails.forEach((curDetails, index) => {
-      var locationsList = [], actionsList = [], datatypesList = [], enrichedList = [];
-      var locationsJsx, actionsJsx, datatypesJsx, enrichedJsx, typeJsx = <h5>{i18next.t("login.grant-auth-details-type", {type: curDetails.type})}</h5>, descriptionJsx;
+      var locationsList = [], actionsList = [], datatypesList = [], enrichedList = [], privilegesList = [];
+      var locationsJsx, actionsJsx, datatypesJsx, enrichedJsx, privilegesJsx, typeJsx = <h5>{i18next.t("login.grant-auth-details-type", {type: curDetails.type})}</h5>, descriptionJsx;
       curDetails.locations.forEach((e, index) => {
         locationsList.push(
           <li className="list-group-item" key={index}>{e}</li>
@@ -150,6 +150,20 @@ class GrantScope extends Component {
           <h5>{i18next.t("login.grant-auth-details-datatypes")}</h5>
           <ul className="list-group">
             {datatypesList}
+          </ul>
+        </div>
+      }
+      curDetails.privileges.forEach((e, index) => {
+        privilegesList.push(
+          <li className="list-group-item" key={index}>{e}</li>
+        );
+      });
+      if (privilegesList.length) {
+        privilegesJsx =
+        <div>
+          <h5>{i18next.t("login.grant-auth-details-privileges")}</h5>
+          <ul className="list-group">
+            {privilegesList}
           </ul>
         </div>
       }
@@ -203,6 +217,7 @@ class GrantScope extends Component {
                 {locationsJsx}
                 {actionsJsx}
                 {datatypesJsx}
+                {privilegesJsx}
                 {enrichedJsx}
               </div>
             </div>
