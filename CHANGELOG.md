@@ -9,6 +9,8 @@ The `"Green Zone Release"`
 - Improve security when updating modules
 - Allow to force PKCE all the time or when use specified scopes
 - Implement [Client-Initiated Backchannel Authentication Flow](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html)
+- Improve IETF strict option in OIDC plugin by handlong signatures and encryption properties
+- User registration: suggest a new username when a username exists
 
 ## 2.5.4
 
