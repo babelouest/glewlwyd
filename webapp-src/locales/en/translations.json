@@ -1210,6 +1210,7 @@
     "register-username-create": "Create account",
     "register-username-error": "Username unavailable",
     "register-username-valid": "Username available",
+    "register-username-suggestion": "Suggestion: {{username}}",
     "register-profile-username-label": "Username",
     "register-name-label": "Full name",
     "register-name-ph": "e.g. Semias from Murias",
