@@ -1210,6 +1210,7 @@
     "register-username-checking": "Vérification",
     "register-username-create": "Créer le compte",
     "register-username-error": "Nom d'utilisateur non disponible",
+    "register-username-suggestion": "Suggestion: {{username}}",
     "register-username-valid": "Nom d'utilisateur disponible",
     "register-profile-username-label": "Nom d'utilisateur",
     "register-name-label": "Nom complet",
