@@ -270,6 +270,60 @@
       "forceShow": true,
       "label": "admin.client-backchannel_user_code_parameter",
       "listElements": ["no","yes"]
+    },{
+      "name": "request_object_signing_alg",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-request_object_signing_alg",
+      "listElements": ["HS256","HS384","HS512","RS256","RS384","RS512","ES256","ES384","ES512","PS256","PS384","PS512","EdDSA","ES256K"]
+    },{
+      "name": "request_object_encryption_enc",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-request_object_encryption_enc",
+      "listElements": ["A128CBC-HS256","A192CBC-HS384","A256CBC-HS512","A128GCM","A192GCM","A256GCM"]
+    },{
+      "name": "request_object_encryption_alg",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-request_object_encryption_alg",
+      "listElements": ["RSA1_5","RSA-OAEP","RSA-OAEP-256","A128KW","A192KW","A256KW","ECDH-ES","ECDH-ES+A128KW","ECDH-ES+A192KW","ECDH-ES+A256KW","A128GCMKW","A192GCMKW","A256GCMKW","PBES2-HS256+A128KW","PBES2-HS384+A192KW","PBES2-HS512+A256KW"]
+    },{
+      "name": "token_endpoint_signing_alg",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-token_endpoint_signing_alg",
+      "listElements": ["HS256","HS384","HS512","RS256","RS384","RS512","ES256","ES384","ES512","PS256","PS384","PS512","EdDSA","ES256K"]
+    },{
+      "name": "token_endpoint_encryption_enc",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-token_endpoint_encryption_enc",
+      "listElements": ["A128CBC-HS256","A192CBC-HS384","A256CBC-HS512","A128GCM","A192GCM","A256GCM"]
+    },{
+      "name": "token_endpoint_encryption_alg",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-token_endpoint_encryption_alg",
+      "listElements": ["RSA1_5","RSA-OAEP","RSA-OAEP-256","A128KW","A192KW","A256KW","ECDH-ES","ECDH-ES+A128KW","ECDH-ES+A192KW","ECDH-ES+A256KW","A128GCMKW","A192GCMKW","A256GCMKW","PBES2-HS256+A128KW","PBES2-HS384+A192KW","PBES2-HS512+A256KW"]
+    },{
+      "name": "backchannel_authentication_request_signing_alg",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-backchannel_authentication_request_signing_alg",
+      "listElements": ["HS256","HS384","HS512","RS256","RS384","RS512","ES256","ES384","ES512","PS256","PS384","PS512","EdDSA","ES256K"]
+    },{
+      "name": "backchannel_authentication_request_encryption_enc",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-backchannel_authentication_request_encryption_enc",
+      "listElements": ["A128CBC-HS256","A192CBC-HS384","A256CBC-HS512","A128GCM","A192GCM","A256GCM"]
+    },{
+      "name": "backchannel_authentication_request_encryption_alg",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-backchannel_authentication_request_encryption_alg",
+      "listElements": ["RSA1_5","RSA-OAEP","RSA-OAEP-256","A128KW","A192KW","A256KW","ECDH-ES","ECDH-ES+A128KW","ECDH-ES+A192KW","ECDH-ES+A256KW","A128GCMKW","A192GCMKW","A256GCMKW","PBES2-HS256+A128KW","PBES2-HS384+A192KW","PBES2-HS512+A256KW"]
     }]
   },
   "defaultScheme": "",
