@@ -127,7 +127,7 @@ const char privkey_1_pem[] = "-----BEGIN RSA PRIVATE KEY-----\n"\
                             "ul3FEZYnTcth2ODSFMb0a0SCuDGkGI8BDI+/4n6+4wIlAXtc8Vt9Ko8WxJjCK/v2\n"\
                             "Ae9x05eknWZj0JxuyoAjPtJApp0pt25omJwZr/lY5i8T0cL6dDF5nZcA9hN//eo=\n"\
                             "-----END RSA PRIVATE KEY-----\n";
-const char pubkey_2_jwk[] = "{\"keys\":[{\"kty\":\"RSA\",\"n\":\"AKLIxChfF0q7zzxrkGFM_Qu8Cx76Cd1AEd76RxXSWvmfzfUk12FYeu1LQpzO0VvpmzuwbhRZk9Vgdo5y51s2k83ht4QvwOOIpr9rlNZrTiILeYhYheTfl2bPaKbDPY1rFFtifLhTytaIXZ18VpBQH-30ycdnyWzu34MYzORiKu7NX-72z2gGjUx_IeIZxkSrloPp9eRSo2JhlAw-UkI-XcjK22cf_A2xptF1__60Ly393lz9q9xxRU21p_R3IpmRenLKoZoeIOEbeTrtiXGZa5K20qPIMjjXpWfpLyiicAGRtPuj7uPjIEh3cBntQdo1JnkNRAHpbCFrywKwh-HP7dyWBXQ3vXzH1HKH-gt2rHjGmvB1tVh4Wh_Hq0pz-ZJRdDRoYUVgdZWEglkP4U_coL5UyUPL_9qHBW7GVIvJUOmy_S3OKYh8jDniv9qM5td8JPThxny8SmBLc7OVeqHr4A-3WidK7Uv4dtYi4Lqirea8Hu0c8t26DMVZTRhbsdEUj-a846BkP75LrkoloMsoJkyIXnjlf8AnbOiA0e7Ns64AcUL7FCtYrKeWIqR1aOADrj8TXMRp8S5LdAwOwDmAsIdo54FVpoyoM0mBtBB4oi1K18jBaeMYckwS0kKVmZ-uaPI8AAas1raHTIq7GbGsCBooc17cNNL0USQ51aROxEFF\",\"e\":\"AQAB\",\"kid\":\"" KID_PUB "\"}]}";
+const char pubkey_2_jwk[] = "{\"kty\":\"RSA\",\"n\":\"AKLIxChfF0q7zzxrkGFM_Qu8Cx76Cd1AEd76RxXSWvmfzfUk12FYeu1LQpzO0VvpmzuwbhRZk9Vgdo5y51s2k83ht4QvwOOIpr9rlNZrTiILeYhYheTfl2bPaKbDPY1rFFtifLhTytaIXZ18VpBQH-30ycdnyWzu34MYzORiKu7NX-72z2gGjUx_IeIZxkSrloPp9eRSo2JhlAw-UkI-XcjK22cf_A2xptF1__60Ly393lz9q9xxRU21p_R3IpmRenLKoZoeIOEbeTrtiXGZa5K20qPIMjjXpWfpLyiicAGRtPuj7uPjIEh3cBntQdo1JnkNRAHpbCFrywKwh-HP7dyWBXQ3vXzH1HKH-gt2rHjGmvB1tVh4Wh_Hq0pz-ZJRdDRoYUVgdZWEglkP4U_coL5UyUPL_9qHBW7GVIvJUOmy_S3OKYh8jDniv9qM5td8JPThxny8SmBLc7OVeqHr4A-3WidK7Uv4dtYi4Lqirea8Hu0c8t26DMVZTRhbsdEUj-a846BkP75LrkoloMsoJkyIXnjlf8AnbOiA0e7Ns64AcUL7FCtYrKeWIqR1aOADrj8TXMRp8S5LdAwOwDmAsIdo54FVpoyoM0mBtBB4oi1K18jBaeMYckwS0kKVmZ-uaPI8AAas1raHTIq7GbGsCBooc17cNNL0USQ51aROxEFF\",\"e\":\"AQAB\",\"kid\":\"" KID_PUB "\"}";
 const char privkey_2_jwk[] = "{\"kty\":\"RSA\",\"n\":\"AKLIxChfF0q7zzxrkGFM_Qu8Cx76Cd1AEd76RxXSWvmfzfUk12FYeu1LQpzO0VvpmzuwbhRZk9Vgdo5y51s2k83ht4QvwOOIpr9rlNZrTiILeYhYheTfl2bPaKbDPY1rFFtifLhTytaIXZ18VpBQH-30ycdnyWzu34MYzORiKu7NX-72z2gGjUx_IeIZxkSrloPp9eRSo2JhlAw-UkI-XcjK22cf_A2xptF1__60Ly393lz9q9xxRU21p_R3IpmRenLKoZoeIOEbeTrtiXGZa5K20qPIMjjXpWfpLyiicAGRtPuj7uPjIEh3cBntQdo1JnkNRAHpbCFrywKwh-HP7dyWBXQ3vXzH1HKH-gt2rHjGmvB1tVh4Wh_Hq0pz-ZJRdDRoYUVgdZWEglkP4U_coL5UyUPL_9qHBW7GVIvJUOmy_S3OKYh8jDniv9qM5td8JPThxny8SmBLc7OVeqHr4A-3WidK7Uv4dtYi4Lqirea8Hu0c8t26DMVZTRhbsdEUj-a846BkP75LrkoloMsoJkyIXnjlf8AnbOiA0e7Ns64AcUL7FCtYrKeWIqR1aOADrj8TXMRp8S5LdAwOwDmAsIdo54FVpoyoM0mBtBB4oi1K18jBaeMYckwS0kKVmZ-uaPI8AAas1raHTIq7GbGsCBooc17cNNL0USQ51aROxEFF\",\"e\":\"AQAB\",\"d\":\"IHgLKEJPUwjC_To3QjEpB_4p-bPF4-uzpNYm96NNohzN5-fBThln64znbH-UItEltXIrgsObSSREgYVJwFfSg25SPHuJ7diD6gp7VYlxvDittRRzIIO4nzkflqO600pYdSHf3qRYARKSGaeDXKWeuMfqt2tsMd4zluKLe8JY7ejpCbERDZ7A8FErYP3jHi9bhlRUR4Z0MFtmPErx_WSTMEnGGXu3usOEkqMGvLcT8giBIes3LHErcaSaK5jXvenWkq74LNV1mXDxbV-T2qTPYCQ3P5Pe8JeS1nccgO5liOqXPtoj_DCBb_Li2UkJqYyQb_TFa9wzRTdK9u5fLBtdRiDzBIPWNNbhCuD2eaAEkTSW3XXUzmPSlrGC-CMUVemVOWRntPhEFgXiZz36-HMiXefX1gtYQPBVAQI1nPDYppjAGj7u-sVvtQqsKB4AQzc4ULq_ttHiJrw_TGbFSQ0QCPJ2HvnFTeBWixKICvYiRXMo7_kdUBKH7_P_jaoomzWbX39phfWOWC62UN29HjQM3GN1bkMjdolrKo5l8uBdQD_GVAMqdkund6Jw8fpuLmuhFAeOtoMVAsW2Id-CGy_jsi19cbgRHrVHe4_vu3yvvCuQ5MP0Rndivg9JvLM-Lj83JsbWfUG2UEhPycgTPFcwuTKstTciXQSXLKLFetrcsME\",\"p\":\"AM_5kF7BoxK7Tvus6_se2ExfT3lKwE7EzbTAwEhpW1CBi13AsK-bBNZXE-83zF0usZz9DUJ5BRyH4LATxMDCkp0Vza0tdu00778VOgs8wzuStbu6uoc1L7g4Y9ImYwkqLQQuA4IN_RtSdzeWGOA_to7UuMlrHSHQrlAf0npev9ceo35pBUoC0sVAE8nF9Ov2_lkgBRkuNGeQfp_IHyhdjr7r3U4tbja_E-BEFzGUUBvIYJ-1kXKx7ipmpyP47FrOUojjwKyn-xPpu4JYLrvQ-XaiA-SiO5AlBhn_iIXEb3FqBdnWQ0xSoss31jYnVVo-7muR_sBm5UmA0PtVDtrBcSs\",\"q\":\"AMhfwi-RxWW1JgP4oHPBTeOrw9TkFpVahRF5PAeZICuoVxIgPZUaNP1Hhuv6Otb4I7SNRdQioxz6jVGogpk11QV6llsV4skanAgRqWT8ds7qdAsXAhkFCmD6mAaqGs4qVLUSGrMq_KhqBcCdt2pvhy3yuIQmv_iWSJ-XJlsXbWW8DSNa2mpefenKB5dt35zKZp5xzn_UVUoC4HK7c2ZaLvs0KuUE8pgaAdAFogk7emgQfXXK9TPPRd9jullPZTx3UQ104mShX6Hz_vfuTUipPBFefzSm3OKtXM5ejkDQdYmooxnVtR20SujjJ_0D0j66v-G9L8dd-_HcNUgsp57Kf08\",\"qi\":\"bNq-mJjepyGY5mXTlzAcBFY5HqlDx-Ssapo1waswzRhnXKB15zqU-LQfotBBp7pKxWCytwgOmV2toZf_R0Sqinohh52D0mCvTYldTB5tUpKpnhEGZuOZ24BTtrqNAw2X5NRKTflttiVJgfrMCSDIR8NNX4awGB8iUNZLyn4e5Zjfa7cLCwn7ngINpU1TaCY9gbHSsYcVcpX7ro6Vr93ox6cRtapBWElzAPXDF0YKMiKzA4fTqVtbamVHz64k7xgWVwdWXDbdqOWOtI0weeeHMy2Y9Ktz7eXh0rK0fG1c35qJ-V61oXdyfapmI7uGH2R5J-Q2LDJw_3AMGb6oCsPfdQ\",\"dp\":\"I8yQlk78lA_b86R7ZlmT3-mUE4vTeHuV8SQwtQY1qrDx3Wx6vW-QsJiCnO3c5rlP53cDnkqYn6Wf_o8YkhmsBRAovEOUMhanohu0RxTpgkqpr6vfycBU-3_xZs4mxAAXiZ2mCu__foF-dfoHRCqTcRiaykj-1cBHERG5OEkw-oWSnQLU3z2HLF7wSQ4jL67vb0X8uq3iZWVQ9o4LFvaryJ9vE7LsQs43TKZL28Ps2ituvm8Rn02TcocDBEUn4iWbvWZ-1vl_VZkpJrGpMbkyB8KxqtxmJlTJLRZ4WJZMnJgkc6_XG78puJNe8yloHsWwYqHZ2SKdGz7qOikVCoC7yw\",\"dq\":\"atXb1L81b8BBT7a93lo_7FdF5_nhLKsB7kokvqxfYce0_R4hl6FMhYsgnitiOgI-D2OPysbZD3dr6BEf6Q6x0OUGy_QEYlOExCyelBCkTDjnvI38-Vgdq42Rh2QlPK2HUrAfek4-PpGhFY1CIUbr3Yzf4t5CVwnSGP1fXwxDsQ2uN56WfEZ7fi7RE2Vq589nHa3ye2e8PeUAxUu7AOSuzhOHl2qm6oBbXQ3T0nZbEqdQLYEUchZe2_fxgPL7OF0p4zHiD-OW-OP-mzT9EfPh6iTnUCxz84yZwhLaaCZ9tPMsW3b9xaO-mSOcy6PA8t9htbvIgNVUoyVVZ3EfwmOXsw\",\"kid\":\"" KID_PUB "\"}";
 const char pubkey_2_pem[] = "-----BEGIN PUBLIC KEY-----\n"\
                             "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAosjEKF8XSrvPPGuQYUz9\n"\
@@ -849,6 +849,18 @@ START_TEST(test_oidc_request_jwt_add_client_pubkey)
 }
 END_TEST
 
+START_TEST(test_oidc_request_jwt_add_client_pubkey_ietf)
+{
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] ss so ss ss ss}", "client_id", CLIENT_PUBKEY_ID, "client_secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "pubkey", pubkey_1_pem, "enabled", json_true(), "request_object_signing_alg", "RS256", "request_object_encryption_alg", "RSA-OAEP-256", "request_object_encryption_enc", "A256CBC-HS512");
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  json_t * j_param = json_pack("{ss}", "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_PUBKEY_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_param);
+}
+END_TEST
+
 START_TEST(test_oidc_request_jwt_add_client_jwks)
 {
   json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] so so}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "jwks", json_loads(pubkey_1_jwk, JSON_DECODE_ANY, NULL), "enabled", json_true());
@@ -875,7 +887,7 @@ END_TEST
 
 START_TEST(test_oidc_request_jwt_add_client_multiple)
 {
-  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] so ss so ss}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "enabled", json_true(), "pubkey", pubkey_2_pem, "jwks", json_loads(pubkey_2_jwk, JSON_DECODE_ANY, NULL), "jwks_uri", "http://localhost:7462/jwks");
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] so ss so ss}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "enabled", json_true(), "pubkey", pubkey_2_pem, "jwks", json_pack("{s[o]}", "keys", json_loads(pubkey_2_jwk, JSON_DECODE_ANY, NULL)), "jwks_uri", "http://localhost:7462/jwks");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -2556,6 +2568,8 @@ START_TEST(test_oidc_request_jwt_client_public_ietf_nested_error)
   o_free(url);
   o_free(request);
   o_free(jws_token);
+  json_decref(j_claims);
+  o_free(payload);
 }
 END_TEST
 
@@ -2594,6 +2608,96 @@ START_TEST(test_oidc_request_jwt_response_client_pubkey_ietf_ok)
 
   o_free(url);
   o_free(request);
+  r_jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_jwt_response_client_pubkey_ietf_nested_ok)
+{
+  jwt_t * jwt_request = NULL;
+  jwk_t * jwk_sign, * jwk_enc;
+  char * url, * request;
+  r_jwt_init(&jwt_request);
+  struct _u_instance instance;
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_ptr_ne(jwk_sign = r_jwk_quick_import(R_IMPORT_JSON_STR, privkey_1_jwk), NULL);
+  ck_assert_ptr_ne(jwk_enc = r_jwk_quick_import(R_IMPORT_JSON_STR, pubkey_2_jwk), NULL);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_request, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_enc_alg(jwt_request, R_JWA_ALG_RSA_OAEP_256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_enc(jwt_request, R_JWA_ENC_A256CBC), RHN_OK);
+  r_jwt_set_claim_str_value(jwt_request, "aud", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "response_type", RESPONSE_TYPE);
+  r_jwt_set_claim_str_value(jwt_request, "client_id", CLIENT_PUBKEY_ID);
+  r_jwt_set_claim_str_value(jwt_request, "redirect_uri", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
+  r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
+  r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
+  r_jwt_set_header_str_value(jwt_request, "typ", "oauth-authz-req+jwt");
+  r_jwt_set_header_str_value(jwt_request, "kid", KID_PUB);
+  request = r_jwt_serialize_nested(jwt_request, R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT, jwk_sign, 0, jwk_enc, 0);
+  ck_assert_ptr_ne(request, NULL);
+  
+  url = msprintf(SERVER_URI "/" PLUGIN_NAME "/auth?g_continue&request=%s&client_id="CLIENT_PUBKEY_ID, request);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "id_token="), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  o_free(url);
+  o_free(request);
+  r_jwk_free(jwk_sign);
+  r_jwk_free(jwk_enc);
+  r_jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_jwt_response_client_pubkey_ietf_nested_invalid_alg_enc)
+{
+  jwt_t * jwt_request = NULL;
+  jwk_t * jwk_sign, * jwk_enc;
+  char * url, * request;
+  r_jwt_init(&jwt_request);
+  struct _u_instance instance;
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_ptr_ne(jwk_sign = r_jwk_quick_import(R_IMPORT_JSON_STR, privkey_1_jwk), NULL);
+  ck_assert_ptr_ne(jwk_enc = r_jwk_quick_import(R_IMPORT_JSON_STR, pubkey_2_jwk), NULL);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_request, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_enc_alg(jwt_request, R_JWA_ALG_RSA_OAEP), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_enc(jwt_request, R_JWA_ENC_A128GCM), RHN_OK);
+  r_jwt_set_claim_str_value(jwt_request, "aud", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "response_type", RESPONSE_TYPE);
+  r_jwt_set_claim_str_value(jwt_request, "client_id", CLIENT_PUBKEY_ID);
+  r_jwt_set_claim_str_value(jwt_request, "redirect_uri", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
+  r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
+  r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
+  r_jwt_set_header_str_value(jwt_request, "typ", "oauth-authz-req+jwt");
+  r_jwt_set_header_str_value(jwt_request, "kid", KID_PUB);
+  request = r_jwt_serialize_nested(jwt_request, R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT, jwk_sign, 0, jwk_enc, 0);
+  ck_assert_ptr_ne(request, NULL);
+  
+  url = msprintf(SERVER_URI "/" PLUGIN_NAME "/auth?g_continue&request=%s&client_id="CLIENT_PUBKEY_ID, request);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  o_free(url);
+  o_free(request);
+  r_jwk_free(jwk_sign);
+  r_jwk_free(jwk_enc);
   r_jwt_free(jwt_request);
 }
 END_TEST
@@ -2778,6 +2882,45 @@ START_TEST(test_oidc_request_jwt_response_client_pubkey_ietf_invalid_typ)
   r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
   r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
   r_jwt_set_header_str_value(jwt_request, "typ", "error");
+  r_jwt_set_header_str_value(jwt_request, "kid", KID_PUB);
+  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
+  ck_assert_ptr_ne(request, NULL);
+  
+  url = msprintf(SERVER_URI "/" PLUGIN_NAME "/auth?g_continue&request=%s&client_id="CLIENT_PUBKEY_ID, request);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+
+  o_free(url);
+  o_free(request);
+  r_jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_request_jwt_response_client_pubkey_ietf_invalid_alg)
+{
+  jwt_t * jwt_request = NULL;
+  char * url, * request;
+  r_jwt_init(&jwt_request);
+  struct _u_instance instance;
+  
+  ck_assert_int_eq(ulfius_init_instance(&instance, 7462, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", "/jwks", NULL, 0, &callback_jwks_ok, NULL), U_OK);
+  
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_request, R_JWA_ALG_RS512), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_request, privkey_1_jwk, NULL), RHN_OK);
+  r_jwt_set_claim_str_value(jwt_request, "aud", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "response_type", RESPONSE_TYPE);
+  r_jwt_set_claim_str_value(jwt_request, "client_id", CLIENT_PUBKEY_ID);
+  r_jwt_set_claim_str_value(jwt_request, "redirect_uri", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
+  r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
+  r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
+  r_jwt_set_header_str_value(jwt_request, "typ", "oauth-authz-req+jwt");
   r_jwt_set_header_str_value(jwt_request, "kid", KID_PUB);
   request = r_jwt_serialize_signed(jwt_request, NULL, 0);
   ck_assert_ptr_ne(request, NULL);
@@ -3033,18 +3176,21 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_request_jwt_delete_client_pubkey);
   tcase_add_test(tc_core, test_oidc_request_jwt_delete_module_request_signed);
   tcase_add_test(tc_core, test_oidc_request_jwt_add_module_request_signed_rsa_ietf_strict);
-  tcase_add_test(tc_core, test_oidc_request_jwt_add_client_pubkey);
+  tcase_add_test(tc_core, test_oidc_request_jwt_add_client_pubkey_ietf);
   tcase_add_test(tc_core, test_oidc_request_jwt_client_public_ietf_response_ok);
   tcase_add_test(tc_core, test_oidc_request_jwt_client_public_ietf_response_invalid_client_id);
   tcase_add_test(tc_core, test_oidc_request_jwt_client_public_ietf_response_invalid_client_id_2);
   tcase_add_test(tc_core, test_oidc_request_jwt_client_public_ietf_response_invalid_typ);
   tcase_add_test(tc_core, test_oidc_request_jwt_client_public_ietf_nested_error);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_ietf_ok);
+  tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_ietf_nested_ok);
+  tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_ietf_nested_invalid_alg_enc);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_ietf_invalid_client_id);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_ietf_invalid_signature);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_ietf_unsigned);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_ietf_invalid_client_id_2);
   tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_ietf_invalid_typ);
+  tcase_add_test(tc_core, test_oidc_request_jwt_response_client_pubkey_ietf_invalid_alg);
   tcase_add_test(tc_core, test_oidc_request_uri_ietf_jwt_response_ok);
   tcase_add_test(tc_core, test_oidc_request_uri_ietf_jwt_response_invalid_client_id);
   tcase_add_test(tc_core, test_oidc_request_uri_ietf_jwt_response_invalid_client_id_2);
