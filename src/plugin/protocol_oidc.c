@@ -102,6 +102,10 @@
 #define GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION_FLAG                256
 #define GLEWLWYD_AUTHORIZATION_TYPE_CIBA_FLAG                                512
 
+#define GLEWLWYD_AUTH_REQUEST_OBJECT 1
+#define GLEWLWYD_AUTH_TOKEN_ENDPOINT 2
+#define GLEWLWYD_AUTH_CIBA           3
+
 #define GLEWLWYD_CLIENT_AUTH_METHOD_NONE            0
 #define GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_POST     1
 #define GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_BASIC    2
@@ -4565,7 +4569,97 @@ static char * get_request_from_uri(struct _oidc_config * config, const char * re
   return str_request;
 }
 
-static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * jwt, const char * client_id, const char * ip_source) {
+static int is_enc_alg_valid(struct _oidc_config * config, json_t * j_client, jwt_t * jwt, int auth_type) {
+  int is_valid = 1;
+  jwa_alg alg = r_jwt_get_enc_alg(jwt);
+  jwa_enc enc = r_jwt_get_enc(jwt);
+  
+  switch (auth_type) {
+    case GLEWLWYD_AUTH_REQUEST_OBJECT:
+      if (json_object_get(j_client, "request_object_encryption_alg") != NULL && json_object_get(j_client, "request_object_encryption_enc") != NULL) {
+        if (r_str_to_jwa_alg(json_string_value(json_object_get(j_client, "request_object_encryption_alg"))) != alg || r_str_to_jwa_enc(json_string_value(json_object_get(j_client, "request_object_encryption_enc"))) != enc) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "is_enc_alg_valid - Error request_object_encryption_alg or request_object_encryption_alg invalid for client %s", json_string_value(json_object_get(j_client, "client_id")));
+          is_valid = 0;
+        }
+      } else if (json_object_get(config->j_params, "request-parameter-ietf-strict") == json_true()) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "is_sig_alg_valid - Error client %s has no property request_object_encryption_alg or request_object_encryption_enc", json_string_value(json_object_get(j_client, "client_id")));
+        is_valid = 0;
+      }
+      break;
+    case GLEWLWYD_AUTH_TOKEN_ENDPOINT:
+      if (json_object_get(j_client, "token_endpoint_encryption_alg") != NULL && json_object_get(j_client, "token_endpoint_encryption_enc") != NULL) {
+        if (r_str_to_jwa_alg(json_string_value(json_object_get(j_client, "token_endpoint_encryption_alg"))) != alg || r_str_to_jwa_enc(json_string_value(json_object_get(j_client, "token_endpoint_encryption_enc"))) != enc) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "is_enc_alg_valid - Error token_endpoint_encryption_alg or token_endpoint_encryption_enc invalid for client %s", json_string_value(json_object_get(j_client, "client_id")));
+          is_valid = 0;
+        }
+      } else if (json_object_get(config->j_params, "request-parameter-ietf-strict") == json_true()) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "is_sig_alg_valid - Error client %s has no property token_endpoint_encryption_alg or token_endpoint_encryption_enc", json_string_value(json_object_get(j_client, "client_id")));
+        is_valid = 0;
+      }
+      break;
+    case GLEWLWYD_AUTH_CIBA:
+      if (json_object_get(j_client, "backchannel_authentication_request_encryption_alg") != NULL && json_object_get(j_client, "backchannel_authentication_request_encryption_enc") != NULL) {
+        if (r_str_to_jwa_alg(json_string_value(json_object_get(j_client, "backchannel_authentication_request_encryption_alg"))) != alg || r_str_to_jwa_enc(json_string_value(json_object_get(j_client, "backchannel_authentication_request_encryption_enc"))) != enc) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "is_enc_alg_valid - Error backchannel_authentication_request_encryption_alg or backchannel_authentication_request_encryption_enc invalid for client %s", json_string_value(json_object_get(j_client, "client_id")));
+          is_valid = 0;
+        }
+      } else if (json_object_get(config->j_params, "request-parameter-ietf-strict") == json_true()) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "is_sig_alg_valid - Error client %s has no property backchannel_authentication_request_encryption_alg or backchannel_authentication_request_encryption_enc", json_string_value(json_object_get(j_client, "client_id")));
+        is_valid = 0;
+      }
+      break;
+    default:
+      is_valid = 0;
+      break;
+  }
+  return is_valid;
+}
+
+static int is_sig_alg_valid(struct _oidc_config * config, json_t * j_client, jwa_alg alg, int auth_type) {
+  int is_valid = 1;
+  
+  switch (auth_type) {
+    case GLEWLWYD_AUTH_REQUEST_OBJECT:
+      if (json_object_get(j_client, "request_object_signing_alg") != NULL) {
+        if (r_str_to_jwa_alg(json_string_value(json_object_get(j_client, "request_object_signing_alg"))) != alg) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "is_sig_alg_valid - Error request_object_signing_alg invalid for client %s", json_string_value(json_object_get(j_client, "client_id")));
+          is_valid = 0;
+        }
+      } else if (json_object_get(config->j_params, "request-parameter-ietf-strict") == json_true()) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "is_sig_alg_valid - Error client %s has no property request_object_signing_alg", json_string_value(json_object_get(j_client, "client_id")));
+        is_valid = 0;
+      }
+      break;
+    case GLEWLWYD_AUTH_TOKEN_ENDPOINT:
+      if (json_object_get(j_client, "token_endpoint_signing_alg") != NULL) {
+        if (r_str_to_jwa_alg(json_string_value(json_object_get(j_client, "token_endpoint_signing_alg"))) == alg) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "is_sig_alg_valid - Error token_endpoint_signing_alg invalid for client %s", json_string_value(json_object_get(j_client, "client_id")));
+          is_valid = 0;
+        }
+      } else if (json_object_get(config->j_params, "request-parameter-ietf-strict") == json_true()) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "is_sig_alg_valid - Error client %s has no property token_endpoint_signing_alg", json_string_value(json_object_get(j_client, "client_id")));
+        is_valid = 0;
+      }
+      break;
+    case GLEWLWYD_AUTH_CIBA:
+      if (json_object_get(j_client, "backchannel_authentication_request_signing_alg") != NULL) {
+        if (r_str_to_jwa_alg(json_string_value(json_object_get(j_client, "backchannel_authentication_request_signing_alg"))) == alg) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "is_sig_alg_valid - Error backchannel_authentication_request_signing_alg invalid for client %s", json_string_value(json_object_get(j_client, "client_id")));
+          is_valid = 0;
+        }
+      } else if (json_object_get(config->j_params, "request-parameter-ietf-strict") == json_true()) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "is_sig_alg_valid - Error client %s has no property backchannel_authentication_request_signing_alg", json_string_value(json_object_get(j_client, "client_id")));
+        is_valid = 0;
+      }
+      break;
+    default:
+      is_valid = 0;
+      break;
+  }
+  return is_valid;
+}
+
+static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * jwt, const char * client_id, int auth_type, const char * ip_source) {
   json_t * j_client, * j_return;
   jwks_t * jwks = NULL;
   jwk_t * jwk = NULL;
@@ -4576,81 +4670,91 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
   if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
     // Client must have a non empty client_secret, a public key available, a jwks, or be non confidential
     alg = r_jwt_get_sign_alg(jwt);
-    if (json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
-      if (alg == R_JWA_ALG_HS256 || alg == R_JWA_ALG_HS384 || alg == R_JWA_ALG_HS512) {
-        if (json_string_length(json_object_get(json_object_get(j_client, "client"), "client_secret"))) {
-          if (r_jwk_init(&jwk) == RHN_OK &&
-              r_jwk_import_from_symmetric_key(jwk, (const unsigned char *)json_string_value(json_object_get(json_object_get(j_client, "client"), "client_secret")), json_string_length(json_object_get(json_object_get(j_client, "client"), "client_secret"))) == RHN_OK &&
-              r_jwt_verify_signature(jwt, jwk, 0) == RHN_OK) {
-            j_return = json_pack("{sisOsi}", "result", G_OK, "client", json_object_get(j_client, "client"), "client_auth_method", GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_JWT);
+    if (r_jwt_get_type(jwt) == R_JWT_TYPE_SIGN || is_enc_alg_valid(config, json_object_get(j_client, "client"), jwt, auth_type)) {
+      if (alg == R_JWA_ALG_NONE || is_sig_alg_valid(config, json_object_get(j_client, "client"), alg, auth_type)) {
+        if (json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
+          if (alg == R_JWA_ALG_HS256 || alg == R_JWA_ALG_HS384 || alg == R_JWA_ALG_HS512) {
+            if (json_string_length(json_object_get(json_object_get(j_client, "client"), "client_secret"))) {
+              if (r_jwk_init(&jwk) == RHN_OK &&
+                  r_jwk_import_from_symmetric_key(jwk, (const unsigned char *)json_string_value(json_object_get(json_object_get(j_client, "client"), "client_secret")), json_string_length(json_object_get(json_object_get(j_client, "client"), "client_secret"))) == RHN_OK &&
+                  r_jwt_verify_signature(jwt, jwk, 0) == RHN_OK) {
+                j_return = json_pack("{sisOsi}", "result", G_OK, "client", json_object_get(j_client, "client"), "client_auth_method", GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_JWT);
+              } else {
+                y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt has an invalid signature (client_secret), origin: %s", ip_source);
+                y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+                j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+                config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+                config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+              }
+              r_jwk_free(jwk);
+            } else {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - client has no attribute 'client_secret', origin: %s", ip_source);
+              y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+              j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+            }
+          } else if (alg == R_JWA_ALG_ES256 || alg == R_JWA_ALG_ES384 || alg == R_JWA_ALG_ES512 || alg == R_JWA_ALG_RS256 || alg == R_JWA_ALG_RS384 || alg == R_JWA_ALG_RS512 || alg == R_JWA_ALG_PS256 || alg == R_JWA_ALG_PS384 || alg == R_JWA_ALG_PS512 || alg == R_JWA_ALG_EDDSA) {
+            if (json_string_length(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))) && o_strlen(kid)) {
+              if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_uri(jwks, json_string_value(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))), config->x5u_flags) == RHN_OK) {
+                if ((jwk = r_jwks_get_by_kid(jwks, kid)) == NULL) {
+                  y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from jwks_uri, origin: %s", ip_source);
+                }
+              }
+              r_jwks_free(jwks);
+            } else if (json_is_object(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks-parameter")))) && o_strlen(kid)) {
+              if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_json_t(jwks, json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks-parameter")))) == RHN_OK) {
+                if ((jwk = r_jwks_get_by_kid(jwks, kid)) == NULL) {
+                  y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from jwks, origin: %s", ip_source);
+                }
+              }
+              r_jwks_free(jwks);
+            } else if (json_string_length(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-pubkey-parameter"))))) {
+              if (r_jwk_init(&jwk) != RHN_OK || r_jwk_import_from_pem_der(jwk, R_X509_TYPE_PUBKEY, R_FORMAT_PEM, (const unsigned char *)json_string_value(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-pubkey-parameter")))), json_string_length(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-pubkey-parameter"))))) != RHN_OK) {
+                y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from client, origin: %s", ip_source);
+                r_jwk_free(jwk);
+                jwk = NULL;
+              }
+            }
+            if (jwk != NULL) {
+              if (r_jwt_verify_signature(jwt, jwk, 0) == RHN_OK) {
+                j_return = json_pack("{sisOsi}", "result", G_OK, "client", json_object_get(j_client, "client"), "client_auth_method", GLEWLWYD_CLIENT_AUTH_METHOD_PRIVATE_KEY_JWT);
+              } else {
+                y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt has an invalid signature (pubkey)", ip_source);
+                y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+                j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+                config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+              }
+              r_jwk_free(jwk);
+            } else {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - invalid pubkey, origin: %s", ip_source);
+              y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+              j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+            }
           } else {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt has an invalid signature (client_secret), origin: %s", ip_source);
+            y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt has unsupported algorithm: %s, origin: %s", r_jwa_alg_to_str(alg), ip_source);
             y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
             j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
             config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
-            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
           }
-          r_jwk_free(jwk);
         } else {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - client has no attribute 'client_secret', origin: %s", ip_source);
-          y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
-          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
-        }
-      } else if (alg == R_JWA_ALG_ES256 || alg == R_JWA_ALG_ES384 || alg == R_JWA_ALG_ES512 || alg == R_JWA_ALG_RS256 || alg == R_JWA_ALG_RS384 || alg == R_JWA_ALG_RS512 || alg == R_JWA_ALG_PS256 || alg == R_JWA_ALG_PS384 || alg == R_JWA_ALG_PS512 || alg == R_JWA_ALG_EDDSA) {
-        if (json_string_length(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))) && o_strlen(kid)) {
-          if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_uri(jwks, json_string_value(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))), config->x5u_flags) == RHN_OK) {
-            if ((jwk = r_jwks_get_by_kid(jwks, kid)) == NULL) {
-              y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from jwks_uri, origin: %s", ip_source);
-            }
-          }
-          r_jwks_free(jwks);
-        } else if (json_is_object(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks-parameter")))) && o_strlen(kid)) {
-          if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_json_t(jwks, json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks-parameter")))) == RHN_OK) {
-            if ((jwk = r_jwks_get_by_kid(jwks, kid)) == NULL) {
-              y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from jwks, origin: %s", ip_source);
-            }
-          }
-          r_jwks_free(jwks);
-        } else if (json_string_length(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-pubkey-parameter"))))) {
-          if (r_jwk_init(&jwk) != RHN_OK || r_jwk_import_from_pem_der(jwk, R_X509_TYPE_PUBKEY, R_FORMAT_PEM, (const unsigned char *)json_string_value(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-pubkey-parameter")))), json_string_length(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-pubkey-parameter"))))) != RHN_OK) {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from client, origin: %s", ip_source);
-            r_jwk_free(jwk);
-            jwk = NULL;
-          }
-        }
-        if (jwk != NULL) {
-          if (r_jwt_verify_signature(jwt, jwk, 0) == RHN_OK) {
-            j_return = json_pack("{sisOsi}", "result", G_OK, "client", json_object_get(j_client, "client"), "client_auth_method", GLEWLWYD_CLIENT_AUTH_METHOD_PRIVATE_KEY_JWT);
+          // jwt_header must have alg set to "none"
+          if (alg == R_JWA_ALG_NONE) {
+            j_return = json_pack("{sisOsi}", "result", G_OK, "client", json_object_get(j_client, "client"), "client_auth_method", GLEWLWYD_CLIENT_AUTH_METHOD_NONE);
           } else {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt has an invalid signature (pubkey)", ip_source);
+            y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt alg is not none although the client is not confidential, origin: %s", ip_source);
             y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
             j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
             config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
           }
-          r_jwk_free(jwk);
-        } else {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - invalid pubkey, origin: %s", ip_source);
-          y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
-          j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt has unsupported algorithm: %s, origin: %s", r_jwa_alg_to_str(alg), ip_source);
         y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
       }
     } else {
-      // jwt_header must have alg set to "none"
-      if (alg == R_JWA_ALG_NONE) {
-        j_return = json_pack("{sisOsi}", "result", G_OK, "client", json_object_get(j_client, "client"), "client_auth_method", GLEWLWYD_CLIENT_AUTH_METHOD_NONE);
-      } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt alg is not none although the client is not confidential, origin: %s", ip_source);
-        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
-        j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
-      }
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
   } else if (check_result_value(j_client, G_ERROR_NOT_FOUND) || check_result_value(j_client, G_ERROR_PARAM)) {
     y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
@@ -4769,7 +4873,7 @@ static json_t * validate_jwt_auth_request(struct _oidc_config * config, const ch
     if (r_jwt_init(&jwt) == RHN_OK && r_jwt_advanced_parse(jwt, jwt_request, R_PARSE_UNSIGNED, 0) == RHN_OK && decrypt_request_token(config, jwt) == G_OK) {
       // request or request_uri must not be present in the payload
       if (r_jwt_get_claim_str_value(jwt, "request") == NULL && r_jwt_get_claim_str_value(jwt, "request_uri") == NULL) {
-        j_result = verify_request_signature(config, jwt, r_jwt_get_claim_str_value(jwt, "client_id"), ip_source);
+        j_result = verify_request_signature(config, jwt, r_jwt_get_claim_str_value(jwt, "client_id"), GLEWLWYD_AUTH_REQUEST_OBJECT, ip_source);
         if (check_result_value(j_result, G_OK)) {
           if (json_object_get(config->j_params, "request-parameter-ietf-strict") == json_true()) {
             if (0 != o_strcmp(client_id, r_jwt_get_claim_str_value(jwt, "client_id")) || 0 != o_strcmp("oauth-authz-req+jwt", r_jws_get_header_str_value(jwt->jws, "typ"))) {
@@ -4817,7 +4921,7 @@ static json_t * validate_ciba_jwt_request(struct _oidc_config * config, const ch
     if (r_jwt_init(&jwt) == RHN_OK && r_jwt_advanced_parse(jwt, jwt_request, R_PARSE_NONE, 0) == RHN_OK && decrypt_request_token(config, jwt) == G_OK) {
       // request or request_uri must not be present in the payload
       if (r_jwt_get_claim_str_value(jwt, "request") == NULL && r_jwt_get_claim_str_value(jwt, "request_uri") == NULL) {
-        j_result = verify_request_signature(config, jwt, r_jwt_get_claim_str_value(jwt, "iss"), ip_source);
+        j_result = verify_request_signature(config, jwt, r_jwt_get_claim_str_value(jwt, "iss"), GLEWLWYD_AUTH_CIBA, ip_source);
         if (check_result_value(j_result, G_OK)) {
           // Verify mandatory claims
           if (o_strlen(client_id = r_jwt_get_claim_str_value(jwt, "iss"))) {
@@ -5286,13 +5390,17 @@ static json_t * validate_jwt_assertion_request(struct _oidc_config * config, con
   jwt_t * jwt = NULL;
   char * endpoint, * plugin_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, config->name);
   json_int_t j_now = (json_int_t)time(NULL);
+  int auth_type = GLEWLWYD_AUTH_TOKEN_ENDPOINT;
 
   endpoint = msprintf("%s/%s", plugin_url, url);
 
   if (jwt_assertion != NULL) {
     if (r_jwt_init(&jwt) == RHN_OK && r_jwt_advanced_parse(jwt, jwt_assertion, R_PARSE_NONE, 0) == RHN_OK && decrypt_request_token(config, jwt) == G_OK) {
       // Extract header and payload
-      j_result = verify_request_signature(config, jwt, r_jwt_get_claim_str_value(jwt, "iss"), ip_source);
+      if (0 == o_strcmp(url, "ciba")) {
+        auth_type = GLEWLWYD_AUTH_CIBA;
+      }
+      j_result = verify_request_signature(config, jwt, r_jwt_get_claim_str_value(jwt, "iss"), auth_type, ip_source);
       if (check_result_value(j_result, G_OK)) {
         if (0 == o_strcmp(r_jwt_get_claim_str_value(jwt, "iss"), r_jwt_get_claim_str_value(jwt, "sub")) &&
             r_jwt_get_claim_int_value(jwt, "exp") > 0 &&
@@ -6098,10 +6206,14 @@ static int is_redirect_uri_valid_without_credential(const char * redirect_uri) {
 }
 
 static json_t * is_client_registration_valid(struct _oidc_config * config, json_t * j_registration, const char * client_id) {
-  json_t * j_error = NULL, * j_return, * j_element = NULL;
+  json_t * j_error = NULL, * j_return, * j_element = NULL, * j_resp = NULL, * j_info = r_library_info_json_t();
   size_t index = 0;
   jwks_t * jwks = NULL;
   const char * resource = NULL;
+  struct _u_request req;
+  struct _u_response resp;
+  memset(&req, 0, sizeof(struct _u_request));
+  memset(&resp, 0, sizeof(struct _u_response));
 
   do {
     if (!json_is_object(j_registration)) {
@@ -6250,10 +6362,66 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         }
       }
     }
-    // TODO: fix rules according to https://openid.net/specs/openid-connect-core-1_0.html#PairwiseAlg
-    if (json_object_get(j_registration, "sector_identifier_uri") != NULL && 0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "sector_identifier_uri")), o_strlen("https://"))) {
+    if (json_object_get(j_registration, "sector_identifier_uri") != NULL &&
+        0 != o_strncmp("https://", json_string_value(json_object_get(j_registration, "sector_identifier_uri")), o_strlen("https://"))) {
       j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "sector_identifier_uri is optional and must be an https:// uri");
       break;
+    }
+    if (json_object_get(j_registration, "sector_identifier_uri") != NULL &&
+        0 == o_strcmp("pairwise", json_string_value(json_object_get(config->j_params, "subject-type")))) {
+      if (ulfius_init_request(&req) == U_OK && ulfius_init_response(&resp) == U_OK) {
+        if (ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET",
+                                                U_OPT_HTTP_URL, json_string_value(json_object_get(j_registration, "sector_identifier_uri")),
+                                                U_OPT_CHECK_SERVER_CERTIFICATE, (json_object_get(config->j_params, "request-uri-allow-https-non-secure")==json_true())?0:1,
+                                                U_OPT_CHECK_PROXY_CERTIFICATE, (json_object_get(config->j_params, "request-uri-allow-https-non-secure")==json_true())?0:1,
+                                                U_OPT_NONE) == U_OK) {
+          if (ulfius_send_http_request(&req, &resp) == U_OK) {
+            if (resp.status >= 200 && resp.status < 300) {
+              if ((j_resp = ulfius_get_json_body_response(&resp, NULL)) != NULL && json_is_array(j_resp)) {
+                json_array_foreach(j_resp, index, j_element) {
+                  if (!is_redirect_uri_valid_without_credential(json_string_value(j_element)) ||
+                     (0 != o_strncmp("https://", json_string_value(j_element), o_strlen("https://")) &&
+                      0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_1, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_1)) &&
+                      0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_2, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_2)) &&
+                      0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_3, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_3)))) {
+                    if (j_error == NULL) {
+                      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "a redirect_uri pointed by sector_identifier_uri must be a 'https://' uri or a 'http://localhost' uri without credentials");
+                    }
+                  }
+                }
+                if (j_error != NULL) {
+                  break;
+                }
+                json_array_foreach(json_object_get(j_registration, "redirect_uris"), index, j_element) {
+                  if (!json_array_has_string(j_resp, json_string_value(j_element))) {
+                    if (j_error == NULL) {
+                      j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "a redirect_uri isn't present in the array pointed by sector_identifier_uri");
+                    }
+                  }
+                }
+              } else {
+                j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid sector_identifier_uri response data, must be a JSON array");
+                break;
+              }
+            } else {
+              j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid sector_identifier_uri response status");
+              break;
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "is_client_registration_valid - Error ulfius_send_http_request");
+            j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid sector_identifier_uri");
+            break;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "is_client_registration_valid - Error ulfius_set_request_properties");
+          j_error = json_pack("{ss}", "error", "server_error");
+          break;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "is_client_registration_valid - Error initializing request or response objects");
+        j_error = json_pack("{ss}", "error", "server_error");
+        break;
+      }
     }
     if (json_object_get(config->j_params, "register-resource-specify-allowed") == json_true()) {
       if (json_object_get(j_registration, "resource") != NULL) {
@@ -6309,10 +6477,103 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         break;
       }
     }
-    // TODO manage *_signing_alg, *_encryption_alg and *_encryption_enc
-    // (* as in id_token, userinfo, request_object, token_endpoint, backchannel_authentication_request)
-    // as per https://openid.net/specs/openid-connect-registration-1_0.html#ClientMetadata
+    if (json_object_get(j_registration, "request_object_signing_alg") != NULL) {
+      if (!json_string_length(json_object_get(j_registration, "request_object_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "request_object_signing_alg")))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_request_object_signing_alg", "request_object_signing_alg is invalid");
+        break;
+      }
+      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jws"), "alg"), json_string_value(json_object_get(j_registration, "request_object_signing_alg")))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_request_object_signing_alg", "request_object_signing_alg not supported");
+        break;
+      }
+    }
+    if (json_object_get(j_registration, "request_object_encryption_alg") != NULL) {
+      if (!json_string_length(json_object_get(j_registration, "request_object_encryption_alg"))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_request_object_encryption_alg", "request_object_encryption_alg is invalid");
+        break;
+      }
+      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "alg"), json_string_value(json_object_get(j_registration, "request_object_encryption_alg")))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_request_object_encryption_alg", "request_object_encryption_alg not supported");
+        break;
+      }
+    }
+    if (json_object_get(j_registration, "request_object_encryption_enc") != NULL) {
+      if (!json_string_length(json_object_get(j_registration, "request_object_encryption_enc"))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_request_object_encryption_enc", "request_object_encryption_enc is invalid");
+        break;
+      }
+      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "enc"), json_string_value(json_object_get(j_registration, "request_object_encryption_enc")))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_request_object_encryption_enc", "request_object_encryption_enc not supported");
+        break;
+      }
+    }
+
+    if (json_object_get(j_registration, "token_endpoint_signing_alg") != NULL) {
+      if (!json_string_length(json_object_get(j_registration, "token_endpoint_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "token_endpoint_signing_alg")))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_token_endpoint_signing_alg", "token_endpoint_signing_alg is invalid");
+        break;
+      }
+      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jws"), "alg"), json_string_value(json_object_get(j_registration, "token_endpoint_signing_alg")))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_token_endpoint_signing_alg", "token_endpoint_signing_alg not supported");
+        break;
+      }
+    }
+    if (json_object_get(j_registration, "token_endpoint_encryption_alg") != NULL) {
+      if (!json_string_length(json_object_get(j_registration, "token_endpoint_encryption_alg"))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_token_endpoint_encryption_alg", "token_endpoint_encryption_alg is invalid");
+        break;
+      }
+      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "alg"), json_string_value(json_object_get(j_registration, "token_endpoint_encryption_alg")))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_token_endpoint_encryption_alg", "token_endpoint_encryption_alg not supported");
+        break;
+      }
+    }
+    if (json_object_get(j_registration, "token_endpoint_encryption_enc") != NULL) {
+      if (!json_string_length(json_object_get(j_registration, "token_endpoint_encryption_enc"))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_token_endpoint_encryption_enc", "token_endpoint_encryption_enc is invalid");
+        break;
+      }
+      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "enc"), json_string_value(json_object_get(j_registration, "token_endpoint_encryption_enc")))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_token_endpoint_encryption_enc", "token_endpoint_encryption_enc not supported");
+        break;
+      }
+    }
+
+    if (json_object_get(j_registration, "backchannel_authentication_request_signing_alg") != NULL) {
+      if (!json_string_length(json_object_get(j_registration, "backchannel_authentication_request_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "backchannel_authentication_request_signing_alg")))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_backchannel_authentication_request_signing_alg", "backchannel_authentication_request_signing_alg is invalid");
+        break;
+      }
+      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jws"), "alg"), json_string_value(json_object_get(j_registration, "backchannel_authentication_request_signing_alg")))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_backchannel_authentication_request_signing_alg", "backchannel_authentication_request_signing_alg not supported");
+        break;
+      }
+    }
+    if (json_object_get(j_registration, "backchannel_authentication_request_encryption_alg") != NULL) {
+      if (!json_string_length(json_object_get(j_registration, "backchannel_authentication_request_encryption_alg"))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_backchannel_authentication_request_encryption_alg", "backchannel_authentication_request_encryption_alg is invalid");
+        break;
+      }
+      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "alg"), json_string_value(json_object_get(j_registration, "backchannel_authentication_request_encryption_alg")))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_backchannel_authentication_request_encryption_alg", "backchannel_authentication_request_encryption_alg not supported");
+        break;
+      }
+    }
+    if (json_object_get(j_registration, "backchannel_authentication_request_encryption_enc") != NULL) {
+      if (!json_string_length(json_object_get(j_registration, "backchannel_authentication_request_encryption_enc"))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_backchannel_authentication_request_encryption_enc", "backchannel_authentication_request_encryption_enc is invalid");
+        break;
+      }
+      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "enc"), json_string_value(json_object_get(j_registration, "backchannel_authentication_request_encryption_enc")))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_backchannel_authentication_request_encryption_enc", "backchannel_authentication_request_encryption_enc not supported");
+        break;
+      }
+    }
   } while(0);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  json_decref(j_resp);
+  json_decref(j_info);
 
   if (j_error != NULL) {
     j_return = json_pack("{siso}", "result", G_ERROR_PARAM, "error", j_error);
@@ -10302,8 +10563,8 @@ static json_t * check_ciba_login_hint(struct _oidc_config * config, json_t * j_c
   
   // expected values in the login_hint: sub or username, nothing else can be used as an identifier
   if (o_strlen(login_hint_token)) {
-    if ((j_login_hint_token = r_jwt_quick_parse(login_hint_token, R_PARSE_NONE, 0)) != NULL) {
-      j_result = verify_request_signature(config, j_login_hint_token, json_string_value(json_object_get(j_client, "client_id")), ip_source);
+    if ((j_login_hint_token = r_jwt_quick_parse(login_hint_token, R_PARSE_NONE, 0)) != NULL && decrypt_request_token(config, j_login_hint_token) == G_OK) {
+      j_result = verify_request_signature(config, j_login_hint_token, json_string_value(json_object_get(j_client, "client_id")), GLEWLWYD_AUTH_CIBA, ip_source);
       if (check_result_value(j_result, G_OK)) {
         j_login_hint = r_jwt_get_full_claims_json_t(j_login_hint_token);
         if (!json_string_length(json_object_get(j_login_hint, "username")) && !json_string_length(json_object_get(j_login_hint, "sub"))) {
