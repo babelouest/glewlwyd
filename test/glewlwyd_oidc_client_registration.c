@@ -1366,7 +1366,7 @@ START_TEST(test_oidc_registration_no_auth_register_client_with_sector_identifier
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 200, j_client, NULL, NULL), 1);
   json_decref(j_client);
 
-  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssssss}",
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssssssssssss}",
                        "client_name", CLIENT_NAME,
                        "redirect_uris", CLIENT_REDIRECT_URI,
                        "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
@@ -1388,7 +1388,10 @@ START_TEST(test_oidc_registration_no_auth_register_client_with_sector_identifier
                        "client_uri", CLIENT_URI,
                        "policy_uri", CLIENT_POLICY_URI,
                        "tos_uri", CLIENT_TOS_URI,
-                       "sector_identifier_uri", CLIENT_SECTOR_IDENTIFIER_URI);
+                       "sector_identifier_uri", CLIENT_SECTOR_IDENTIFIER_URI,
+                       "request_object_signing_alg", "RS256",
+                       "request_object_encryption_alg", "RSA-OAEP-256",
+                       "request_object_encryption_enc", "A128CBC-HS256");
   ck_assert_ptr_ne(j_client, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 200, j_client, NULL, NULL), 1);
   json_decref(j_client);
