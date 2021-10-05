@@ -111,6 +111,12 @@
       "label": "admin.client-authorization-type",
       "listElements": ["code","token","id_token","password","none","client_credentials","refresh_token","delete_token","device_authorization","urn:openid:params:grant-type:ciba"]
     },{
+      "name": "response_mode",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-response_mode",
+      "listElements": ["query","fragment","form_post","query.jwt","fragment.jwt","form_post.jwt"]
+    },{
       "name": "sector_identifier_uri",
       "edit": true,
       "forceShow": true,

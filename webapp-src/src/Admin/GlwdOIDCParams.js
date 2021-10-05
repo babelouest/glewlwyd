@@ -58,6 +58,7 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["pkce-allowed"]!==undefined?"":(props.mod.parameters["pkce-allowed"] = false);
     props.mod.parameters["pkce-method-plain-allowed"]!==undefined?"":(props.mod.parameters["pkce-method-plain-allowed"] = false);
     props.mod.parameters["pkce-required"]!==undefined?"":(props.mod.parameters["pkce-required"] = false);
+    props.mod.parameters["pkce-required-public-client"]!==undefined?"":(props.mod.parameters["pkce-required-public-client"] = false);
     props.mod.parameters["pkce-scopes"]!==undefined?"":(props.mod.parameters["pkce-scopes"] = []);
     props.mod.parameters["introspection-revocation-allowed"]!==undefined?"":(props.mod.parameters["introspection-revocation-allowed"] = false);
     props.mod.parameters["introspection-revocation-auth-scope"]!==undefined?"":(props.mod.parameters["introspection-revocation-auth-scope"] = []);
@@ -137,6 +138,12 @@ class GlwdOIDCParams extends Component {
         "oauth-ciba-email-defaultLang": true
       };
     }
+    props.mod.parameters["oauth-fapi-check-all"]!==undefined?"":(props.mod.parameters["oauth-fapi-check-all"] = false);
+    props.mod.parameters["oauth-fapi-allow-jarm"]!==undefined?"":(props.mod.parameters["oauth-fapi-allow-jarm"] = false);
+    props.mod.parameters["oauth-fapi-verify-nbf"]!==undefined?"":(props.mod.parameters["oauth-fapi-verify-nbf"] = false);
+    props.mod.parameters["oauth-fapi-allow-restrict-alg"]!==undefined?"":(props.mod.parameters["oauth-fapi-allow-restrict-alg"] = false);
+    props.mod.parameters["oauth-fapi-restrict-alg"]!==undefined?"":(props.mod.parameters["oauth-fapi-restrict-alg"] = []);
+    props.mod.parameters["oauth-fapi-allow-multiple-kid"]!==undefined?"":(props.mod.parameters["oauth-fapi-allow-multiple-kid"] = false);
 
     this.state = {
       config: props.config,
@@ -262,6 +269,7 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["pkce-allowed"]!==undefined?"":(nextProps.mod.parameters["pkce-allowed"] = false);
     nextProps.mod.parameters["pkce-method-plain-allowed"]!==undefined?"":(nextProps.mod.parameters["pkce-method-plain-allowed"] = false);
     nextProps.mod.parameters["pkce-required"]!==undefined?"":(nextProps.mod.parameters["pkce-required"] = false);
+    nextProps.mod.parameters["pkce-required-public-client"]!==undefined?"":(nextProps.mod.parameters["pkce-required-public-client"] = false);
     nextProps.mod.parameters["pkce-scopes"]!==undefined?"":(nextProps.mod.parameters["pkce-scopes"] = []);
     nextProps.mod.parameters["introspection-revocation-allowed"]!==undefined?"":(nextProps.mod.parameters["introspection-revocation-allowed"] = false);
     nextProps.mod.parameters["introspection-revocation-auth-scope"]!==undefined?"":(nextProps.mod.parameters["introspection-revocation-auth-scope"] = []);
@@ -341,6 +349,12 @@ class GlwdOIDCParams extends Component {
         "oauth-ciba-email-defaultLang": true
       };
     }
+    nextProps.mod.parameters["oauth-fapi-check-all"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-check-all"] = false);
+    nextProps.mod.parameters["oauth-fapi-allow-jarm"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-allow-jarm"] = false);
+    nextProps.mod.parameters["oauth-fapi-verify-nbf"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-verify-nbf"] = false);
+    nextProps.mod.parameters["oauth-fapi-allow-restrict-alg"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-allow-restrict-alg"] = false);
+    nextProps.mod.parameters["oauth-fapi-restrict-alg"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-restrict-alg"] = []);
+    nextProps.mod.parameters["oauth-fapi-allow-multiple-kid"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-allow-multiple-kid"] = false);
 
     this.setState({
       config: nextProps.config,
@@ -1174,6 +1188,21 @@ class GlwdOIDCParams extends Component {
       });
     }
   }
+  
+  addFapiRestrictAlg(alg) {
+    if (this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf(alg) === -1) {
+      var mod = this.state.mod;
+      mod.parameters["oauth-fapi-restrict-alg"].push(alg);
+      this.setState({mod: mod});
+    }
+  }
+  
+  deleteFapiRestrictAlg(e, index) {
+    e.preventDefault();
+    var mod = this.state.mod;
+    mod.parameters["oauth-fapi-restrict-alg"].splice(index, 1);
+    this.setState({mod: mod});
+  }
 
   render() {
     var keyJsx, certJsx, scopeOverrideList = [], scopeList = [], additionalParametersList = [], claimsList = [], x5cList = [], addressClaim;
@@ -1945,6 +1974,21 @@ class GlwdOIDCParams extends Component {
       langList.push(<div key={(index*2)+1} className="dropdown-divider"></div>);
     });
     var emailTemplate = this.state.mod.parameters['oauth-ciba-email-templates'][this.state.currentLang]||{};
+
+    var fapiRestrictAlgList = [];
+    if (this.state.mod.parameters["oauth-fapi-check-all"]) {
+      ["RSA-OAEP","RSA-OAEP-256","A128KW","A192KW","A256KW","ECDH-ES","ECDH-ES+A128KW","ECDH-ES+A192KW","ECDH-ES+A256KW","A128GCMKW","A192GCMKW","A256GCMKW","PBES2-HS256+A128KW","PBES2-HS384+A192KW","PBES2-HS512+A256KW"].forEach((alg, index) => {
+        fapiRestrictAlgList.push(
+          <span className="badge badge-primary btn-icon-right">{alg}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span>
+        );
+      });
+    } else {
+      this.state.mod.parameters["oauth-fapi-restrict-alg"].forEach((alg, index) => {
+        fapiRestrictAlgList.push(
+          <a href="#" onClick={(e) => this.deleteFapiRestrictAlg(e, index)} key={index}><span className="badge badge-primary btn-icon-right">{alg}<span className="badge badge-light btn-icon-right"><i className="fas fa-times"></i></span></span></a>
+        );
+      });
+    }
 
     return (
       <div>
@@ -2787,6 +2831,10 @@ class GlwdOIDCParams extends Component {
                   <input type="checkbox" className="form-check-input" id="mod-glwd-pkce-required" onChange={(e) => this.toggleParam(e, "pkce-required")} checked={this.state.mod.parameters["pkce-required"]} disabled={!this.state.mod.parameters["pkce-allowed"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-pkce-required">{i18next.t("admin.mod-glwd-pkce-required")}</label>
                 </div>
+                <div className="form-group form-check">
+                  <input type="checkbox" className="form-check-input" id="mod-glwd-pkce-required-public-client" onChange={(e) => this.toggleParam(e, "pkce-required-public-client")} checked={this.state.mod.parameters["pkce-required-public-client"]} disabled={!this.state.mod.parameters["pkce-allowed"]||this.state.mod.parameters["pkce-required"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-pkce-required-public-client">{i18next.t("admin.mod-glwd-pkce-required-public-client")}</label>
+                </div>
               </div>
             </div>
           </div>
@@ -3562,6 +3610,96 @@ class GlwdOIDCParams extends Component {
                               disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"]}></textarea>
                   </div>
                   {this.state.errorList["oauth-ciba-email-body-pattern"]?<span className="error-input">{this.state.errorList["oauth-ciba-email-body-pattern"]}</span>:""}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="accordion" id="accordionFAPI">
+          <div className="card">
+            <div className="card-header" id="addParamCard">
+              <h2 className="mb-0">
+                <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseFAPI" aria-expanded="true" aria-controls="collapseFAPI">
+                  {this.state.errorList["oauth-fapi"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
+                  {i18next.t("admin.mod-glwd-oauth-fapi-title")}
+                </button>
+              </h2>
+            </div>
+            <div id="collapseFAPI" className="collapse" aria-labelledby="addParamCard" data-parent="#accordionFAPI">
+              <div className="card-body">
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-fapi-check-all"
+                         onChange={(e) => this.toggleParam(e, "oauth-fapi-check-all")}
+                         checked={this.state.mod.parameters["oauth-fapi-check-all"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-fapi-check-all">{i18next.t("admin.mod-glwd-oauth-fapi-check-all")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-fapi-allow-jarm"
+                         onChange={(e) => this.toggleParam(e, "oauth-fapi-allow-jarm")}
+                         disabled={this.state.mod.parameters["oauth-fapi-check-all"]}
+                         checked={this.state.mod.parameters["oauth-fapi-check-all"]||this.state.mod.parameters["oauth-fapi-allow-jarm"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-fapi-allow-jarm">{i18next.t("admin.mod-glwd-oauth-fapi-allow-jarm")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-fapi-verify-nbf"
+                         onChange={(e) => this.toggleParam(e, "oauth-fapi-verify-nbf")}
+                         disabled={this.state.mod.parameters["oauth-fapi-check-all"]}
+                         checked={this.state.mod.parameters["oauth-fapi-check-all"]||this.state.mod.parameters["oauth-fapi-verify-nbf"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-fapi-verify-nbf">{i18next.t("admin.mod-glwd-oauth-fapi-verify-nbf")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-fapi-allow-restrict-alg"
+                         onChange={(e) => this.toggleParam(e, "oauth-fapi-allow-restrict-alg")}
+                         disabled={this.state.mod.parameters["oauth-fapi-check-all"]}
+                         checked={this.state.mod.parameters["oauth-fapi-check-all"]||this.state.mod.parameters["oauth-fapi-allow-restrict-alg"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-fapi-allow-restrict-alg">{i18next.t("admin.mod-glwd-oauth-fapi-allow-restrict-alg")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-oauth-fapi-restrict-alg">{i18next.t("admin.mod-glwd-oauth-fapi-restrict-alg")}</label>
+                    </div>
+                    <div className="dropdown">
+                      <button className="btn btn-secondary dropdown-toggle" type="button" id="mod-mod-glwd-oauth-fapi-restrict-alg" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled={this.state.mod.parameters["oauth-fapi-check-all"]}>
+                        {i18next.t("admin.mod-glwd-oauth-fapi-restrict-alg-list")}
+                      </button>
+                      <div className="dropdown-menu" aria-labelledby="mod-glwd-name-scope-claim">
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("RSA-OAEP")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("RSA-OAEP")}>RSA-OAEP</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("RSA-OAEP-256")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("RSA-OAEP-256")}>RSA-OAEP-256</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("A128KW")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("A128KW")}>A128KW</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("A192KW")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("A192KW")}>A192KW</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("A256KW")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("A256KW")}>A256KW</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("ECDH-ES")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("ECDH-ES")}>ECDH-ES</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("ECDH-ES+A128KW")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("ECDH-ES+A128KW")}>ECDH-ES+A128KW</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("ECDH-ES+A192KW")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("ECDH-ES+A192KW")}>ECDH-ES+A192KW</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("ECDH-ES+A256KW")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("ECDH-ES+A256KW")}>ECDH-ES+A256KW</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("A128GCMKW")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("A128GCMKW")}>A128GCMKW</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("A192GCMKW")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("A192GCMKW")}>A192GCMKW</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("A256GCMKW")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("A256GCMKW")}>A256GCMKW</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("PBES2-HS256+A128KW")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("PBES2-HS256+A128KW")}>PBES2-HS256+A128KW</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("PBES2-HS384+A192KW")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("PBES2-HS384+A192KW")}>PBES2-HS384+A192KW</a>
+                        <a className={"dropdown-item"+(this.state.mod.parameters["oauth-fapi-restrict-alg"].indexOf("PBES2-HS512+A256KW")!==-1?" disabled":"")} href="#" onClick={(e) => this.addFapiRestrictAlg("PBES2-HS512+A256KW")}>PBES2-HS512+A256KW</a>
+                      </div>
+                    </div>
+                    {fapiRestrictAlgList}
+                  </div>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-fapi-allow-multiple-kid"
+                         onChange={(e) => this.toggleParam(e, "oauth-fapi-allow-multiple-kid")}
+                         disabled={this.state.mod.parameters["oauth-fapi-check-all"]}
+                         checked={this.state.mod.parameters["oauth-fapi-check-all"]||this.state.mod.parameters["oauth-fapi-allow-multiple-kid"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-fapi-allow-multiple-kid">{i18next.t("admin.mod-glwd-oauth-fapi-allow-multiple-kid")}</label>
                 </div>
               </div>
             </div>
