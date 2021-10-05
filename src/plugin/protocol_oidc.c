@@ -106,6 +106,13 @@
 #define GLEWLWYD_AUTH_TOKEN_ENDPOINT 2
 #define GLEWLWYD_AUTH_CIBA           3
 
+#define GLEWLWYD_RESPONSE_MODE_QUERY         1
+#define GLEWLWYD_RESPONSE_MODE_FRAGMENT      2
+#define GLEWLWYD_RESPONSE_MODE_FORM_POST     3
+#define GLEWLWYD_RESPONSE_MODE_QUERY_JWT     4
+#define GLEWLWYD_RESPONSE_MODE_FRAGMENT_JWT  5
+#define GLEWLWYD_RESPONSE_MODE_FORM_POST_JWT 6
+
 #define GLEWLWYD_CLIENT_AUTH_METHOD_NONE            0
 #define GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_POST     1
 #define GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_BASIC    2
@@ -262,10 +269,25 @@ static int str_has_valid_charset(const char * str, const char * charset) {
 }
 
 /**
+ * return true if the JSON array has a element matching value
+ */
+static int json_array_has_string(json_t * j_array, const char * value) {
+  json_t * j_element = NULL;
+  size_t index = 0;
+
+  json_array_foreach(j_array, index, j_element) {
+    if (json_is_string(j_element) && 0 == o_strcmp(value, json_string_value(j_element))) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/**
  * verify input parameters for the plugin instance
  */
 static json_t * check_parameters (json_t * j_params) {
-  json_t * j_element = NULL, * j_return = NULL, * j_error = json_array(), * j_scope, * j_rar_type, * j_property = NULL, * j_template = NULL;
+  json_t * j_element = NULL, * j_return = NULL, * j_error = json_array(), * j_scope, * j_rar_type, * j_property = NULL, * j_template = NULL, * j_allowed_algs = NULL;
   size_t index = 0, indexScope = 0;
   const char * key = NULL;
   int ret = G_OK, has_openid = 0;
@@ -782,6 +804,14 @@ static json_t * check_parameters (json_t * j_params) {
           ret = G_ERROR_PARAM;
         }
       }
+      if (json_object_get(j_params, "pkce-required") != NULL && !json_is_boolean(json_object_get(j_params, "pkce-required"))) {
+        json_array_append_new(j_error, json_string("Property 'pkce-required' is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "pkce-required-public-client") != NULL && !json_is_boolean(json_object_get(j_params, "pkce-required-public-client"))) {
+        json_array_append_new(j_error, json_string("Property 'pkce-required-public-client' is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
     }
     if (json_object_get(j_params, "introspection-revocation-allowed") != NULL && !json_is_boolean(json_object_get(j_params, "introspection-revocation-allowed"))) {
       json_array_append_new(j_error, json_string("Property 'introspection-revocation-allowed' is optional and must be a boolean"));
@@ -1171,6 +1201,40 @@ static json_t * check_parameters (json_t * j_params) {
           }
         }
       }
+      if (json_object_get(j_params, "oauth-fapi-check-all") != NULL && !json_is_boolean(json_object_get(j_params, "oauth-fapi-check-all"))) {
+        json_array_append_new(j_error, json_string("oauth-fapi-check-all is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "oauth-fapi-allow-jarm") != NULL && !json_is_boolean(json_object_get(j_params, "oauth-fapi-allow-jarm"))) {
+        json_array_append_new(j_error, json_string("oauth-fapi-allow-jarm is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "oauth-fapi-verify-nbf") != NULL && !json_is_boolean(json_object_get(j_params, "oauth-fapi-verify-nbf"))) {
+        json_array_append_new(j_error, json_string("oauth-fapi-verify-nbf is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "oauth-fapi-allow-restrict-alg") != NULL && !json_is_boolean(json_object_get(j_params, "oauth-fapi-allow-restrict-alg"))) {
+        json_array_append_new(j_error, json_string("oauth-fapi-allow-restrict-alg is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "oauth-fapi-allow-restrict-alg") == json_true()) {
+        if (json_object_get(j_params, "oauth-fapi-restrict-alg") == NULL || !json_array_size(json_object_get(j_params, "oauth-fapi-restrict-alg"))) {
+          json_array_append_new(j_error, json_string("oauth-fapi-restrict-alg is mandatory and must be an array of strings"));
+          ret = G_ERROR_PARAM;
+        } else {
+          j_allowed_algs = json_pack("[sssssssssssssss]", "RSA-OAEP", "RSA-OAEP-256", "A128KW", "A192KW", "A256KW", "ECDH-ES", "ECDH-ES+A128KW", "ECDH-ES+A192KW", "ECDH-ES+A256KW", "A128GCMKW", "A192GCMKW", "A256GCMKW", "PBES2-HS256+A128KW", "PBES2-HS384+A192KW", "PBES2-HS512+A256KW");
+          json_array_foreach(json_object_get(j_params, "oauth-fapi-restrict-alg"), index, j_element) {
+            if (!json_string_length(j_element) || !json_array_has_string(j_allowed_algs, json_string_value(j_element))) {
+              json_array_append_new(j_error, json_string("oauth-fapi-restrict-alg list invalid"));
+              ret = G_ERROR_PARAM;
+            }
+          }
+        }
+      }
+      if (json_object_get(j_params, "oauth-fapi-allow-multiple-kid") != NULL && !json_is_boolean(json_object_get(j_params, "oauth-fapi-allow-multiple-kid"))) {
+        json_array_append_new(j_error, json_string("oauth-fapi-allow-multiple-kid is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
     }
 
     if (json_array_size(j_error) && ret == G_ERROR_PARAM) {
@@ -1196,21 +1260,6 @@ static struct _u_map * get_map(const struct _u_request * request) {
   } else {
     return request->map_url;
   }
-}
-
-/**
- * return true if the JSON array has a element matching value
- */
-static int json_array_has_string(json_t * j_array, const char * value) {
-  json_t * j_element = NULL;
-  size_t index = 0;
-
-  json_array_foreach(j_array, index, j_element) {
-    if (json_is_string(j_element) && 0 == o_strcmp(value, json_string_value(j_element))) {
-      return 1;
-    }
-  }
-  return 0;
 }
 
 static int verify_resource(struct _oidc_config * config, const char * resource, json_t * j_client, const char * scope_list) {
@@ -3781,7 +3830,7 @@ static int validate_code_challenge(json_t * j_result_code, const char * code_ver
   return ret;
 }
 
-static int is_code_challenge_valid(struct _oidc_config * config, const char * scope, const char * code_challenge, const char * code_challenge_method, char * code_challenge_stored) {
+static int is_code_challenge_valid(struct _oidc_config * config, const char * scope, const char * code_challenge, const char * code_challenge_method, char * code_challenge_stored, int client_confidential) {
   int ret;
   char ** scope_list = NULL;
   size_t index = 0;
@@ -3820,7 +3869,7 @@ static int is_code_challenge_valid(struct _oidc_config * config, const char * sc
       ret = G_ERROR_PARAM;
     }
   } else {
-    if (json_object_get(config->j_params, "pkce-required") == json_true()) {
+    if (json_object_get(config->j_params, "pkce-required") == json_true() || (!client_confidential && json_object_get(config->j_params, "pkce-required-public-client") == json_true())) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc is_code_challenge_valid - pkce required");
       ret = G_ERROR_PARAM;
     } else if (json_array_size(json_object_get(config->j_params, "pkce-scopes"))) {
@@ -8790,7 +8839,7 @@ static json_t * validate_endpoint_auth(const struct _u_request * request,
     }
 
     // Check code_challenge if necessary
-    if ((res = is_code_challenge_valid(config, scope, code_challenge, code_challenge_method, code_challenge_stored)) == G_ERROR_PARAM) {
+    if ((res = is_code_challenge_valid(config, scope, code_challenge, code_challenge_method, code_challenge_stored, (json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()))) == G_ERROR_PARAM) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - code challenge invalid");
       if (form_post) {
         build_form_post_error_response(map, response, "error", "invalid_request", NULL);
@@ -10321,7 +10370,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
     }
 
     // Check code_challenge if necessary
-    if ((res = is_code_challenge_valid(config, scope, code_challenge, code_challenge_method, code_challenge_stored)) == G_ERROR_PARAM) {
+    if ((res = is_code_challenge_valid(config, scope, code_challenge, code_challenge_method, code_challenge_stored, (json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()))) == G_ERROR_PARAM) {
       response->status = 403;
       break;
     } else if (res != G_OK) {
@@ -14737,6 +14786,14 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
             j_return = json_pack("{si}", "result", G_ERROR);
             break;
           }
+        }
+        if (json_object_get(p_config->j_params, "oauth-fapi-check-all") == json_true()) {
+          json_object_set(p_config->j_params, "oauth-fapi-allow-jarm", json_true());
+          json_object_set(p_config->j_params, "oauth-fapi-verify-nbf", json_true());
+          json_object_set(p_config->j_params, "oauth-fapi-allow-restrict-alg", json_true());
+          json_object_del(p_config->j_params, "oauth-fapi-restrict-alg");
+          json_object_set_new(p_config->j_params, "oauth-fapi-restrict-alg", json_pack("[sssssssssssssss]", "RSA-OAEP", "RSA-OAEP-256", "A128KW", "A192KW", "A256KW", "ECDH-ES", "ECDH-ES+A128KW", "ECDH-ES+A192KW", "ECDH-ES+A256KW", "A128GCMKW", "A192GCMKW", "A256GCMKW", "PBES2-HS256+A128KW", "PBES2-HS384+A192KW", "PBES2-HS512+A256KW"));
+          json_object_set(p_config->j_params, "oauth-fapi-allow-multiple-kid", json_true());
         }
       }
       if (json_object_get(p_config->j_params, "oauth-rar-allowed") == json_true()) {
