@@ -21,7 +21,9 @@
 #define SCOPE2_REQUIRED "scope2"
 #define SCOPE_NOT_REQUIRED "scope3"
 #define CLIENT "client1_id"
+#define CLIENT_CONFIDENTIAL "client3_id"
 #define REDIRECT_URI "..%2f..%2ftest-oidc.html?param=client1_cb1"
+#define REDIRECT_URI_CONFIDENTIAL "..%2f..%2ftest-oidc.html?param=client3"
 #define REDIRECT_URI_DECODED "../../test-oidc.html?param=client1_cb1"
 #define ADMIN_USERNAME "admin"
 #define ADMIN_PASSWORD "password"
@@ -131,6 +133,35 @@ START_TEST(test_oidc_code_code_challenge_add_plugin_required)
                                   "pkce-allowed", json_true(),
                                   "pkce-method-plain-allowed", json_false(),
                                   "pkce-required", json_true());
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_oidc_code_code_challenge_add_plugin_required_public_client)
+{
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisosososososososo}}",
+                                "module", PLUGIN_MODULE,
+                                "name", PLUGIN_NAME,
+                                "display_name", PLUGIN_DISPLAY_NAME,
+                                "enabled", json_true(),
+                                "parameters",
+                                  "iss", PLUGIN_ISS,
+                                  "jwt-type", PLUGIN_JWT_TYPE,
+                                  "jwt-key-size", PLUGIN_JWT_KEY_SIZE,
+                                  "key", PLUGIN_KEY,
+                                  "code-duration", PLUGIN_CODE_DURATION,
+                                  "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
+                                  "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
+                                  "auth-type-client-enabled", json_true(),
+                                  "auth-type-code-enabled", json_true(),
+                                  "auth-type-implicit-enabled", json_true(),
+                                  "auth-type-password-enabled", json_true(),
+                                  "auth-type-refresh-enabled", json_true(),
+                                  "pkce-allowed", json_true(),
+                                  "pkce-method-plain-allowed", json_false(),
+                                  "pkce-required-public-client", json_true());
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -438,6 +469,12 @@ START_TEST(test_oidc_code_code_challenge_missing_ok)
 }
 END_TEST
 
+START_TEST(test_oidc_code_code_challenge_missing_confidential_ok)
+{
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT_CONFIDENTIAL "&redirect_uri=" REDIRECT_URI_CONFIDENTIAL "&state=xyzabcd&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
+}
+END_TEST
+
 START_TEST(test_oidc_code_code_challenge_missing_error)
 {
   ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request"), 1);
@@ -503,6 +540,11 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_code_code_challenge_scopes_required_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_scopes_required_error);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_scopes_not_required_ok);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_remove_plugin);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_add_plugin_required_public_client);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_confidential_ok);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_error);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_verifier_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_remove_plugin);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
