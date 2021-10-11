@@ -2043,7 +2043,7 @@ json_t * add_plugin_module(struct config_elements * config, json_t * j_module) {
               cur_instance->enabled = 1;
               j_return = json_pack("{si}", "result", G_OK);
             } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-              j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
+              j_return = json_pack("{sisO*}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "add_plugin_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
               j_return = json_pack("{si}", "result", G_ERROR);
