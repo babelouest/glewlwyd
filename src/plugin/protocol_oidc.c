@@ -1210,6 +1210,10 @@ static json_t * check_parameters (json_t * j_params) {
         json_array_append_new(j_error, json_string("oauth-fapi-allow-jarm is optional and must be a boolean"));
         ret = G_ERROR_PARAM;
       }
+      if (json_object_get(j_params, "oauth-fapi-add-s_hash") != NULL && !json_is_boolean(json_object_get(j_params, "oauth-fapi-add-s_hash"))) {
+        json_array_append_new(j_error, json_string("oauth-fapi-add-s_hash is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
       if (json_object_get(j_params, "oauth-fapi-verify-nbf") != NULL && !json_is_boolean(json_object_get(j_params, "oauth-fapi-verify-nbf"))) {
         json_array_append_new(j_error, json_string("oauth-fapi-verify-nbf is optional and must be a boolean"));
         ret = G_ERROR_PARAM;
@@ -2104,6 +2108,38 @@ static char * encrypt_token_if_required(struct _oidc_config * config, const char
   return token_out;
 }
 
+static char * generate_x_hash(struct _oidc_config * config, json_t * j_client, const char * value) {
+  int key_size;
+  int dig_alg = GNUTLS_DIG_UNKNOWN;
+  gnutls_datum_t hash_data;
+  unsigned char x_hash[128] = {0};
+  size_t x_hash_len = 128, x_hash_encoded_len = 0;
+  char * to_return = NULL, x_hash_encoded[128] = {0};
+
+  if (value != NULL && j_client != NULL) {
+    key_size = get_key_size_from_alg(r_jwa_alg_to_str(get_token_sign_alg(config, j_client, GLEWLWYD_TOKEN_TYPE_ID_TOKEN)));
+    if (key_size == 256) dig_alg = GNUTLS_DIG_SHA256;
+    else if (key_size == 384) dig_alg = GNUTLS_DIG_SHA384;
+    else if (key_size == 512) dig_alg = GNUTLS_DIG_SHA512;
+    if (dig_alg != GNUTLS_DIG_UNKNOWN) {
+      hash_data.data = (unsigned char*)value;
+      hash_data.size = o_strlen(value);
+      if (gnutls_fingerprint(dig_alg, &hash_data, x_hash, &x_hash_len) == GNUTLS_E_SUCCESS) {
+        if (o_base64url_encode(x_hash, x_hash_len/2, (unsigned char *)x_hash_encoded, &x_hash_encoded_len)) {
+          to_return = o_strndup(x_hash_encoded, x_hash_encoded_len);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_x_hash - Error o_base64url_encode x_hash");
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_x_hash - Error gnutls_fingerprint x_hash");
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_x_hash - Error digest algorithm size '%d' not supported x_hash", key_size);
+    }
+  }
+  return to_return;
+}
+
 /**
  * Generates a client_access_token from the specified parameters that are considered valid
  */
@@ -2779,6 +2815,7 @@ static char * generate_id_token(struct _oidc_config * config,
                                 json_t * j_claims_request,
                                 const char * auth_req_id,
                                 const char * refresh_token,
+                                const char * s_hash,
                                 const char * ip_source) {
   jwt_t * jwt;
   jwa_alg alg = get_token_sign_alg(config, j_client, GLEWLWYD_TOKEN_TYPE_ID_TOKEN);
@@ -2849,6 +2886,9 @@ static char * generate_id_token(struct _oidc_config * config,
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - Error digest algorithm size '%d' not supported c_hash", key_size);
               }
+            }
+            if (s_hash != NULL) {
+              json_object_set_new(j_user_info, "s_hash", json_string(s_hash));
             }
             if (auth_req_id != NULL) {
               json_object_set_new(j_user_info, "urn:openid:params:jwt:claim:auth_req_id", json_string(auth_req_id));
@@ -3622,7 +3662,8 @@ static char * generate_authorization_code(struct _oidc_config * config,
                                           json_t * j_claims,
                                           int auth_type,
                                           const char * code_challenge,
-                                          json_t * j_authorization_details) {
+                                          json_t * j_authorization_details,
+                                          const char * s_hash) {
   char * code = NULL, * code_hash = NULL, * expiration_clause, ** scope_array = NULL, * str_claims = NULL, * str_authorization_details = NULL;
   json_t * j_query, * j_code_id;
   int res, i;
@@ -3653,7 +3694,7 @@ static char * generate_authorization_code(struct _oidc_config * config,
           if (j_authorization_details != NULL) {
             str_authorization_details = json_dumps(j_authorization_details, JSON_COMPACT);
           }
-          j_query = json_pack("{sss{ss ss ss ss ss ss ss ss ss? ss ss? si s{ss} ss?}}",
+          j_query = json_pack("{sss{ss ss ss ss ss ss ss ss ss? ss ss? si s{ss} ss? ss?}}",
                               "table",
                               GLEWLWYD_PLUGIN_OIDC_TABLE_CODE,
                               "values",
@@ -3672,7 +3713,8 @@ static char * generate_authorization_code(struct _oidc_config * config,
                                 "gpoc_expires_at",
                                   "raw",
                                   expiration_clause,
-                                "gpoc_code_challenge", code_challenge);
+                                "gpoc_code_challenge", code_challenge,
+                                "gpoc_s_hash", s_hash);
           o_free(expiration_clause);
           o_free(str_claims);
           o_free(str_authorization_details);
@@ -4133,7 +4175,7 @@ static json_t * validate_authorization_code(struct _oidc_config * config, const 
     } else { // HOEL_DB_TYPE_SQLITE
       expiration_clause = o_strdup("> (strftime('%s','now'))");
     }
-    j_query = json_pack("{sss[ssssssss]s{sssssssss{ssss}}}",
+    j_query = json_pack("{sss[sssssssss]s{sssssssss{ssss}}}",
                         "table",
                         GLEWLWYD_PLUGIN_OIDC_TABLE_CODE,
                         "columns",
@@ -4145,6 +4187,7 @@ static json_t * validate_authorization_code(struct _oidc_config * config, const 
                           "gpoc_resource AS resource",
                           "gpoc_enabled AS enabled",
                           "gpoc_authorization_details",
+                          "gpoc_s_hash AS s_hash",
                         "where",
                           "gpoc_plugin_name",
                           config->name,
@@ -5039,7 +5082,8 @@ static int decrypt_request_token(struct _oidc_config * config, jwt_t * jwt) {
 static json_t * validate_jwt_auth_request(struct _oidc_config * config, const char * jwt_request, const char * client_id, const char * ip_source) {
   json_t * j_return, * j_result;
   jwt_t * jwt = NULL;
-  int valid_ietf = 1;
+  int valid_ietf = 1, valid_fapi = 1;
+  json_int_t j_now = (json_int_t)time(NULL);
 
   if (jwt_request != NULL) {
     if (r_jwt_init(&jwt) == RHN_OK && r_jwt_advanced_parse(jwt, jwt_request, R_PARSE_UNSIGNED, 0) == RHN_OK && decrypt_request_token(config, jwt) == G_OK) {
@@ -5052,10 +5096,20 @@ static json_t * validate_jwt_auth_request(struct _oidc_config * config, const ch
               valid_ietf = 0;
             }
           }
-          if (valid_ietf) {
+          if (json_object_get(config->j_params, "oauth-fapi-verify-nbf") == json_true() &&
+             (r_jwt_validate_claims(jwt, R_JWT_CLAIM_NBF, R_JWT_CLAIM_NOW, R_JWT_CLAIM_EXP, R_JWT_CLAIM_NOW, R_JWT_CLAIM_NOP) != RHN_OK ||
+             ((r_jwt_get_claim_int_value(jwt, "exp") - j_now) > MIN(config->auth_token_max_age, 3600)))) {
+            valid_fapi = 0;
+          }
+          if (valid_ietf && valid_fapi) {
             j_return = json_pack("{sisosOsOsi}", "result", G_OK, "request", r_jwt_get_full_claims_json_t(jwt), "client", json_object_get(j_result, "client"), "client_auth_method", json_object_get(j_result, "client_auth_method"), "type", r_jwt_get_type(jwt));
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "validate_jwt_auth_request - Error jwt_request is not compatible with IETF format, origin: %s", ip_source);
+            if (!valid_ietf) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "validate_jwt_auth_request - Error jwt_request is not compatible with IETF format, origin: %s", ip_source);
+            }
+            if (!valid_fapi) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "validate_jwt_auth_request - Error jwt_request is not compatible with FAPI recommendations, origin: %s", ip_source);
+            }
             j_return = json_pack("{si}", "result", G_ERROR_PARAM);
           }
         } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
@@ -5247,6 +5301,7 @@ static json_t * generate_ciba_token_response(struct _oidc_config * config, json_
                                                   NULL,
                                                   json_string_value(json_object_get(j_ciba_request, "auth_req_id")),
                                                   refresh_token,
+                                                  NULL,
                                                   json_string_value(json_object_get(j_ciba_request, "issued_for")))) != NULL) {
                   if (serialize_id_token(config,
                                          GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS,
@@ -5574,18 +5629,21 @@ static json_t * validate_jwt_assertion_request(struct _oidc_config * config, con
       }
       j_result = verify_request_signature(config, jwt, r_jwt_get_claim_str_value(jwt, "iss"), auth_type, ip_source);
       if (check_result_value(j_result, G_OK)) {
-        if (0 == o_strcmp(r_jwt_get_claim_str_value(jwt, "iss"), r_jwt_get_claim_str_value(jwt, "sub")) &&
-            r_jwt_get_claim_int_value(jwt, "exp") > 0 &&
-            r_jwt_get_claim_int_value(jwt, "exp") > j_now &&
+        if (r_jwt_validate_claims(jwt, R_JWT_CLAIM_ISS, json_string_value(json_object_get(json_object_get(j_result, "client"), "client_id")),
+                                       R_JWT_CLAIM_SUB, json_string_value(json_object_get(json_object_get(j_result, "client"), "client_id")),
+                                       R_JWT_CLAIM_AUD, endpoint,
+                                       R_JWT_CLAIM_EXP, R_JWT_CLAIM_NOW,
+                                       R_JWT_CLAIM_NOP) == RHN_OK &&
+            (json_object_get(config->j_params, "oauth-fapi-verify-nbf") != json_true() || r_jwt_validate_claims(jwt, R_JWT_CLAIM_NBF, R_JWT_CLAIM_NOW, R_JWT_CLAIM_NOP) == RHN_OK) &&
             ((r_jwt_get_claim_int_value(jwt, "exp") - j_now) <= config->auth_token_max_age) &&
-            0 == o_strcmp(endpoint, r_jwt_get_claim_str_value(jwt, "aud")) &&
             check_request_jti_unused(config, r_jwt_get_claim_str_value(jwt, "jti"), r_jwt_get_claim_str_value(jwt, "iss"), ip_source) == G_OK) {
           j_return = json_pack("{sisosOsO}", "result", G_OK, "request", r_jwt_get_full_claims_json_t(jwt), "client", json_object_get(j_result, "client"), "client_auth_method", json_object_get(j_result, "client_auth_method"));
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "invalid jwt assertion content");
           y_log_message(Y_LOG_LEVEL_DEBUG, " - iss: '%s'", r_jwt_get_claim_str_value(jwt, "iss"));
           y_log_message(Y_LOG_LEVEL_DEBUG, " - sub: '%s'", r_jwt_get_claim_str_value(jwt, "sub"));
-          y_log_message(Y_LOG_LEVEL_DEBUG, " - exp: %"JSON_INTEGER_FORMAT, r_jwt_get_claim_int_value(jwt, "exp"));
+          y_log_message(Y_LOG_LEVEL_DEBUG, " - nbf: %"RHONABWY_INTEGER_FORMAT, r_jwt_get_claim_int_value(jwt, "nbf"));
+          y_log_message(Y_LOG_LEVEL_DEBUG, " - exp: %"RHONABWY_INTEGER_FORMAT, r_jwt_get_claim_int_value(jwt, "exp"));
           y_log_message(Y_LOG_LEVEL_DEBUG, " - aud: '%s'", r_jwt_get_claim_str_value(jwt, "aud"));
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
         }
@@ -7541,6 +7599,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
                                                                         NULL,
                                                                         NULL,
                                                                         NULL,
+                                                                        NULL,
                                                                         ip_source)) != NULL) {
                                         if (serialize_id_token(config,
                                                                GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION,
@@ -9184,6 +9243,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                                                               json_object_get(j_claims_request, "id_token"),
                                                               NULL,
                                                               NULL,
+                                                              json_string_value(json_object_get(json_object_get(j_code, "code"), "s_hash")),
                                                               ip_source)) != NULL) {
                               if (serialize_id_token(config,
                                                      GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE,
@@ -9532,6 +9592,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
                                                           access_token,
                                                           NULL,
                                                           json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")),
+                                                          NULL,
                                                           NULL,
                                                           NULL,
                                                           NULL,
@@ -11919,7 +11980,8 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
              * ip_source = get_ip_source(request),
              * key = NULL,
              * max_age = NULL,
-             * str_response_mode = NULL;
+             * str_response_mode = NULL,
+             * state = NULL;
   char * redirect_url = NULL,
       ** resp_type_array = NULL,
       ** scope_list = NULL,
@@ -11938,6 +12000,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
        * id_token_hash = NULL,
        * issued_for = NULL,
        * endptr = NULL,
+       * s_hash = NULL,
          jti[OIDC_JTI_LENGTH+1] = {0},
          code_challenge_stored[GLEWLWYD_CODE_CHALLENGE_MAX_LENGTH + 1] = {0};
   json_t * j_request = NULL,
@@ -11989,6 +12052,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   do {
     if (u_map_has_key(map, "state")) {
       u_map_put(&map_redirect, "state", u_map_get(map, "state"));
+      state = u_map_get(map, "state");
     }
     if (u_map_has_key(map, "redirect_uri")) {
       redirect_uri = u_map_get(map, "redirect_uri");
@@ -12150,6 +12214,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           }
           if (!u_map_has_key(&map_redirect, "state")) {
             u_map_put(&map_redirect, "state", json_string_value(json_object_get(json_object_get(j_request, "request"), "state")));
+            state = json_string_value(json_object_get(json_object_get(j_request, "request"), "state"));
           }
           if ((resource == NULL || request_par) && json_object_get(config->j_params, "resource-allowed") == json_true()) {
             resource = json_string_value(json_object_get(json_object_get(j_request, "request"), "resource"));
@@ -12608,6 +12673,10 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       }
     }
 
+    if (json_object_get(config->j_params, "oauth-fapi-add-s_hash") == json_true()) {
+      s_hash = generate_x_hash(config, json_object_get(j_client, "client"), state);
+    }
+
     if (has_code) {
       if (is_authorization_type_enabled((struct _oidc_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE) && redirect_uri != NULL) {
         // Generates authorization code
@@ -12624,7 +12693,8 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                                                               j_claims,
                                                               auth_type,
                                                               code_challenge_stored,
-                                                              json_object_get(j_rar_filtered_result, "authorization_details"))) == NULL) {
+                                                              json_object_get(j_rar_filtered_result, "authorization_details"),
+                                                              s_hash)) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_auth_code_grant - Error generate_authorization_code");
           u_map_put(&map_redirect, "error", "server_error");
           build_auth_response(config, response, response_mode, json_object_get(j_client, "client"), redirect_uri, &map_redirect);
@@ -12730,6 +12800,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                                           json_object_get(j_claims, "id_token"),
                                           NULL,
                                           NULL,
+                                          s_hash,
                                           ip_source)) != NULL) {
           if (serialize_id_token(config,
                                  GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE,
@@ -12794,6 +12865,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   o_free(scope_reduced);
   o_free(issued_for);
   o_free(id_token_hash);
+  o_free(s_hash);
   free_string_array(resp_type_array);
   free_string_array(scope_list);
   u_map_clean(&map_redirect);
@@ -14606,14 +14678,6 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
             break;
           }
         }
-        if (json_object_get(p_config->j_params, "oauth-fapi-check-all") == json_true()) {
-          json_object_set(p_config->j_params, "oauth-fapi-allow-jarm", json_true());
-          json_object_set(p_config->j_params, "oauth-fapi-verify-nbf", json_true());
-          json_object_set(p_config->j_params, "oauth-fapi-allow-restrict-alg", json_true());
-          json_object_del(p_config->j_params, "oauth-fapi-restrict-alg");
-          json_object_set_new(p_config->j_params, "oauth-fapi-restrict-alg", json_pack("[sssssssssssssss]", "RSA-OAEP", "RSA-OAEP-256", "A128KW", "A192KW", "A256KW", "ECDH-ES", "ECDH-ES+A128KW", "ECDH-ES+A192KW", "ECDH-ES+A256KW", "A128GCMKW", "A192GCMKW", "A256GCMKW", "PBES2-HS256+A128KW", "PBES2-HS384+A192KW", "PBES2-HS512+A256KW"));
-          json_object_set(p_config->j_params, "oauth-fapi-allow-multiple-kid", json_true());
-        }
       }
       if (json_object_get(p_config->j_params, "oauth-rar-allowed") == json_true()) {
         if (
@@ -14646,6 +14710,15 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
           j_return = json_pack("{si}", "result", G_ERROR);
           break;
         }
+      }
+      if (json_object_get(p_config->j_params, "oauth-fapi-check-all") == json_true()) {
+        json_object_set(p_config->j_params, "oauth-fapi-allow-jarm", json_true());
+        json_object_set(p_config->j_params, "oauth-fapi-add-s_hash", json_true());
+        json_object_set(p_config->j_params, "oauth-fapi-verify-nbf", json_true());
+        json_object_set(p_config->j_params, "oauth-fapi-allow-restrict-alg", json_true());
+        json_object_del(p_config->j_params, "oauth-fapi-restrict-alg");
+        json_object_set_new(p_config->j_params, "oauth-fapi-restrict-alg", json_pack("[sssssssssssssss]", "RSA-OAEP", "RSA-OAEP-256", "A128KW", "A192KW", "A256KW", "ECDH-ES", "ECDH-ES+A128KW", "ECDH-ES+A192KW", "ECDH-ES+A256KW", "A128GCMKW", "A192GCMKW", "A256GCMKW", "PBES2-HS256+A128KW", "PBES2-HS384+A192KW", "PBES2-HS512+A256KW"));
+        json_object_set(p_config->j_params, "oauth-fapi-allow-multiple-kid", json_true());
       }
 
       // .well-known/openid-configuration content generation
