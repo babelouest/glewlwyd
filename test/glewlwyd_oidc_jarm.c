@@ -22,7 +22,7 @@
 #define ADMIN_PASSWORD "password"
 #define USER_USERNAME "user1"
 #define USER_PASSWORD "password"
-#define PLUGIN_NAME "oidc_iss_id"
+#define PLUGIN_NAME "oidc_jarm"
 #define PLUGIN_JWT_TYPE_RSA "rsa"
 #define PLUGIN_JWT_KEY_SIZE "256"
 #define SCOPE_LIST "openid"
