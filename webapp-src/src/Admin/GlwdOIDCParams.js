@@ -140,6 +140,7 @@ class GlwdOIDCParams extends Component {
     }
     props.mod.parameters["oauth-fapi-check-all"]!==undefined?"":(props.mod.parameters["oauth-fapi-check-all"] = false);
     props.mod.parameters["oauth-fapi-allow-jarm"]!==undefined?"":(props.mod.parameters["oauth-fapi-allow-jarm"] = false);
+    props.mod.parameters["oauth-fapi-add-s_hash"]!==undefined?"":(props.mod.parameters["oauth-fapi-add-s_hash"] = false);
     props.mod.parameters["oauth-fapi-verify-nbf"]!==undefined?"":(props.mod.parameters["oauth-fapi-verify-nbf"] = false);
     props.mod.parameters["oauth-fapi-allow-restrict-alg"]!==undefined?"":(props.mod.parameters["oauth-fapi-allow-restrict-alg"] = false);
     props.mod.parameters["oauth-fapi-restrict-alg"]!==undefined?"":(props.mod.parameters["oauth-fapi-restrict-alg"] = []);
@@ -351,6 +352,7 @@ class GlwdOIDCParams extends Component {
     }
     nextProps.mod.parameters["oauth-fapi-check-all"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-check-all"] = false);
     nextProps.mod.parameters["oauth-fapi-allow-jarm"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-allow-jarm"] = false);
+    nextProps.mod.parameters["oauth-fapi-add-s_hash"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-add-s_hash"] = false);
     nextProps.mod.parameters["oauth-fapi-verify-nbf"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-verify-nbf"] = false);
     nextProps.mod.parameters["oauth-fapi-allow-restrict-alg"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-allow-restrict-alg"] = false);
     nextProps.mod.parameters["oauth-fapi-restrict-alg"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-restrict-alg"] = []);
@@ -3643,6 +3645,15 @@ class GlwdOIDCParams extends Component {
                          disabled={this.state.mod.parameters["oauth-fapi-check-all"]}
                          checked={this.state.mod.parameters["oauth-fapi-check-all"]||this.state.mod.parameters["oauth-fapi-allow-jarm"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-oauth-fapi-allow-jarm">{i18next.t("admin.mod-glwd-oauth-fapi-allow-jarm")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-fapi-add-s_hash"
+                         onChange={(e) => this.toggleParam(e, "oauth-fapi-add-s_hash")}
+                         disabled={this.state.mod.parameters["oauth-fapi-check-all"]}
+                         checked={this.state.mod.parameters["oauth-fapi-check-all"]||this.state.mod.parameters["oauth-fapi-add-s_hash"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-fapi-add-s_hash">{i18next.t("admin.mod-glwd-oauth-fapi-add-s_hash")}</label>
                 </div>
                 <div className="form-group form-check">
                   <input type="checkbox"

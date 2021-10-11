@@ -751,6 +751,7 @@
     "mod-glwd-oauth-fapi-title": "Options supplémentaires pour les API de niveau finance (FAPI)",
     "mod-glwd-oauth-fapi-check-all": "Tout sélectionner ci-dessous",
     "mod-glwd-oauth-fapi-allow-jarm": "Autoriser les réponses /auth au format JWT (JARM)",
+    "mod-glwd-oauth-fapi-add-s_hash": "Ajouter le s_hash dans les id_token",
     "mod-glwd-oauth-fapi-verify-nbf": "Champ nbf obligatoire",
     "mod-glwd-oauth-fapi-allow-restrict-alg": "Autoriser la limitation des algorithmes de chiffrement autorisés",
     "mod-glwd-oauth-fapi-restrict-alg": "Algorithmes autorisés",
