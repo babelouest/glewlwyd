@@ -75,6 +75,7 @@ glewlwyd_oidc_all_algs
 glewlwyd_oidc_ciba
 glewlwyd_oidc_auth_iss_is
 glewlwyd_oidc_jarm
+glewlwyd_oidc_fapi
 
 glewlwyd_register
 
