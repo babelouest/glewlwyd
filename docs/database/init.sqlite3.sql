@@ -27,13 +27,6 @@ DROP TABLE IF EXISTS g_user_scope_user;
 DROP TABLE IF EXISTS g_user_scope;
 DROP TABLE IF EXISTS g_user_password;
 DROP TABLE IF EXISTS g_user;
-DROP TABLE IF EXISTS gpo_ciba_scope;
-DROP TABLE IF EXISTS gpo_ciba_scheme;
-DROP TABLE IF EXISTS gpo_ciba;
-DROP TABLE IF EXISTS gpo_par_scope;
-DROP TABLE IF EXISTS gpo_par;
-DROP TABLE IF EXISTS gpo_rar;
-DROP TABLE IF EXISTS gpo_dpop;
 DROP TABLE IF EXISTS gpg_device_authorization_scope;
 DROP TABLE IF EXISTS gpg_device_authorization;
 DROP TABLE IF EXISTS gpg_access_token_scope;
@@ -42,9 +35,13 @@ DROP TABLE IF EXISTS gpg_refresh_token_scope;
 DROP TABLE IF EXISTS gpg_refresh_token;
 DROP TABLE IF EXISTS gpg_code_scope;
 DROP TABLE IF EXISTS gpg_code;
+DROP TABLE IF EXISTS gpo_ciba_scope;
+DROP TABLE IF EXISTS gpo_ciba_scheme;
+DROP TABLE IF EXISTS gpo_ciba;
 DROP TABLE IF EXISTS gpo_par_scope;
 DROP TABLE IF EXISTS gpo_par;
 DROP TABLE IF EXISTS gpo_rar;
+DROP TABLE IF EXISTS gpo_dpop;
 DROP TABLE IF EXISTS gpo_device_scheme;
 DROP TABLE IF EXISTS gpo_device_authorization_scope;
 DROP TABLE IF EXISTS gpo_device_authorization;
@@ -387,6 +384,7 @@ CREATE TABLE gpo_code (
   gpoc_resource TEXT,
   gpoc_claims_request TEXT DEFAULT NULL,
   gpoc_authorization_details TEXT DEFAULT NULL,
+  gpoc_s_hash TEXT,
   gpoc_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpoc_issued_for TEXT, -- IP address or hostname
   gpoc_user_agent TEXT,

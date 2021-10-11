@@ -32,6 +32,7 @@ CREATE TABLE gpo_code (
   gpoc_nonce VARCHAR(512),
   gpoc_claims_request TEXT DEFAULT NULL,
   gpoc_authorization_details TEXT DEFAULT NULL,
+  gpoc_s_hash VARCHAR(512),
   gpoc_expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   gpoc_issued_for VARCHAR(256), -- IP address or hostname
   gpoc_user_agent VARCHAR(256),

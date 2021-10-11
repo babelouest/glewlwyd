@@ -34,13 +34,13 @@ DROP TABLE IF EXISTS gpg_access_token;
 DROP TABLE IF EXISTS gpg_refresh_token_scope;
 DROP TABLE IF EXISTS gpg_refresh_token;
 DROP TABLE IF EXISTS gpg_code_scope;
+DROP TABLE IF EXISTS gpg_code;
 DROP TABLE IF EXISTS gpo_ciba_scope;
 DROP TABLE IF EXISTS gpo_ciba_scheme;
 DROP TABLE IF EXISTS gpo_ciba;
 DROP TABLE IF EXISTS gpo_par_scope;
 DROP TABLE IF EXISTS gpo_par;
 DROP TABLE IF EXISTS gpo_rar;
-DROP TABLE IF EXISTS gpg_code;
 DROP TABLE IF EXISTS gpo_dpop;
 DROP TABLE IF EXISTS gpo_device_scheme;
 DROP TABLE IF EXISTS gpo_device_authorization_scope;
@@ -388,6 +388,7 @@ CREATE TABLE gpo_code (
   gpoc_resource VARCHAR(512),
   gpoc_claims_request BLOB DEFAULT NULL,
   gpoc_authorization_details BLOB DEFAULT NULL,
+  gpoc_s_hash VARCHAR(512),
   gpoc_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpoc_issued_for VARCHAR(256), -- IP address or hostname
   gpoc_user_agent VARCHAR(256),

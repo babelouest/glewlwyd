@@ -32,6 +32,7 @@ CREATE TABLE gpo_code (
   gpoc_resource TEXT,
   gpoc_claims_request TEXT DEFAULT NULL,
   gpoc_authorization_details TEXT DEFAULT NULL,
+  gpoc_s_hash TEXT,
   gpoc_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpoc_issued_for TEXT, -- IP address or hostname
   gpoc_user_agent TEXT,

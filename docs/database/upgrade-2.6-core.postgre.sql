@@ -57,3 +57,6 @@ CREATE TABLE gpo_ciba_scheme (
   gpobh_scheme_module VARCHAR(128) NOT NULL,
   FOREIGN KEY(gpob_id) REFERENCES gpo_ciba(gpob_id) ON DELETE CASCADE
 );
+
+ALTER TABLE gpo_code
+ADD gpoc_s_hash VARCHAR(512);
