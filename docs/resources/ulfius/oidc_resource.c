@@ -4,7 +4,7 @@
  *
  * Copyright 2016-2021 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20210402
+ * Version 20211009
  *
  * The MIT License (MIT)
  * 
@@ -134,25 +134,19 @@ static int access_token_check_validity(struct _oidc_resource_config * config, js
  */
 static json_t * access_token_check_signature(struct _oidc_resource_config * config, const char * token_value) {
   json_t * j_return = NULL, * j_grants;
-  jwt_t * jwt = r_jwt_copy(config->jwt);
+  jwt_t * jwt = NULL;
   jwk_t * jwk = NULL;
-  jwa_alg alg = R_JWA_ALG_UNKNOWN;
   const char * kid;
   
   if (token_value != NULL) {
-    if (r_jwt_parse(jwt, token_value, 0) == RHN_OK) {
+    if ((jwt = r_jwt_quick_parse(token_value, R_PARSE_NONE, config->x5u_flags)) != NULL) {
       if ((kid = r_jwt_get_header_str_value(jwt, "kid")) != NULL) {
-        if ((jwk = r_jwks_get_by_kid(jwt->jwks_pubkey_sign, kid)) == NULL) {
-          j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
-        } else {
-          alg = r_str_to_jwa_alg(r_jwk_get_property_str(jwk, "alg"));
-        }
+        jwk = r_jwks_get_by_kid(config->jwks_public, kid);
       } else {
-        jwk = r_jwk_copy(config->jwk_verify_default);
-        alg = config->alg;
+        jwk = r_jwks_get_at(config->jwks_public, 0);
       }
-      if (j_return == NULL) {
-        if (r_jwt_verify_signature(jwt, jwk, 0) == RHN_OK && r_jwt_get_sign_alg(jwt) == alg) {
+      if (jwk != NULL) {
+        if (r_jwt_verify_signature(jwt, jwk, 0) == RHN_OK) {
           j_grants = r_jwt_get_full_claims_json_t(jwt);
           if (j_grants != NULL) {
             j_return = json_pack("{siso}", "result", G_TOKEN_OK, "grants", j_grants);
@@ -162,15 +156,15 @@ static json_t * access_token_check_signature(struct _oidc_resource_config * conf
         } else {
           j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
         }
+        r_jwk_free(jwk);
       }
-      r_jwk_free(jwk);
     } else {
       j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
     }
+    r_jwt_free(jwt);
   } else {
     j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
   }
-  r_jwt_free(jwt);
   return j_return;
 }
 
@@ -222,13 +216,13 @@ int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request
             } else {
               res = U_CALLBACK_CONTINUE;
               if (json_object_get(json_object_get(j_access_token, "grants"), "aud") != NULL) {
-                json_object_set((void*)response->shared_data, "aud", json_object_get(json_object_get(j_access_token, "grants"), "aud"));
+                json_object_set((json_t *)response->shared_data, "aud", json_object_get(json_object_get(j_access_token, "grants"), "aud"));
               }
               if (json_object_get(json_object_get(j_access_token, "grants"), "client_id") != NULL) {
-                json_object_set((void*)response->shared_data, "client_id", json_object_get(json_object_get(j_access_token, "grants"), "client_id"));
+                json_object_set((json_t *)response->shared_data, "client_id", json_object_get(json_object_get(j_access_token, "grants"), "client_id"));
               }
               if (json_object_get(json_object_get(j_access_token, "grants"), "claims") != NULL) {
-                json_object_set((void*)response->shared_data, "claims", json_object_get(json_object_get(j_access_token, "grants"), "claims"));
+                json_object_set((json_t *)response->shared_data, "claims", json_object_get(json_object_get(j_access_token, "grants"), "claims"));
               }
             }
           }

@@ -4,7 +4,7 @@
  *
  * Copyright 2016-2021 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20210402
+ * Version 20211009
  *
  * The MIT License (MIT)
  * 
@@ -50,9 +50,8 @@
 struct _oidc_resource_config {
   int       method;
   char    * oauth_scope;
-  jwt_t   * jwt;
-  jwk_t   * jwk_verify_default;
-  jwa_alg   alg;
+  jwks_t  * jwks_public;
+  int       x5u_flags;
   char    * realm;
   unsigned short accept_access_token;
   unsigned short accept_client_token;
