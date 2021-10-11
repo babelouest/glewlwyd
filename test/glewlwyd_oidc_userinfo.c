@@ -202,6 +202,7 @@ START_TEST(test_oidc_userinfo_jwt)
   char * access_token, * bearer, * body;
   json_t * j_result, * j_payload = NULL;
   jwt_t * jwt;
+  jwk_t * jwk;
   
   ulfius_init_response(&resp);
   ulfius_init_request(&req);
@@ -229,9 +230,9 @@ START_TEST(test_oidc_userinfo_jwt)
   ck_assert_str_eq(u_map_get(resp.map_header, "Content-Type"), "application/jwt");
   body = o_strndup(resp.binary_body, resp.binary_body_length);
   r_jwt_init(&jwt);
-  r_jwt_add_sign_key_symmetric(jwt, (unsigned char *)("secret_" PLUGIN_NAME), o_strlen("secret_" PLUGIN_NAME));
+  jwk = r_jwk_quick_import(R_IMPORT_SYMKEY, ("secret_" PLUGIN_NAME), o_strlen("secret_" PLUGIN_NAME));
   r_jwt_parse(jwt, body, 0);
-  ck_assert_int_eq(r_jwt_verify_signature(jwt, NULL, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_verify_signature(jwt, jwk, 0), RHN_OK);
   ck_assert_ptr_ne((j_payload = r_jwt_get_full_claims_json_t(jwt)), NULL);
   ck_assert_ptr_ne(json_search(j_payload, j_result), NULL);
   json_decref(j_payload);
@@ -249,9 +250,8 @@ START_TEST(test_oidc_userinfo_jwt)
   ck_assert_str_eq(u_map_get(resp.map_header, "Content-Type"), "application/jwt");
   body = o_strndup(resp.binary_body, resp.binary_body_length);
   r_jwt_init(&jwt);
-  r_jwt_add_sign_key_symmetric(jwt, (unsigned char *)("secret_" PLUGIN_NAME), o_strlen("secret_" PLUGIN_NAME));
   r_jwt_parse(jwt, body, 0);
-  ck_assert_int_eq(r_jwt_verify_signature(jwt, NULL, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_verify_signature(jwt, jwk, 0), RHN_OK);
   ck_assert_ptr_ne((j_payload = r_jwt_get_full_claims_json_t(jwt)), NULL);
   ck_assert_ptr_ne(json_search(j_payload, j_result), NULL);
   json_decref(j_payload);
@@ -267,15 +267,15 @@ START_TEST(test_oidc_userinfo_jwt)
   ck_assert_str_eq(u_map_get(resp.map_header, "Content-Type"), "application/jwt");
   body = o_strndup(resp.binary_body, resp.binary_body_length);
   r_jwt_init(&jwt);
-  r_jwt_add_sign_key_symmetric(jwt, (unsigned char *)("secret_" PLUGIN_NAME), o_strlen("secret_" PLUGIN_NAME));
   r_jwt_parse(jwt, body, 0);
-  ck_assert_int_eq(r_jwt_verify_signature(jwt, NULL, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_verify_signature(jwt, jwk, 0), RHN_OK);
   ck_assert_ptr_ne((j_payload = r_jwt_get_full_claims_json_t(jwt)), NULL);
   ck_assert_ptr_ne(json_search(j_payload, j_result), NULL);
   json_decref(j_payload);
   ulfius_clean_response(&resp);
   o_free(body);
   r_jwt_free(jwt);
+  r_jwk_free(jwk);
   
   json_decref(j_result);
   

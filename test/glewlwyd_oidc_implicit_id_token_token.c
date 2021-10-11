@@ -207,10 +207,7 @@ END_TEST
 
 START_TEST(test_oidc_implicit_id_token_token_empty)
 {
-  char * url = msprintf("%s/oidc/auth?response_type=%s&state=xyzabcd&nonce=nonce1234&g_continue", SERVER_URI, RESPONSE_TYPE);
-  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL);
-  o_free(url);
-  ck_assert_int_eq(res, 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&state=xyzabcd&nonce=nonce1234&g_continue", NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
 }
 END_TEST
 

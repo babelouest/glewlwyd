@@ -198,6 +198,13 @@ START_TEST(test_oidc_optional_request_parameters_max_age)
 }
 END_TEST
 
+START_TEST(test_oidc_optional_request_parameters_response_mode_fragment)
+{
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI"/oidc/auth?response_type="RESPONSE_TYPE"&response_mode=fragment&client_id="CLIENT"&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope="SCOPE_LIST"&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "../../test-oauth2.html?param=client1_cb1#"), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI"/oidc/auth?response_type="RESPONSE_TYPE"&response_mode=fragment&client_id="CLIENT"&redirect_uri=error.html&state=xyzabcd&nonce=nonce1234&scope="SCOPE_LIST"&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "error.html#"), 1);
+}
+END_TEST
+
 START_TEST(test_oidc_optional_request_parameters_response_mode_form_post)
 {
   char * url = msprintf("%s/oidc/auth?response_type=%s&response_mode=form_post&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s&g_continue", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
@@ -244,6 +251,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_login_hint);
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_max_age);
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_response_mode_form_post);
+  tcase_add_test(tc_core, test_oidc_optional_request_parameters_response_mode_fragment);
   tcase_add_test(tc_core, test_oidc_optional_request_parameters_unknown);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);

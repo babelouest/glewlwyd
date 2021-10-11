@@ -532,6 +532,7 @@ START_TEST(test_oidc_introspection_access_token_target_bearer_jwt)
   const char * token, * token_auth;
   char * tmp;
   jwt_t * jwt;
+  jwk_t * jwk;
   
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
@@ -582,14 +583,15 @@ START_TEST(test_oidc_introspection_access_token_target_bearer_jwt)
   ck_assert_str_eq("application/jwt", u_map_get(resp.map_header, "Content-Type"));
   ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
   ck_assert_int_eq(r_jwt_parsen(jwt, resp.binary_body, resp.binary_body_length, 0), RHN_OK);
-  ck_assert_int_eq(r_jwt_add_sign_key_symmetric(jwt, (const unsigned char *)PLUGIN_KEY, o_strlen(PLUGIN_KEY)), RHN_OK);
-  ck_assert_int_eq(r_jwt_verify_signature(jwt, NULL, 0), RHN_OK);
+  ck_assert_ptr_ne(NULL, jwk = r_jwk_quick_import(R_IMPORT_SYMKEY, PLUGIN_KEY, o_strlen(PLUGIN_KEY)));
+  ck_assert_int_eq(r_jwt_verify_signature(jwt, jwk, 0), RHN_OK);
   ck_assert_ptr_ne(NULL, j_response = r_jwt_get_full_claims_json_t(jwt));
   j_verify = json_pack("{sossssssssss}", "active", json_true(), "username", USERNAME, "client_id", CLIENT_CONFIDENTIAL_1, "token_type", TOKEN_TYPE_HINT_ACCESS, "scope", SCOPE_LIST, "iss", PLUGIN_ISS);
   ck_assert_ptr_ne(NULL, json_search(j_response, j_verify));
   ck_assert_str_eq("token-introspection+jwt", r_jwt_get_header_str_value(jwt, "typ"));
 
   r_jwt_free(jwt);
+  r_jwk_free(jwk);
   json_decref(j_verify);
   json_decref(j_response);
   json_decref(j_body);
@@ -607,6 +609,7 @@ START_TEST(test_oidc_introspection_access_token_target_bearer_jwt_response)
   const char * token, * token_auth;
   char * tmp;
   jwt_t * jwt;
+  jwk_t * jwk;
   
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
@@ -657,8 +660,8 @@ START_TEST(test_oidc_introspection_access_token_target_bearer_jwt_response)
   ck_assert_str_eq("application/token-introspection+jwt", u_map_get(resp.map_header, "Content-Type"));
   ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
   ck_assert_int_eq(r_jwt_parsen(jwt, resp.binary_body, resp.binary_body_length, 0), RHN_OK);
-  ck_assert_int_eq(r_jwt_add_sign_key_symmetric(jwt, (const unsigned char *)PLUGIN_KEY, o_strlen(PLUGIN_KEY)), RHN_OK);
-  ck_assert_int_eq(r_jwt_verify_signature(jwt, NULL, 0), RHN_OK);
+  ck_assert_ptr_ne(NULL, jwk = r_jwk_quick_import(R_IMPORT_SYMKEY, PLUGIN_KEY, o_strlen(PLUGIN_KEY)));
+  ck_assert_int_eq(r_jwt_verify_signature(jwt, jwk, 0), RHN_OK);
   ck_assert_ptr_ne(NULL, j_response = r_jwt_get_full_claims_json_t(jwt));
   j_verify = json_pack("{sossssssssss}", "active", json_true(), "username", USERNAME, "client_id", CLIENT_CONFIDENTIAL_1, "token_type", TOKEN_TYPE_HINT_ACCESS, "scope", SCOPE_LIST, "iss", PLUGIN_ISS);
   ck_assert_ptr_ne(NULL, json_search(json_object_get(j_response, "token_introspection"), j_verify));
@@ -668,6 +671,7 @@ START_TEST(test_oidc_introspection_access_token_target_bearer_jwt_response)
   ck_assert_int_gt(r_jwt_get_claim_int_value(jwt, "iat"), 0);
 
   r_jwt_free(jwt);
+  r_jwk_free(jwk);
   json_decref(j_verify);
   json_decref(j_response);
   json_decref(j_body);
