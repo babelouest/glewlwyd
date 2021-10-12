@@ -145,6 +145,8 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["oauth-fapi-allow-restrict-alg"]!==undefined?"":(props.mod.parameters["oauth-fapi-allow-restrict-alg"] = false);
     props.mod.parameters["oauth-fapi-restrict-alg"]!==undefined?"":(props.mod.parameters["oauth-fapi-restrict-alg"] = []);
     props.mod.parameters["oauth-fapi-allow-multiple-kid"]!==undefined?"":(props.mod.parameters["oauth-fapi-allow-multiple-kid"] = false);
+    props.mod.parameters["oauth-fapi-ciba-confidential-client"]!==undefined?"":(props.mod.parameters["oauth-fapi-ciba-confidential-client"] = false);
+    props.mod.parameters["oauth-fapi-ciba-push-forbidden"]!==undefined?"":(props.mod.parameters["oauth-fapi-ciba-push-forbidden"] = false);
 
     this.state = {
       config: props.config,
@@ -357,6 +359,8 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["oauth-fapi-allow-restrict-alg"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-allow-restrict-alg"] = false);
     nextProps.mod.parameters["oauth-fapi-restrict-alg"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-restrict-alg"] = []);
     nextProps.mod.parameters["oauth-fapi-allow-multiple-kid"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-allow-multiple-kid"] = false);
+    nextProps.mod.parameters["oauth-fapi-ciba-confidential-client"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-ciba-confidential-client"] = false);
+    nextProps.mod.parameters["oauth-fapi-ciba-push-forbidden"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-ciba-push-forbidden"] = false);
 
     this.setState({
       config: nextProps.config,
@@ -3711,6 +3715,24 @@ class GlwdOIDCParams extends Component {
                          disabled={this.state.mod.parameters["oauth-fapi-check-all"]}
                          checked={this.state.mod.parameters["oauth-fapi-check-all"]||this.state.mod.parameters["oauth-fapi-allow-multiple-kid"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-oauth-fapi-allow-multiple-kid">{i18next.t("admin.mod-glwd-oauth-fapi-allow-multiple-kid")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-fapi-ciba-confidential-client"
+                         onChange={(e) => this.toggleParam(e, "oauth-fapi-ciba-confidential-client")}
+                         disabled={this.state.mod.parameters["oauth-fapi-check-all"]}
+                         checked={this.state.mod.parameters["oauth-fapi-check-all"]||this.state.mod.parameters["oauth-fapi-ciba-confidential-client"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-fapi-ciba-confidential-client">{i18next.t("admin.mod-glwd-oauth-fapi-ciba-confidential-client")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-fapi-ciba-push-forbidden"
+                         onChange={(e) => this.toggleParam(e, "oauth-fapi-ciba-push-forbidden")}
+                         disabled={this.state.mod.parameters["oauth-fapi-check-all"]}
+                         checked={this.state.mod.parameters["oauth-fapi-check-all"]||this.state.mod.parameters["oauth-fapi-ciba-push-forbidden"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-fapi-ciba-push-forbidden">{i18next.t("admin.mod-glwd-oauth-fapi-ciba-push-forbidden")}</label>
                 </div>
               </div>
             </div>

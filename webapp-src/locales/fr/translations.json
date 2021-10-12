@@ -757,6 +757,8 @@
     "mod-glwd-oauth-fapi-restrict-alg": "Algorithmes autorisés",
     "mod-glwd-oauth-fapi-restrict-alg-list": "Sélectionner",
     "mod-glwd-oauth-fapi-allow-multiple-kid": "Autoriser les kid multiples identiques pour les clients",
+    "mod-glwd-oauth-fapi-ciba-confidential-client": "Les clients autorisés pour CIBA doivent être confidentiels",
+    "mod-glwd-oauth-fapi-ciba-push-forbidden": "Mode push interdit",
     "requires-admin-scope": "Droits administrateur requis",
     "success-api-delete-user": "Utilisateur supprimé",
     "error-api-delete-user": "Erreur de suppression de l'utilisateur",

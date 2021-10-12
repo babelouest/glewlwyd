@@ -756,6 +756,8 @@
     "mod-glwd-oauth-fapi-restrict-alg": "Allowed algs",
     "mod-glwd-oauth-fapi-restrict-alg-list": "Select",
     "mod-glwd-oauth-fapi-allow-multiple-kid": "Allow clients with multiple similar kid",
+    "mod-glwd-oauth-fapi-ciba-confidential-client": "CIBA allowed clients must be confidential",
+    "mod-glwd-oauth-fapi-ciba-push-forbidden": "Push mode forbidden",
     "requires-admin-scope": "Administrator scope required",
     "success-api-delete-user": "User deleted",
     "error-api-delete-user": "Error while removing user",
