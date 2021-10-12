@@ -2000,11 +2000,7 @@ static jwk_t * get_jwk_enc(struct _oidc_config * config, json_t * j_client, jwa_
 
   if (r_jwks_init(&jwks_pub) == RHN_OK) {
     if (json_string_length(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-pubkey-parameter"))))) {
-      if ((jwk_import = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_PUBKEY, json_string_value(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-pubkey-parameter")))), json_string_length(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-pubkey-parameter")))))) != NULL) {
-        r_jwks_append_jwk(jwks_pub, jwk_import);
-        r_jwk_free(jwk_import);
-      }
-      if ((jwk_import = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_CERTIFICATE, json_string_value(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-pubkey-parameter")))), json_string_length(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-pubkey-parameter")))))) != NULL) {
+      if ((jwk_import = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_UNSPECIFIED, json_string_value(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-pubkey-parameter")))), json_string_length(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-pubkey-parameter")))))) != NULL) {
         r_jwks_append_jwk(jwks_pub, jwk_import);
         r_jwk_free(jwk_import);
       }
@@ -7050,7 +7046,7 @@ static char * build_jwt_auth_response(struct _oidc_config * config, json_t * j_c
       if (r_jwt_set_properties(jwt, RHN_OPT_SIG_ALG, alg,
                                     RHN_OPT_CLAIM_JSON_T_VALUE, "iss", json_object_get(config->j_params, "iss"),
                                     RHN_OPT_CLAIM_JSON_T_VALUE, "aud", json_object_get(j_client, "client_id"),
-                                    RHN_OPT_CLAIM_INT_VALUE, "exp", ((json_int_t)now)+config->access_token_duration,
+                                    RHN_OPT_CLAIM_RHN_INT_VALUE, "exp", ((rhn_int_t)now)+config->access_token_duration,
                                     RHN_OPT_NONE) == RHN_OK) {
         keys = u_map_enum_keys(map_query);
         for (i=0; keys[i]!=NULL; i++) {
@@ -14327,7 +14323,7 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
         if (ret != G_OK) {
           break;
         }
-        if ((jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_PUBKEY, json_string_value(json_object_get(config->j_params, "cert")), json_string_length(json_object_get(config->j_params, "cert")))) == NULL && (jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_CERTIFICATE, json_string_value(json_object_get(config->j_params, "cert")), json_string_length(json_object_get(config->j_params, "cert")))) == NULL) {
+        if ((jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_UNSPECIFIED, json_string_value(json_object_get(config->j_params, "cert")), json_string_length(json_object_get(config->j_params, "cert")))) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "build_sign_keys_from_params - oidc - Error r_jwk_quick_import public rsa");
           ret = G_ERROR_PARAM;
         }
@@ -14367,7 +14363,7 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
         if (ret != G_OK) {
           break;
         }
-        if ((jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_PUBKEY, json_string_value(json_object_get(config->j_params, "cert")), json_string_length(json_object_get(config->j_params, "cert")))) == NULL && (jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_CERTIFICATE, json_string_value(json_object_get(config->j_params, "cert")), json_string_length(json_object_get(config->j_params, "cert")))) == NULL) {
+        if ((jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_UNSPECIFIED, json_string_value(json_object_get(config->j_params, "cert")), json_string_length(json_object_get(config->j_params, "cert")))) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "build_sign_keys_from_params - oidc - Error r_jwk_quick_import public ecdsa");
           ret = G_ERROR_PARAM;
         }
@@ -14407,7 +14403,7 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
         if (ret != G_OK) {
           break;
         }
-        if ((jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_PUBKEY, json_string_value(json_object_get(config->j_params, "cert")), json_string_length(json_object_get(config->j_params, "cert")))) == NULL && (jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_CERTIFICATE, json_string_value(json_object_get(config->j_params, "cert")), json_string_length(json_object_get(config->j_params, "cert")))) == NULL) {
+        if ((jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_UNSPECIFIED, json_string_value(json_object_get(config->j_params, "cert")), json_string_length(json_object_get(config->j_params, "cert")))) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "build_sign_keys_from_params - oidc - Error r_jwk_quick_import public rsa-pss");
           ret = G_ERROR_PARAM;
         }
@@ -14441,7 +14437,7 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
         if (ret != G_OK) {
           break;
         }
-        if ((jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_PUBKEY, json_string_value(json_object_get(config->j_params, "cert")), json_string_length(json_object_get(config->j_params, "cert")))) == NULL && (jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_CERTIFICATE, json_string_value(json_object_get(config->j_params, "cert")), json_string_length(json_object_get(config->j_params, "cert")))) == NULL) {
+        if ((jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_UNSPECIFIED, json_string_value(json_object_get(config->j_params, "cert")), json_string_length(json_object_get(config->j_params, "cert")))) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "build_sign_keys_from_params - oidc - Error r_jwk_quick_import public eddsa");
           ret = G_ERROR_PARAM;
         }
