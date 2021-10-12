@@ -45,6 +45,7 @@
 #define RESPONSE_TYPE_CODE_ID_TOKEN_POST "code id_token"
 #define STATE "Ohana means family. Family means nobody gets left behind or forgotten"
 #define REQUEST_MAX_EXP 120
+#define KID "multiple"
 
 const char pubkey_1_pem[] = "-----BEGIN PUBLIC KEY-----\n"\
                             "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAxaF1egmmQ+0/AAEcv/Jd\n"\
@@ -176,6 +177,35 @@ const char privkey_2_pem[] = "-----BEGIN RSA PRIVATE KEY-----\n"\
                             "WElzAPXDF0YKMiKzA4fTqVtbamVHz64k7xgWVwdWXDbdqOWOtI0weeeHMy2Y9Ktz\n"\
                             "7eXh0rK0fG1c35qJ+V61oXdyfapmI7uGH2R5J+Q2LDJw/3AMGb6oCsPfdQ==\n"\
                             "-----END RSA PRIVATE KEY-----\n";
+const char jwk_pubkey_ecdsa_str[] = "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4\","\
+                                    "\"y\":\"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM\",\"use\":\"sig\",\"kid\":\""KID"\",\"alg\":\"ES384\"}";
+const char jwk_pubkey_ecdsa_str_invalid_alg[] = "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4\","\
+                                    "\"y\":\"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM\",\"use\":\"sig\",\"kid\":\""KID"\",\"alg\":\"ES512\"}";
+const char jwk_privkey_ecdsa_str[] = "{\"kty\":\"EC\",\"crv\":\"P-256\",\"x\":\"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4\","\
+                                     "\"y\":\"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM\",\"d\":\"870MB6gfuTJ4HtUnUvYMyJpr5eUZNP4Bk43bVdj3eAE\","\
+                                     "\"use\":\"sig\",\"kid\":\""KID"\",\"alg\":\"ES384\"}";
+const char jwk_pubkey_ecdsa_str_2[] = "{\"kty\":\"EC\",\"x\":\"RKL0w34ppc4wuBuzotuWo9d6hGv59uWjgc5oimWQtYU\",\"y\":\"S8EabLKBmyT2v_vPSrpfWnYw6edRm9I60UQlbvSS1eU\""\
+                                      ",\"d\":\"KMRJaGpxVer0w9lMjIY_UrjC067tZdEJkL5eaiBVWi8\",\"crv\":\"P-256\",\"kid\":\""KID"\",\"alg\":\"ES256\",\"use\":\"sig\"}";
+const char jwk_privkey_ecdsa_str_2[] = "{\"kty\":\"EC\",\"x\":\"RKL0w34ppc4wuBuzotuWo9d6hGv59uWjgc5oimWQtYU\",\"y\":\"S8EabLKBmyT2v_vPSrpfWnYw6edRm9I60UQlbvSS1eU\","\
+                                       "\"crv\":\"P-256\",\"kid\":\""KID"\",\"alg\":\"ES256\",\"use\":\"sig\"}";
+const char jwk_pubkey_rsa_str[] = "{\"kty\":\"RSA\",\"n\":\"0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEps2aiAFbWhM78LhWx4cbbfAAtVT86zwu1RK7aPFFxuhDR1L6tSoc_BJECPebWKRX"\
+                                  "jBZCiFV4n3oknjhMstn64tZ_2W-5JsGY4Hc5n9yBXArwl93lqt7_RN5w6Cf0h4QyQ5v-65YGjQR0_FDW2QvzqY368QQMicAtaSqzs8KJZgnYb9c7d0zgdAZHzu6"\
+                                  "qMQvRL5hajrn1n91CbOpbISD08qNLyrdkt-bFTWhAI4vMQFh6WeZu0fM4lFd2NcRwr3XPksINHaQ-G_xBniIqbw0Ls1jF44-csFCur-kEgU8awapJzKnqDKgw\""\
+                                  ",\"e\":\"AQAB\",\"alg\":\"RS256\",\"kid\":\""KID"\",\"use\":\"sig\"}";
+const char jwk_privkey_rsa_str[] = "{\"kty\":\"RSA\",\"n\":\"0vx7agoebGcQSuuPiLJXZptN9nndrQmbXEps2aiAFbWhM78LhWx4cbbfAAtVT86zwu1RK7aPFFxuhDR1L6tSoc_BJECPebWKR"\
+                                   "XjBZCiFV4n3oknjhMstn64tZ_2W-5JsGY4Hc5n9yBXArwl93lqt7_RN5w6Cf0h4QyQ5v-65YGjQR0_FDW2QvzqY368QQMicAtaSqzs8KJZgnYb9c7d0zgdAZHz"\
+                                   "u6qMQvRL5hajrn1n91CbOpbISD08qNLyrdkt-bFTWhAI4vMQFh6WeZu0fM4lFd2NcRwr3XPksINHaQ-G_xBniIqbw0Ls1jF44-csFCur-kEgU8awapJzKnqDKg"\
+                                   "w\",\"e\":\"AQAB\",\"d\":\"X4cTteJY_gn4FYPsXB8rdXix5vwsg1FLN5E3EaG6RJoVH-HLLKD9M7dx5oo7GURknchnrRweUkC7hT5fJLM0WbFAKNLWY2v"\
+                                   "v7B6NqXSzUvxT0_YSfqijwp3RTzlBaCxWp4doFk5N2o8Gy_nHNKroADIkJ46pRUohsXywbReAdYaMwFs9tv8d_cPVY3i07a3t8MN6TNwm0dSawm9v47UiCl3Sk"\
+                                   "5ZiG7xojPLu4sbg1U2jx4IBTNBznbJSzFHK66jT8bgkuqsk0GjskDJk19Z4qwjwbsnn4j2WBii3RL-Us2lGVkY8fkFzme1z0HbIkfz0Y6mqnOYtqc0X4jfcKoA"\
+                                   "C8Q\",\"p\":\"83i-7IvMGXoMXCskv73TKr8637FiO7Z27zv8oj6pbWUQyLPQBQxtPVnwD20R-60eTDmD2ujnMt5PoqMrm8RfmNhVWDtjjMmCMjOpSXicFHj7"\
+                                   "XOuVIYQyqVWlWEh6dN36GVZYk93N8Bc9vY41xy8B9RzzOGVQzXvNEvn7O0nVbfs\",\"q\":\"3dfOR9cuYq-0S-mkFLzgItgMEfFzB2q3hWehMuG0oCuqnb3v"\
+                                   "obLyumqjVZQO1dIrdwgTnCdpYzBcOfW5r370AFXjiWft_NGEiovonizhKpo9VVS78TzFgxkIdrecRezsZ-1kYd_s1qDbxtkDEgfAITAG9LUnADun4vIcb6yelx"\
+                                   "k\",\"dp\":\"G4sPXkc6Ya9y8oJW9_ILj4xuppu0lzi_H7VTkS8xj5SdX3coE0oimYwxIi2emTAue0UOa5dpgFGyBJ4c8tQ2VF402XRugKDTP8akYhFo5tAA7"\
+                                   "7Qe_NmtuYZc3C3m3I24G2GvR5sSDxUyAN2zq8Lfn9EUms6rY3Ob8YeiKkTiBj0\",\"dq\":\"s9lAH9fggBsoFR8Oac2R_E2gw282rT2kGOAhvIllETE1efrA"\
+                                   "6huUUvMfBcMpn8lqeW6vzznYY5SSQF7pMdC_agI3nG8Ibp1BUb0JUiraRNqUfLhcQb_d9GF4Dh7e74WbRsobRonujTYN1xCaP6TO61jvWrX-L18txXw494Q_cg"\
+                                   "k\",\"qi\":\"GyM_p6JrXySiz1toFgKbWV-JdI3jQ4ypu9rbMWx3rQJBfmt0FoYzgUIZEVFEcOqwemRN81zoDAaa-Bk0KWNGDjJHZDdDmFhW3AN7lI-puxk_m"\
+                                   "HZGJ11rxyR8O55XLSe3SPmRfKwZI6yU24ZxvQKFYItdldUKGzO6Ia6zTKhAVRU\",\"alg\":\"RS256\",\"kid\":\""KID"\",\"use\":\"sig\"}";
 
 struct _u_request admin_req;
 struct _u_request user_req;
@@ -247,7 +277,63 @@ START_TEST(test_oidc_fapi_add_client_pubkey)
 }
 END_TEST
 
-START_TEST(test_oidc_fapi_delete_client_pubkey)
+START_TEST(test_oidc_fapi_add_client_jwks)
+{
+  jwks_t * jwks = r_jwks_quick_import(R_IMPORT_JSON_STR, jwk_pubkey_ecdsa_str, R_IMPORT_JSON_STR, jwk_pubkey_ecdsa_str_2, R_IMPORT_JSON_STR, jwk_pubkey_rsa_str, R_IMPORT_NONE);
+  json_t * j_client = json_pack("{ss ss so s[s] s[ssss] s[s] so ss ss ss so}",
+                                "client_id", CLIENT_PUBKEY_ID,
+                                "name", CLIENT_PUBKEY_NAME,
+                                "confidential", json_true(),
+                                "redirect_uri",
+                                  CLIENT_PUBKEY_REDIRECT,
+                                "authorization_type",
+                                  "code", "token", "id_token", "client_credentials",
+                                "scope",
+                                  SCOPE_LIST,
+                                CLIENT_JWKS_PARAM, r_jwks_export_to_json_t(jwks),
+                                "authorization_signed_response_alg", CLIENT_SIGN_ALG,
+                                "authorization_encrypted_response_alg", CLIENT_ENC_ALG,
+                                "authorization_encrypted_response_enc", CLIENT_ENC,
+                                "enabled", json_true());
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  json_t * j_param = json_pack("{ss}", "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_PUBKEY_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_param);
+  r_jwks_free(jwks);
+}
+END_TEST
+
+START_TEST(test_oidc_fapi_add_client_jwks_invalid_alg)
+{
+  jwks_t * jwks = r_jwks_quick_import(R_IMPORT_JSON_STR, jwk_pubkey_ecdsa_str_invalid_alg, R_IMPORT_JSON_STR, jwk_pubkey_ecdsa_str_2, R_IMPORT_JSON_STR, jwk_pubkey_rsa_str, R_IMPORT_NONE);
+  json_t * j_client = json_pack("{ss ss so s[s] s[ssss] s[s] so ss ss ss so}",
+                                "client_id", CLIENT_PUBKEY_ID,
+                                "name", CLIENT_PUBKEY_NAME,
+                                "confidential", json_true(),
+                                "redirect_uri",
+                                  CLIENT_PUBKEY_REDIRECT,
+                                "authorization_type",
+                                  "code", "token", "id_token", "client_credentials",
+                                "scope",
+                                  SCOPE_LIST,
+                                CLIENT_JWKS_PARAM, r_jwks_export_to_json_t(jwks),
+                                "authorization_signed_response_alg", CLIENT_SIGN_ALG,
+                                "authorization_encrypted_response_alg", CLIENT_ENC_ALG,
+                                "authorization_encrypted_response_enc", CLIENT_ENC,
+                                "enabled", json_true());
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  json_t * j_param = json_pack("{ss}", "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_PUBKEY_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_param);
+  r_jwks_free(jwks);
+}
+END_TEST
+
+START_TEST(test_oidc_fapi_delete_client)
 {
   json_t * j_param = json_pack("{ss}", "scope", "");
   ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_PUBKEY_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
@@ -571,6 +657,68 @@ START_TEST(test_oidc_fapi_request_jwt_exp_missing)
 }
 END_TEST
 
+START_TEST(test_oidc_fapi_request_jwt_multiple_kid_response_ok)
+{
+  jwt_t * jwt_request = NULL;
+  char * url, * request;
+  r_jwt_init(&jwt_request);
+  time_t now;
+  
+  time(&now);
+  ck_assert_ptr_ne(jwt_request, NULL);
+  r_jwt_add_sign_keys_json_str(jwt_request, jwk_privkey_ecdsa_str, NULL);
+  r_jwt_set_claim_str_value(jwt_request, "aud", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "response_type", RESPONSE_TYPE_CODE_ID_TOKEN_POST);
+  r_jwt_set_claim_str_value(jwt_request, "client_id", CLIENT_PUBKEY_ID);
+  r_jwt_set_claim_str_value(jwt_request, "redirect_uri", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
+  r_jwt_set_claim_int_value(jwt_request, "nbf", now);
+  r_jwt_set_claim_int_value(jwt_request, "exp", now+60);
+  r_jwt_set_claim_str_value(jwt_request, "state", STATE);
+  r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
+  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
+  ck_assert_ptr_ne(request, NULL);
+  
+  url = msprintf("%s/%s/auth?g_continue&request=%s", SERVER_URI, PLUGIN_NAME, request);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "id_token="), 1);
+  
+  o_free(url);
+  o_free(request);
+  r_jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_fapi_request_jwt_multiple_kid_invalid_alg)
+{
+  jwt_t * jwt_request = NULL;
+  char * url, * request;
+  r_jwt_init(&jwt_request);
+  time_t now;
+  
+  time(&now);
+  ck_assert_ptr_ne(jwt_request, NULL);
+  r_jwt_add_sign_keys_json_str(jwt_request, jwk_privkey_ecdsa_str, NULL);
+  r_jwt_set_claim_str_value(jwt_request, "aud", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "response_type", RESPONSE_TYPE_CODE_ID_TOKEN_POST);
+  r_jwt_set_claim_str_value(jwt_request, "client_id", CLIENT_PUBKEY_ID);
+  r_jwt_set_claim_str_value(jwt_request, "redirect_uri", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
+  r_jwt_set_claim_int_value(jwt_request, "nbf", now);
+  r_jwt_set_claim_int_value(jwt_request, "exp", now+60);
+  r_jwt_set_claim_str_value(jwt_request, "state", STATE);
+  r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
+  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
+  ck_assert_ptr_ne(request, NULL);
+  
+  url = msprintf("%s/%s/auth?g_continue&request=%s", SERVER_URI, PLUGIN_NAME, request);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  
+  o_free(url);
+  o_free(request);
+  r_jwt_free(jwt_request);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -587,7 +735,13 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_fapi_request_jwt_nbf_too_long);
   tcase_add_test(tc_core, test_oidc_fapi_request_jwt_nbf_missing);
   tcase_add_test(tc_core, test_oidc_fapi_request_jwt_exp_missing);
-  tcase_add_test(tc_core, test_oidc_fapi_delete_client_pubkey);
+  tcase_add_test(tc_core, test_oidc_fapi_delete_client);
+  tcase_add_test(tc_core, test_oidc_fapi_add_client_jwks);
+  tcase_add_test(tc_core, test_oidc_fapi_request_jwt_multiple_kid_response_ok);
+  tcase_add_test(tc_core, test_oidc_fapi_delete_client);
+  tcase_add_test(tc_core, test_oidc_fapi_add_client_jwks_invalid_alg);
+  tcase_add_test(tc_core, test_oidc_fapi_request_jwt_multiple_kid_invalid_alg);
+  tcase_add_test(tc_core, test_oidc_fapi_delete_client);
   tcase_add_test(tc_core, test_oidc_fapi_delete_plugin);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
