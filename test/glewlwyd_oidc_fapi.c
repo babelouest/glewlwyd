@@ -47,6 +47,9 @@
 #define STATE "Ohana means family. Family means nobody gets left behind or forgotten"
 #define REQUEST_MAX_EXP 120
 #define KID "multiple"
+#define PLUGIN_CIBA_DEFAULT_EXPIRATION 600
+#define PLUGIN_CIBA_MAXIMUM_EXPIRATION 1200
+#define CIBA_CLIENT_NOTIFICATION_TOKEN "ZBMDEshXMWMv8KUbBSUnbRgEYpvM8LyA"
 
 const char pubkey_1_pem[] = "-----BEGIN PUBLIC KEY-----\n"\
                             "MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAxaF1egmmQ+0/AAEcv/Jd\n"\
@@ -213,7 +216,7 @@ struct _u_request user_req;
 
 START_TEST(test_oidc_fapi_add_plugin)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssssisisisosososososososososososissssss}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssssisisisosososososososososososissssss sosisisosososososo}}",
                                 "module", "oidc",
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_NAME,
@@ -240,7 +243,17 @@ START_TEST(test_oidc_fapi_add_plugin)
                                   "request-maximum-exp", REQUEST_MAX_EXP,
                                   "client-pubkey-parameter", CLIENT_PUBKEY_PARAM,
                                   "client-jwks-parameter", CLIENT_JWKS_PARAM,
-                                  "client-jwks_uri-parameter", CLIENT_JWKS_URI_PARAM);
+                                  "client-jwks_uri-parameter", CLIENT_JWKS_URI_PARAM,
+                                  
+                                  "oauth-ciba-allowed", json_true(),
+                                  "oauth-ciba-default-expiry", PLUGIN_CIBA_DEFAULT_EXPIRATION,
+                                  "oauth-ciba-maximum-expiry", PLUGIN_CIBA_MAXIMUM_EXPIRATION,
+                                  "oauth-ciba-mode-poll-allowed", json_true(),
+                                  "oauth-ciba-mode-ping-allowed", json_true(),
+                                  "oauth-ciba-mode-push-allowed", json_true(),
+                                  "oauth-ciba-allow-https-non-secure", json_true(),
+                                  "oauth-ciba-user-code-allowed", json_false(),
+                                  "oauth-ciba-email-allowed", json_false());
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
 }
@@ -303,6 +316,98 @@ START_TEST(test_oidc_fapi_add_client_jwks)
   ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_PUBKEY_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
   r_jwks_free(jwks);
+}
+END_TEST
+
+START_TEST(test_oidc_fapi_add_client_ciba_poll)
+{
+  json_t * j_client = json_pack("{ss ss so s[s] s[sssss] s[s] ss ss ss ss ss so}",
+                                "client_id", CLIENT_PUBKEY_ID,
+                                "name", CLIENT_PUBKEY_NAME,
+                                "confidential", json_true(),
+                                "redirect_uri",
+                                  CLIENT_PUBKEY_REDIRECT,
+                                "authorization_type",
+                                  "code",
+                                  "token",
+                                  "id_token",
+                                  "client_credentials",
+                                  "urn:openid:params:grant-type:ciba",
+                                "scope",
+                                  SCOPE_LIST,
+                                "client_secret", CLIENT_SECRET,
+                                "authorization_signed_response_alg", CLIENT_SIGN_ALG,
+                                "authorization_encrypted_response_alg", CLIENT_ENC_ALG,
+                                "authorization_encrypted_response_enc", CLIENT_ENC,
+                                "backchannel_token_delivery_mode", "poll",
+                                "enabled", json_true());
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  json_t * j_param = json_pack("{ss}", "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_PUBKEY_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_param);
+}
+END_TEST
+
+START_TEST(test_oidc_fapi_add_client_ciba_push)
+{
+  json_t * j_client = json_pack("{ss ss so s[s] s[sssss] s[s] ss ss ss ss ss so}",
+                                "client_id", CLIENT_PUBKEY_ID,
+                                "name", CLIENT_PUBKEY_NAME,
+                                "confidential", json_true(),
+                                "redirect_uri",
+                                  CLIENT_PUBKEY_REDIRECT,
+                                "authorization_type",
+                                  "code",
+                                  "token",
+                                  "id_token",
+                                  "client_credentials",
+                                  "urn:openid:params:grant-type:ciba",
+                                "scope",
+                                  SCOPE_LIST,
+                                "client_secret", CLIENT_SECRET,
+                                "authorization_signed_response_alg", CLIENT_SIGN_ALG,
+                                "authorization_encrypted_response_alg", CLIENT_ENC_ALG,
+                                "authorization_encrypted_response_enc", CLIENT_ENC,
+                                "backchannel_token_delivery_mode", "push",
+                                "enabled", json_true());
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  json_t * j_param = json_pack("{ss}", "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_PUBKEY_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_param);
+}
+END_TEST
+
+START_TEST(test_oidc_fapi_add_client_ciba_poll_public)
+{
+  json_t * j_client = json_pack("{ss ss so s[s] s[sssss] s[s] ss ss ss ss so}",
+                                "client_id", CLIENT_PUBKEY_ID,
+                                "name", CLIENT_PUBKEY_NAME,
+                                "confidential", json_false(),
+                                "redirect_uri",
+                                  CLIENT_PUBKEY_REDIRECT,
+                                "authorization_type",
+                                  "code",
+                                  "token",
+                                  "id_token",
+                                  "client_credentials",
+                                  "urn:openid:params:grant-type:ciba",
+                                "scope",
+                                  SCOPE_LIST,
+                                "authorization_signed_response_alg", CLIENT_SIGN_ALG,
+                                "authorization_encrypted_response_alg", CLIENT_ENC_ALG,
+                                "authorization_encrypted_response_enc", CLIENT_ENC,
+                                "backchannel_token_delivery_mode", "poll",
+                                "enabled", json_true());
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  json_t * j_param = json_pack("{ss}", "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_PUBKEY_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_param);
 }
 END_TEST
 
@@ -812,6 +917,87 @@ START_TEST(test_oidc_fapi_response_jwt_enc_error)
 }
 END_TEST
 
+START_TEST(test_oidc_fapi_ciba_request_ok)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_body;
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/ciba",
+                                                       U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_AUTH_BASIC_USER, CLIENT_PUBKEY_ID,
+                                                       U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                                       U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                                       U_OPT_POST_BODY_PARAMETER, "client_notification_token", CIBA_CLIENT_NOTIFICATION_TOKEN,
+                                                       U_OPT_POST_BODY_PARAMETER, "login_hint", "{\"username\":\""USER_USERNAME"\"}",
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(200, resp.status);
+  ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
+  ck_assert_ptr_ne(NULL, json_object_get(j_body, "auth_req_id"));
+  ck_assert_int_eq(PLUGIN_CIBA_DEFAULT_EXPIRATION, json_integer_value(json_object_get(j_body, "expires_in")));
+  
+  json_decref(j_body);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
+START_TEST(test_oidc_fapi_ciba_request_invalid_delivery_mode)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_body;
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/ciba",
+                                                       U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_AUTH_BASIC_USER, CLIENT_PUBKEY_ID,
+                                                       U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                                       U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                                       U_OPT_POST_BODY_PARAMETER, "client_notification_token", CIBA_CLIENT_NOTIFICATION_TOKEN,
+                                                       U_OPT_POST_BODY_PARAMETER, "login_hint", "{\"username\":\""USER_USERNAME"\"}",
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(401, resp.status);
+  ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
+  ck_assert_str_eq("invalid_client", json_string_value(json_object_get(j_body, "error")));
+  
+  json_decref(j_body);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
+START_TEST(test_oidc_fapi_ciba_request_invalid_client_public)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_body;
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/ciba",
+                                                       U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT_PUBKEY_ID,
+                                                       U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                                       U_OPT_POST_BODY_PARAMETER, "client_notification_token", CIBA_CLIENT_NOTIFICATION_TOKEN,
+                                                       U_OPT_POST_BODY_PARAMETER, "login_hint", "{\"username\":\""USER_USERNAME"\"}",
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(401, resp.status);
+  ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
+  ck_assert_str_eq("invalid_client", json_string_value(json_object_get(j_body, "error")));
+  
+  json_decref(j_body);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -838,6 +1024,15 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_fapi_delete_client);
   tcase_add_test(tc_core, test_oidc_fapi_add_client_jwks_enc_alg_invalid);
   tcase_add_test(tc_core, test_oidc_fapi_response_jwt_enc_error);
+  tcase_add_test(tc_core, test_oidc_fapi_delete_client);
+  tcase_add_test(tc_core, test_oidc_fapi_add_client_ciba_poll);
+  tcase_add_test(tc_core, test_oidc_fapi_ciba_request_ok);
+  tcase_add_test(tc_core, test_oidc_fapi_delete_client);
+  tcase_add_test(tc_core, test_oidc_fapi_add_client_ciba_push);
+  tcase_add_test(tc_core, test_oidc_fapi_ciba_request_invalid_delivery_mode);
+  tcase_add_test(tc_core, test_oidc_fapi_delete_client);
+  tcase_add_test(tc_core, test_oidc_fapi_add_client_ciba_poll_public);
+  tcase_add_test(tc_core, test_oidc_fapi_ciba_request_invalid_client_public);
   tcase_add_test(tc_core, test_oidc_fapi_delete_client);
   tcase_add_test(tc_core, test_oidc_fapi_delete_plugin);
   tcase_set_timeout(tc_core, 30);
