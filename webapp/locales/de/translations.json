@@ -219,6 +219,7 @@
     "client-redirect-uri": "Weiterleitungs URIs",
     "client-redirect-uri-ph": "z.B.: https://client.glewlwyd.tld/",
     "client-authorization-type": "Authorisations Typen",
+    "client-response_mode": "Response mode",
     "client-enabled": "Aktiviert",
     "client-client-id-mandatory": "Client ID ist ein Pflichtfeld",
     "client-client-id-exists": "Client ID exitiert bereits",

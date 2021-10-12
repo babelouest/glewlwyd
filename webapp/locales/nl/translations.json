@@ -229,6 +229,7 @@
     "client-redirect-uri": "Redirect URIs",
     "client-redirect-uri-ph": "Bijv.: https://client.glewlwyd.tld/",
     "client-authorization-type": "Autorisatie types",
+    "client-response_mode": "Response mode",
     "client-enabled": "Ingeschakeld",
     "client-client-id-mandatory": "Client ID is verplicht",
     "client-client-id-exists": "Client ID bestaat al",
