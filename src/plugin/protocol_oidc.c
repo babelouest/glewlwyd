@@ -6814,6 +6814,10 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_access_token_encryption_enc", "access_token_encryption_enc not supported");
         break;
       }
+      if (json_object_get(j_registration, "access_token_encryption_alg") == NULL) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_access_token_encryption_enc", "access_token_encryption_alg is mandatory");
+        break;
+      }
     }
 
     if (json_object_get(j_registration, "id_token_signing_alg") != NULL) {
@@ -6843,6 +6847,10 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
       if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "enc"), json_string_value(json_object_get(j_registration, "id_token_encryption_enc")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_id_token_encryption_enc", "id_token_encryption_enc not supported");
+        break;
+      }
+      if (json_object_get(j_registration, "id_token_encryption_alg") == NULL) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_id_token_encryption_enc", "id_token_encryption_alg is mandatory");
         break;
       }
     }
@@ -6876,6 +6884,10 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_userinfo_encryption_enc", "userinfo_encryption_enc not supported");
         break;
       }
+      if (json_object_get(j_registration, "userinfo_encryption_alg") == NULL) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_userinfo_encryption_enc", "userinfo_encryption_alg is mandatory");
+        break;
+      }
     }
 
     if (json_object_get(j_registration, "request_object_signing_alg") != NULL) {
@@ -6905,6 +6917,10 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
       if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "enc"), json_string_value(json_object_get(j_registration, "request_object_encryption_enc")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_request_object_encryption_enc", "request_object_encryption_enc not supported");
+        break;
+      }
+      if (json_object_get(j_registration, "request_object_encryption_alg") == NULL) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_request_object_encryption_enc", "request_object_encryption_alg is mandatory");
         break;
       }
     }
@@ -6938,6 +6954,10 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_token_endpoint_encryption_enc", "token_endpoint_encryption_enc not supported");
         break;
       }
+      if (json_object_get(j_registration, "token_endpoint_encryption_alg") == NULL) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_token_endpoint_encryption_enc", "token_endpoint_encryption_alg is mandatory");
+        break;
+      }
     }
 
     if (json_object_get(j_registration, "backchannel_authentication_request_signing_alg") != NULL) {
@@ -6969,6 +6989,10 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_backchannel_authentication_request_encryption_enc", "backchannel_authentication_request_encryption_enc not supported");
         break;
       }
+      if (json_object_get(j_registration, "backchannel_authentication_request_encryption_alg") == NULL) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_backchannel_authentication_request_encryption_enc", "backchannel_authentication_request_encryption_alg is mandatory");
+        break;
+      }
     }
 
     if (json_object_get(j_registration, "authorization_signed_response_alg") != NULL) {
@@ -6998,6 +7022,10 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
       if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "enc"), json_string_value(json_object_get(j_registration, "authorization_encrypted_response_enc")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_authorization_encryption_enc", "authorization_encrypted_response_enc not supported");
+        break;
+      }
+      if (json_object_get(j_registration, "authorization_encrypted_response_alg") == NULL) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_authorization_encryption_enc", "authorization_encrypted_response_alg is mandatory");
         break;
       }
     }
