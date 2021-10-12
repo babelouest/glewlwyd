@@ -4874,9 +4874,41 @@ static int is_sig_alg_valid(struct _oidc_config * config, json_t * j_client, jwa
   return is_valid;
 }
 
+static json_t * get_jwk_search_pattern(jwt_t * jwt, jwks_t * jwks) {
+  json_t * j_search = json_object();
+  jwa_alg alg = r_jwt_get_sign_alg(jwt);
+  jwk_t * jwk;
+  int s_alg = 1;
+  size_t i;
+  
+  if (alg == R_JWA_ALG_HS256 || alg == R_JWA_ALG_HS384 || alg == R_JWA_ALG_HS512) {
+    json_object_set_new(j_search, "kty", json_string("oct"));
+  } else if (alg == R_JWA_ALG_RS256 || alg == R_JWA_ALG_RS384 || alg == R_JWA_ALG_RS512 ||
+             alg == R_JWA_ALG_PS256 || alg == R_JWA_ALG_PS384 || alg == R_JWA_ALG_PS512) {
+    json_object_set_new(j_search, "kty", json_string("RSA"));
+  } else if (alg == R_JWA_ALG_ES256 || alg == R_JWA_ALG_ES384 || alg == R_JWA_ALG_ES512 || alg == R_JWA_ALG_ES256K) {
+    json_object_set_new(j_search, "kty", json_string("EC"));
+  } else if (alg == R_JWA_ALG_EDDSA) {
+    json_object_set_new(j_search, "kty", json_string("OKP"));
+  }
+  json_object_set_new(j_search, "use", json_string("sig"));
+  for (i=0; i<r_jwks_size(jwks); i++) {
+    jwk = r_jwks_get_at(jwks, i);
+    if (r_jwk_get_property_str(jwk, "alg") == NULL) {
+      s_alg = 0;
+      break;
+    }
+    r_jwk_free(jwk);
+  }
+  if (s_alg) {
+    json_object_set_new(j_search, "alg", json_string(r_jwa_alg_to_str(alg)));
+  }
+  return j_search;
+}
+
 static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * jwt, const char * client_id, int auth_type, const char * ip_source) {
-  json_t * j_client, * j_return;
-  jwks_t * jwks = NULL;
+  json_t * j_client, * j_return, * j_search;
+  jwks_t * jwks = NULL, * jwks_kid = NULL, * jwks_multiple_kids;
   jwk_t * jwk = NULL;
   jwa_alg alg = R_JWA_ALG_UNKNOWN;
   const char * kid = r_jwt_get_sig_kid(jwt), * pubkey_param = json_string_value(json_object_get(config->j_params, "client-pubkey-parameter"));
@@ -4911,15 +4943,59 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
           } else if (alg == R_JWA_ALG_ES256 || alg == R_JWA_ALG_ES384 || alg == R_JWA_ALG_ES512 || alg == R_JWA_ALG_RS256 || alg == R_JWA_ALG_RS384 || alg == R_JWA_ALG_RS512 || alg == R_JWA_ALG_PS256 || alg == R_JWA_ALG_PS384 || alg == R_JWA_ALG_PS512 || alg == R_JWA_ALG_EDDSA) {
             if (json_string_length(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))) && o_strlen(kid)) {
               if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_uri(jwks, json_string_value(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))), config->x5u_flags) == RHN_OK) {
-                if ((jwk = r_jwks_get_by_kid(jwks, kid)) == NULL) {
-                  y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from jwks_uri, origin: %s", ip_source);
+                if (json_object_get(config->j_params, "oauth-fapi-allow-multiple-kid") == json_true()) {
+                  j_search = json_pack("{ss*}", "kid", kid);
+                  jwks_kid = r_jwks_search_json_t(jwks, j_search);
+                  json_decref(j_search);
+                  if (r_jwks_size(jwks_kid) == 1) {
+                    jwk = r_jwks_get_at(jwks_kid, 0);
+                  } else if (r_jwks_size(jwks_kid) > 1) {
+                    j_search = get_jwk_search_pattern(jwt, jwks_kid);
+                    jwks_multiple_kids = r_jwks_search_json_t(jwks_kid, j_search);
+                    json_decref(j_search);
+                    if (r_jwks_size(jwks_multiple_kids) == 1) {
+                      jwk = r_jwks_get_at(jwks_multiple_kids, 0);
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from jwks_uri, muliple kid, pattern invalid, origin: %s", ip_source);
+                    }
+                    r_jwks_free(jwks_multiple_kids);
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from jwks_uri (fapi), origin: %s", ip_source);
+                  }
+                  r_jwks_free(jwks_kid);
+                } else {
+                  if ((jwk = r_jwks_get_by_kid(jwks, kid)) == NULL) {
+                    y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from jwks_uri, origin: %s", ip_source);
+                  }
                 }
               }
               r_jwks_free(jwks);
             } else if (json_is_object(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks-parameter")))) && o_strlen(kid)) {
               if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_json_t(jwks, json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks-parameter")))) == RHN_OK) {
-                if ((jwk = r_jwks_get_by_kid(jwks, kid)) == NULL) {
-                  y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from jwks, origin: %s", ip_source);
+                if (json_object_get(config->j_params, "oauth-fapi-allow-multiple-kid") == json_true()) {
+                  j_search = json_pack("{ss*}", "kid", kid);
+                  jwks_kid = r_jwks_search_json_t(jwks, j_search);
+                  json_decref(j_search);
+                  if (r_jwks_size(jwks_kid) == 1) {
+                    jwk = r_jwks_get_at(jwks_kid, 0);
+                  } else if (r_jwks_size(jwks_kid) > 1) {
+                    j_search = get_jwk_search_pattern(jwt, jwks_kid);
+                    jwks_multiple_kids = r_jwks_search_json_t(jwks_kid, j_search);
+                    json_decref(j_search);
+                    if (r_jwks_size(jwks_multiple_kids) == 1) {
+                      jwk = r_jwks_get_at(jwks_multiple_kids, 0);
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from jwks, muliple kid, pattern invalid, origin: %s", ip_source);
+                    }
+                    r_jwks_free(jwks_multiple_kids);
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from jwks (fapi), origin: %s", ip_source);
+                  }
+                  r_jwks_free(jwks_kid);
+                } else {
+                  if ((jwk = r_jwks_get_by_kid(jwks, kid)) == NULL) {
+                    y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from jwks, origin: %s", ip_source);
+                  }
                 }
               }
               r_jwks_free(jwks);
