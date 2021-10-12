@@ -39,6 +39,7 @@
 #define CLIENT_REDIRECT_URI_ENCODED "..%2F..%2Ftest-oidc.html%3Fparam%3Dclient1_cb1"
 #define CLIENT_SIGN_ALG "PS256"
 #define CLIENT_ENC_ALG "RSA-OAEP-256"
+#define CLIENT_ENC_ALG_INVALID "RSA1_5"
 #define CLIENT_ENC "A128GCM"
 #define RESPONSE_TYPE_CODE "code"
 #define RESPONSE_TYPE_CODE_ID_TOKEN "code+id_token"
@@ -321,6 +322,34 @@ START_TEST(test_oidc_fapi_add_client_jwks_invalid_alg)
                                 CLIENT_JWKS_PARAM, r_jwks_export_to_json_t(jwks),
                                 "authorization_signed_response_alg", CLIENT_SIGN_ALG,
                                 "authorization_encrypted_response_alg", CLIENT_ENC_ALG,
+                                "authorization_encrypted_response_enc", CLIENT_ENC,
+                                "enabled", json_true());
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  json_t * j_param = json_pack("{ss}", "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_PUBKEY_ID, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_param);
+  r_jwks_free(jwks);
+}
+END_TEST
+
+START_TEST(test_oidc_fapi_add_client_jwks_enc_alg_invalid)
+{
+  jwks_t * jwks = r_jwks_quick_import(R_IMPORT_JSON_STR, jwk_pubkey_ecdsa_str, R_IMPORT_JSON_STR, jwk_pubkey_ecdsa_str_2, R_IMPORT_JSON_STR, jwk_pubkey_rsa_str, R_IMPORT_NONE);
+  json_t * j_client = json_pack("{ss ss so s[s] s[ssss] s[s] so ss ss ss so}",
+                                "client_id", CLIENT_PUBKEY_ID,
+                                "name", CLIENT_PUBKEY_NAME,
+                                "confidential", json_true(),
+                                "redirect_uri",
+                                  CLIENT_PUBKEY_REDIRECT,
+                                "authorization_type",
+                                  "code", "token", "id_token", "client_credentials",
+                                "scope",
+                                  SCOPE_LIST,
+                                CLIENT_JWKS_PARAM, r_jwks_export_to_json_t(jwks),
+                                "authorization_signed_response_alg", CLIENT_SIGN_ALG,
+                                "authorization_encrypted_response_alg", CLIENT_ENC_ALG_INVALID,
                                 "authorization_encrypted_response_enc", CLIENT_ENC,
                                 "enabled", json_true());
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
@@ -719,6 +748,70 @@ START_TEST(test_oidc_fapi_request_jwt_multiple_kid_invalid_alg)
 }
 END_TEST
 
+START_TEST(test_oidc_fapi_response_jwt_enc_ok)
+{
+  jwt_t * jwt_request = NULL;
+  char * url, * request;
+  r_jwt_init(&jwt_request);
+  time_t now;
+  
+  time(&now);
+  ck_assert_ptr_ne(jwt_request, NULL);
+  r_jwt_add_sign_keys_json_str(jwt_request, jwk_privkey_ecdsa_str, NULL);
+  r_jwt_set_claim_str_value(jwt_request, "aud", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "response_type", RESPONSE_TYPE_CODE_ID_TOKEN_POST);
+  r_jwt_set_claim_str_value(jwt_request, "response_mode", "query.jwt");
+  r_jwt_set_claim_str_value(jwt_request, "client_id", CLIENT_PUBKEY_ID);
+  r_jwt_set_claim_str_value(jwt_request, "redirect_uri", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
+  r_jwt_set_claim_int_value(jwt_request, "nbf", now);
+  r_jwt_set_claim_int_value(jwt_request, "exp", now+60);
+  r_jwt_set_claim_str_value(jwt_request, "state", STATE);
+  r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
+  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
+  ck_assert_ptr_ne(request, NULL);
+  
+  url = msprintf("%s/%s/auth?g_continue&request=%s", SERVER_URI, PLUGIN_NAME, request);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "response="), 1);
+  
+  o_free(url);
+  o_free(request);
+  r_jwt_free(jwt_request);
+}
+END_TEST
+
+START_TEST(test_oidc_fapi_response_jwt_enc_error)
+{
+  jwt_t * jwt_request = NULL;
+  char * url, * request;
+  r_jwt_init(&jwt_request);
+  time_t now;
+  
+  time(&now);
+  ck_assert_ptr_ne(jwt_request, NULL);
+  r_jwt_add_sign_keys_json_str(jwt_request, jwk_privkey_ecdsa_str, NULL);
+  r_jwt_set_claim_str_value(jwt_request, "aud", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "response_type", RESPONSE_TYPE_CODE_ID_TOKEN_POST);
+  r_jwt_set_claim_str_value(jwt_request, "response_mode", "jwt");
+  r_jwt_set_claim_str_value(jwt_request, "client_id", CLIENT_PUBKEY_ID);
+  r_jwt_set_claim_str_value(jwt_request, "redirect_uri", CLIENT_PUBKEY_REDIRECT);
+  r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
+  r_jwt_set_claim_int_value(jwt_request, "nbf", now);
+  r_jwt_set_claim_int_value(jwt_request, "exp", now+60);
+  r_jwt_set_claim_str_value(jwt_request, "state", STATE);
+  r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
+  request = r_jwt_serialize_signed(jwt_request, NULL, 0);
+  ck_assert_ptr_ne(request, NULL);
+  
+  url = msprintf("%s/%s/auth?g_continue&request=%s", SERVER_URI, PLUGIN_NAME, request);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error="), 1);
+  
+  o_free(url);
+  o_free(request);
+  r_jwt_free(jwt_request);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -737,10 +830,14 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_fapi_request_jwt_exp_missing);
   tcase_add_test(tc_core, test_oidc_fapi_delete_client);
   tcase_add_test(tc_core, test_oidc_fapi_add_client_jwks);
+  tcase_add_test(tc_core, test_oidc_fapi_response_jwt_enc_ok);
   tcase_add_test(tc_core, test_oidc_fapi_request_jwt_multiple_kid_response_ok);
   tcase_add_test(tc_core, test_oidc_fapi_delete_client);
   tcase_add_test(tc_core, test_oidc_fapi_add_client_jwks_invalid_alg);
   tcase_add_test(tc_core, test_oidc_fapi_request_jwt_multiple_kid_invalid_alg);
+  tcase_add_test(tc_core, test_oidc_fapi_delete_client);
+  tcase_add_test(tc_core, test_oidc_fapi_add_client_jwks_enc_alg_invalid);
+  tcase_add_test(tc_core, test_oidc_fapi_response_jwt_enc_error);
   tcase_add_test(tc_core, test_oidc_fapi_delete_client);
   tcase_add_test(tc_core, test_oidc_fapi_delete_plugin);
   tcase_set_timeout(tc_core, 30);
