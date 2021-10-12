@@ -1240,6 +1240,14 @@ static json_t * check_parameters (json_t * j_params) {
         json_array_append_new(j_error, json_string("oauth-fapi-allow-multiple-kid is optional and must be a boolean"));
         ret = G_ERROR_PARAM;
       }
+      if (json_object_get(j_params, "oauth-fapi-ciba-confidential-client") != NULL && !json_is_boolean(json_object_get(j_params, "oauth-fapi-ciba-confidential-client"))) {
+        json_array_append_new(j_error, json_string("oauth-fapi-ciba-confidential-client is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "oauth-fapi-ciba-push-forbidden") != NULL && !json_is_boolean(json_object_get(j_params, "oauth-fapi-ciba-push-forbidden"))) {
+        json_array_append_new(j_error, json_string("oauth-fapi-ciba-push-forbidden is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
     }
 
     if (json_array_size(j_error) && ret == G_ERROR_PARAM) {
@@ -6759,6 +6767,12 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "backchannel_token_delivery_mode must have one of the following values: 'poll', 'ping', 'push'");
         break;
       }
+      if (json_object_get(config->j_params, "oauth-fapi-ciba-push-forbidden") == json_true()) {
+        if (0 == o_strcmp("push", json_string_value(json_object_get(j_registration, "backchannel_token_delivery_mode")))) {
+          j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "backchannel_token_delivery_mode value 'push' forbidden");
+          break;
+        }
+      }
       if (json_object_get(j_registration, "backchannel_token_delivery_mode") != NULL) {
         if (json_object_get(j_registration, "backchannel_client_notification_endpoint") != NULL) {
           resource = json_string_value(json_object_get(j_registration, "backchannel_client_notification_endpoint"));
@@ -10733,7 +10747,7 @@ static int process_ciba_request (const struct _u_request * request,
       j_client = check_client_valid(config, client_id, client_secret, NULL, GLEWLWYD_AUTHORIZATION_TYPE_CIBA_FLAG, 0, ip_source);
     }
 
-    if (!check_result_value(j_client, G_OK)) {
+    if (!check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
       j_return = json_pack("{ss}", "error", "invalid_client");
       ulfius_set_json_body_response(response, 401, j_return);
       json_decref(j_return);
@@ -10741,7 +10755,25 @@ static int process_ciba_request (const struct _u_request * request,
       break;
     }
     
-    if (0 == o_strcmp(json_string_value(json_object_get(j_client, "backchannel_token_delivery_mode")), "poll") &&
+    if (json_object_get(config->j_params, "oauth-fapi-ciba-push-forbidden") == json_true()) {
+      if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "push")) {
+        j_return = json_pack("{ss}", "error", "invalid_client");
+        ulfius_set_json_body_response(response, 401, j_return);
+        json_decref(j_return);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s' uses ciba mode push, which is forbidden, origin: %s", client_id, ip_source);
+        break;
+      }
+    }
+    
+    if (json_object_get(config->j_params, "oauth-fapi-ciba-confidential-client") == json_true() && json_object_get(json_object_get(j_client, "client"), "confidential") != json_true()) {
+      j_return = json_pack("{ss}", "error", "invalid_client");
+      ulfius_set_json_body_response(response, 401, j_return);
+      json_decref(j_return);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s' is not confidential, which is forbidden, origin: %s", client_id, ip_source);
+      break;
+    }
+    
+    if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "poll") &&
         json_true() != json_object_get(config->j_params, "oauth-ciba-mode-poll-allowed")) {
       j_return = json_pack("{ss}", "error", "invalid_request");
       ulfius_set_json_body_response(response, 401, j_return);
@@ -10750,7 +10782,7 @@ static int process_ciba_request (const struct _u_request * request,
       break;
     }
 
-    if (0 == o_strcmp(json_string_value(json_object_get(j_client, "backchannel_token_delivery_mode")), "ping") &&
+    if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "ping") &&
         json_true() != json_object_get(config->j_params, "oauth-ciba-mode-ping-allowed")) {
       j_return = json_pack("{ss}", "error", "invalid_request");
       ulfius_set_json_body_response(response, 401, j_return);
@@ -10759,7 +10791,7 @@ static int process_ciba_request (const struct _u_request * request,
       break;
     }
 
-    if (0 == o_strcmp(json_string_value(json_object_get(j_client, "backchannel_token_delivery_mode")), "push") &&
+    if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "push") &&
         json_true() != json_object_get(config->j_params, "oauth-ciba-mode-push-allowed")) {
       j_return = json_pack("{ss}", "error", "invalid_request");
       ulfius_set_json_body_response(response, 401, j_return);
@@ -10944,7 +10976,7 @@ static int process_ciba_request (const struct _u_request * request,
     }
     
     j_return = json_pack("{sssi}", "auth_req_id", auth_req_id, "expires_in", l_requested_expiry);
-    if (0 == o_strcmp(json_string_value(json_object_get(j_client, "backchannel_token_delivery_mode")), "poll")) {
+    if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "poll")) {
       // This is only to avoid clients that would expect an interval value,
       // but Glewlwyd's ciba implementation doesn't care about the interval
       json_object_set_new(j_return, "interval", json_integer(5));
@@ -14948,6 +14980,8 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
         json_object_del(p_config->j_params, "oauth-fapi-restrict-alg");
         json_object_set_new(p_config->j_params, "oauth-fapi-restrict-alg", json_pack("[sssssssssssssss]", "RSA-OAEP", "RSA-OAEP-256", "A128KW", "A192KW", "A256KW", "ECDH-ES", "ECDH-ES+A128KW", "ECDH-ES+A192KW", "ECDH-ES+A256KW", "A128GCMKW", "A192GCMKW", "A256GCMKW", "PBES2-HS256+A128KW", "PBES2-HS384+A192KW", "PBES2-HS512+A256KW"));
         json_object_set(p_config->j_params, "oauth-fapi-allow-multiple-kid", json_true());
+        json_object_set(p_config->j_params, "oauth-fapi-ciba-confidential-client", json_true());
+        json_object_set(p_config->j_params, "oauth-fapi-ciba-push-forbidden", json_true());
       }
 
       // .well-known/openid-configuration content generation
