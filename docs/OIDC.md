@@ -40,6 +40,9 @@ The following OpenID Connect and OAuth2 functionalities are currently supported:
 - [OAuth 2.0 JWT Secured Authorization Request (JAR)](https://datatracker.ietf.org/doc/html/rfc9101)
 - [OpenID Connect Client-Initiated Backchannel Authentication Flow](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html)
 - [OAuth 2.0 Authorization Server Issuer Identification](https://www.ietf.org/id/draft-ietf-oauth-iss-auth-resp-01.html)
+- [Financial-grade API Security Profile 1.0 - Part 1: Baseline](https://openid.net/specs/openid-financial-api-part-1-1_0-final.html)
+- [Financial-grade API Security Profile 1.0 - Part 2: Advanced](https://openid.net/specs/openid-financial-api-part-2-1_0.html)
+- [Financial-grade API: Client Initiated Backchannel Authentication Profile](https://bitbucket.org/openid/fapi/src/master/Financial_API_WD_CIBA.md)
 
 The following OpenID Connect functionalities are not supported yet:
 
@@ -918,6 +921,44 @@ Click on the following link to accept: {CONNECT_URL}.
 
 Click on the following link to cancel: {CANCEL_URL}
 ```
+
+## Financial-grade API additional options (FAPI)
+
+### Select all below
+
+If this is set to true, all FAPI related options will be set to true and all encryption algorithms will be allowed, except for `dir` and `RSA1_5`.
+
+### Allow JWT responses in /auth (JARM)
+
+If this is set to true, JWT response mode will be allowed.
+
+### Add s_hash in id_token
+
+If this is set to true, the state hash will be added in the id_token payload as `s_hash`.
+
+### Verify nbf property
+
+If this is set to true, the `nbf` parameter will be mandatory in jwt requests and `exp-nbf` must not succeed 60 minutes.
+
+### Allow restricted algs for encryption
+
+If this is set to true, glewlwyd may restrict some algorithms for encryption.
+
+### Allowed algs
+
+Dropdown menu to select allowed encryption algorithms. By design, algorithms `dir` and `RSA1_5` are forbidden in FAPI mode.
+
+### Allow clients with multiple similar kid
+
+If this is set to true, clients with the same kid in its public key set is allowed.
+
+### CIBA allowed clients must be confidential
+
+If this is set to true, clients must be confidential to use CIBA endpoint.
+
+### Push mode forbidden
+
+If this is set to true, clients must use CIBA with poll or ping mode.
 
 ## Native Apps Guidelines
 
