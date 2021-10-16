@@ -5245,7 +5245,8 @@ static json_t * validate_ciba_jwt_request(struct _oidc_config * config, const ch
                                            R_JWT_CLAIM_IAT, R_JWT_CLAIM_PRESENT,
                                            R_JWT_CLAIM_NBF, R_JWT_CLAIM_PRESENT,
                                            R_JWT_CLAIM_JTI, NULL,
-                                           R_JWT_CLAIM_NOP) == RHN_OK) {
+                                           R_JWT_CLAIM_NOP) == RHN_OK &&
+                o_strnstr(r_jwt_get_claim_str_value(jwt, "aud"), json_string_value(json_object_get(config->j_params, "iss")), json_string_length(json_object_get(config->j_params, "iss"))) != NULL) {
               if ((res = check_ciba_jti(config, r_jwt_get_claim_str_value(jwt, "jti"), client_id, ip_source)) == RHN_OK) {
                 j_claims = r_jwt_get_full_claims_json_t(jwt);
                 if (json_object_get(j_claims, "requested_expiry") != NULL) {
@@ -10638,7 +10639,7 @@ static json_t * check_ciba_login_hint(struct _oidc_config * config, json_t * j_c
       if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
         j_return = json_pack("{sisO}", "result", G_OK, "user", json_object_get(j_user, "user"));
       } else if (check_result_value(j_user, G_ERROR_NOT_FOUND) || json_object_get(json_object_get(j_user, "user"), "enabled") != json_true()) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_ciba_login_hint - invalid username '%s' for client_id '%s'", json_string_value(json_object_get(j_login_hint, "sub")), json_string_value(json_object_get(j_login_hint, "username")), json_string_value(json_object_get(j_client, "client_id")));
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_ciba_login_hint - invalid username '%s' for client_id '%s'", username_from_sub, json_string_value(json_object_get(j_login_hint, "username")), json_string_value(json_object_get(j_client, "client_id")));
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_ciba_login_hint - Error glewlwyd_plugin_callback_get_user");
@@ -10752,6 +10753,14 @@ static int process_ciba_request (const struct _u_request * request,
       ulfius_set_json_body_response(response, 401, j_return);
       json_decref(j_return);
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s' is invalid, origin: %s", client_id, ip_source);
+      break;
+    }
+    
+    if (!o_strlen(scope)) {
+      j_return = json_pack("{ss}", "error", "invalid_scope");
+      ulfius_set_json_body_response(response, 401, j_return);
+      json_decref(j_return);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s', scope is mandatory, origin: %s", client_id, ip_source);
       break;
     }
     
