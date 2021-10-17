@@ -143,7 +143,7 @@ Check out [rnbyc documentation](https://babelouest.github.io/rhonabwy/md_tools_r
 This simple example shows how to generate a ECDSA 256 private key.
 
 ```shell
-$ rnbyc -j -g ecdsa256 -k key-1 -p /dev/null
+$ rnbyc -j -g ec256 -k key-1 -a ES256 -p /dev/null
 {
   "keys": [
     {
