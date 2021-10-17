@@ -472,6 +472,7 @@ CREATE TABLE gpo_access_token_scope (
 -- Id token table, to store meta information on id token sent
 CREATE TABLE gpo_id_token (
   gpoi_id SERIAL PRIMARY KEY,
+  gpoc_id INTEGER,
   gpoi_plugin_name VARCHAR(256) NOT NULL,
   gpoi_authorization_type SMALLINT NOT NULL,
   gpoi_username VARCHAR(256),
@@ -480,7 +481,9 @@ CREATE TABLE gpo_id_token (
   gpoi_issued_for VARCHAR(256), -- IP address or hostname
   gpoi_user_agent VARCHAR(256),
   gpoi_hash VARCHAR(512),
-  gpoi_enabled SMALLINT DEFAULT 1
+  gpoi_sid_hash VARCHAR(512),
+  gpoi_enabled SMALLINT DEFAULT 1,
+  FOREIGN KEY(gpoc_id) REFERENCES gpo_code(gpoc_id) ON DELETE CASCADE
 );
 CREATE INDEX i_gpoi_hash ON gpo_id_token(gpoi_hash);
 

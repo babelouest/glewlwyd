@@ -60,3 +60,8 @@ CREATE TABLE gpo_ciba_scheme (
 
 ALTER TABLE gpo_code
 ADD gpoc_s_hash TEXT;
+
+ALTER TABLE gpo_id_token
+ADD gpoc_id INTEGER,
+ADD gpoi_sid_hash TEXT,
+ADD FOREIGN KEY(gpoc_id) REFERENCES gpo_code(gpoc_id) ON DELETE CASCADE;
