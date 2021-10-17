@@ -4,6 +4,12 @@
 
 This plugin is based on the [OAuth 2 RFC document](https://tools.ietf.org/html/rfc6749) and allows Glewlwyd to act as an OAuth2 Provider.
 
+**Note**
+
+This plugin will be deprecated sooner or later. Until then, bugs will still be fixed but no new functionalities will be added.
+
+It's recommened to use the [OIDC plugin](OIDC.md) instead.
+
 ## Functionalities summary
 
 The following OAuth2 functionalities are supported:
