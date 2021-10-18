@@ -702,44 +702,47 @@ json_t * get_user_session_list(struct config_elements * config, const char * use
 }
 
 int delete_user_session_from_hash(struct config_elements * config, const char * username, const char * session_hash) {
-  json_t * j_query, * j_result;
-  int res, ret;
+  json_t * j_query, * j_result, * j_element = NULL;
+  int res, ret = G_OK;
   unsigned char session_hash_dec[128];
-  size_t session_hash_dec_len = 0;
+  size_t session_hash_dec_len = 0, index = 0;
   
-  if (o_base64url_2_base64((unsigned char *)session_hash, o_strlen(session_hash), session_hash_dec, &session_hash_dec_len)) {
-    j_query = json_pack("{sss[s]s{ss%ss}}",
-                        "table",
-                        GLEWLWYD_TABLE_USER_SESSION,
-                        "columns",
-                          "gus_id",
-                        "where",
-                          "gus_session_hash",
-                          session_hash_dec,
-                          session_hash_dec_len,
-                          "gus_username",
-                          username);
+  j_query = json_pack("{sss[s]s{ss}}",
+                      "table",
+                      GLEWLWYD_TABLE_USER_SESSION,
+                      "columns",
+                        "gus_id",
+                      "where",
+                        "gus_username", username);
+  if (session_hash != NULL) {
+    if (o_base64url_2_base64((unsigned char *)session_hash, o_strlen(session_hash), session_hash_dec, &session_hash_dec_len)) {
+      json_object_set_new(json_object_get(j_query, "where"), "gus_session_hash", json_stringn((const char *)session_hash_dec, session_hash_dec_len));
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_session_from_hash - Error o_base64url_2_base64");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  if (ret == G_OK) {
     res = h_select(config->conn, j_query, &j_result, NULL);
     json_decref(j_query);
     if (res == H_OK) {
       if (json_array_size(j_result)) {
-        j_query = json_pack("{sss{si}s{sO}}",
-                            "table",
-                            GLEWLWYD_TABLE_USER_SESSION,
-                            "set",
-                              "gus_enabled",
-                              0,
-                            "where",
-                              "gus_id",
-                              json_object_get(json_array_get(j_result, 0), "gus_id"));
-        res = h_update(config->conn, j_query, NULL);
-        json_decref(j_query);
-        if (res == H_OK) {
-          ret = G_OK;
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_session_from_hash - Error executing j_query (2)");
-          glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
-          ret = G_ERROR_DB;
+        json_array_foreach(j_result, index, j_element) {
+          j_query = json_pack("{sss{si}s{sO}}",
+                              "table",
+                              GLEWLWYD_TABLE_USER_SESSION,
+                              "set",
+                                "gus_enabled",
+                                0,
+                              "where",
+                                "gus_id", json_object_get(j_element, "gus_id"));
+          res = h_update(config->conn, j_query, NULL);
+          json_decref(j_query);
+          if (res != H_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_session_from_hash - Error executing j_query (2)");
+            glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+            ret = G_ERROR_DB;
+          }
         }
       } else {
         ret = G_ERROR_NOT_FOUND;
@@ -750,9 +753,6 @@ int delete_user_session_from_hash(struct config_elements * config, const char * 
       glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "delete_user_session_from_hash - Error o_base64url_2_base64");
-    ret = G_ERROR_PARAM;
   }
   return ret;
 }

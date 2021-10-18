@@ -383,7 +383,12 @@ int main (int argc, char ** argv) {
   // User profile
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile_list/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile_list/", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
-  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_profile_valid, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_profile_valid, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/password", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_profile_valid, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/plugin", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/grant", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_profile_valid, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/scheme/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_profile_valid, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/session/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_delete_profile, (void*)config);
@@ -391,6 +396,7 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile/plugin", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_plugin_list, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile/grant", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_client_grant_list, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile/session", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_session_list, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/profile/session/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/profile/session/:session_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile/scheme", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_get_scheme_list, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/scheme/register/*", GLEWLWYD_CALLBACK_PRIORITY_PRE_APPLICATION, &callback_glewlwyd_scheme_check_forbid_profile, (void*)config);

@@ -4635,72 +4635,99 @@ static json_t * refresh_token_list_get(struct _oidc_config * config, const char 
  * disable a refresh token based on its signature
  */
 static int refresh_token_disable(struct _oidc_config * config, const char * username, const char * token_hash, const char * ip_source) {
-  json_t * j_query, * j_result;
-  int res, ret;
+  json_t * j_query, * j_result, * j_element = NULL;
+  int res, ret = G_OK;
   unsigned char token_hash_dec[128];
-  size_t token_hash_dec_len = 0;
+  size_t token_hash_dec_len = 0, index = 0;
 
-  if (o_base64url_2_base64((unsigned char *)token_hash, o_strlen(token_hash), token_hash_dec, &token_hash_dec_len)) {
-    j_query = json_pack("{sss[ss]s{ssssss%}}",
-                        "table",
-                        GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN,
-                        "columns",
-                          "gpor_id",
-                          "gpor_enabled",
-                        "where",
-                          "gpor_plugin_name",
-                          config->name,
-                          "gpor_username",
-                          username,
-                          "gpor_token_hash",
-                          token_hash_dec,
-                          token_hash_dec_len);
-    res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
-    json_decref(j_query);
-    if (res == H_OK) {
-      if (json_array_size(j_result)) {
-        if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpor_enabled"))) {
-          j_query = json_pack("{sss{si}s{ssssss%}}",
+  j_query = json_pack("{sss[ss]s{ssss}}",
+                      "table",
+                      GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN,
+                      "columns",
+                        "gpor_id",
+                        "gpor_enabled",
+                      "where",
+                        "gpor_plugin_name", config->name,
+                        "gpor_username", username);
+  if (token_hash != NULL) {
+    if (o_base64url_2_base64((unsigned char *)token_hash, o_strlen(token_hash), token_hash_dec, &token_hash_dec_len)) {
+      json_object_set_new(json_object_get(j_query, "where"), "gpor_token_hash", json_stringn((const char *)token_hash_dec, token_hash_dec_len));
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable oidc - Error o_base64url_2_base64");
+      ret = G_ERROR_PARAM;
+    }
+  }
+  res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result)) {
+      json_array_foreach(j_result, index, j_element) {
+        if (json_integer_value(json_object_get(j_element, "gpor_enabled"))) {
+          j_query = json_pack("{sss{si}s{sssO}}",
                               "table",
                               GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN,
                               "set",
-                                "gpor_enabled",
-                                0,
+                                "gpor_enabled", 0,
                               "where",
-                                "gpor_plugin_name",
-                                config->name,
-                                "gpor_username",
-                                username,
-                                "gpor_token_hash",
-                                token_hash_dec,
-                                token_hash_dec_len);
+                                "gpor_plugin_name", config->name,
+                                "gpor_id", json_object_get(j_element, "gpor_id"));
           res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
           json_decref(j_query);
           if (res == H_OK) {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - token '[...%s]' disabled, origin: %s", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))), ip_source);
-            ret = G_OK;
+            if (token_hash != NULL) {
+              y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - token '[...%s]' disabled, origin: %s", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))), ip_source);
+            }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (2)");
             config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
             ret = G_ERROR_DB;
           }
-        } else {
+        } else if (token_hash != NULL) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token '[...%s]' already disabled, origin: %s", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))), ip_source);
           ret = G_ERROR_PARAM;
         }
-      } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token '[...%s]' not found, origin: %s", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))), ip_source);
-        ret = G_ERROR_NOT_FOUND;
       }
-      json_decref(j_result);
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (1)");
+    } else if (token_hash != NULL) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "refresh_token_disable - Error token '[...%s]' not found, origin: %s", token_hash + (o_strlen(token_hash) - (o_strlen(token_hash)>=8?8:o_strlen(token_hash))), ip_source);
+      ret = G_ERROR_NOT_FOUND;
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (1)");
+    config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+    ret = G_ERROR_DB;
+  }
+  if (ret == G_OK && token_hash == NULL) {
+    j_query = json_pack("{sss{si}s{ss}}",
+                        "table",
+                        GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN,
+                        "set",
+                          "gpoa_enabled", 0,
+                        "where",
+                          "gpoa_plugin_name", config->name);
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (3)");
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     }
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error o_base64url_2_base64");
-    ret = G_ERROR_PARAM;
+  }
+  if (ret == G_OK && token_hash == NULL) {
+    j_query = json_pack("{sss{si}s{ss}}",
+                        "table",
+                        GLEWLWYD_PLUGIN_OIDC_TABLE_ID_TOKEN,
+                        "set",
+                          "gpoi_enabled", 0,
+                        "where",
+                          "gpoi_plugin_name", config->name);
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "refresh_token_disable - Error executing j_query (4)");
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+      ret = G_ERROR_DB;
+    }
   }
   return ret;
 }
@@ -14831,6 +14858,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_refresh_token_list_get, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) != G_OK ||
+         config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_disable_refresh_token, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_disable_refresh_token, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_discovery, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "jwks", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_jwks, (void*)*cls) != G_OK) {
@@ -15148,6 +15176,7 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
     config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "userinfo/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "userinfo/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, "token/");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/:token_hash");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "token/*");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration");
