@@ -54,6 +54,7 @@ class App extends Component {
       resetCredentials: [],
       resetCredentialsShow: false,
       authDetails: [],
+      pluginList: [],
       messageModal: {
         title: "",
         label: "",
@@ -208,6 +209,15 @@ class App extends Component {
         this.setState({deviceAuth: true, currentUser: false, userList: [], loaded: true, scheme: this.state.config.params.scheme});
       } else {
         this.setState({newUser: (!!this.state.config.params.callback_url && !!this.state.config.params.scope), showGrant: false, currentUser: false, userList: [], loaded: true, scheme: this.state.config.params.scheme});
+      }
+    });
+    apiManager.glewlwydRequest("/profile/plugin")
+    .then((res) => {
+      this.setState({pluginList: res});
+    })
+    .fail((err) => {
+      if (error.status != 401) {
+        messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("error-api-connect")});
       }
     });
   }
@@ -523,6 +533,7 @@ class App extends Component {
                        registration={this.state.registration}
                        resetCredentials={this.state.resetCredentials}
                        resetCredentialsShow={this.state.resetCredentialsShow} 
+                       pluginList={this.state.pluginList}
                        sessionClosed={this.state.sessionClosed}/>
             </div>
           </div>

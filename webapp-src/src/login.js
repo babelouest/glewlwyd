@@ -30,6 +30,7 @@ var initApp = () => {
     apiManager.request(frontEndConfig.GlewlwydUrl + "config/")
     .then((serverConfig) => {
       apiManager.setConfig(frontEndConfig.GlewlwydUrl + serverConfig.api_prefix);
+      apiManager.setConfigSub(frontEndConfig.GlewlwydUrl + serverConfig.api_prefix);
       var config = Object.assign({
         params: {
           scope: urlParams.get("scope")||false, 

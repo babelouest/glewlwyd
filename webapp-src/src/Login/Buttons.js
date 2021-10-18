@@ -24,6 +24,7 @@ class Buttons extends Component {
       registration: props.registration,
       resetCredentials: props.resetCredentials,
       resetCredentialsShow: props.resetCredentialsShow,
+      pluginList: props.pluginList,
       sessionClosed: props.sessionClosed
     };
 
@@ -55,12 +56,13 @@ class Buttons extends Component {
       registration: nextProps.registration,
       resetCredentials: nextProps.resetCredentials,
       resetCredentialsShow: nextProps.resetCredentialsShow,
+      pluginList: nextProps.pluginList,
       sessionClosed: nextProps.sessionClosed
     });
   }
 
   clickLogout() {
-    apiManager.glewlwydRequest("/auth/?username=" + this.state.currentUser.username, "DELETE")
+    return apiManager.glewlwydRequest("/auth/?username=" + this.state.currentUser.username, "DELETE")
     .then(() => {
       messageDispatcher.sendMessage('App', {type: 'InitProfile'});
       messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
@@ -71,7 +73,51 @@ class Buttons extends Component {
       messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
     });
   }
-  
+
+  revokeAll(e, session, token) {
+    e.preventDefault();
+    var promises = [];
+    if (token) {
+      this.state.pluginList.forEach((plugin) => {
+        if (plugin.module === "oauth2-glewlwyd") {
+          promises.push(apiManager.glewlwydRequestSub("/" + plugin.name + "/profile/token/", "DELETE")
+          .fail(() => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
+          }));
+        } else if (plugin.module === "oidc") {
+          promises.push(apiManager.glewlwydRequestSub("/" + plugin.name + "/token/", "DELETE")
+          .fail(() => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
+          }));
+        }
+      });
+    }
+    if (promises.length) {
+      Promise.all(promises)
+      .then((res) => {
+        if (session) {
+          return apiManager.glewlwydRequest("/profile/session/", "DELETE");
+          messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
+        } else {
+          return res;
+        }
+      })
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("login.logout-all-success")});
+        messageDispatcher.sendMessage('App', {type: 'InitProfile'});
+      });
+    } else if (session) {
+      apiManager.glewlwydRequest("/profile/session/", "DELETE")
+      .then(() => {
+        messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("login.logout-all-success")});
+        messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
+      });
+    }
+  }
+
   clickGrant() {
     messageDispatcher.sendMessage('App', {type: 'ToggleGrant'});
   }
@@ -174,21 +220,28 @@ class Buttons extends Component {
             <button type="button" className="btn btn-danger" onClick={this.clickLogout}>
               <i className="fas fa-sign-out-alt btn-icon"></i>{i18next.t("login.logout")}
             </button>
-          </div>
-          <div>
-            <hr/>
             <div className="btn-group" role="group">
-              <div className="btn-group" role="group">
-                <button className="btn btn-secondary dropdown-toggle" type="button" id="selectGrant" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i className="fas fa-user-cog btn-icon"></i>{i18next.t("login.login-handle")}{asterisk}
-                </button>
-                <div className="dropdown-menu" aria-labelledby="selectGrant">
-                  {bGrant}
-                  <a className="dropdown-item" href={this.state.config.ProfileUrl||""} target="_blank" rel="noopener noreferrer">{i18next.t("login.update-profile")}</a>
-                </div>
+              <button className="btn btn-danger dropdown-toggle" type="button" id="logoutDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              </button>
+              <div className="dropdown-menu" aria-labelledby="logoutDropdown">
+                <a className="dropdown-item" href="#" onClick={(e) => this.revokeAll(e, true, true)}>{i18next.t("login.logout-all-sessions-tokens")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.revokeAll(e, true, false)}>{i18next.t("login.logout-all-sessions")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.revokeAll(e, false, true)}>{i18next.t("login.logout-all-tokens")}</a>
               </div>
-              {bAnother}
             </div>
+          </div>
+          <hr/>
+          <div className="btn-group" role="group">
+            <div className="btn-group" role="group">
+              <button className="btn btn-secondary dropdown-toggle" type="button" id="selectGrant" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i className="fas fa-user-cog btn-icon"></i>{i18next.t("login.login-handle")}{asterisk}
+              </button>
+              <div className="dropdown-menu" aria-labelledby="selectGrant">
+                {bGrant}
+                <a className="dropdown-item" href={this.state.config.ProfileUrl||""} target="_blank" rel="noopener noreferrer">{i18next.t("login.update-profile")}</a>
+              </div>
+            </div>
+            {bAnother}
           </div>
         </div>
   		);

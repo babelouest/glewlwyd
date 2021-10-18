@@ -319,55 +319,56 @@ class App extends Component {
   refreshSession() {
     apiManager.glewlwydRequest("/profile/session")
     .then((res) => {
-      this.setState({sessionList: res});
-    })
-    .fail((err) => {
-      if (err.status === 401) {
-        this.setState({invalidCredentialMessage: true});
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
-      } else {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-      }
-    });
-    apiManager.glewlwydRequest("/profile/plugin")
-    .then((res) => {
-      res.forEach((plugin) => {
-        if (plugin.module === "oauth2-glewlwyd") {
-          apiManager.glewlwydRequestSub("/" + plugin.name + "/profile/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
-          .then((resPlugin) => {
-            var plugins = this.state.plugins;
-            plugins.oauth2[plugin.name] = resPlugin;
-            this.setState({plugins: plugins});
-          })
-          .fail((err) => {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-          });
-        } else if (plugin.module === "oidc") {
-          apiManager.glewlwydRequestSub("/" + plugin.name + "/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
-          .then((resPlugin) => {
-            var plugins = this.state.plugins;
-            plugins.oidc[plugin.name] = resPlugin;
-            this.setState({plugins: plugins});
-          })
-          .fail((err) => {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
-          });
-          apiManager.glewlwydRequest("/" + plugin.name + "/ciba_user_list")
-          .then((cibaList) => {
-            this.setState({cibaList: cibaList});
-          })
-          .fail((err) => {
-            if (err.status !== 404) {
-              messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      this.setState({sessionList: res}, () => {
+        apiManager.glewlwydRequest("/profile/plugin")
+        .then((res) => {
+          res.forEach((plugin) => {
+            if (plugin.module === "oauth2-glewlwyd") {
+              apiManager.glewlwydRequestSub("/" + plugin.name + "/profile/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
+              .then((resPlugin) => {
+                var plugins = this.state.plugins;
+                plugins.oauth2[plugin.name] = resPlugin;
+                this.setState({plugins: plugins});
+              })
+              .fail((err) => {
+                messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+              });
+            } else if (plugin.module === "oidc") {
+              apiManager.glewlwydRequestSub("/" + plugin.name + "/token" + (this.state.config.params.delegate?"?impersonate="+this.state.config.params.delegate:""))
+              .then((resPlugin) => {
+                var plugins = this.state.plugins;
+                plugins.oidc[plugin.name] = resPlugin;
+                this.setState({plugins: plugins});
+              })
+              .fail((err) => {
+                messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+              });
+              apiManager.glewlwydRequest("/" + plugin.name + "/ciba_user_list")
+              .then((cibaList) => {
+                this.setState({cibaList: cibaList});
+              })
+              .fail((err) => {
+                if (err.status !== 404) {
+                  messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+                }
+              });
             }
           });
-        }
+          messageDispatcher.sendMessage('App', {type: "sessionComplete"});
+        })
+        .fail((err) => {
+          if (err.status === 401) {
+            this.setState({invalidCredentialMessage: true});
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
+          } else {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+          }
+        });
       });
-      messageDispatcher.sendMessage('App', {type: "sessionComplete"});
     })
     .fail((err) => {
       if (err.status === 401) {
-        this.setState({invalidCredentialMessage: true});
+        this.setState({invalidCredentialMessage: true, loggedIn: false, sessionList: [], clientGrantList: [], cibaList: []});
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.requires-profile-scope")});
       } else {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
