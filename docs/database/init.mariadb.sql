@@ -477,6 +477,7 @@ CREATE TABLE gpo_access_token_scope (
 CREATE TABLE gpo_id_token (
   gpoi_id INT(11) PRIMARY KEY AUTO_INCREMENT,
   gpoc_id INT(11),
+  gpor_id INT(11),
   gpoi_plugin_name VARCHAR(256) NOT NULL,
   gpoi_authorization_type INT(2) NOT NULL,
   gpoi_username VARCHAR(256),
@@ -487,7 +488,8 @@ CREATE TABLE gpo_id_token (
   gpoi_hash VARCHAR(512),
   gpoi_sid_hash VARCHAR(512),
   gpoi_enabled TINYINT(1) DEFAULT 1,
-  FOREIGN KEY(gpoc_id) REFERENCES gpo_code(gpoc_id) ON DELETE CASCADE
+  FOREIGN KEY(gpoc_id) REFERENCES gpo_code(gpoc_id) ON DELETE CASCADE,
+  FOREIGN KEY(gpor_id) REFERENCES gpo_refresh_token(gpor_id) ON DELETE CASCADE
 );
 CREATE INDEX i_gpoi_hash ON gpo_id_token(gpoi_hash);
 

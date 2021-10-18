@@ -63,5 +63,7 @@ ADD gpoc_s_hash VARCHAR(512);
 
 ALTER TABLE gpo_id_token
 ADD gpoc_id INTEGER,
+ADD gpor_id INTEGER,
 ADD gpoi_sid_hash VARCHAR(512),
-ADD FOREIGN KEY(gpoc_id) REFERENCES gpo_code(gpoc_id) ON DELETE CASCADE;
+ADD FOREIGN KEY(gpoc_id) REFERENCES gpo_code(gpoc_id) ON DELETE CASCADE,
+ADD FOREIGN KEY(gpor_id) REFERENCES gpo_refresh_token(gpor_id) ON DELETE CASCADE;
