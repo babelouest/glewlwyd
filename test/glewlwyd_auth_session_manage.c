@@ -222,6 +222,71 @@ START_TEST(test_glwd_auth_session_manage_delete_ok)
 }
 END_TEST
 
+START_TEST(test_glwd_auth_session_manage_delete_all_ok)
+{
+  struct _u_request req, test_req;
+  struct _u_response resp;
+  char user_agent[33], * cookie = NULL;
+  json_t * j_body;
+  int x[1];
+  
+  ulfius_init_request(&req);
+  ulfius_init_request(&test_req);
+  ulfius_init_response(&resp);
+  test_req.http_url = o_strdup(SERVER_URI "/profile_list/");
+  req.http_verb = strdup("POST");
+  req.http_url = msprintf("%s/auth/", SERVER_URI);
+  gnutls_rnd(GNUTLS_RND_NONCE, x, sizeof(int));
+  snprintf(user_agent, 32, "glwd-auth-test-%04d", x[0]);
+  u_map_put(req.map_header, "User-Agent", user_agent);
+  j_body = json_pack("{ssss}", "username", USERNAME, "password", PASSWORD);
+  ulfius_set_json_body_request(&req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  cookie = msprintf("%s=%s", resp.map_cookie[0].key, resp.map_cookie[0].value);
+  u_map_put(test_req.map_header, "Cookie", cookie);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  o_free(user_req.http_url);
+  o_free(user_req.http_verb);
+  user_req.http_verb = strdup("GET");
+  user_req.http_url = msprintf(SERVER_URI "/profile/session/?pattern=%s", user_agent);
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  j_body = ulfius_get_json_body_response(&resp, NULL);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(json_array_size(j_body), 1);
+  ulfius_clean_response(&resp);
+  json_decref(j_body);
+  
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_send_http_request(&test_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  o_free(user_req.http_verb);
+  o_free(user_req.http_url);
+  user_req.http_verb = strdup("DELETE");
+  user_req.http_url = msprintf(SERVER_URI "/profile/session/");
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_send_http_request(&test_req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+  ulfius_clean_request(&test_req);
+  o_free(cookie);
+  
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -233,6 +298,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_auth_session_manage_list);
   tcase_add_test(tc_core, test_glwd_auth_session_manage_delete_not_found);
   tcase_add_test(tc_core, test_glwd_auth_session_manage_delete_ok);
+  tcase_add_test(tc_core, test_glwd_auth_session_manage_delete_all_ok);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
