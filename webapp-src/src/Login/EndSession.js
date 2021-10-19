@@ -30,6 +30,16 @@ class EndSession extends Component {
     });
   }
   
+  isCallbackUrlValid() {
+    if (this.state.config.params.callback_url) {
+      var curUrl = window.location.protocol + "//" + window.location.host;
+      console.log(curUrl, this.state.config.params.callback_url);
+      return this.state.config.params.callback_url.startsWith(curUrl);
+    } else {
+      return false;
+    }
+  }
+  
   handleLogout() {
     if (this.state.singleLogout) {
       var promises = [];
@@ -52,7 +62,7 @@ class EndSession extends Component {
         .then((res) => {
           apiManager.glewlwydRequest("/auth/", "DELETE")
           .always((res) => {
-            if (this.state.config.params.callback_url) {
+            if (this.isCallbackUrlValid()) {
               document.location.href = this.state.config.params.callback_url;
             } else {
               messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
@@ -69,7 +79,7 @@ class EndSession extends Component {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
       })
       .always(() => {
-        if (this.state.config.params.callback_url) {
+        if (this.isCallbackUrlValid()) {
           document.location.href = this.state.config.params.callback_url;
         } else {
           messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
@@ -104,7 +114,7 @@ class EndSession extends Component {
       Promise.all(promises)
       .then((res) => {
         if (session) {
-          if (this.state.config.params.callback_url) {
+          if (this.isCallbackUrlValid()) {
             document.location.href = this.state.config.params.callback_url;
           } else {
             messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
@@ -127,7 +137,7 @@ class EndSession extends Component {
       })
       .then(() => {
         messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("login.logout-all-success")});
-        if (this.state.config.params.callback_url) {
+        if (this.isCallbackUrlValid()) {
           document.location.href = this.state.config.params.callback_url;
         } else {
           messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
@@ -141,7 +151,7 @@ class EndSession extends Component {
 
   render() {
     var ignoreLogoutButton, lgoutAllButton, messageJsx;
-    if (this.state.config.params.callback_url) {
+    if (this.isCallbackUrlValid()) {
       ignoreLogoutButton = <button type="button" className="btn btn-primary btn-icon-right" onClick={this.handleIgnoreLogout}>{i18next.t("login.ignore-logout")}</button>
     }
     if (!this.state.singleLogout) {
