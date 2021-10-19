@@ -12,6 +12,7 @@ The `"Green Zone Release"`
 - Implement [OAuth 2.0 Authorization Server Issuer Identification](https://www.ietf.org/id/draft-ietf-oauth-iss-auth-resp-01.html)
 - Improve IETF strict option in OIDC plugin by handlong signatures and encryption properties
 - User registration: suggest a new username when a username exists
+- Allow to remove all sessions and/or revoke all tokens
 
 ## 2.5.4
 
