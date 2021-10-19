@@ -119,6 +119,7 @@
     "oauth2-connect": "Se connecter avec {{provider}}",
     "end-session-title": "Fermeture de session",
     "end-session-message": "Voulez-vous fermer la session en cours?",
+    "end-all-session-message": "Voulez vous fermer toutes les sessions actives et révoquer tous les tokens?",
     "ignore-logout": "Rester connecté",
     "device-authorization-title": "Autorisation d'un composant",
     "device-authorization-message": "Veuillez saisir le code",

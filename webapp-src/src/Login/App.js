@@ -43,6 +43,7 @@ class App extends Component {
       forceShowGrant: false,
       selectAccount: false,
       endSession: false,
+      singleLogout: false,
       sessionClosed: false,
       deviceAuth: false,
       login_hint: props.config.params.login_hint||"",
@@ -98,7 +99,7 @@ class App extends Component {
       } else if (message.type === "newUserScheme") {
         this.setState({scheme: message.scheme, identify: message.identify});
       } else if (message.type === "SessionClosed") {
-        this.setState({endSession: false, sessionClosed: true});
+        this.setState({endSession: false, singleLogout: false, sessionClosed: true});
       } else if (message.type === "SessionReopen") {
         this.setState({sessionClosed: false, newUser: true, currentUser: false, login_hint: ""}, () => {
           this.initProfile(true);
@@ -180,6 +181,12 @@ class App extends Component {
           newState.selectAccount = true;
         } else if (this.state.prompt === "end_session") {
           newState.endSession = true;
+          newState.singleLogout = false;
+          newState.newUser = false;
+          newState.currentUser = false;
+        } else if (this.state.prompt === "single_logout") {
+          newState.endSession = true;
+          newState.singleLogout = true;
           newState.newUser = false;
           newState.currentUser = false;
         } else if (this.state.prompt && this.state.prompt.substring(0, 6) === "device") {
@@ -199,6 +206,15 @@ class App extends Component {
         } else {
           this.setState({showGrantAsterisk: false});
         }
+        apiManager.glewlwydRequest("/profile/plugin")
+        .then((res) => {
+          this.setState({pluginList: res});
+        })
+        .fail((err) => {
+          if (err.status != 401) {
+            messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("error-api-connect")});
+          }
+        });
       });
     })
     .fail((error) => {
@@ -209,15 +225,6 @@ class App extends Component {
         this.setState({deviceAuth: true, currentUser: false, userList: [], loaded: true, scheme: this.state.config.params.scheme});
       } else {
         this.setState({newUser: (!!this.state.config.params.callback_url && !!this.state.config.params.scope), showGrant: false, currentUser: false, userList: [], loaded: true, scheme: this.state.config.params.scheme});
-      }
-    });
-    apiManager.glewlwydRequest("/profile/plugin")
-    .then((res) => {
-      this.setState({pluginList: res});
-    })
-    .fail((err) => {
-      if (error.status != 401) {
-        messageDispatcher.sendMessage('Notification', {type: "warning", message: i18next.t("error-api-connect")});
       }
     });
   }
@@ -417,7 +424,7 @@ class App extends Component {
         if (this.state.resetCredentialsShow) {
           body = <ResetCredentials config={this.state.config} resetCredentials={this.state.resetCredentials}/>;
         } else if (this.state.endSession) {
-          body = <EndSession config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser}/>;
+          body = <EndSession config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser} singleLogout={this.state.singleLogout} pluginList={this.state.pluginList}/>;
         } else if (this.state.sessionClosed) {
           body = <SessionClosed config={this.state.config}/>;
         } else if (this.state.deviceAuth) {
