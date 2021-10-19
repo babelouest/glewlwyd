@@ -6287,7 +6287,7 @@ static json_t * convert_client_registration_to_glewlwyd(json_t * j_registration)
   return j_client;
 }
 
-static int clent_registration_management_delete(struct _oidc_config * config, json_int_t gpocr_id, json_t * j_client) {
+static int client_registration_management_delete(struct _oidc_config * config, json_int_t gpocr_id, json_t * j_client) {
   int ret, res;
   json_t * j_query;
 
@@ -6305,14 +6305,14 @@ static int clent_registration_management_delete(struct _oidc_config * config, js
     res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
     json_decref(j_query);
     if (res != H_OK) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "clent_registration_management_delete - Error executing j_query");
+      y_log_message(Y_LOG_LEVEL_DEBUG, "client_registration_management_delete - Error executing j_query");
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     } else {
       ret = G_OK;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "clent_registration_management_delete - Error glewlwyd_plugin_callback_set_client");
+    y_log_message(Y_LOG_LEVEL_ERROR, "client_registration_management_delete - Error glewlwyd_plugin_callback_set_client");
     ret = G_ERROR;
   }
   return ret;
@@ -9012,7 +9012,7 @@ static int callback_client_registration_management_delete(const struct _u_reques
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   UNUSED(request);
 
-  if (clent_registration_management_delete(config, json_integer_value(json_object_get((json_t *)response->shared_data, "gpocr_id")), json_object_get((json_t *)response->shared_data, "client")) != G_OK) {
+  if (client_registration_management_delete(config, json_integer_value(json_object_get((json_t *)response->shared_data, "gpocr_id")), json_object_get((json_t *)response->shared_data, "client")) != G_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_client_registration_management_read - Error registration_management_delete");
     response->status = 500;
   } else {
