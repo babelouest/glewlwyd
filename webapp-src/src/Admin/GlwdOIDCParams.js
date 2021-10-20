@@ -72,6 +72,8 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["register-resource-default"]!==undefined?"":(props.mod.parameters["register-resource-default"] = []);
     props.mod.parameters["register-default-properties"]!==undefined?"":(props.mod.parameters["register-default-properties"] = {});
     props.mod.parameters["session-management-allowed"]!==undefined?"":(props.mod.parameters["session-management-allowed"] = false);
+    props.mod.parameters["front-channel-logout-allowed"]!==undefined?"":(props.mod.parameters["front-channel-logout-allowed"] = false);
+    props.mod.parameters["back-channel-logout-allowed"]!==undefined?"":(props.mod.parameters["back-channel-logout-allowed"] = false);
     props.mod.parameters["client-pubkey-parameter"]!==undefined?"":(props.mod.parameters["client-pubkey-parameter"] = "");
     props.mod.parameters["client-jwks-parameter"]!==undefined?"":(props.mod.parameters["client-jwks-parameter"] = "jwks");
     props.mod.parameters["client-jwks_uri-parameter"]!==undefined?"":(props.mod.parameters["client-jwks_uri-parameter"] = "jwks_uri");
@@ -286,6 +288,8 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["register-default-properties"]!==undefined?"":(nextProps.mod.parameters["register-default-properties"] = {});
     nextProps.mod.parameters["register-client-token-one-use"]!==undefined?"":(nextProps.mod.parameters["register-client-token-one-use"] = true);
     nextProps.mod.parameters["session-management-allowed"]!==undefined?"":(nextProps.mod.parameters["session-management-allowed"] = false);
+    nextProps.mod.parameters["front-channel-logout-allowed"]!==undefined?"":(nextProps.mod.parameters["front-channel-logout-allowed"] = false);
+    nextProps.mod.parameters["back-channel-logout-allowed"]!==undefined?"":(nextProps.mod.parameters["back-channel-logout-allowed"] = false);
     nextProps.mod.parameters["client-pubkey-parameter"]!==undefined?"":(nextProps.mod.parameters["client-pubkey-parameter"] = "");
     nextProps.mod.parameters["client-jwks-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks-parameter"] = "jwks");
     nextProps.mod.parameters["client-jwks_uri-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks_uri-parameter"] = "jwks_uri");
@@ -2985,6 +2989,24 @@ class GlwdOIDCParams extends Component {
                 <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-session-management-allowed" onChange={(e) => this.toggleParam(e, "session-management-allowed")} checked={this.state.mod.parameters["session-management-allowed"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-session-management-allowed">{i18next.t("admin.mod-glwd-session-management-allowed")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-front-channel-logout-allowed"
+                         onChange={(e) => this.toggleParam(e, "front-channel-logout-allowed")}
+                         disabled={!this.state.mod.parameters["session-management-allowed"]}
+                         checked={this.state.mod.parameters["front-channel-logout-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-front-channel-logout-allowed">{i18next.t("admin.mod-glwd-front-channel-logout-allowed")}</label>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-back-channel-logout-allowed"
+                         onChange={(e) => this.toggleParam(e, "back-channel-logout-allowed")}
+                         disabled={!this.state.mod.parameters["session-management-allowed"]}
+                         checked={this.state.mod.parameters["back-channel-logout-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-back-channel-logout-allowed">{i18next.t("admin.mod-glwd-back-channel-logout-allowed")}</label>
                 </div>
               </div>
             </div>
