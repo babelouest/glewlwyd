@@ -823,6 +823,24 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("Property 'session-management-allowed' is optional and must be a boolean"));
       ret = G_ERROR_PARAM;
     }
+    if (json_object_get(j_params, "session-management-allowed") == json_true()) {
+      if (!json_string_length(json_object_get(j_params, "session-cookie-name"))) {
+        json_array_append_new(j_error, json_string("Property 'session-cookie-name' is mandatory and must be a JSON string"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_integer_value(json_object_get(j_params, "session-cookie-expiration")) <= 0) {
+        json_array_append_new(j_error, json_string("Property 'session-cookie-expiration' is mandatory and must be a positive non-null integer"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "front-channel-logout-allowed") != NULL && !json_is_boolean(json_object_get(j_params, "front-channel-logout-allowed"))) {
+        json_array_append_new(j_error, json_string("Property 'front-channel-logout-allowed' is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
+      if (json_object_get(j_params, "back-channel-logout-allowed") != NULL && !json_is_boolean(json_object_get(j_params, "back-channel-logout-allowed"))) {
+        json_array_append_new(j_error, json_string("Property 'back-channel-logout-allowed' is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
+    }
     if (json_object_get(j_params, "introspection-revocation-allowed") == json_true()) {
       if (json_object_get(j_params, "introspection-revocation-auth-scope") != NULL && !json_is_array(json_object_get(j_params, "introspection-revocation-auth-scope"))) {
         json_array_append_new(j_error, json_string("Property 'introspection-revocation-auth-scope' is optional and must be a JSON array of strings, maximum 128 characters"));
@@ -2118,6 +2136,47 @@ static char * encrypt_token_if_required(struct _oidc_config * config, const char
   return token_out;
 }
 
+static int get_session_token(struct _oidc_config * config, const struct _u_request * request, struct _u_response * response, char * sid) {
+  int ret = G_OK;
+  char expires[129];
+  time_t now;
+  struct tm ts;
+  
+  time(&now);
+  now += (time_t)json_integer_value(json_object_get(config->j_params, "session-cookie-expiration"));
+  gmtime_r(&now, &ts);
+  strftime(expires, 128, "%a, %d %b %Y %T %Z", &ts);
+
+  if (json_object_get(config->j_params, "session-management-allowed") == json_true()) {
+    if (u_map_get(request->map_cookie, json_string_value(json_object_get(config->j_params, "session-cookie-name"))) != NULL) {
+      if (o_strlen(u_map_get(request->map_cookie, json_string_value(json_object_get(config->j_params, "session-cookie-name")))) == OIDC_SID_LENGTH) {
+        if (o_strncpy(sid, u_map_get(request->map_cookie, json_string_value(json_object_get(config->j_params, "session-cookie-name"))), OIDC_SID_LENGTH) == NULL) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_session_token - Error o_strncpy");
+          ret = G_ERROR;
+        } else {
+          if (ulfius_add_cookie_to_response(response, json_string_value(json_object_get(config->j_params, "session-cookie-name")), sid, expires, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", config->glewlwyd_config->glewlwyd_config->cookie_secure, 0) != U_OK) {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "get_session_token - Error ulfius_add_cookie_to_response (1)");
+            ret = G_ERROR;
+          }
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "get_session_token - Invalid cookie length");
+        ret = G_ERROR;
+      }
+    } else {
+      if (rand_string_nonce(sid, OIDC_SID_LENGTH) == NULL) {
+        ret = G_ERROR;
+      } else {
+        if (ulfius_add_cookie_to_response(response, json_string_value(json_object_get(config->j_params, "session-cookie-name")), sid, expires, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", config->glewlwyd_config->glewlwyd_config->cookie_secure, 0) != U_OK) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "get_session_token - Error ulfius_add_cookie_to_response (2)");
+          ret = G_ERROR;
+        }
+      }
+    }
+  }
+  return ret;
+}
+
 static char * generate_x_hash(struct _oidc_config * config, json_t * j_client, const char * value) {
   int key_size;
   int dig_alg = GNUTLS_DIG_UNKNOWN;
@@ -2757,7 +2816,7 @@ static int serialize_id_token(struct _oidc_config * config,
                               const char * user_agent) {
   json_t * j_query;
   int res, ret;
-  char * issued_at_clause, * id_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, id_token), * sid_hash = NULL;
+  char * issued_at_clause, * id_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, id_token);
 
   if (pthread_mutex_lock(&config->insert_lock)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_id_token - Error pthread_mutex_lock");
@@ -2771,8 +2830,7 @@ static int serialize_id_token(struct _oidc_config * config,
       } else { // HOEL_DB_TYPE_SQLITE
         issued_at_clause = msprintf("%u", (now));
       }
-      sid_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, sid);
-      j_query = json_pack("{sss{sssisosos{ss}sssssssssoso}}",
+      j_query = json_pack("{sss{sssisosos{ss}ssssssss*soso}}",
                           "table",
                           GLEWLWYD_PLUGIN_OIDC_TABLE_ID_TOKEN,
                           "values",
@@ -2793,14 +2851,13 @@ static int serialize_id_token(struct _oidc_config * config,
                             user_agent!=NULL?user_agent:"",
                             "gpoi_hash",
                             id_token_hash,
-                            "gpoi_sid_hash",
-                            sid_hash,
+                            "gpoi_sid",
+                            sid,
                             "gpoc_id",
                             gpoc_id?json_integer(gpoc_id):json_null(),
                             "gpor_id",
                             gpor_id?json_integer(gpor_id):json_null());
       o_free(issued_at_clause);
-      o_free(sid_hash);
       res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
       json_decref(j_query);
       if (res == H_OK) {
@@ -2837,7 +2894,7 @@ static char * generate_id_token(struct _oidc_config * config,
                                 const char * auth_req_id,
                                 const char * refresh_token,
                                 const char * s_hash,
-                                char * sid,
+                                const char * sid,
                                 const char * ip_source) {
   jwt_t * jwt;
   jwa_alg alg = get_token_sign_alg(config, j_client, GLEWLWYD_TOKEN_TYPE_ID_TOKEN);
@@ -2934,8 +2991,9 @@ static char * generate_id_token(struct _oidc_config * config,
                 y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - Error digest algorithm size '%d' not supported rt_hash", key_size);
               }
             }
-            rand_string_nonce(sid, OIDC_SID_LENGTH);
-            json_object_set_new(j_user_info, "sid", json_string(sid));
+            if (o_strlen(sid)) {
+              json_object_set_new(j_user_info, "sid", json_string(sid));
+            }
             //jwt_add_grant(jwt, "acr", "plop"); // TODO?
             if (r_jwt_set_full_claims_json_t(jwt, j_user_info) == RHN_OK) {
               token = r_jwt_serialize_signed(jwt, jwk, 0);
@@ -3687,7 +3745,8 @@ static json_t * generate_authorization_code(struct _oidc_config * config,
                                           int auth_type,
                                           const char * code_challenge,
                                           json_t * j_authorization_details,
-                                          const char * s_hash) {
+                                          const char * s_hash,
+                                          const char * sid) {
   char * code = NULL, * code_hash = NULL, * expiration_clause, ** scope_array = NULL, * str_claims = NULL, * str_authorization_details = NULL;
   json_t * j_query, * j_code_id, * j_return;
   int res, i;
@@ -3717,7 +3776,7 @@ static json_t * generate_authorization_code(struct _oidc_config * config,
           if (j_authorization_details != NULL) {
             str_authorization_details = json_dumps(j_authorization_details, JSON_COMPACT);
           }
-          j_query = json_pack("{sss{ss ss ss ss ss ss ss ss ss? ss ss? si s{ss} ss? ss?}}",
+          j_query = json_pack("{sss{ss ss ss ss ss ss ss ss ss? ss ss? si s{ss} ss? ss? ss?}}",
                               "table",
                               GLEWLWYD_PLUGIN_OIDC_TABLE_CODE,
                               "values",
@@ -3737,7 +3796,8 @@ static json_t * generate_authorization_code(struct _oidc_config * config,
                                   "raw",
                                   expiration_clause,
                                 "gpoc_code_challenge", code_challenge,
-                                "gpoc_s_hash", s_hash);
+                                "gpoc_s_hash", s_hash,
+                                "gpoc_sid", sid);
           o_free(expiration_clause);
           o_free(str_claims);
           o_free(str_authorization_details);
@@ -4194,7 +4254,7 @@ static json_t * validate_authorization_code(struct _oidc_config * config, const 
     } else { // HOEL_DB_TYPE_SQLITE
       expiration_clause = o_strdup("> (strftime('%s','now'))");
     }
-    j_query = json_pack("{sss[sssssssss]s{sssssssss{ssss}}}",
+    j_query = json_pack("{sss[ssssssssss]s{sssssssss{ssss}}}",
                         "table",
                         GLEWLWYD_PLUGIN_OIDC_TABLE_CODE,
                         "columns",
@@ -4207,6 +4267,7 @@ static json_t * validate_authorization_code(struct _oidc_config * config, const 
                           "gpoc_enabled AS enabled",
                           "gpoc_authorization_details",
                           "gpoc_s_hash AS s_hash",
+                          "gpoc_sid AS sid",
                         "where",
                           "gpoc_plugin_name",
                           config->name,
@@ -5342,7 +5403,7 @@ static int check_ciba_user_code(struct _oidc_config * config, json_t * j_user, c
   }
 }
 
-static json_t * generate_ciba_token_response(struct _oidc_config * config, json_t * j_client, json_t * j_user, json_t * j_ciba_request, const char * scope_list) {
+static json_t * generate_ciba_token_response(struct _oidc_config * config, json_t * j_client, json_t * j_user, json_t * j_ciba_request, const char * scope_list, const char * sid) {
   json_t * j_return, * j_refresh_token, * j_amr, * j_refresh;
   time_t now;
   char * refresh_token,
@@ -5353,7 +5414,6 @@ static json_t * generate_ciba_token_response(struct _oidc_config * config, json_
        * id_token_out,
        jti_r[OIDC_JTI_LENGTH+1] = {0},
        jti[OIDC_JTI_LENGTH+1] = {0},
-       sid[OIDC_SID_LENGTH+1] = {0},
        ** scope_array = NULL;
   const char * client_id = json_string_value(json_object_get(j_client, "client_id")),
              * x5t_s256 = json_string_value(json_object_get(j_ciba_request, "x5t_s256")),
@@ -5550,7 +5610,7 @@ static int close_ciba_request(struct _oidc_config * config, json_int_t gpob_id) 
   return ret;
 }
 
-static int send_ciba_client_notification(struct _oidc_config * config, json_t * j_client, json_t * j_user, json_t * j_ciba_request, const char * scope_list, int status) {
+static int send_ciba_client_notification(struct _oidc_config * config, json_t * j_client, json_t * j_user, json_t * j_ciba_request, const char * scope_list, int status, const char * sid) {
   int ret;
   struct _u_request req;
   struct _u_response resp;
@@ -5597,7 +5657,7 @@ static int send_ciba_client_notification(struct _oidc_config * config, json_t * 
     }
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_client, "backchannel_token_delivery_mode")), "push")) {
     if (status == 1) {
-      j_ciba_token = generate_ciba_token_response(config, j_client, j_user, j_ciba_request, scope_list);
+      j_ciba_token = generate_ciba_token_response(config, j_client, j_user, j_ciba_request, scope_list, sid);
       if (check_result_value(j_ciba_token, G_OK)) {
         if (close_ciba_request(config, json_integer_value(json_object_get(j_ciba_request, "gpob_id"))) == G_OK) {
           if (ulfius_init_request(&req) == U_OK) {
@@ -6757,6 +6817,24 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
                     }
                   }
                 }
+                if (j_error != NULL) {
+                  break;
+                }
+                if (json_string_value(json_object_get(j_registration, "backchannel_client_notification_endpoint")) != NULL &&
+                    !json_array_has_string(j_resp, json_string_value(json_object_get(j_registration, "backchannel_client_notification_endpoint")))) {
+                  j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "backchannel_client_notification_endpoint is not present in sector_identifier_uri content");
+                  break;
+                }
+                if (json_string_value(json_object_get(j_registration, "post_logout_redirect_uri")) != NULL &&
+                    !json_array_has_string(j_resp, json_string_value(json_object_get(j_registration, "post_logout_redirect_uri")))) {
+                  j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "post_logout_redirect_uri is not present in sector_identifier_uri content");
+                  break;
+                }
+                if (json_string_value(json_object_get(j_registration, "frontchannel_logout_uri")) != NULL &&
+                    !json_array_has_string(j_resp, json_string_value(json_object_get(j_registration, "frontchannel_logout_uri")))) {
+                  j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "frontchannel_logout_uri is not present in sector_identifier_uri content");
+                  break;
+                }
               } else {
                 j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid sector_identifier_uri response data, must be a JSON array");
                 break;
@@ -6786,7 +6864,8 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         if (json_array_size(json_object_get(j_registration, "resource"))) {
           json_array_foreach(json_object_get(j_registration, "resource"), index, j_element) {
             resource = json_string_value(j_element);
-            if ((0 != o_strncmp("https://", resource, o_strlen("https://")) &&
+            if (!is_redirect_uri_valid_without_credential(resource) ||
+                (0 != o_strncmp("https://", resource, o_strlen("https://")) &&
                  0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_1, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_1)) &&
                  0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_2, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_2)) &&
                  0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_3, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_3))) ||
@@ -7099,6 +7178,62 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       if (!json_array_has_string(j_response_modes_supported, response_mode)) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_response_mode", "response_mode value not supported");
         break;
+      }
+    }
+    
+    if (json_object_get(j_registration, "post_logout_redirect_uri") != NULL) {
+      resource = json_string_value(json_object_get(j_registration, "post_logout_redirect_uri"));
+      if (!is_redirect_uri_valid_without_credential(resource) ||
+         (0 != o_strncmp("https://", resource, o_strlen("https://")) &&
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_1, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_1)) &&
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_2, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_2)) &&
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_3, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_3)))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "post_logout_redirect_uri is not a valid uri");
+        break;
+      }
+    }
+    if (json_object_get(j_registration, "frontchannel_logout_uri") != NULL) {
+      resource = json_string_value(json_object_get(j_registration, "frontchannel_logout_uri"));
+      if (!is_redirect_uri_valid_without_credential(resource) ||
+         (0 != o_strncmp("https://", resource, o_strlen("https://")) &&
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_1, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_1)) &&
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_2, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_2)) &&
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_3, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_3)))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "frontchannel_logout_uri is not a valid uri");
+        break;
+      }
+    }
+    if (json_object_get(j_registration, "frontchannel_logout_session_required") != NULL) {
+      if (!json_is_boolean(json_object_get(j_registration, "frontchannel_logout_session_required"))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "frontchannel_logout_session_required is not a boolean");
+        break;
+      }
+      if (json_object_get(j_registration, "frontchannel_logout_session_required") == json_true()) {
+        json_object_set_new(j_registration, "frontchannel_logout_session_required", json_string("1"));
+      } else {
+        json_object_set_new(j_registration, "frontchannel_logout_session_required", json_string("0"));
+      }
+    }
+    if (json_object_get(j_registration, "backchannel_logout_uri") != NULL) {
+      resource = json_string_value(json_object_get(j_registration, "backchannel_logout_uri"));
+      if (!is_redirect_uri_valid_without_credential(resource) ||
+         (0 != o_strncmp("https://", resource, o_strlen("https://")) &&
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_1, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_1)) &&
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_2, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_2)) &&
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_3, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_3)))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "backchannel_logout_uri is not a valid uri");
+        break;
+      }
+    }
+    if (json_object_get(j_registration, "backchannel_logout_session_required") != NULL) {
+      if (!json_is_boolean(json_object_get(j_registration, "backchannel_logout_session_required"))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "backchannel_logout_session_required is not a boolean");
+        break;
+      }
+      if (json_object_get(j_registration, "backchannel_logout_session_required") == json_true()) {
+        json_object_set_new(j_registration, "backchannel_logout_session_required", json_string("1"));
+      } else {
+        json_object_set_new(j_registration, "backchannel_logout_session_required", json_string("0"));
       }
     }
   } while(0);
@@ -7433,8 +7568,8 @@ static json_t * generate_device_authorization(struct _oidc_config * config, cons
   return j_return;
 }
 
-static int validate_device_authorization_scope(struct _oidc_config * config, json_int_t gpoda_id, const char * username, const char * scope_list, json_t * j_amr) {
-  char * query, * scope_clause = NULL, * scope_escaped, ** scope_array = NULL, * username_escaped;
+static int validate_device_authorization_scope(struct _oidc_config * config, json_int_t gpoda_id, const char * username, const char * scope_list, json_t * j_amr, const char * sid) {
+  char * query, * scope_clause = NULL, * scope_escaped, ** scope_array = NULL, * username_escaped, * sid_sescaped;
   int res, i, ret;
   json_t * j_query, * j_element = NULL;
   size_t index = 0;
@@ -7457,9 +7592,11 @@ static int validate_device_authorization_scope(struct _oidc_config * config, jso
     o_free(query);
     if (res == H_OK) {
       username_escaped = h_escape_string_with_quotes(config->glewlwyd_config->glewlwyd_config->conn, username);
-      query = msprintf("UPDATE %s set gpoda_status=1, gpoda_username=%s WHERE gpoda_id=%"JSON_INTEGER_FORMAT, GLEWLWYD_PLUGIN_OIDC_TABLE_DEVICE_AUTHORIZATION, username_escaped, gpoda_id);
+      sid_sescaped = h_escape_string_with_quotes(config->glewlwyd_config->glewlwyd_config->conn, sid);
+      query = msprintf("UPDATE %s set gpoda_status=1, gpoda_username=%s, gpoda_sid=%s WHERE gpoda_id=%"JSON_INTEGER_FORMAT, GLEWLWYD_PLUGIN_OIDC_TABLE_DEVICE_AUTHORIZATION, username_escaped, sid_sescaped, gpoda_id);
       res = h_execute_query(config->glewlwyd_config->glewlwyd_config->conn, query, NULL, H_OPTION_EXEC);
       o_free(username_escaped);
+      o_free(sid_sescaped);
       o_free(query);
       if (res == H_OK) {
         if (json_array_size(j_amr)) {
@@ -7618,7 +7755,6 @@ static int check_auth_type_device_code(const struct _u_request * request,
        * id_token_out = NULL,
          jti[OIDC_JTI_LENGTH+1] = {0},
          jti_r[OIDC_JTI_LENGTH+1] = {0},
-         sid[OIDC_SID_LENGTH+1] = {0},
        * scope = NULL,
        * issued_for = get_client_hostname(request);
   time_t now;
@@ -7644,7 +7780,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
     }
     if (check_result_value(j_client, G_OK) && is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
       device_code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, device_code);
-      j_query = json_pack("{sss[sssssss]s{sssOs{ssss}}}",
+      j_query = json_pack("{sss[ssssssss]s{sssOs{ssss}}}",
                           "table",
                           GLEWLWYD_PLUGIN_OIDC_TABLE_DEVICE_AUTHORIZATION,
                           "columns",
@@ -7655,6 +7791,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
                             SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpoda_last_check) AS last_check", "gpoda_last_check AS last_check", "EXTRACT(EPOCH FROM gpoda_last_check)::integer AS last_check"),
                             "gpoda_resource AS resource",
                             "gpoda_authorization_details",
+                            "gpoda_sid AS sid",
                           "where",
                             "gpoda_device_code_hash",
                             device_code_hash,
@@ -7812,14 +7949,14 @@ static int check_auth_type_device_code(const struct _u_request * request,
                                                                         NULL,
                                                                         NULL,
                                                                         NULL,
-                                                                        sid,
+                                                                        json_string_value(json_object_get(json_array_get(j_result, 0), "sid")),
                                                                         ip_source)) != NULL) {
                                         if (serialize_id_token(config,
                                                                GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION,
                                                                id_token,
                                                                username,
                                                                client_id,
-                                                               sid,
+                                                               json_string_value(json_object_get(json_array_get(j_result, 0), "sid")),
                                                                0,
                                                                json_integer_value(json_object_get(j_refresh_token, "gpgr_id")),
                                                                now,
@@ -9325,8 +9462,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
        * access_token = NULL,
        * access_token_out = NULL,
          jti[OIDC_JTI_LENGTH+1] = {0},
-         jti_r[OIDC_JTI_LENGTH+1] = {0},
-         sid[OIDC_SID_LENGTH+1] = {0};
+         jti_r[OIDC_JTI_LENGTH+1] = {0};
   json_t * j_code,
          * j_body,
          * j_refresh_token,
@@ -9469,14 +9605,14 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                                                               NULL,
                                                               NULL,
                                                               json_string_value(json_object_get(json_object_get(j_code, "code"), "s_hash")),
-                                                              sid,
+                                                              json_string_value(json_object_get(json_object_get(j_code, "code"), "sid")),
                                                               ip_source)) != NULL) {
                               if (serialize_id_token(config,
                                                      GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE,
                                                      id_token,
                                                      json_string_value(json_object_get(json_object_get(j_code, "code"), "username")),
                                                      client_id,
-                                                     sid,
+                                                     json_string_value(json_object_get(json_object_get(j_code, "code"), "sid")),
                                                      json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpoc_id")),
                                                      json_integer_value(json_object_get(j_refresh_token, "gpgr_id")),
                                                      now,
@@ -9697,7 +9833,6 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
        * id_token_out = NULL,
          jti[OIDC_JTI_LENGTH+1] = {0},
          jti_r[OIDC_JTI_LENGTH+1] = {0},
-         sid[OIDC_SID_LENGTH+1] = {0},
       ** scope_array = NULL;
   time_t now;
   size_t index = 0;
@@ -9833,14 +9968,14 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
                                                           NULL,
                                                           NULL,
                                                           NULL,
-                                                          sid,
+                                                          NULL,
                                                           ip_source)) != NULL) {
                           if (serialize_id_token(config,
                                                  GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS,
                                                  id_token,
                                                  username,
                                                  client_id,
-                                                 sid,
+                                                 NULL,
                                                  0,
                                                  json_integer_value(json_object_get(j_refresh_token, "gpgr_id")),
                                                  now,
@@ -10554,14 +10689,15 @@ static int serialize_ciba_request(struct _oidc_config * config,
     ret = G_ERROR;
   } else {
     // disable all other enabled ciba requests from the same client_id to the same username
-    j_query = json_pack("{sss{si}s{ss ss sO si}}", "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
-                                                   "set",
-                                                    "gpob_enabled", 0,
-                                                   "where",
-                                                     "gpob_plugin_name", config->name,
-                                                     "gpob_client_id", client_id,
-                                                     "gpob_username", json_object_get(j_user, "username"),
-                                                     "gpob_enabled", 1);
+    j_query = json_pack("{sss{si}s{ss ss sO si}}", 
+                        "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
+                        "set",
+                         "gpob_enabled", 0,
+                        "where",
+                          "gpob_plugin_name", config->name,
+                          "gpob_client_id", client_id,
+                          "gpob_username", json_object_get(j_user, "username"),
+                          "gpob_enabled", 1);
     res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
     json_decref(j_query);
     if (res == H_OK) {
@@ -10573,21 +10709,22 @@ static int serialize_ciba_request(struct _oidc_config * config,
       } else { // HOEL_DB_TYPE_SQLITE
         expires_at_clause = msprintf("%u", (now + (unsigned int)requested_expiry));
       }
-      j_query = json_pack("{sss{ss ss ss* sO ss* ss* ss ss ss* s{ss} ss ss*}}", "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
-                                                                     "values",
-                                                                       "gpob_plugin_name", config->name,
-                                                                       "gpob_client_id", client_id,
-                                                                       "gpob_x5t_s256", x5t_s256,
-                                                                       "gpob_username", json_object_get(j_user, "username"),
-                                                                       "gpob_client_notification_token", client_notification_token,
-                                                                       "gpob_jti_hash", jti_hash,
-                                                                       "gpob_auth_req_id", auth_req_id,
-                                                                       "gpob_user_req_id", user_req_id,
-                                                                       "gpob_binding_message", binding_message,
-                                                                       "gpob_expires_at", 
-                                                                         "raw", expires_at_clause,
-                                                                       "gpob_issued_for", ip_source,
-                                                                       "gpob_user_agent", user_agent);
+      j_query = json_pack("{sss{ss ss ss* sO ss* ss* ss ss ss* s{ss} ss ss*}}",
+                          "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
+                          "values",
+                            "gpob_plugin_name", config->name,
+                            "gpob_client_id", client_id,
+                            "gpob_x5t_s256", x5t_s256,
+                            "gpob_username", json_object_get(j_user, "username"),
+                            "gpob_client_notification_token", client_notification_token,
+                            "gpob_jti_hash", jti_hash,
+                            "gpob_auth_req_id", auth_req_id,
+                            "gpob_user_req_id", user_req_id,
+                            "gpob_binding_message", binding_message,
+                            "gpob_expires_at", 
+                              "raw", expires_at_clause,
+                            "gpob_issued_for", ip_source,
+                            "gpob_user_agent", user_agent);
       res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
       json_decref(j_query);
       o_free(expires_at_clause);
@@ -11136,16 +11273,17 @@ static json_t * get_ciba_requests_for_user(struct _oidc_config * config, const c
   return j_return;
 }
 
-static int update_ciba_request(struct _oidc_config * config, json_int_t gpob_id, const char * scopes_granted, json_t * j_amr, int status) {
+static int update_ciba_request(struct _oidc_config * config, json_int_t gpob_id, const char * scopes_granted, json_t * j_amr, int status, const char * sid) {
   json_t * j_query, * j_element = NULL;
   int res, ret;
   char ** scope_array = NULL, * scope_escaped, * scope_clause = NULL;
   size_t i = 0;
   
-  j_query = json_pack("{sss{si}s{sI}}",
+  j_query = json_pack("{sss{siss?}s{sI}}",
                       "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
                       "set",
                         "gpob_status", status,
+                        "gpob_sid", sid,
                       "where",
                         "gpob_id", gpob_id);
   res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
@@ -11353,7 +11491,7 @@ static json_t * get_ciba_request_from_auth_req_id(struct _oidc_config * config, 
   char * scope_list = NULL;
   size_t index = 0;
 
-  j_query = json_pack("{sss[sssssssssss]s{sssssi}}",
+  j_query = json_pack("{sss[ssssssssssss]s{sssssi}}",
                       "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
                       "columns",
                         "gpob_id",
@@ -11367,6 +11505,7 @@ static json_t * get_ciba_request_from_auth_req_id(struct _oidc_config * config, 
                         "gpob_issued_for AS issued_for",
                         "gpob_user_agent AS user_agent",
                         SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpob_expires_at) AS expires_at", "gpob_expires_at AS expires_at", "EXTRACT(EPOCH FROM gpob_expires_at)::integer AS expires_at"),
+                        "gpob_sid AS sid",
                       "where",
                         "gpob_plugin_name", config->name,
                         "gpob_auth_req_id", auth_req_id,
@@ -11531,7 +11670,7 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
       // If we arrive here, request is accepted and valid, let's send the tokens!
       j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "username")));
       if (check_result_value(j_user, G_OK)) {
-        j_token = generate_ciba_token_response(config, json_object_get(j_client, "client"), json_object_get(j_user, "user"), json_object_get(j_ciba_request, "ciba"), json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "scope")));
+        j_token = generate_ciba_token_response(config, json_object_get(j_client, "client"), json_object_get(j_user, "user"), json_object_get(j_ciba_request, "ciba"), json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "scope")), json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "sid")));
         if (check_result_value(j_token, G_OK)) {
           if (close_ciba_request(config, json_integer_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "gpob_id"))) == G_OK) {
             ulfius_set_json_body_response(response, 200, json_object_get(j_token, "token"));
@@ -12989,6 +13128,13 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       s_hash = generate_x_hash(config, json_object_get(j_client, "client"), state);
     }
 
+    if (get_session_token(config, request, response, sid) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_authorization - Error get_session_token");
+      u_map_put(&map_redirect, "error", "server_error");
+      build_auth_response(config, response, response_mode, json_object_get(j_client, "client"), redirect_uri, &map_redirect);
+      break;
+    }
+
     if (has_code) {
       if (is_authorization_type_enabled((struct _oidc_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE) && redirect_uri != NULL) {
         // Generates authorization code
@@ -13006,7 +13152,8 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                                                            auth_type,
                                                            code_challenge_stored,
                                                            json_object_get(j_rar_filtered_result, "authorization_details"),
-                                                           s_hash);
+                                                           s_hash,
+                                                           sid);
         if (check_result_value(j_authorization_code, G_OK)) {
           authorization_code = json_string_value(json_object_get(j_authorization_code, "code"));
           if ((authorization_code_out = encrypt_token_if_required(config, authorization_code, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_CODE, &enc_res)) != NULL) {
@@ -13827,102 +13974,113 @@ static int callback_oidc_device_authorization(const struct _u_request * request,
  */
 static int callback_oidc_device_verification(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  char * redirect_url = NULL;
+  char * redirect_url = NULL, sid[OIDC_SID_LENGTH+1] = {0};
   struct _u_map param;
   json_t * j_result, * j_session;
 
-  if (!o_strlen(u_map_get(request->map_url, "code"))) {
-    if (u_map_init(&param) == U_OK) {
-      u_map_put(&param, "prompt", "device");
-      response->status = 302;
-      redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
-      ulfius_add_header_to_response(response, "Location", redirect_url);
-      o_free(redirect_url);
-      u_map_clean(&param);
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error u_map_init");
-      response->status = 500;
-    }
-  } else if (o_strlen(u_map_get(request->map_url, "code")) != (GLEWLWYD_DEVICE_AUTH_USER_CODE_LENGTH+1)) {
-    if (u_map_init(&param) == U_OK) {
-      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request));
-      u_map_put(&param, "prompt", "deviceCodeError");
-      response->status = 302;
-      redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
-      ulfius_add_header_to_response(response, "Location", redirect_url);
-      o_free(redirect_url);
-      u_map_clean(&param);
-      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_DEVICE_CODE, 1, "plugin", config->name, NULL);
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error u_map_init");
-      response->status = 500;
-    }
-  } else {
-    if (u_map_init(&param) == U_OK) {
-      j_result = validate_device_auth_user_code(config, u_map_get(request->map_url, "code"));
-      if (check_result_value(j_result, G_OK)) {
-        if (u_map_has_key(request->map_url, "g_continue")) {
-          j_session = validate_session_client_scope(config, request, json_string_value(json_object_get(json_object_get(j_result, "device_auth"), "client_id")), json_string_value(json_object_get(json_object_get(j_result, "device_auth"), "scope")));
-          if (check_result_value(j_session, G_OK)) {
-            if (validate_device_authorization_scope(config, json_integer_value(json_object_get(json_object_get(j_result, "device_auth"), "gpoda_id")), json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), json_object_get(json_object_get(j_session, "session"), "amr")) == G_OK) {
-              u_map_put(&param, "prompt", "deviceComplete");
-              response->status = 302;
-              redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
-              ulfius_add_header_to_response(response, "Location", redirect_url);
-              o_free(redirect_url);
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error validate_device_authorization_scope");
-              u_map_put(&param, "prompt", "deviceServerError");
-              response->status = 302;
-              redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
-              ulfius_add_header_to_response(response, "Location", redirect_url);
-              o_free(redirect_url);
-            }
-          } else if (check_result_value(j_session, G_ERROR_NOT_FOUND) || check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
-            // Redirect to login page
-            response->status = 302;
-            redirect_url = get_login_url(config, request, "device", json_string_value(json_object_get(json_object_get(j_result, "device_auth"), "client_id")), json_string_value(json_object_get(json_object_get(j_result, "device_auth"), "scope")), NULL);
-            ulfius_add_header_to_response(response, "Location", redirect_url);
-            o_free(redirect_url);
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error validate_session_client_scope");
-            u_map_put(&param, "prompt", "deviceServerError");
-            response->status = 302;
-            redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
-            ulfius_add_header_to_response(response, "Location", redirect_url);
-            o_free(redirect_url);
-          }
-          json_decref(j_session);
-        } else {
-          // Redirect to login page
-          response->status = 302;
-          redirect_url = get_login_url(config, request, "device", json_string_value(json_object_get(json_object_get(j_result, "device_auth"), "client_id")), json_string_value(json_object_get(json_object_get(j_result, "device_auth"), "scope")), NULL);
-          ulfius_add_header_to_response(response, "Location", redirect_url);
-          o_free(redirect_url);
-        }
-      } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+  if (get_session_token(config, request, response, sid) == G_OK) {
+    if (!o_strlen(u_map_get(request->map_url, "code"))) {
+      if (u_map_init(&param) == U_OK) {
+        u_map_put(&param, "prompt", "device");
+        response->status = 302;
+        redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
+        ulfius_add_header_to_response(response, "Location", redirect_url);
+        o_free(redirect_url);
+        u_map_clean(&param);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error u_map_init");
+        response->status = 500;
+      }
+    } else if (o_strlen(u_map_get(request->map_url, "code")) != (GLEWLWYD_DEVICE_AUTH_USER_CODE_LENGTH+1)) {
+      if (u_map_init(&param) == U_OK) {
         y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request));
         u_map_put(&param, "prompt", "deviceCodeError");
         response->status = 302;
         redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
+        u_map_clean(&param);
         config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_DEVICE_CODE, 1, "plugin", config->name, NULL);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error validate_device_auth_user_code");
-        u_map_put(&param, "prompt", "deviceServerError");
-        response->status = 302;
-        redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
-        ulfius_add_header_to_response(response, "Location", redirect_url);
-        o_free(redirect_url);
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error u_map_init");
+        response->status = 500;
       }
-      json_decref(j_result);
-      u_map_clean(&param);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error u_map_init");
-      response->status = 500;
+      if (u_map_init(&param) == U_OK) {
+        j_result = validate_device_auth_user_code(config, u_map_get(request->map_url, "code"));
+        if (check_result_value(j_result, G_OK)) {
+          if (u_map_has_key(request->map_url, "g_continue")) {
+            j_session = validate_session_client_scope(config, request, json_string_value(json_object_get(json_object_get(j_result, "device_auth"), "client_id")), json_string_value(json_object_get(json_object_get(j_result, "device_auth"), "scope")));
+            if (check_result_value(j_session, G_OK)) {
+              if (validate_device_authorization_scope(config,
+                                                      json_integer_value(json_object_get(json_object_get(j_result, "device_auth"), "gpoda_id")),
+                                                      json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")),
+                                                      json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")),
+                                                      json_object_get(json_object_get(j_session, "session"), "amr"),
+                                                      sid) == G_OK) {
+                u_map_put(&param, "prompt", "deviceComplete");
+                response->status = 302;
+                redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
+                ulfius_add_header_to_response(response, "Location", redirect_url);
+                o_free(redirect_url);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error validate_device_authorization_scope");
+                u_map_put(&param, "prompt", "deviceServerError");
+                response->status = 302;
+                redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
+                ulfius_add_header_to_response(response, "Location", redirect_url);
+                o_free(redirect_url);
+              }
+            } else if (check_result_value(j_session, G_ERROR_NOT_FOUND) || check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
+              // Redirect to login page
+              response->status = 302;
+              redirect_url = get_login_url(config, request, "device", json_string_value(json_object_get(json_object_get(j_result, "device_auth"), "client_id")), json_string_value(json_object_get(json_object_get(j_result, "device_auth"), "scope")), NULL);
+              ulfius_add_header_to_response(response, "Location", redirect_url);
+              o_free(redirect_url);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error validate_session_client_scope");
+              u_map_put(&param, "prompt", "deviceServerError");
+              response->status = 302;
+              redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
+              ulfius_add_header_to_response(response, "Location", redirect_url);
+              o_free(redirect_url);
+            }
+            json_decref(j_session);
+          } else {
+            // Redirect to login page
+            response->status = 302;
+            redirect_url = get_login_url(config, request, "device", json_string_value(json_object_get(json_object_get(j_result, "device_auth"), "client_id")), json_string_value(json_object_get(json_object_get(j_result, "device_auth"), "scope")), NULL);
+            ulfius_add_header_to_response(response, "Location", redirect_url);
+            o_free(redirect_url);
+          }
+        } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
+          y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request));
+          u_map_put(&param, "prompt", "deviceCodeError");
+          response->status = 302;
+          redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
+          ulfius_add_header_to_response(response, "Location", redirect_url);
+          o_free(redirect_url);
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_DEVICE_CODE, 1, "plugin", config->name, NULL);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error validate_device_auth_user_code");
+          u_map_put(&param, "prompt", "deviceServerError");
+          response->status = 302;
+          redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
+          ulfius_add_header_to_response(response, "Location", redirect_url);
+          o_free(redirect_url);
+        }
+        json_decref(j_result);
+        u_map_clean(&param);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error u_map_init");
+        response->status = 500;
+      }
     }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_device_verification - Error get_session_token");
+    response->status = 500;
   }
+
   return U_CALLBACK_CONTINUE;
 }
 
@@ -14204,50 +14362,62 @@ static int callback_ciba_user_check(const struct _u_request * request, struct _u
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   json_t * j_ciba_request = get_ciba_request_from_user_req_id(config, u_map_get(request->map_url, "user_req_id")), * j_session, * j_client;
   struct _u_map additional_parameters;
-  char * redirect_url;
+  char * redirect_url, sid[OIDC_SID_LENGTH+1] = {0};
   
   u_map_init(&additional_parameters);
   if (check_result_value(j_ciba_request, G_OK)) {
-    if (!u_map_has_key(request->map_url, "cancel")) {
-      u_map_put(&additional_parameters, "login_hint", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "username")));
-      u_map_put(&additional_parameters, "ciba_binding_message", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "binding_message")));
-      u_map_put(&additional_parameters, "ciba_login_hint", "true");
-      if (u_map_has_key(request->map_url, "g_continue")) {
-        if (0 == json_integer_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "status"))) {
-          j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")));
-          if (check_result_value(j_client, G_OK)) {
-            j_session = validate_session_client_scope(config, request, json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "scope")));
-            if (check_result_value(j_session, G_OK)) {
-              if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "username")))) {
-                if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == json_false()) {
-                  if (pthread_mutex_lock(&config->insert_lock)) {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check oidc - Error pthread_mutex_lock");
-                    response->status = 302;
-                    u_map_put(&additional_parameters, "ciba_message", "server_error");
-                    redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
-                    ulfius_add_header_to_response(response, "Location", redirect_url);
-                    o_free(redirect_url);
-                  } else {
-                    y_log_message(Y_LOG_LEVEL_DEBUG, "scope: %s", json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")));
-                    if (update_ciba_request(config, json_integer_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "gpob_id")), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), json_object_get(json_object_get(j_session, "session"), "amr"), 1) == G_OK) {
-                      if (send_ciba_client_notification(config, json_object_get(j_client, "client"), json_object_get(json_object_get(j_session, "session"), "user"), json_object_get(j_ciba_request, "ciba"), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), 1) != G_OK) {
-                        y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check - Error send_ciba_client_notification");
-                      }
-                      // Redirect to login page with a success message
-                      response->status = 302;
-                      u_map_put(&additional_parameters, "ciba_message", "complete");
-                      redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
-                      ulfius_add_header_to_response(response, "Location", redirect_url);
-                      o_free(redirect_url);
-                    } else {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check - Error update_ciba_request status 1");
+    if (get_session_token(config, request, response, sid) == G_OK) {
+      if (!u_map_has_key(request->map_url, "cancel")) {
+        u_map_put(&additional_parameters, "login_hint", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "username")));
+        u_map_put(&additional_parameters, "ciba_binding_message", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "binding_message")));
+        u_map_put(&additional_parameters, "ciba_login_hint", "true");
+        if (u_map_has_key(request->map_url, "g_continue")) {
+          if (0 == json_integer_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "status"))) {
+            j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")));
+            if (check_result_value(j_client, G_OK)) {
+              j_session = validate_session_client_scope(config, request, json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "scope")));
+              if (check_result_value(j_session, G_OK)) {
+                if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "username")))) {
+                  if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == json_false()) {
+                    if (pthread_mutex_lock(&config->insert_lock)) {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check oidc - Error pthread_mutex_lock");
                       response->status = 302;
                       u_map_put(&additional_parameters, "ciba_message", "server_error");
                       redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
                       ulfius_add_header_to_response(response, "Location", redirect_url);
                       o_free(redirect_url);
+                    } else {
+                      if (update_ciba_request(config,
+                                              json_integer_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "gpob_id")),
+                                              json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")),
+                                              json_object_get(json_object_get(j_session, "session"), "amr"),
+                                              1,
+                                              sid) == G_OK) {
+                        if (send_ciba_client_notification(config, json_object_get(j_client, "client"), json_object_get(json_object_get(j_session, "session"), "user"), json_object_get(j_ciba_request, "ciba"), json_string_value(json_object_get(json_object_get(j_session, "session"), "scope_filtered")), 1, sid) != G_OK) {
+                          y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check - Error send_ciba_client_notification");
+                        }
+                        // Redirect to login page with a success message
+                        response->status = 302;
+                        u_map_put(&additional_parameters, "ciba_message", "complete");
+                        redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
+                        ulfius_add_header_to_response(response, "Location", redirect_url);
+                        o_free(redirect_url);
+                      } else {
+                        y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check - Error update_ciba_request status 1");
+                        response->status = 302;
+                        u_map_put(&additional_parameters, "ciba_message", "server_error");
+                        redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
+                        ulfius_add_header_to_response(response, "Location", redirect_url);
+                        o_free(redirect_url);
+                      }
+                      pthread_mutex_unlock(&config->insert_lock);
                     }
-                    pthread_mutex_unlock(&config->insert_lock);
+                  } else {
+                     // Redirect to login page
+                    response->status = 302;
+                    redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "scope")), &additional_parameters);
+                    ulfius_add_header_to_response(response, "Location", redirect_url);
+                    o_free(redirect_url);
                   }
                 } else {
                    // Redirect to login page
@@ -14256,103 +14426,109 @@ static int callback_ciba_user_check(const struct _u_request * request, struct _u
                   ulfius_add_header_to_response(response, "Location", redirect_url);
                   o_free(redirect_url);
                 }
-              } else {
+              } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
                  // Redirect to login page
                 response->status = 302;
                 redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "scope")), &additional_parameters);
                 ulfius_add_header_to_response(response, "Location", redirect_url);
                 o_free(redirect_url);
-              }
-            } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
-               // Redirect to login page
-              response->status = 302;
-              redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "scope")), &additional_parameters);
-              ulfius_add_header_to_response(response, "Location", redirect_url);
-              o_free(redirect_url);
-            } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
-              if (pthread_mutex_lock(&config->insert_lock)) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check oidc - Error pthread_mutex_lock");
-                response->status = 302;
-                u_map_put(&additional_parameters, "ciba_message", "server_error");
-                redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
-                ulfius_add_header_to_response(response, "Location", redirect_url);
-                o_free(redirect_url);
-              } else {
-                if (update_ciba_request(config, json_integer_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "gpob_id")), json_string_value(json_object_get(j_session, "scope_filtered")), json_object_get(j_session, "amr"), 2) == G_OK) {
-                  // Redirect to login page with a error message
-                  response->status = 302;
-                  u_map_put(&additional_parameters, "ciba_message", "invalid");
-                  redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
-                  ulfius_add_header_to_response(response, "Location", redirect_url);
-                  o_free(redirect_url);
-                } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check - Error update_ciba_request status 2");
+              } else if (check_result_value(j_session, G_ERROR_UNAUTHORIZED)) {
+                if (pthread_mutex_lock(&config->insert_lock)) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check oidc - Error pthread_mutex_lock");
                   response->status = 302;
                   u_map_put(&additional_parameters, "ciba_message", "server_error");
                   redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
                   ulfius_add_header_to_response(response, "Location", redirect_url);
                   o_free(redirect_url);
+                } else {
+                  if (update_ciba_request(config,
+                                          json_integer_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "gpob_id")),
+                                          json_string_value(json_object_get(j_session, "scope_filtered")),
+                                          json_object_get(j_session, "amr"),
+                                          2,
+                                          NULL) == G_OK) {
+                    // Redirect to login page with a error message
+                    response->status = 302;
+                    u_map_put(&additional_parameters, "ciba_message", "invalid");
+                    redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
+                    ulfius_add_header_to_response(response, "Location", redirect_url);
+                    o_free(redirect_url);
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check - Error update_ciba_request status 2");
+                    response->status = 302;
+                    u_map_put(&additional_parameters, "ciba_message", "server_error");
+                    redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
+                    ulfius_add_header_to_response(response, "Location", redirect_url);
+                    o_free(redirect_url);
+                  }
+                  pthread_mutex_unlock(&config->insert_lock);
                 }
-                pthread_mutex_unlock(&config->insert_lock);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check - Error validate_session_client_scope");
+                response->status = 302;
+                u_map_put(&additional_parameters, "ciba_message", "server_error");
+                redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
+                ulfius_add_header_to_response(response, "Location", redirect_url);
+                o_free(redirect_url);
               }
+              json_decref(j_session);
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check - Error validate_session_client_scope");
+              y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check - Error glewlwyd_plugin_callback_get_client");
               response->status = 302;
               u_map_put(&additional_parameters, "ciba_message", "server_error");
               redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
               ulfius_add_header_to_response(response, "Location", redirect_url);
               o_free(redirect_url);
             }
-            json_decref(j_session);
+            json_decref(j_client);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check - Error glewlwyd_plugin_callback_get_client");
+            // Redirect to login page with a error message
+            response->status = 302;
+            u_map_put(&additional_parameters, "ciba_message", "invalid");
+            redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
+            ulfius_add_header_to_response(response, "Location", redirect_url);
+            o_free(redirect_url);
+          }
+        } else {
+          // Redirect to login page
+          response->status = 302;
+          redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "scope")), &additional_parameters);
+          ulfius_add_header_to_response(response, "Location", redirect_url);
+          o_free(redirect_url);
+        }
+      } else {
+        if (pthread_mutex_lock(&config->insert_lock)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check oidc - Error pthread_mutex_lock");
+          response->status = 302;
+          u_map_put(&additional_parameters, "ciba_message", "server_error");
+          redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
+          ulfius_add_header_to_response(response, "Location", redirect_url);
+          o_free(redirect_url);
+        } else {
+          if (update_ciba_request(config, json_integer_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "gpob_id")), NULL, NULL, 3, NULL) == G_OK) {
+            response->status = 302;
+            u_map_put(&additional_parameters, "ciba_message", "cancelled");
+            redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
+            ulfius_add_header_to_response(response, "Location", redirect_url);
+            o_free(redirect_url);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check - Error update_ciba_request status 3");
             response->status = 302;
             u_map_put(&additional_parameters, "ciba_message", "server_error");
             redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
             ulfius_add_header_to_response(response, "Location", redirect_url);
             o_free(redirect_url);
           }
-          json_decref(j_client);
-        } else {
-          // Redirect to login page with a error message
-          response->status = 302;
-          u_map_put(&additional_parameters, "ciba_message", "invalid");
-          redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
-          ulfius_add_header_to_response(response, "Location", redirect_url);
-          o_free(redirect_url);
+          pthread_mutex_unlock(&config->insert_lock);
         }
-      } else {
-        // Redirect to login page
-        response->status = 302;
-        redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "scope")), &additional_parameters);
-        ulfius_add_header_to_response(response, "Location", redirect_url);
-        o_free(redirect_url);
       }
     } else {
-      if (pthread_mutex_lock(&config->insert_lock)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check oidc - Error pthread_mutex_lock");
-        response->status = 302;
-        u_map_put(&additional_parameters, "ciba_message", "server_error");
-        redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
-        ulfius_add_header_to_response(response, "Location", redirect_url);
-        o_free(redirect_url);
-      } else {
-        if (update_ciba_request(config, json_integer_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "gpob_id")), NULL, NULL, 3) == G_OK) {
-          response->status = 302;
-          u_map_put(&additional_parameters, "ciba_message", "cancelled");
-          redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
-          ulfius_add_header_to_response(response, "Location", redirect_url);
-          o_free(redirect_url);
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check - Error update_ciba_request status 3");
-          response->status = 302;
-          u_map_put(&additional_parameters, "ciba_message", "server_error");
-          redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
-          ulfius_add_header_to_response(response, "Location", redirect_url);
-          o_free(redirect_url);
-        }
-        pthread_mutex_unlock(&config->insert_lock);
-      }
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_ciba_user_check - Error get_session_token");
+      response->status = 302;
+      u_map_put(&additional_parameters, "ciba_message", "server_error");
+      redirect_url = get_login_url(config, request, "ciba_user_check", json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "client_id")), NULL, &additional_parameters);
+      ulfius_add_header_to_response(response, "Location", redirect_url);
+      o_free(redirect_url);
     }
   } else if (check_result_value(j_ciba_request, G_ERROR_NOT_FOUND)) {
     response->status = 302;
