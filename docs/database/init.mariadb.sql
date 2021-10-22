@@ -389,6 +389,7 @@ CREATE TABLE gpo_code (
   gpoc_claims_request BLOB DEFAULT NULL,
   gpoc_authorization_details BLOB DEFAULT NULL,
   gpoc_s_hash VARCHAR(512),
+  gpoc_sid VARCHAR(128),
   gpoc_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpoc_issued_for VARCHAR(256), -- IP address or hostname
   gpoc_user_agent VARCHAR(256),
@@ -486,7 +487,7 @@ CREATE TABLE gpo_id_token (
   gpoi_issued_for VARCHAR(256), -- IP address or hostname
   gpoi_user_agent VARCHAR(256),
   gpoi_hash VARCHAR(512),
-  gpoi_sid_hash VARCHAR(512),
+  gpoi_sid VARCHAR(128),
   gpoi_enabled TINYINT(1) DEFAULT 1,
   FOREIGN KEY(gpoc_id) REFERENCES gpo_code(gpoc_id) ON DELETE CASCADE,
   FOREIGN KEY(gpor_id) REFERENCES gpo_refresh_token(gpor_id) ON DELETE CASCADE
@@ -540,6 +541,7 @@ CREATE TABLE gpo_device_authorization (
   gpoda_issued_for VARCHAR(256), -- IP address or hostname of the deice client
   gpoda_device_code_hash VARCHAR(512) NOT NULL,
   gpoda_user_code_hash VARCHAR(512) NOT NULL,
+  gpoda_sid VARCHAR(128),
   gpoda_status TINYINT(1) DEFAULT 0, -- 0: created, 1: user verified, 2 device completed, 3 disabled
   gpoda_authorization_details BLOB DEFAULT NULL,
   gpoda_last_check TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -608,6 +610,7 @@ CREATE TABLE gpo_par (
   gpop_issued_for VARCHAR(256), -- IP address or hostname
   gpop_user_agent VARCHAR(256)
 );
+CREATE INDEX i_gpop_client_id ON gpo_par(gpop_client_id);
 CREATE INDEX i_gpop_request_uri_hash ON gpo_par(gpop_request_uri_hash);
 CREATE INDEX i_gpop_code_challenge ON gpo_par(gpop_code_challenge);
 
@@ -629,6 +632,7 @@ CREATE TABLE gpo_ciba (
   gpob_auth_req_id VARCHAR(128),
   gpob_user_req_id VARCHAR(128),
   gpob_binding_message VARCHAR(256),
+  gpob_sid VARCHAR(128),
   gpob_status TINYINT(1) DEFAULT 0, -- 0: created, 1: accepted, 2: error, 3: closed
   gpob_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpob_issued_for VARCHAR(256), -- IP address or hostname

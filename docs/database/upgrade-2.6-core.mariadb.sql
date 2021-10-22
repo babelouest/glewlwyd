@@ -31,6 +31,7 @@ CREATE TABLE gpo_ciba (
   gpob_auth_req_id VARCHAR(128),
   gpob_user_req_id VARCHAR(128),
   gpob_binding_message VARCHAR(256),
+  gpob_sid VARCHAR(128),
   gpob_status TINYINT(1) DEFAULT 0, -- 0: created, 1: accepted, 2: error, 3: closed
   gpob_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpob_issued_for VARCHAR(256), -- IP address or hostname
@@ -59,11 +60,15 @@ CREATE TABLE gpo_ciba_scheme (
 );
 
 ALTER TABLE gpo_code
-ADD gpoc_s_hash VARCHAR(512);
+ADD gpoc_s_hash VARCHAR(512),
+ADD gpoc_sid VARCHAR(128);
 
 ALTER TABLE gpo_id_token
 ADD gpoc_id INT(11) DEFAULT NULL,
 ADD gpor_id INT(11),
-ADD gpoi_sid_hash VARCHAR(512),
+ADD gpoi_sid VARCHAR(128),
 ADD FOREIGN KEY(gpoc_id) REFERENCES gpo_code(gpoc_id) ON DELETE CASCADE,
 ADD FOREIGN KEY(gpor_id) REFERENCES gpo_refresh_token(gpor_id) ON DELETE CASCADE;
+
+ALTER TABLE gpo_device_authorization
+Add gpoda_sid VARCHAR(128);

@@ -33,6 +33,7 @@ CREATE TABLE gpo_code (
   gpoc_claims_request TEXT DEFAULT NULL,
   gpoc_authorization_details TEXT DEFAULT NULL,
   gpoc_s_hash TEXT,
+  gpoc_sid TEXT,
   gpoc_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpoc_issued_for TEXT, -- IP address or hostname
   gpoc_user_agent TEXT,
@@ -130,7 +131,7 @@ CREATE TABLE gpo_id_token (
   gpoi_issued_for TEXT, -- IP address or hostname
   gpoi_user_agent TEXT,
   gpoi_hash TEXT,
-  gpoi_sid_hash TEXT,
+  gpoi_sid TEXT,
   gpoi_enabled INTEGER DEFAULT 1,
   FOREIGN KEY(gpoc_id) REFERENCES gpo_code(gpoc_id) ON DELETE CASCADE,
   FOREIGN KEY(gpor_id) REFERENCES gpo_refresh_token(gpor_id) ON DELETE CASCADE
@@ -184,6 +185,7 @@ CREATE TABLE gpo_device_authorization (
   gpoda_issued_for TEXT, -- IP address or hostname of the deice client
   gpoda_device_code_hash TEXT NOT NULL,
   gpoda_user_code_hash TEXT NOT NULL,
+  gpoda_sid TEXT,
   gpoda_status INTEGER DEFAULT 0, -- 0: created, 1: user verified, 2 device completed, 3 disabled
   gpoda_authorization_details TEXT DEFAULT NULL,
   gpoda_last_check TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -274,6 +276,7 @@ CREATE TABLE gpo_ciba (
   gpob_auth_req_id TEXT,
   gpob_user_req_id TEXT,
   gpob_binding_message TEXT,
+  gpob_sid TEXT,
   gpob_status INTEGER DEFAULT 0, -- 0: created, 1: accepted, 2: error, 3: closed
   gpob_expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpob_issued_for TEXT, -- IP address or hostname
