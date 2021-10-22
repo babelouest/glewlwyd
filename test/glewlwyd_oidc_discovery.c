@@ -59,7 +59,7 @@ END_TEST
 
 START_TEST(test_oidc_discovery_add_plugin)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssssisisisosososososososososssssosos[{ssssso}{ssssso}]sssss{ssss}s[ssss]s[s]sosososos[s]sososssososisosssosos{s{s[ss]s[ss]s[ss]s[ss]s[ss]}s{s[s]s[ss]s[ss]s[ss]s[s]}s{s[s]s[s]s[s]s[sss]s[s]}s{}}sososssisosisisososososososo}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssssisisisosososososososososssssosos[{ssssso}{ssssso}]sssss{ssss}s[ssss]s[s]sosososos[s]sososssisssososisosssosos{s{s[ss]s[ss]s[ss]s[ss]s[ss]}s{s[s]s[ss]s[ss]s[ss]s[s]}s{s[s]s[s]s[s]s[sss]s[s]}s{}}sososssisosisisososososososo}}",
                                 "module", "oidc",
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_NAME,
@@ -154,6 +154,8 @@ START_TEST(test_oidc_discovery_add_plugin)
                                   "introspection-revocation-auth-scope", INTROSPECT_SCOPE,
                                   "register-client-allowed", json_true(),
                                   "session-management-allowed", json_true(),
+                                  "session-cookie-name", "GLEWLWYD2_OIDC_SID",
+                                  "session-cookie-expiration", 2419200,
                                   "client-cert-source", "TLS",
                                   "client-cert-use-endpoint-aliases", json_true(),
                                   "oauth-dpop-allowed", json_true(),

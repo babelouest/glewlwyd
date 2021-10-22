@@ -48,7 +48,7 @@ struct _u_request user_req;
 
 START_TEST(test_oidc_session_management_add_module_ok)
 {
-  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososososo}}",
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisosososososososososssi}}",
                                 "module", PLUGIN_MODULE,
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_DISPLAY_NAME,
@@ -69,7 +69,9 @@ START_TEST(test_oidc_session_management_add_module_ok)
                                   "auth-type-password-enabled", json_true(),
                                   "auth-type-refresh-enabled", json_true(),
                                   "request-parameter-allow", json_true(),
-                                  "session-management-allowed", json_true());
+                                  "session-management-allowed", json_true(),
+                                  "session-cookie-name", "GLEWLWYD2_OIDC_SID",
+                                  "session-cookie-expiration", 2419200);
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
