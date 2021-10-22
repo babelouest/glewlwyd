@@ -72,8 +72,10 @@ class GlwdOIDCParams extends Component {
     props.mod.parameters["register-resource-default"]!==undefined?"":(props.mod.parameters["register-resource-default"] = []);
     props.mod.parameters["register-default-properties"]!==undefined?"":(props.mod.parameters["register-default-properties"] = {});
     props.mod.parameters["session-management-allowed"]!==undefined?"":(props.mod.parameters["session-management-allowed"] = false);
-    props.mod.parameters["front-channel-logout-allowed"]!==undefined?"":(props.mod.parameters["front-channel-logout-allowed"] = false);
-    props.mod.parameters["back-channel-logout-allowed"]!==undefined?"":(props.mod.parameters["back-channel-logout-allowed"] = false);
+    props.mod.parameters["session-cookie-name"]!==undefined?"":(props.mod.parameters["session-cookie-name"] = "GLEWLWYD2_OIDC_SID");
+    props.mod.parameters["session-cookie-expiration"]!==undefined?"":(props.mod.parameters["session-cookie-expiration"] = 2419200);
+    props.mod.parameters["front-channel-logout-allowed"]!==undefined?"":(props.mod.parameters["front-channel-logout-allowed"] = true);
+    props.mod.parameters["back-channel-logout-allowed"]!==undefined?"":(props.mod.parameters["back-channel-logout-allowed"] = true);
     props.mod.parameters["client-pubkey-parameter"]!==undefined?"":(props.mod.parameters["client-pubkey-parameter"] = "");
     props.mod.parameters["client-jwks-parameter"]!==undefined?"":(props.mod.parameters["client-jwks-parameter"] = "jwks");
     props.mod.parameters["client-jwks_uri-parameter"]!==undefined?"":(props.mod.parameters["client-jwks_uri-parameter"] = "jwks_uri");
@@ -288,8 +290,10 @@ class GlwdOIDCParams extends Component {
     nextProps.mod.parameters["register-default-properties"]!==undefined?"":(nextProps.mod.parameters["register-default-properties"] = {});
     nextProps.mod.parameters["register-client-token-one-use"]!==undefined?"":(nextProps.mod.parameters["register-client-token-one-use"] = true);
     nextProps.mod.parameters["session-management-allowed"]!==undefined?"":(nextProps.mod.parameters["session-management-allowed"] = false);
-    nextProps.mod.parameters["front-channel-logout-allowed"]!==undefined?"":(nextProps.mod.parameters["front-channel-logout-allowed"] = false);
-    nextProps.mod.parameters["back-channel-logout-allowed"]!==undefined?"":(nextProps.mod.parameters["back-channel-logout-allowed"] = false);
+    nextProps.mod.parameters["session-cookie-name"]!==undefined?"":(nextProps.mod.parameters["session-cookie-name"] = "GLEWLWYD2_OIDC_SID");
+    nextProps.mod.parameters["session-cookie-expiration"]!==undefined?"":(nextProps.mod.parameters["session-cookie-expiration"] = 2419200);
+    nextProps.mod.parameters["front-channel-logout-allowed"]!==undefined?"":(nextProps.mod.parameters["front-channel-logout-allowed"] = true);
+    nextProps.mod.parameters["back-channel-logout-allowed"]!==undefined?"":(nextProps.mod.parameters["back-channel-logout-allowed"] = true);
     nextProps.mod.parameters["client-pubkey-parameter"]!==undefined?"":(nextProps.mod.parameters["client-pubkey-parameter"] = "");
     nextProps.mod.parameters["client-jwks-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks-parameter"] = "jwks");
     nextProps.mod.parameters["client-jwks_uri-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks_uri-parameter"] = "jwks_uri");
@@ -1177,15 +1181,27 @@ class GlwdOIDCParams extends Component {
         Object.keys(this.state.mod.parameters["oauth-ciba-email-templates"]).forEach(lang => {
           if (!this.state.mod.parameters["oauth-ciba-email-templates"][lang]["oauth-ciba-email-subject"]) {
             hasError = true;
-            errorList["oauth-ciba-email-subject"] += i18next.t("admin.mod-email-subject-error", {lang: lang});
+            errorList["oauth-ciba-email-subject"] = i18next.t("admin.mod-email-subject-error", {lang: lang});
             errorList["oauth-ciba"] = true;
           }
           if (this.state.mod.parameters["oauth-ciba-email-templates"][lang]["oauth-ciba-email-body-pattern"].search("{CONNECT_URL}") === -1) {
             hasError = true;
-            errorList["oauth-ciba-email-body-pattern"] += i18next.t("admin.mod-glwd-oauth-ciba-email-body-pattern-error", {lang: lang});
+            errorList["oauth-ciba-email-body-pattern"] = i18next.t("admin.mod-glwd-oauth-ciba-email-body-pattern-error", {lang: lang});
             errorList["oauth-ciba"] = true;
           }
         });
+      }
+      if (this.state.mod.parameters["session-management-allowed"]) {
+        if (!this.state.mod.parameters["session-cookie-name"]) {
+          hasError = true;
+          errorList["session-cookie-name"] = i18next.t("admin.mod-glwd-session-cookie-name-error", {lang: lang});
+          errorList["session"] = true;
+        }
+        if (this.state.mod.parameters["session-cookie-expiration"] <= 0) {
+          hasError = true;
+          errorList["session-cookie-expiration"] = i18next.t("admin.mod-glwd-session-cookie-expiration-error", {lang: lang});
+          errorList["session"] = true;
+        }
       }
     }
     if (!hasError) {
@@ -2980,6 +2996,7 @@ class GlwdOIDCParams extends Component {
             <div className="card-header" id="addParamCard">
               <h2 className="mb-0">
                 <button className="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseSessionManagement" aria-expanded="true" aria-controls="collapseSessionManagement">
+                  {this.state.errorList["session"]?<span className="error-input btn-icon"><i className="fas fa-exclamation-circle"></i></span>:""}
                   {i18next.t("admin.mod-glwd-session-management-title")}
                 </button>
               </h2>
@@ -2989,6 +3006,38 @@ class GlwdOIDCParams extends Component {
                 <div className="form-group form-check">
                   <input type="checkbox" className="form-check-input" id="mod-glwd-session-management-allowed" onChange={(e) => this.toggleParam(e, "session-management-allowed")} checked={this.state.mod.parameters["session-management-allowed"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-session-management-allowed">{i18next.t("admin.mod-glwd-session-management-allowed")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-session-cookie-name">{i18next.t("admin.mod-glwd-session-cookie-name")}</label>
+                    </div>
+                    <input type="text"
+                           className="form-control"
+                           id="mod-glwd-session-cookie-name"
+                           onChange={(e) => this.changeNumberParam(e, "session-cookie-name")}
+                           value={this.state.mod.parameters["session-cookie-name"]}
+                           placeholder={i18next.t("admin.mod-glwd-session-cookie-name-ph")}
+                           disabled={!this.state.mod.parameters["session-management-allowed"]} />
+                  </div>
+                  {this.state.errorList["session-cookie-name"]?<span className="error-input">{this.state.errorList["session-cookie-name"]}</span>:""}
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-session-cookie-expiration">{i18next.t("admin.mod-glwd-session-cookie-expiration")}</label>
+                    </div>
+                    <input type="number"
+                           min="1"
+                           step="1"
+                           className="form-control"
+                           id="mod-glwd-session-cookie-expiration"
+                           onChange={(e) => this.changeParam(e, "session-cookie-expiration")}
+                           value={this.state.mod.parameters["session-cookie-expiration"]}
+                           placeholder={i18next.t("admin.mod-glwd-session-cookie-expiration-ph")}
+                           disabled={!this.state.mod.parameters["session-management-allowed"]} />
+                  </div>
+                  {this.state.errorList["session-cookie-expiration"]?<span className="error-input">{this.state.errorList["session-cookie-expiration"]}</span>:""}
                 </div>
                 <div className="form-group form-check">
                   <input type="checkbox"
