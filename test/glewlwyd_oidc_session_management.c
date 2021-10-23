@@ -42,13 +42,14 @@
 #define CLIENT_REDIRECT_POST_LOGOUT_ENC "https%3A%2F%2Fclient.local%2Flogout"
 #define CLIENT_ANOTHER_REDIRECT_POST_LOGOUT "https://2Fanotherclient.local/logout"
 #define CLIENT_ANOTHER_REDIRECT_POST_LOGOUT_ENC "https%3A%2F%2Fanotherclient.local%2Flogout"
+#define STATE "stateXyzabcd123"
 
 struct _u_request admin_req;
 struct _u_request user_req;
 
 START_TEST(test_oidc_session_management_add_module_ok)
 {
-  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisosososososososososssi}}",
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisosososososososososssisoso}}",
                                 "module", PLUGIN_MODULE,
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_DISPLAY_NAME,
@@ -71,7 +72,9 @@ START_TEST(test_oidc_session_management_add_module_ok)
                                   "request-parameter-allow", json_true(),
                                   "session-management-allowed", json_true(),
                                   "session-cookie-name", "GLEWLWYD2_OIDC_SID",
-                                  "session-cookie-expiration", 2419200);
+                                  "session-cookie-expiration", 2419200,
+                                  "front-channel-logout-allowed", json_true(),
+                                  "back-channel-logout-allowed", json_true());
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -185,7 +188,7 @@ START_TEST(test_oidc_session_management_end_session_no_post_logout)
 
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
-  user_req.http_url = msprintf("%s/%s/auth?response_type=id_token&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
+  user_req.http_url = msprintf("%s/%s/auth?response_type=id_token&g_continue&client_id=%s&redirect_uri=%s&state="STATE"&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, CLIENT_ID, CLIENT_REDIRECT, SCOPE_LIST);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -203,10 +206,10 @@ START_TEST(test_oidc_session_management_end_session_no_post_logout)
   o_free(req.http_verb);
   o_free(req.http_url);
   req.http_verb = o_strdup("GET");
-  req.http_url = msprintf(SERVER_URI "/" PLUGIN_NAME "/end_session?state=stateXyz&id_token_hint=%s", id_token);
+  req.http_url = msprintf(SERVER_URI "/" PLUGIN_NAME "/end_session?state="STATE"&id_token_hint=%s", id_token);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 302);
-  ck_assert_ptr_eq(NULL, o_strcasestr(u_map_get(resp.map_header, "Location"), "stateXyz"));
+  ck_assert_ptr_eq(NULL, o_strcasestr(u_map_get(resp.map_header, "Location"), STATE));
   
   j_body = json_pack("{ss}", "scope", "");
   ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "/auth/grant/" CLIENT_ID, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
@@ -296,10 +299,10 @@ START_TEST(test_oidc_session_management_end_session_valid_post_logout)
   o_free(req.http_verb);
   o_free(req.http_url);
   req.http_verb = o_strdup("GET");
-  req.http_url = msprintf(SERVER_URI "/" PLUGIN_NAME "/end_session?state=stateXyzabcd123&post_logout_redirect_uri=%s&id_token_hint=%s", CLIENT_REDIRECT_POST_LOGOUT_ENC, id_token);
+  req.http_url = msprintf(SERVER_URI "/" PLUGIN_NAME "/end_session?state="STATE"&post_logout_redirect_uri=%s&id_token_hint=%s", CLIENT_REDIRECT_POST_LOGOUT_ENC, id_token);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 302);
-  ck_assert_ptr_ne(NULL, o_strcasestr(u_map_get(resp.map_header, "Location"), "stateXyzabcd123"));
+  ck_assert_ptr_ne(NULL, o_strcasestr(u_map_get(resp.map_header, "Location"), STATE));
   ck_assert_ptr_ne(NULL, o_strcasestr(u_map_get(resp.map_header, "Location"), CLIENT_REDIRECT_POST_LOGOUT_ENC));
   
   j_body = json_pack("{ss}", "scope", "");
