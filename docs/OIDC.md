@@ -29,7 +29,7 @@ The following OpenID Connect and OAuth2 functionalities are currently supported:
 - [OAuth 2.0 Form Post Response Mode](http://openid.net/specs/oauth-v2-form-post-response-mode-1_0.html)
 - [Messages encryption](https://openid.net/specs/openid-connect-core-1_0.html#Encryption)
 - [Session Management](https://openid.net/specs/openid-connect-session-1_0.html)
-- [JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens - draft 13](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-access-token-jwt-13)
+- [JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens](https://www.rfc-editor.org/rfc/rfc9068.html)
 - [OAuth 2.0 for Native Apps](https://tools.ietf.org/html/rfc8252), see [Native Apps Guidelines](#native-apps-guidelines)
 - [OAuth 2.0 Device Authorization Grant](https://tools.ietf.org/html/rfc8628)
 - [OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) Draft 03](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-dpop-03)
