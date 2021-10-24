@@ -330,6 +330,36 @@
       "forceShow": true,
       "label": "admin.client-backchannel_authentication_request_encryption_alg",
       "listElements": ["RSA1_5","RSA-OAEP","RSA-OAEP-256","A128KW","A192KW","A256KW","ECDH-ES","ECDH-ES+A128KW","ECDH-ES+A192KW","ECDH-ES+A256KW","A128GCMKW","A192GCMKW","A256GCMKW","PBES2-HS256+A128KW","PBES2-HS384+A192KW","PBES2-HS512+A256KW"]
+    },{
+      "name": "post_logout_redirect_uri",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-post_logout_redirect_uri",
+      "placeholder": "admin.client-post_logout_redirect_uri-ph"
+    },{
+      "name": "frontchannel_logout_uri",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-frontchannel_logout_uri",
+      "placeholder": "admin.client-frontchannel_logout_uri-ph"
+    },{
+      "name": "frontchannel_logout_session_required",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-frontchannel_logout_session_required",
+      "listElements": ["no","yes"]
+    },{
+      "name": "backchannel_logout_uri",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-backchannel_logout_uri",
+      "placeholder": "admin.client-backchannel_logout_uri-ph"
+    },{
+      "name": "backchannel_logout_session_required",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-backchannel_logout_session_required",
+      "listElements": ["no","yes"]
     }]
   },
   "defaultScheme": "",
