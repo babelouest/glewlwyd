@@ -10,6 +10,7 @@ import PasswordForm from './PasswordForm';
 import NoPasswordForm from './NoPasswordForm';
 import SelectAccount from './SelectAccount';
 import EndSession from './EndSession';
+import SingleLogout from './SingleLogout';
 import SessionClosed from './SessionClosed';
 import DeviceAuth from './DeviceAuth';
 import ResetCredentials from './ResetCredentials';
@@ -179,14 +180,14 @@ class App extends Component {
           newState.forceShowGrant = true;
         } else if (this.state.prompt === "select_account") {
           newState.selectAccount = true;
+        } else if (this.state.prompt === "single_logout") {
+          newState.endSession = false;
+          newState.singleLogout = true;
+          newState.newUser = false;
+          newState.currentUser = false;
         } else if (this.state.prompt === "end_session") {
           newState.endSession = true;
           newState.singleLogout = false;
-          newState.newUser = false;
-          newState.currentUser = false;
-        } else if (this.state.prompt === "single_logout") {
-          newState.endSession = true;
-          newState.singleLogout = true;
           newState.newUser = false;
           newState.currentUser = false;
         } else if (this.state.prompt && this.state.prompt.substring(0, 6) === "device") {
@@ -424,7 +425,9 @@ class App extends Component {
         if (this.state.resetCredentialsShow) {
           body = <ResetCredentials config={this.state.config} resetCredentials={this.state.resetCredentials}/>;
         } else if (this.state.endSession) {
-          body = <EndSession config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser} singleLogout={this.state.singleLogout} pluginList={this.state.pluginList}/>;
+          body = <EndSession config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser} pluginList={this.state.pluginList}/>;
+        } else if (this.state.singleLogout) {
+          body = <SingleLogout config={this.state.config} userList={this.state.userList} currentUser={this.state.currentUser} pluginList={this.state.pluginList}/>;
         } else if (this.state.sessionClosed) {
           body = <SessionClosed config={this.state.config}/>;
         } else if (this.state.deviceAuth) {

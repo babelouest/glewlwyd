@@ -44,7 +44,9 @@ var initApp = () => {
           plugin: urlParams.get("plugin")||false,
           ciba_message: urlParams.get("ciba_message")||false,
           ciba_binding_message: urlParams.get("ciba_binding_message")||false,
-          ciba_login_hint: urlParams.get("ciba_login_hint")||false
+          ciba_login_hint: urlParams.get("ciba_login_hint")||false,
+          sid: urlParams.get("sid")||false,
+          post_redirect_to: urlParams.get("post_redirect_to")||false
         }
       }, frontEndConfig, serverConfig);
       ReactDOM.render(<App config={config}/>, document.getElementById('root'));

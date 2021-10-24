@@ -13,11 +13,19 @@ class EndSession extends Component {
       userList: props.userList||[],
       currentUser: props.currentUser||[],
       pluginList: props.pluginList,
-      singleLogout: props.singleLogout
+      sessionList: false,
+      showEndSessionIframes: false,
+      endSessionIframesComplete: 0,
+      revokeSession: false,
+      revokeTokens: false,
+      logoutIgnored: false
     };
     
-    this.handleLogout = this.handleLogout.bind(this);
     this.handleIgnoreLogout = this.handleIgnoreLogout.bind(this);
+    this.setRevokeAll = this.setRevokeAll.bind(this);
+    this.iframeLoaded = this.iframeLoaded.bind(this);
+    
+    this.getFrontchannelLogoutUrls();
   }
   
   componentWillReceiveProps(nextProps) {
@@ -25,23 +33,63 @@ class EndSession extends Component {
       config: nextProps.config,
       userList: nextProps.userList||[],
       currentUser: nextProps.currentUser||[],
-      pluginList: nextProps.pluginList,
-      singleLogout: nextProps.singleLogout
+      pluginList: nextProps.pluginList
     });
   }
   
-  isCallbackUrlValid() {
-    if (this.state.config.params.callback_url) {
-      var curUrl = window.location.protocol + "//" + window.location.host;
-      console.log(curUrl, this.state.config.params.callback_url);
-      return this.state.config.params.callback_url.startsWith(curUrl);
-    } else {
-      return false;
+  getFrontchannelLogoutUrls() {
+    if (this.state.config.params.sid && this.state.config.params.plugin) {
+      var post_redirect_to = "";
+      if (this.state.config.params.post_redirect_to) {
+        post_redirect_to = "?post_redirect_to="+encodeURIComponent(this.state.config.params.post_redirect_to);
+      }
+      apiManager.glewlwydRequestSub("/" + this.state.config.params.plugin + "/session/" + this.state.config.params.sid + "/" + this.state.config.params.client_id + post_redirect_to)
+      .then((res) => {
+        this.setState({sessionList: res});
+      })
+      .fail(() => {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      });
     }
   }
   
-  handleLogout() {
-    if (this.state.singleLogout) {
+  handleIgnoreLogout() {
+    if (this.state.sessionList.post_redirect_to) {
+      document.location = this.state.sessionList.post_redirect_to;
+    } else {
+      document.location = this.state.config.ProfileUrl;
+    }
+  }
+  
+  setRevokeAll(e, revokeSession, revokeTokens) {
+    e.preventDefault();
+    this.setState({revokeSession: revokeSession, revokeTokens: revokeTokens, showEndSessionIframes: true});
+  }
+  
+  iframeLoaded(e, index) {
+    this.setState({endSessionIframesComplete: this.state.endSessionIframesComplete+1}, () => {
+      console.log("iframeLoaded", this.state.endSessionIframesComplete, this.state.sessionList.client.length);
+      if (this.state.endSessionIframesComplete === this.state.sessionList.client.length) {
+        this.handleRevokeTokens()
+        .then(() => {
+          this.handleRevokeSession()
+          .then(() => {
+            apiManager.glewlwydRequest("/auth/", "DELETE")
+            .always(() => {
+              if (this.state.sessionList.post_redirect_to) {
+                document.location = this.state.sessionList.post_redirect_to;
+              } else {
+                messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
+              }
+            });
+          });
+        });
+      }
+    });
+  }
+
+  handleRevokeTokens() {
+    if (this.state.revokeTokens) {
       var promises = [];
       this.state.pluginList.forEach((plugin) => {
         if (plugin.module === "oauth2-glewlwyd") {
@@ -56,118 +104,48 @@ class EndSession extends Component {
           }));
         }
       });
-      Promise.all(promises)
-      .then((res) => {
-        apiManager.glewlwydRequest("/profile/session/", "DELETE")
-        .then((res) => {
-          apiManager.glewlwydRequest("/auth/", "DELETE")
-          .always((res) => {
-            if (this.isCallbackUrlValid()) {
-              document.location.href = this.state.config.params.callback_url;
-            } else {
-              messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
-            }
-          });
-        })
-        .fail(() => {
-          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
-        });
-      })
+      return Promise.all(promises);
     } else {
-      apiManager.glewlwydRequest("/auth/", "DELETE")
-      .fail(() => {
-        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
-      })
-      .always(() => {
-        if (this.isCallbackUrlValid()) {
-          document.location.href = this.state.config.params.callback_url;
-        } else {
-          messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
-        }
-      });
+      return Promise.resolve(true);
     }
   }
   
-  handleIgnoreLogout() {
-    document.location.href = this.state.config.params.callback_url;
-  }
-  
-  revokeAll(e, session, token) {
-    e.preventDefault();
-    var promises = [];
-    if (token) {
-      this.state.pluginList.forEach((plugin) => {
-        if (plugin.module === "oauth2-glewlwyd") {
-          promises.push(apiManager.glewlwydRequestSub("/" + plugin.name + "/profile/token/", "DELETE")
-          .fail(() => {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
-          }));
-        } else if (plugin.module === "oidc") {
-          promises.push(apiManager.glewlwydRequestSub("/" + plugin.name + "/token/", "DELETE")
-          .fail(() => {
-            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
-          }));
-        }
-      });
-    }
-    if (promises.length) {
-      Promise.all(promises)
-      .then((res) => {
-        if (session) {
-          if (this.isCallbackUrlValid()) {
-            document.location.href = this.state.config.params.callback_url;
-          } else {
-            messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
-          }
-          return apiManager.glewlwydRequest("/profile/session/", "DELETE")
-          .then(() => {
-            return apiManager.glewlwydRequest("/auth/", "DELETE");
-          });
-        } else {
-          return res;
-        }
-      })
-      .then(() => {
-        messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("login.logout-all-success")});
-      });
-    } else if (session) {
-      apiManager.glewlwydRequest("/profile/session/", "DELETE")
-      .then(() => {
-        return apiManager.glewlwydRequest("/auth/", "DELETE");
-      })
-      .then(() => {
-        messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("login.logout-all-success")});
-        if (this.isCallbackUrlValid()) {
-          document.location.href = this.state.config.params.callback_url;
-        } else {
-          messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
-        }
-      })
+  handleRevokeSession() {
+    if (this.state.revokeSession) {
+      return apiManager.glewlwydRequest("/profile/session/", "DELETE")
       .fail(() => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.error-delete-session")});
       });
+    } else {
+      return Promise.resolve(true);
     }
   }
 
   render() {
-    var ignoreLogoutButton, lgoutAllButton, messageJsx;
-    if (this.isCallbackUrlValid()) {
-      ignoreLogoutButton = <button type="button" className="btn btn-primary btn-icon-right" onClick={this.handleIgnoreLogout}>{i18next.t("login.ignore-logout")}</button>
-    }
-    if (!this.state.singleLogout) {
-      lgoutAllButton = 
-        <div className="btn-group btn-icon" role="group">
-          <button className="btn btn-danger dropdown-toggle" type="button" id="logoutDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          </button>
-          <div className="dropdown-menu" aria-labelledby="logoutDropdown">
-            <a className="dropdown-item" href="#" onClick={(e) => this.revokeAll(e, true, true)}>{i18next.t("login.logout-all-sessions-tokens")}</a>
-            <a className="dropdown-item" href="#" onClick={(e) => this.revokeAll(e, true, false)}>{i18next.t("login.logout-all-sessions")}</a>
-            <a className="dropdown-item" href="#" onClick={(e) => this.revokeAll(e, false, true)}>{i18next.t("login.logout-all-tokens")}</a>
-          </div>
-        </div>
-      messageJsx = <h4>{i18next.t("login.end-session-message")}</h4>
+    var messageJsx, postRedirectJsx, endSessionIframesJsx = [];
+    if (this.state.showEndSessionIframes) {
+      this.state.sessionList.client.forEach((client, index) => {
+        var url = client.frontchannel_logout_uri + "?iss=" + this.state.sessionList.iss;
+        if (client.frontchannel_logout_session_required) {
+          url += "&sid=" + this.state.sessionList.sid;
+        }
+        endSessionIframesJsx.push(
+          <iframe key={index}
+                  src={url}
+                  width="0"
+                  height="0"
+                  frameBorder="0"
+                  marginHeight="0"
+                  marginWidth="0"
+                  onLoad={(e) => this.iframeLoaded(e, index)} />
+        );
+      });
+      messageJsx = <h4>{i18next.t("login.end-session-message-post-redirect-ongoing")}</h4>
     } else {
-      messageJsx = <h4>{i18next.t("login.end-all-session-message")}</h4>
+      messageJsx = <h4>{i18next.t("login.end-session-message-post-redirect", {client: this.state.sessionList.client_name||this.state.sessionList.client_id})}</h4>
+      if (this.state.config.params.callback_url) {
+        postRedirectJsx = <h4>{i18next.t("login.end-session-message-post-redirect-url")} {this.state.config.params.callback_url}</h4>
+      }
     }
     return (
     <div>
@@ -179,6 +157,8 @@ class EndSession extends Component {
       <div className="row">
         <div className="col-md-12">
           {messageJsx}
+          {postRedirectJsx}
+          {endSessionIframesJsx}
         </div>
       </div>
       <div className="row">
@@ -189,12 +169,20 @@ class EndSession extends Component {
       <div className="row">
         <div className="col-md-12">
           <div className="btn-group" role="group">
-            <button type="button" className="btn btn-danger" onClick={this.handleLogout}>
+            <button type="button" className="btn btn-danger" onClick={(e) => this.setRevokeAll(e, false, false)}>
               <i className="fas fa-sign-out-alt btn-icon"></i>{i18next.t("login.logout")}
             </button>
-            {lgoutAllButton}
+            <div className="btn-group btn-icon" role="group">
+              <button className="btn btn-danger dropdown-toggle" type="button" id="logoutDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              </button>
+              <div className="dropdown-menu" aria-labelledby="logoutDropdown">
+                <a className="dropdown-item" href="#" onClick={(e) => this.setRevokeAll(e, true, true)}>{i18next.t("login.logout-all-sessions-tokens")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.setRevokeAll(e, true, false)}>{i18next.t("login.logout-all-sessions")}</a>
+                <a className="dropdown-item" href="#" onClick={(e) => this.setRevokeAll(e, false, true)}>{i18next.t("login.logout-all-tokens")}</a>
+              </div>
+            </div>
           </div>
-          {ignoreLogoutButton}
+          <button type="button" className="btn btn-primary btn-icon-right" onClick={this.handleIgnoreLogout}>{i18next.t("login.ignore-logout")}</button>
         </div>
       </div>
     </div>);
