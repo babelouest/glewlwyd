@@ -13,6 +13,8 @@ The `"Green Zone Release"`
 - Improve IETF strict option in OIDC plugin by handlong signatures and encryption properties
 - User registration: suggest a new username when a username exists
 - Allow to remove all sessions and/or revoke all tokens
+- Implement [OpenID Connect Front-Channel Logout 1.0 - draft 04](https://openid.net/specs/openid-connect-frontchannel-1_0.html)
+- Implement [OpenID Connect Back-Channel Logout 1.0 - draft 06](https://openid.net/specs/openid-connect-backchannel-1_0.html)
 
 ## 2.5.4
 
