@@ -165,6 +165,7 @@
         <div class="col-md-4">
           <select id="redirect_uri" class="form-control">
             <option value="../../test-oidc.html?param=client1_cb1">uri_client1</option>
+            <option value="../../test-oidc.html?param=client2">uri_client2</option>
             <option value="../../test-oidc.html?param=client3">uri_client3</option>
             <option value="../../test-oidc.html?param=client4">uri_client4</option>
           </select>
@@ -356,6 +357,22 @@
         </div>
       </div>
       <div class="row">
+        <div class="col-md-4">
+          <label for="end_session">end_session</label>
+        </div>
+        <div class="col-md-4">
+          <input type="text" id="end_session" name="end_session" value="/api/oidc/end_session" class="form-control">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <label for="post_logout_redirect_uri">post_logout_redirect_uri</label>
+        </div>
+        <div class="col-md-4">
+          <input type="text" id="post_logout_redirect_uri" name="post_logout_redirect_uri" value="" class="form-control">
+        </div>
+      </div>
+      <div class="row">
       </div>
       <div class="row">
         <div class="col-md-2">
@@ -364,6 +381,7 @@
           <button type="button" name="generate_jwt" id="generate_jwt" class="btn btn-lg btn-primary btn-block">Generate unencoded JWT</button>
           <button type="button" name="run" id="run" class="btn btn-lg btn-primary btn-block">Run test</button>
           <button type="button" name="check_session_state" id="check_session_state" class="btn btn-lg btn-primary btn-block">Check session state</button>
+          <button type="button" name="end_session_btn" id="end_session_btn" class="btn btn-lg btn-primary btn-block">End session</button>
         </div>
       </div>
       <div class="row">
@@ -400,12 +418,16 @@
       $("#access_token").val(params.access_token);
       $("#result").append("<div><strong>access_token</strong>: <code>" + params.access_token + "</code></div>");
     }
+    if (params.id_token) {
+      $("#id_token").val(params.id_token);
+      $("#result").append("<div><strong>id_token</strong>: <code>" + params.id_token + "</code></div>");
+    }
     if (params.session_state) {
       $("#session_state").val(params.session_state);
       $("#result").append("<div><strong>session_state</strong>: <code>" + params.session_state + "</code></div>");
     }
     
-    params = getQueryParams(location.hash.substring(1));
+    params = getQueryParams(location.hash);
     if (params.code) {
       $("#code").val(params.code);
     }
@@ -564,6 +586,7 @@
           success: function (result, status, request) {
             $("#refresh_token").val(result.refresh_token);
             $("#access_token").val(result.access_token);
+            $("#id_token").val(result.id_token);
             $("#result").append("<div class=\"alert alert-info\">Success: " + request.getResponseHeader("content-type") + "</div>");
             for (var key in result) {
               $("#result").append("<div><strong>" + key + "</strong>: <code>" + JSON.stringify(result[key], null, 4) + "</code></div>");
@@ -683,14 +706,20 @@
     }
   });
 
+  $("#end_session_btn").click(function () {
+    if ($("#end_session").val()) {
+      document.location = $("#end_session").val() + "?id_token_hint=" + $("#id_token").val() + "&state=" + $("#state").val() + "&post_logout_redirect_uri=" + $("#post_logout_redirect_uri").val()
+    }
+  });
+
   function receiveMessage(e) {
     if (e.source.origin === location.origin) {
       if (e.data === "unchanged") {
-	$("#session_state_result").html("<span class='badge badge-success'>unchanged</span>");
+        $("#session_state_result").html("<span class='badge badge-success'>unchanged</span>");
       } else if (e.data === "changed") {
-	$("#session_state_result").html("<span class='badge badge-secondary'>changed</span>");
+        $("#session_state_result").html("<span class='badge badge-secondary'>changed</span>");
       } else if (e.data === "error") {
-	$("#session_state_result").html("<span class='badge badge-danger'>error</span>");
+        $("#session_state_result").html("<span class='badge badge-danger'>error</span>");
       }
     }
   }
