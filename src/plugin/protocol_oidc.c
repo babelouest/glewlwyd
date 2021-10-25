@@ -9271,7 +9271,7 @@ static int callback_revocation(const struct _u_request * request, struct _u_resp
   } else if (check_result_value(j_result, G_ERROR_PARAM)) {
     response->status = 400;
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "callback_introspection - Error get_token_metadata");
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation - Error get_token_metadata");
     response->status = 500;
   }
   json_decref(j_result);
@@ -9282,7 +9282,7 @@ static int callback_introspection(const struct _u_request * request, struct _u_r
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   json_t * j_result;
   jwt_t * jwt = NULL;
-  jwa_alg alg = get_token_sign_alg(config, json_object_get((json_t *)response->shared_data, "client"), GLEWLWYD_TOKEN_TYPE_ID_TOKEN);
+  jwa_alg alg = get_token_sign_alg(config, json_object_get((json_t *)response->shared_data, "client"), GLEWLWYD_TOKEN_TYPE_INTROSPECTION);
   jwk_t * jwk = get_jwk_sign(config, json_object_get((json_t *)response->shared_data, "client"), alg);
   time_t now;
   char * token = NULL, * token_out;
@@ -9294,7 +9294,10 @@ static int callback_introspection(const struct _u_request * request, struct _u_r
 
   j_result = get_token_metadata(config, u_map_get(request->map_post_body, "token"), u_map_get(request->map_post_body, "token_type_hint"), get_client_id_for_introspection(config, request));
   if (check_result_value(j_result, G_OK)) {
-    if (0 == o_strcmp("jwt", u_map_get(request->map_url, "format")) || 0 == o_strcmp("jwt", u_map_get(request->map_post_body, "format")) || 0 == o_strcasecmp("application/jwt", u_map_get_case(request->map_header, "Accept")) || 0 == o_strcasecmp("application/token-introspection+jwt", u_map_get_case(request->map_header, "Accept"))) {
+    if (0 == o_strcmp("jwt", u_map_get(request->map_url, "format")) ||
+        0 == o_strcmp("jwt", u_map_get(request->map_post_body, "format")) ||
+        0 == o_strcasecmp("application/jwt", u_map_get_case(request->map_header, "Accept")) ||
+        0 == o_strcasecmp("application/token-introspection+jwt", u_map_get_case(request->map_header, "Accept"))) {
       if (0 == o_strcmp("access_token", json_string_value(json_object_get(json_object_get(j_result, "token"), "token_type")))) {
         if (jwk != NULL && alg != R_JWA_ALG_UNKNOWN) {
           if (r_jwt_init(&jwt) == RHN_OK) {
@@ -9373,9 +9376,9 @@ static int callback_introspection(const struct _u_request * request, struct _u_r
 
 static int callback_check_intropect_revoke(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_client, * j_element = NULL, * j_introspect, * j_assertion;
-  size_t index = 0;
-  int ret = U_CALLBACK_UNAUTHORIZED;
+  json_t * j_client, * j_introspect, * j_assertion;
+  int ret = U_CALLBACK_UNAUTHORIZED, client_auth_method = GLEWLWYD_CLIENT_AUTH_METHOD_NONE;
+  const char * client_id, * client_secret;
 
   if (0 == o_strncmp(HEADER_PREFIX_BEARER, u_map_get_case(request->map_header, HEADER_AUTHORIZATION), o_strlen(HEADER_PREFIX_BEARER)) && config->introspect_revoke_resource_config->oauth_scope != NULL) {
     j_introspect = get_token_metadata(config, (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER)), "access_token", NULL);
@@ -9387,6 +9390,15 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
     }
     json_decref(j_introspect);
   } else if (json_object_get(config->j_params, "introspection-revocation-allow-target-client") == json_true()) {
+    if (u_map_get(request->map_post_body, "client_secret") != NULL) {
+      client_id = u_map_get(request->map_post_body, "client_id");
+      client_secret = u_map_get(request->map_post_body, "client_secret");
+      client_auth_method = GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_POST;
+    } else {
+      client_id = request->auth_basic_user;
+      client_secret = request->auth_basic_password;
+      client_auth_method = GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_BASIC;
+    }
     j_assertion = check_client_certificate_valid(config, request);
     if (check_result_value(j_assertion, G_ERROR_UNAUTHORIZED)) {
       ret = U_CALLBACK_UNAUTHORIZED;
@@ -9417,18 +9429,16 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
           ret = U_CALLBACK_UNAUTHORIZED;
         }
       } else {
-        j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password);
-        if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
-          json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
-            if (0 == o_strcmp(json_string_value(j_element), "client_credentials")) {
-              ret = U_CALLBACK_CONTINUE;
-            }
-          }
+        j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, client_id, client_secret);
+        if (check_result_value(j_client, G_OK) && is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
+          ret = U_CALLBACK_CONTINUE;
         }
+        ulfius_set_response_shared_data(response, json_pack("{sO}", "client", json_object_get(j_client, "client")), (void (*)(void *))&json_decref);
         json_decref(j_client);
       }
+    } else {
+      json_object_set((json_t *)response->shared_data, "client", json_object_get(j_assertion, "client"));
     }
-    json_object_set((json_t *)response->shared_data, "client", json_object_get(j_assertion, "client"));
     json_decref(j_assertion);
   }
   if (ret == U_CALLBACK_UNAUTHORIZED) {
@@ -11933,7 +11943,7 @@ struct _backchannel_elements {
   json_t * j_client_id_list;
 };
 
-void * run_backchannel_logout_thread(void * args) {
+static void * run_backchannel_logout_thread(void * args) {
   struct _backchannel_elements * elt = (struct _backchannel_elements *)args;
   json_t * j_element = NULL, * j_client, * j_events = json_pack("{s{}}", "http://schemas.openid.net/event/backchannel-logout");;
   size_t index = 0;
@@ -11941,7 +11951,7 @@ void * run_backchannel_logout_thread(void * args) {
   jwt_t * jwt;
   char * sub, jti[OIDC_JTI_LENGTH+1] = {0}, * token, * out_token;
   jwa_alg alg;
-  jwk_t * jwk;
+  jwk_t * jwk = NULL;
   struct _u_request req;
   struct _u_response resp;
 
@@ -11961,7 +11971,7 @@ void * run_backchannel_logout_thread(void * args) {
         r_jwt_set_claim_int_value(jwt, "iat", (rhn_int_t)time(NULL));
         rand_string_nonce(jti, OIDC_JTI_LENGTH);
         r_jwt_set_claim_str_value(jwt, "jti", jti);
-        if (json_object_get(json_object_get(j_client, "client"), "backchannel_logout_session_required") == json_true()) {
+        if (is_true(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_logout_session_required")))) {
           r_jwt_set_claim_str_value(jwt, "sid", elt->sid);
         }
         r_jwt_set_claim_json_t_value(jwt, "events", j_events);
@@ -11998,6 +12008,7 @@ void * run_backchannel_logout_thread(void * args) {
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "run_backchannel_logout_thread - Invalid alg or sign key for client %s", json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id")));
       }
+      r_jwk_free(jwk);
     }
     json_decref(j_client);
   }
@@ -12104,6 +12115,7 @@ static int disable_tokens_from_session(struct _oidc_config * config, const char 
                             "gpoi_sid", sid,
                             "gpoi_enabled", 1);
       res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+      json_decref(j_query);
       if (res == H_OK) {
         ret = G_OK;
       } else {
@@ -12126,64 +12138,72 @@ static int disable_tokens_from_session(struct _oidc_config * config, const char 
 }
 
 static json_t * get_session_front_client_list(struct _oidc_config * config, const char * username, const char * sid, const char * client_id, const char * post_redirect_to) {
-  json_t * j_query, * j_result = NULL, * j_client, * j_return, * j_element = NULL;
+  json_t * j_query, * j_result = NULL, * j_client, * j_client_alpha, * j_return, * j_element = NULL;
   int res;
   size_t index = 0;
   
-  if (json_object_get(config->j_params, "front-channel-logout-allowed") == json_true()) {
-    if (o_strlen(sid) && o_strlen(client_id)) {
-      j_query = json_pack("{sss[s]s{sssssssi}}",
-                          "table", GLEWLWYD_PLUGIN_OIDC_TABLE_ID_TOKEN,
-                          "columns",
-                            "DISTINCT(gpoi_client_id) AS client_id",
-                          "where",
-                            "gpoi_plugin_name", config->name,
-                            "gpoi_username", username,
-                            "gpoi_sid", sid,
-                            "gpoi_enabled", 1);
-      res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
-      json_decref(j_query);
-      if (res == H_OK) {
-        j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, client_id);
-        if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
-          j_return = json_pack("{sis{sssssssO*s[]}}",
-                               "result", G_OK,
-                               "session",
-                                 "iss",json_string_value(json_object_get(config->j_params, "iss")),
-                                 "sid", sid,
-                                 "client_id", client_id,
-                                 "client_name", json_object_get(json_object_get(j_client, "client"), "name"),
-                                 "client");
-          if (post_redirect_to != NULL && json_array_has_string(json_object_get(json_object_get(j_client, "client"), "post_logout_redirect_uris"), post_redirect_to)) {
-            json_object_set_new(json_object_get(j_return, "session"), "post_redirect_to", json_string(post_redirect_to));
-          }
-          json_array_foreach(j_result, index, j_element) {
-            j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get(j_element, "client_id")));
-            if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
-              if (json_object_get(json_object_get(j_client, "client"), "frontchannel_logout_uri") != NULL) {
-                json_array_append_new(json_object_get(json_object_get(j_return, "session"), "client"),
-                                      json_pack("{sOsOso}",
-                                                "client_id", json_object_get(j_element, "client_id"),
-                                                "frontchannel_logout_uri", json_object_get(json_object_get(j_client, "client"), "frontchannel_logout_uri"), "frontchannel_logout_session_required", is_true(json_string_value(json_object_get(json_object_get(j_client, "client"), "frontchannel_logout_session_required")))?json_true():json_false()));
+  if (o_strlen(sid) && o_strlen(client_id)) {
+    j_client_alpha = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, client_id);
+    if (check_result_value(j_client_alpha, G_OK) && json_object_get(json_object_get(j_client_alpha, "client"), "enabled") == json_true()) {
+      j_return = json_pack("{sis{sssssssO*s[]}}",
+                           "result", G_OK,
+                           "session",
+                             "iss",json_string_value(json_object_get(config->j_params, "iss")),
+                             "sid", sid,
+                             "client_id", client_id,
+                             "client_name", json_object_get(json_object_get(j_client_alpha, "client"), "name"),
+                             "client");
+      if (post_redirect_to != NULL && json_array_has_string(json_object_get(json_object_get(j_client_alpha, "client"), "post_logout_redirect_uris"), post_redirect_to)) {
+        json_object_set_new(json_object_get(j_return, "session"), "post_redirect_to", json_string(post_redirect_to));
+      }
+      if (json_object_get(config->j_params, "front-channel-logout-allowed") == json_true()) {
+        j_query = json_pack("{sss[s]s{sssssssi}}",
+                            "table", GLEWLWYD_PLUGIN_OIDC_TABLE_ID_TOKEN,
+                            "columns",
+                              "DISTINCT(gpoi_client_id) AS client_id",
+                            "where",
+                              "gpoi_plugin_name", config->name,
+                              "gpoi_username", username,
+                              "gpoi_sid", sid,
+                              "gpoi_enabled", 1);
+        res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          if (json_array_size(j_result)) {
+            json_array_foreach(j_result, index, j_element) {
+              j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get(j_element, "client_id")));
+              if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
+                if (json_object_get(json_object_get(j_client, "client"), "frontchannel_logout_uri") != NULL) {
+                  json_array_append_new(json_object_get(json_object_get(j_return, "session"), "client"),
+                                        json_pack("{sOsOso}",
+                                                  "client_id", json_object_get(j_element, "client_id"),
+                                                  "frontchannel_logout_uri", json_object_get(json_object_get(j_client, "client"), "frontchannel_logout_uri"), "frontchannel_logout_session_required", is_true(json_string_value(json_object_get(json_object_get(j_client, "client"), "frontchannel_logout_session_required")))?json_true():json_false()));
+                }
               }
+              json_decref(j_client);
             }
-            json_decref(j_client);
+          } else {
+            json_decref(j_return);
+            j_return = json_pack("{si}", "result", G_ERROR_PARAM);
           }
+          json_decref(j_result);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_session_front_client_list - Error get_client");
-          j_return = json_pack("{si}", "result", G_ERROR);
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_session_front_client_list - Error executing j_query");
+          json_decref(j_return);
+          j_return = json_pack("{si}", "result", G_ERROR_DB);
         }
-        json_decref(j_result);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_session_front_client_list - Error executing j_query");
-        j_return = json_pack("{si}", "result", G_ERROR_DB);
+        json_decref(j_return);
+        j_return = json_pack("{si}", "result", G_ERROR_PARAM);
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_session_front_client_list - Invalid input parameters");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_session_front_client_list - Error get_client");
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
     }
+    json_decref(j_client_alpha);
   } else {
-    j_return = json_pack("{sis{sssss[]}}", "result", G_OK, "session", "iss", json_string_value(json_object_get(config->j_params, "iss")), "sid", sid, "client");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_session_front_client_list - Invalid input parameters");
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
   return j_return;
 }
@@ -13986,11 +14006,27 @@ static int callback_oidc_check_session_iframe(const struct _u_request * request,
 
 static int callback_oidc_end_session_list(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  
-    if (run_backchannel_logout(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "sid")) != G_OK ||
-      disable_tokens_from_session(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "sid")) != G_OK) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_end_session_list - Error run_backchannel_logout or disable_tokens_from_session");
-    response->status = 500;
+  time_t now;
+  struct tm ts;
+  char expires[129];
+
+  time(&now);
+  now += (time_t)json_integer_value(json_object_get(config->j_params, "session-cookie-expiration"));
+  gmtime_r(&now, &ts);
+  strftime(expires, 128, "%a, %d %b %Y %T %Z", &ts);
+  if (o_strlen(u_map_get(request->map_url, "sid")) == OIDC_SID_LENGTH) {
+    if (run_backchannel_logout(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "sid")) == G_OK &&
+        disable_tokens_from_session(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "sid")) == G_OK) {
+      if (ulfius_add_cookie_to_response(response, json_string_value(json_object_get(config->j_params, "session-cookie-name")), "", expires, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", config->glewlwyd_config->glewlwyd_config->cookie_secure, 0) != U_OK) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_end_session_list - Error ulfius_add_cookie_to_response");
+        response->status = 500;
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_end_session_list - Error run_backchannel_logout or disable_tokens_from_session");
+      response->status = 500;
+    }
+  } else {
+    response->status = 400;
   }
   return U_CALLBACK_CONTINUE;
 }
@@ -14001,6 +14037,8 @@ static int callback_oidc_get_session_list(const struct _u_request * request, str
   
   if (check_result_value(j_session, G_OK)) {
     ulfius_set_json_body_response(response, 200, json_object_get(j_session, "session"));
+  } else if (check_result_value(j_session, G_ERROR_PARAM)) {
+    response->status = 400;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_get_session_list - Error get_session_client_list");
     response->status = 500;
@@ -14028,7 +14066,7 @@ static int callback_oidc_end_session(const struct _u_request * request, struct _
       u_map_put(&map, "client_id", json_string_value(json_object_get(json_object_get(j_metadata, "token"), "client_id")));
       j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get(json_object_get(j_metadata, "token"), "client_id")));
       if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
-        if ((post_logout_redirect_uri = u_map_get(request->map_url, "post_logout_redirect_uri")) != NULL) {
+        if (o_strlen(post_logout_redirect_uri = u_map_get(request->map_url, "post_logout_redirect_uri"))) {
           if (json_array_has_string(json_object_get(json_object_get(j_client, "client"), "post_logout_redirect_uris"), u_map_get(request->map_url, "post_logout_redirect_uri"))) {
             if (u_map_get(request->map_url, "state") != NULL) {
               if (o_strlen(u_map_get(request->map_url, "state"))) {
@@ -14054,11 +14092,12 @@ static int callback_oidc_end_session(const struct _u_request * request, struct _
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_end_session - Error getting client_id %s", json_string_value(json_object_get(json_object_get(j_metadata, "token"), "client_id")));
       }
       json_decref(j_client);
+      u_map_put(&map, "prompt", "end_session");
     } else {
       y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_end_session - Invalid id_token");
+      u_map_put(&map, "prompt", "single_logout");
     }
     json_decref(j_metadata);
-    u_map_put(&map, "prompt", "end_session");
     logout_url = config->glewlwyd_config->glewlwyd_callback_get_login_url(config->glewlwyd_config, NULL, NULL, redirect_uri, &map);
     response->status = 302;
     ulfius_add_header_to_response(response, "Location", logout_url);
