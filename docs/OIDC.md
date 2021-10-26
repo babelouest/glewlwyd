@@ -638,6 +638,19 @@ Add endpoints for clients to manage their registration as defined in [OAuth 2.0 
 
 Add default properties and values to clients during registration.
 
+## Session management
+
+### Allow session management endpoints
+
+If this is set to true, a session ID will be used to identify the user's session, the same `sid` parameter will be added to all ID Tokens for the same session.
+
+The following session management endpoints will be available:
+
+- `GET /api/{plugin_name}/end_session`: Start the end session flow. The query parameter `id_token_hint` referencing the ID Token's session to close. In addition, the optional parameters `post_logout_redirect_uri` and `state` can be passsed. If a valid id_token is used as parameter, the endpoint will redirect to the login page with valid parameters to complete the session ending
+- `GET /api/{plugin_name}/session/:sid/:client_id`: Get the list of clients which are referrenced by this session and use OpenID Connect Front-Channel Logout (if enabled)
+- `DELETE /api/{plugin_name}/session/:sid/`: Confirm the suppression of this session and send an end session token to the clients which are referrenced by this session and use OpenID Connect Back-Channel Logout (if enabled)
+- `GET /api/{plugin_name}/check_session_iframe`: Check the current session as standardized in [Session Management](https://openid.net/specs/openid-connect-session-1_0.html)
+
 ## Device Authorization management
 
 ### Code expiration (seconds)
