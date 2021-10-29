@@ -11,8 +11,8 @@
 ![logged in](docs/screenshots/login-nopassword.png)
 
 ## Process supported:
-- [OAuth2](docs/OAUTH2.md)
-- [OpenID Connect](docs/OIDC.md)
+- [OpenID Connect/OAuth2](docs/OIDC.md)
+- [OAuth2](docs/OAUTH2.md): Legacy plugin, it's recommended to use the OpenID Connect/OAuth2 for new installations
 
 ## User authentication via multiple factors:
 - [Password](https://xkcd.com/936/)
@@ -26,7 +26,7 @@
 ## Users and clients can be storage backends:
 - [Database](docs/USER_DATABASE.md)
 - [LDAP service](docs/USER_LDAP.md)
-- [HTTP Backend service providing Basic Authentication](docs/USER_HTTP.md)
+- [HTTP Backend service providing Basic Authentication](docs/USER_HTTP.md) (Users only)
 
 ## User registration
 
@@ -51,6 +51,8 @@ Based on a plugin architecture to make it easier to add or update storage backen
 ## Passwordless authentication
 
 Adding new authentication schemes or backend storage for users and clients is possible via the plugin architecture.
+
+## Architecture and performance
 
 The backend API server is fully written in C and uses a small amount of resources.
 
