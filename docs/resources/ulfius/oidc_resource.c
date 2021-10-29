@@ -4,7 +4,7 @@
  *
  * Copyright 2016-2021 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20211009
+ * Version 20211029
  *
  * The MIT License (MIT)
  * 
@@ -254,7 +254,7 @@ int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request
 /**
  * Parse the DPoP header and extract its jkt value if the DPoP is valid
  */
-json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, const char * htu, time_t max_iat, const char * jkt) {
+json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, const char * htu, time_t max_iat, const char * jkt, const char * access_token) {
   json_t * j_return = NULL, * j_header = NULL, * j_claims = NULL;
   const char * dpop_header;
   jwt_t * dpop_jwt = NULL;
@@ -262,6 +262,9 @@ json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, 
   jwk_t * jwk_header = NULL;
   char * jkt_from_token = NULL;
   time_t now;
+  unsigned char ath[32] = {0}, ath_enc[64] = {0};
+  size_t ath_len = 32, ath_enc_len = 64;
+  gnutls_datum_t hash_data;
   
   if ((dpop_header = u_map_get_case(request->map_header, HEADER_DPOP)) != NULL) {
     if (r_jwt_init(&dpop_jwt) == RHN_OK) {
@@ -324,6 +327,23 @@ json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, 
             time(&now);
             if ((time_t)r_jwt_get_claim_int_value(dpop_jwt, "iat") > now || ((time_t)r_jwt_get_claim_int_value(dpop_jwt, "iat"))+max_iat < now) {
               y_log_message(Y_LOG_LEVEL_DEBUG, "verify_dpop_proof - Invalid iat");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+              break;
+            }
+            hash_data.data = (unsigned char*)access_token;
+            hash_data.size = o_strlen(access_token);
+            if (gnutls_fingerprint(GNUTLS_DIG_SHA256, &hash_data, ath, &ath_len) != GNUTLS_E_SUCCESS) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error gnutls_fingerprint");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+              break;
+            }
+            if (!o_base64url_encode(ath, ath_len, ath_enc, &ath_enc_len)) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error o_base64url_encode ath");
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+              break;
+            }
+            if (0 != o_strcmp((const char *)ath_enc, r_jwt_get_claim_str_value(dpop_jwt, "ath"))) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error ath invalid");
               j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
               break;
             }

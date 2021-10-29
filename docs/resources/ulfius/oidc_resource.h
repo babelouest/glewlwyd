@@ -4,7 +4,7 @@
  *
  * Copyright 2016-2021 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20211009
+ * Version 20211029
  *
  * The MIT License (MIT)
  * 
@@ -69,4 +69,4 @@ int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request
 /**
  * Verifies if a DPoP header exists and if it does, verifies that it's a valid DPoP header
  */
-json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, const char * htu, time_t max_iat, const char * jkt);
+json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, const char * htu, time_t max_iat, const char * jkt, const char * access_token);
