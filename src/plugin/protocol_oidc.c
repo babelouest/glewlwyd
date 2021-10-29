@@ -2146,20 +2146,16 @@ static int get_session_token(struct _oidc_config * config, const struct _u_reque
   strftime(expires, 128, "%a, %d %b %Y %T %Z", &ts);
 
   if (json_object_get(config->j_params, "session-management-allowed") == json_true()) {
-    if (u_map_get(request->map_cookie, json_string_value(json_object_get(config->j_params, "session-cookie-name"))) != NULL) {
-      if (o_strlen(u_map_get(request->map_cookie, json_string_value(json_object_get(config->j_params, "session-cookie-name")))) == OIDC_SID_LENGTH) {
-        if (o_strncpy(sid, u_map_get(request->map_cookie, json_string_value(json_object_get(config->j_params, "session-cookie-name"))), OIDC_SID_LENGTH) == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_session_token - Error o_strncpy");
-          ret = G_ERROR;
-        } else {
-          if (ulfius_add_cookie_to_response(response, json_string_value(json_object_get(config->j_params, "session-cookie-name")), sid, expires, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", config->glewlwyd_config->glewlwyd_config->cookie_secure, 0) != U_OK) {
-            y_log_message(Y_LOG_LEVEL_DEBUG, "get_session_token - Error ulfius_add_cookie_to_response (1)");
-            ret = G_ERROR;
-          }
-        }
-      } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "get_session_token - Invalid cookie length");
+    if (u_map_get(request->map_cookie, json_string_value(json_object_get(config->j_params, "session-cookie-name"))) != NULL &&
+        o_strlen(u_map_get(request->map_cookie, json_string_value(json_object_get(config->j_params, "session-cookie-name")))) == OIDC_SID_LENGTH) {
+      if (o_strncpy(sid, u_map_get(request->map_cookie, json_string_value(json_object_get(config->j_params, "session-cookie-name"))), OIDC_SID_LENGTH) == NULL) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_session_token - Error o_strncpy");
         ret = G_ERROR;
+      } else {
+        if (ulfius_add_cookie_to_response(response, json_string_value(json_object_get(config->j_params, "session-cookie-name")), sid, expires, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", config->glewlwyd_config->glewlwyd_config->cookie_secure, 0) != U_OK) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "get_session_token - Error ulfius_add_cookie_to_response (1)");
+          ret = G_ERROR;
+        }
       }
     } else {
       if (rand_string_nonce(sid, OIDC_SID_LENGTH) == NULL) {
@@ -12173,7 +12169,7 @@ static json_t * get_session_front_client_list(struct _oidc_config * config, cons
             json_array_foreach(j_result, index, j_element) {
               j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get(j_element, "client_id")));
               if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
-                if (json_object_get(json_object_get(j_client, "client"), "frontchannel_logout_uri") != NULL) {
+                if (json_string_length(json_object_get(json_object_get(j_client, "client"), "frontchannel_logout_uri"))) {
                   json_array_append_new(json_object_get(json_object_get(j_return, "session"), "client"),
                                         json_pack("{sOsOso}",
                                                   "client_id", json_object_get(j_element, "client_id"),
