@@ -44,6 +44,7 @@ langList.forEach(lang => {
 });
 
 var hasError = false;
+
 Object.keys(translation).forEach(key => {
   if (translation[key].length !== translationSize) {
     hasError = true;

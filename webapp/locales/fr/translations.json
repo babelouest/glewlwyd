@@ -775,7 +775,7 @@
     "mod-glwd-oauth-ciba-email-allowed": "Envoyer un courriel de notification à l'utilisateur ciblé",
     "mod-glwd-oauth-ciba-email-body-pattern": "Corps du courriel, {CONNECT_URL} requis",
     "mod-glwd-oauth-ciba-email-body-pattern-ph": "Ex: Cliquez ici pour confirmer: {CONNECT_URL}\nCliquez ici pour annuler la demande: {CANCEL_URL}\nmessage de l'émetteur: {BINDING_MESSAGE}",
-    "mod-glwd-oauth-ciba-email-body-pattern-error": "Le corps du courriel est obligatoire pour la langue '{{lang}}', et doit contenir la chaine {CONNECT_URL} - ",
+    "mod-glwd-oauth-ciba-email-body-pattern-error": "Le corps du courriel est obligatoire pour la langue '{{lang}}', et doit contenir la chaine {CONNECT_URL}",
     "mod-glwd-oauth-fapi-title": "Options supplémentaires pour les API de niveau finance (FAPI)",
     "mod-glwd-oauth-fapi-check-all": "Tout sélectionner ci-dessous",
     "mod-glwd-oauth-fapi-allow-jarm": "Autoriser les réponses /auth au format JWT (JARM)",

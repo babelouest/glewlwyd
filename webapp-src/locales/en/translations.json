@@ -774,7 +774,7 @@
     "mod-glwd-oauth-ciba-email-allowed": "Send an e-mail to the targeted user",
     "mod-glwd-oauth-ciba-email-body-pattern": "E-mail body template, {CONNECT_URL} required",
     "mod-glwd-oauth-ciba-email-body-pattern-ph": "e.g. Click to confirm: {CONNECT_URL}\nClick to cancel: {CANCEL_URL}\nsender message: {BINDING_MESSAGE}",
-    "mod-glwd-oauth-ciba-email-body-pattern-error": "E-mail body is mandatory for language '{{lang}}' and must contain the pattern {CONNECT_URL} - ",
+    "mod-glwd-oauth-ciba-email-body-pattern-error": "E-mail body is mandatory for language '{{lang}}' and must contain the pattern {CONNECT_URL}",
     "mod-glwd-oauth-fapi-title": "Financial-grade API additional options (FAPI)",
     "mod-glwd-oauth-fapi-check-all": "Select all below",
     "mod-glwd-oauth-fapi-allow-jarm": "Allow JWT responses in /auth (JARM)",
