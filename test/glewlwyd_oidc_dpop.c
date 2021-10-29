@@ -629,6 +629,9 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt_invalid)
   json_t * j_result, * j_dpop_pub;
   jwt_t * jwt_dpop;
   jwk_t * jwk_dpop_pub;
+  unsigned char ath[32] = {0}, ath_enc[64] = {0};
+  size_t ath_len = 32, ath_enc_len = 64;
+  gnutls_datum_t hash_data;
   
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
@@ -678,6 +681,11 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt_invalid)
   ulfius_clean_request(&req);
   o_free(dpop_token);
   
+  hash_data.data = (unsigned char*)json_string_value(json_object_get(j_result, "access_token"));
+  hash_data.size = json_string_length(json_object_get(j_result, "access_token"));
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &hash_data, ath, &ath_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(o_base64url_encode(ath, ath_len, ath_enc, &ath_enc_len), 1);
+
   ck_assert_ptr_ne(NULL, bearer = msprintf("Bearer %s", json_string_value(json_object_get(j_result, "access_token"))));
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
@@ -690,6 +698,7 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt_invalid)
   ck_assert_int_eq(resp.status, 401);
   ulfius_clean_response(&resp);
   
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "ath", (const char *)ath_enc), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "GET"), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/userinfo"), RHN_OK);
   
@@ -844,7 +853,7 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt_invalid)
   
   ulfius_init_response(&resp);
   ck_assert_int_eq(r_jwt_set_header_str_value(jwt_dpop, "typ", "dpop+jwt"), RHN_OK);
-  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jwt", "error"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jwk", "error"), RHN_OK);
   ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
   ck_assert_int_eq(ulfius_set_request_properties(&req, 
                                                  U_OPT_HEADER_PARAMETER, "DPoP", dpop_token,
@@ -867,6 +876,30 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt_invalid)
   
   ulfius_init_response(&resp);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jwk", NULL), RHN_OK);
+  ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
+  ck_assert_int_eq(ulfius_set_request_properties(&req, 
+                                                 U_OPT_HEADER_PARAMETER, "DPoP", dpop_token,
+                                                 U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ulfius_clean_response(&resp);
+  o_free(dpop_token);
+  
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_dpop, "jwk", j_dpop_pub), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "ath", "error"), RHN_OK);
+  ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
+  ck_assert_int_eq(ulfius_set_request_properties(&req, 
+                                                 U_OPT_HEADER_PARAMETER, "DPoP", dpop_token,
+                                                 U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ulfius_clean_response(&resp);
+  o_free(dpop_token);
+  
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_dpop, "jwk", j_dpop_pub), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "ath", NULL), RHN_OK);
   ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
   ck_assert_int_eq(ulfius_set_request_properties(&req, 
                                                  U_OPT_HEADER_PARAMETER, "DPoP", dpop_token,
@@ -906,6 +939,7 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt_invalid)
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/token"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "ath", (const char *)ath_enc), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_int_value(jwt_dpop, "iat", time(NULL)), RHN_OK);
   ck_assert_int_eq(r_jwt_set_header_str_value(jwt_dpop, "typ", "dpop+jwt"), RHN_OK);
   ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_dpop, "jwk", j_dpop_pub), RHN_OK);
@@ -937,7 +971,10 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt)
   json_t * j_result, * j_dpop_pub;
   jwt_t * jwt_dpop;
   jwk_t * jwk_dpop_pub;
-  
+  unsigned char ath[32] = {0}, ath_enc[64] = {0};
+  size_t ath_len = 32, ath_enc_len = 64;
+  gnutls_datum_t hash_data;
+
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
   user_req.http_url = msprintf("%s/%s/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
@@ -986,12 +1023,18 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt)
   ulfius_clean_request(&req);
   o_free(dpop_token);
   
+  hash_data.data = (unsigned char*)json_string_value(json_object_get(j_result, "access_token"));
+  hash_data.size = json_string_length(json_object_get(j_result, "access_token"));
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &hash_data, ath, &ath_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(o_base64url_encode(ath, ath_len, ath_enc, &ath_enc_len), 1);
+
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
   snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "GET"), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/userinfo"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "ath", (const char *)ath_enc), RHN_OK);
   ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
   ck_assert_ptr_ne(NULL, bearer = msprintf("Bearer %s", json_string_value(json_object_get(j_result, "access_token"))));
   ck_assert_int_eq(ulfius_set_request_properties(&req, 
@@ -1023,7 +1066,10 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt_jti_replay)
   json_t * j_result, * j_dpop_pub;
   jwt_t * jwt_dpop;
   jwk_t * jwk_dpop_pub;
-  
+  unsigned char ath[32] = {0}, ath_enc[64] = {0};
+  size_t ath_len = 32, ath_enc_len = 64;
+  gnutls_datum_t hash_data;
+
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
   user_req.http_url = msprintf("%s/%s/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&nonce=nonce1234&scope=%s", SERVER_URI, PLUGIN_NAME, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
@@ -1072,12 +1118,18 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt_jti_replay)
   ulfius_clean_request(&req);
   o_free(dpop_token);
   
+  hash_data.data = (unsigned char*)json_string_value(json_object_get(j_result, "access_token"));
+  hash_data.size = json_string_length(json_object_get(j_result, "access_token"));
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &hash_data, ath, &ath_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(o_base64url_encode(ath, ath_len, ath_enc, &ath_enc_len), 1);
+
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
   snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "GET"), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/userinfo"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "ath", (const char *)ath_enc), RHN_OK);
   ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
   ck_assert_ptr_ne(NULL, bearer = msprintf("Bearer %s", json_string_value(json_object_get(j_result, "access_token"))));
   ck_assert_int_eq(ulfius_set_request_properties(&req, 
@@ -1240,6 +1292,9 @@ START_TEST(test_oidc_dpop_refresh_token_management_with_jkt)
   json_t * j_result, * j_dpop_pub;
   jwt_t * jwt_dpop;
   jwk_t * jwk_dpop_pub;
+  unsigned char ath[32] = {0}, ath_enc[64] = {0};
+  size_t ath_len = 32, ath_enc_len = 64;
+  gnutls_datum_t hash_data;
   
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
@@ -1289,12 +1344,18 @@ START_TEST(test_oidc_dpop_refresh_token_management_with_jkt)
   ulfius_clean_request(&req);
   o_free(dpop_token);
   
+  hash_data.data = (unsigned char*)json_string_value(json_object_get(j_result, "access_token"));
+  hash_data.size = json_string_length(json_object_get(j_result, "access_token"));
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &hash_data, ath, &ath_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(o_base64url_encode(ath, ath_len, ath_enc, &ath_enc_len), 1);
+
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
   snprintf(jti, 16, "%u", (uint)rand());
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "DELETE"), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/token/hash"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "ath", (const char *)ath_enc), RHN_OK);
   ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
   ck_assert_ptr_ne(NULL, bearer = msprintf("Bearer %s", json_string_value(json_object_get(j_result, "access_token"))));
   ck_assert_int_eq(ulfius_set_request_properties(&req, 
@@ -1315,6 +1376,7 @@ START_TEST(test_oidc_dpop_refresh_token_management_with_jkt)
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "GET"), RHN_OK);
   ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/token"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "ath", (const char *)ath_enc), RHN_OK);
   ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
   ck_assert_int_eq(ulfius_set_request_properties(&req, 
                                                  U_OPT_HTTP_VERB, "GET",
