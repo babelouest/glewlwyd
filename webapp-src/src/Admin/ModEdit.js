@@ -4,6 +4,55 @@ import i18next from 'i18next';
 import apiManager from '../lib/APIManager';
 import ModEditParameters from './ModEditParameters';
 import messageDispatcher from '../lib/MessageDispatcher';
+import defaultParameters from '../lib/DefaultParameters';
+
+let defaultParamClient = {
+  "redirect_uri":{"multiple":true},
+  "authorization_type":{"multiple":true},
+  "response_mode":{"multiple":false},
+  "sector_identifier_uri":{"multiple":false},
+  "token_endpoint_auth_method":{"multiple":true},
+  "client_secret":{"multiple":false},
+  "jwks":{"convert":"jwks","multiple":false},
+  "jwks_uri":{"multiple":false},
+  "pubkey":{"multiple":false},
+  "enc":{"multiple":false},
+  "alg":{"multiple":false},
+  "alg_kid":{"multiple":false},
+  "encrypt_code":{"multiple":false},
+  "encrypt_at":{"multiple":false},
+  "encrypt_userinfo":{"multiple":false},
+  "encrypt_id_token":{"multiple":false},
+  "encrypt_refresh_token":{"multiple":false},
+  "resource":{"multiple":true},
+  "authorization_data_types":{"multiple":true},
+  "tls_client_auth_san_dns":{"multiple":false},
+  "tls_client_auth_san_uri":{"multiple":false},
+  "tls_client_auth_san_ip":{"multiple":false},
+  "tls_client_auth_san_email":{"multiple":false},
+  "backchannel_token_delivery_mode":{"multiple":false},
+  "backchannel_client_notification_endpoint":{"multiple":false},
+  "backchannel_user_code_parameter":{"multiple":false},
+  "request_object_signing_alg":{"multiple":false},
+  "token_endpoint_signing_alg":{"multiple":false},
+  "backchannel_authentication_request_signing_alg":{"multiple":false},
+  "request_object_encryption_alg":{"multiple":false},
+  "request_object_encryption_enc":{"multiple":false},
+  "token_endpoint_encryption_alg":{"multiple":false},
+  "token_endpoint_encryption_enc":{"multiple":false},
+  "backchannel_authentication_request_encryption_alg":{"multiple":false},
+  "backchannel_authentication_request_encryption_enc":{"multiple":false},
+  "post_logout_redirect_uri":{"multiple":false},
+  "frontchannel_logout_uri":{"multiple":false},
+  "frontchannel_logout_session_required":{"multiple":false},
+  "backchannel_logout_uri":{"multiple":false},
+  "backchannel_logout_session_required":{"multiple":false}
+};
+
+let defaultParamUser = {
+  "picture":{"multiple":false,"profile-read":true,"profile-write":true},
+  "reset-credentials-code":{"multiple":false,"profile-read":false,"profile-write":false}
+};
 
 class ModEdit extends Component {
   constructor(props) {
@@ -27,20 +76,14 @@ class ModEdit extends Component {
     
     if (props.role === "client") {
       if (props.mod.parameters["data-format"] === undefined) {
-        props.mod.parameters["data-format"]  = {};
+        props.mod.parameters["data-format"] = {};
       }
-      if (props.mod.parameters["data-format"]["redirect_uri"] === undefined) {
-        props.mod.parameters["data-format"]["redirect_uri"] = {multiple: true, read: true, write: true};
+      defaultParameters.updateWithDefaultParameters(props.mod.parameters["data-format"], defaultParamClient);
+    } else if (props.role === "user") {
+      if (props.mod.parameters["data-format"] === undefined) {
+        props.mod.parameters["data-format"] = {};
       }
-      if (props.mod.parameters["data-format"]["authorization_type"] === undefined) {
-        props.mod.parameters["data-format"]["authorization_type"] = {multiple: true, read: true, write: true};
-      }
-      if (props.mod.parameters["data-format"]["sector_identifier_uri"] === undefined) {
-        props.mod.parameters["data-format"]["sector_identifier_uri"] = {multiple: false, read: true, write: true};
-      }
-      if (props.mod.parameters["data-format"]["client_secret"] === undefined) {
-        props.mod.parameters["data-format"]["client_secret"] = {multiple: false, read: true, write: true};
-      }
+      defaultParameters.updateWithDefaultParameters(props.mod.parameters["data-format"], defaultParamUser);
     }
 
     this.state = {
@@ -115,20 +158,14 @@ class ModEdit extends Component {
 
     if (nextProps.role === "client") {
       if (nextProps.mod.parameters["data-format"] === undefined) {
-        nextProps.mod.parameters["data-format"]  = {};
+        nextProps.mod.parameters["data-format"] = {};
       }
-      if (nextProps.mod.parameters["data-format"]["redirect_uri"] === undefined) {
-        nextProps.mod.parameters["data-format"]["redirect_uri"] = {multiple: true, read: true, write: true};
+      defaultParameters.updateWithDefaultParameters(nextProps.mod.parameters["data-format"], defaultParamClient);
+    } else if (nextProps.role === "user") {
+      if (nextProps.mod.parameters["data-format"] === undefined) {
+        nextProps.mod.parameters["data-format"] = {};
       }
-      if (nextProps.mod.parameters["data-format"]["authorization_type"] === undefined) {
-        nextProps.mod.parameters["data-format"]["authorization_type"] = {multiple: true, read: true, write: true};
-      }
-      if (nextProps.mod.parameters["data-format"]["sector_identifier_uri"] === undefined) {
-        nextProps.mod.parameters["data-format"]["sector_identifier_uri"] = {multiple: false, read: true, write: true};
-      }
-      if (nextProps.mod.parameters["data-format"]["client_secret"] === undefined) {
-        nextProps.mod.parameters["data-format"]["client_secret"] = {multiple: false, read: true, write: true};
-      }
+      defaultParameters.updateWithDefaultParameters(nextProps.mod.parameters["data-format"], defaultParamUser);
     }
 
     this.setState({

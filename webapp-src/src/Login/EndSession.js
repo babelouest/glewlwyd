@@ -38,7 +38,7 @@ class EndSession extends Component {
   }
   
   getFrontchannelLogoutUrls() {
-    if (this.state.config.params.sid && this.state.config.params.plugin) {
+    if (this.state.config.params.sid && this.state.config.params.plugin && this.state.config.params.client_id) {
       var post_redirect_to = "";
       if (this.state.config.params.post_redirect_to) {
         post_redirect_to = "?post_redirect_to="+encodeURIComponent(this.state.config.params.post_redirect_to);
@@ -55,7 +55,7 @@ class EndSession extends Component {
   
   handleIgnoreLogout() {
     if (this.state.sessionList.post_redirect_to) {
-      document.location = this.state.sessionList.post_redirect_to;
+      document.location = this.state.config.params.callback_url;
     } else {
       document.location = this.state.config.ProfileUrl;
     }
@@ -63,28 +63,48 @@ class EndSession extends Component {
   
   setRevokeAll(e, revokeSession, revokeTokens) {
     e.preventDefault();
-    this.setState({revokeSession: revokeSession, revokeTokens: revokeTokens, showEndSessionIframes: true});
+    this.setState({revokeSession: revokeSession, revokeTokens: revokeTokens, showEndSessionIframes: true}, () => {
+      if (!this.state.sessionList.client.length) {
+        this.completeRevocation();
+      } else {
+        // If the iFrames are not fully loaded after 15 seconds, force the revocation of the tokens and the session
+        setTimeout(() => {
+          if (this.state.endSessionIframesComplete !== this.state.sessionList.client.length) {
+            this.completeRevocation();
+          }
+        }, 15000);
+      }
+    });
   }
   
   iframeLoaded(e, index) {
     this.setState({endSessionIframesComplete: this.state.endSessionIframesComplete+1}, () => {
-      console.log("iframeLoaded", this.state.endSessionIframesComplete, this.state.sessionList.client.length);
       if (this.state.endSessionIframesComplete === this.state.sessionList.client.length) {
-        this.handleRevokeTokens()
+        this.completeRevocation();
+      }
+    });
+  }
+  
+  completeRevocation() {
+    apiManager.glewlwydRequestSub("/" + this.state.config.params.plugin + "/session/" + this.state.config.params.sid, "DELETE")
+    .then((res) => {
+      return this.handleRevokeTokens()
+      .then(() => {
+        return this.handleRevokeSession()
         .then(() => {
-          this.handleRevokeSession()
-          .then(() => {
-            apiManager.glewlwydRequest("/auth/", "DELETE")
-            .always(() => {
-              if (this.state.sessionList.post_redirect_to) {
-                document.location = this.state.sessionList.post_redirect_to;
-              } else {
-                messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
-              }
-            });
+          return apiManager.glewlwydRequest("/auth/", "DELETE")
+          .always(() => {
+            if (this.state.sessionList.post_redirect_to) {
+              document.location = this.state.config.params.callback_url;
+            } else {
+              messageDispatcher.sendMessage('App', {type: 'SessionClosed'});
+            }
           });
         });
-      }
+      });
+    })
+    .fail(() => {
+      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
     });
   }
 

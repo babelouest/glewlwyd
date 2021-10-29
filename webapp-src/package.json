@@ -23,6 +23,7 @@
 		"@babel/preset-env": "^7.12.12",
 		"@babel/preset-react": "^7.12.12",
 		"babel-loader": "^8.2.2",
+		"chokidar": "^3.5.2",
 		"core-js": "^3.8.2",
 		"css-loader": "^5.0.1",
 		"style-loader": "^2.0.0",

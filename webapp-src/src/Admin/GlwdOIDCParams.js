@@ -2,155 +2,152 @@ import React, { Component } from 'react';
 import i18next from 'i18next';
 
 import messageDispatcher from '../lib/MessageDispatcher';
+import defaultParameters from '../lib/DefaultParameters';
+
+let defaultParam = {
+  "oauth-as-iss-id":false,
+  "jwt-type":"rsa",
+  "jwt-key-size":"256",
+  "jwks-uri":"",
+  "jwks-private":"",
+  "default-kid":"",
+  "client-sign_kid-parameter":"",
+  "jwks-public":"",
+  "key":"",
+  "cert":"",
+  "access-token-duration":3600,
+  "refresh-token-duration":1209600,
+  "code-duration":600,
+  "refresh-token-rolling":true,
+  "refresh-token-one-use":"never",
+  "client-refresh-token-one-use-parameter":"refresh-token-one-use",
+  "allow-non-oidc":false,
+  "auth-type-code-enabled":true,
+  "auth-type-code-revoke-replayed":false,
+  "auth-type-token-enabled":true,
+  "auth-type-id-token-enabled":true,
+  "auth-type-none-enabled":true,
+  "auth-type-password-enabled":false,
+  "auth-type-client-enabled":true,
+  "auth-type-device-enabled":false,
+  "auth-type-refresh-enabled":true,
+  "scope":[],
+  "additional-parameters":[],
+  "claims":[],
+  "service-documentation":"https://github.com/babelouest/glewlwyd/tree/master/docs",
+  "op-policy-uri":"",
+  "op-tos-uri":"",
+  "jwks-show":true,
+  "jwks-x5c":[],
+  "request-parameter-allow":true,
+  "request-uri-allow-https-non-secure":false,
+  "request-parameter-allow-encrypted":true,
+  "request-parameter-ietf-strict":false,
+  "secret-type":"pairwise",
+  "address-claim":{"type":"no","formatted":"","street_address":"","locality":"","region":"","postal_code":"","country":"","mandatory":false},
+  "name-claim":"on-demand",
+  "name-claim-scope":[],
+  "email-claim":"no",
+  "email-claim-scope":[],
+  "scope-claim":"no",
+  "scope-claim-scope":[],
+  "allowed-scope":["openid"],
+  "pkce-allowed":false,
+  "pkce-method-plain-allowed":false,
+  "pkce-required":false,
+  "pkce-required-public-client":false,
+  "pkce-scopes":[],
+  "introspection-revocation-allowed":false,
+  "introspection-revocation-auth-scope":[],
+  "introspection-revocation-allow-target-client":true,
+  "register-client-allowed":false,
+  "register-client-auth-scope":[],
+  "register-client-credentials-scope":[],
+  "register-client-token-one-use":true,
+  "register-client-management-allowed":true,
+  "register-resource-specify-allowed":false,
+  "register-resource-default":[],
+  "register-default-properties":{},
+  "session-management-allowed":false,
+  "session-cookie-name":"GLEWLWYD2_OIDC_SID",
+  "session-cookie-expiration":2419200,
+  "front-channel-logout-allowed":true,
+  "back-channel-logout-allowed":true,
+  "client-pubkey-parameter":"",
+  "client-jwks-parameter":"jwks",
+  "client-jwks_uri-parameter":"jwks_uri",
+  "request-maximum-exp":3600,
+  "encrypt-out-token-allow":false,
+  "client-enc-parameter":"enc",
+  "client-alg-parameter":"alg",
+  "client-alg_kid-parameter":"alg_kid",
+  "client-encrypt_code-parameter":"encrypt_code",
+  "client-encrypt_at-parameter":"encrypt_at",
+  "client-encrypt_userinfo-parameter":"encrypt_userinfo",
+  "client-encrypt_id_token-parameter":"encrypt_id_token",
+  "client-encrypt_refresh_token-parameter":"encrypt_refresh_token",
+  "client-encrypt_introspection-parameter":"encrypt_introspection",
+  "device-authorization-expiration":600,
+  "device-authorization-interval":5,
+  "client-cert-header-name":"SSL_CLIENT_CERT",
+  "client-cert-use-endpoint-aliases":false,
+  "client-cert-self-signed-allowed":false,
+  "oauth-dpop-allowed":false,
+  "oauth-dpop-iat-duration":10,
+  "resource-allowed":false,
+  "resource-scope":{},
+  "resource-client-property":"",
+  "resource-scope-and-client-property":false,
+  "resource-change-allowed":false,
+  "oauth-rar-allowed":false,
+  "rar-types-client-property":"authorization_data_types",
+  "rar-allow-auth-unsigned":false,
+  "rar-allow-auth-unencrypted":true,
+  "rar-types":{},
+  "oauth-par-allowed":false,
+  "oauth-par-duration":90,
+  "oauth-par-required":false,
+  "oauth-par-request_uri-prefix":"urn:ietf:params:oauth:request_uri:",
+  "prompt-continue-client-property":"",
+  "restrict-scope-client-property":"",
+  "oauth-ciba-allowed":false,
+  "oauth-ciba-default-expiry":600,
+  "oauth-ciba-maximum-expiry":1200,
+  "oauth-ciba-mode-poll-allowed":true,
+  "oauth-ciba-mode-ping-allowed":true,
+  "oauth-ciba-mode-push-allowed":true,
+  "oauth-ciba-allow-https-non-secure":false,
+  "oauth-ciba-user-code-allowed":true,
+  "oauth-ciba-user-code-property":"user-code","oauth-ciba-email-allowed":false,
+  "oauth-ciba-email-host":"",
+  "oauth-ciba-email-user":"",
+  "oauth-ciba-email-password":"",
+  "oauth-ciba-email-use-tls":false,
+  "oauth-ciba-email-check-certificate":true,
+  "oauth-ciba-email-port":0,
+  "oauth-ciba-email-from":"",
+  "oauth-ciba-email-user-lang-property":"lang",
+  "oauth-ciba-email-content-type":"text/plain; charset=utf-8",
+  "oauth-ciba-email-templates":{"fr":{"oauth-ciba-email-subject":"","oauth-ciba-email-body-pattern":"","oauth-ciba-email-defaultLang":true}},
+  "oauth-fapi-check-all":false,
+  "oauth-fapi-allow-jarm":false,
+  "oauth-fapi-add-s_hash":false,
+  "oauth-fapi-verify-nbf":false,
+  "oauth-fapi-allow-restrict-alg":false,
+  "oauth-fapi-restrict-alg":[],
+  "oauth-fapi-allow-multiple-kid":false,
+  "oauth-fapi-ciba-confidential-client":false,
+  "oauth-fapi-ciba-push-forbidden":false,
+  "jwks-public-uri":"",
+  "iss":"/"
+};
 
 class GlwdOIDCParams extends Component {
   constructor(props) {
     super(props);
 
     props.mod.parameters?"":(props.mod.parameters = {});
-    props.mod.parameters["oauth-as-iss-id"]!==undefined?"":(props.mod.parameters["oauth-as-iss-id"] = false);
-    props.mod.parameters["jwt-type"]?"":(props.mod.parameters["jwt-type"] = "rsa");
-    props.mod.parameters["jwt-key-size"]!==undefined?"":(props.mod.parameters["jwt-key-size"] = "256");
-    props.mod.parameters["jwks-uri"]?"":(props.mod.parameters["jwks-uri"] = "");
-    props.mod.parameters["jwks-private"]?"":(props.mod.parameters["jwks-private"] = "");
-    props.mod.parameters["default-kid"]?"":(props.mod.parameters["default-kid"] = "");
-    props.mod.parameters["client-sign_kid-parameter"]?"":(props.mod.parameters["client-sign_kid-parameter"] = "");
-    props.mod.parameters["jwks-public"]?"":(props.mod.parameters["jwks-public"] = "");
-    props.mod.parameters["key"]?"":(props.mod.parameters["key"] = "");
-    props.mod.parameters["cert"]?"":(props.mod.parameters["cert"] = "");
-    props.mod.parameters["access-token-duration"]!==undefined?"":(props.mod.parameters["access-token-duration"] = 3600);
-    props.mod.parameters["refresh-token-duration"]!==undefined?"":(props.mod.parameters["refresh-token-duration"] = 1209600);
-    props.mod.parameters["code-duration"]!==undefined?"":(props.mod.parameters["code-duration"] = 600);
-    props.mod.parameters["refresh-token-rolling"]!==undefined?"":(props.mod.parameters["refresh-token-rolling"] = true);
-    props.mod.parameters["refresh-token-one-use"]!==undefined?"":(props.mod.parameters["refresh-token-one-use"] = "never");
-    props.mod.parameters["client-refresh-token-one-use-parameter"]!==undefined?"":(props.mod.parameters["client-refresh-token-one-use-parameter"] = "refresh-token-one-use");
-    props.mod.parameters["allow-non-oidc"]!==undefined?"":(props.mod.parameters["allow-non-oidc"] = false);
-    props.mod.parameters["auth-type-code-enabled"]!==undefined?"":(props.mod.parameters["auth-type-code-enabled"] = true);
-    props.mod.parameters["auth-type-code-revoke-replayed"]!==undefined?"":(props.mod.parameters["auth-type-code-revoke-replayed"] = false);
-    props.mod.parameters["auth-type-token-enabled"]!==undefined?"":(props.mod.parameters["auth-type-token-enabled"] = true);
-    props.mod.parameters["auth-type-id-token-enabled"] = true;
-    props.mod.parameters["auth-type-none-enabled"]!==undefined?"":(props.mod.parameters["auth-type-none-enabled"] = true);
-    props.mod.parameters["auth-type-password-enabled"]!==undefined?"":(props.mod.parameters["auth-type-password-enabled"] = false);
-    props.mod.parameters["auth-type-client-enabled"]!==undefined?"":(props.mod.parameters["auth-type-client-enabled"] = true);
-    props.mod.parameters["auth-type-device-enabled"]!==undefined?"":(props.mod.parameters["auth-type-device-enabled"] = false);
-    props.mod.parameters["auth-type-refresh-enabled"]!==undefined?"":(props.mod.parameters["auth-type-refresh-enabled"] = true);
-    props.mod.parameters["scope"]?"":(props.mod.parameters["scope"] = []);
-    props.mod.parameters["additional-parameters"]?"":(props.mod.parameters["additional-parameters"] = []);
-    props.mod.parameters["claims"]?"":(props.mod.parameters["claims"] = []);
-    props.mod.parameters["service-documentation"]!==undefined?"":(props.mod.parameters["service-documentation"] = "https://github.com/babelouest/glewlwyd/tree/master/docs");
-    props.mod.parameters["op-policy-uri"]!==undefined?"":(props.mod.parameters["op-policy-uri"] = "");
-    props.mod.parameters["op-tos-uri"]!==undefined?"":(props.mod.parameters["op-tos-uri"] = "");
-    props.mod.parameters["jwks-show"]!==undefined?"":(props.mod.parameters["jwks-show"] = true);
-    props.mod.parameters["jwks-x5c"]!==undefined?"":(props.mod.parameters["jwks-x5c"] = []);
-    props.mod.parameters["request-parameter-allow"]!==undefined?"":(props.mod.parameters["request-parameter-allow"] = true);
-    props.mod.parameters["request-uri-allow-https-non-secure"]!==undefined?"":(props.mod.parameters["request-uri-allow-https-non-secure"] = false);
-    props.mod.parameters["request-parameter-allow-encrypted"]!==undefined?"":(props.mod.parameters["request-parameter-allow-encrypted"] = true);
-    props.mod.parameters["request-parameter-ietf-strict"]!==undefined?"":(props.mod.parameters["request-parameter-ietf-strict"] = false);
-    props.mod.parameters["secret-type"]?"":(props.mod.parameters["secret-type"] = "pairwise");
-    props.mod.parameters["address-claim"]?"":(props.mod.parameters["address-claim"] = {type: "no", formatted: "", street_address: "", locality: "", region: "", postal_code: "", country: "", mandatory: false});
-    props.mod.parameters["name-claim"]?"":(props.mod.parameters["name-claim"] = "on-demand");
-    props.mod.parameters["name-claim-scope"]?"":(props.mod.parameters["name-claim-scope"] = []);
-    props.mod.parameters["email-claim"]?"":(props.mod.parameters["email-claim"] = "no");
-    props.mod.parameters["email-claim-scope"]?"":(props.mod.parameters["email-claim-scope"] = []);
-    props.mod.parameters["scope-claim"]?"":(props.mod.parameters["scope-claim"] = "no");
-    props.mod.parameters["scope-claim-scope"]?"":(props.mod.parameters["scope-claim-scope"] = []);
-    props.mod.parameters["allowed-scope"]?"":(props.mod.parameters["allowed-scope"] = ["openid"]);
-    props.mod.parameters["pkce-allowed"]!==undefined?"":(props.mod.parameters["pkce-allowed"] = false);
-    props.mod.parameters["pkce-method-plain-allowed"]!==undefined?"":(props.mod.parameters["pkce-method-plain-allowed"] = false);
-    props.mod.parameters["pkce-required"]!==undefined?"":(props.mod.parameters["pkce-required"] = false);
-    props.mod.parameters["pkce-required-public-client"]!==undefined?"":(props.mod.parameters["pkce-required-public-client"] = false);
-    props.mod.parameters["pkce-scopes"]!==undefined?"":(props.mod.parameters["pkce-scopes"] = []);
-    props.mod.parameters["introspection-revocation-allowed"]!==undefined?"":(props.mod.parameters["introspection-revocation-allowed"] = false);
-    props.mod.parameters["introspection-revocation-auth-scope"]!==undefined?"":(props.mod.parameters["introspection-revocation-auth-scope"] = []);
-    props.mod.parameters["introspection-revocation-allow-target-client"]!==undefined?"":(props.mod.parameters["introspection-revocation-allow-target-client"] = true);
-    props.mod.parameters["register-client-allowed"]!==undefined?"":(props.mod.parameters["register-client-allowed"] = false);
-    props.mod.parameters["register-client-auth-scope"]!==undefined?"":(props.mod.parameters["register-client-auth-scope"] = []);
-    props.mod.parameters["register-client-credentials-scope"]!==undefined?"":(props.mod.parameters["register-client-credentials-scope"] = []);
-    props.mod.parameters["register-client-token-one-use"]!==undefined?"":(props.mod.parameters["register-client-token-one-use"] = true);
-    props.mod.parameters["register-client-management-allowed"]!==undefined?"":(props.mod.parameters["register-client-management-allowed"] = true);
-    props.mod.parameters["register-resource-specify-allowed"]!==undefined?"":(props.mod.parameters["register-resource-specify-allowed"] = false);
-    props.mod.parameters["register-resource-default"]!==undefined?"":(props.mod.parameters["register-resource-default"] = []);
-    props.mod.parameters["register-default-properties"]!==undefined?"":(props.mod.parameters["register-default-properties"] = {});
-    props.mod.parameters["session-management-allowed"]!==undefined?"":(props.mod.parameters["session-management-allowed"] = false);
-    props.mod.parameters["session-cookie-name"]!==undefined?"":(props.mod.parameters["session-cookie-name"] = "GLEWLWYD2_OIDC_SID");
-    props.mod.parameters["session-cookie-expiration"]!==undefined?"":(props.mod.parameters["session-cookie-expiration"] = 2419200);
-    props.mod.parameters["front-channel-logout-allowed"]!==undefined?"":(props.mod.parameters["front-channel-logout-allowed"] = true);
-    props.mod.parameters["back-channel-logout-allowed"]!==undefined?"":(props.mod.parameters["back-channel-logout-allowed"] = true);
-    props.mod.parameters["client-pubkey-parameter"]!==undefined?"":(props.mod.parameters["client-pubkey-parameter"] = "");
-    props.mod.parameters["client-jwks-parameter"]!==undefined?"":(props.mod.parameters["client-jwks-parameter"] = "jwks");
-    props.mod.parameters["client-jwks_uri-parameter"]!==undefined?"":(props.mod.parameters["client-jwks_uri-parameter"] = "jwks_uri");
-    props.mod.parameters["request-maximum-exp"]!==undefined?"":(props.mod.parameters["request-maximum-exp"] = 3600);
-    props.mod.parameters["encrypt-out-token-allow"]!==undefined?"":(props.mod.parameters["encrypt-out-token-allow"] = false);
-    props.mod.parameters["client-enc-parameter"]!==undefined?"":(props.mod.parameters["client-enc-parameter"] = "enc");
-    props.mod.parameters["client-alg-parameter"]!==undefined?"":(props.mod.parameters["client-alg-parameter"] = "alg");
-    props.mod.parameters["client-alg_kid-parameter"]!==undefined?"":(props.mod.parameters["client-alg_kid-parameter"] = "alg_kid");
-    props.mod.parameters["client-encrypt_code-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_code-parameter"] = "encrypt_code");
-    props.mod.parameters["client-encrypt_at-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_at-parameter"] = "encrypt_at");
-    props.mod.parameters["client-encrypt_userinfo-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_userinfo-parameter"] = "encrypt_userinfo");
-    props.mod.parameters["client-encrypt_id_token-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_id_token-parameter"] = "encrypt_id_token");
-    props.mod.parameters["client-encrypt_refresh_token-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_refresh_token-parameter"] = "encrypt_refresh_token");
-    props.mod.parameters["client-encrypt_introspection-parameter"]!==undefined?"":(props.mod.parameters["client-encrypt_introspection-parameter"] = "encrypt_introspection");
-    props.mod.parameters["device-authorization-expiration"]!==undefined?"":(props.mod.parameters["device-authorization-expiration"] = 600);
-    props.mod.parameters["device-authorization-interval"]!==undefined?"":(props.mod.parameters["device-authorization-interval"] = 5);
-    props.mod.parameters["client-cert-header-name"]!==undefined?"":(props.mod.parameters["client-cert-header-name"] = "SSL_CLIENT_CERT");
-    props.mod.parameters["client-cert-use-endpoint-aliases"]!==undefined?"":(props.mod.parameters["client-cert-use-endpoint-aliases"] = false);
-    props.mod.parameters["client-cert-self-signed-allowed"]!==undefined?"":(props.mod.parameters["client-cert-self-signed-allowed"] = false);
-    props.mod.parameters["oauth-dpop-allowed"]!==undefined?"":(props.mod.parameters["oauth-dpop-allowed"] = false);
-    props.mod.parameters["oauth-dpop-iat-duration"]!==undefined?"":(props.mod.parameters["oauth-dpop-iat-duration"] = 10);
-    props.mod.parameters["resource-allowed"]!==undefined?"":(props.mod.parameters["resource-allowed"] = false);
-    props.mod.parameters["resource-scope"]!==undefined?"":(props.mod.parameters["resource-scope"] = {});
-    props.mod.parameters["resource-client-property"]!==undefined?"":(props.mod.parameters["resource-client-property"] = "");
-    props.mod.parameters["resource-scope-and-client-property"]!==undefined?"":(props.mod.parameters["resource-scope-and-client-property"] = false);
-    props.mod.parameters["resource-change-allowed"]!==undefined?"":(props.mod.parameters["resource-change-allowed"] = false);
-    props.mod.parameters["oauth-rar-allowed"]!==undefined?"":(props.mod.parameters["oauth-rar-allowed"] = false);
-    props.mod.parameters["rar-types-client-property"]!==undefined?"":(props.mod.parameters["rar-types-client-property"] = "authorization_data_types");
-    props.mod.parameters["rar-allow-auth-unsigned"]!==undefined?"":(props.mod.parameters["rar-allow-auth-unsigned"] = false);
-    props.mod.parameters["rar-allow-auth-unencrypted"]!==undefined?"":(props.mod.parameters["rar-allow-auth-unencrypted"] = true);
-    props.mod.parameters["rar-types"]!==undefined?"":(props.mod.parameters["rar-types"] = {});
-    props.mod.parameters["oauth-par-allowed"]!==undefined?"":(props.mod.parameters["oauth-par-allowed"] = false);
-    props.mod.parameters["oauth-par-duration"]!==undefined?"":(props.mod.parameters["oauth-par-duration"] = 90);
-    props.mod.parameters["oauth-par-required"]!==undefined?"":(props.mod.parameters["oauth-par-required"] = false);
-    props.mod.parameters["oauth-par-request_uri-prefix"]!==undefined?"":(props.mod.parameters["oauth-par-request_uri-prefix"] = "urn:ietf:params:oauth:request_uri:");
-    props.mod.parameters["prompt-continue-client-property"]!==undefined?"":(props.mod.parameters["prompt-continue-client-property"] = "");
-    props.mod.parameters["restrict-scope-client-property"]!==undefined?"":(props.mod.parameters["restrict-scope-client-property"] = "");
-    props.mod.parameters["oauth-ciba-allowed"]!==undefined?"":(props.mod.parameters["oauth-ciba-allowed"] = false);
-    props.mod.parameters["oauth-ciba-default-expiry"]!==undefined?"":(props.mod.parameters["oauth-ciba-default-expiry"] = 600);
-    props.mod.parameters["oauth-ciba-maximum-expiry"]!==undefined?"":(props.mod.parameters["oauth-ciba-maximum-expiry"] = 1200);
-    props.mod.parameters["oauth-ciba-mode-poll-allowed"]!==undefined?"":(props.mod.parameters["oauth-ciba-mode-poll-allowed"] = true);
-    props.mod.parameters["oauth-ciba-mode-ping-allowed"]!==undefined?"":(props.mod.parameters["oauth-ciba-mode-ping-allowed"] = true);
-    props.mod.parameters["oauth-ciba-mode-push-allowed"]!==undefined?"":(props.mod.parameters["oauth-ciba-mode-push-allowed"] = true);
-    props.mod.parameters["oauth-ciba-allow-https-non-secure"]!==undefined?"":(props.mod.parameters["oauth-ciba-allow-https-non-secure"] = false);
-    props.mod.parameters["oauth-ciba-user-code-allowed"]!==undefined?"":(props.mod.parameters["oauth-ciba-user-code-allowed"] = true);
-    props.mod.parameters["oauth-ciba-user-code-property"]!==undefined?"":(props.mod.parameters["oauth-ciba-user-code-property"] = "user-code");
-    props.mod.parameters["oauth-ciba-email-allowed"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-allowed"] = false);
-    props.mod.parameters["oauth-ciba-email-host"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-host"] = "");
-    props.mod.parameters["oauth-ciba-email-user"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-user"] = "");
-    props.mod.parameters["oauth-ciba-email-password"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-password"] = "");
-    props.mod.parameters["oauth-ciba-email-use-tls"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-use-tls"] = false);
-    props.mod.parameters["oauth-ciba-email-check-certificate"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-check-certificate"] = true);
-    props.mod.parameters["oauth-ciba-email-port"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-port"] = 0);
-    props.mod.parameters["oauth-ciba-email-from"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-from"] = "");
-    props.mod.parameters["oauth-ciba-email-user-lang-property"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-user-lang-property"] = "lang");
-    props.mod.parameters["oauth-ciba-email-content-type"]!==undefined?"":(props.mod.parameters["oauth-ciba-email-content-type"] = "text/plain; charset=utf-8");
-    if (props.mod.parameters["oauth-ciba-email-templates"]===undefined) {
-      props.mod.parameters["oauth-ciba-email-templates"] = {};
-    }
-    if (!Object.keys(props.mod.parameters["oauth-ciba-email-templates"]).length) {
-      props.mod.parameters["oauth-ciba-email-templates"][i18next.language] = {
-        "oauth-ciba-email-subject": "",
-        "oauth-ciba-email-body-pattern": "",
-        "oauth-ciba-email-defaultLang": true
-      };
-    }
-    props.mod.parameters["oauth-fapi-check-all"]!==undefined?"":(props.mod.parameters["oauth-fapi-check-all"] = false);
-    props.mod.parameters["oauth-fapi-allow-jarm"]!==undefined?"":(props.mod.parameters["oauth-fapi-allow-jarm"] = false);
-    props.mod.parameters["oauth-fapi-add-s_hash"]!==undefined?"":(props.mod.parameters["oauth-fapi-add-s_hash"] = false);
-    props.mod.parameters["oauth-fapi-verify-nbf"]!==undefined?"":(props.mod.parameters["oauth-fapi-verify-nbf"] = false);
-    props.mod.parameters["oauth-fapi-allow-restrict-alg"]!==undefined?"":(props.mod.parameters["oauth-fapi-allow-restrict-alg"] = false);
-    props.mod.parameters["oauth-fapi-restrict-alg"]!==undefined?"":(props.mod.parameters["oauth-fapi-restrict-alg"] = []);
-    props.mod.parameters["oauth-fapi-allow-multiple-kid"]!==undefined?"":(props.mod.parameters["oauth-fapi-allow-multiple-kid"] = false);
-    props.mod.parameters["oauth-fapi-ciba-confidential-client"]!==undefined?"":(props.mod.parameters["oauth-fapi-ciba-confidential-client"] = false);
-    props.mod.parameters["oauth-fapi-ciba-push-forbidden"]!==undefined?"":(props.mod.parameters["oauth-fapi-ciba-push-forbidden"] = false);
+    defaultParameters.updateWithDefaultParameters(props.mod.parameters, defaultParam);
 
     this.state = {
       config: props.config,
@@ -225,150 +222,7 @@ class GlwdOIDCParams extends Component {
   componentWillReceiveProps(nextProps) {
 
     nextProps.mod.parameters?"":(nextProps.mod.parameters = {});
-    nextProps.mod.parameters["oauth-as-iss-id"]!==undefined?"":(nextProps.mod.parameters["oauth-as-iss-id"] = false);
-    nextProps.mod.parameters["jwt-type"]?"":(nextProps.mod.parameters["jwt-type"] = "rsa");
-    nextProps.mod.parameters["jwt-key-size"]!==undefined?"":(nextProps.mod.parameters["jwt-key-size"] = "256");
-    nextProps.mod.parameters["jwks-uri"]?"":(nextProps.mod.parameters["jwks-uri"] = "");
-    nextProps.mod.parameters["jwks-private"]?"":(nextProps.mod.parameters["jwks-private"] = "");
-    nextProps.mod.parameters["default-kid"]?"":(nextProps.mod.parameters["default-kid"] = "");
-    nextProps.mod.parameters["client-sign_kid-parameter"]?"":(nextProps.mod.parameters["client-sign_kid-parameter"] = "");
-    nextProps.mod.parameters["jwks-public-uri"]?"":(nextProps.mod.parameters["jwks-public-uri"] = "");
-    nextProps.mod.parameters["jwks-public"]?"":(nextProps.mod.parameters["jwks-public"] = "");
-    nextProps.mod.parameters["key"]?"":(nextProps.mod.parameters["key"] = "");
-    nextProps.mod.parameters["cert"]?"":(nextProps.mod.parameters["cert"] = "");
-    nextProps.mod.parameters["access-token-duration"]!==undefined?"":(nextProps.mod.parameters["access-token-duration"] = 3600);
-    nextProps.mod.parameters["refresh-token-duration"]!==undefined?"":(nextProps.mod.parameters["refresh-token-duration"] = 1209600);
-    nextProps.mod.parameters["code-duration"]!==undefined?"":(nextProps.mod.parameters["code-duration"] = 600);
-    nextProps.mod.parameters["refresh-token-rolling"]!==undefined?"":(nextProps.mod.parameters["refresh-token-rolling"] = true);
-    nextProps.mod.parameters["refresh-token-one-use"]!==undefined?"":(nextProps.mod.parameters["refresh-token-one-use"] = "never");
-    nextProps.mod.parameters["client-refresh-token-one-use-parameter"]!==undefined?"":(nextProps.mod.parameters["client-refresh-token-one-use-parameter"] = "refresh-token-one-use");
-    nextProps.mod.parameters["allow-non-oidc"]!==undefined?"":(nextProps.mod.parameters["allow-non-oidc"] = false);
-    nextProps.mod.parameters["auth-type-code-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-code-enabled"] = true);
-    nextProps.mod.parameters["auth-type-code-revoke-replayed"]!==undefined?"":(nextProps.mod.parameters["auth-type-code-revoke-replayed"] = false);
-    nextProps.mod.parameters["auth-type-token-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-token-enabled"] = true);
-    nextProps.mod.parameters["auth-type-id-token-enabled"] = true;
-    nextProps.mod.parameters["auth-type-none-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-none-enabled"] = true);
-    nextProps.mod.parameters["auth-type-password-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-password-enabled"] = false);
-    nextProps.mod.parameters["auth-type-client-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-client-enabled"] = true);
-    nextProps.mod.parameters["auth-type-device-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-device-enabled"] = false);
-    nextProps.mod.parameters["auth-type-refresh-enabled"]!==undefined?"":(nextProps.mod.parameters["auth-type-refresh-enabled"] = true);
-    nextProps.mod.parameters["scope"]?"":(nextProps.mod.parameters["scope"] = []);
-    nextProps.mod.parameters["additional-parameters"]?"":(nextProps.mod.parameters["additional-parameters"] = []);
-    nextProps.mod.parameters["claims"]?"":(nextProps.mod.parameters["claims"] = []);
-    nextProps.mod.parameters["service-documentation"]!==undefined?"":(nextProps.mod.parameters["service-documentation"] = "https://github.com/babelouest/glewlwyd/tree/master/docs");
-    nextProps.mod.parameters["op-policy-uri"]!==undefined?"":(nextProps.mod.parameters["op-policy-uri"] = "");
-    nextProps.mod.parameters["op-tos-uri"]!==undefined?"":(nextProps.mod.parameters["op-tos-uri"] = "");
-    nextProps.mod.parameters["jwks-show"]!==undefined?"":(nextProps.mod.parameters["jwks-show"] = true);
-    nextProps.mod.parameters["jwks-x5c"]!==undefined?"":(nextProps.mod.parameters["jwks-x5c"] = []);
-    nextProps.mod.parameters["request-parameter-allow"]!==undefined?"":(nextProps.mod.parameters["request-parameter-allow"] = true);
-    nextProps.mod.parameters["request-uri-allow-https-non-secure"]!==undefined?"":(nextProps.mod.parameters["request-uri-allow-https-non-secure"] = false);
-    nextProps.mod.parameters["request-parameter-allow-encrypted"]!==undefined?"":(nextProps.mod.parameters["request-parameter-allow-encrypted"] = true);
-    nextProps.mod.parameters["request-parameter-ietf-strict"]!==undefined?"":(nextProps.mod.parameters["request-parameter-ietf-strict"] = false);
-    nextProps.mod.parameters["secret-type"]?"":(nextProps.mod.parameters["secret-type"] = "pairwise");
-    nextProps.mod.parameters["address-claim"]?"":(nextProps.mod.parameters["address-claim"] = {type: "no", formatted: "", street_address: "", locality: "", region: "", postal_code: "", country: "", mandatory: false});
-    nextProps.mod.parameters["name-claim"]?"":(nextProps.mod.parameters["name-claim"] = "on-demand");
-    nextProps.mod.parameters["name-claim-scope"]?"":(nextProps.mod.parameters["name-claim-scope"] = []);
-    nextProps.mod.parameters["email-claim"]?"":(nextProps.mod.parameters["email-claim"] = "no");
-    nextProps.mod.parameters["email-claim-scope"]?"":(nextProps.mod.parameters["email-claim-scope"] = []);
-    nextProps.mod.parameters["scope-claim"]?"":(nextProps.mod.parameters["scope-claim"] = "no");
-    nextProps.mod.parameters["scope-claim-scope"]?"":(nextProps.mod.parameters["scope-claim-scope"] = []);
-    nextProps.mod.parameters["allowed-scope"]?"":(nextProps.mod.parameters["allowed-scope"] = ["openid"]);
-    nextProps.mod.parameters["pkce-allowed"]!==undefined?"":(nextProps.mod.parameters["pkce-allowed"] = false);
-    nextProps.mod.parameters["pkce-method-plain-allowed"]!==undefined?"":(nextProps.mod.parameters["pkce-method-plain-allowed"] = false);
-    nextProps.mod.parameters["pkce-required"]!==undefined?"":(nextProps.mod.parameters["pkce-required"] = false);
-    nextProps.mod.parameters["pkce-required-public-client"]!==undefined?"":(nextProps.mod.parameters["pkce-required-public-client"] = false);
-    nextProps.mod.parameters["pkce-scopes"]!==undefined?"":(nextProps.mod.parameters["pkce-scopes"] = []);
-    nextProps.mod.parameters["introspection-revocation-allowed"]!==undefined?"":(nextProps.mod.parameters["introspection-revocation-allowed"] = false);
-    nextProps.mod.parameters["introspection-revocation-auth-scope"]!==undefined?"":(nextProps.mod.parameters["introspection-revocation-auth-scope"] = []);
-    nextProps.mod.parameters["introspection-revocation-allow-target-client"]!==undefined?"":(nextProps.mod.parameters["introspection-revocation-allow-target-client"] = true);
-    nextProps.mod.parameters["register-client-allowed"]!==undefined?"":(nextProps.mod.parameters["register-client-allowed"] = false);
-    nextProps.mod.parameters["register-client-auth-scope"]!==undefined?"":(nextProps.mod.parameters["register-client-auth-scope"] = []);
-    nextProps.mod.parameters["register-client-credentials-scope"]!==undefined?"":(nextProps.mod.parameters["register-client-credentials-scope"] = []);
-    nextProps.mod.parameters["register-client-management-allowed"]!==undefined?"":(nextProps.mod.parameters["register-client-management-allowed"] = true);
-    nextProps.mod.parameters["register-resource-specify-allowed"]!==undefined?"":(nextProps.mod.parameters["register-resource-specify-allowed"] = false);
-    nextProps.mod.parameters["register-resource-default"]!==undefined?"":(nextProps.mod.parameters["register-resource-default"] = []);
-    nextProps.mod.parameters["register-default-properties"]!==undefined?"":(nextProps.mod.parameters["register-default-properties"] = {});
-    nextProps.mod.parameters["register-client-token-one-use"]!==undefined?"":(nextProps.mod.parameters["register-client-token-one-use"] = true);
-    nextProps.mod.parameters["session-management-allowed"]!==undefined?"":(nextProps.mod.parameters["session-management-allowed"] = false);
-    nextProps.mod.parameters["session-cookie-name"]!==undefined?"":(nextProps.mod.parameters["session-cookie-name"] = "GLEWLWYD2_OIDC_SID");
-    nextProps.mod.parameters["session-cookie-expiration"]!==undefined?"":(nextProps.mod.parameters["session-cookie-expiration"] = 2419200);
-    nextProps.mod.parameters["front-channel-logout-allowed"]!==undefined?"":(nextProps.mod.parameters["front-channel-logout-allowed"] = true);
-    nextProps.mod.parameters["back-channel-logout-allowed"]!==undefined?"":(nextProps.mod.parameters["back-channel-logout-allowed"] = true);
-    nextProps.mod.parameters["client-pubkey-parameter"]!==undefined?"":(nextProps.mod.parameters["client-pubkey-parameter"] = "");
-    nextProps.mod.parameters["client-jwks-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks-parameter"] = "jwks");
-    nextProps.mod.parameters["client-jwks_uri-parameter"]!==undefined?"":(nextProps.mod.parameters["client-jwks_uri-parameter"] = "jwks_uri");
-    nextProps.mod.parameters["request-maximum-exp"]!==undefined?"":(nextProps.mod.parameters["request-maximum-exp"] = 3600);
-    nextProps.mod.parameters["encrypt-out-token-allow"]!==undefined?"":(nextProps.mod.parameters["encrypt-out-token-allow"] = false);
-    nextProps.mod.parameters["client-enc-parameter"]!==undefined?"":(nextProps.mod.parameters["client-enc-parameter"] = "enc");
-    nextProps.mod.parameters["client-alg-parameter"]!==undefined?"":(nextProps.mod.parameters["client-alg-parameter"] = "alg");
-    nextProps.mod.parameters["client-alg_kid-parameter"]!==undefined?"":(nextProps.mod.parameters["client-alg_kid-parameter"] = "alg_kid");
-    nextProps.mod.parameters["client-encrypt_code-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_code-parameter"] = "encrypt_code");
-    nextProps.mod.parameters["client-encrypt_at-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_at-parameter"] = "encrypt_at");
-    nextProps.mod.parameters["client-encrypt_userinfo-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_userinfo-parameter"] = "encrypt_userinfo");
-    nextProps.mod.parameters["client-encrypt_id_token-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_id_token-parameter"] = "encrypt_id_token");
-    nextProps.mod.parameters["client-encrypt_refresh_token-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_refresh_token-parameter"] = "encrypt_refresh_token");
-    nextProps.mod.parameters["client-encrypt_introspection-parameter"]!==undefined?"":(nextProps.mod.parameters["client-encrypt_introspection-parameter"] = "encrypt_introspection");
-    nextProps.mod.parameters["device-authorization-expiration"]!==undefined?"":(nextProps.mod.parameters["device-authorization-expiration"] = 600);
-    nextProps.mod.parameters["device-authorization-interval"]!==undefined?"":(nextProps.mod.parameters["device-authorization-interval"] = 5);
-    nextProps.mod.parameters["client-cert-header-name"]!==undefined?"":(nextProps.mod.parameters["client-cert-header-name"] = "SSL_CLIENT_CERT");
-    nextProps.mod.parameters["client-cert-use-endpoint-aliases"]!==undefined?"":(nextProps.mod.parameters["client-cert-use-endpoint-aliases"] = false);
-    nextProps.mod.parameters["client-cert-self-signed-allowed"]!==undefined?"":(nextProps.mod.parameters["client-cert-self-signed-allowed"] = false);
-    nextProps.mod.parameters["oauth-dpop-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-dpop-allowed"] = false);
-    nextProps.mod.parameters["oauth-dpop-iat-duration"]!==undefined?"":(nextProps.mod.parameters["oauth-dpop-iat-duration"] = 10);
-    nextProps.mod.parameters["resource-allowed"]!==undefined?"":(nextProps.mod.parameters["resource-allowed"] = false);
-    nextProps.mod.parameters["resource-scope"]!==undefined?"":(nextProps.mod.parameters["resource-scope"] = {});
-    nextProps.mod.parameters["resource-client-property"]!==undefined?"":(nextProps.mod.parameters["resource-client-property"] = "");
-    nextProps.mod.parameters["resource-scope-and-client-property"]!==undefined?"":(nextProps.mod.parameters["resource-scope-and-client-property"] = false);
-    nextProps.mod.parameters["resource-change-allowed"]!==undefined?"":(nextProps.mod.parameters["resource-change-allowed"] = false);
-    nextProps.mod.parameters["oauth-rar-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-rar-allowed"] = false);
-    nextProps.mod.parameters["rar-types-client-property"]!==undefined?"":(nextProps.mod.parameters["rar-types-client-property"] = "authorization_data_types");
-    nextProps.mod.parameters["rar-allow-auth-unsigned"]!==undefined?"":(nextProps.mod.parameters["rar-allow-auth-unsigned"] = false);
-    nextProps.mod.parameters["rar-allow-auth-unencrypted"]!==undefined?"":(nextProps.mod.parameters["rar-allow-auth-unencrypted"] = true);
-    nextProps.mod.parameters["rar-types"]!==undefined?"":(nextProps.mod.parameters["rar-types"] = {});
-    nextProps.mod.parameters["oauth-par-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-par-allowed"] = false);
-    nextProps.mod.parameters["oauth-par-duration"]!==undefined?"":(nextProps.mod.parameters["oauth-par-duration"] = 90);
-    nextProps.mod.parameters["oauth-par-required"]!==undefined?"":(nextProps.mod.parameters["oauth-par-required"] = false);
-    nextProps.mod.parameters["oauth-par-request_uri-prefix"]!==undefined?"":(nextProps.mod.parameters["oauth-par-request_uri-prefix"] = "urn:ietf:params:oauth:request_uri:");
-    nextProps.mod.parameters["prompt-continue-client-property"]!==undefined?"":(nextProps.mod.parameters["prompt-continue-client-property"] = "");
-    nextProps.mod.parameters["restrict-scope-client-property"]!==undefined?"":(nextProps.mod.parameters["restrict-scope-client-property"] = "");
-    nextProps.mod.parameters["oauth-ciba-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-allowed"] = false);
-    nextProps.mod.parameters["oauth-ciba-mode-poll-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-mode-poll-allowed"] = true);
-    nextProps.mod.parameters["oauth-ciba-mode-ping-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-mode-ping-allowed"] = true);
-    nextProps.mod.parameters["oauth-ciba-mode-push-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-mode-push-allowed"] = true);
-    nextProps.mod.parameters["oauth-ciba-allow-https-non-secure"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-allow-https-non-secure"] = false);
-    nextProps.mod.parameters["oauth-ciba-user-code-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-user-code-allowed"] = true);
-    nextProps.mod.parameters["oauth-ciba-user-code-property"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-user-code-property"] = "user-code");
-    nextProps.mod.parameters["oauth-ciba-default-expiry"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-default-expiry"] = 600);
-    nextProps.mod.parameters["oauth-ciba-maximum-expiry"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-maximum-expiry"] = 1200);
-    nextProps.mod.parameters["oauth-ciba-email-allowed"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-allowed"] = false);
-    nextProps.mod.parameters["oauth-ciba-email-host"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-host"] = "");
-    nextProps.mod.parameters["oauth-ciba-email-user"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-user"] = "");
-    nextProps.mod.parameters["oauth-ciba-email-password"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-password"] = "");
-    nextProps.mod.parameters["oauth-ciba-email-use-tls"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-use-tls"] = false);
-    nextProps.mod.parameters["oauth-ciba-email-check-certificate"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-check-certificate"] = true);
-    nextProps.mod.parameters["oauth-ciba-email-port"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-port"] = 0);
-    nextProps.mod.parameters["oauth-ciba-email-from"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-from"] = "");
-    nextProps.mod.parameters["oauth-ciba-email-user-lang-property"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-user-lang-property"] = "lang");
-    nextProps.mod.parameters["oauth-ciba-email-content-type"]!==undefined?"":(nextProps.mod.parameters["oauth-ciba-email-content-type"] = "text/plain; charset=utf-8");
-    if (nextProps.mod.parameters["oauth-ciba-email-templates"]===undefined) {
-      nextProps.mod.parameters["oauth-ciba-email-templates"] = {};
-    }
-    if (!Object.keys(nextProps.mod.parameters["oauth-ciba-email-templates"]).length) {
-      nextProps.mod.parameters["oauth-ciba-email-templates"][i18next.language] = {
-        "oauth-ciba-email-subject": "",
-        "body-pattern": "",
-        "oauth-ciba-email-defaultLang": true
-      };
-    }
-    nextProps.mod.parameters["oauth-fapi-check-all"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-check-all"] = false);
-    nextProps.mod.parameters["oauth-fapi-allow-jarm"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-allow-jarm"] = false);
-    nextProps.mod.parameters["oauth-fapi-add-s_hash"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-add-s_hash"] = false);
-    nextProps.mod.parameters["oauth-fapi-verify-nbf"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-verify-nbf"] = false);
-    nextProps.mod.parameters["oauth-fapi-allow-restrict-alg"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-allow-restrict-alg"] = false);
-    nextProps.mod.parameters["oauth-fapi-restrict-alg"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-restrict-alg"] = []);
-    nextProps.mod.parameters["oauth-fapi-allow-multiple-kid"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-allow-multiple-kid"] = false);
-    nextProps.mod.parameters["oauth-fapi-ciba-confidential-client"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-ciba-confidential-client"] = false);
-    nextProps.mod.parameters["oauth-fapi-ciba-push-forbidden"]!==undefined?"":(nextProps.mod.parameters["oauth-fapi-ciba-push-forbidden"] = false);
+    defaultParameters.updateWithDefaultParameters(nextProps.mod.parameters, defaultParam);
 
     this.setState({
       config: nextProps.config,
