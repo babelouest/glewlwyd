@@ -13738,8 +13738,12 @@ static int callback_oidc_token(const struct _u_request * request, struct _u_resp
  */
 static int callback_oidc_get_userinfo(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  char * username = get_username_from_sub(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub")), NULL), * token = NULL, * token_out = NULL;
-  json_t * j_user, * j_userinfo, * j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "client_id")));
+  char * username = get_username_from_sub(config, json_string_value(json_object_get((json_t *)response->shared_data, "sub")), NULL),
+       * token = NULL,
+       * token_out = NULL;
+  json_t * j_user,
+         * j_userinfo,
+         * j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "client_id")));
   jwt_t * jwt = NULL;
   jwa_alg alg = get_token_sign_alg(config, json_object_get((json_t *)response->shared_data, "client"), GLEWLWYD_TOKEN_TYPE_USERINFO);
   jwk_t * jwk = get_jwk_sign(config, json_object_get((json_t *)response->shared_data, "client"), alg);
@@ -13754,7 +13758,7 @@ static int callback_oidc_get_userinfo(const struct _u_request * request, struct 
   if (json_object_get((json_t *)response->shared_data, "jkt") != NULL) {
     external_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, config->name);
     htu = msprintf("%s/userinfo", external_url);
-    j_jkt = verify_dpop_proof(request, request->http_verb, htu, (time_t)json_integer_value(json_object_get(config->j_params, "oauth-dpop-iat-duration")), json_string_value(json_object_get((json_t *)response->shared_data, "jkt")));
+    j_jkt = verify_dpop_proof(request, request->http_verb, htu, (time_t)json_integer_value(json_object_get(config->j_params, "oauth-dpop-iat-duration")), json_string_value(json_object_get((json_t *)response->shared_data, "jkt")), (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER)));
     if (!check_result_value(j_jkt, G_TOKEN_OK)) {
       jkt_continue = 0;
     } else if (check_dpop_jti(config,
@@ -13857,7 +13861,7 @@ static int callback_oidc_refresh_token_list_get(const struct _u_request * reques
   if (json_object_get((json_t *)response->shared_data, "jkt") != NULL) {
     external_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, config->name);
     htu = msprintf("%s/token", external_url);
-    j_jkt = verify_dpop_proof(request, request->http_verb, htu, (time_t)json_integer_value(json_object_get(config->j_params, "oauth-dpop-iat-duration")), json_string_value(json_object_get((json_t *)response->shared_data, "jkt")));
+    j_jkt = verify_dpop_proof(request, request->http_verb, htu, (time_t)json_integer_value(json_object_get(config->j_params, "oauth-dpop-iat-duration")), json_string_value(json_object_get((json_t *)response->shared_data, "jkt")), (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER)));
     if (!check_result_value(j_jkt, G_TOKEN_OK)) {
       jkt_continue = 0;
     } else if (check_dpop_jti(config,
@@ -13922,7 +13926,7 @@ static int callback_oidc_disable_refresh_token(const struct _u_request * request
   if (json_object_get((json_t *)response->shared_data, "jkt") != NULL) {
     external_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, config->name);
     htu = msprintf("%s/token/%s", external_url, u_map_get(request->map_url, "token_hash"));
-    j_jkt = verify_dpop_proof(request, request->http_verb, htu, (time_t)json_integer_value(json_object_get(config->j_params, "oauth-dpop-iat-duration")), json_string_value(json_object_get((json_t *)response->shared_data, "jkt")));
+    j_jkt = verify_dpop_proof(request, request->http_verb, htu, (time_t)json_integer_value(json_object_get(config->j_params, "oauth-dpop-iat-duration")), json_string_value(json_object_get((json_t *)response->shared_data, "jkt")), (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER)));
     if (!check_result_value(j_jkt, G_TOKEN_OK)) {
       jkt_continue = 0;
     } else if (check_dpop_jti(config,
