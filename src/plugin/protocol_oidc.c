@@ -8239,7 +8239,11 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
           if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
             if (is_client_auth_method_allowed(json_object_get(j_client, "client"), GLEWLWYD_CLIENT_AUTH_METHOD_TLS)) {
               if (json_string_length(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_subject_dn"))) {
+#if GNUTLS_VERSION_NUMBER >= 0x030702
+                if (gnutls_x509_crt_get_dn3(cert, &cert_dn, 0) == GNUTLS_E_SUCCESS) {
+#else
                 if (gnutls_x509_crt_get_dn2(cert, &cert_dn) == GNUTLS_E_SUCCESS) {
+#endif
                   if (cert_dn.size == json_string_length(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_subject_dn")) && 0 == o_strncasecmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_subject_dn")), (const char *)cert_dn.data, cert_dn.size)) {
                     j_return = json_pack("{sisOss#si}", "result", G_OK, "client", json_object_get(j_client, "client"), "x5t#S256", (const char *)cert_id, cert_id_len, "client_auth_method", GLEWLWYD_CLIENT_AUTH_METHOD_TLS);
                   } else {
@@ -8249,7 +8253,7 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
                   }
                   gnutls_free(cert_dn.data);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "check_client_certificate_valid - Error gnutls_x509_crt_get_dn2");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "check_client_certificate_valid - Error gnutls_x509_crt_get_dn3");
                   j_return = json_pack("{si}", "result", G_ERROR);
                 }
               } else {
