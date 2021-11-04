@@ -29,7 +29,7 @@ else
 fi
 
 # clean old certs
-rm -f $DEST/server.* $DEST/root* $DEST/client* $DEST/user* $DEST/packed*
+rm -f $DEST/server.* $DEST/root* $DEST/client* $DEST/user* $DEST/packed* $DEST/apple*
 
 echo >> $DEST/certtool.log
 echo Generate Glewlwyd test certificates >> $DEST/certtool.log
