@@ -23,11 +23,13 @@ MEMCHECK=0
 RUN=1
 PARAM_FILE=param.json
 VALGRIND_COMMAND=valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all
+CERT=cert
 
 all: test
 
 clean:
 	rm -f *.o *.log valgrind.txt valgrind-*.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER) $(TARGET_PROFILE_DELETE)
+	rm -f $(CERT)/server.* $(CERT)/root* $(CERT)/client* $(CERT)/user* $(CERT)/packed* $(CERT)/apple* $(CERT)/certtool.log
 
 build: $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER) $(TARGET_PROFILE_DELETE)
 
