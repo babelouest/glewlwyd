@@ -2212,7 +2212,6 @@ int init_user_middleware_module_list(struct config_elements * config) {
       // read module_path and load modules
       if (NULL == (modules_directory = opendir(config->user_middleware_module_path))) {
         y_log_message(Y_LOG_LEVEL_ERROR, "init_user_middleware_module_list - Error reading libraries folder %s", config->user_middleware_module_path);
-        ret = G_ERROR;
       } else {
         while ((in_file = readdir(modules_directory))) {
           is_reg = 0;
