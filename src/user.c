@@ -683,6 +683,8 @@ int add_user(struct config_elements * config, json_t * j_user, const char * sour
           y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error user_module_add");
           ret = result;
         }
+      } else {
+        ret = G_ERROR;
       }
     } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "add_user - Error module %s not allowed", user_module->name);
@@ -771,6 +773,8 @@ int set_user(struct config_elements * config, const char * username, json_t * j_
           ret = G_ERROR;
         }
         json_decref(j_cur_user);
+      } else {
+        ret = G_ERROR;
       }
     } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
       ret = G_ERROR_PARAM;

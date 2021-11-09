@@ -3748,6 +3748,7 @@ static json_t * generate_authorization_code(struct _oidc_config * config,
 
   if (pthread_mutex_lock(&config->insert_lock)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - Error pthread_mutex_lock");
+    j_return = json_pack("{si}", "result", G_ERROR);
   } else {
     if ((code = o_malloc(33*sizeof(char))) != NULL) {
       if (rand_string_nonce(code, 32) != NULL) {
@@ -3833,6 +3834,9 @@ static json_t * generate_authorization_code(struct _oidc_config * config,
                 y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - Error h_last_insert_id");
                 j_return = json_pack("{si}", "result", G_ERROR);
               }
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - scope_list is empty");
+              j_return = json_pack("{si}", "result", G_ERROR);
             }
           }
         } else {
@@ -5403,11 +5407,11 @@ static json_t * generate_ciba_token_response(struct _oidc_config * config, json_
   json_t * j_return, * j_refresh_token, * j_amr, * j_refresh;
   time_t now;
   char * refresh_token,
-       * refresh_token_out,
+       * refresh_token_out = NULL,
        * access_token,
-       * access_token_out,
+       * access_token_out = NULL,
        * id_token,
-       * id_token_out,
+       * id_token_out = NULL,
        jti_r[OIDC_JTI_LENGTH+1] = {0},
        jti[OIDC_JTI_LENGTH+1] = {0},
        ** scope_array = NULL;
@@ -12070,6 +12074,7 @@ static int run_backchannel_logout(struct _oidc_config * config, const char * use
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "run_backchannel_logout - Error executing j_query");
+      ret = G_ERROR_DB;
     }
   } else {
     ret = G_OK;

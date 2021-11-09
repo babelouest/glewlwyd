@@ -82,7 +82,7 @@ int callback_glewlwyd_check_user_profile_valid (const struct _u_request * reques
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if ((res = is_scope_list_valid_for_session(config, config->profile_scope, session_uid)) == G_OK) {
         if (ulfius_set_response_shared_data(response, json_deep_copy(json_object_get(j_user, "user")), (void (*)(void *))&json_decref) != U_OK) {
-          res = U_CALLBACK_ERROR;
+          ret = U_CALLBACK_ERROR;
         } else {
           ret = U_CALLBACK_IGNORE;
         }
@@ -139,7 +139,7 @@ int callback_glewlwyd_check_admin_session (const struct _u_request * request, st
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if ((res = is_scope_list_valid_for_session(config, config->admin_scope, session_uid)) == G_OK) {
         if (ulfius_set_response_shared_data(response, json_deep_copy(json_object_get(j_user, "user")), (void (*)(void *))&json_decref) != U_OK) {
-          res = U_CALLBACK_ERROR;
+          ret = U_CALLBACK_ERROR;
         } else {
           ret = U_CALLBACK_IGNORE;
         }
@@ -170,7 +170,7 @@ int callback_glewlwyd_check_admin_session_or_api_key (const struct _u_request * 
   if (NULL != api_key && 0 == o_strncmp(GLEWLWYD_API_KEY_HEADER_PREFIX, api_key, o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) {
     if ((res = verify_api_key(config, api_key + o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) == G_OK) {
       if (ulfius_set_response_shared_data(response, json_pack("{so}", "username", json_null()), (void (*)(void *))&json_decref) != U_OK) {
-        res = U_CALLBACK_ERROR;
+        ret = U_CALLBACK_ERROR;
       } else {
         ret = U_CALLBACK_IGNORE;
       }
@@ -186,7 +186,7 @@ int callback_glewlwyd_check_admin_session_or_api_key (const struct _u_request * 
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if ((res = is_scope_list_valid_for_session(config, config->admin_scope, session_uid)) == G_OK) {
         if (ulfius_set_response_shared_data(response, json_deep_copy(json_object_get(j_user, "user")), (void (*)(void *))&json_decref) != U_OK) {
-          res = U_CALLBACK_ERROR;
+          ret = U_CALLBACK_ERROR;
         } else {
           ret = U_CALLBACK_IGNORE;
         }

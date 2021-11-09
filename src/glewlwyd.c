@@ -2332,8 +2332,11 @@ int load_user_middleware_module_instance_list(struct config_elements * config) {
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error executing j_query");
-        ret = G_ERROR;
+        ret = G_ERROR_DB;
       }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error user_middleware_module_path");
+      ret = G_ERROR;
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error allocating resource for config->user_middleware_module_instance_list");

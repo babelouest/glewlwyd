@@ -100,10 +100,10 @@ int glewlwyd_metrics_increment_counter(struct config_elements * config, const ch
         thread_detach = pthread_detach(thread_metrics);
         if (thread_ret || thread_detach) {
           y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_metrics_increment_counter - Error thread");
-          ret = G_ERROR_MEMORY;
           o_free(data->name);
           o_free(data->label);
           o_free(data);
+          ret = G_ERROR;
         } else {
           ret = G_OK;
         }
@@ -115,6 +115,8 @@ int glewlwyd_metrics_increment_counter(struct config_elements * config, const ch
       y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_metrics_increment_counter - Error input values");
       ret = G_ERROR_PARAM;
     }
+  } else {
+    ret = G_OK;
   }
   return ret;
 }
@@ -167,6 +169,7 @@ int glewlwyd_metrics_add_metric(struct config_elements * config, const char * na
         glwd_metrics->data_size = 0;
         glwd_metrics->data = NULL;
         pointer_list_append(&config->metrics_list, glwd_metrics);
+        ret = G_OK;
       } else {
         ret = G_ERROR_MEMORY;
       }
