@@ -2335,8 +2335,9 @@ int load_user_middleware_module_instance_list(struct config_elements * config) {
         ret = G_ERROR_DB;
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error user_middleware_module_path");
-      ret = G_ERROR;
+      // Do not return an error for backwards compatibility
+      y_log_message(Y_LOG_LEVEL_WARNING, "Warning - user_middleware_module_path missing in config file");
+      ret = G_OK;
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error allocating resource for config->user_middleware_module_instance_list");
