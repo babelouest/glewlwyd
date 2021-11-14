@@ -3298,6 +3298,7 @@ static json_t * serialize_refresh_token(struct _oidc_config * config,
       } else { // HOEL_DB_TYPE_SQLITE
         last_seen_clause = msprintf("%u", (now));
       }
+      y_log_message(Y_LOG_LEVEL_DEBUG, "duration %"JSON_INTEGER_FORMAT, duration);
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
         expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)duration));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
@@ -7298,10 +7299,10 @@ static char * build_jwt_auth_response(struct _oidc_config * config, json_t * j_c
 }
 
 static void build_auth_response(struct _oidc_config * config, struct _u_response * response, int response_mode, json_t * j_client, const char * redirect_uri, struct _u_map * map_query) {
-  const char ** keys, * value;
+  const char ** keys, * value, * sep;
   size_t i;
   char * redirect_url = NULL, * key_encoded, * value_encoded, * token = NULL;
-  int enc_res = G_OK;
+  int enc_res = G_OK, has_param = 0;;
   
   if (o_strlen(redirect_uri)) {
     if (response_mode == GLEWLWYD_RESPONSE_MODE_QUERY_JWT || response_mode == GLEWLWYD_RESPONSE_MODE_FRAGMENT_JWT || response_mode == GLEWLWYD_RESPONSE_MODE_FORM_POST_JWT) {
@@ -7336,16 +7337,23 @@ static void build_auth_response(struct _oidc_config * config, struct _u_response
           value_encoded = ulfius_url_encode(json_string_value(json_object_get(config->j_params, "iss")));
           redirect_url = mstrcatf(redirect_url, "iss=%s", value_encoded);
           o_free(value_encoded);
+          has_param = 1;
         }
         keys = u_map_enum_keys(map_query);
         for (i=0; keys[i]!=NULL; i++) {
           value = u_map_get(map_query, keys[i]);
+          if (has_param) {
+            sep = "&";
+          } else {
+            sep = "";
+            has_param = 1;
+          }
           if (o_strlen(value)) {
             value_encoded = ulfius_url_encode(value);
-            redirect_url = mstrcatf(redirect_url, "%s=%s", keys[i], value_encoded);
+            redirect_url = mstrcatf(redirect_url, "%s%s=%s", sep, keys[i], value_encoded);
             o_free(value_encoded);
           } else {
-            redirect_url = mstrcatf(redirect_url, "%s", keys[i]);
+            redirect_url = mstrcatf(redirect_url, "%s%s", sep, keys[i]);
           }
         }
         response->status = 302;
@@ -12819,6 +12827,9 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
     
     if (u_map_has_key(map, "response_type")) {
       response_type = u_map_get(map, "response_type");
+      if (o_strstr(response_type, "code") == NULL) {
+        response_mode = GLEWLWYD_RESPONSE_MODE_FRAGMENT;
+      }
     }
     if (u_map_has_key(map, "response_mode")) {
       str_response_mode = u_map_get(map, "response_mode");
@@ -13112,16 +13123,18 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
     }
 
     // Check code_challenge if necessary
-    if ((res = is_code_challenge_valid(config, scope, code_challenge, code_challenge_method, code_challenge_stored, (json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()))) == G_ERROR_PARAM) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - code challenge invalid");
-      u_map_put(&map_redirect, "error", "invalid_request");
-      build_auth_response(config, response, response_mode, json_object_get(j_client, "client"), redirect_uri, &map_redirect);
-      break;
-    } else if (res != G_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - error is_code_challenge_valid");
-      u_map_put(&map_redirect, "error", "server_error");
-      build_auth_response(config, response, response_mode, json_object_get(j_client, "client"), redirect_uri, &map_redirect);
-      break;
+    if (has_code) {
+      if ((res = is_code_challenge_valid(config, scope, code_challenge, code_challenge_method, code_challenge_stored, (json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()))) == G_ERROR_PARAM) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - code challenge invalid");
+        u_map_put(&map_redirect, "error", "invalid_request");
+        build_auth_response(config, response, response_mode, json_object_get(j_client, "client"), redirect_uri, &map_redirect);
+        break;
+      } else if (res != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - error is_code_challenge_valid");
+        u_map_put(&map_redirect, "error", "server_error");
+        build_auth_response(config, response, response_mode, json_object_get(j_client, "client"), redirect_uri, &map_redirect);
+        break;
+      }
     }
 
     if (j_authorization_details != NULL) {
