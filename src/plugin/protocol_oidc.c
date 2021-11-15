@@ -3298,7 +3298,6 @@ static json_t * serialize_refresh_token(struct _oidc_config * config,
       } else { // HOEL_DB_TYPE_SQLITE
         last_seen_clause = msprintf("%u", (now));
       }
-      y_log_message(Y_LOG_LEVEL_DEBUG, "duration %"JSON_INTEGER_FORMAT, duration);
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
         expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)duration));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
@@ -8252,10 +8251,11 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
             if (is_client_auth_method_allowed(json_object_get(j_client, "client"), GLEWLWYD_CLIENT_AUTH_METHOD_TLS)) {
               if (json_string_length(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_subject_dn"))) {
 #if GNUTLS_VERSION_NUMBER >= 0x030702
-                if (gnutls_x509_crt_get_dn3(cert, &cert_dn, 0) == GNUTLS_E_SUCCESS) {
+                if (gnutls_x509_crt_get_dn3(cert, &cert_dn, 0) == GNUTLS_E_SUCCESS)
 #else
-                if (gnutls_x509_crt_get_dn2(cert, &cert_dn) == GNUTLS_E_SUCCESS) {
+                if (gnutls_x509_crt_get_dn2(cert, &cert_dn) == GNUTLS_E_SUCCESS)
 #endif
+                {
                   if (cert_dn.size == json_string_length(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_subject_dn")) && 0 == o_strncasecmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_subject_dn")), (const char *)cert_dn.data, cert_dn.size)) {
                     j_return = json_pack("{sisOss#si}", "result", G_OK, "client", json_object_get(j_client, "client"), "x5t#S256", (const char *)cert_id, cert_id_len, "client_auth_method", GLEWLWYD_CLIENT_AUTH_METHOD_TLS);
                   } else {
