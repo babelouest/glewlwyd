@@ -481,6 +481,23 @@ START_TEST(test_oidc_code_code_challenge_missing_error)
 }
 END_TEST
 
+START_TEST(test_oidc_code_code_challenge_missing_resp_type_token_id_token_ok)
+{
+  struct _u_response resp;
+  
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&user_req, U_OPT_HTTP_VERB, "GET",
+                                                 U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=id_token&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE_LIST,
+                                                 U_OPT_NONE), U_OK);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "&id_token="), NULL);
+
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
 START_TEST(test_oidc_code_code_challenge_scopes_required_ok)
 {
   ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE1_REQUIRED " " SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
@@ -535,6 +552,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_code_code_challenge_add_plugin_required);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_verifier_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_error);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_resp_type_token_id_token_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_remove_plugin);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_add_plugin_required_with_scopes);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_scopes_required_ok);
@@ -544,6 +562,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_code_code_challenge_add_plugin_required_public_client);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_confidential_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_error);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_resp_type_token_id_token_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_verifier_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_remove_plugin);
   tcase_set_timeout(tc_core, 30);
