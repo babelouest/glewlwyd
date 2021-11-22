@@ -847,6 +847,8 @@ if (BUILD_GLEWLWYD_TESTING)
       set(TESTS_SSL ${TESTS_SSL} glewlwyd_oidc_client_certificate)
     endif ()
 
+    set(TESTS_PROMETHEUS glewlwyd_prometheus)
+
     if (WITH_PLUGIN_REGISTER)
       set (TESTS ${TESTS}
               glewlwyd_register
@@ -883,7 +885,7 @@ if (BUILD_GLEWLWYD_TESTING)
     if (WITH_SCHEME_CERTIFICATE)
       set(TESTS_SSL ${TESTS_SSL} glewlwyd_scheme_certificate)
     endif ()
-
+    
     configure_file(
         "${CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
         "${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake"
@@ -940,13 +942,19 @@ if (BUILD_GLEWLWYD_TESTING)
         endforeach ()
       endif ()
     endforeach ()
-    
+
     foreach (t ${TESTS_SSL})
       add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
       target_include_directories(${t} PUBLIC ${TST_DIR})
       target_link_libraries(${t} PUBLIC ${TST_LIBS})
     endforeach ()
-        
+
+    foreach (t ${TESTS_PROMETHEUS})
+      add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
+      target_include_directories(${t} PUBLIC ${TST_DIR})
+      target_link_libraries(${t} PUBLIC ${TST_LIBS})
+    endforeach ()
+
   endif ()
 endif ()
 
