@@ -2282,6 +2282,7 @@ static int callback_register_reset_credentials_email_verify(const struct _u_requ
                                     0);
       y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' opened a reset credential session with e-mail token, origin: %s", config->name, json_string_value(json_object_get(j_result, "username")), get_ip_source(request));
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_RESET_CREDENTIALS_STARTED, 1, "plugin", config->name, "verification", "email", NULL);
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_RESET_CREDENTIALS_STARTED, 1, "plugin", config->name, NULL);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_reset_credentials_email_verify - Error reset_credentials_create_session");
       response->status = 500;
@@ -2326,6 +2327,7 @@ static int callback_register_reset_credentials_code_verify(const struct _u_reque
                                     0);
       y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' opened a reset credential session with code, origin: %s", config->name, json_string_value(json_object_get(j_parameters, "username")), get_ip_source(request));
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_RESET_CREDENTIALS_STARTED, 1, "plugin", config->name, "verification", "code", NULL);
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_RESET_CREDENTIALS_STARTED, 1, "plugin", config->name, NULL);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_reset_credentials_code_verify - Error reset_credentials_create_session");
       response->status = 500;
