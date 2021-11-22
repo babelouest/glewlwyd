@@ -18,6 +18,7 @@ TARGET_REGISTER=glewlwyd_register
 TARGET_IRL=glewlwyd_mod_user_irl glewlwyd_mod_client_irl glewlwyd_mod_user_multiple_password_irl glewlwyd_mod_user_http glewlwyd_oauth2_irl glewlwyd_oidc_irl glewlwyd_scheme_mail glewlwyd_scheme_otp glewlwyd_scheme_webauthn glewlwyd_scheme_retype_password glewlwyd_scheme_http glewlwyd_scheme_oauth2
 TARGET_CERTIFICATE=glewlwyd_scheme_certificate glewlwyd_oidc_client_certificate
 TARGET_PROFILE_DELETE=glewlwyd_profile_delete
+TARGET_PROMETHEUS=glewlwyd_prometheus
 VERBOSE=0
 MEMCHECK=0
 RUN=1
@@ -28,10 +29,10 @@ CERT=cert
 all: test
 
 clean:
-	rm -f *.o *.log valgrind.txt valgrind-*.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER) $(TARGET_PROFILE_DELETE)
+	rm -f *.o *.log valgrind.txt valgrind-*.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER) $(TARGET_PROFILE_DELETE) $(TARGET_PROMETHEUS)
 	rm -f $(CERT)/server.* $(CERT)/root* $(CERT)/client* $(CERT)/user* $(CERT)/packed* $(CERT)/apple* $(CERT)/certtool.log
 
-build: $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER) $(TARGET_PROFILE_DELETE)
+build: $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER) $(TARGET_PROFILE_DELETE) $(TARGET_PROMETHEUS)
 
 unit-tests.o: unit-tests.c unit-tests.h
 	$(CC) $(CFLAGS) -c unit-tests.c
@@ -56,6 +57,8 @@ test-certificate: $(TARGET_CERTIFICATE) test_glewlwyd_scheme_certificate test_gl
 test-register: $(TARGET_REGISTER) test_glewlwyd_register
 
 test-profile-delete: $(TARGET_PROFILE_DELETE) test_glewlwyd_profile_delete
+
+test-prometheus: $(TARGET_PROMETHEUS) test_glewlwyd_prometheus
 
 test-irl: $(TARGET_IRL) test_glewlwyd_mod_user_http test_glewlwyd_scheme_http test_glewlwyd_scheme_mail test_glewlwyd_scheme_otp test_glewlwyd_scheme_webauthn test_glewlwyd_scheme_retype_password test_glewlwyd_scheme_oauth2
 	@for JSON_FILE in mod_user_*.json; \

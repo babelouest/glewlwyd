@@ -1281,6 +1281,8 @@ START_TEST(test_oidc_registration_no_auth_register_client_with_sector_identifier
 
   char * key_pem = read_file(CB_KEY);
   char * cert_pem = read_file(CB_CRT);
+  ck_assert_ptr_ne(NULL, key_pem);
+  ck_assert_ptr_ne(NULL, cert_pem);
   ck_assert_int_eq(ulfius_start_secure_framework(&instance, key_pem, cert_pem), U_OK);
   o_free(key_pem);
   o_free(cert_pem);

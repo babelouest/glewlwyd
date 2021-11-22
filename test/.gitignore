@@ -120,5 +120,7 @@ glewlwyd_scheme_http
 glewlwyd_scheme_oauth2
 glewlwyd_scheme_forbidden
 
+glewlwyd_prometheus
+
 valgrind-*.txt
 *.json
