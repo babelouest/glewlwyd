@@ -60,5 +60,5 @@ jobs:
         glewlwyd --config-file=test/glewlwyd-prometheus.conf &
         sleep 1
         export G_PID=$!
-        ./glewlwyd_prometheus || (cat /tmp/glewlwyd-delete.log && false)
+        ./glewlwyd_prometheus || (cat /tmp/glewlwyd-prometheus.log && false)
         kill $G_PID
