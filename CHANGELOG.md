@@ -10,7 +10,7 @@ The `"Green Zone Release"`
 - Allow to force PKCE all the time or when use specified scopes
 - Implement [Client-Initiated Backchannel Authentication Flow](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html)
 - Implement [OAuth 2.0 Authorization Server Issuer Identification](https://www.ietf.org/id/draft-ietf-oauth-iss-auth-resp-01.html)
-- Improve IETF strict option in OIDC plugin by handlong signatures and encryption properties
+- Improve IETF strict option in OIDC plugin by handling signatures and encryption properties
 - User registration: suggest a new username when a username exists
 - Allow to remove all sessions and/or revoke all tokens
 - Implement [OpenID Connect Front-Channel Logout 1.0 - draft 04](https://openid.net/specs/openid-connect-frontchannel-1_0.html)
