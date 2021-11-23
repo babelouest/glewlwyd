@@ -15,7 +15,7 @@ The `"Green Zone Release"`
 - Allow to remove all sessions and/or revoke all tokens
 - Implement [OpenID Connect Front-Channel Logout 1.0 - draft 04](https://openid.net/specs/openid-connect-frontchannel-1_0.html)
 - Implement [OpenID Connect Back-Channel Logout 1.0 - draft 06](https://openid.net/specs/openid-connect-backchannel-1_0.html)
-- Upgrade DPoP implementation to Draft 4.0
+- Upgrade DPoP implementation to [draft 4.0](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-dpop-04)
 
 ## 2.5.4
 
