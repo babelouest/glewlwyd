@@ -1209,6 +1209,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
                                                                       I_OPT_CLIENT_SECRET, json_string_value(json_object_get(j_element, "client_secret")),
                                                                       I_OPT_REDIRECT_URI, json_string_value(json_object_get(j_parameters, "redirect_uri")),
                                                                       I_OPT_SCOPE, is_oidc?"openid":json_string_value(json_object_get(j_element, "scope")),
+                                                                      I_OPT_TOKEN_METHOD, I_TOKEN_AUTH_METHOD_SECRET_BASIC,
                                                                       I_OPT_NONE) != I_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init oauth2 - Error setting parameters for provider %s", json_string_value(json_object_get(j_element, "name")));
                 } else if (i_get_openid_config(&i_session) != I_OK) {
@@ -1239,6 +1240,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
                                                                       I_OPT_CLIENT_SECRET, json_string_value(json_object_get(j_element, "client_secret")),
                                                                       I_OPT_REDIRECT_URI, json_string_value(json_object_get(j_parameters, "redirect_uri")),
                                                                       I_OPT_SCOPE, is_oidc?"openid":json_string_value(json_object_get(j_element, "scope")),
+                                                                      I_OPT_TOKEN_METHOD, I_TOKEN_AUTH_METHOD_SECRET_BASIC,
                                                                       I_OPT_NONE) != I_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init oauth2 - Error setting parameters for provider %s", json_string_value(json_object_get(j_element, "name")));
                 } else if ((j_export = i_export_session_json_t(&i_session)) == NULL) {
