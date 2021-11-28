@@ -81,7 +81,7 @@ static json_t * is_user_database_parameters_valid(json_t * j_params) {
           if (json_object_get(j_params, "mariadb-dbname") == NULL || !json_is_string(json_object_get(j_params, "mariadb-dbname"))) {
             json_array_append_new(j_error, json_string("mariadb-dbname is mandatory and must be a string"));
           }
-          if (json_object_get(j_params, "mariadb-port") != NULL && (!json_is_integer(json_object_get(j_params, "mariadb-dbname")) || json_integer_value(json_object_get(j_params, "mariadb-dbname")) < 0)) {
+          if (json_object_get(j_params, "mariadb-port") != NULL && (!json_is_integer(json_object_get(j_params, "mariadb-port")) || json_integer_value(json_object_get(j_params, "mariadb-port")) < 0)) {
             json_array_append_new(j_error, json_string("mariadb-port is optional and must be a positive integer (default: 0)"));
           }
         } else if (0 == o_strcmp("postgre", json_string_value(json_object_get(j_params, "connection-type")))) {
@@ -1131,25 +1131,30 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
       param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       ret = G_ERROR_DB;
     } else {
+      ret = G_OK;
       if (param->multiple_passwords) {
-        if ((passwords = o_malloc(json_array_size(json_object_get(j_user, "password"))*sizeof(char *))) != NULL) {
-          for (i=0; i<json_array_size(json_object_get(j_user, "password")); i++) {
-            passwords[i] = json_string_value(json_array_get(json_object_get(j_user, "password"), i));
+        if (json_array_size(json_object_get(j_user, "password"))) {
+          if ((passwords = o_malloc(json_array_size(json_object_get(j_user, "password"))*sizeof(char *))) != NULL) {
+            for (i=0; i<json_array_size(json_object_get(j_user, "password")); i++) {
+              passwords[i] = json_string_value(json_array_get(json_object_get(j_user, "password"), i));
+            }
+            ret = update_password_list(param, json_integer_value(j_gu_id), passwords, json_array_size(json_object_get(j_user, "password")), 1);
+            o_free(passwords);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error allocating resources for password");
+            ret = G_ERROR_MEMORY;
           }
-          ret = update_password_list(param, json_integer_value(j_gu_id), passwords, json_array_size(json_object_get(j_user, "password")), 1);
-          o_free(passwords);
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error allocating resources for password");
-          ret = G_ERROR_MEMORY;
         }
       } else {
-        if ((passwords = o_malloc(sizeof(char *))) != NULL) {
-          passwords[0] = json_string_value(json_object_get(j_user, "password"));
-          ret = update_password_list(param, json_integer_value(j_gu_id), passwords, 1, 1);
-          o_free(passwords);
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error allocating resources for password");
-          ret = G_ERROR_MEMORY;
+        if (json_string_length(json_object_get(j_user, "password"))) {
+          if ((passwords = o_malloc(sizeof(char *))) != NULL) {
+            passwords[0] = json_string_value(json_object_get(j_user, "password"));
+            ret = update_password_list(param, json_integer_value(j_gu_id), passwords, 1, 1);
+            o_free(passwords);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error allocating resources for password");
+            ret = G_ERROR_MEMORY;
+          }
         }
       }
     }
@@ -1212,6 +1217,7 @@ int user_module_update(struct config_module * config, const char * username, jso
         param->config_glewlwyd->glewlwyd_module_callback_metrics_increment_counter(param->config_glewlwyd, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         ret = G_ERROR_DB;
       } else {
+        ret = G_OK;
         if (param->multiple_passwords) {
           if (json_array_size(json_object_get(j_user, "password"))) {
             if ((passwords = o_malloc(json_array_size(json_object_get(j_user, "password"))*sizeof(char *))) != NULL) {
@@ -1237,7 +1243,6 @@ int user_module_update(struct config_module * config, const char * username, jso
             }
           }
         }
-        ret = G_OK;
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add database - Error executing j_query update");
