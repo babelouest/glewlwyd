@@ -69,8 +69,8 @@ static json_t * is_client_database_parameters_valid(json_t * j_params) {
           if (json_object_get(j_params, "mariadb-host") == NULL || !json_is_string(json_object_get(j_params, "mariadb-host"))) {
             json_array_append_new(j_error, json_string("mariadb-host is mandatory and must be a string"));
           }
-          if (json_object_get(j_params, "mariadb-client") == NULL || !json_is_string(json_object_get(j_params, "mariadb-client"))) {
-            json_array_append_new(j_error, json_string("mariadb-client is mandatory and must be a string"));
+          if (json_object_get(j_params, "mariadb-user") == NULL || !json_is_string(json_object_get(j_params, "mariadb-user"))) {
+            json_array_append_new(j_error, json_string("mariadb-user is mandatory and must be a string"));
           }
           if (json_object_get(j_params, "mariadb-password") == NULL || !json_is_string(json_object_get(j_params, "mariadb-password"))) {
             json_array_append_new(j_error, json_string("mariadb-password is mandatory and must be a string"));
@@ -78,7 +78,7 @@ static json_t * is_client_database_parameters_valid(json_t * j_params) {
           if (json_object_get(j_params, "mariadb-dbname") == NULL || !json_is_string(json_object_get(j_params, "mariadb-dbname"))) {
             json_array_append_new(j_error, json_string("mariadb-dbname is mandatory and must be a string"));
           }
-          if (json_object_get(j_params, "mariadb-port") != NULL && (!json_is_integer(json_object_get(j_params, "mariadb-dbname")) || json_integer_value(json_object_get(j_params, "mariadb-dbname")) < 0)) {
+          if (json_object_get(j_params, "mariadb-port") != NULL && (!json_is_integer(json_object_get(j_params, "mariadb-port")) || json_integer_value(json_object_get(j_params, "mariadb-port")) < 0)) {
             json_array_append_new(j_error, json_string("mariadb-port is optional and must be a positive integer (default: 0)"));
           }
         } else if (0 == o_strcmp("postgre", json_string_value(json_object_get(j_params, "connection-type")))) {
