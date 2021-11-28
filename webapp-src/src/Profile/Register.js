@@ -216,30 +216,18 @@ class Register extends Component {
     return false;
   }
   
-  saveName(e) {
+  saveNameOrPassword(e) {
     e.preventDefault();
     
-    apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile", "PUT", this.state.registerProfile)
-    .then(() => {
-      messageDispatcher.sendMessage('App', {type: "registration"});
-      messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-profile-saved")});
-    })
+    let promiseName = apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile", "PUT", this.state.registerProfile)
     .fail((err) => {
       if (err.status !== 400) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
       }
     });
-  }
-  
-  savePassword(e) {
-    e.preventDefault();
-    
+    let promises = [promiseName];
     if (!this.state.invalidPassword && this.state.password.length >= (this.state.config.PasswordMinLength||8)) {
-      apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/password", "POST", {password: this.state.password})
-      .then(() => {
-        messageDispatcher.sendMessage('App', {type: "registration"});
-        messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-password-saved")});
-      })
+      let promisePwd = apiManager.glewlwydRequest("/" + this.state.config.params.register + "/profile/password", "POST", {password: this.state.password})
       .fail((err) => {
         if (err.status !== 400) {
           messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
@@ -248,9 +236,14 @@ class Register extends Component {
       .always(() => {
         this.setState({password: "", passwordConfirm: "", modifyPassword: false});
       });
-    } else {
-      messageDispatcher.sendMessage('App', {type: "registration"});
+      
+      promises.push(promisePwd);
     }
+    Promise.all(promises)
+    .then(() => {
+      messageDispatcher.sendMessage('App', {type: "registration"});
+      messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("profile.register-profile-saved")});
+    });
   }
   
   sendVerificationEmail() {
@@ -463,15 +456,6 @@ class Register extends Component {
                    placeholder={i18next.t((!this.state.modifyPassword && this.state.registerProfile.password_set?"profile.register-password-set-ph":"profile.register-confirm-password-ph"))} 
                    onChange={(e) => this.changeConfirmPassword(e)} 
                    value={this.state.passwordConfirm}/>
-            <div className="input-group-append">
-              <button className="btn btn-secondary btn-icon" 
-                      type="button" 
-                      onClick={(e) => this.savePassword(e)}
-                      disabled={this.state.invalidPassword || (!this.state.modifyPassword && this.state.registerProfile.password_set)}
-                      title={i18next.t("save")}>
-                {i18next.t("save")}
-              </button>
-            </div>
           </div>
           {this.state.invalidPassword?<span className="badge badge-danger">{this.state.invalidPassword}</span>:""}
         </div>
@@ -510,15 +494,15 @@ class Register extends Component {
                    onChange={(e) => this.changeName(e)} 
                    value={this.state.registerProfile.name||""}/>
             <div className="input-group-append">
-              <button className="btn btn-secondary btn-icon" 
-                      type="button" 
-                      onClick={(e) => this.saveName(e)}
-                      title={i18next.t("save")}>
-                {i18next.t("save")}
-              </button>
             </div>
           </div>
           {passwordJsx}
+          <button className="btn btn-secondary btn-icon" 
+                  type="button" 
+                  onClick={(e) => this.saveNameOrPassword(e)}
+                  title={i18next.t("save")}>
+            {i18next.t("save")}
+          </button>
         </form>
     } else if (!this.state.registerProfile) {
       if (this.state.registerConfig["verify-email"]) {
