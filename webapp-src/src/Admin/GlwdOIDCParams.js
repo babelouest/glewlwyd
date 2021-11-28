@@ -1086,7 +1086,11 @@ class GlwdOIDCParams extends Component {
 
   render() {
     var keyJsx, certJsx, scopeOverrideList = [], scopeList = [], additionalParametersList = [], claimsList = [], x5cList = [], addressClaim;
-    var baseApiUrl = document.location.href.split('?')[0].split('#')[0] + this.state.config.api_prefix + "/" + (this.state.mod.name||"");
+    var baseApiUrl = document.location.href.split('?')[0].split('#')[0];
+    if (baseApiUrl.endsWith(this.state.config.AdminUrl)) {
+      baseApiUrl = baseApiUrl.substring(0, baseApiUrl.length-this.state.config.AdminUrl.length-1) + "/";
+    }
+    baseApiUrl += this.state.config.api_prefix + "/" + (this.state.mod.name||"");
     var urlOidcConfig = baseApiUrl + "/.well-known/openid-configuration", urlAuth = baseApiUrl + "/auth", urlToken = baseApiUrl + "/token", urlUserinfo = baseApiUrl + "/userinfo";
 
     if (this.state.mod.parameters["jwt-type"] === "sha") {
