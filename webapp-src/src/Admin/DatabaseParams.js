@@ -295,7 +295,15 @@ class DatabaseParams extends Component {
             <div className="input-group-prepend">
               <label className="input-group-text" htmlFor="mod-database-mariadb-port">{i18next.t("admin.mod-database-mariadb-port")}</label>
             </div>
-            <input type="number" min="0" max="65535" step="1" className="form-control" id="mod-database-mariadb-port" onChange={(e) => this.changeValue(e, "mariadb-port")} value={this.state.mod.parameters["mariadb-port"]} placeholder={i18next.t("admin.mod-database-mariadb-port-ph")} />
+            <input type="number"
+                   min="0"
+                   max="65535"
+                   step="1"
+                   className="form-control"
+                   id="mod-database-mariadb-port"
+                   onChange={(e) => this.changeValue(e, "mariadb-port", true)}
+                   value={this.state.mod.parameters["mariadb-port"]}
+                   placeholder={i18next.t("admin.mod-database-mariadb-port-ph")} />
           </div>
         </div></div>;
       } else if (this.state.mod.parameters["connection-type"] === "postgre") {
