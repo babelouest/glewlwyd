@@ -64,7 +64,8 @@ By design, the schemes `Retype password` and `E-mail code` can't be registered o
 WebAuthn is an authentication scheme that permits the user to authenticate via a dedicated device without having to retain a password. Currently, the devices available for this scheme are the following:
 
 - Yubikeys
-- Android devices (phone or tablet) if the system version is Nougat (7.0) or above
+- Android devices (phone or tablet) if the system version is Nougat (7.0) or higher
+- Apple devices (iPhone or iPad) if the system is iOS 14 or higher
 
 You'll need a browser compatible with WebAuthn API. Recent versions of Firefox, Chrome, Edge and Opera work fine, check [Can I use](https://caniuse.com/#search=webauthn) for more details.
 
@@ -116,17 +117,13 @@ Also, if you're currently browsing using your certificate, you can click on the 
 
 If you already have registered at least one certificate and want to test the authentication with the current certificate you're using while browsing, you can click on the `Test current certificate` button. If the authentication is successful, the certificate used to authenticate will be highlighted in the list.
 
-#### Request a certificate to the server
-
-If this option is enabled, you can then request a valid certificate for your authentication. After clicking on the button, a PKCS#12 certificate will be available for download. You must save this file, then import it in your browser certificate list using the provided password.
-
 ### External OAuth2/OIDC Login
 
 ![profile-oauth2](screenshots/profile-oauth2.png)
 
 ![login-oauth2](screenshots/login-oauth2.png)
 
-This scheme allow users to connect to Glewlwyd via an trusted external OAuth2/OIDC service. External OAuth2/OIDC services may include mainstream services such as Google, Facebook, GitHub, etc.
+This scheme allow users to connect to Glewlwyd via an account on a trusted external OAuth2/OIDC service. External OAuth2/OIDC services may include mainstream services such as Google, Facebook, GitHub, etc.
 
 #### Registration
 
