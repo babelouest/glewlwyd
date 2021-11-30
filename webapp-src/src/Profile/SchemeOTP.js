@@ -144,6 +144,7 @@ class SchemeOTP extends Component {
       myOtp.secret = res.secret;
       this.setState({myOtp: myOtp}, () => {
         this.showQRCode();
+        this.register();
       });
     })
     .fail((err) => {
@@ -208,7 +209,7 @@ class SchemeOTP extends Component {
   }
   
 	render() {
-    var jsxHOTP, jsxTOTP, secretJsx, jsxHotpOption, jsxTotpOption, jsxQrcode, jsxForbidMessage;
+    var jsxHOTP, jsxTOTP, secretJsx, jsxHotpOption, jsxTotpOption, jsxQrcode, jsxForbidMessage, bottomButtonJsx;
     secretJsx = 
       <div className="row">
         <div className="col-md-12">
@@ -216,9 +217,14 @@ class SchemeOTP extends Component {
             <div className="input-group-prepend">
               <span className="input-group-text">{i18next.t("profile.scheme-otp-secret")}</span>
             </div>
-            <input type="text" maxLength="128" className={!!this.state.errorList.secret?"form-control is-invalid":"form-control"} id="scheme-otp-secret" onChange={(e) => this.changeParam(e, "secret")} value={this.state.myOtp.secret} placeholder={i18next.t("profile.scheme-otp-secret-ph")} />
+            <input type="text"
+                   maxLength="128"
+                   className={!!this.state.errorList.secret?"form-control is-invalid":"form-control"}
+                   id="scheme-otp-secret" onChange={(e) => this.changeParam(e, "secret")}
+                   value={this.state.myOtp.secret}
+                   placeholder={i18next.t("profile.scheme-otp-secret-ph")} />
             <div className="input-group-append">
-              <button className="btn btn-outline-secondary" type="button" onClick={this.generateSecret}>{i18next.t("profile.scheme-otp-generate-secret")}</button>
+              <button type="button" className="btn btn-outline-secondary" onClick={this.register}>{i18next.t("profile.scheme-otp-save")}</button>
             </div>
             {!!this.state.errorList.secret?<span className="error-input">{this.state.errorList.secret}</span>:""}
           </div>
@@ -239,6 +245,7 @@ class SchemeOTP extends Component {
           </div>
         </div>
       </div>
+      bottomButtonJsx = <button className="btn btn-primary" type="button" onClick={this.generateSecret}>{i18next.t("profile.scheme-otp-generate-secret")}</button>
     } else if (this.state.myOtp.type === "TOTP") {
       jsxTOTP = <div>
         {secretJsx}
@@ -254,6 +261,9 @@ class SchemeOTP extends Component {
           </div>
         </div>
       </div>
+      bottomButtonJsx = <button className="btn btn-primary" type="button" onClick={this.generateSecret}>{i18next.t("profile.scheme-otp-generate-secret")}</button>
+    } else {
+      bottomButtonJsx = <button className="btn btn-primary" type="button" onClick={this.register}>{i18next.t("profile.scheme-otp-save")}</button>
     }
     if (this.state.allowHotp) {
       jsxHotpOption = <a className={"dropdown-item"+(this.state.myOtp.type==="HOTP"?" active":"")} href="#" onClick={(e) => this.changeType(e, "HOTP")}>{i18next.t("profile.scheme-otp-type-HOTP")}</a>;
@@ -318,7 +328,7 @@ class SchemeOTP extends Component {
         <div className="row">
           <div className="col-md-12">
             <div className="btn-group" role="group">
-              <button type="button" className="btn btn-primary" onClick={(e) => this.register(e)}>{i18next.t("profile.scheme-otp-save")}</button>
+              {bottomButtonJsx}
             </div>
           </div>
         </div>
