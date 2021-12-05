@@ -1,5 +1,12 @@
 # Glewlwyd Changelog
 
+## 2.6.1
+
+- Fix bug in OTP registration
+- Fix several UI bugs
+- Improve user registration UI and OTP scheme registration
+- Add callback function `plugin_user_revoke` in plugins
+
 ## 2.6.0
 
 The `"Green Zone Release"`
