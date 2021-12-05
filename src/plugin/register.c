@@ -2797,3 +2797,10 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
   }
   return G_OK;
 }
+
+int plugin_user_revoke(struct config_plugin * config, const char * username, void * cls) {
+  UNUSED(config);
+  UNUSED(username);
+  UNUSED(cls);
+  return G_OK;
+}

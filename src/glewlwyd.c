@@ -3128,11 +3128,13 @@ static int load_plugin_module_file(struct config_elements * config, const char *
       *(void **) (&cur_plugin_module->plugin_module_unload) = dlsym(file_handle, "plugin_module_unload");
       *(void **) (&cur_plugin_module->plugin_module_init) = dlsym(file_handle, "plugin_module_init");
       *(void **) (&cur_plugin_module->plugin_module_close) = dlsym(file_handle, "plugin_module_close");
+      *(void **) (&cur_plugin_module->plugin_user_revoke) = dlsym(file_handle, "plugin_user_revoke");
 
       if (cur_plugin_module->plugin_module_load != NULL &&
           cur_plugin_module->plugin_module_unload != NULL &&
           cur_plugin_module->plugin_module_init != NULL &&
-          cur_plugin_module->plugin_module_close != NULL) {
+          cur_plugin_module->plugin_module_close != NULL &&
+          cur_plugin_module->plugin_user_revoke != NULL) {
         j_result = cur_plugin_module->plugin_module_load(config->config_p);
         if (check_result_value(j_result, G_OK)) {
           cur_plugin_module->name = o_strdup(json_string_value(json_object_get(j_result, "name")));
@@ -3191,6 +3193,7 @@ static int load_plugin_module_file(struct config_elements * config, const char *
         y_log_message(Y_LOG_LEVEL_ERROR, " - plugin_module_unload: %s", (cur_plugin_module->plugin_module_unload != NULL?"found":"not found"));
         y_log_message(Y_LOG_LEVEL_ERROR, " - plugin_module_init: %s", (cur_plugin_module->plugin_module_init != NULL?"found":"not found"));
         y_log_message(Y_LOG_LEVEL_ERROR, " - plugin_module_close: %s", (cur_plugin_module->plugin_module_close != NULL?"found":"not found"));
+        y_log_message(Y_LOG_LEVEL_ERROR, " - plugin_user_revoke: %s", (cur_plugin_module->plugin_user_revoke != NULL?"found":"not found"));
         dlclose(file_handle);
         o_free(cur_plugin_module);
         ret = G_ERROR;

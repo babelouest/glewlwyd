@@ -3606,6 +3606,80 @@ static int jwt_autocheck(struct _oauth2_config * config) {
   return ret;
 }
 
+static int disable_user_data(struct _oauth2_config * config, const char * username) {
+  json_t * j_query;
+  int res, ret = G_OK;
+  
+  do {
+    j_query = json_pack("{sss{si}s{sssssi}}",
+                        "table", GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE,
+                        "set",
+                          "gpgc_enabled", 0,
+                        "where",
+                          "gpgc_plugin_name", config->name,
+                          "gpgc_username", username,
+                          "gpgc_enabled", 1);
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "disable_user_data - Error disable codes");
+      ret = G_ERROR;
+      break;
+    }
+
+    j_query = json_pack("{sss{si}s{sssssi}}",
+                        "table", GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN,
+                        "set",
+                          "gpgr_enabled", 0,
+                        "where",
+                          "gpgr_plugin_name", config->name,
+                          "gpgr_username", username,
+                          "gpgr_enabled", 1);
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "disable_user_data - Error disable refresh tokens");
+      ret = G_ERROR;
+      break;
+    }
+
+    j_query = json_pack("{sss{si}s{sssssi}}",
+                        "table", GLEWLWYD_PLUGIN_OAUTH2_TABLE_ACCESS_TOKEN,
+                        "set",
+                          "gpga_enabled", 0,
+                        "where",
+                          "gpga_plugin_name", config->name,
+                          "gpga_username", username,
+                          "gpga_enabled", 1);
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "disable_user_data - Error disable access tokens");
+      ret = G_ERROR;
+      break;
+    }
+
+    j_query = json_pack("{sss{si}s{sssss{ssss}}}",
+                        "table", GLEWLWYD_PLUGIN_OAUTH2_TABLE_DEVICE_AUTHORIZATION,
+                        "set",
+                          "gpgda_status", 3,
+                        "where",
+                          "gpgda_plugin_name", config->name,
+                          "gpgda_username", username,
+                          "gpgda_status",
+                            "operator", "raw",
+                            "value", "in (0, 1)");
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "disable_user_data - Error disable device auth tokens");
+      ret = G_ERROR;
+      break;
+    }
+  } while (0);
+  return ret;
+}
+
 json_t * plugin_module_load(struct config_plugin * config) {
   UNUSED(config);
   return json_pack("{si ss ss ss}",
@@ -3985,4 +4059,15 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
     o_free(cls);
   }
   return G_OK;
+}
+
+int plugin_user_revoke(struct config_plugin * config, const char * username, void * cls) {
+  UNUSED(config);
+  // Disable all data for user 'username', then remove entry in subject identifier table
+  if (disable_user_data((struct _oauth2_config *)cls, username) == G_OK) {
+    return G_OK;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "plugin_user_revoke - oauth2 - Error disable_user_data");
+    return G_ERROR;
+  }
 }

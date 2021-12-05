@@ -15255,6 +15255,166 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
   return ret;
 }
 
+static int remove_subject_identifier(struct _oidc_config * config, const char * username) {
+  json_t * j_query;
+  int res, ret = G_OK;
+  
+  j_query = json_pack("{sss{ssss}}",
+                        "table", GLEWLWYD_PLUGIN_OIDC_TABLE_SUBJECT_IDENTIFIER,
+                        "where",
+                          "gposi_plugin_name", config->name,
+                          "gposi_username", username);
+  res = h_delete(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "remove_subject_identifier - Error executing j_query");
+    ret = G_OK;
+  } else {
+    ret = G_ERROR_DB;
+  }
+  return ret;
+}
+
+static int disable_user_data(struct _oidc_config * config, const char * username) {
+  json_t * j_query;
+  int res, ret = G_OK;
+  
+  do {
+    j_query = json_pack("{sss{si}s{sssssi}}",
+                        "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CODE,
+                        "set",
+                          "gpoc_enabled", 0,
+                        "where",
+                          "gpoc_plugin_name", config->name,
+                          "gpoc_username", username,
+                          "gpoc_enabled", 1);
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "disable_user_data - Error disable codes");
+      ret = G_ERROR;
+      break;
+    }
+
+    j_query = json_pack("{sss{si}s{sssssi}}",
+                        "table", GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN,
+                        "set",
+                          "gpor_enabled", 0,
+                        "where",
+                          "gpor_plugin_name", config->name,
+                          "gpor_username", username,
+                          "gpor_enabled", 1);
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "disable_user_data - Error disable refresh tokens");
+      ret = G_ERROR;
+      break;
+    }
+
+    j_query = json_pack("{sss{si}s{sssssi}}",
+                        "table", GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN,
+                        "set",
+                          "gpoa_enabled", 0,
+                        "where",
+                          "gpoa_plugin_name", config->name,
+                          "gpoa_username", username,
+                          "gpoa_enabled", 1);
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "disable_user_data - Error disable access tokens");
+      ret = G_ERROR;
+      break;
+    }
+
+    j_query = json_pack("{sss{si}s{sssssi}}",
+                        "table", GLEWLWYD_PLUGIN_OIDC_TABLE_ID_TOKEN,
+                        "set",
+                          "gpoi_enabled", 0,
+                        "where",
+                          "gpoi_plugin_name", config->name,
+                          "gpoi_username", username,
+                          "gpoi_enabled", 1);
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "disable_user_data - Error disable id tokens");
+      ret = G_ERROR;
+      break;
+    }
+
+    j_query = json_pack("{sss{si}s{sssss{ssss}}}",
+                        "table", GLEWLWYD_PLUGIN_OIDC_TABLE_DEVICE_AUTHORIZATION,
+                        "set",
+                          "gpoda_status", 3,
+                        "where",
+                          "gpoda_plugin_name", config->name,
+                          "gpoda_username", username,
+                          "gpoda_status",
+                            "operator", "raw",
+                            "value", "in (0, 1)");
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "disable_user_data - Error disable device auth tokens");
+      ret = G_ERROR;
+      break;
+    }
+
+    j_query = json_pack("{sss{si}s{sssssi}}",
+                        "table", GLEWLWYD_PLUGIN_OIDC_TABLE_RAR,
+                        "set",
+                          "gporar_enabled", 0,
+                        "where",
+                          "gporar_plugin_name", config->name,
+                          "gporar_username", username,
+                          "gporar_enabled", 1);
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "disable_user_data - Error disable rar");
+      ret = G_ERROR;
+      break;
+    }
+
+    j_query = json_pack("{sss{si}s{sssss{ssss}}}",
+                        "table", GLEWLWYD_PLUGIN_OIDC_TABLE_PAR,
+                        "set",
+                          "gpop_status", 2,
+                        "where",
+                          "gpop_plugin_name", config->name,
+                          "gpop_username", username,
+                          "gpop_status",
+                            "operator", "raw",
+                            "value", "in (0, 1)");
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "disable_user_data - Error disable par");
+      ret = G_ERROR;
+      break;
+    }
+
+    j_query = json_pack("{sss{si}s{sssssi}}",
+                        "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
+                        "set",
+                          "gpob_enabled", 0,
+                        "where",
+                          "gpob_plugin_name", config->name,
+                          "gpob_username", username,
+                          "gpob_enabled", 1);
+    res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+    json_decref(j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "disable_user_data - Error disable ciba");
+      ret = G_ERROR;
+      break;
+    }
+  } while (0);
+  return ret;
+}
+
 json_t * plugin_module_load(struct config_plugin * config) {
   UNUSED(config);
   r_global_init();
@@ -15799,4 +15959,20 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
     o_free(cls);
   }
   return G_OK;
+}
+
+int plugin_user_revoke(struct config_plugin * config, const char * username, void * cls) {
+  UNUSED(config);
+  // Disable all data for user 'username', then remove entry in subject identifier table
+  if (disable_user_data((struct _oidc_config *)cls, username) == G_OK) {
+    if (remove_subject_identifier((struct _oidc_config *)cls, username) == G_OK) {
+      return G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "plugin_user_revoke - oidc - Error remove_subject_identifier");
+      return G_ERROR;
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "plugin_user_revoke - oidc - Error disable_user_data");
+    return G_ERROR;
+  }
 }

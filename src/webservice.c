@@ -2426,12 +2426,18 @@ int callback_glewlwyd_user_delete_profile (const struct _u_request * request, st
   } else {
     json_array_foreach(json_object_get(j_session, "session"), index, j_cur_session) {
       if (0 == o_strcasecmp(username, json_string_value(json_object_get(j_cur_session, "username")))) {
-        if (user_session_delete(config, session_uid, json_string_value(json_object_get(j_cur_session, "username"))) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_profile - Error user_session_delete");
+        if (delete_user_session_from_hash(config, json_string_value(json_object_get(j_cur_session, "username")), NULL) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_profile - Error delete_user_session_from_hash");
           response->status = 500;
           ret = G_ERROR;
         } else {
-          y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' removed (profile)", json_string_value(json_object_get((json_t *)response->shared_data, "username")));
+          if (user_session_delete(config, session_uid, json_string_value(json_object_get(j_cur_session, "username"))) != G_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_delete_profile - Error user_session_delete");
+            response->status = 500;
+            ret = G_ERROR;
+          } else {
+            y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' removed (profile)", json_string_value(json_object_get((json_t *)response->shared_data, "username")));
+          }
         }
       }
     }

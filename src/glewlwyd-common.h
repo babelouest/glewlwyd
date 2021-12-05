@@ -292,6 +292,7 @@ struct _plugin_module {
   int      (* plugin_module_unload)(struct config_plugin * config);
   json_t * (* plugin_module_init)(struct config_plugin * config, const char * name, json_t * j_parameters, void ** cls);
   int      (* plugin_module_close)(struct config_plugin * config, const char * name, void * cls);
+  int      (* plugin_user_revoke)(struct config_plugin * config, const char * username, void * cls);
 };
 
 /**

@@ -187,3 +187,27 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
  */
 int plugin_module_close(struct config_plugin * config, const char * name, void * cls);
 ```
+
+```C
+/**
+ * 
+ * plugin_user_revoke
+ * 
+ * Revoke data created for the user 'username' before removing the user
+ * from the system
+ * 
+ * @return value: G_OK on success, another value on error
+ * 
+ * @parameter config: a struct config_module with acess to some Glewlwyd
+ *                    service and data
+ * @parameter username: the username whose data must be revoked
+ * @parameter cls: pointer to the void * cls value allocated in client_module_init
+ * 
+ */
+int plugin_user_revoke(struct config_plugin * config, const char * username, void * cls) {
+  UNUSED(config);
+  UNUSED(username);
+  UNUSED(cls);
+  return G_OK;
+}
+```

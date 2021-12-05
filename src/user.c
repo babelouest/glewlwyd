@@ -793,6 +793,7 @@ int delete_user(struct config_elements * config, const char * username, const ch
   struct _user_module_instance * user_module;
   struct _user_middleware_module_instance * user_middleware_module;
   struct _user_auth_scheme_module_instance * scheme_module;
+  struct _plugin_module_instance * plugin_module;
   json_t * j_cur_user;
   int result;
   size_t i;
@@ -832,6 +833,17 @@ int delete_user(struct config_elements * config, const char * username, const ch
           if (scheme_module != NULL && scheme_module->enabled) {
             if ((ret = scheme_module->module->user_auth_scheme_module_deregister(config->config_m, username, scheme_module->cls)) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error user_auth_scheme_module_deregister for scheme %s", scheme_module->name);
+              break;
+            }
+          }
+        }
+      }
+      if (ret == G_OK) {
+        for (i = 0; i < pointer_list_size(config->plugin_module_instance_list); i++) {
+          plugin_module = pointer_list_get_at(config->plugin_module_instance_list, i);
+          if (plugin_module != NULL && plugin_module->enabled) {
+            if ((ret = plugin_module->module->plugin_user_revoke(config->config_p, username, plugin_module->cls)) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error plugin_user_revoke for plugin %s", plugin_module->name);
               break;
             }
           }
@@ -907,6 +919,7 @@ int user_delete_profile(struct config_elements * config, const char * username) 
   json_t * j_user = get_user(config, username, NULL);
   struct _user_module_instance * user_module;
   struct _user_auth_scheme_module_instance * scheme_module;
+  struct _plugin_module_instance * plugin_module;
   int ret;
   size_t i;
 
@@ -930,6 +943,17 @@ int user_delete_profile(struct config_elements * config, const char * username) 
           if (scheme_module != NULL && scheme_module->enabled) {
             if ((ret = scheme_module->module->user_auth_scheme_module_deregister(config->config_m, username, scheme_module->cls)) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "user_delete_profile - Error user_auth_scheme_module_deregister for scheme %s", scheme_module->name);
+              break;
+            }
+          }
+        }
+      }
+      if (ret == G_OK && !(config->delete_profile & GLEWLWYD_PROFILE_DELETE_DISABLE_PROFILE)) {
+        for (i = 0; i < pointer_list_size(config->plugin_module_instance_list); i++) {
+          plugin_module = pointer_list_get_at(config->plugin_module_instance_list, i);
+          if (plugin_module != NULL && plugin_module->enabled) {
+            if ((ret = plugin_module->module->plugin_user_revoke(config->config_p, username, plugin_module->cls)) != G_OK) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_delete_profile - Error plugin_user_revoke for plugin %s", plugin_module->name);
               break;
             }
           }
