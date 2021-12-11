@@ -15267,9 +15267,9 @@ static int remove_subject_identifier(struct _oidc_config * config, const char * 
   res = h_delete(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "remove_subject_identifier - Error executing j_query");
     ret = G_OK;
   } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "remove_subject_identifier - Error executing j_query");
     ret = G_ERROR_DB;
   }
   return ret;
