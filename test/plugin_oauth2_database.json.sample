@@ -6,6 +6,7 @@
     "order_rank":1,
     "parameters":{
       "use-glewlwyd-connection":true,
+      "pbkdf2-iterations": 1,
       "data-format":{
         "redirect_uri":{"multiple":true,"read":true,"write":true},
         "authorization_type":{"multiple":true,"read":true,"write":true}

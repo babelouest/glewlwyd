@@ -4,7 +4,12 @@
   "display_name":"Database",
   "order_rank":1,
   "parameters":{
-    "use-glewlwyd-connection":true
+    "pbkdf2-iterations": 1,
+    "use-glewlwyd-connection":true,
+    "data-format":{
+      "mock-42":{"property":"postalAddress","multiple":false,"profile-read":true,"profile-write":true},
+      "mock-95":{"property":"postalCode","multiple":true,"profile-read":true,"profile-write":true}
+    }
   },
   "readonly":false,
   "enabled":true
