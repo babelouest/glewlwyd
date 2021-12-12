@@ -223,7 +223,7 @@ START_TEST(test_glwd_mod_user_irl_admin_update_password)
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USERNAME, NULL, NULL, j_profile, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_profile);
   
-  j_profile = json_pack("{s[s]sos[ss]}", "scope", SCOPE, "enabled", json_true(), "password", PASSWORD1, PASSWORD3);
+  j_profile = json_pack("{sss[s]sos[ss]}", "name", NAME, "scope", SCOPE, "enabled", json_true(), "password", PASSWORD1, PASSWORD3);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USERNAME, NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_profile);
   
@@ -239,7 +239,7 @@ START_TEST(test_glwd_mod_user_irl_admin_update_password)
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/auth/", NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_profile);
   
-  j_profile = json_pack("{s[s]sos[so]}", "scope", SCOPE, "enabled", json_true(), "password", "", json_null());
+  j_profile = json_pack("{sss[s]sos[so]}", "name", NAME, "scope", SCOPE, "enabled", json_true(), "password", "", json_null());
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USERNAME, NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_profile);
   
@@ -259,7 +259,7 @@ START_TEST(test_glwd_mod_user_irl_admin_update_password)
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/auth/", NULL, NULL, j_profile, NULL, 401, NULL, NULL, NULL), 1);
   json_decref(j_profile);
   
-  j_profile = json_pack("{s[s]sos[sss]}", "scope", SCOPE, "enabled", json_true(), "password", "", PASSWORD2, PASSWORD3);
+  j_profile = json_pack("{sss[s]sos[sss]}", "name", NAME, "scope", SCOPE, "enabled", json_true(), "password", "", PASSWORD2, PASSWORD3);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USERNAME, NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_profile);
   
@@ -279,7 +279,7 @@ START_TEST(test_glwd_mod_user_irl_admin_update_password)
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/auth/", NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_profile);
   
-  j_profile = json_pack("{s[s]sos[ssoss]}", "scope", SCOPE, "enabled", json_true(), "password", "", "", json_null(), "", "");
+  j_profile = json_pack("{sss[s]sos[ssoss]}", "name", NAME, "scope", SCOPE, "enabled", json_true(), "password", "", "", json_null(), "", "");
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USERNAME, NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_profile);
   
@@ -299,7 +299,7 @@ START_TEST(test_glwd_mod_user_irl_admin_update_password)
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/auth/", NULL, NULL, j_profile, NULL, 401, NULL, NULL, NULL), 1);
   json_decref(j_profile);
   
-  j_profile = json_pack("{s[s]sos[ss]}", "scope", SCOPE, "enabled", json_true(), "password", PASSWORD1, PASSWORD2);
+  j_profile = json_pack("{sss[s]sos[ss]}", "name", NAME, "scope", SCOPE, "enabled", json_true(), "password", PASSWORD1, PASSWORD2);
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USERNAME, NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_profile);
   
