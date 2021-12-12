@@ -34,6 +34,8 @@
 #define PROFILE_MAIL "dev@glewlwyd"
 #define PROFILE_SCOPE_1 "g_profile"
 #define PROFILE_SCOPE_2 "scope1"
+#define PROFILE_MOCK_42 "42"
+#define PROFILE_MOCK_95 "95"
 
 struct _u_request admin_req;
 json_t * j_params;
@@ -72,7 +74,16 @@ END_TEST
 
 START_TEST(test_glwd_mod_user_irl_user_add)
 {
-  json_t * j_user = json_pack("{sssssssss[ss]}", "username", username, "password", PROFILE_PASSWORD, "name", PROFILE_NAME, "email", PROFILE_MAIL, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2);
+  json_t * j_user = json_pack("{sssssssss[ss]sss[s]}", "username", username, "password", PROFILE_PASSWORD, "name", PROFILE_NAME, "email", PROFILE_MAIL, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2, "mock-42", PROFILE_MOCK_42, "mock-95", PROFILE_MOCK_95);
+  char * url = SERVER_URI "/user?source=" MOD_NAME;
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_user, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_user);
+}
+END_TEST
+
+START_TEST(test_glwd_mod_user_irl_user_add_empty_values)
+{
+  json_t * j_user = json_pack("{sssssssss[ss]sss[]}", "username", username, "password", PROFILE_PASSWORD, "name", PROFILE_NAME, "email", PROFILE_MAIL, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2, "mock-42", "", "mock-95");
   char * url = SERVER_URI "/user?source=" MOD_NAME;
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", url, NULL, NULL, j_user, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_user);
@@ -312,6 +323,52 @@ START_TEST(test_glwd_mod_user_irl_user_update_profile)
 }
 END_TEST
 
+START_TEST(test_glwd_mod_user_irl_user_update_profile_empty_values)
+{
+  struct _u_request auth_req;
+  struct _u_response auth_resp;
+  json_t * j_body, * j_profile;
+  char * cookie;
+  
+  ulfius_init_request(&auth_req);
+  ulfius_init_response(&auth_resp);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{ssss}", "username", username, "password", PROFILE_PASSWORD);
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_gt(auth_resp.nb_cookies, 0);
+  ck_assert_ptr_ne((cookie = msprintf("%s=%s", auth_resp.map_cookie[0].key, auth_resp.map_cookie[0].value)), NULL);
+  ck_assert_int_eq(u_map_put(auth_req.map_header, "Cookie", cookie), U_OK);
+  
+  ulfius_clean_response(&auth_resp);
+  
+  ulfius_init_response(&auth_resp);
+  
+  j_profile = json_pack("{sssssss[ss]}", "username", username, "name", PROFILE_NAME, "email", PROFILE_MAIL, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/profile_list/", NULL, NULL, NULL, NULL, 200, j_profile, NULL, NULL), 1);
+  json_decref(j_profile);
+  
+  j_profile = json_pack("{sss[s]}", "name", PROFILE_NAME " Profile Updated", "mock-95", PROFILE_MOCK_95);
+  ck_assert_int_eq(run_simple_test(&auth_req, "PUT", SERVER_URI "/profile/", NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_profile);
+  
+  j_profile = json_pack("{sssssss[ss]s[s]}", "username", username, "name", PROFILE_NAME " Profile Updated", "email", PROFILE_MAIL, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2, "mock-95", PROFILE_MOCK_95);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/profile_list/", NULL, NULL, NULL, NULL, 200, j_profile, NULL, NULL), 1);
+  json_decref(j_profile);
+  
+  j_profile = json_pack("{ss}", "name", PROFILE_NAME " Profile Updated");
+  ck_assert_int_eq(run_simple_test(&auth_req, "PUT", SERVER_URI "/profile/", NULL, NULL, j_profile, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_profile);
+  
+  ulfius_clean_response(&auth_resp);
+  ulfius_clean_request(&auth_req);
+  o_free(cookie);
+}
+END_TEST
+
 START_TEST(test_glwd_mod_user_irl_user_update_profile_case)
 {
   struct _u_request auth_req;
@@ -462,6 +519,26 @@ START_TEST(test_glwd_mod_user_irl_user_update)
 }
 END_TEST
 
+START_TEST(test_glwd_mod_user_irl_user_update_empty_values)
+{
+  json_t * j_user = json_pack("{sssss[ss]sss[s]}", "name", PROFILE_NAME "-updated", "email", PROFILE_MAIL "-updated", "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2, "mock-42", "", "mock-95", PROFILE_MOCK_95);
+  char * url = msprintf(SERVER_URI "/user/%s?source=" MOD_NAME, username);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_user, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_user);
+  o_free(url);
+}
+END_TEST
+
+START_TEST(test_glwd_mod_user_irl_user_update_empty_values_only)
+{
+  json_t * j_user = json_pack("{ss}", "name", PROFILE_NAME "-updated");
+  char * url = msprintf(SERVER_URI "/user/%s?source=" MOD_NAME, username);
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_user, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_user);
+  o_free(url);
+}
+END_TEST
+
 START_TEST(test_glwd_mod_user_irl_user_update_case)
 {
   json_t * j_user = json_pack("{sssss[ss]}", "name", PROFILE_NAME "-updated", "email", PROFILE_MAIL "-updated", "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2);
@@ -475,6 +552,26 @@ END_TEST
 START_TEST(test_glwd_mod_user_irl_user_get_updated)
 {
   json_t * j_user = json_pack("{sssssssss[ss]}", "username", username, "name", PROFILE_NAME "-updated", "email", PROFILE_MAIL "-updated", "source", MOD_NAME, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2);
+  char * url = msprintf(SERVER_URI "/user/%s?source=" MOD_NAME, username);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_user, NULL, NULL), 1);
+  json_decref(j_user);
+  o_free(url);
+}
+END_TEST
+
+START_TEST(test_glwd_mod_user_irl_user_get_updated_empty_values)
+{
+  json_t * j_user = json_pack("{sssssss[ss]s[s]}", "username", username, "email", PROFILE_MAIL "-updated", "source", MOD_NAME, "scope", PROFILE_SCOPE_1, PROFILE_SCOPE_2, "mock-95", PROFILE_MOCK_95);
+  char * url = msprintf(SERVER_URI "/user/%s?source=" MOD_NAME, username);
+  ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_user, NULL, NULL), 1);
+  json_decref(j_user);
+  o_free(url);
+}
+END_TEST
+
+START_TEST(test_glwd_mod_user_irl_user_get_updated_empty_values_only)
+{
+  json_t * j_user = json_pack("{ss}", "username", username);
   char * url = msprintf(SERVER_URI "/user/%s?source=" MOD_NAME, username);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", url, NULL, NULL, NULL, NULL, 200, j_user, NULL, NULL), 1);
   json_decref(j_user);
@@ -594,6 +691,14 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_mod_user_irl_user_get_case_updated);
   tcase_add_test(tc_core, test_glwd_mod_user_irl_user_delete);
   tcase_add_test(tc_core, test_glwd_mod_user_irl_user_delete_case);
+  tcase_add_test(tc_core, test_glwd_mod_user_irl_user_add_empty_values);
+  tcase_add_test(tc_core, test_glwd_mod_user_irl_user_get);
+  tcase_add_test(tc_core, test_glwd_mod_user_irl_user_update_profile_empty_values);
+  tcase_add_test(tc_core, test_glwd_mod_user_irl_user_update_empty_values);
+  tcase_add_test(tc_core, test_glwd_mod_user_irl_user_get_updated_empty_values);
+  tcase_add_test(tc_core, test_glwd_mod_user_irl_user_update_empty_values_only);
+  tcase_add_test(tc_core, test_glwd_mod_user_irl_user_get_updated_empty_values_only);
+  tcase_add_test(tc_core, test_glwd_mod_user_irl_user_delete);
   tcase_add_test(tc_core, test_glwd_mod_user_irl_user_large_list_add);
   tcase_add_test(tc_core, test_glwd_mod_user_irl_user_large_list_get);
   tcase_add_test(tc_core, test_glwd_mod_user_irl_user_large_list_delete);
