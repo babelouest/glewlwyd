@@ -558,7 +558,7 @@ static int set_update_password_mod(json_t * j_params, LDAP * ldap, const char * 
   return ret;
 }
 
-static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char * username, json_t * j_user, int profile, int add, json_t * j_mod_value_free_array) {
+static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char * username, json_t * j_user, int profile, int add) {
   LDAPMod ** mods = NULL;
   size_t nb_attr = 0;
   json_t * j_format, * j_property = NULL, * j_property_value, * j_scope;
@@ -569,97 +569,77 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
   size_t value_dec_len = 0;
   const char ** passwords = NULL;
 
-  if (j_mod_value_free_array != NULL) {
-    // Count attrs
-    if (add) {
-      nb_attr += count_properties(j_params, "username-property") + 1;
+  // Count attrs
+  if (add) {
+    nb_attr += count_properties(j_params, "username-property") + 1;
+  }
+  if (!add || json_string_length(json_object_get(j_user, "name"))) {
+    nb_attr += count_properties(j_params, "name-property");
+  }
+  if (!profile) {
+    if (!add || json_array_size(json_object_get(j_user, "scope"))) {
+      nb_attr += count_properties(j_params, "scope-property");
     }
-    if (!add || json_string_length(json_object_get(j_user, "name"))) {
-      nb_attr += count_properties(j_params, "name-property");
+    if (!add || json_string_length(json_object_get(j_user, "email"))) {
+      nb_attr += count_properties(j_params, "email-property");
     }
-    if (!profile) {
-      if (!add || json_array_size(json_object_get(j_user, "scope"))) {
-        nb_attr += count_properties(j_params, "scope-property");
-      }
-      if (!add || json_string_length(json_object_get(j_user, "email"))) {
-        nb_attr += count_properties(j_params, "email-property");
-      }
-      if (!add || json_string_length(json_object_get(j_user, "password")) || json_array_size(json_object_get(j_user, "password"))) {
-        nb_attr++;
-      }
+    if (!add || json_string_length(json_object_get(j_user, "password")) || json_array_size(json_object_get(j_user, "password"))) {
+      nb_attr++;
     }
-    json_object_foreach(j_user, field, j_property) {
-      if (0 != o_strcmp(field, "username") &&
-          0 != o_strcmp(field, "name") &&
-          0 != o_strcmp(field, "password") &&
-          0 != o_strcmp(field, "scope") &&
-          0 != o_strcmp(field, "email") &&
-          0 != o_strcmp(field, "enabled")) {
-        if (!add || json_string_length(j_property) || json_array_size(j_property)) {
-          if ((j_format = json_object_get(json_object_get(j_params, "data-format"), field)) != NULL) {
-            if (!profile || (profile && json_object_get(j_format, "profile-write") == json_true())) {
-              nb_attr += count_properties(j_format, "property");
-            }
+  }
+  json_object_foreach(j_user, field, j_property) {
+    if (0 != o_strcmp(field, "username") &&
+        0 != o_strcmp(field, "name") &&
+        0 != o_strcmp(field, "password") &&
+        0 != o_strcmp(field, "scope") &&
+        0 != o_strcmp(field, "email") &&
+        0 != o_strcmp(field, "enabled")) {
+      if (!add || json_string_length(j_property) || json_array_size(j_property)) {
+        if ((j_format = json_object_get(json_object_get(j_params, "data-format"), field)) != NULL) {
+          if (!profile || (profile && json_object_get(j_format, "profile-write") == json_true())) {
+            nb_attr += count_properties(j_format, "property");
           }
         }
       }
     }
-    mods = o_malloc((nb_attr + 1)*sizeof(LDAPMod *));
-    for (i=0; i<=nb_attr; i++) {
-      mods[i] = NULL;
-    }
+  }
+  mods = o_malloc((nb_attr + 1)*sizeof(LDAPMod *));
+  for (i=0; i<=nb_attr; i++) {
+    mods[i] = NULL;
+  }
 
-    // Fill mods
-    i=0;
-    if (mods != NULL) {
-      if (add) {
-        mods[i] = o_malloc(sizeof(LDAPMod));
-        if (mods[i] != NULL) {
-          mods[i]->mod_values = o_malloc((json_array_size(json_object_get(j_params, "object-class")) + 1) * sizeof(char *));
-          if (mods[i]->mod_values != NULL) {
-            mods[i]->mod_op = LDAP_MOD_ADD;
-            mods[i]->mod_type = "objectClass";
-            json_array_foreach(json_object_get(j_params, "object-class"), index, j_property_value) {
-              mods[i]->mod_values[index] = o_strdup(json_string_value(j_property_value));
-            }
-            mods[i]->mod_values[json_array_size(json_object_get(j_params, "object-class"))] = NULL;
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (objectClass)", i);
-            has_error = 1;
+  // Fill mods
+  i=0;
+  if (mods != NULL) {
+    if (add) {
+      mods[i] = o_malloc(sizeof(LDAPMod));
+      if (mods[i] != NULL) {
+        mods[i]->mod_values = o_malloc((json_array_size(json_object_get(j_params, "object-class")) + 1) * sizeof(char *));
+        if (mods[i]->mod_values != NULL) {
+          mods[i]->mod_op = LDAP_MOD_ADD;
+          mods[i]->mod_type = "objectClass";
+          json_array_foreach(json_object_get(j_params, "object-class"), index, j_property_value) {
+            mods[i]->mod_values[index] = o_strdup(json_string_value(j_property_value));
           }
-          i++;
+          mods[i]->mod_values[json_array_size(json_object_get(j_params, "object-class"))] = NULL;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (objectClass)", i);
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (objectClass)", i);
           has_error = 1;
         }
-        
-        if (json_is_array(json_object_get(j_params, "username-property"))) {
-          json_array_foreach(json_object_get(j_params, "username-property"), index, j_property) {
-            mods[i] = o_malloc(sizeof(LDAPMod));
-            if (mods[i] != NULL) {
-              mods[i]->mod_values = o_malloc(2 * sizeof(char *));
-              if (mods[i]->mod_values != NULL) {
-                mods[i]->mod_op = LDAP_MOD_ADD;
-                mods[i]->mod_type = (char *)json_string_value(j_property);
-                mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "username")));
-                mods[i]->mod_values[1] = NULL;
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (username)", i);
-                has_error = 1;
-              }
-              i++;
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (username)", i);
-              has_error = 1;
-            }
-          }
-        } else {
+        i++;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (objectClass)", i);
+        has_error = 1;
+      }
+      
+      if (json_is_array(json_object_get(j_params, "username-property"))) {
+        json_array_foreach(json_object_get(j_params, "username-property"), index, j_property) {
           mods[i] = o_malloc(sizeof(LDAPMod));
           if (mods[i] != NULL) {
             mods[i]->mod_values = o_malloc(2 * sizeof(char *));
             if (mods[i]->mod_values != NULL) {
-              mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
-              mods[i]->mod_type = (char *)get_read_property(j_params, "username-property");
+              mods[i]->mod_op = LDAP_MOD_ADD;
+              mods[i]->mod_type = (char *)json_string_value(j_property);
               mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "username")));
               mods[i]->mod_values[1] = NULL;
             } else {
@@ -672,36 +652,36 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
             has_error = 1;
           }
         }
-      }
-
-      if (json_string_length(json_object_get(j_user, "name"))) {
-        if (json_is_array(json_object_get(j_params, "name-property"))) {
-          json_array_foreach(json_object_get(j_params, "name-property"), index, j_property) {
-            mods[i] = o_malloc(sizeof(LDAPMod));
-            if (mods[i] != NULL) {
-              mods[i]->mod_values = o_malloc(2 * sizeof(char *));
-              if (mods[i]->mod_values != NULL) {
-                mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
-                mods[i]->mod_type = (char *)json_string_value(j_property);
-                mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "name")));
-                mods[i]->mod_values[1] = NULL;
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (name)", i);
-                has_error = 1;
-              }
-              i++;
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (name)", i);
-              has_error = 1;
-            }
+      } else {
+        mods[i] = o_malloc(sizeof(LDAPMod));
+        if (mods[i] != NULL) {
+          mods[i]->mod_values = o_malloc(2 * sizeof(char *));
+          if (mods[i]->mod_values != NULL) {
+            mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+            mods[i]->mod_type = (char *)get_read_property(j_params, "username-property");
+            mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "username")));
+            mods[i]->mod_values[1] = NULL;
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (username)", i);
+            has_error = 1;
           }
+          i++;
         } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (username)", i);
+          has_error = 1;
+        }
+      }
+    }
+
+    if (json_string_length(json_object_get(j_user, "name"))) {
+      if (json_is_array(json_object_get(j_params, "name-property"))) {
+        json_array_foreach(json_object_get(j_params, "name-property"), index, j_property) {
           mods[i] = o_malloc(sizeof(LDAPMod));
           if (mods[i] != NULL) {
             mods[i]->mod_values = o_malloc(2 * sizeof(char *));
             if (mods[i]->mod_values != NULL) {
               mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
-              mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "name-property"));
+              mods[i]->mod_type = (char *)json_string_value(j_property);
               mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "name")));
               mods[i]->mod_values[1] = NULL;
             } else {
@@ -714,31 +694,33 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
             has_error = 1;
           }
         }
-      } else if (!add) {
-        if (json_is_array(json_object_get(j_params, "name-property"))) {
-          json_array_foreach(json_object_get(j_params, "name-property"), index, j_property) {
-            mods[i] = o_malloc(sizeof(LDAPMod));
-            if (mods[i] != NULL) {
-              if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
-                mods[i]->mod_op = LDAP_MOD_REPLACE;
-                mods[i]->mod_type = o_strdup(json_string_value(j_property));
-                mods[i]->mod_values[0] = NULL;
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (name)", i);
-                has_error = 1;
-              }
-              i++;
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (name)", i);
-              has_error = 1;
-            }
+      } else {
+        mods[i] = o_malloc(sizeof(LDAPMod));
+        if (mods[i] != NULL) {
+          mods[i]->mod_values = o_malloc(2 * sizeof(char *));
+          if (mods[i]->mod_values != NULL) {
+            mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+            mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "name-property"));
+            mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "name")));
+            mods[i]->mod_values[1] = NULL;
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (name)", i);
+            has_error = 1;
           }
+          i++;
         } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (name)", i);
+          has_error = 1;
+        }
+      }
+    } else if (!add) {
+      if (json_is_array(json_object_get(j_params, "name-property"))) {
+        json_array_foreach(json_object_get(j_params, "name-property"), index, j_property) {
           mods[i] = o_malloc(sizeof(LDAPMod));
           if (mods[i] != NULL) {
             if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
               mods[i]->mod_op = LDAP_MOD_REPLACE;
-              mods[i]->mod_type = o_strdup(json_string_value(json_object_get(j_params, "name-property")));
+              mods[i]->mod_type = o_strdup(json_string_value(j_property));
               mods[i]->mod_values[0] = NULL;
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (name)", i);
@@ -750,36 +732,34 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
             has_error = 1;
           }
         }
-      }
-      if (!profile) {
-        if (json_string_length(json_object_get(j_user, "email"))) {
-          if (json_is_array(json_object_get(j_params, "email-property"))) {
-            json_array_foreach(json_object_get(j_params, "email-property"), index, j_property) {
-              mods[i] = o_malloc(sizeof(LDAPMod));
-              if (mods[i] != NULL) {
-                mods[i]->mod_values = o_malloc(2 * sizeof(char *));
-                if (mods[i]->mod_values != NULL) {
-                  mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
-                  mods[i]->mod_type = (char *)json_string_value(j_property);
-                  mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "email")));
-                  mods[i]->mod_values[1] = NULL;
-                } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (email)", i);
-                  has_error = 1;
-                }
-                i++;
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (email)", i);
-                has_error = 1;
-              }
-            }
+      } else {
+        mods[i] = o_malloc(sizeof(LDAPMod));
+        if (mods[i] != NULL) {
+          if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
+            mods[i]->mod_op = LDAP_MOD_REPLACE;
+            mods[i]->mod_type = o_strdup(json_string_value(json_object_get(j_params, "name-property")));
+            mods[i]->mod_values[0] = NULL;
           } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (name)", i);
+            has_error = 1;
+          }
+          i++;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (name)", i);
+          has_error = 1;
+        }
+      }
+    }
+    if (!profile) {
+      if (json_string_length(json_object_get(j_user, "email"))) {
+        if (json_is_array(json_object_get(j_params, "email-property"))) {
+          json_array_foreach(json_object_get(j_params, "email-property"), index, j_property) {
             mods[i] = o_malloc(sizeof(LDAPMod));
             if (mods[i] != NULL) {
               mods[i]->mod_values = o_malloc(2 * sizeof(char *));
               if (mods[i]->mod_values != NULL) {
                 mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
-                mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "email-property"));
+                mods[i]->mod_type = (char *)json_string_value(j_property);
                 mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "email")));
                 mods[i]->mod_values[1] = NULL;
               } else {
@@ -792,31 +772,33 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               has_error = 1;
             }
           }
-        } else if (!add) {
-          if (json_is_array(json_object_get(j_params, "email-property"))) {
-            json_array_foreach(json_object_get(j_params, "email-property"), index, j_property) {
-              mods[i] = o_malloc(sizeof(LDAPMod));
-              if (mods[i] != NULL) {
-                if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
-                  mods[i]->mod_op = LDAP_MOD_REPLACE;
-                  mods[i]->mod_type = (char *)json_string_value(j_property);
-                  mods[i]->mod_values[0] = NULL;
-                } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (email)", i);
-                  has_error = 1;
-                }
-                i++;
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (email)", i);
-                has_error = 1;
-              }
+        } else {
+          mods[i] = o_malloc(sizeof(LDAPMod));
+          if (mods[i] != NULL) {
+            mods[i]->mod_values = o_malloc(2 * sizeof(char *));
+            if (mods[i]->mod_values != NULL) {
+              mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+              mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "email-property"));
+              mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "email")));
+              mods[i]->mod_values[1] = NULL;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (email)", i);
+              has_error = 1;
             }
+            i++;
           } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (email)", i);
+            has_error = 1;
+          }
+        }
+      } else if (!add) {
+        if (json_is_array(json_object_get(j_params, "email-property"))) {
+          json_array_foreach(json_object_get(j_params, "email-property"), index, j_property) {
             mods[i] = o_malloc(sizeof(LDAPMod));
             if (mods[i] != NULL) {
               if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
                 mods[i]->mod_op = LDAP_MOD_REPLACE;
-                mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "email-property"));
+                mods[i]->mod_type = (char *)json_string_value(j_property);
                 mods[i]->mod_values[0] = NULL;
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (email)", i);
@@ -828,37 +810,33 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               has_error = 1;
             }
           }
-        }
-        if (json_array_size(json_object_get(j_user, "scope"))) {
-          if (json_is_array(json_object_get(j_params, "scope-property"))) {
-            json_array_foreach(json_object_get(j_params, "scope-property"), index, j_property) {
-              mods[i] = o_malloc(sizeof(LDAPMod));
-              if (mods[i] != NULL) {
-                mods[i]->mod_values = o_malloc((json_array_size(json_object_get(j_user, "scope")) + 1) * sizeof(char *));
-                if (mods[i]->mod_values != NULL) {
-                  mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
-                  mods[i]->mod_type = (char *)json_string_value(j_property);
-                  json_array_foreach(json_object_get(j_user, "scope"), index_scope, j_scope) {
-                    mods[i]->mod_values[index_scope] = o_strdup(json_string_value(j_scope));
-                  }
-                  mods[i]->mod_values[(json_array_size(json_object_get(j_user, "scope")))] = NULL;
-                } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (scope)", i);
-                  has_error = 1;
-                }
-                i++;
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (scope)", i);
-                has_error = 1;
-              }
+        } else {
+          mods[i] = o_malloc(sizeof(LDAPMod));
+          if (mods[i] != NULL) {
+            if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
+              mods[i]->mod_op = LDAP_MOD_REPLACE;
+              mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "email-property"));
+              mods[i]->mod_values[0] = NULL;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (email)", i);
+              has_error = 1;
             }
+            i++;
           } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (email)", i);
+            has_error = 1;
+          }
+        }
+      }
+      if (json_array_size(json_object_get(j_user, "scope"))) {
+        if (json_is_array(json_object_get(j_params, "scope-property"))) {
+          json_array_foreach(json_object_get(j_params, "scope-property"), index, j_property) {
             mods[i] = o_malloc(sizeof(LDAPMod));
             if (mods[i] != NULL) {
               mods[i]->mod_values = o_malloc((json_array_size(json_object_get(j_user, "scope")) + 1) * sizeof(char *));
               if (mods[i]->mod_values != NULL) {
                 mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
-                mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "scope-property"));
+                mods[i]->mod_type = (char *)json_string_value(j_property);
                 json_array_foreach(json_object_get(j_user, "scope"), index_scope, j_scope) {
                   mods[i]->mod_values[index_scope] = o_strdup(json_string_value(j_scope));
                 }
@@ -873,31 +851,35 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               has_error = 1;
             }
           }
-        } else if (!add) {
-          if (json_is_array(json_object_get(j_params, "scope-property"))) {
-            json_array_foreach(json_object_get(j_params, "scope-property"), index, j_property) {
-              mods[i] = o_malloc(sizeof(LDAPMod));
-              if (mods[i] != NULL) {
-                if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
-                  mods[i]->mod_op = LDAP_MOD_REPLACE;
-                  mods[i]->mod_type = (char *)json_string_value(j_property);
-                  mods[i]->mod_values[0] = NULL;
-                } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (scope)", i);
-                  has_error = 1;
-                }
-                i++;
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (scope)", i);
-                has_error = 1;
+        } else {
+          mods[i] = o_malloc(sizeof(LDAPMod));
+          if (mods[i] != NULL) {
+            mods[i]->mod_values = o_malloc((json_array_size(json_object_get(j_user, "scope")) + 1) * sizeof(char *));
+            if (mods[i]->mod_values != NULL) {
+              mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+              mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "scope-property"));
+              json_array_foreach(json_object_get(j_user, "scope"), index_scope, j_scope) {
+                mods[i]->mod_values[index_scope] = o_strdup(json_string_value(j_scope));
               }
+              mods[i]->mod_values[(json_array_size(json_object_get(j_user, "scope")))] = NULL;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (scope)", i);
+              has_error = 1;
             }
+            i++;
           } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (scope)", i);
+            has_error = 1;
+          }
+        }
+      } else if (!add) {
+        if (json_is_array(json_object_get(j_params, "scope-property"))) {
+          json_array_foreach(json_object_get(j_params, "scope-property"), index, j_property) {
             mods[i] = o_malloc(sizeof(LDAPMod));
             if (mods[i] != NULL) {
               if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
                 mods[i]->mod_op = LDAP_MOD_REPLACE;
-                mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "scope-property"));
+                mods[i]->mod_type = (char *)json_string_value(j_property);
                 mods[i]->mod_values[0] = NULL;
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (scope)", i);
@@ -909,184 +891,192 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               has_error = 1;
             }
           }
-        }
-
-        if (json_object_get(j_params, "multiple_passwords") == json_true()) {
-          if ((passwords = o_malloc(json_array_size(json_object_get(j_user, "password"))*sizeof(char *))) != NULL) {
-            mods[i] = o_malloc(sizeof(LDAPMod));
-            if (mods[i] != NULL) {
-              json_array_foreach(json_object_get(j_user, "password"), index, j_property) {
-                passwords[index] = json_string_value(j_property);
-              }
-              if (set_update_password_mod(j_params, ldap, username, passwords, json_array_size(json_object_get(j_user, "password")), mods[i], add) == G_OK) {
-                mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
-                mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "password-property"));
-                json_array_append_new(j_mod_value_free_array, json_integer(i));
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error set_update_password_mod for mods[%d]", i);
-                has_error = 1;
-              }
-              i++;
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (password)", i);
-              has_error = 1;
-            }
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (passwords)", i);
-            has_error = 1;
-          }
-          o_free(passwords);
         } else {
-          if (json_string_length(json_object_get(j_user, "password"))) {
-            mods[i] = o_malloc(sizeof(LDAPMod));
-            if (mods[i] != NULL) {
-              mods[i]->mod_values = o_malloc(2 * sizeof(char *));
-              if (mods[i]->mod_values != NULL) {
-                mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
-                mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "password-property"));
-                mods[i]->mod_values[0] = json_string_length(json_object_get(j_user, "password"))?generate_hash(get_digest_algorithm(j_params), json_string_value(json_object_get(j_user, "password"))):NULL;
-                mods[i]->mod_values[1] = NULL;
-                json_array_append_new(j_mod_value_free_array, json_integer(i));
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (password)", i);
-                has_error = 1;
-              }
-              i++;
+          mods[i] = o_malloc(sizeof(LDAPMod));
+          if (mods[i] != NULL) {
+            if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
+              mods[i]->mod_op = LDAP_MOD_REPLACE;
+              mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "scope-property"));
+              mods[i]->mod_values[0] = NULL;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (password)", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (scope)", i);
               has_error = 1;
             }
+            i++;
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (scope)", i);
+            has_error = 1;
           }
         }
       }
-      json_object_foreach(j_user, field, j_property) {
-        if (0 != o_strcmp(field, "username") &&
-            0 != o_strcmp(field, "name") &&
-            0 != o_strcmp(field, "password") &&
-            0 != o_strcmp(field, "scope") &&
-            0 != o_strcmp(field, "email") &&
-            0 != o_strcmp(field, "enabled")) {
-          if ((j_format = json_object_get(json_object_get(j_params, "data-format"), field)) != NULL) {
-            if (!profile || (profile && json_object_get(j_format, "profile-write") == json_true())) {
-              if (json_array_size(j_property) && json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") == json_true()) {
-                mods[i] = o_malloc(sizeof(LDAPMod));
-                if (mods[i] != NULL) {
-                  mods[i]->mod_values = o_malloc((json_array_size(j_property) + 1) * sizeof(char *));
-                  if (mods[i]->mod_values != NULL) {
-                    mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
-                    mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
-                    json_array_foreach(j_property, index_scope, j_property_value) {
-                      if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
-                        if (o_base64_decode((const unsigned char *)json_string_value(j_property_value), json_string_length(j_property_value), NULL, &value_dec_len)) {
-                          if ((value_dec = o_malloc(value_dec_len+1)) != NULL) {
-                            if (o_base64_decode((const unsigned char *)json_string_value(j_property_value), json_string_length(j_property_value), value_dec, &value_dec_len)) {
-                              value_dec[value_dec_len] = '\0';
-                              mods[i]->mod_values[index_scope] = (char *)value_dec;
-                            } else {
-                              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (1-2)", json_string_value(j_property_value));
-                              has_error = 1;
-                            }
-                          } else {
-                            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for value_dec (1)");
-                          }
-                        } else {
-                          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (1-1)", json_string_value(j_property_value));
-                          has_error = 1;
-                        }
-                      } else {
-                        mods[i]->mod_values[index_scope] = o_strdup(json_string_value(j_property_value));
-                      }
-                    }
+
+      if (json_object_get(j_params, "multiple_passwords") == json_true()) {
+        if ((passwords = o_malloc(json_array_size(json_object_get(j_user, "password"))*sizeof(char *))) != NULL) {
+          mods[i] = o_malloc(sizeof(LDAPMod));
+          if (mods[i] != NULL) {
+            json_array_foreach(json_object_get(j_user, "password"), index, j_property) {
+              passwords[index] = json_string_value(j_property);
+            }
+            if (set_update_password_mod(j_params, ldap, username, passwords, json_array_size(json_object_get(j_user, "password")), mods[i], add) == G_OK) {
+              mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+              mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "password-property"));
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error set_update_password_mod for mods[%d]", i);
+              has_error = 1;
+            }
+            i++;
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (password)", i);
+            has_error = 1;
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (passwords)", i);
+          has_error = 1;
+        }
+        o_free(passwords);
+      } else {
+        if (json_string_length(json_object_get(j_user, "password"))) {
+          mods[i] = o_malloc(sizeof(LDAPMod));
+          if (mods[i] != NULL) {
+            mods[i]->mod_values = o_malloc(2 * sizeof(char *));
+            if (mods[i]->mod_values != NULL) {
+              mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+              mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "password-property"));
+              mods[i]->mod_values[0] = json_string_length(json_object_get(j_user, "password"))?generate_hash(get_digest_algorithm(j_params), json_string_value(json_object_get(j_user, "password"))):NULL;
+              mods[i]->mod_values[1] = NULL;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (password)", i);
+              has_error = 1;
+            }
+            i++;
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (password)", i);
+            has_error = 1;
+          }
+        }
+      }
+    }
+    json_object_foreach(j_user, field, j_property) {
+      if (0 != o_strcmp(field, "username") &&
+          0 != o_strcmp(field, "name") &&
+          0 != o_strcmp(field, "password") &&
+          0 != o_strcmp(field, "scope") &&
+          0 != o_strcmp(field, "email") &&
+          0 != o_strcmp(field, "enabled")) {
+        if ((j_format = json_object_get(json_object_get(j_params, "data-format"), field)) != NULL) {
+          if (!profile || (profile && json_object_get(j_format, "profile-write") == json_true())) {
+            if (json_array_size(j_property) && json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") == json_true()) {
+              mods[i] = o_malloc(sizeof(LDAPMod));
+              if (mods[i] != NULL) {
+                mods[i]->mod_values = o_malloc((json_array_size(j_property) + 1) * sizeof(char *));
+                if (mods[i]->mod_values != NULL) {
+                  mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+                  mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
+                  json_array_foreach(j_property, index_scope, j_property_value) {
                     if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
-                      json_array_append_new(j_mod_value_free_array, json_integer(i));
-                    }
-                    mods[i]->mod_values[json_array_size(j_property)] = NULL;
-                  } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (%s)", i, json_string_value(json_object_get(j_format, "property")));
-                    has_error = 1;
-                  }
-                  i++;
-                } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (%s)", i, json_string_value(json_object_get(j_format, "property")));
-                  has_error = 1;
-                }
-              } else if (json_string_length(j_property) && json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true()) {
-                mods[i] = o_malloc(sizeof(LDAPMod));
-                if (mods[i] != NULL) {
-                  mods[i]->mod_values = o_malloc(2 * sizeof(char *));
-                  if (mods[i]->mod_values != NULL) {
-                    mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
-                    mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
-                    if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
-                      if (o_base64_decode((const unsigned char *)json_string_value(j_property), json_string_length(j_property), NULL, &value_dec_len)) {
+                      if (o_base64_decode((const unsigned char *)json_string_value(j_property_value), json_string_length(j_property_value), NULL, &value_dec_len)) {
                         if ((value_dec = o_malloc(value_dec_len+1)) != NULL) {
-                          if (o_base64_decode((const unsigned char *)json_string_value(j_property), json_string_length(j_property), value_dec, &value_dec_len)) {
+                          if (o_base64_decode((const unsigned char *)json_string_value(j_property_value), json_string_length(j_property_value), value_dec, &value_dec_len)) {
                             value_dec[value_dec_len] = '\0';
-                            mods[i]->mod_values[0] = (char *)value_dec;
+                            mods[i]->mod_values[index_scope] = (char *)value_dec;
                           } else {
-                            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (2-2)", json_string_value(j_property));
+                            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (1-2)", json_string_value(j_property_value));
                             has_error = 1;
                           }
                         } else {
-                          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for value_dec (2)");
+                          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for value_dec (1)");
                         }
                       } else {
-                        y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (2-1)", json_string_value(j_property));
+                        y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (1-1)", json_string_value(j_property_value));
                         has_error = 1;
                       }
-                      json_array_append_new(j_mod_value_free_array, json_integer(i));
                     } else {
-                      mods[i]->mod_values[0] = o_strdup(json_string_value(j_property));
+                      mods[i]->mod_values[index_scope] = o_strdup(json_string_value(j_property_value));
                     }
-                    mods[i]->mod_values[1] = NULL;
-                    i++;
-                  } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (%s)", i, json_string_value(json_object_get(j_format, "property")));
-                    has_error = 1;
                   }
+                  mods[i]->mod_values[json_array_size(j_property)] = NULL;
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (%s)", i, json_string_value(json_object_get(j_format, "property")));
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (%s)", i, json_string_value(json_object_get(j_format, "property")));
                   has_error = 1;
                 }
-              } else if (!add) {
-                mods[i] = o_malloc(sizeof(LDAPMod));
-                if (mods[i] != NULL) {
-                  if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
-                    mods[i]->mod_op = LDAP_MOD_REPLACE;
-                    mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
-                    mods[i]->mod_values[0] = NULL;
+                i++;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (%s)", i, json_string_value(json_object_get(j_format, "property")));
+                has_error = 1;
+              }
+            } else if (json_string_length(j_property) && json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true()) {
+              mods[i] = o_malloc(sizeof(LDAPMod));
+              if (mods[i] != NULL) {
+                mods[i]->mod_values = o_malloc(2 * sizeof(char *));
+                if (mods[i]->mod_values != NULL) {
+                  mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+                  mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
+                  if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
+                    if (o_base64_decode((const unsigned char *)json_string_value(j_property), json_string_length(j_property), NULL, &value_dec_len)) {
+                      if ((value_dec = o_malloc(value_dec_len+1)) != NULL) {
+                        if (o_base64_decode((const unsigned char *)json_string_value(j_property), json_string_length(j_property), value_dec, &value_dec_len)) {
+                          value_dec[value_dec_len] = '\0';
+                          mods[i]->mod_values[0] = (char *)value_dec;
+                        } else {
+                          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (2-2)", json_string_value(j_property));
+                          has_error = 1;
+                        }
+                      } else {
+                        y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for value_dec (2)");
+                      }
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (2-1)", json_string_value(j_property));
+                      has_error = 1;
+                    }
                   } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (%s)", i, json_string_value(json_object_get(j_format, "property")));
-                    has_error = 1;
+                    mods[i]->mod_values[0] = o_strdup(json_string_value(j_property));
                   }
+                  mods[i]->mod_values[1] = NULL;
                   i++;
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (%s)", i, json_string_value(json_object_get(j_format, "property")));
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (%s)", i, json_string_value(json_object_get(j_format, "property")));
                   has_error = 1;
                 }
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (%s)", i, json_string_value(json_object_get(j_format, "property")));
+                has_error = 1;
+              }
+            } else if (!add) {
+              mods[i] = o_malloc(sizeof(LDAPMod));
+              if (mods[i] != NULL) {
+                if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
+                  mods[i]->mod_op = LDAP_MOD_REPLACE;
+                  mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
+                  mods[i]->mod_values[0] = NULL;
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (%s)", i, json_string_value(json_object_get(j_format, "property")));
+                  has_error = 1;
+                }
+                i++;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (%s)", i, json_string_value(json_object_get(j_format, "property")));
+                has_error = 1;
               }
             }
           }
         }
       }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods");
-      has_error = 1;
-    }
-    if (has_error) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - mods has error, cleaning memory");
-      for (i=0; mods[i]!=NULL; i++) {
-        for (j=0; mods[i]->mod_values[j] != NULL; j++) {
-          o_free(mods[i]->mod_values[j]);
-        }
-        o_free(mods[i]->mod_values);
-        o_free(mods[i]);
-      }
-      o_free(mods);
-      mods = NULL;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error j_mod_value_free_array is NULL");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods");
+    has_error = 1;
+  }
+  if (has_error) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - mods has error, cleaning memory");
+    for (i=0; mods[i]!=NULL; i++) {
+      for (j=0; mods[i]->mod_values[j] != NULL; j++) {
+        o_free(mods[i]->mod_values[j]);
+      }
+      o_free(mods[i]->mod_values);
+      o_free(mods[i]);
+    }
+    o_free(mods);
+    mods = NULL;
   }
   return mods;
 }
@@ -1657,7 +1647,7 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
 
 int user_module_add(struct config_module * config, json_t * j_user, void * cls) {
   UNUSED(config);
-  json_t * j_params = (json_t *)cls, * j_mod_value_free_array = NULL;
+  json_t * j_params = (json_t *)cls;
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, result;
   LDAPMod ** mods = NULL;
@@ -1665,7 +1655,7 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
   size_t i, j;
 
   if (ldap != NULL) {
-    mods = get_ldap_write_mod(j_params, ldap, json_string_value(json_object_get(j_user, "username")), j_user, 0, 1, (j_mod_value_free_array = json_array()));
+    mods = get_ldap_write_mod(j_params, ldap, json_string_value(json_object_get(j_user, "username")), j_user, 0, 1);
     if (mods != NULL) {
       new_dn = msprintf("%s=%s,%s", json_string_value(json_object_get(j_params, "rdn-property")), json_string_value(json_object_get(j_user, "username")), json_string_value(json_object_get(j_params, "base-search")));
       if (new_dn != NULL) {
@@ -1687,7 +1677,6 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
         o_free(mods[i]->mod_values);
         o_free(mods[i]);
       }
-      json_decref(j_mod_value_free_array);
       o_free(mods);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_add ldap - Error get_ldap_write_mod");
@@ -1703,7 +1692,7 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
 
 int user_module_update(struct config_module * config, const char * username, json_t * j_user, void * cls) {
   UNUSED(config);
-  json_t * j_params = (json_t *)cls, * j_mod_value_free_array;
+  json_t * j_params = (json_t *)cls;
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, result;
   LDAPMod ** mods = NULL;
@@ -1711,7 +1700,7 @@ int user_module_update(struct config_module * config, const char * username, jso
   size_t i, j;
 
   if (ldap != NULL) {
-    mods = get_ldap_write_mod(j_params, ldap, username, j_user, 0, 0, (j_mod_value_free_array = json_array()));
+    mods = get_ldap_write_mod(j_params, ldap, username, j_user, 0, 0);
     if (mods != NULL) {
       cur_dn = get_user_dn_from_username(j_params, ldap, username);
       if (cur_dn != NULL) {
@@ -1733,7 +1722,6 @@ int user_module_update(struct config_module * config, const char * username, jso
         o_free(mods[i]->mod_values);
         o_free(mods[i]);
       }
-      json_decref(j_mod_value_free_array);
       o_free(mods);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_update ldap - Error get_ldap_write_mod");
@@ -1749,7 +1737,7 @@ int user_module_update(struct config_module * config, const char * username, jso
 
 int user_module_update_profile(struct config_module * config, const char * username, json_t * j_user, void * cls) {
   UNUSED(config);
-  json_t * j_params = (json_t *)cls, * j_mod_value_free_array;
+  json_t * j_params = (json_t *)cls;
   LDAP * ldap = connect_ldap_server(j_params);
   int ret, result;
   LDAPMod ** mods = NULL;
@@ -1757,7 +1745,7 @@ int user_module_update_profile(struct config_module * config, const char * usern
   size_t i, j;
 
   if (ldap != NULL) {
-    mods = get_ldap_write_mod(j_params, ldap, username, j_user, 1, 0, (j_mod_value_free_array = json_array()));
+    mods = get_ldap_write_mod(j_params, ldap, username, j_user, 1, 0);
     if (mods != NULL) {
       cur_dn = get_user_dn_from_username(j_params, ldap, username);
       if (cur_dn != NULL) {
@@ -1772,7 +1760,6 @@ int user_module_update_profile(struct config_module * config, const char * usern
         ret = G_ERROR;
       }
       o_free(cur_dn);
-      json_decref(j_mod_value_free_array);
       for (i=0; mods[i]!=NULL; i++) {
         for (j=0; mods[i]->mod_values[j] != NULL; j++) {
           o_free(mods[i]->mod_values[j]);
