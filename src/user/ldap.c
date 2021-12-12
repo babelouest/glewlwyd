@@ -564,7 +564,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
   json_t * j_format, * j_property = NULL, * j_property_value, * j_scope;
   const char * field = NULL;
   size_t index = 0, index_scope = 0, i, j;
-  int has_error = 0;
+  int has_error = 0, mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
   unsigned char * value_dec = NULL;
   size_t value_dec_len = 0;
   const char ** passwords = NULL;
@@ -616,7 +616,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
       if (mods[i] != NULL) {
         mods[i]->mod_values = o_malloc((json_array_size(json_object_get(j_params, "object-class")) + 1) * sizeof(char *));
         if (mods[i]->mod_values != NULL) {
-          mods[i]->mod_op = LDAP_MOD_ADD;
+          mods[i]->mod_op = mod_op;
           mods[i]->mod_type = "objectClass";
           json_array_foreach(json_object_get(j_params, "object-class"), index, j_property_value) {
             mods[i]->mod_values[index] = o_strdup(json_string_value(j_property_value));
@@ -638,7 +638,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
           if (mods[i] != NULL) {
             mods[i]->mod_values = o_malloc(2 * sizeof(char *));
             if (mods[i]->mod_values != NULL) {
-              mods[i]->mod_op = LDAP_MOD_ADD;
+              mods[i]->mod_op = mod_op;
               mods[i]->mod_type = (char *)json_string_value(j_property);
               mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "username")));
               mods[i]->mod_values[1] = NULL;
@@ -657,7 +657,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
         if (mods[i] != NULL) {
           mods[i]->mod_values = o_malloc(2 * sizeof(char *));
           if (mods[i]->mod_values != NULL) {
-            mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+            mods[i]->mod_op = mod_op;
             mods[i]->mod_type = (char *)get_read_property(j_params, "username-property");
             mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "username")));
             mods[i]->mod_values[1] = NULL;
@@ -680,7 +680,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
           if (mods[i] != NULL) {
             mods[i]->mod_values = o_malloc(2 * sizeof(char *));
             if (mods[i]->mod_values != NULL) {
-              mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+              mods[i]->mod_op = mod_op;
               mods[i]->mod_type = (char *)json_string_value(j_property);
               mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "name")));
               mods[i]->mod_values[1] = NULL;
@@ -699,7 +699,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
         if (mods[i] != NULL) {
           mods[i]->mod_values = o_malloc(2 * sizeof(char *));
           if (mods[i]->mod_values != NULL) {
-            mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+            mods[i]->mod_op = mod_op;
             mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "name-property"));
             mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "name")));
             mods[i]->mod_values[1] = NULL;
@@ -719,7 +719,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
           mods[i] = o_malloc(sizeof(LDAPMod));
           if (mods[i] != NULL) {
             if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
-              mods[i]->mod_op = LDAP_MOD_REPLACE;
+              mods[i]->mod_op = mod_op;
               mods[i]->mod_type = o_strdup(json_string_value(j_property));
               mods[i]->mod_values[0] = NULL;
             } else {
@@ -736,7 +736,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
         mods[i] = o_malloc(sizeof(LDAPMod));
         if (mods[i] != NULL) {
           if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
-            mods[i]->mod_op = LDAP_MOD_REPLACE;
+            mods[i]->mod_op = mod_op;
             mods[i]->mod_type = o_strdup(json_string_value(json_object_get(j_params, "name-property")));
             mods[i]->mod_values[0] = NULL;
           } else {
@@ -758,7 +758,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
             if (mods[i] != NULL) {
               mods[i]->mod_values = o_malloc(2 * sizeof(char *));
               if (mods[i]->mod_values != NULL) {
-                mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+                mods[i]->mod_op = mod_op;
                 mods[i]->mod_type = (char *)json_string_value(j_property);
                 mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "email")));
                 mods[i]->mod_values[1] = NULL;
@@ -777,7 +777,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
           if (mods[i] != NULL) {
             mods[i]->mod_values = o_malloc(2 * sizeof(char *));
             if (mods[i]->mod_values != NULL) {
-              mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+              mods[i]->mod_op = mod_op;
               mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "email-property"));
               mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "email")));
               mods[i]->mod_values[1] = NULL;
@@ -797,7 +797,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
             mods[i] = o_malloc(sizeof(LDAPMod));
             if (mods[i] != NULL) {
               if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
-                mods[i]->mod_op = LDAP_MOD_REPLACE;
+                mods[i]->mod_op = mod_op;
                 mods[i]->mod_type = (char *)json_string_value(j_property);
                 mods[i]->mod_values[0] = NULL;
               } else {
@@ -814,7 +814,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
           mods[i] = o_malloc(sizeof(LDAPMod));
           if (mods[i] != NULL) {
             if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
-              mods[i]->mod_op = LDAP_MOD_REPLACE;
+              mods[i]->mod_op = mod_op;
               mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "email-property"));
               mods[i]->mod_values[0] = NULL;
             } else {
@@ -835,7 +835,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
             if (mods[i] != NULL) {
               mods[i]->mod_values = o_malloc((json_array_size(json_object_get(j_user, "scope")) + 1) * sizeof(char *));
               if (mods[i]->mod_values != NULL) {
-                mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+                mods[i]->mod_op = mod_op;
                 mods[i]->mod_type = (char *)json_string_value(j_property);
                 json_array_foreach(json_object_get(j_user, "scope"), index_scope, j_scope) {
                   mods[i]->mod_values[index_scope] = o_strdup(json_string_value(j_scope));
@@ -856,7 +856,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
           if (mods[i] != NULL) {
             mods[i]->mod_values = o_malloc((json_array_size(json_object_get(j_user, "scope")) + 1) * sizeof(char *));
             if (mods[i]->mod_values != NULL) {
-              mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+              mods[i]->mod_op = mod_op;
               mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "scope-property"));
               json_array_foreach(json_object_get(j_user, "scope"), index_scope, j_scope) {
                 mods[i]->mod_values[index_scope] = o_strdup(json_string_value(j_scope));
@@ -878,7 +878,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
             mods[i] = o_malloc(sizeof(LDAPMod));
             if (mods[i] != NULL) {
               if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
-                mods[i]->mod_op = LDAP_MOD_REPLACE;
+                mods[i]->mod_op = mod_op;
                 mods[i]->mod_type = (char *)json_string_value(j_property);
                 mods[i]->mod_values[0] = NULL;
               } else {
@@ -895,7 +895,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
           mods[i] = o_malloc(sizeof(LDAPMod));
           if (mods[i] != NULL) {
             if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
-              mods[i]->mod_op = LDAP_MOD_REPLACE;
+              mods[i]->mod_op = mod_op;
               mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "scope-property"));
               mods[i]->mod_values[0] = NULL;
             } else {
@@ -918,7 +918,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               passwords[index] = json_string_value(j_property);
             }
             if (set_update_password_mod(j_params, ldap, username, passwords, json_array_size(json_object_get(j_user, "password")), mods[i], add) == G_OK) {
-              mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+              mods[i]->mod_op = mod_op;
               mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "password-property"));
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error set_update_password_mod for mods[%d]", i);
@@ -940,7 +940,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
           if (mods[i] != NULL) {
             mods[i]->mod_values = o_malloc(2 * sizeof(char *));
             if (mods[i]->mod_values != NULL) {
-              mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+              mods[i]->mod_op = mod_op;
               mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "password-property"));
               mods[i]->mod_values[0] = json_string_length(json_object_get(j_user, "password"))?generate_hash(get_digest_algorithm(j_params), json_string_value(json_object_get(j_user, "password"))):NULL;
               mods[i]->mod_values[1] = NULL;
@@ -970,7 +970,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               if (mods[i] != NULL) {
                 mods[i]->mod_values = o_malloc((json_array_size(j_property) + 1) * sizeof(char *));
                 if (mods[i]->mod_values != NULL) {
-                  mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+                  mods[i]->mod_op = mod_op;
                   mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
                   json_array_foreach(j_property, index_scope, j_property_value) {
                     if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
@@ -1009,7 +1009,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               if (mods[i] != NULL) {
                 mods[i]->mod_values = o_malloc(2 * sizeof(char *));
                 if (mods[i]->mod_values != NULL) {
-                  mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
+                  mods[i]->mod_op = mod_op;
                   mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
                   if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
                     if (o_base64_decode((const unsigned char *)json_string_value(j_property), json_string_length(j_property), NULL, &value_dec_len)) {
@@ -1045,7 +1045,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               mods[i] = o_malloc(sizeof(LDAPMod));
               if (mods[i] != NULL) {
                 if ((mods[i]->mod_values = o_malloc(sizeof(char *))) != NULL) {
-                  mods[i]->mod_op = LDAP_MOD_REPLACE;
+                  mods[i]->mod_op = mod_op;
                   mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
                   mods[i]->mod_values[0] = NULL;
                 } else {
