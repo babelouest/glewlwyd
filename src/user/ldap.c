@@ -623,12 +623,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
           }
           mods[i]->mod_values[json_array_size(json_object_get(j_params, "object-class"))] = NULL;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (objectClass)", i);
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (objectClass)", i);
           has_error = 1;
         }
         i++;
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (objectClass)", i);
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (objectClass)", i);
         has_error = 1;
       }
       
@@ -643,12 +643,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "username")));
               mods[i]->mod_values[1] = NULL;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (username)", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (username)", i);
               has_error = 1;
             }
             i++;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (username)", i);
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (username)", i);
             has_error = 1;
           }
         }
@@ -662,12 +662,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
             mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "username")));
             mods[i]->mod_values[1] = NULL;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (username)", i);
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (username)", i);
             has_error = 1;
           }
           i++;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (username)", i);
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (username)", i);
           has_error = 1;
         }
       }
@@ -685,12 +685,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "name")));
               mods[i]->mod_values[1] = NULL;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (name)", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (name)", i);
               has_error = 1;
             }
             i++;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (name)", i);
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (name)", i);
             has_error = 1;
           }
         }
@@ -704,12 +704,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
             mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "name")));
             mods[i]->mod_values[1] = NULL;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (name)", i);
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (name)", i);
             has_error = 1;
           }
           i++;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (name)", i);
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (name)", i);
           has_error = 1;
         }
       }
@@ -723,12 +723,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               mods[i]->mod_type = o_strdup(json_string_value(j_property));
               mods[i]->mod_values[0] = NULL;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (name)", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (name)", i);
               has_error = 1;
             }
             i++;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (name)", i);
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (name)", i);
             has_error = 1;
           }
         }
@@ -740,12 +740,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
             mods[i]->mod_type = o_strdup(json_string_value(json_object_get(j_params, "name-property")));
             mods[i]->mod_values[0] = NULL;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (name)", i);
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (name)", i);
             has_error = 1;
           }
           i++;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (name)", i);
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (name)", i);
           has_error = 1;
         }
       }
@@ -763,12 +763,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
                 mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "email")));
                 mods[i]->mod_values[1] = NULL;
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (email)", i);
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (email)", i);
                 has_error = 1;
               }
               i++;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (email)", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (email)", i);
               has_error = 1;
             }
           }
@@ -782,12 +782,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               mods[i]->mod_values[0] = o_strdup(json_string_value(json_object_get(j_user, "email")));
               mods[i]->mod_values[1] = NULL;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (email)", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (email)", i);
               has_error = 1;
             }
             i++;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (email)", i);
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (email)", i);
             has_error = 1;
           }
         }
@@ -801,12 +801,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
                 mods[i]->mod_type = (char *)json_string_value(j_property);
                 mods[i]->mod_values[0] = NULL;
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (email)", i);
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (email)", i);
                 has_error = 1;
               }
               i++;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (email)", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (email)", i);
               has_error = 1;
             }
           }
@@ -818,12 +818,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "email-property"));
               mods[i]->mod_values[0] = NULL;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (email)", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (email)", i);
               has_error = 1;
             }
             i++;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (email)", i);
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (email)", i);
             has_error = 1;
           }
         }
@@ -842,12 +842,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
                 }
                 mods[i]->mod_values[(json_array_size(json_object_get(j_user, "scope")))] = NULL;
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (scope)", i);
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (scope)", i);
                 has_error = 1;
               }
               i++;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (scope)", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (scope)", i);
               has_error = 1;
             }
           }
@@ -863,12 +863,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               }
               mods[i]->mod_values[(json_array_size(json_object_get(j_user, "scope")))] = NULL;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (scope)", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (scope)", i);
               has_error = 1;
             }
             i++;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (scope)", i);
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (scope)", i);
             has_error = 1;
           }
         }
@@ -882,12 +882,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
                 mods[i]->mod_type = (char *)json_string_value(j_property);
                 mods[i]->mod_values[0] = NULL;
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (scope)", i);
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (scope)", i);
                 has_error = 1;
               }
               i++;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (scope)", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (scope)", i);
               has_error = 1;
             }
           }
@@ -899,12 +899,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "scope-property"));
               mods[i]->mod_values[0] = NULL;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (scope)", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (scope)", i);
               has_error = 1;
             }
             i++;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (scope)", i);
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (scope)", i);
             has_error = 1;
           }
         }
@@ -921,16 +921,16 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               mods[i]->mod_op = mod_op;
               mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "password-property"));
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error set_update_password_mod for mods[%d]", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error set_update_password_mod for mods[%zu]", i);
               has_error = 1;
             }
             i++;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (password)", i);
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (password)", i);
             has_error = 1;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (passwords)", i);
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (passwords)", i);
           has_error = 1;
         }
         o_free(passwords);
@@ -945,12 +945,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
               mods[i]->mod_values[0] = json_string_length(json_object_get(j_user, "password"))?generate_hash(get_digest_algorithm(j_params), json_string_value(json_object_get(j_user, "password"))):NULL;
               mods[i]->mod_values[1] = NULL;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (password)", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (password)", i);
               has_error = 1;
             }
             i++;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (password)", i);
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (password)", i);
             has_error = 1;
           }
         }
@@ -996,12 +996,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
                   }
                   mods[i]->mod_values[json_array_size(j_property)] = NULL;
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (%s)", i, json_string_value(json_object_get(j_format, "property")));
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (%s)", i, json_string_value(json_object_get(j_format, "property")));
                   has_error = 1;
                 }
                 i++;
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (%s)", i, json_string_value(json_object_get(j_format, "property")));
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (%s)", i, json_string_value(json_object_get(j_format, "property")));
                 has_error = 1;
               }
             } else if (json_string_length(j_property) && json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true()) {
@@ -1034,11 +1034,11 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
                   mods[i]->mod_values[1] = NULL;
                   i++;
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (%s)", i, json_string_value(json_object_get(j_format, "property")));
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (%s)", i, json_string_value(json_object_get(j_format, "property")));
                   has_error = 1;
                 }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (%s)", i, json_string_value(json_object_get(j_format, "property")));
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (%s)", i, json_string_value(json_object_get(j_format, "property")));
                 has_error = 1;
               }
             } else if (!add) {
@@ -1049,12 +1049,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
                   mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
                   mods[i]->mod_values[0] = NULL;
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d]->mod_values (%s)", i, json_string_value(json_object_get(j_format, "property")));
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu]->mod_values (%s)", i, json_string_value(json_object_get(j_format, "property")));
                   has_error = 1;
                 }
                 i++;
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%d] (%s)", i, json_string_value(json_object_get(j_format, "property")));
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (%s)", i, json_string_value(json_object_get(j_format, "property")));
                 has_error = 1;
               }
             }
