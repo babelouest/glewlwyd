@@ -106,6 +106,6 @@ Go to the [Screenshots](docs/screenshots) folder to get a visual idea of Glewlwy
 
 ## Questions, problems or feature requests
 
-You can open an [issue](https://github.com/babelouest/glewlwyd/issues), a [pull request](https://github.com/babelouest/ulfius/pulls) or send me an [e-mail](mailto:mail@babelouest.org). Any help is much appreciated!
+You can open an [issue](https://github.com/babelouest/glewlwyd/issues), a [pull request](https://github.com/babelouest/ulfius/pulls) or send me an [e-mail](mailto:mail@babelouest.io). Any help is much appreciated!
 
 You can visit the IRC channel #glewlwyd on the [Libera.​Chat](https://libera.chat/) network.
