@@ -2,10 +2,14 @@
 
 ## 2.6.1
 
+This is a security release, please upgrade your Glewlwyd version.
+
 - Fix bug in OTP registration
 - Fix several UI bugs
 - Improve user registration UI and OTP scheme registration
 - Add callback function `plugin_user_revoke` in plugins
+- Add config file option `add_x_frame_option_header_deny` to allow removing header `X-Frame-Options: deny`
+- Fix escalation bug
 
 ## 2.6.0
 
