@@ -278,10 +278,6 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
               y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", json_string_value(json_object_get(j_param, "username")), ip_source);
             }
-            if ((session_uid = get_session_id(config, request)) != NULL && user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, 1) != G_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (2)");
-            }
-            o_free(session_uid);
             response->status = 401;
             glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID, 1, NULL);
             glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 1, "scheme_type", "password", NULL);
