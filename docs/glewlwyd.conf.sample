@@ -43,14 +43,14 @@ cookie_domain="localhost"
 # cookie_secure, this options SHOULD be set to 1, set this to 0 to test glewlwyd on insecure connection http instead of https
 cookie_secure=0
 
-# add http header X-Frame-Options: deny, default true
-add_x_frame_option_header_deny=true
-
 # session expiration, default is 4 weeks
 session_expiration=2419200
 
 # session key
 session_key="GLEWLWYD2_SESSION_ID"
+
+# add http header X-Frame-Options: deny, default true
+add_x_frame_option_header_deny=true
 
 # admin scope name
 admin_scope="g_admin"
