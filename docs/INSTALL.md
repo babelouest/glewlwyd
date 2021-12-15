@@ -3,6 +3,7 @@
 [![License: CC BY 4.0](https://licensebuttons.net/l/by/4.0/80x15.png)](https://creativecommons.org/licenses/by/4.0/)
 
 1.  [Upgrade Glewlwyd](#upgrade-glewlwyd)
+    * [Upgrade to Glewlwyd 2.6.1](#upgrade-to-glewlwyd-261)
     * [Upgrade to Glewlwyd 2.6.0](#upgrade-to-glewlwyd-260)
     * [Upgrade to Glewlwyd 2.5.4](#upgrade-to-glewlwyd-254)
     * [Upgrade to Glewlwyd 2.5.0](#upgrade-to-glewlwyd-250)
@@ -56,6 +57,10 @@
 ## Upgrade Glewlwyd
 
 Glewlwyd upgrades usually come with database changes. It is highly recommended to backup your database before performing the upgrade. You must perform the database upgrades in the correct order. i.e. if you upgrade from Glewlwyd 2.3 to Glewlwyd 2.6, you must first install the 2.4 upgrade, then the 2.5.
+
+### Upgrade to Glewlwyd 2.6.1
+
+This is a security release, please upgrade your Glewlwyd version.
 
 ### Upgrade to Glewlwyd 2.6.0
 
@@ -626,6 +631,15 @@ You must change the value `cookie_domain` accordingly to the domain name Glewlwy
 ```
 
 The parameter `cookie_secure` is set to 0 by default, but since you should use Glewlwyd in a https connection, you should set this option to 1.
+
+### HTTP header X-Frame-Options
+
+- Config file variable: `add_x_frame_option_header_deny`
+- Environment variable: `GLWD_ADD_X_FRAME_DENY`
+
+Optional. Default, is `true`.
+
+It's recommended to leave this value to `true`, unless you need to embed glewlwyd in an iFrame.
 
 ### Cookie Session values
 
