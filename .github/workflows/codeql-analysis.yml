@@ -48,7 +48,7 @@ jobs:
 
     - run: |
         sudo apt-get update
-        sudo apt-get install -y libconfig-dev libsystemd-dev libjansson-dev libcurl4-gnutls-dev libldap2-dev libmicrohttpd-dev libsqlite3-dev sqlite3 libpq-dev liboath-dev default-mysql-client default-libmysqlclient-dev cmake pkg-config gnutls-bin libcbor-dev
+        sudo apt-get install -y libconfig-dev libsystemd-dev libjansson-dev libcurl4-gnutls-dev libldap2-dev libmicrohttpd-dev libsqlite3-dev sqlite3 libpq-dev liboath-dev mariadb-client libmariadbclient-dev cmake pkg-config gnutls-bin libcbor-dev
         
         mkdir build
         cd build
