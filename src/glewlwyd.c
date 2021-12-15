@@ -139,6 +139,7 @@ int main (int argc, char ** argv) {
   config->external_url = NULL;
   config->cookie_domain = NULL;
   config->cookie_secure = 0;
+  config->add_x_frame_option_header_deny = 1;
   config->log_mode_args = 0;
   config->log_level_args = 0;
   config->log_mode = Y_LOG_MODE_NONE;
@@ -515,7 +516,9 @@ int main (int argc, char ** argv) {
   u_map_put(config->instance->default_headers, "Access-Control-Allow-Credentials", "true");
   u_map_put(config->instance->default_headers, "Cache-Control", "no-store");
   u_map_put(config->instance->default_headers, "Pragma", "no-cache");
-  u_map_put(config->instance->default_headers, "X-Frame-Options", "deny");
+  if (config->add_x_frame_option_header_deny) {
+    u_map_put(config->instance->default_headers, "X-Frame-Options", "deny");
+  }
 
   // metrics endpoint configuration
   if (config->metrics_endpoint) {
@@ -894,6 +897,10 @@ int build_config_from_file(struct config_elements * config) {
 
     if (config_lookup_int(&cfg, "cookie_secure", &int_value) == CONFIG_TRUE) {
       config->cookie_secure = (uint)int_value;
+    }
+
+    if (config_lookup_bool(&cfg, "add_x_frame_option_header_deny", &int_value) == CONFIG_TRUE) {
+      config->add_x_frame_option_header_deny = (uint)int_value;
     }
 
     // Get log mode
@@ -1363,6 +1370,10 @@ int build_config_from_env(struct config_elements * config) {
 
   if ((value = getenv(GLEWLWYD_ENV_COOKIE_SECURE)) != NULL) {
     config->cookie_secure = (uint)(o_strcmp(value, "1")==0);
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_ADD_X_FRAME_DENY)) != NULL) {
+    config->add_x_frame_option_header_deny = (uint)(o_strcmp(value, "1")==0);
   }
 
   if ((value = getenv(GLEWLWYD_ENV_SESSION_EXPIRATION)) != NULL && o_strlen(value)) {
