@@ -44,10 +44,10 @@ build-polyfill-webapp:
 
 install-webapp:
 	find $(WEBAPP_DEST) ! -name config.json ! -name webapp ! -name .gitignore -delete
-	cp -R index.html login.html profile.html callback.html config.json.sample favicon.ico css/ js/ locales/ fonts/ img/ $(WEBAPP_DEST)
+	cp -R index.html login.html profile.html callback.html config.json.sample favicon.ico robots.txt css/ js/ locales/ fonts/ img/ $(WEBAPP_DEST)
 	cp output/*.js $(WEBAPP_DEST)
 
 install-polyfill:
 	find $(WEBAPP_DEST) ! -name config.json ! -name webapp ! -name .gitignore -delete
-	cp -R polyfill/index.html polyfill/login.html polyfill/profile.html polyfill/callback.html config.json.sample favicon.ico css/ js/ locales/ fonts/ img/ $(WEBAPP_DEST)
+	cp -R polyfill/index.html polyfill/login.html polyfill/profile.html polyfill/callback.html config.json.sample favicon.ico robots.txt css/ js/ locales/ fonts/ img/ $(WEBAPP_DEST)
 	cp output/*.js $(WEBAPP_DEST)
