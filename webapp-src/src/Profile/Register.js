@@ -575,7 +575,7 @@ class Register extends Component {
         }
         if (this.state.registerConfig["email-is-username"]) {
           formJsx = 
-            <form className="needs-validation" noValidate>
+            <form className="needs-validation" noValidate onSubmit={(e) => this.noSubmit(e)}>
               <label htmlFor="email-input">{i18next.t("profile.register-email-label")}</label>
               <div className="input-group mb-3">
                 <input type="text" 
@@ -603,7 +603,7 @@ class Register extends Component {
             </form>
         } else {
           formJsx = 
-            <form className="needs-validation" noValidate>
+            <form className="needs-validation" noValidate onSubmit={(e) => this.noSubmit(e)}>
               <label htmlFor="username-input">{i18next.t("profile.register-username-label")}</label>
               <div className="input-group mb-3">
                 <input type="text" 
@@ -644,7 +644,7 @@ class Register extends Component {
         }
       } else {
         formJsx = 
-          <form className="needs-validation" noValidate>
+          <form className="needs-validation" noValidate onSubmit={(e) => this.noSubmit(e)}>
             <label htmlFor="username-input">{i18next.t("profile.register-username-label")}</label>
             <div className="input-group mb-3">
               <input type="text" 
