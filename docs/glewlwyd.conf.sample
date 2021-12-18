@@ -140,6 +140,11 @@ static_files_mime_types =
     compress = 1
   },
   {
+    extension = ".txt"
+    mime_type = "text/plain"
+    compress = 1
+  },
+  {
     extension = ".png"
     mime_type = "image/png"
     compress = 0
