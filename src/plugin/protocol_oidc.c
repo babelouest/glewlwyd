@@ -2233,6 +2233,7 @@ static char * generate_client_access_token(struct _oidc_config * config,
         r_jwt_set_claim_str_value(jwt, "aud", scope_list);
       }
       r_jwt_set_claim_str_value(jwt, "client_id", json_string_value(json_object_get(j_client, "client_id")));
+      r_jwt_set_claim_str_value(jwt, "sub", json_string_value(json_object_get(j_client, "client_id")));
       r_jwt_set_claim_int_value(jwt, "iat", now);
       r_jwt_set_claim_int_value(jwt, "exp", (((json_int_t)now) + config->access_token_duration));
       r_jwt_set_claim_int_value(jwt, "nbf", now);
@@ -7306,7 +7307,7 @@ static void build_auth_response(struct _oidc_config * config, struct _u_response
   const char ** keys, * value, * sep;
   size_t i;
   char * redirect_url = NULL, * key_encoded, * value_encoded, * token = NULL;
-  int enc_res = G_OK, has_param = 0;;
+  int enc_res = G_OK, has_param = 0;
   
   if (o_strlen(redirect_uri)) {
     if (response_mode == GLEWLWYD_RESPONSE_MODE_QUERY_JWT || response_mode == GLEWLWYD_RESPONSE_MODE_FRAGMENT_JWT || response_mode == GLEWLWYD_RESPONSE_MODE_FORM_POST_JWT) {
@@ -7442,6 +7443,7 @@ static void build_auth_response(struct _oidc_config * config, struct _u_response
         break;
     }
   } else {
+    ulfius_set_string_body_response(response, 403, "<html><head><title>Glewlwyd</title></head><body><h1>Invalid request</h1></body></html>");
     response->status = 403;
   }
   o_free(token);
