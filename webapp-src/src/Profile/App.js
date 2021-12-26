@@ -302,6 +302,8 @@ class App extends Component {
               }
             });
           }
+            this.refreshSession();
+            this.refreshClientGrant();
         });
       })
       .fail((error) => {
