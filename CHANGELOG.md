@@ -1,5 +1,9 @@
 # Glewlwyd Changelog
 
+## 2.7.0
+
+- Fix delegation session
+
 ## 2.6.1
 
 This is a security release, please upgrade your Glewlwyd version.
