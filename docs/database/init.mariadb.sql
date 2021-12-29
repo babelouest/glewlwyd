@@ -204,6 +204,15 @@ CREATE TABLE g_api_key (
 );
 CREATE INDEX i_gak_token_hash ON g_api_key(gak_token_hash);
 
+CREATE TABLE g_misc_config (
+  gmc_id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  gmc_type VARCHAR(128) NOT NULL,
+  gmc_name VARCHAR(128),
+  gmc_value MEDIUMBLOB
+);
+CREATE INDEX i_gmc_type ON g_misc_config(gmc_type);
+CREATE INDEX i_gmc_name ON g_misc_config(gmc_name);
+
 CREATE TABLE g_client (
   gc_id INT(11) PRIMARY KEY AUTO_INCREMENT,
   gc_client_id VARCHAR(128) NOT NULL UNIQUE,
