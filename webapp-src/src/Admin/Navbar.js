@@ -244,6 +244,8 @@ class Navbar extends Component {
               <a className={"dropdown-item" + (this.state.curNav==="plugins"?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "plugins", true)}>{i18next.t("admin.menu-plugins")}</a>
               <div className="dropdown-divider"></div>
               <a className={"dropdown-item" + (this.state.curNav==="api-key"?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "api-key", true)}>{i18next.t("admin.menu-api-key")}</a>
+              <div className="dropdown-divider"></div>
+              <a className={"dropdown-item" + (this.state.curNav==="misc-config"?" active":"")} href="#" data-toggle="collapse" data-target=".navbar-collapse.show" onClick={(e) => this.navigate(e, "misc-config", true)}>{i18next.t("admin.menu-misc-config")}</a>
             </div>
           </li>
         </ul>

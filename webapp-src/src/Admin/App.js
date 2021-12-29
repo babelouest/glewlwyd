@@ -22,6 +22,7 @@ import ScopeEdit from './ScopeEdit';
 import ModEdit from './ModEdit';
 import PluginEdit from './PluginEdit';
 import APIKey from './APIKey';
+import MiscConfig from './MiscConfig';
 
 class App extends Component {
   constructor(props) {
@@ -57,7 +58,8 @@ class App extends Component {
       profileList: false,
       invalidCredentialMessage: false,
       savedRecord: false,
-      savedIndex: -1
+      savedIndex: -1,
+      miscConfig: []
     }
 
     this.fetchApi = this.fetchApi.bind(this);
@@ -588,6 +590,8 @@ class App extends Component {
         } else if (message.role === 'pluginMod') {
           this.fetchPlugins();
         }
+      } else if (message.type === 'miscConfig') {
+        this.fetchMiscConfig();
       }
     });
 
@@ -630,6 +634,7 @@ class App extends Component {
             this.fetchPlugins();
             this.fetchAllScopes();
             this.fetchApiKeys();
+            this.fetchMiscConfig();
           });
         })
         .fail((error) => {
@@ -944,6 +949,33 @@ class App extends Component {
       curApiKeys.list = apiKeys;
       curApiKeys.pattern = this.state.config.pattern.user;
       this.setState({apiKeys: curApiKeys, loggedIn: true});
+    }).fail((err) => {
+      if (err.status !== 401) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
+        this.setState({
+          loggedIn: false,
+          modTypes: {user: [], client: [], scheme: [], plugin: []},
+          users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          clients: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          scopes: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          modUsers: [],
+          modUsersMiddleware: [],
+          modClients: [],
+          modSchemes: [],
+          plugins: [],
+          invalidCredentialMessage: true
+        });
+      }
+    });
+  }
+
+  fetchMiscConfig () {
+    return apiManager.glewlwydRequest("/misc")
+    .then((miscConfig) => {
+      this.setState({miscConfig: miscConfig});
     }).fail((err) => {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
@@ -2348,6 +2380,9 @@ class App extends Component {
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="api-key"?" active":"")}>
                     <APIKey config={this.state.config} apiKeys={this.state.apiKeys} loggedIn={this.state.loggedIn} />
+                  </div>
+                  <div className={"carousel-item" + (this.state.curNav==="misc-config"?" active":"")}>
+                    <MiscConfig config={this.state.config} miscConfig={this.state.miscConfig} loggedIn={this.state.loggedIn} />
                   </div>
                 </div>
               </div>

@@ -174,6 +174,7 @@
     "menu-auth-schemes": "Authentication schemes",
     "menu-plugins": "Plugins",
     "menu-api-key": "API Keys",
+    "menu-misc-config": "Misc configurations",
     "add": "Add",
     "edit": "Edit",
     "delete": "Delete",
@@ -1118,7 +1119,18 @@
     "mod-glwd-oauth-par-duration": "request_uri duration (seconds)",
     "mod-glwd-oauth-par-duration-ph": "e.g. 90",
     "mod-glwd-restrict-scope-client-property": "Client restrict-scope property",
-    "mod-glwd-restrict-scope-client-property-ph": "e.g. scope"
+    "mod-glwd-restrict-scope-client-property-ph": "e.g. scope",
+    "misc-smtp-list-title": "SMTP configurations list",
+    "misc-smtp-summary": "Summary",
+    "modal-misc-smtp-title": "Edit a SMTP configurations",
+    "success-api-set-misc-smtp": "SMTP configurations updated with success",
+    "error-api-set-misc-smtp": "Error while updating SMTP configurations",
+    "success-api-add-misc-smtp": "SMTP configurations added with success",
+    "error-api-add-misc-smtp": "Error while adding SMTP configurations",
+    "confirm-remove-misc-smtp-title": "Confirm remove",
+    "confirm-remove-misc-smtp-message": "Are you sure you want to remove this SMTP configurations?",
+    "success-api-delete-misc-smtp": "Configuration removed",
+    "error-api-delete-misc-smtp": "Error while removing SMTP configurations"
   },
   "profile": {
     "error-credential-message": "Please connect to the application",
