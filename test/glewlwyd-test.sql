@@ -28,6 +28,7 @@ DELETE FROM gpg_device_authorization;
 DELETE FROM gpg_access_token;
 DELETE FROM gpg_refresh_token;
 DELETE FROM gpg_code;
+DELETE FROM g_misc_config;
 
 INSERT INTO g_user_module_instance (gumi_module, gumi_name, gumi_display_name, gumi_order, gumi_parameters) VALUES ('mock', 'mock', 'Mock user module', 0, '{"username-prefix":"","password":"password"}');
 INSERT INTO g_user_auth_scheme_module_instance (guasmi_module, guasmi_name, guasmi_display_name, guasmi_expiration, guasmi_parameters) VALUES ('mock', 'mock_scheme_42', 'Mock 42', 600, '{"mock-value":"42"}');
