@@ -205,7 +205,7 @@ CREATE TABLE g_api_key (
 CREATE INDEX i_gak_token_hash ON g_api_key(gak_token_hash);
 
 CREATE TABLE g_misc_config (
-  gmc_id INT(11) INTEGER PRIMARY KEY AUTOINCREMENT,
+  gmc_id INTEGER PRIMARY KEY AUTOINCREMENT,
   gmc_type TEXT NOT NULL,
   gmc_name TEXT,
   gmc_value TEXT
