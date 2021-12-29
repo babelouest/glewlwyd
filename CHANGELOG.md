@@ -3,6 +3,8 @@
 ## 2.7.0
 
 - Fix delegation session
+- Add SMTP configuration template
+- Allow to send an e-mail to an account when a new connexion occurs
 
 ## 2.6.1
 

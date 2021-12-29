@@ -139,6 +139,7 @@ add_executable(glewlwyd ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.h
                         ${CMAKE_CURRENT_SOURCE_DIR}/src/http_compression_callback.c
                         ${CMAKE_CURRENT_SOURCE_DIR}/src/user.c
                         ${CMAKE_CURRENT_SOURCE_DIR}/src/api_key.c
+                        ${CMAKE_CURRENT_SOURCE_DIR}/src/misc_config.c
                         ${CMAKE_CURRENT_SOURCE_DIR}/src/metrics.c
                         ${CMAKE_CURRENT_SOURCE_DIR}/src/webservice.c
                         ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.c )
