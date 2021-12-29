@@ -264,7 +264,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             if ((session_uid = get_session_id(config, request)) == NULL) {
               session_uid = generate_session_id();
             }
-            if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, 1) != G_OK) {
+            if (user_session_update(config, session_uid, ip_source, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, 1) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (1)");
               response->status = 500;
             } else {
@@ -290,7 +290,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
           j_result = get_users_for_session(config, session_uid);
           if (check_result_value(j_result, G_OK)) {
             // Refresh username to set as default
-            if (user_session_update(config, u_map_get(request->map_cookie, config->session_key), u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, 0) != G_OK) {
+            if (user_session_update(config, u_map_get(request->map_cookie, config->session_key), ip_source, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, 0) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (2)");
               response->status = 500;
             } else {
@@ -321,7 +321,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             if ((session_uid = get_session_id(config, request)) == NULL) {
               session_uid = generate_session_id();
             }
-            if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_name")), 1) != G_OK) {
+            if (user_session_update(config, session_uid, ip_source, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_name")), 1) != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (3)");
               response->status = 500;
             } else {
@@ -354,7 +354,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
           if ((session_uid = get_session_id(config, request)) == NULL) {
             session_uid = generate_session_id();
           }
-          if (user_session_update(config, session_uid, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_result, "username")), json_string_value(json_object_get(j_param, "scheme_name")), 1) != G_OK) {
+          if (user_session_update(config, session_uid, ip_source, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_result, "username")), json_string_value(json_object_get(j_param, "scheme_name")), 1) != G_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (4)");
             response->status = 500;
           } else {
@@ -2686,6 +2686,129 @@ int callback_glewlwyd_delete_api_key (const struct _u_request * request, struct 
   } else {
     y_log_message(Y_LOG_LEVEL_INFO, "Event - API key disabled by user '%s'", json_string_value(json_object_get((json_t *)response->shared_data, "username")));
   }
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_get_misc_config_list (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(request);
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_misc_config;
+  
+  j_misc_config = get_misc_config_list(config);
+  if (check_result_value(j_misc_config, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_misc_config, "misc_config"));
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_misc_config_list - Error get_misc_config_list");
+    response->status = 500;
+  }
+  json_decref(j_misc_config);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_get_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_misc_config;
+  
+  j_misc_config = get_misc_config(config, NULL, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_misc_config, G_OK)) {
+    ulfius_set_json_body_response(response, 200, json_object_get(j_misc_config, "misc_config"));
+  } else if (check_result_value(j_misc_config, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_misc_config - Error get_misc_config");
+    response->status = 500;
+  }
+  json_decref(j_misc_config);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_add_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_misc_config, * j_misc_config_valid;
+  
+  j_misc_config = ulfius_get_json_body_request(request, NULL);
+  if (j_misc_config != NULL) {
+    j_misc_config_valid = is_misc_config_valid(config, j_misc_config, 1);
+    if (check_result_value(j_misc_config_valid, G_OK)) {
+      if (add_misc_config(config, j_misc_config) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_misc_config - Error add_misc_config");
+        response->status = 500;
+      }
+    } else if (check_result_value(j_misc_config_valid, G_ERROR_PARAM)) {
+      if (json_object_get(j_misc_config_valid, "error") != NULL) {
+        ulfius_set_json_body_response(response, 400, json_object_get(j_misc_config_valid, "error"));
+      } else {
+        response->status = 400;
+      }
+    } else if (!check_result_value(j_misc_config_valid, G_OK)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_misc_config - Error is_misc_config_valid");
+      response->status = 500;
+    }
+    json_decref(j_misc_config_valid);
+  } else {
+    response->status = 400;
+  }
+  json_decref(j_misc_config);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_set_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_misc_config, * j_misc_config_valid, * j_search_misc_config;
+  
+  j_search_misc_config = get_misc_config(config, NULL, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_search_misc_config, G_OK)) {
+    j_misc_config = ulfius_get_json_body_request(request, NULL);
+    if (j_misc_config != NULL) {
+      json_object_del(j_misc_config, "enabled");
+      j_misc_config_valid = is_misc_config_valid(config, j_misc_config, 0);
+      if (check_result_value(j_misc_config_valid, G_OK)) {
+        if (set_misc_config(config, u_map_get(request->map_url, "name"), j_misc_config) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_misc_config - Error set_misc_config");
+          response->status = 500;
+        }
+      } else if (check_result_value(j_misc_config_valid, G_ERROR_PARAM)) {
+        if (json_object_get(j_misc_config_valid, "error") != NULL) {
+          ulfius_set_json_body_response(response, 400, json_object_get(j_misc_config_valid, "error"));
+        } else {
+          response->status = 400;
+        }
+      } else if (!check_result_value(j_misc_config_valid, G_OK)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_misc_config - Error is_misc_config_valid");
+        response->status = 500;
+      }
+      json_decref(j_misc_config_valid);
+    } else {
+      response->status = 400;
+    }
+    json_decref(j_misc_config);
+  } else if (check_result_value(j_search_misc_config, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_misc_config - Error get_misc_config");
+    response->status = 500;
+  }
+  json_decref(j_search_misc_config);
+  return U_CALLBACK_CONTINUE;
+}
+
+int callback_glewlwyd_delete_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct config_elements * config = (struct config_elements *)user_data;
+  json_t * j_search_misc_config;
+  
+  j_search_misc_config = get_misc_config(config, NULL, u_map_get(request->map_url, "name"));
+  if (check_result_value(j_search_misc_config, G_OK)) {
+    if (delete_misc_config(config, u_map_get(request->map_url, "name")) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_misc_config - Error delete_misc_config");
+      response->status = 500;
+    }
+  } else if (check_result_value(j_search_misc_config, G_ERROR_NOT_FOUND)) {
+    response->status = 404;
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_misc_config - Error get_misc_config");
+    response->status = 500;
+  }
+  json_decref(j_search_misc_config);
   return U_CALLBACK_CONTINUE;
 }
 

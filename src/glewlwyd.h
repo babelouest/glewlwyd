@@ -75,6 +75,7 @@
 #define GLEWLWYD_API_KEY_HEADER_KEY                        "Authorization"
 #define GLEWLWYD_API_KEY_HEADER_PREFIX                     "token "
 #define GLEWLWYD_API_KEY_LENGTH                            32
+#define GLEWLWYD_MAIL_ON_CONNEXION_TYPE                    "mail-on-connexion"
 
 #define GLEWLWYD_RUNNING     0
 #define GLEWLWYD_STOP        1
@@ -93,6 +94,7 @@
 #define GLEWLWYD_TABLE_SCOPE_GROUP_AUTH_SCHEME_MODULE_INSTANCE "g_scope_group_auth_scheme_module_instance"
 #define GLEWLWYD_TABLE_CLIENT_USER_SCOPE                       "g_client_user_scope"
 #define GLEWLWYD_TABLE_API_KEY                                 "g_api_key"
+#define GLEWLWYD_TABLE_MISC_CONFIG                             "g_misc_config"
 
 // Module management
 #define GLEWLWYD_MODULE_ACTION_STOP  0
@@ -185,7 +187,7 @@ json_t * auth_trigger_user_scheme(struct config_elements * config, const char * 
 json_t * auth_trigger_identify_scheme(struct config_elements * config, const char * scheme_type, const char * scheme_name, json_t * j_trigger_parameters, const struct _u_request * request);
 
 // Session
-int user_session_update(struct config_elements * config, const char * session_uid, const char * user_agent, const char * issued_for, const char * username, const char * scheme_name, int update_login);
+int user_session_update(struct config_elements * config, const char * session_uid, const char * ip_source, const char * user_agent, const char * issued_for, const char * username, const char * scheme_name, int update_login);
 json_t * get_session_for_username(struct config_elements * config, const char * session_uid, const char * username);
 json_t * get_current_user_for_session(struct config_elements * config, const char * session_uid);
 json_t * get_users_for_session(struct config_elements * config, const char * session_uid);
@@ -353,6 +355,14 @@ json_t * get_api_key_list(struct config_elements * config, const char * pattern,
 json_t * generate_api_key(struct config_elements * config, const char * username, const char * issued_for, const char * user_agent);
 int disable_api_key(struct config_elements * config, const char * token_hash);
 
+// Misc Config CRUD functions
+json_t * get_misc_config_list(struct config_elements * config);
+json_t * get_misc_config(struct config_elements * config, const char * type, const char * name);
+json_t * is_misc_config_valid(struct config_elements * config, json_t * j_misc_config, int add);
+int add_misc_config(struct config_elements * config, json_t * j_misc_config);
+int set_misc_config(struct config_elements * config, const char * name, json_t * j_misc_config);
+int delete_misc_config(struct config_elements * config, const char * name);
+
 // Metrics functions
 void glewlwyd_metrics_close(struct config_elements * config);
 int glewlwyd_metrics_init(struct config_elements * config);
@@ -455,6 +465,12 @@ int callback_glewlwyd_delete_scope (const struct _u_request * request, struct _u
 int callback_glewlwyd_get_api_key_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_api_key (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_add_api_key (const struct _u_request * request, struct _u_response * response, void * user_data);
+
+int callback_glewlwyd_get_misc_config_list (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_get_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_add_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_set_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_glewlwyd_delete_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int callback_metrics (const struct _u_request * request, struct _u_response * response, void * user_data);
 
