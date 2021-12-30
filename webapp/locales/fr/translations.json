@@ -1141,7 +1141,16 @@
     "mail-on-connexion-body-pattern-ph": "Ex: Nouvelle connexion à votre compte '{USERNAME}'\nOrigine: {IP} - {LOCATION}",
     "success-api-mail-on-connexion": "Configuration enregistrée",
     "error-api-mail-on-connexion": "Erreur lors de l'enregistrement de la configuration",
-    "misc-ip-geolocalization-api": "Utiliser une API de géolocalisation"
+    "misc-ip-geolocation-api": "Utiliser une API de géolocalisation",
+    "modal-misc-geolocation-title": "API de geolocalisation",
+    "misc-geolocation-url": "URL de l'API, incluant {IP}",
+    "misc-geolocation-url-ph": "Ex: https://my-geolotaiton-api.tld/{IP}?API_KEY=abcdxyz1234",
+    "misc-geolocation-output-properties": "Champs à utiliser pour la sortie",
+    "misc-geolocation-output-properties-ph": "Ex: city, country_name",
+    "success-api-ip-geolocation-api": "Configuration enregistrée",
+    "error-api-ip-geolocation-api": "Erreur lors de l'enregistrement de la configuration",
+    "misc-geolocation-url-error": "L'URL est obligatoire",
+    "misc-geolocation-output-properties-error": "Les champs à utiliser pour la sortie sont obligatoires"
   },
   "profile": {
     "error-credential-message": "Veuillez vous connecter à l'application",
