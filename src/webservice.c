@@ -2722,18 +2722,30 @@ int callback_glewlwyd_get_misc_config (const struct _u_request * request, struct
   return U_CALLBACK_CONTINUE;
 }
 
-int callback_glewlwyd_add_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data) {
+int callback_glewlwyd_set_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_misc_config, * j_misc_config_valid;
+  json_t * j_misc_config, * j_misc_config_valid, * j_search_misc_config;
   
   j_misc_config = ulfius_get_json_body_request(request, NULL);
   if (j_misc_config != NULL) {
-    j_misc_config_valid = is_misc_config_valid(config, j_misc_config, 1);
+    j_misc_config_valid = is_misc_config_valid(u_map_get(request->map_url, "name"), j_misc_config);
     if (check_result_value(j_misc_config_valid, G_OK)) {
-      if (add_misc_config(config, j_misc_config) != G_OK) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_misc_config - Error add_misc_config");
+      j_search_misc_config = get_misc_config(config, NULL, u_map_get(request->map_url, "name"));
+      if (check_result_value(j_search_misc_config, G_OK)) {
+        if (set_misc_config(config, u_map_get(request->map_url, "name"), j_misc_config) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_misc_config - Error set_misc_config");
+          response->status = 500;
+        }
+      } else if (check_result_value(j_search_misc_config, G_ERROR_NOT_FOUND)) {
+        if (add_misc_config(config, u_map_get(request->map_url, "name"), j_misc_config) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_misc_config - Error add_misc_config");
+          response->status = 500;
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_misc_config - Error get_misc_config");
         response->status = 500;
       }
+      json_decref(j_search_misc_config);
     } else if (check_result_value(j_misc_config_valid, G_ERROR_PARAM)) {
       if (json_object_get(j_misc_config_valid, "error") != NULL) {
         ulfius_set_json_body_response(response, 400, json_object_get(j_misc_config_valid, "error"));
@@ -2741,7 +2753,7 @@ int callback_glewlwyd_add_misc_config (const struct _u_request * request, struct
         response->status = 400;
       }
     } else if (!check_result_value(j_misc_config_valid, G_OK)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_add_misc_config - Error is_misc_config_valid");
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_misc_config - Error is_misc_config_valid");
       response->status = 500;
     }
     json_decref(j_misc_config_valid);
@@ -2749,46 +2761,6 @@ int callback_glewlwyd_add_misc_config (const struct _u_request * request, struct
     response->status = 400;
   }
   json_decref(j_misc_config);
-  return U_CALLBACK_CONTINUE;
-}
-
-int callback_glewlwyd_set_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data) {
-  struct config_elements * config = (struct config_elements *)user_data;
-  json_t * j_misc_config, * j_misc_config_valid, * j_search_misc_config;
-  
-  j_search_misc_config = get_misc_config(config, NULL, u_map_get(request->map_url, "name"));
-  if (check_result_value(j_search_misc_config, G_OK)) {
-    j_misc_config = ulfius_get_json_body_request(request, NULL);
-    if (j_misc_config != NULL) {
-      json_object_del(j_misc_config, "enabled");
-      j_misc_config_valid = is_misc_config_valid(config, j_misc_config, 0);
-      if (check_result_value(j_misc_config_valid, G_OK)) {
-        if (set_misc_config(config, u_map_get(request->map_url, "name"), j_misc_config) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_misc_config - Error set_misc_config");
-          response->status = 500;
-        }
-      } else if (check_result_value(j_misc_config_valid, G_ERROR_PARAM)) {
-        if (json_object_get(j_misc_config_valid, "error") != NULL) {
-          ulfius_set_json_body_response(response, 400, json_object_get(j_misc_config_valid, "error"));
-        } else {
-          response->status = 400;
-        }
-      } else if (!check_result_value(j_misc_config_valid, G_OK)) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_misc_config - Error is_misc_config_valid");
-        response->status = 500;
-      }
-      json_decref(j_misc_config_valid);
-    } else {
-      response->status = 400;
-    }
-    json_decref(j_misc_config);
-  } else if (check_result_value(j_search_misc_config, G_ERROR_NOT_FOUND)) {
-    response->status = 404;
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_set_misc_config - Error get_misc_config");
-    response->status = 500;
-  }
-  json_decref(j_search_misc_config);
   return U_CALLBACK_CONTINUE;
 }
 

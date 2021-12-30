@@ -510,7 +510,6 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/misc/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/misc/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_misc_config_list, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/misc/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_misc_config, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/misc/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_misc_config, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/misc/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_misc_config, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/misc/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_delete_misc_config, (void*)config);
 
@@ -3447,4 +3446,44 @@ void close_plugin_module_list(struct config_elements * config) {
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "close_plugin_module_list - Error pthread_mutex_lock");
   }
+}
+
+char * get_ip_data(struct config_elements * config, const char * ip_address) {
+  char * data = NULL, * url, ** properties = NULL;
+  json_t * j_misc_config = get_misc_config(config, GLEWLWYD_IP_GEOLOCATION_API_TYPE, NULL), * j_response;
+  struct _u_request req;
+  struct _u_response resp;
+  size_t i;
+  
+  if (check_result_value(j_misc_config, G_OK) && json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "enabled") == json_true()) {
+    if (split_string(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "output-properties")), ",", &properties)) {
+      url = str_replace(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "url")), "{IP}", ip_address);
+      ulfius_init_request(&req);
+      ulfius_init_response(&resp);
+      ulfius_set_request_properties(&req, U_OPT_HTTP_URL, url, U_OPT_NONE);
+      if (ulfius_send_http_request(&req, &resp) == U_OK && resp.status >= 200 && resp.status < 300) {
+        if ((j_response = ulfius_get_json_body_response(&resp, NULL)) != NULL) {
+          for (i=0; properties[i]!=NULL; i++) {
+            if (data == NULL) {
+              data = strdup(json_string_value(json_object_get(j_response, trimwhitespace(properties[i]))));
+            } else {
+              data = mstrcatf(data, " - %s", json_string_value(json_object_get(j_response, trimwhitespace(properties[i]))));
+            }
+          }
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_ip_data - No JSON response - url", url);
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_ip_data - Error ulfius_send_http_request - url %s", url);
+      }
+      ulfius_clean_request(&req);
+      ulfius_clean_response(&resp);
+      o_free(url);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_ip_data - Error split_string for %s", json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "output-properties")));
+    }
+    free_string_array(properties);
+  }
+  json_decref(j_misc_config);
+  return data;
 }

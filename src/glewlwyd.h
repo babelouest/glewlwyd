@@ -76,6 +76,7 @@
 #define GLEWLWYD_API_KEY_HEADER_PREFIX                     "token "
 #define GLEWLWYD_API_KEY_LENGTH                            32
 #define GLEWLWYD_MAIL_ON_CONNEXION_TYPE                    "mail-on-connexion"
+#define GLEWLWYD_IP_GEOLOCATION_API_TYPE                   "ip-geolocation-api"
 
 #define GLEWLWYD_RUNNING     0
 #define GLEWLWYD_STOP        1
@@ -172,6 +173,7 @@ struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(
 struct _user_auth_scheme_module * get_user_auth_scheme_module_lib(struct config_elements * config, const char * name);
 struct _plugin_module_instance * get_plugin_module_instance(struct config_elements * config, const char * name);
 struct _plugin_module * get_plugin_module_lib(struct config_elements * config, const char * name);
+char * get_ip_data(struct config_elements * config, const char * ip_address);
 
 // Modules generic functions
 int module_parameters_check(const char * module_parameters);
@@ -358,8 +360,8 @@ int disable_api_key(struct config_elements * config, const char * token_hash);
 // Misc Config CRUD functions
 json_t * get_misc_config_list(struct config_elements * config);
 json_t * get_misc_config(struct config_elements * config, const char * type, const char * name);
-json_t * is_misc_config_valid(struct config_elements * config, json_t * j_misc_config, int add);
-int add_misc_config(struct config_elements * config, json_t * j_misc_config);
+json_t * is_misc_config_valid(const char * name, json_t * j_misc_config);
+int add_misc_config(struct config_elements * config, const char * name, json_t * j_misc_config);
 int set_misc_config(struct config_elements * config, const char * name, json_t * j_misc_config);
 int delete_misc_config(struct config_elements * config, const char * name);
 
@@ -468,7 +470,6 @@ int callback_glewlwyd_add_api_key (const struct _u_request * request, struct _u_
 
 int callback_glewlwyd_get_misc_config_list (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_get_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data);
-int callback_glewlwyd_add_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_set_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_glewlwyd_delete_misc_config (const struct _u_request * request, struct _u_response * response, void * user_data);
 

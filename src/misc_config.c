@@ -96,21 +96,13 @@ json_t * get_misc_config(struct config_elements * config, const char * type, con
   return j_return;
 }
 
-json_t * is_misc_config_valid(struct config_elements * config, json_t * j_misc_config, int add) {
-  json_t * j_error = json_array(), * j_return, * j_cur_misc_config;
+json_t * is_misc_config_valid(const char * name, json_t * j_misc_config) {
+  json_t * j_error = json_array(), * j_return;
   char * value;
   
   if (j_error != NULL) {
-    if (add) {
-      if (!json_string_length(json_object_get(j_misc_config, "name")) || json_string_length(json_object_get(j_misc_config, "name")) > 128) {
-        json_array_append_new(j_error, json_string("name is mandatory and must be a non empty string, maximum 128 characters"));
-      } else {
-        j_cur_misc_config = get_misc_config(config, NULL, json_string_value(json_object_get(j_misc_config, "name")));
-        if (check_result_value(j_cur_misc_config, G_OK)) {
-          json_array_append_new(j_error, json_string("name already used"));
-        }
-        json_decref(j_cur_misc_config);
-      }
+    if (!o_strlen(name) || o_strlen(name) > 128) {
+      json_array_append_new(j_error, json_string("name is mandatory and must be a non empty string, maximum 128 characters"));
     }
     if (!json_string_length(json_object_get(j_misc_config, "type")) || json_string_length(json_object_get(j_misc_config, "type")) > 128) {
       json_array_append_new(j_error, json_string("type is mandatory and must be a non empty string, maximum 128 characters"));
@@ -135,7 +127,7 @@ json_t * is_misc_config_valid(struct config_elements * config, json_t * j_misc_c
   return j_return;
 }
 
-int add_misc_config(struct config_elements * config, json_t * j_misc_config) {
+int add_misc_config(struct config_elements * config, const char * name, json_t * j_misc_config) {
   json_t * j_query;
   int res, ret;
   char * value = NULL;
@@ -143,11 +135,11 @@ int add_misc_config(struct config_elements * config, json_t * j_misc_config) {
   if (json_object_get(j_misc_config, "value") != NULL && json_object_get(j_misc_config, "value") != json_null()) {
     value = json_dumps(json_object_get(j_misc_config, "value"), JSON_COMPACT);
   }
-  j_query = json_pack("{sss{ssssss?}}",
+  j_query = json_pack("{sss{sOssss?}}",
                       "table", GLEWLWYD_TABLE_MISC_CONFIG,
                       "values",
-                        "gmc_type", json_string_value(json_object_get(j_misc_config, "type")),
-                        "gmc_name", json_string_value(json_object_get(j_misc_config, "name")),
+                        "gmc_type", json_object_get(j_misc_config, "type"),
+                        "gmc_name", name,
                         "gmc_value", value);
   o_free(value);
   res = h_insert(config->conn, j_query, NULL);
@@ -169,10 +161,10 @@ int set_misc_config(struct config_elements * config, const char * name, json_t *
   if (json_object_get(j_misc_config, "value") != NULL && json_object_get(j_misc_config, "value") != json_null()) {
     value = json_dumps(json_object_get(j_misc_config, "value"), JSON_COMPACT);
   }
-  j_query = json_pack("{sss{ssss?}s{ss}}",
+  j_query = json_pack("{sss{sOss?}s{ss}}",
                       "table", GLEWLWYD_TABLE_MISC_CONFIG,
                       "set",
-                        "gmc_type", json_string_value(json_object_get(j_misc_config, "type")),
+                        "gmc_type", json_object_get(j_misc_config, "type"),
                         "gmc_value", value,
                       "where",
                         "gmc_name", name);
