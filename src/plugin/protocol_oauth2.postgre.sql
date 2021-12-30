@@ -89,7 +89,7 @@ CREATE TABLE gpg_device_authorization (
   gpgda_username VARCHAR(256),
   gpgda_created_at TIMESTAMPTZ DEFAULT NOW(),
   gpgda_expires_at TIMESTAMPTZ DEFAULT NOW(),
-  gpgda_issued_for VARCHAR(256), -- IP address or hostname of the deice client
+  gpgda_issued_for VARCHAR(256), -- IP address or hostname of the device client
   gpgda_device_code_hash VARCHAR(512) NOT NULL,
   gpgda_user_code_hash VARCHAR(512) NOT NULL,
   gpgda_status SMALLINT DEFAULT 0, -- 0: created, 1: user verified, 2 device completed, 3 disabled

@@ -182,7 +182,7 @@ CREATE TABLE gpo_device_authorization (
   gpoda_username TEXT,
   gpoda_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   gpoda_expires_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  gpoda_issued_for TEXT, -- IP address or hostname of the deice client
+  gpoda_issued_for TEXT, -- IP address or hostname of the device client
   gpoda_device_code_hash TEXT NOT NULL,
   gpoda_user_code_hash TEXT NOT NULL,
   gpoda_sid TEXT,
