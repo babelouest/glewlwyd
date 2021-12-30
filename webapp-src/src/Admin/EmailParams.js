@@ -65,6 +65,7 @@ class EmailParams extends Component {
       mod: props.mod,
       role: props.role,
       check: props.check,
+      miscConfig: props.miscConfig,
       hasError: false,
       errorList: {},
       currentLang: i18next.language,
@@ -84,6 +85,7 @@ class EmailParams extends Component {
     this.changeNewLang = this.changeNewLang.bind(this);
     this.addLang = this.addLang.bind(this);
     this.removeLang = this.removeLang.bind(this);
+    this.selectSmtpConfig = this.selectSmtpConfig.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -146,6 +148,7 @@ class EmailParams extends Component {
       mod: nextProps.mod,
       role: nextProps.role,
       check: nextProps.check,
+      miscConfig: nextProps.miscConfig,
       hasError: false
     }, () => {
       if (this.state.check) {
@@ -275,6 +278,22 @@ class EmailParams extends Component {
     }
   }
   
+  selectSmtpConfig(e) {
+    let config = this.state.miscConfig[parseInt(e.target.value)], mod = this.state.mod;
+    if (config) {
+      mod.parameters.host = config.value.host;
+      mod.parameters.port = config.value.port;
+      mod.parameters["use-tls"] = config.value["use-tls"];
+      mod.parameters["check-certificate"] = config.value["check-certificate"];
+      mod.parameters["user-lang-property"] = config.value["user-lang-property"];
+      mod.parameters.user = config.value.user;
+      mod.parameters.password = config.value.password;
+      mod.parameters.from = config.value.from;
+      mod.parameters["content-type"] = config.value["content-type"];
+      this.setState({mod: mod, currentLang: i18next.language});
+    }
+  }
+  
   render() {
     var langList = [];
     langList.push(
@@ -299,8 +318,31 @@ class EmailParams extends Component {
       langList.push(<div key={(index*2)+1} className="dropdown-divider"></div>);
     });
     var template = this.state.mod.parameters.templates[this.state.currentLang]||{};
+    let smtpConfigList = []
+    this.state.miscConfig.forEach((config, index) => {
+      if (config.type === "smtp") {
+        let summary;
+        if (config.value) {
+          summary = "Host: "+config.value.host;
+          smtpConfigList.push(
+            <option key={index} value={index}>{index + " - " + summary}</option>
+          );
+        }
+      }
+    });
     return (
       <div>
+        <div className="form-group">
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor="smtp-template">{i18next.t("admin.smtp-config")}</label>
+            </div>
+            <select className="form-control" onChange={(e) => {this.selectSmtpConfig(e)}}>
+              <option value={-1}>{i18next.t("admin.smtp-config-none")}</option>
+              {smtpConfigList}
+            </select>
+          </div>
+        </div>
         <div className="form-group">
           <div className="input-group mb-3">
             <div className="input-group-prepend">

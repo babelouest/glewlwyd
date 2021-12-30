@@ -171,6 +171,7 @@ class RegisterParams extends Component {
       mod: props.mod,
       role: props.role,
       check: props.check,
+      miscConfig: props.miscConfig,
       hasError: false,
       errorList: {},
       currentLang: i18next.language,
@@ -357,6 +358,7 @@ class RegisterParams extends Component {
       mod: nextProps.mod,
       role: nextProps.role,
       check: nextProps.check,
+      miscConfig: nextProps.miscConfig,
       hasError: false,
       currentLang: i18next.language,
       newLang: "",
@@ -705,6 +707,22 @@ class RegisterParams extends Component {
     }
   }
   
+  selectSmtpConfig(e) {
+    let config = this.state.miscConfig[parseInt(e.target.value)], mod = this.state.mod;
+    if (config) {
+      mod.parameters.host = config.value.host;
+      mod.parameters.port = config.value.port;
+      mod.parameters["use-tls"] = config.value["use-tls"];
+      mod.parameters["check-certificate"] = config.value["check-certificate"];
+      mod.parameters["user-lang-property"] = config.value["user-lang-property"];
+      mod.parameters.user = config.value.user;
+      mod.parameters.password = config.value.password;
+      mod.parameters.from = config.value.from;
+      mod.parameters["content-type"] = config.value["content-type"];
+      this.setState({mod: mod, currentLang: i18next.language});
+    }
+  }
+  
   render() {
     var langList = [], langListUpdateEmail = [], langListResetCredentials = [];
     langList.push(
@@ -836,6 +854,18 @@ class RegisterParams extends Component {
           </div>
         </div>
       );
+    });
+    let smtpConfigList = []
+    this.state.miscConfig.forEach((config, index) => {
+      if (config.type === "smtp") {
+        let summary;
+        if (config.value) {
+          summary = "Host: "+config.value.host;
+          smtpConfigList.push(
+            <option key={index} value={index}>{index + " - " + summary}</option>
+          );
+        }
+      }
     });
 
     return (
@@ -1235,6 +1265,17 @@ class RegisterParams extends Component {
             </div>
             <div id="collapseSMTPParams" className="collapse" aria-labelledby="SMTPParamsCard" data-parent="#accordionSMTPParams">
               <div className="card-body">
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="smtp-template">{i18next.t("admin.smtp-config")}</label>
+                    </div>
+                    <select className="form-control" onChange={(e) => {this.selectSmtpConfig(e)}}>
+                      <option value={-1}>{i18next.t("admin.smtp-config-none")}</option>
+                      {smtpConfigList}
+                    </select>
+                  </div>
+                </div>
                 <div className="form-group">
                   <div className="input-group mb-3">
                     <div className="input-group-prepend">

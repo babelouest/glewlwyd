@@ -3,11 +3,6 @@ import i18next from 'i18next';
 
 import messageDispatcher from '../lib/MessageDispatcher';
 
-import MockPluginParams from './MockPluginParams';
-import GlwdOauth2Params from './GlwdOauth2Params';
-import GlwdOIDCParams from './GlwdOIDCParams';
-import RegisterParams from './RegisterParams';
-
 class APIKey extends Component {
   constructor(props) {
     super(props);

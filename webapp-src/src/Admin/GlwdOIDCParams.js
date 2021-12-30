@@ -154,6 +154,7 @@ class GlwdOIDCParams extends Component {
       mod: props.mod,
       role: props.role,
       check: props.check,
+      miscConfig: props.miscConfig,
       errorList: {},
       newScopeOverride: false,
       newResourceScope: false,
@@ -228,7 +229,8 @@ class GlwdOIDCParams extends Component {
       config: nextProps.config,
       mod: nextProps.mod,
       role: nextProps.role,
-      check: nextProps.check
+      check: nextProps.check,
+      miscConfig: nextProps.miscConfig
     }, () => {
       if (this.state.check) {
         this.checkParameters();
@@ -1084,6 +1086,22 @@ class GlwdOIDCParams extends Component {
     this.setState({mod: mod});
   }
 
+  selectSmtpConfig(e) {
+    let config = this.state.miscConfig[parseInt(e.target.value)], mod = this.state.mod;
+    if (config) {
+      mod.parameters["oauth-ciba-email-host"] = config.value.host;
+      mod.parameters["oauth-ciba-email-port"] = config.value.port;
+      mod.parameters["oauth-ciba-email-use-tls"] = config.value["use-tls"];
+      mod.parameters["oauth-ciba-email-check-certificate"] = config.value["check-certificate"];
+      mod.parameters["oauth-ciba-email-user-lang-property"] = config.value["user-lang-property"];
+      mod.parameters["oauth-ciba-email-user"] = config.value.user;
+      mod.parameters["oauth-ciba-email-password"] = config.value.password;
+      mod.parameters["oauth-ciba-email-from"] = config.value.from;
+      mod.parameters["oauth-ciba-email-content-type"] = config.value["content-type"];
+      this.setState({mod: mod, currentLang: i18next.language});
+    }
+  }
+  
   render() {
     var keyJsx, certJsx, scopeOverrideList = [], scopeList = [], additionalParametersList = [], claimsList = [], x5cList = [], addressClaim;
     var baseApiUrl = document.location.href.split('?')[0].split('#')[0];
@@ -1873,6 +1891,19 @@ class GlwdOIDCParams extends Component {
         );
       });
     }
+
+    let smtpConfigList = []
+    this.state.miscConfig.forEach((config, index) => {
+      if (config.type === "smtp") {
+        let summary;
+        if (config.value) {
+          summary = "Host: "+config.value.host;
+          smtpConfigList.push(
+            <option key={index} value={index}>{index + " - " + summary}</option>
+          );
+        }
+      }
+    });
 
     return (
       <div>
@@ -3368,6 +3399,17 @@ class GlwdOIDCParams extends Component {
                          checked={this.state.mod.parameters["oauth-ciba-email-allowed"]}
                          disabled={!this.state.mod.parameters["oauth-ciba-allowed"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-oauth-ciba-email-allowed">{i18next.t("admin.mod-glwd-oauth-ciba-email-allowed")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="smtp-template">{i18next.t("admin.smtp-config")}</label>
+                    </div>
+                    <select className="form-control" onChange={(e) => {this.selectSmtpConfig(e)}} disabled={!this.state.mod.parameters["oauth-ciba-allowed"] || !this.state.mod.parameters["oauth-ciba-email-allowed"]}>
+                      <option value={-1}>{i18next.t("admin.smtp-config-none")}</option>
+                      {smtpConfigList}
+                    </select>
+                  </div>
                 </div>
                 <div className="form-group">
                   <div className="input-group mb-3">

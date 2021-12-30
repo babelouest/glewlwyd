@@ -20,6 +20,7 @@ class ModEditParameters extends Component {
       config: props.config,
       mod: props.mod,
       role: props.role,
+      miscConfig: props.miscConfig,
       check: props.check
     };
   }
@@ -29,6 +30,7 @@ class ModEditParameters extends Component {
       config: nextProps.config,
       mod: nextProps.mod,
       role: nextProps.role,
+      miscConfig: nextProps.miscConfig,
       check: nextProps.check
     });
   }
@@ -43,7 +45,7 @@ class ModEditParameters extends Component {
     } else if (this.state.mod.module === "http") {
       return <HTTPParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
     } else if (this.state.mod.module === "email") {
-      return <EmailParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
+      return <EmailParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} miscConfig={this.state.miscConfig} />
     } else if (this.state.mod.module === "webauthn") {
       return <WebauthnParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
     } else if (this.state.mod.module === "otp") {

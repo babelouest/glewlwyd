@@ -18,6 +18,7 @@ class PluginEdit extends Component {
       modTypes: props.types,
       add: props.add,
       callback: props.callback,
+      miscConfig: props.miscConfig,
       parametersValid: true,
       nameInvalid: false,
       nameInvalidMessage: false,
@@ -72,6 +73,7 @@ class PluginEdit extends Component {
       modTypes: nextProps.types,
       add: nextProps.add,
       callback: nextProps.callback,
+      miscConfig: nextProps.miscConfig,
       parametersValid: true,
       nameInvalid: false,
       nameInvalidMessage: false,
@@ -192,7 +194,7 @@ class PluginEdit extends Component {
                     <input type="text" className="form-control" id="mod-display-name" placeholder={i18next.t("admin.mod-display-name-ph")} maxLength="256" value={this.state.mod.display_name||""} onChange={(e) => this.changeDisplayName(e)}/>
                   </div>
                 </div>
-                <PluginEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} modSchemes={this.state.modSchemes} />
+                <PluginEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} modSchemes={this.state.modSchemes} miscConfig={this.state.miscConfig} />
               </form>
             </div>
             <div className="modal-footer">

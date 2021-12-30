@@ -15,7 +15,8 @@ class PluginEditParameters extends Component {
       modSchemes: props.modSchemes,
       mod: props.mod,
       role: props.role,
-      check: props.check
+      check: props.check,
+      miscConfig: props.miscConfig
     };
   }
   
@@ -25,7 +26,8 @@ class PluginEditParameters extends Component {
       modSchemes: nextProps.modSchemes,
       mod: nextProps.mod,
       role: nextProps.role,
-      check: nextProps.check
+      check: nextProps.check,
+      miscConfig: nextProps.miscConfig
     });
   }
   
@@ -35,9 +37,9 @@ class PluginEditParameters extends Component {
     } else if (this.state.mod.module === "oauth2-glewlwyd") {
       return <GlwdOauth2Params mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
     } else if (this.state.mod.module === "oidc") {
-      return <GlwdOIDCParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
+      return <GlwdOIDCParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} miscConfig={this.state.miscConfig} />
     } else if (this.state.mod.module === "register") {
-      return <RegisterParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} modSchemes={this.state.modSchemes} />
+      return <RegisterParams mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} modSchemes={this.state.modSchemes} miscConfig={this.state.miscConfig} />
     } else {
       return ("");
     }

@@ -2413,14 +2413,16 @@ class App extends Component {
                    add={this.state.ModModal.add}
                    types={this.state.ModModal.types}
                    callback={this.state.ModModal.callback}
-                   config={this.state.config} />
+                   config={this.state.config}
+                   miscConfig={this.state.miscConfig} />
           <PluginEdit title={this.state.PluginModal.title}
                       mod={this.state.PluginModal.data}
                       add={this.state.PluginModal.add}
                       modSchemes={this.state.modSchemes}
                       types={this.state.PluginModal.types}
                       callback={this.state.PluginModal.callback}
-                      config={this.state.config} />
+                      config={this.state.config}
+                      miscConfig={this.state.miscConfig}/>
         </div>
       );
     } else {

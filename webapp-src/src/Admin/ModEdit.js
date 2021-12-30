@@ -94,6 +94,7 @@ class ModEdit extends Component {
       modTypes: props.types,
       add: props.add,
       callback: props.callback,
+      miscConfig: props.miscConfig,
       parametersValid: true,
       nameInvalid: false,
       nameInvalidMessage: false,
@@ -176,6 +177,7 @@ class ModEdit extends Component {
       modTypes: nextProps.types,
       add: nextProps.add,
       callback: nextProps.callback,
+      miscConfig: nextProps.miscConfig,
       parametersValid: true,
       nameInvalid: false,
       nameInvalidMessage: false,
@@ -386,7 +388,7 @@ class ModEdit extends Component {
               {readonly}
               {multiplePasswords}
               {schemeParams}
-              <ModEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} />
+              <ModEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} miscConfig={this.state.miscConfig} />
             </form>
           </div>
           <div className="modal-footer">

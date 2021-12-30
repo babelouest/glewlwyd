@@ -4,11 +4,8 @@ import i18next from 'i18next';
 import messageDispatcher from '../lib/MessageDispatcher';
 import apiManager from '../lib/APIManager';
 
-import MockPluginParams from './MockPluginParams';
-import GlwdOauth2Params from './GlwdOauth2Params';
-import GlwdOIDCParams from './GlwdOIDCParams';
-import RegisterParams from './RegisterParams';
-
+// To who may read this code, sorry!
+// Maybe one day I'll refactor it to move modals outside of it
 class MiscConfig extends Component {
   constructor(props) {
     super(props);
@@ -29,7 +26,7 @@ class MiscConfig extends Component {
         user: "",
         password: "",
         from: "",
-        "content-type": ""
+        "content-type": "text/plain; charset=utf-8"
       },
       mailOnConnexion: {
         enabled: true,
@@ -41,12 +38,18 @@ class MiscConfig extends Component {
         user: "",
         password: "",
         from: "",
-        "content-type": "",
+        "content-type": "text/plain; charset=utf-8",
         templates: {}
       },
       errorMailOnConnexionList: {},
       currentLang: i18next.language,
-      newLang: ""
+      newLang: "",
+      geolocation: {
+        enabled: false,
+        url: "",
+        "output-properties": "city, country_name"
+      },
+      errorGeolocationList: {}
     };
     
     this.addSmtp = this.addSmtp.bind(this);
@@ -72,10 +75,11 @@ class MiscConfig extends Component {
         port: 25,
         "use-tls": false,
         "check-certificate": false,
+        "user-lang-property": "lang",
         user: "",
         password: "",
         from: "",
-        "content-type": ""
+        "content-type": "text/plain; charset=utf-8"
       }
     }, () => {
       $("#smtpModal").modal({keyboard: false, show: true});
@@ -90,7 +94,7 @@ class MiscConfig extends Component {
         successI18n = "admin.success-api-set-misc-smtp";
         errorI18n = "admin.error-api-set-misc-smtp";
       } else {
-        promise = apiManager.glewlwydRequest("/misc/", "POST", {name: "smtp-"+Math.random().toString(36).substring(2, 15), type: "smtp", value: this.state.smtp})
+        promise = apiManager.glewlwydRequest("/misc/smtp-"+Math.random().toString(36).substring(2, 15), "PUT", {type: "smtp", value: this.state.smtp})
         successI18n = "admin.success-api-add-misc-smtp";
         errorI18n = "admin.error-api-add-misc-smtp";
       }
@@ -316,16 +320,7 @@ class MiscConfig extends Component {
       });
       if (!hasError) {
         this.setState({errorMailOnConnexionList: {}}, () => {
-          let promise = false;
-          this.state.miscConfig.forEach((config) => {
-            if (config.type === "mail-on-connexion") {
-              promise = apiManager.glewlwydRequest("/misc/cur-mail-on-connexion", "PUT", {type: "mail-on-connexion", value: this.state.mailOnConnexion});
-            }
-          });
-          if (!promise) {
-            promise = apiManager.glewlwydRequest("/misc/", "POST", {name: "cur-mail-on-connexion", type: "mail-on-connexion", value: this.state.mailOnConnexion});
-          }
-          promise
+          apiManager.glewlwydRequest("/misc/cur-mail-on-connexion", "PUT", {type: "mail-on-connexion", value: this.state.mailOnConnexion})
           .then(() => {
             messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-mail-on-connexion")});
             messageDispatcher.sendMessage('App', {type: "miscConfig"});
@@ -345,10 +340,99 @@ class MiscConfig extends Component {
     }
   }
 
+  switchGeolocation() {
+    let miscConfig = this.state.miscConfig, geolocation, found = false;
+    miscConfig.forEach((config) => {
+      if (config.type === "ip-geolocation-api") {
+        found = true;
+        config.value.enabled = !config.value.enabled;
+        geolocation = config.value;
+        apiManager.glewlwydRequest("/misc/cur-ip-geolocation-api", "PUT", {type: "ip-geolocation-api", value: config.value})
+        .then(() => {
+          messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-ip-geolocation-api")});
+          messageDispatcher.sendMessage('App', {type: "miscConfig"});
+        })
+        .fail((err) => {
+          messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-ip-geolocation-api")});
+        });
+      }
+    });
+    if (!found) {
+      geolocation = {
+        enabled: true,
+        url: "",
+        "output-properties": "city, country_name"
+      };
+    }
+    this.setState({geolocation: geolocation}, () => {
+      if (!found) {
+        $("#geolocationModal").modal({keyboard: false, show: true});
+      }
+    });
+  }
+  
+  closeGeolocationModal(e, result) {
+    if (result) {
+      var errorList = {}, hasError = false;
+      if (!this.state.geolocation["url"]) {
+        hasError = true;
+        errorList["url"] = i18next.t("admin.misc-geolocation-url-error")
+      }
+      if (!this.state.geolocation["output-properties"]) {
+        hasError = true;
+        errorList["output-properties"] = i18next.t("admin.misc-geolocation-output-properties-error")
+      }
+      if (!hasError) {
+        this.setState({errorGeolocationList: {}}, () => {
+          apiManager.glewlwydRequest("/misc/cur-ip-geolocation-api", "PUT", {type: "ip-geolocation-api", value: this.state.geolocation})
+          .then(() => {
+            messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-ip-geolocation-api")});
+            messageDispatcher.sendMessage('App', {type: "miscConfig"});
+          })
+          .fail((err) => {
+            messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-ip-geolocation-api")});
+          })
+          .always(() => {
+            $("#geolocationModal").modal("hide");
+          });
+        });
+      } else {
+        this.setState({errorGeolocationList: errorList});
+      }
+    } else {
+      $("#geolocationModal").modal("hide");
+    }
+  }
+
+  changeGeolocationValue(e, param) {
+    var geolocation = this.state.geolocation;
+    geolocation[param] = e.target.value;
+    this.setState({geolocation: geolocation});
+  }
+  
+  editGeolocation() {
+    let geolocation, found = false;
+    this.state.miscConfig.forEach((config) => {
+      if (config.type === "ip-geolocation-api") {
+        found = true;
+        geolocation = config.value;
+      }
+    });
+    if (found) {
+      this.setState({geolocation: geolocation}, () => {
+        $("#geolocationModal").modal({keyboard: false, show: true});
+      });
+    }
+  }
+  
   render() {
-    let smtpList = [], switchMailConnexionButton, mailConnexionEditDisabled = true, smtpConfigList = [];
+    let smtpList = [], switchMailConnexionButton, mailConnexionEditDisabled = true, smtpConfigList = [], switchGeolocationButton, geolocationDisabled = true;
     switchMailConnexionButton =
       <button type="button" className="btn btn-secondary" onClick={(e) => this.switchMailConnexion()} title={i18next.t("admin.switch-on")}>
+        <i className="fas fa-toggle-off"></i>
+      </button>
+    switchGeolocationButton =
+      <button type="button" className="btn btn-secondary" onClick={(e) => this.switchGeolocation()} title={i18next.t("admin.switch-on")}>
         <i className="fas fa-toggle-off"></i>
       </button>
     this.state.miscConfig.forEach((config, index) => {
@@ -382,6 +466,14 @@ class MiscConfig extends Component {
               <i className="fas fa-toggle-on"></i>
             </button>
           mailConnexionEditDisabled = false;
+        }
+      } else if (config.type === "ip-geolocation-api") {
+        if (config.value.enabled) {
+          switchGeolocationButton =
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.switchGeolocation()} title={i18next.t("admin.switch-off")}>
+              <i className="fas fa-toggle-on"></i>
+            </button>
+          geolocationDisabled = false;
         }
       }
     });
@@ -436,11 +528,25 @@ class MiscConfig extends Component {
         <h4>
           {i18next.t("admin.misc-send-mail-on-new-connexion")}
         </h4>
-        <div className="btn-group btn-icon-right" role="group">
-          {switchMailConnexionButton}
-          <button type="button" className="btn btn-secondary" onClick={(e) => this.editMailConnexion()} title={i18next.t("admin.edit")} disabled={mailConnexionEditDisabled}>
-            <i className="fas fa-edit"></i>
-          </button>
+        <div className="text-right">
+          <div className="btn-group" role="group">
+            {switchMailConnexionButton}
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.editMailConnexion()} title={i18next.t("admin.edit")} disabled={mailConnexionEditDisabled}>
+              <i className="fas fa-edit"></i>
+            </button>
+          </div>
+        </div>
+        <hr/>
+        <h4>
+          {i18next.t("admin.misc-ip-geolocation-api")}
+        </h4>
+        <div className="text-right">
+          <div className="btn-group" role="group">
+            {switchGeolocationButton}
+            <button type="button" className="btn btn-secondary" onClick={(e) => this.editGeolocation()} title={i18next.t("admin.edit")} disabled={geolocationDisabled}>
+              <i className="fas fa-edit"></i>
+            </button>
+          </div>
         </div>
         <div className="modal fade on-top" id="smtpModal" tabIndex="-1" role="dialog" aria-labelledby="smtpModalLabel" aria-hidden="true">
           <div className="modal-dialog modal-lg" role="document">
@@ -659,6 +765,44 @@ class MiscConfig extends Component {
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={(e) => this.closeMailOnConnexionModal(e, false)}>{i18next.t("modal.close")}</button>
                 <button type="button" className="btn btn-primary" onClick={(e) => this.closeMailOnConnexionModal(e, true)}>{i18next.t("modal.ok")}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="modal fade on-top" id="geolocationModal" tabIndex="-1" role="dialog" aria-labelledby="geolocationModalLabel" aria-hidden="true">
+          <div className="modal-dialog modal-lg" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title" id="geolocationModalLabel">{i18next.t("admin.modal-misc-geolocation-title")}</h5>
+                <button type="button" className="close" aria-label={i18next.t("modal.close")} onClick={(e) => this.closeGeolocationModal(e, false)}>
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div className="modal-body">
+                <form className="needs-validation" noValidate>
+                  <div className="form-group">
+                    <div className="input-group mb-3">
+                      <div className="input-group-prepend">
+                        <label className="input-group-text" htmlFor="misc-geolocation-url">{i18next.t("admin.misc-geolocation-url")}</label>
+                      </div>
+                      <input type="text" className={this.state.errorGeolocationList["url"]?"form-control is-invalid":"form-control"} id="misc-geolocation-url" onChange={(e) => this.changeGeolocationValue(e, "url")} value={this.state.geolocation["url"]} placeholder={i18next.t("admin.misc-geolocation-url-ph")} />
+                    </div>
+                    {this.state.errorGeolocationList["url"]?<span className="error-input">{this.state.errorGeolocationList["url"]}</span>:""}
+                  </div>
+                  <div className="form-group">
+                    <div className="input-group mb-3">
+                      <div className="input-group-prepend">
+                        <label className="input-group-text" htmlFor="misc-geolocation-output-properties">{i18next.t("admin.misc-geolocation-output-properties")}</label>
+                      </div>
+                      <input type="text" className={this.state.errorGeolocationList["output-properties"]?"form-control is-invalid":"form-control"} id="misc-geolocation-output-properties" onChange={(e) => this.changeGeolocationValue(e, "output-properties")} value={this.state.geolocation["output-properties"]} placeholder={i18next.t("admin.misc-geolocation-output-properties-ph")} />
+                    </div>
+                    {this.state.errorGeolocationList["output-properties"]?<span className="error-input">{this.state.errorGeolocationList["output-properties"]}</span>:""}
+                  </div>
+                </form>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={(e) => this.closeGeolocationModal(e, false)}>{i18next.t("modal.close")}</button>
+                <button type="button" className="btn btn-primary" onClick={(e) => this.closeGeolocationModal(e, true)}>{i18next.t("modal.ok")}</button>
               </div>
             </div>
           </div>
