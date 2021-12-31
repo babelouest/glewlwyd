@@ -27,7 +27,7 @@
 #include "glewlwyd.h"
 
 json_t * get_misc_config_list(struct config_elements * config) {
-  json_t * j_query, * j_result = NULL, * j_return, * j_value, * j_element = NULL;
+  json_t * j_query, * j_result = NULL, * j_return, * j_element = NULL;
   int res;
   size_t index;
   
@@ -42,8 +42,7 @@ json_t * get_misc_config_list(struct config_elements * config) {
   if (res == H_OK) {
     json_array_foreach(j_result, index, j_element) {
       if (json_object_get(j_element, "gmc_value") != json_null()) {
-        j_value = json_loads(json_string_value(json_object_get(j_element, "gmc_value")), JSON_DECODE_ANY, NULL);
-        json_object_set(j_element, "value", j_value);
+        json_object_set_new(j_element, "value", json_loads(json_string_value(json_object_get(j_element, "gmc_value")), JSON_DECODE_ANY, NULL));
       } else {
         json_object_set(j_element, "value", json_null());
       }
@@ -58,7 +57,7 @@ json_t * get_misc_config_list(struct config_elements * config) {
 }
 
 json_t * get_misc_config(struct config_elements * config, const char * type, const char * name) {
-  json_t * j_query, * j_result = NULL, * j_return, * j_value;
+  json_t * j_query, * j_result = NULL, * j_return;
   int res;
   
   j_query = json_pack("{sss[sss]s{}}",
@@ -79,16 +78,16 @@ json_t * get_misc_config(struct config_elements * config, const char * type, con
   if (res == H_OK) {
     if (json_array_size(j_result)) {
       if (json_object_get(json_array_get(j_result, 0), "gmc_value") != json_null()) {
-        j_value = json_loads(json_string_value(json_object_get(json_array_get(j_result, 0), "gmc_value")), JSON_DECODE_ANY, NULL);
-        json_object_set(json_array_get(j_result, 0), "value", j_value);
+        json_object_set_new(json_array_get(j_result, 0), "value", json_loads(json_string_value(json_object_get(json_array_get(j_result, 0), "gmc_value")), JSON_DECODE_ANY, NULL));
       } else {
         json_object_set(json_array_get(j_result, 0), "value", json_null());
       }
       json_object_del(json_array_get(j_result, 0), "gmc_value");
-      j_return = json_pack("{siso}", "result", G_OK, "misc_config", json_array_get(j_result, 0));
+      j_return = json_pack("{sisO}", "result", G_OK, "misc_config", json_array_get(j_result, 0));
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
+    json_decref(j_result);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_misc_config - Error executing j_query");
     j_return = json_pack("{si}", "result", G_ERROR_DB);
@@ -197,4 +196,85 @@ int delete_misc_config(struct config_elements * config, const char * name) {
     ret = G_ERROR_DB;
   }
   return ret;
+}
+
+struct _update_issued_for {
+  struct config_elements * config;
+  const struct _h_connection * conn;
+  json_t * j_query;
+  char * issued_for_column;
+  char * issued_for_value;
+};
+
+void * run_thread_update_issued_for(void * args) {
+  struct _update_issued_for * thread_config = (struct _update_issued_for *)args;
+  char * ip_address = o_strdup(thread_config->issued_for_value), * ip_data = NULL;
+  int res;
+
+  if (o_strchr(ip_address, ',') != NULL) {
+    *o_strchr(ip_address, ',') = '\0';
+  }
+  if (o_strchr(ip_address, ' ') != NULL) {
+    *o_strchr(ip_address, ' ') = '\0';
+  }
+  if (o_strchr(ip_address, '-') != NULL) {
+    *o_strchr(ip_address, '-') = '\0';
+  }
+  ip_data = get_ip_data(thread_config->config, ip_address);
+  if (ip_data != NULL) {
+    json_object_set_new(json_object_get(thread_config->j_query, "set"), thread_config->issued_for_column, json_pack("s++", thread_config->issued_for_value, " - ", ip_data));
+    res = h_update(thread_config->conn, thread_config->j_query, NULL);
+    json_decref(thread_config->j_query);
+    if (res != H_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "run_thread_update_issued_for - Error executing j_query");
+    }
+  }
+  o_free(ip_data);
+  o_free(ip_address);
+  o_free(thread_config->issued_for_column);
+  o_free(thread_config->issued_for_value);
+  json_decref(thread_config->j_query);
+  o_free(thread_config);
+  
+  return NULL;
+}
+ 
+void update_issued_for(struct config_elements * config, const struct _h_connection * conn, const char * sql_table, const char * issued_for_column, const char * issued_for_value, const char * id_column, json_int_t id_value) {
+  struct _update_issued_for * thread_config = o_malloc(sizeof(struct _update_issued_for));
+  pthread_t thread_update_issued_for;
+  int thread_ret, thread_detach;
+  pthread_attr_t attr;
+  struct sched_param param;
+
+  if (thread_config != NULL) {
+    thread_config->config = config;
+    if (conn != NULL) {
+      thread_config->conn = conn;
+    } else {
+      thread_config->conn = config->conn;
+    }
+    thread_config->j_query = json_pack("{sss{}s{sI}}",
+                                "table", sql_table,
+                                "set",
+                                "where",
+                                  id_column, id_value);
+    thread_config->issued_for_column = o_strdup(issued_for_column);
+    thread_config->issued_for_value = o_strdup(issued_for_value);
+
+    pthread_attr_init (&attr);
+    pthread_attr_getschedparam (&attr, &param);
+    param.sched_priority = 0;
+    pthread_attr_setschedparam (&attr, &param);
+    thread_ret = pthread_create(&thread_update_issued_for, &attr, run_thread_update_issued_for, (void *)thread_config);
+    thread_detach = pthread_detach(thread_update_issued_for);
+    if (thread_ret || thread_detach) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "update_issued_for - Error thread");
+      o_free(thread_config->issued_for_column);
+      o_free(thread_config->issued_for_value);
+      json_decref(thread_config->j_query);
+      o_free(thread_config);
+    }
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "update_issued_for - Error allocating resoures for thread_config");
+  }
 }
