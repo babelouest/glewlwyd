@@ -103,6 +103,7 @@ glewlwyd_crud_user
 glewlwyd_crud_user_middleware
 glewlwyd_crud_client
 glewlwyd_crud_scope
+glewlwyd_crud_misc_config
 
 glewlwyd_mod_user_http
 glewlwyd_mod_user_irl
