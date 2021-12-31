@@ -386,6 +386,7 @@ struct config_elements {
   unsigned short                                 metrics_endpoint_admin_session;
   pthread_mutex_t                                metrics_lock;
   struct _pointer_list                           metrics_list;
+  pthread_mutex_t                                insert_lock;
 };
 
 /**
@@ -441,6 +442,7 @@ struct config_plugin {
   char   * (* glewlwyd_callback_get_plugin_external_url)(struct config_plugin * config, const char * name);
   char   * (* glewlwyd_callback_get_login_url)(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url, struct _u_map * additional_parameters);
   char   * (* glewlwyd_callback_generate_hash)(struct config_plugin * config, const char * data);
+  void     (* glewlwyd_callback_update_issued_for)(struct config_plugin * config, const struct _h_connection * conn, const char * sql_table, const char * issued_for_column, const char * issued_for_value, const char * id_column, json_int_t id_value);
 };
 
 /**
@@ -461,6 +463,7 @@ struct config_module {
   json_t               * (* glewlwyd_module_callback_check_user_session)(struct config_module * config, const struct _u_request * request, const char * username);
   int                    (* glewlwyd_module_callback_metrics_add_metric)(struct config_module * config, const char * name, const char * help);
   int                    (* glewlwyd_module_callback_metrics_increment_counter)(struct config_module * config, const char * name, size_t inc, ...);
+  void                   (* glewlwyd_module_callback_update_issued_for)(struct config_module * config, const struct _h_connection * conn, const char * sql_table, const char * issued_for_column, const char * issued_for_value, const char * id_column, json_int_t id_value);
 };
 
 /**

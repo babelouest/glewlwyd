@@ -54,7 +54,7 @@ release: glewlwyd
 	cd scheme && $(MAKE)
 	cd plugin && $(MAKE)
 
-%.o: %.c glewlwyd.h glewlwyd-common.h static_file_callback.h http_compression_callback.h
+%.o: %.c glewlwyd.h glewlwyd-common.h static_compressed_inmemory_website_callback.h http_compression_callback.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $<
 
 glewlwyd: $(OBJECTS)

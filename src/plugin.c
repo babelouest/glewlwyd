@@ -454,6 +454,14 @@ char * glewlwyd_callback_generate_hash(struct config_plugin * config, const char
   return generate_hash(config->glewlwyd_config->hash_algorithm, data);
 }
 
+void glewlwyd_callback_update_issued_for(struct config_plugin * config, const struct _h_connection * conn, const char * sql_table, const char * issued_for_column, const char * issued_for_value, const char * id_column, json_int_t id_value) {
+  const struct _h_connection * cur_conn = conn;
+  
+  if (cur_conn == NULL) {
+    cur_conn = config->glewlwyd_config->conn;
+  }
+  update_issued_for(config->glewlwyd_config, cur_conn, sql_table, issued_for_column, issued_for_value, id_column, id_value);
+}
 json_t * glewlwyd_plugin_callback_get_user_list(struct config_plugin * config, const char * pattern, size_t offset, size_t limit) {
   return get_user_list(config->glewlwyd_config, pattern, offset, limit, NULL);
 }

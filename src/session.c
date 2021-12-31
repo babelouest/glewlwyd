@@ -415,7 +415,7 @@ json_t * get_current_user_for_session(struct config_elements * config, const cha
 }
 
 int user_session_update(struct config_elements * config, const char * session_uid, const char * ip_source, const char * user_agent, const char * issued_for, const char * username, const char * scheme_name, int update_login) {
-  json_t * j_query, * j_session = get_session_for_username(config, session_uid, username);
+  json_t * j_query, * j_session = get_session_for_username(config, session_uid, username), * j_last_index;
   struct _user_auth_scheme_module_instance * scheme_instance = NULL;
   int res, ret;
   time_t now;
@@ -437,51 +437,60 @@ int user_session_update(struct config_elements * config, const char * session_ui
       res = h_update(config->conn, j_query, NULL);
       json_decref(j_query);
       if (res == H_OK) {
-        // Create session for user if not exist
-        j_query = json_pack("{sss{sssssssssi}}",
-                            "table",
-                            GLEWLWYD_TABLE_USER_SESSION,
-                            "values",
-                              "gus_session_hash",
-                              session_uid_hash,
-                              "gus_username",
-                              username,
-                              "gus_user_agent",
-                              user_agent!=NULL?user_agent:"",
-                              "gus_issued_for",
-                              issued_for!=NULL?issued_for:"",
-                              "gus_current",
-                              1);
-        if (update_login) {
-          if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-            expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + config->session_expiration));
-          } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-            expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + config->session_expiration));
-          } else { // HOEL_DB_TYPE_SQLITE
-            expiration_clause = msprintf("%u", (now + config->session_expiration));
-          }
-          if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-            last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
-          } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-            last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
-          } else { // HOEL_DB_TYPE_SQLITE
-            last_login_clause = msprintf("%u", (now));
-          }
-          json_object_set_new(json_object_get(j_query, "values"), "gus_last_login", json_pack("{ss}", "raw", last_login_clause));
-          json_object_set_new(json_object_get(j_query, "values"), "gus_expiration", json_pack("{ss}", "raw", expiration_clause));
-          o_free(last_login_clause);
-          o_free(expiration_clause);
-        }
-        res = h_insert(config->conn, j_query, NULL);
-        json_decref(j_query);
-        json_decref(j_session);
-        if (res == H_OK) {
-          send_mail_on_new_connexion(config, username, ip_source);
-          j_session = get_session_for_username(config, session_uid, username);
+        if (pthread_mutex_lock(&config->insert_lock)) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error pthread_mutex_lock");
+          ret = G_ERROR;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error h_insert session");
-          glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
-          j_session = json_pack("{si}", "result", G_ERROR_DB);
+          // Create session for user if not exist
+          j_query = json_pack("{sss{sssssssssi}}",
+                              "table",
+                              GLEWLWYD_TABLE_USER_SESSION,
+                              "values",
+                                "gus_session_hash", session_uid_hash,
+                                "gus_username", username,
+                                "gus_user_agent", user_agent!=NULL?user_agent:"",
+                                "gus_issued_for", issued_for!=NULL?issued_for:"",
+                                "gus_current", 1);
+          if (update_login) {
+            if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+              expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + config->session_expiration));
+            } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+              expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + config->session_expiration));
+            } else { // HOEL_DB_TYPE_SQLITE
+              expiration_clause = msprintf("%u", (now + config->session_expiration));
+            }
+            if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
+              last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+            } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
+              last_login_clause = msprintf("TO_TIMESTAMP(%u)", (now));
+            } else { // HOEL_DB_TYPE_SQLITE
+              last_login_clause = msprintf("%u", (now));
+            }
+            json_object_set_new(json_object_get(j_query, "values"), "gus_last_login", json_pack("{ss}", "raw", last_login_clause));
+            json_object_set_new(json_object_get(j_query, "values"), "gus_expiration", json_pack("{ss}", "raw", expiration_clause));
+            o_free(last_login_clause);
+            o_free(expiration_clause);
+          }
+          res = h_insert(config->conn, j_query, NULL);
+          json_decref(j_query);
+          json_decref(j_session);
+          if (res == H_OK) {
+            if ((j_last_index = h_last_insert_id(config->conn)) != NULL) {
+              update_issued_for(config, NULL, GLEWLWYD_TABLE_USER_SESSION, "gus_issued_for", issued_for, "gus_id", json_integer_value(j_last_index));
+              send_mail_on_new_connexion(config, username, ip_source);
+              j_session = get_session_for_username(config, session_uid, username);
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error j_last_index session");
+              glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+              j_session = json_pack("{si}", "result", G_ERROR_DB);
+            }
+            json_decref(j_last_index);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error h_insert session");
+            glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+            j_session = json_pack("{si}", "result", G_ERROR_DB);
+          }
+          pthread_mutex_unlock(&config->insert_lock);
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_session_update - Error h_update session (0)");

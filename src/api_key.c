@@ -134,7 +134,7 @@ json_t * get_api_key_list(struct config_elements * config, const char * pattern,
 }
 
 json_t * generate_api_key(struct config_elements * config, const char * username, const char * issued_for, const char * user_agent) {
-  json_t * j_query, * j_return;
+  json_t * j_query, * j_return, * j_last_index;
   int res;
   char token[GLEWLWYD_API_KEY_LENGTH+1] = {0}, * token_hash, * tmp;
   
@@ -145,26 +145,35 @@ json_t * generate_api_key(struct config_elements * config, const char * username
   token_hash = str_replace(tmp, "+", "-");
   o_free(tmp);
   if (token_hash != NULL) {
-    j_query = json_pack("{sss{ssssssss?}}",
-                        "table",
-                        GLEWLWYD_TABLE_API_KEY,
-                        "values",
-                          "gak_token_hash",
-                          token_hash,
-                          "gak_username",
-                          username,
-                          "gak_issued_for",
-                          issued_for,
-                          "gak_user_agent",
-                          user_agent);
-    res = h_insert(config->conn, j_query, NULL);
-    json_decref(j_query);
-    if (res == H_OK) {
-      j_return = json_pack("{sis{ss}}", "result", G_OK, "api_key", "key", token);
+    if (pthread_mutex_lock(&config->insert_lock)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "generate_api_key - Error pthread_mutex_lock");
+      j_return = json_pack("{si}", "result", G_ERROR);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "generate_api_key - Error executing j_query");
-      glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
-      j_return = json_pack("{si}", "result", G_ERROR_DB);
+      j_query = json_pack("{sss{ssssssss?}}",
+                          "table", GLEWLWYD_TABLE_API_KEY,
+                          "values",
+                            "gak_token_hash", token_hash,
+                            "gak_username", username,
+                            "gak_issued_for", issued_for,
+                            "gak_user_agent", user_agent);
+      res = h_insert(config->conn, j_query, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        if ((j_last_index = h_last_insert_id(config->conn)) != NULL) {
+          update_issued_for(config, NULL, GLEWLWYD_TABLE_API_KEY, "gak_issued_for", issued_for, "gak_id", json_integer_value(j_last_index));
+          j_return = json_pack("{sis{ss}}", "result", G_OK, "api_key", "key", token);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "generate_api_key - Error j_last_index");
+          glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+          j_return = json_pack("{si}", "result", G_ERROR_DB);
+        }
+        json_decref(j_last_index);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "generate_api_key - Error executing j_query");
+        glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+        j_return = json_pack("{si}", "result", G_ERROR_DB);
+      }
+      pthread_mutex_unlock(&config->insert_lock);
     }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "generate_api_key - Error generate_hash");

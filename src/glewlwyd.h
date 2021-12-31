@@ -296,6 +296,7 @@ time_t glewlwyd_callback_get_session_age(struct config_plugin * config, const st
 char * glewlwyd_callback_get_login_url(struct config_plugin * config, const char * client_id, const char * scope_list, const char * callback_url, struct _u_map * additional_parameters);
 char * glewlwyd_callback_get_plugin_external_url(struct config_plugin * config, const char * name);
 char * glewlwyd_callback_generate_hash(struct config_plugin * config, const char * data);
+void glewlwyd_callback_update_issued_for(struct config_plugin * config, const struct _h_connection * conn, const char * sql_table, const char * issued_for_column, const char * issued_for_value, const char * id_column, json_int_t id_value);
 json_t * glewlwyd_plugin_callback_get_user_list(struct config_plugin * config, const char * pattern, size_t offset, size_t limit);
 json_t * glewlwyd_plugin_callback_get_user(struct config_plugin * config, const char * username);
 json_t * glewlwyd_plugin_callback_get_user_profile(struct config_plugin * config, const char * username);
@@ -334,6 +335,7 @@ json_t * glewlwyd_module_callback_check_user_session(struct config_module * conf
 int glewlwyd_module_metrics_increment_counter(struct config_module * config, const char * metrics_name, size_t inc, const char * module_type, const char * module_name);
 int glewlwyd_module_callback_metrics_add_metric(struct config_module * config, const char * name, const char * help);
 int glewlwyd_module_callback_metrics_increment_counter(struct config_module * config, const char * name, size_t inc, ...);
+void glewlwyd_module_callback_update_issued_for(struct config_module * config, const struct _h_connection * conn, const char * sql_table, const char * issued_for_column, const char * issued_for_value, const char * id_column, json_int_t id_value);
 
 // Client CRUD functions
 json_t * get_client_list(struct config_elements * config, const char * pattern, size_t offset, size_t limit, const char * source);
@@ -364,6 +366,7 @@ json_t * is_misc_config_valid(const char * name, json_t * j_misc_config);
 int add_misc_config(struct config_elements * config, const char * name, json_t * j_misc_config);
 int set_misc_config(struct config_elements * config, const char * name, json_t * j_misc_config);
 int delete_misc_config(struct config_elements * config, const char * name);
+void update_issued_for(struct config_elements * config, const struct _h_connection * conn, const char * sql_table, const char * issued_for_column, const char * issued_for_value, const char * id_column, json_int_t id_value);
 
 // Metrics functions
 void glewlwyd_metrics_close(struct config_elements * config);

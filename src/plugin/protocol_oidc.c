@@ -2745,17 +2745,23 @@ static int serialize_pushed_request_uri(struct _oidc_config * config,
         res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
         json_decref(j_query);
         if (res == H_OK) {
-          j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
-          j_query = json_pack("{sss[]}", "table", GLEWLWYD_PLUGIN_OIDC_TABLE_PAR_SCOPE, "values");
-          for (i=0; scope_array[i]!= NULL; i++) {
-            json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpop_id", j_last_id, "gpops_scope", scope_array[i]));
-          }
-          res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
-          json_decref(j_query);
-          if (res == H_OK) {
-            ret = G_OK;
+          if ((j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn)) != NULL) {
+            config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_PAR, "gpop_issued_for", issued_for, "gpop_id", json_integer_value(j_last_id));
+            j_query = json_pack("{sss[]}", "table", GLEWLWYD_PLUGIN_OIDC_TABLE_PAR_SCOPE, "values");
+            for (i=0; scope_array[i]!= NULL; i++) {
+              json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpop_id", j_last_id, "gpops_scope", scope_array[i]));
+            }
+            res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+            json_decref(j_query);
+            if (res == H_OK) {
+              ret = G_OK;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_pushed_request_uri oidc - Error executing j_query (2)");
+              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+              ret = G_ERROR_DB;
+            }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_pushed_request_uri oidc - Error executing j_query (2)");
+            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_pushed_request_uri oidc - Error h_last_insert_id");
             config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
             ret = G_ERROR_DB;
           }
@@ -2809,7 +2815,7 @@ static int serialize_id_token(struct _oidc_config * config,
                               time_t now,
                               const char * issued_for,
                               const char * user_agent) {
-  json_t * j_query;
+  json_t * j_query, * j_last_id;
   int res, ret;
   char * issued_at_clause, * id_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, id_token);
 
@@ -2856,7 +2862,15 @@ static int serialize_id_token(struct _oidc_config * config,
       res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
       json_decref(j_query);
       if (res == H_OK) {
-        ret = G_OK;
+        if ((j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn)) != NULL) {
+          config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_ID_TOKEN, "gpoi_issued_for", issued_for, "gpoi_id", json_integer_value(j_last_id));
+          ret = G_OK;
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_id_token - Error h_last_insert_id");
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+          ret = G_ERROR_DB;
+        }
+        json_decref(j_last_id);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "oidc serialize_id_token - Error executing j_query");
         config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
@@ -3094,6 +3108,7 @@ static int serialize_access_token(struct _oidc_config * config,
         if (res == H_OK) {
           j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
           if (j_last_id != NULL) {
+            config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN, "gpoa_issued_for", issued_for, "gpoa_id", json_integer_value(j_last_id));
             if (split_string(scope_list, " ", &scope_array) > 0) {
               j_query = json_pack("{sss[]}",
                                   "table",
@@ -3315,19 +3330,13 @@ static json_t * serialize_refresh_token(struct _oidc_config * config,
         str_authorization_details = json_dumps(j_authorization_details, JSON_COMPACT);
       }
       j_query = json_pack_ex(&error, 0, "{sss{ss si so ss so s{ss} s{ss} s{ss} sI si ss ss ss ss ss? ss? ss?}}",
-                          "table",
-                          GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN,
+                          "table", GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN,
                           "values",
-                            "gpor_plugin_name",
-                            config->name,
-                            "gpor_authorization_type",
-                            auth_type,
-                            "gpoc_id",
-                            gpoc_id?json_integer(gpoc_id):json_null(),
-                            "gpor_username",
-                            username,
-                            "gpor_client_id",
-                            client_id!=NULL?json_string(client_id):json_null(),
+                            "gpor_plugin_name", config->name,
+                            "gpor_authorization_type", auth_type,
+                            "gpoc_id", gpoc_id?json_integer(gpoc_id):json_null(),
+                            "gpor_username", username,
+                            "gpor_client_id", client_id!=NULL?json_string(client_id):json_null(),
                             "gpor_issued_at",
                               "raw",
                               issued_at_clause,
@@ -3337,24 +3346,15 @@ static json_t * serialize_refresh_token(struct _oidc_config * config,
                             "gpor_expires_at",
                               "raw",
                               expires_at_clause,
-                            "gpor_duration",
-                            duration,
-                            "gpor_rolling_expiration",
-                            rolling,
-                            "gpor_claims_request",
-                            str_claims_request!=NULL?str_claims_request:"",
-                            "gpor_token_hash",
-                            token_hash,
-                            "gpor_issued_for",
-                            issued_for,
-                            "gpor_user_agent",
-                            user_agent!=NULL?user_agent:"",
-                            "gpor_resource",
-                            resource,
-                            "gpor_dpop_jkt",
-                            dpop_jkt,
-                            "gpor_authorization_details",
-                            str_authorization_details);
+                            "gpor_duration", duration,
+                            "gpor_rolling_expiration", rolling,
+                            "gpor_claims_request", str_claims_request!=NULL?str_claims_request:"",
+                            "gpor_token_hash", token_hash,
+                            "gpor_issued_for", issued_for,
+                            "gpor_user_agent", user_agent!=NULL?user_agent:"",
+                            "gpor_resource", resource,
+                            "gpor_dpop_jkt", dpop_jkt,
+                            "gpor_authorization_details", str_authorization_details);
       if (config->refresh_token_one_use) {
         if (!o_strlen(jti)) {
           rand_string_nonce(jti, OIDC_JTI_LENGTH);
@@ -3371,6 +3371,7 @@ static json_t * serialize_refresh_token(struct _oidc_config * config,
       if (res == H_OK) {
         j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
         if (j_last_id != NULL) {
+          config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_CODE, "gpor_issued_for", issued_for, "gpor_id", json_integer_value(j_last_id));
           if (split_string(scope_list, " ", &scope_array) > 0) {
             j_query = json_pack("{sss[]}",
                                 "table",
@@ -3806,6 +3807,7 @@ static json_t * generate_authorization_code(struct _oidc_config * config,
             if (scope_list != NULL) {
               j_code_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
               if (j_code_id != NULL) {
+                config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_CODE, "gpoc_issued_for", issued_for, "gpoc_id", json_integer_value(j_code_id));
                 j_query = json_pack("{sss[]}",
                                     "table",
                                     GLEWLWYD_PLUGIN_OIDC_TABLE_CODE_SCOPE,
@@ -5752,63 +5754,77 @@ static int send_ciba_client_notification(struct _oidc_config * config, json_t * 
 }
 
 static int check_request_jti_unused(struct _oidc_config * config, const char * jti, const char * iss, const char * ip_source) {
-  json_t * j_query, * j_result = NULL;
+  json_t * j_query, * j_result = NULL, * j_last_index;
   int ret, res;
   char * jti_hash = NULL;
 
-  if (o_strlen(jti)) {
-    jti_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, jti);
-    j_query = json_pack("{sss[s]s{ssssss}}",
-                        "table",
-                        GLEWLWYD_PLUGIN_OIDC_TABLE_CLIENT_TOKEN_REQUEST,
-                        "columns",
-                          "gpoctr_id",
-                        "where",
-                          "gpoctr_plugin_name",
-                          config->name,
-                          "gpoctr_cient_id",
-                          iss,
-                          "gpoctr_jti_hash",
-                          jti_hash);
-    res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
-    json_decref(j_query);
-    if (res == H_OK) {
-      if (json_array_size(j_result)) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_request_jti_unused - jti already used for client '%s', origin %s", iss, ip_source);
-        ret = G_ERROR_UNAUTHORIZED;
-      } else {
-        j_query = json_pack("{sss{ssssssss}}",
-                            "table",
-                            GLEWLWYD_PLUGIN_OIDC_TABLE_CLIENT_TOKEN_REQUEST,
-                            "values",
-                              "gpoctr_plugin_name",
-                              config->name,
-                              "gpoctr_cient_id",
-                              iss,
-                              "gpoctr_issued_for",
-                              ip_source,
-                              "gpoctr_jti_hash",
-                              jti_hash);
-        res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
-        json_decref(j_query);
-        if (res == H_OK) {
-          ret = G_OK;
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "check_request_jti_unused - Error executing j_query (2)");
-          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
-          ret = G_ERROR_DB;
-        }
-      }
-      json_decref(j_result);
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "check_request_jti_unused - Error executing j_query (1)");
-      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
-      ret = G_ERROR_DB;
-    }
-    o_free(jti_hash);
+  if (pthread_mutex_lock(&config->insert_lock)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "serialize_client_register - oidc - Error pthread_mutex_lock");
+    ret = G_ERROR;
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "check_request_jti_unused - no jti in jwt request for client '%s', origin %s", iss, ip_source);
-    ret = G_ERROR_PARAM;
+    if (o_strlen(jti)) {
+      jti_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, jti);
+      j_query = json_pack("{sss[s]s{ssssss}}",
+                          "table",
+                          GLEWLWYD_PLUGIN_OIDC_TABLE_CLIENT_TOKEN_REQUEST,
+                          "columns",
+                            "gpoctr_id",
+                          "where",
+                            "gpoctr_plugin_name",
+                            config->name,
+                            "gpoctr_cient_id",
+                            iss,
+                            "gpoctr_jti_hash",
+                            jti_hash);
+      res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        if (json_array_size(j_result)) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "check_request_jti_unused - jti already used for client '%s', origin %s", iss, ip_source);
+          ret = G_ERROR_UNAUTHORIZED;
+        } else {
+          j_query = json_pack("{sss{ssssssss}}",
+                              "table",
+                              GLEWLWYD_PLUGIN_OIDC_TABLE_CLIENT_TOKEN_REQUEST,
+                              "values",
+                                "gpoctr_plugin_name",
+                                config->name,
+                                "gpoctr_cient_id",
+                                iss,
+                                "gpoctr_issued_for",
+                                ip_source,
+                                "gpoctr_jti_hash",
+                                jti_hash);
+          res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+          json_decref(j_query);
+          if (res == H_OK) {
+            j_last_index = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
+            if (j_last_index != NULL) {
+              config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_CLIENT_TOKEN_REQUEST, "gpoctr_issued_for", ip_source, "gpoctr_id", json_integer_value(j_last_index));
+              ret = G_OK;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "check_request_jti_unused - oidc - Error h_last_insert_id");
+              ret = G_ERROR_DB;
+            }
+            json_decref(j_last_index);
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "check_request_jti_unused - Error executing j_query (2)");
+            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+            ret = G_ERROR_DB;
+          }
+        }
+        json_decref(j_result);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_request_jti_unused - Error executing j_query (1)");
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+        ret = G_ERROR_DB;
+      }
+      o_free(jti_hash);
+    } else {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "check_request_jti_unused - no jti in jwt request for client '%s', origin %s", iss, ip_source);
+      ret = G_ERROR_PARAM;
+    }
+    pthread_mutex_unlock(&config->insert_lock);
   }
   return ret;
 }
@@ -6450,68 +6466,83 @@ static json_t * check_client_registration_management_at(struct _oidc_config * co
 }
 
 static int serialize_client_register(struct _oidc_config * config, const struct _u_request * request, json_t * j_client, const char * client_management_at) {
-  json_t * j_query, * j_result;
+  json_t * j_query, * j_result, * j_last_index;
   int res, ret = G_OK;
   char * issued_for = get_client_hostname(request), * access_token_hash = NULL, * management_at_hash = NULL;
   json_int_t gpoa_id = 0;
 
-  if (json_array_size(json_object_get(config->j_params, "register-client-auth-scope"))) {
-    access_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER)));
-    j_query = json_pack("{sss[s]s{ssss}}",
-                        "table",
-                        GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN,
-                        "columns",
-                          "gpoa_id",
-                        "where",
-                          "gpoa_plugin_name",
-                          config->name,
-                          "gpoa_token_hash",
-                          access_token_hash);
-    res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
-    json_decref(j_query);
-    if (res == H_OK) {
-      if (json_array_size(j_result)) {
-        gpoa_id = json_integer_value(json_object_get(json_array_get(j_result, 0), "gpoa_id"));
+  if (pthread_mutex_lock(&config->insert_lock)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "serialize_client_register - oidc - Error pthread_mutex_lock");
+    ret = G_ERROR;
+  } else {
+    if (json_array_size(json_object_get(config->j_params, "register-client-auth-scope"))) {
+      access_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER)));
+      j_query = json_pack("{sss[s]s{ssss}}",
+                          "table",
+                          GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN,
+                          "columns",
+                            "gpoa_id",
+                          "where",
+                            "gpoa_plugin_name",
+                            config->name,
+                            "gpoa_token_hash",
+                            access_token_hash);
+      res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        if (json_array_size(j_result)) {
+          gpoa_id = json_integer_value(json_object_get(json_array_get(j_result, 0), "gpoa_id"));
+        } else {
+          ret = G_ERROR_PARAM;
+        }
+        json_decref(j_result);
       } else {
-        ret = G_ERROR_PARAM;
+        y_log_message(Y_LOG_LEVEL_ERROR, "serialize_client_register - Error executing j_query (1)");
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+        ret = G_ERROR_DB;
       }
-      json_decref(j_result);
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "serialize_client_register - Error executing j_query (1)");
-      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
-      ret = G_ERROR_DB;
     }
-  }
-  if (ret == G_OK) {
-    management_at_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, client_management_at);
-    j_query = json_pack("{sss{sssOssss*ss?}}",
-                        "table",
-                        GLEWLWYD_PLUGIN_OIDC_TABLE_CLIENT_REGISTRATION,
-                        "values",
-                          "gpocr_plugin_name",
-                          config->name,
-                          "gpocr_cient_id",
-                          json_object_get(j_client, "client_id"),
-                          "gpocr_issued_for",
-                          issued_for,
-                          "gpocr_user_agent",
-                          u_map_get_case(request->map_header, "user-agent"),
-                          "gpocr_management_at_hash",
-                          management_at_hash);
-    if (gpoa_id) {
-      json_object_set_new(json_object_get(j_query, "values"), "gpoa_id", json_integer(gpoa_id));
+    if (ret == G_OK) {
+      management_at_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, client_management_at);
+      j_query = json_pack("{sss{sssOssss*ss?}}",
+                          "table",
+                          GLEWLWYD_PLUGIN_OIDC_TABLE_CLIENT_REGISTRATION,
+                          "values",
+                            "gpocr_plugin_name",
+                            config->name,
+                            "gpocr_cient_id",
+                            json_object_get(j_client, "client_id"),
+                            "gpocr_issued_for",
+                            issued_for,
+                            "gpocr_user_agent",
+                            u_map_get_case(request->map_header, "user-agent"),
+                            "gpocr_management_at_hash",
+                            management_at_hash);
+      if (gpoa_id) {
+        json_object_set_new(json_object_get(j_query, "values"), "gpoa_id", json_integer(gpoa_id));
+      }
+      res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+      json_decref(j_query);
+      if (res == H_OK) {
+        j_last_index = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
+        if (j_last_index != NULL) {
+          config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_CLIENT_REGISTRATION, "gpocr_issued_for", issued_for, "gpocr_id", json_integer_value(j_last_index));
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "serialize_client_register - oidc - Error h_last_insert_id");
+          ret = G_ERROR_DB;
+        }
+        json_decref(j_last_index);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "serialize_client_register - Error executing j_query (2)");
+        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
+        ret = G_ERROR_DB;
+      }
     }
-    res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
-    json_decref(j_query);
-    if (res != H_OK) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "serialize_client_register - Error executing j_query (2)");
-      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
-      ret = G_ERROR_DB;
-    }
+    o_free(access_token_hash);
+    o_free(management_at_hash);
+    pthread_mutex_unlock(&config->insert_lock);
   }
   o_free(issued_for);
-  o_free(access_token_hash);
-  o_free(management_at_hash);
   return ret;
 }
 
@@ -7544,6 +7575,7 @@ static json_t * generate_device_authorization(struct _oidc_config * config, cons
       if (res == H_OK) {
         j_device_auth_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
         if (j_device_auth_id != NULL) {
+          config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_DEVICE_AUTHORIZATION, "gpoda_issued_for", ip_source, "gpoda_id", json_integer_value(j_device_auth_id));
           if (split_string(scope_list, " ", &scope_array) > 0) {
             j_query = json_pack("{sss[]}", "table", GLEWLWYD_PLUGIN_OIDC_TABLE_DEVICE_AUTHORIZATION_SCOPE, "values");
             for (i=0; scope_array[i]!=NULL; i++) {
@@ -10772,26 +10804,31 @@ static int serialize_ciba_request(struct _oidc_config * config,
       json_decref(j_query);
       o_free(expires_at_clause);
       if (res == H_OK) {
-        j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
-        j_query = json_pack("{sss[]}", "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA_SCOPE, "values");
-        if (split_string(scope, " ", &scope_array)) {
-          for (i=0; scope_array[i] != NULL; i++) {
-            json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpob_id", j_last_id, "gpops_scope", scope_array[i]));
-          }
-          res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
-          if (res == H_OK) {
-            ret = G_OK;
+        if ((j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn)) != NULL) {
+          config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA, "gpob_issued_for", ip_source, "gpob_id", json_integer_value(j_last_id));
+          j_query = json_pack("{sss[]}", "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA_SCOPE, "values");
+          if (split_string(scope, " ", &scope_array)) {
+            for (i=0; scope_array[i] != NULL; i++) {
+              json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpob_id", j_last_id, "gpops_scope", scope_array[i]));
+            }
+            res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+            if (res == H_OK) {
+              ret = G_OK;
+            } else {
+              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_ciba_request - Error executing j_query (3)");
+              ret = G_ERROR_DB;
+            }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_ciba_request - Error executing j_query (3)");
-            ret = G_ERROR_DB;
+            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_ciba_request - Error split_string");
+            ret = G_ERROR;
           }
+          free_string_array(scope_array);
+          json_decref(j_query);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "serialize_ciba_request - Error split_string");
-          ret = G_ERROR;
+          y_log_message(Y_LOG_LEVEL_ERROR, "serialize_ciba_request - Error h_last_insert_id");
+          ret = G_ERROR_DB;
         }
-        free_string_array(scope_array);
         json_decref(j_last_id);
-        json_decref(j_query);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "serialize_ciba_request - Error executing j_query (2)");
         ret = G_ERROR_DB;

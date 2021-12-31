@@ -733,10 +733,11 @@ static int is_user_certificate_valid_user_property(struct config_module * config
   if (check_result_value(j_user_list, G_OK)) {
     if (json_string_length(json_object_get(j_user_list, "dn"))) {
 #if GNUTLS_VERSION_NUMBER >= 0x030702
-      if (gnutls_x509_crt_get_dn3(cert, &cert_dn, 0) == GNUTLS_E_SUCCESS) {
+      if (gnutls_x509_crt_get_dn3(cert, &cert_dn, 0) == GNUTLS_E_SUCCESS)
 #else
-      if (gnutls_x509_crt_get_dn2(cert, &cert_dn) == GNUTLS_E_SUCCESS) {
+      if (gnutls_x509_crt_get_dn2(cert, &cert_dn) == GNUTLS_E_SUCCESS)
 #endif
+      {
         if (cert_dn.size == json_string_length(json_object_get(j_user_list, "dn")) && 
             0 == o_strncasecmp(json_string_value(json_object_get(j_user_list, "dn")), (const char *)cert_dn.data, cert_dn.size)) {
           ret = G_OK;

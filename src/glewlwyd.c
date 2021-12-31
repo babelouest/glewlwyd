@@ -91,6 +91,7 @@ int main (int argc, char ** argv) {
   config->config_p->glewlwyd_callback_get_plugin_external_url = &glewlwyd_callback_get_plugin_external_url;
   config->config_p->glewlwyd_callback_get_login_url = &glewlwyd_callback_get_login_url;
   config->config_p->glewlwyd_callback_generate_hash = &glewlwyd_callback_generate_hash;
+  config->config_p->glewlwyd_callback_update_issued_for = &glewlwyd_callback_update_issued_for;
   config->config_p->glewlwyd_plugin_callback_get_user_list = &glewlwyd_plugin_callback_get_user_list;
   config->config_p->glewlwyd_plugin_callback_get_user = &glewlwyd_plugin_callback_get_user;
   config->config_p->glewlwyd_plugin_callback_get_user_profile = &glewlwyd_plugin_callback_get_user_profile;
@@ -127,6 +128,7 @@ int main (int argc, char ** argv) {
   config->config_m->glewlwyd_module_callback_check_user_session = &glewlwyd_module_callback_check_user_session;
   config->config_m->glewlwyd_module_callback_metrics_add_metric = &glewlwyd_module_callback_metrics_add_metric;
   config->config_m->glewlwyd_module_callback_metrics_increment_counter = &glewlwyd_module_callback_metrics_increment_counter;
+  config->config_m->glewlwyd_module_callback_update_issued_for = &glewlwyd_module_callback_update_issued_for;
   config->config_file = NULL;
   config->port = 0;
   config->bind_address = NULL;
@@ -312,6 +314,10 @@ int main (int argc, char ** argv) {
   pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
   if (pthread_mutex_init(&config->module_lock, &mutexattr) != 0) {
     fprintf(stderr, "Error initializing modules mutex\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  if (pthread_mutex_init(&config->insert_lock, &mutexattr) != 0) {
+    fprintf(stderr, "Error initializing insert mutex\n");
     exit_server(&config, GLEWLWYD_ERROR);
   }
   pthread_mutexattr_destroy(&mutexattr);
@@ -647,6 +653,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     close_plugin_module_list(*config);
     
     pthread_mutex_destroy(&(*config)->module_lock);
+    pthread_mutex_destroy(&(*config)->insert_lock);
 
     /* stop framework */
     if ((*config)->instance_initialized) {

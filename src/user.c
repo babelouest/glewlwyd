@@ -1116,3 +1116,12 @@ int glewlwyd_module_callback_metrics_increment_counter(struct config_module * co
   }
   return ret;
 }
+
+void glewlwyd_module_callback_update_issued_for(struct config_module * config, const struct _h_connection * conn, const char * sql_table, const char * issued_for_column, const char * issued_for_value, const char * id_column, json_int_t id_value) {
+  const struct _h_connection * cur_conn = conn;
+  
+  if (cur_conn == NULL) {
+    cur_conn = config->conn;
+  }
+  update_issued_for(config->glewlwyd_config, cur_conn, sql_table, issued_for_column, issued_for_value, id_column, id_value);
+}
