@@ -98,6 +98,7 @@ glewlwyd_auth_session_manage
 glewlwyd_auth_profile_get_scheme_available
 glewlwyd_auth_profile_impersonate
 glewlwyd_profile_delete
+glewlwyd_mail_on_connexion
 
 glewlwyd_crud_user
 glewlwyd_crud_user_middleware
