@@ -89,6 +89,7 @@ static void * thread_send_mail_on_new_connexion(void * args) {
       if (o_strstr(body_pattern, "{LOCATION}") != NULL) {
         ip_data = get_ip_data(send_mail->config, send_mail->ip_address);
         body = complete_template(body_pattern, "{USERNAME}", send_mail->username, "{IP}", send_mail->ip_address, "{LOCATION}", ip_data!=NULL?ip_data:"-", NULL);
+        o_free(ip_data);
       } else {
         body = complete_template(body_pattern, "{USERNAME}", send_mail->username, "{IP}", send_mail->ip_address, NULL);
       }

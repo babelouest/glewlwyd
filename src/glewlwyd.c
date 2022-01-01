@@ -3480,6 +3480,7 @@ char * get_ip_data(struct config_elements * config, const char * ip_address) {
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_ip_data - No JSON response - url", url);
         }
+        json_decref(j_response);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_ip_data - Error ulfius_send_http_request - url %s", url);
       }

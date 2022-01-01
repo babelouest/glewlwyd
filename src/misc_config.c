@@ -224,7 +224,6 @@ void * run_thread_update_issued_for(void * args) {
   if (ip_data != NULL) {
     json_object_set_new(json_object_get(thread_config->j_query, "set"), thread_config->issued_for_column, json_pack("s++", thread_config->issued_for_value, " - ", ip_data));
     res = h_update(thread_config->conn, thread_config->j_query, NULL);
-    json_decref(thread_config->j_query);
     if (res != H_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "run_thread_update_issued_for - Error executing j_query");
     }

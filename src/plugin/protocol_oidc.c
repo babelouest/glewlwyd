@@ -3371,7 +3371,7 @@ static json_t * serialize_refresh_token(struct _oidc_config * config,
       if (res == H_OK) {
         j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
         if (j_last_id != NULL) {
-          config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_CODE, "gpor_issued_for", issued_for, "gpor_id", json_integer_value(j_last_id));
+          config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN, "gpor_issued_for", issued_for, "gpor_id", json_integer_value(j_last_id));
           if (split_string(scope_list, " ", &scope_array) > 0) {
             j_query = json_pack("{sss[]}",
                                 "table",
