@@ -870,7 +870,7 @@ class GlwdOIDCParams extends Component {
           errorList["additional-parameters"][index] = {};
         }
         errorList["additional-parameters"][index]["token"] = i18next.t("admin.mod-glwd-additional-parameter-token-parameter-error");
-      } else if (addParam["token-parameter"] === "username" ||
+      } else if (addParam["token-parameter"] === "sub" ||
                  addParam["token-parameter"] === "salt" ||
                  addParam["token-parameter"] === "type" ||
                  addParam["token-parameter"] === "iat" ||
