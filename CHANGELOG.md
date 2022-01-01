@@ -5,6 +5,8 @@
 - Fix delegation session
 - Add SMTP configuration template
 - Allow to send an e-mail to an account when a new connexion occurs
+- Allow to fetch a geolocation API to improve the `issued_for` records
+- Fix oidc plugin bug: allow to add the `username` as claim in the access token
 
 ## 2.6.1
 
