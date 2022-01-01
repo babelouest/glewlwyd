@@ -121,6 +121,7 @@ glewlwyd_scheme_certificate
 glewlwyd_scheme_http
 glewlwyd_scheme_oauth2
 glewlwyd_scheme_forbidden
+glewlwyd_geolocation
 
 glewlwyd_prometheus
 

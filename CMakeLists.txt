@@ -751,12 +751,15 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_crud_user_middleware
               glewlwyd_crud_client
               glewlwyd_crud_scope
+              glewlwyd_crud_misc_config
               glewlwyd_mod_user_http
               glewlwyd_mod_user_irl
               glewlwyd_mod_user_multiple_password_irl
               glewlwyd_mod_client_irl
               glewlwyd_profile_delete
               glewlwyd_scheme_forbidden
+              glewlwyd_mail_on_connexion
+              glewlwyd_geolocation
               )
 
     if (WITH_PLUGIN_OAUTH2)
