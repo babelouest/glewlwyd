@@ -607,13 +607,13 @@ static json_t * check_parameters (json_t * j_params) {
             } else if (json_object_get(j_element, "token-parameter") == NULL || !json_is_string(json_object_get(j_element, "token-parameter")) || !json_string_length(json_object_get(j_element, "token-parameter"))) {
               json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'username', 'salt', 'type', 'iat', 'expires_in', 'scope'"));
               ret = G_ERROR_PARAM;
-            } else if (0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "username") ||
+            } else if (0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "sub") ||
                        0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "salt") ||
                        0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "type") ||
                        0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "iat") ||
                        0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "expires_in") ||
                        0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "scope")) {
-              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'username', 'salt', 'type', 'iat', 'expires_in', 'scope'"));
+              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'sub', 'salt', 'type', 'iat', 'expires_in', 'scope'"));
               ret = G_ERROR_PARAM;
             }
           }
