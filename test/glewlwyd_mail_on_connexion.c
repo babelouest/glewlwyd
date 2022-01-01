@@ -297,7 +297,7 @@ START_TEST(test_glwd_mail_on_connexion_delete_misc_config)
 }
 END_TEST
 
-START_TEST(test_oidc_mail_on_connexion_email_username_ok)
+START_TEST(test_glwd_mail_on_connexion_email_username_ok)
 {
   struct smtp_manager manager;
   pthread_t thread;
@@ -337,7 +337,7 @@ START_TEST(test_oidc_mail_on_connexion_email_username_ok)
 }
 END_TEST
 
-START_TEST(test_oidc_mail_on_connexion_email_ip_ok)
+START_TEST(test_glwd_mail_on_connexion_email_ip_ok)
 {
   struct smtp_manager manager;
   pthread_t thread;
@@ -377,7 +377,7 @@ START_TEST(test_oidc_mail_on_connexion_email_ip_ok)
 }
 END_TEST
 
-START_TEST(test_oidc_mail_on_connexion_email_mfa)
+START_TEST(test_glwd_mail_on_connexion_email_mfa)
 {
   struct smtp_manager manager;
   pthread_t thread;
@@ -417,7 +417,7 @@ START_TEST(test_oidc_mail_on_connexion_email_mfa)
 }
 END_TEST
 
-START_TEST(test_oidc_mail_on_connexion_no_email_ok)
+START_TEST(test_glwd_mail_on_connexion_no_email_ok)
 {
   struct smtp_manager manager;
   pthread_t thread;
@@ -461,7 +461,7 @@ START_TEST(test_oidc_mail_on_connexion_no_email_ok)
 }
 END_TEST
 
-START_TEST(test_oidc_mail_on_connexion_reconnexion_no_email_ok)
+START_TEST(test_glwd_mail_on_connexion_reconnexion_no_email_ok)
 {
   struct smtp_manager manager;
   pthread_t thread;
@@ -568,7 +568,7 @@ START_TEST(test_oidc_mail_on_connexion_reconnexion_no_email_ok)
 }
 END_TEST
 
-START_TEST(test_oidc_mail_on_connexion_reconnexion_mfa_no_email_ok)
+START_TEST(test_glwd_mail_on_connexion_reconnexion_mfa_no_email_ok)
 {
   struct smtp_manager manager;
   pthread_t thread;
@@ -683,12 +683,12 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd mail on connexion");
   tc_core = tcase_create("test_glwd_mail_on_connexion");
   tcase_add_test(tc_core, test_glwd_mail_on_connexion_add_users);
-  tcase_add_test(tc_core, test_oidc_mail_on_connexion_email_username_ok);
-  tcase_add_test(tc_core, test_oidc_mail_on_connexion_email_ip_ok);
-  tcase_add_test(tc_core, test_oidc_mail_on_connexion_email_mfa);
-  tcase_add_test(tc_core, test_oidc_mail_on_connexion_no_email_ok);
-  tcase_add_test(tc_core, test_oidc_mail_on_connexion_reconnexion_no_email_ok);
-  tcase_add_test(tc_core, test_oidc_mail_on_connexion_reconnexion_mfa_no_email_ok);
+  tcase_add_test(tc_core, test_glwd_mail_on_connexion_email_username_ok);
+  tcase_add_test(tc_core, test_glwd_mail_on_connexion_email_ip_ok);
+  tcase_add_test(tc_core, test_glwd_mail_on_connexion_email_mfa);
+  tcase_add_test(tc_core, test_glwd_mail_on_connexion_no_email_ok);
+  tcase_add_test(tc_core, test_glwd_mail_on_connexion_reconnexion_no_email_ok);
+  tcase_add_test(tc_core, test_glwd_mail_on_connexion_reconnexion_mfa_no_email_ok);
   tcase_add_test(tc_core, test_glwd_mail_on_connexion_delete_misc_config);
   tcase_add_test(tc_core, test_glwd_mail_on_connexion_remove_users);
   tcase_set_timeout(tc_core, 30);
