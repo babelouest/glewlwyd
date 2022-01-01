@@ -463,6 +463,7 @@ START_TEST(test_glwd_geolocation_invalid_url)
   j_body = json_pack("{ssss}", "username", USER1, "password", USER_PASSWORD);
 
   ulfius_init_request(&req);
+  user_agent[0] = 'G';
   u_map_put(req.map_header, "User-Agent", user_agent);
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/auth/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   ulfius_clean_request(&req);
