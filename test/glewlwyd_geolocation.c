@@ -463,7 +463,7 @@ START_TEST(test_glwd_geolocation_invalid_url)
   j_body = json_pack("{ssss}", "username", USER1, "password", USER_PASSWORD);
 
   ulfius_init_request(&req);
-  user_agent[0] = 'G';
+  user_agent[0] = 'O';
   u_map_put(req.map_header, "User-Agent", user_agent);
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/auth/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   ulfius_clean_request(&req);
@@ -477,11 +477,11 @@ START_TEST(test_glwd_geolocation_invalid_url)
                                                                   U_OPT_HTTP_URL, SERVER_URI "/delegate/" USER1 "/profile/session",
                                                                   U_OPT_URL_PARAMETER, "pattern", user_agent,
                                                                   U_OPT_NONE), U_OK);
+  usleep(50000);
   ck_assert_int_eq(ulfius_send_http_request(&admin_req_copy, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   ck_assert_ptr_ne(NULL, j_response = ulfius_get_json_body_response(&resp, NULL));
   ck_assert_int_gt(json_array_size(j_response), 0);
-  usleep(50000);
   ck_assert_ptr_eq(NULL, o_strstr(json_string_value(json_object_get(json_array_get(j_response, 0), "issued_for")), GEOLOCATION_CITY " - " GEOLOCATION_COUNTRY));
   json_decref(j_response);
   ulfius_clean_response(&resp);
