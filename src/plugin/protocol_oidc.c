@@ -6726,25 +6726,23 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
     if (j_error != NULL) {
       break;
     }
-    if (json_array_size(json_object_get(j_registration, "response_types"))) {
-      if (!json_array_size(json_object_get(j_registration, "redirect_uris"))) {
-        j_error = json_pack("{ssss}", "error", "invalid_redirect_uri", "error_description", "redirect_uris is mandatory and must be an array of strings");
-        break;
-      }
-      json_array_foreach(json_object_get(j_registration, "redirect_uris"), index, j_element) {
-        if (!is_redirect_uri_valid_without_credential(json_string_value(j_element)) ||
-           (0 != o_strncmp("https://", json_string_value(j_element), o_strlen("https://")) &&
-            0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_1, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_1)) &&
-            0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_2, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_2)) &&
-            0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_3, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_3)))) {
-          if (j_error == NULL) {
-            j_error = json_pack("{ssss}", "error", "invalid_redirect_uri", "error_description", "a redirect_uri must be a 'https://' uri or a 'http://localhost' uri without credentials");
-          }
+    if (!json_array_size(json_object_get(j_registration, "redirect_uris"))) {
+      j_error = json_pack("{ssss}", "error", "invalid_redirect_uri", "error_description", "redirect_uris is mandatory and must be an array of strings");
+      break;
+    }
+    json_array_foreach(json_object_get(j_registration, "redirect_uris"), index, j_element) {
+      if (!is_redirect_uri_valid_without_credential(json_string_value(j_element)) ||
+         (0 != o_strncmp("https://", json_string_value(j_element), o_strlen("https://")) &&
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_1, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_1)) &&
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_2, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_2)) &&
+          0 != o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_3, json_string_value(j_element), o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_3)))) {
+        if (j_error == NULL) {
+          j_error = json_pack("{ssss}", "error", "invalid_redirect_uri", "error_description", "a redirect_uri must be a 'https://' uri or a 'http://localhost' uri without credentials");
         }
       }
-      if (j_error != NULL) {
-        break;
-      }
+    }
+    if (j_error != NULL) {
+      break;
     }
     if (json_object_get(j_registration, "application_type") != NULL && 0 != o_strcmp("web", json_string_value(json_object_get(j_registration, "application_type"))) && 0 != o_strcmp("native", json_string_value(json_object_get(j_registration, "application_type")))) {
       j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "application_type is optional and must have one of the following values: 'web', 'native'");
