@@ -6,6 +6,7 @@
 -- License: MIT                                           --
 -- ------------------------------------------------------ --
 
+DROP TABLE IF EXISTS g_misc_config;
 DROP TABLE IF EXISTS g_api_key;
 DROP TABLE IF EXISTS g_client_user_scope;
 DROP TABLE IF EXISTS g_scope_group_auth_scheme_module_instance;

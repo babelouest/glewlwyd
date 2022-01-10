@@ -6,6 +6,7 @@
 -- License: MIT                                          --
 -- ----------------------------------------------------- --
 
+DROP TABLE IF EXISTS g_misc_config;
 DROP TABLE IF EXISTS g_api_key;
 DROP TABLE IF EXISTS g_client_user_scope;
 DROP TABLE IF EXISTS g_scope_group_auth_scheme_module_instance;
@@ -151,3 +152,12 @@ CREATE TABLE g_api_key (
   gak_enabled INTEGER DEFAULT 1
 );
 CREATE INDEX i_gak_token_hash ON g_api_key(gak_token_hash);
+
+CREATE TABLE g_misc_config (
+  gmc_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gmc_type TEXT NOT NULL,
+  gmc_name TEXT,
+  gmc_value TEXT
+);
+CREATE INDEX i_gmc_type ON g_misc_config(gmc_type);
+CREATE INDEX i_gmc_name ON g_misc_config(gmc_name);
