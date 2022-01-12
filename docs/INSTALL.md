@@ -797,6 +797,8 @@ Database configuration is mandatory.
 
 ## Initialise database
 
+**Warning:** Remember to use script that correspond to your Glewlwyd version
+
 Use the script that fit your database back-end in the [database](database) folder:
 
 - `docs/database/init.mariadb.sql`
@@ -1086,6 +1088,8 @@ Example of a `/etc/logrotate.d/glewlwyd` file. This file will create a new log f
 All front-end pages have a minimal design, feel free to modify them for your own need, or create your own application. The source code is available in `/webapp-src` and requires nodejs and npm or yarn to build.
 
 The built front-end files are located in the webapp/ directory.
+
+**Warning:** Remember to use front-end files that correspond to your Glewlwyd version
 
 ### webapp/config.json
 
