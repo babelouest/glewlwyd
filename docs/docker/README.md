@@ -32,4 +32,4 @@ $ docker run --rm -it -p 4593:4593 -v $(pwd)/config:/etc/glewlwyd babelouest/gle
 
 ## Database and front-end app
 
-Aftern create docker container you need to configure [Database](../docs/INSTALL.md#initialise-database) and [Front end application](../INSTALL.md#front-end-application). Remember to use files that correspond to your docker image version not master branch version.
+After creating docker container you need to configure [Database](../docs/INSTALL.md#initialise-database) and [Front end application](../INSTALL.md#front-end-application). Remember to use files that correspond to your docker image version not master branch version.
