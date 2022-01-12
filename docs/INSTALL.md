@@ -797,13 +797,13 @@ Database configuration is mandatory.
 
 ## Initialise database
 
+**Warning:** Remember to use script that correspond to your Glewlwyd version
+
 Use the script that fit your database back-end in the [database](database) folder:
 
 - `docs/database/init.mariadb.sql`
 - `docs/database/init.sqlite3.sql`
 - `docs/database/init.postgre.sql`
-
-:warning: Remember to use script that correspond to your Glewlwyd version :warning:
 
 Note: PostgreSQL requires the extension `pgcrypto` enabled to encrypt users and clients passwords.
 
@@ -1089,7 +1089,7 @@ All front-end pages have a minimal design, feel free to modify them for your own
 
 The built front-end files are located in the webapp/ directory.
 
-:warning: Remember to use front-end files that correspond to your Glewlwyd version :warning:
+**Warning:** Remember to use front-end files that correspond to your Glewlwyd version
 
 ### webapp/config.json
 
