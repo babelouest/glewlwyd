@@ -803,6 +803,8 @@ Use the script that fit your database back-end in the [database](database) folde
 - `docs/database/init.sqlite3.sql`
 - `docs/database/init.postgre.sql`
 
+:warning: Remember to use script that correspond to your Glewlwyd version :warning:
+
 Note: PostgreSQL requires the extension `pgcrypto` enabled to encrypt users and clients passwords.
 
 For example, initialise a MariaDB database:
@@ -1086,6 +1088,8 @@ Example of a `/etc/logrotate.d/glewlwyd` file. This file will create a new log f
 All front-end pages have a minimal design, feel free to modify them for your own need, or create your own application. The source code is available in `/webapp-src` and requires nodejs and npm or yarn to build.
 
 The built front-end files are located in the webapp/ directory.
+
+:warning: Remember to use front-end files that correspond to your Glewlwyd version :warning:
 
 ### webapp/config.json
 
