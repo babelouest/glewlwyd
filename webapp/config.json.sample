@@ -191,6 +191,12 @@
       "label": "admin.client-alg_kid",
       "placeholder": "admin.client-alg_kid-ph"
     },{
+      "name": "sign_kid",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-sign_kid",
+      "placeholder": "admin.client-sign_kid-ph"
+    },{
       "name": "encrypt_code",
       "edit": true,
       "forceShow": true,

@@ -266,6 +266,8 @@
     "client-alg-ph": "Ex: RSA1_5",
     "client-alg_kid": "KID de clé de chiffrement",
     "client-alg_kid-ph": "Ex: abcd1234",
+    "client-sign_kid": "KID de clé de signature",
+    "client-sign_kid-ph": "Ex: abcd1234",
     "client-encrypt_code": "Chiffrer les code d'authorisation",
     "client-encrypt_at": "Chiffrer les access_token",
     "client-encrypt_userinfo": "Chiffrer les userinfo",

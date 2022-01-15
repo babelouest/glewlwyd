@@ -266,6 +266,8 @@
     "client-alg-ph": "e.g. RSA1_5",
     "client-alg_kid": "Content Encryption KID",
     "client-alg_kid-ph": "e.g. abcd1234",
+    "client-sign_kid": "Signature KID",
+    "client-sign_kid-ph": "e.g. abcd1234",
     "client-encrypt_code": "Encrypt authorization code",
     "client-encrypt_at": "Encrypt access_token",
     "client-encrypt_userinfo": "Encrypt userinfo",
