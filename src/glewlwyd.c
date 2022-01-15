@@ -3472,7 +3472,7 @@ char * get_ip_data(struct config_elements * config, const char * ip_address) {
         if ((j_response = ulfius_get_json_body_response(&resp, NULL)) != NULL) {
           for (i=0; properties[i]!=NULL; i++) {
             if (data == NULL) {
-              data = strdup(json_string_value(json_object_get(j_response, trimwhitespace(properties[i]))));
+              data = o_strdup(json_string_value(json_object_get(j_response, trimwhitespace(properties[i]))));
             } else {
               data = mstrcatf(data, " - %s", json_string_value(json_object_get(j_response, trimwhitespace(properties[i]))));
             }
