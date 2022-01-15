@@ -3005,8 +3005,7 @@ static char * generate_id_token(struct _oidc_config * config,
             }
             //jwt_add_grant(jwt, "acr", "plop"); // TODO?
             if (r_jwt_set_full_claims_json_t(jwt, j_user_info) == RHN_OK) {
-              token = r_jwt_serialize_signed(jwt, jwk, 0);
-              if (token == NULL) {
+              if ((token = r_jwt_serialize_signed(jwt, jwk, 0)) == NULL) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "generate_id_token - oidc - Error r_jwt_serialize_signed");
               } else {
                 y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - id_token generated for client '%s' granted by user '%s', origin: %s", config->name, json_string_value(json_object_get(j_client, "client_id")), username, ip_source);
@@ -9316,7 +9315,7 @@ static int callback_revocation(const struct _u_request * request, struct _u_resp
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_id_token");
           response->status = 500;
         } else {
-          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - id_token generated for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request));
+          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - id_token revoked for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request));
         }
       }
     }
