@@ -255,6 +255,16 @@ int main (int argc, char ** argv) {
     return 0;
   }
 
+  if (!o_strlen(config->cookie_domain)) {
+    y_log_message(Y_LOG_LEVEL_WARNING, "Config property 'cookie_domain' is not set - cookie session may not be saved on the browser");
+  } else if (o_strstr(config->external_url, config->cookie_domain) == NULL) {
+    y_log_message(Y_LOG_LEVEL_WARNING, "Config property 'cookie_domain' seems different from 'external_url', cookie session may not be saved on the browser");
+  }
+
+  if (!config->cookie_secure) {
+    y_log_message(Y_LOG_LEVEL_WARNING, "Config property 'cookie_secure' is set to false, recommended settings is true");
+  }
+
   if (config->bind_address != NULL) {
     bind_address.sin_family = AF_INET;
     bind_address.sin_port = htons(config->port);
@@ -549,7 +559,7 @@ int main (int argc, char ** argv) {
       exit_server(&config, GLEWLWYD_ERROR);
     }
   }
-  
+
   // Check if cookie domain (if set) is the same domain as in external_url
   if (o_strlen(config->cookie_domain)) {
     if (0 == o_strncmp("http://", config->external_url, o_strlen("http://"))) {
@@ -651,7 +661,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
 
     close_plugin_module_instance_list(*config);
     close_plugin_module_list(*config);
-    
+
     pthread_mutex_destroy(&(*config)->module_lock);
     pthread_mutex_destroy(&(*config)->insert_lock);
 
@@ -3461,7 +3471,7 @@ char * get_ip_data(struct config_elements * config, const char * ip_address) {
   struct _u_request req;
   struct _u_response resp;
   size_t i;
-  
+
   if (check_result_value(j_misc_config, G_OK) && json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "enabled") == json_true()) {
     if (split_string(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "output-properties")), ",", &properties)) {
       url = str_replace(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "url")), "{IP}", ip_address);
