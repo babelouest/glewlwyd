@@ -935,6 +935,8 @@ int user_delete_profile(struct config_elements * config, const char * username) 
       } else {
         if ((ret = user_module->module->user_module_delete(config->config_m, username, user_module->cls)) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_delete_profile - Error user_module_delete");
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' removed - user action", username);
         }
       }
       if (ret == G_OK && !(config->delete_profile & GLEWLWYD_PROFILE_DELETE_DISABLE_PROFILE)) {
