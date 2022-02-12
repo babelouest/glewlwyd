@@ -11,6 +11,7 @@ class EditRecord extends Component {
       title: props.title,
       pattern: props.pattern,
       source: props.source,
+      defaultSource: props.defaultSource,
       data: props.data,
       cb: props.callback,
       validateCb: props.validateCallback,
@@ -54,6 +55,7 @@ class EditRecord extends Component {
       title: nextProps.title,
       pattern: nextProps.pattern,
       source: nextProps.source,
+      defaultSource: nextProps.defaultSource,
       data: nextProps.data,
       cb: nextProps.callback,
       validateCb: nextProps.validateCallback,
@@ -493,10 +495,16 @@ class EditRecord extends Component {
   }
 
   createData() {
-    var data = {};
+    var data = {
+      source: this.state.defaultSource
+    };
     this.state.pattern.forEach((pat, index) => {
       if (pat.list) {
-        data[pat.name] = [];
+        if (pat.defaultValue !== undefined) {
+          data[pat.name] = pat.defaultValue;
+        } else {
+          data[pat.name] = [];
+        }
       } else if (pat.defaultValue !== undefined) {
         data[pat.name] = pat.defaultValue;
       } else if (pat.type !== "boolean") {

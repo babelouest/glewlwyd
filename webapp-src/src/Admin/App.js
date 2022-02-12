@@ -48,9 +48,11 @@ class App extends Component {
       scopeModal: {title: "", data: {name: "", display_name: "", description: "", password_required: true, scheme: {}}, callback: false, add: false},
       curMod: false,
       modUsers: [],
+      defaultModUsers: false,
       modUsersMiddleware: [],
       ModModal: {title: "", role: false, data: {}, types: [], add: false, callback: false},
       modClients: [],
+      defaultModClients: false,
       modSchemes: [],
       plugins: [],
       PluginModal: {title: "", data: {}, types: [], add: false, callback: false},
@@ -304,6 +306,7 @@ class App extends Component {
             title: i18next.t("admin.add-user-title"),
             pattern: this.state.config.pattern.user,
             source: this.state.modUsers,
+            defaultSource: this.state.defaultModUsers,
             data: {username: "", name: "", password: "", email: "", enabled: true, scope: []},
             callback: this.confirmAddUser,
             validateCallback: this.validateUser,
@@ -317,7 +320,8 @@ class App extends Component {
             title: i18next.t("admin.add-client-title"),
             pattern: this.state.config.pattern.client,
             source: this.state.modClients,
-            data: {client_id: "", confidential: false, client_secret: "", enabled: true, name: "", password: "", redirect_uri: [], scope: []},
+            defaultSource: this.state.defaultModClients,
+            data: {client_id: "", confidential: false, client_secret: "", enabled: true, name: "", password: "", redirect_uri: [], scope: [], token_endpoint_auth_method: ["client_secret_basic"], authorization_type: ["code", "refresh_token"]},
             callback: this.confirmAddClient,
             validateCallback: this.validateClient,
             add: true
@@ -739,13 +743,13 @@ class App extends Component {
     .then((scopes) => {
       var curScopes = this.state.scopes;
       curScopes.list = scopes;
-      this.setState({scopes: curScopes});
+      return this.setState({scopes: curScopes});
     })
     .fail((err) => {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
-        this.setState({
+        return this.setState({
           loggedIn: false,
           modTypes: {user: [], client: [], scheme: [], plugin: []},
           users: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
@@ -783,14 +787,20 @@ class App extends Component {
         }
       });
       config.scopes = scopes;
-      this.setState({users: users, clients: clients, config: config});
+      return this.setState({users: users, clients: clients, config: config});
     });
   }
 
   fetchUserMods () {
     return apiManager.glewlwydRequest("/mod/user")
     .then((modUsers) => {
-      this.setState({modUsers: modUsers});
+      let defaultModUsers = false;
+      modUsers.forEach((mod) => {
+        if (!mod.readonly && !defaultModUsers) {
+          defaultModUsers = mod.name;
+        }
+      });
+      this.setState({modUsers: modUsers, defaultModUsers: defaultModUsers});
     }).fail((err) => {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
@@ -867,7 +877,13 @@ class App extends Component {
   fetchClientMods () {
     return apiManager.glewlwydRequest("/mod/client")
     .then((modClients) => {
-      this.setState({modClients: modClients});
+      let defaultModClients = false;
+      modClients.forEach((mod) => {
+        if (!mod.readonly && !defaultModClients) {
+          defaultModClients = mod.name;
+        }
+      });
+      this.setState({modClients: modClients, defaultModClients: defaultModClients});
     }).fail((err) => {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
@@ -1114,6 +1130,7 @@ class App extends Component {
         }
       })
       .always(() => {
+        this.fetchAllScopes();
         this.fetchScopes()
         .always(() => {
           this.setState({confirmModal: {title: "", message: ""}}, () => {
@@ -1247,6 +1264,7 @@ class App extends Component {
         }
       })
       .always(() => {
+        this.fetchAllScopes();
         this.fetchScopes()
         .always(() => {
           this.setState({scopeModal: {data: {}, callback: false, savedRecord: false, savedIndex: -1}}, () => {
@@ -1380,6 +1398,7 @@ class App extends Component {
         }
       })
       .always(() => {
+        this.fetchAllScopes();
         this.fetchScopes()
         .always(() => {
           this.setState({scopeModal: {data: {}, callback: false}}, () => {
@@ -2398,6 +2417,7 @@ class App extends Component {
           <EditRecord title={this.state.editModal.title}
                       pattern={this.state.editModal.pattern}
                       source={this.state.editModal.source}
+                      defaultSource={this.state.editModal.defaultSource}
                       data={this.state.editModal.data}
                       callback={this.state.editModal.callback}
                       validateCallback={this.state.editModal.validateCallback}
