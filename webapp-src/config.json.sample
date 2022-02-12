@@ -109,6 +109,7 @@
       "edit": true,
       "forceShow": true,
       "label": "admin.client-authorization-type",
+      "defaultValue": ["code", "refresh_token"],
       "listElements": ["code","token","id_token","password","none","client_credentials","refresh_token","delete_token","device_authorization","urn:openid:params:grant-type:ciba"]
     },{
       "name": "response_mode",
@@ -135,6 +136,7 @@
       "edit": true,
       "forceShow": true,
       "label": "admin.client-token_endpoint_auth_method",
+      "defaultValue": ["client_secret_basic"],
       "listElements": ["", "none", "client_secret_post", "client_secret_basic", "client_secret_jwt", "private_key_jwt", "tls_client_auth", "self_signed_tls_client_auth"]
     },{
       "name": "client_secret",
