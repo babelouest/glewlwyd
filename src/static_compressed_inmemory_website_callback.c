@@ -2,22 +2,22 @@
  *
  * Static file server with compression Ulfius callback
  *
- * Copyright 2020-2021 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2020-2022 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20211026
- * 
+ * Version 20220212
+ *
  * The MIT License (MIT)
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -39,7 +39,7 @@
  * `lock`: mutex lock (do not touch this variable)
  * `gzip_files`: a `struct _u_map` containing cached gzip files
  * `deflate_files`: a `struct _u_map` containing cached deflate files
- * 
+ *
  * example of mime-types used in Hutch:
  * {
  *   key = ".html"
@@ -52,6 +52,10 @@
  * {
  *   key = ".js"
  *   value = "application/javascript"
+ * },
+ * {
+ *   key = ".json"
+ *   value = "application/json"
  * },
  * {
  *   key = ".png"
@@ -85,7 +89,7 @@
  *   key = "*"
  *   value = "application/octet-stream"
  * }
- * 
+ *
  */
 #include <pthread.h>
 #include <zlib.h>
@@ -285,7 +289,7 @@ int u_add_mime_types_compressed(struct _u_compressed_inmemory_website_config * c
 int callback_static_compressed_inmemory_website (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _u_compressed_inmemory_website_config * config = (struct _u_compressed_inmemory_website_config *)user_data;
   char ** accept_list = NULL;
-  int ret = U_CALLBACK_CONTINUE, compress_mode = U_COMPRESS_NONE, res;
+  int ret = U_CALLBACK_CONTINUE, compress_mode = U_COMPRESS_NONE, res, unknown_mime_type = 0;
   z_stream defstream;
   unsigned char * file_content, * file_content_orig = NULL;
   size_t length, read_length, offset, data_zip_len = 0;
@@ -323,6 +327,13 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
       url_dup_save = file_requested = o_strdup("index.html");
     }
 
+    content_type = u_map_get_case(&config->mime_types, get_filename_ext(file_requested));
+    if (content_type == NULL) {
+      content_type = u_map_get(&config->mime_types, "*");
+      unknown_mime_type = 1;
+    }
+    u_map_copy_into(response->map_header, &config->map_header);
+
     if (!u_map_has_key_case(response->map_header, U_CONTENT_HEADER)) {
       if (split_string(u_map_get_case(request->map_header, U_ACCEPT_HEADER), ",", &accept_list)) {
         if (config->allow_gzip && string_array_has_trimmed_value((const char **)accept_list, U_ACCEPT_GZIP)) {
@@ -331,31 +342,30 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
           compress_mode = U_COMPRESS_DEFL;
         }
 
-        content_type = u_map_get_case(&config->mime_types, get_filename_ext(file_requested));
-        if (content_type == NULL) {
-          content_type = u_map_get(&config->mime_types, "*");
-          y_log_message(Y_LOG_LEVEL_WARNING, "Static File Server - Unknown mime type for extension %s", get_filename_ext(file_requested));
-        }
-        if (!string_array_has_value((const char **)config->mime_types_compressed, content_type)) {
-          compress_mode = U_COMPRESS_NONE;
-        }
-
-        u_map_put(response->map_header, "Content-Type", content_type);
-        u_map_copy_into(response->map_header, &config->map_header);
-
         if (compress_mode != U_COMPRESS_NONE) {
           if (compress_mode == U_COMPRESS_GZIP && config->allow_cache_compressed && u_map_has_key(&config->gzip_files, file_requested)) {
             ulfius_set_binary_body_response(response, 200, u_map_get(&config->gzip_files, file_requested), u_map_get_length(&config->gzip_files, file_requested));
             u_map_put(response->map_header, U_CONTENT_HEADER, U_ACCEPT_GZIP);
+            u_map_put(response->map_header, "Content-Type", content_type);
           } else if (compress_mode == U_COMPRESS_DEFL && config->allow_cache_compressed && u_map_has_key(&config->deflate_files, file_requested)) {
             ulfius_set_binary_body_response(response, 200, u_map_get(&config->deflate_files, file_requested), u_map_get_length(&config->deflate_files, file_requested));
             u_map_put(response->map_header, U_CONTENT_HEADER, U_ACCEPT_DEFLATE);
+            u_map_put(response->map_header, "Content-Type", content_type);
           } else {
             file_path = msprintf("%s/%s", ((struct _u_compressed_inmemory_website_config *)user_data)->files_path, file_requested);
 
             if (!pthread_mutex_lock(&config->lock)) {
               f = fopen (file_path, "rb");
               if (f) {
+                if (unknown_mime_type) {
+                  y_log_message(Y_LOG_LEVEL_WARNING, "Static File Server - Unknown mime type for extension %s", get_filename_ext(file_requested));
+                }
+                if (!string_array_has_value((const char **)config->mime_types_compressed, content_type)) {
+                  compress_mode = U_COMPRESS_NONE;
+                }
+
+                u_map_put(response->map_header, "Content-Type", content_type);
+
                 fseek (f, 0, SEEK_END);
                 offset = length = ftell (f);
                 fseek (f, 0, SEEK_SET);
@@ -372,8 +382,8 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
                   }
 
                   if (compress_mode == U_COMPRESS_GZIP) {
-                    if (deflateInit2(&defstream, 
-                                     Z_DEFAULT_COMPRESSION, 
+                    if (deflateInit2(&defstream,
+                                     Z_DEFAULT_COMPRESSION,
                                      Z_DEFLATED,
                                      U_GZIP_WINDOW_BITS | U_GZIP_ENCODING,
                                      8,
@@ -408,7 +418,7 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
                         ret = U_CALLBACK_ERROR;
                       }
                     } while (U_CALLBACK_CONTINUE == ret && defstream.avail_out == 0);
-                    
+
                     if (ret == U_CALLBACK_CONTINUE) {
                       if (compress_mode == U_COMPRESS_GZIP) {
                         if (config->allow_cache_compressed) {
