@@ -17,7 +17,7 @@ This is a security release, please upgrade your Glewlwyd version.
 - Improve user registration UI and OTP scheme registration
 - Add callback function `plugin_user_revoke` in plugins
 - Add config file option `add_x_frame_option_header_deny` to allow removing header `X-Frame-Options: deny`
-- Fix escalation bug
+- Security: Fix escalation bug (CVE-2021-45379)
 
 ## 2.6.0
 
@@ -38,7 +38,7 @@ The `"Green Zone Release"`
 
 ## 2.5.4
 
-- Fix possible buffer overflow in webauthn registration (CVE-2021-40818)
+- Security: Fix possible buffer overflow in webauthn registration (CVE-2021-40818)
 - Update dependencies versions
 
 ## 2.5.3
