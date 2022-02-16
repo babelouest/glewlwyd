@@ -1760,7 +1760,7 @@ static char * get_username_from_sub(struct _oidc_config * config, const char * s
                         config->name,
                         "gposi_sub",
                         sub);
-  if (j_client == NULL) {
+  if (j_client != NULL) {
     if (config->subject_type == GLEWLWYD_OIDC_SUBJECT_TYPE_PAIRWISE) {
       if (json_string_length(json_object_get(j_client, "sector_identifier_uri"))) {
         json_object_set(json_object_get(j_query, "where"), "gposi_sector_identifier_uri", json_object_get(j_client, "sector_identifier_uri"));
@@ -15017,7 +15017,7 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
     if (0 == o_strcmp("rsa", json_string_value(json_object_get(config->j_params, "jwt-type")))) {
       if (0 == o_strcmp("256", json_string_value(json_object_get(config->j_params, "jwt-key-size")))) {
         alg = R_JWA_ALG_RS256;
-      } else if (0 == o_strcmp("256", json_string_value(json_object_get(config->j_params, "jwt-key-size")))) {
+      } else if (0 == o_strcmp("384", json_string_value(json_object_get(config->j_params, "jwt-key-size")))) {
         alg = R_JWA_ALG_RS384;
       } else { // 512
         alg = R_JWA_ALG_RS512;
