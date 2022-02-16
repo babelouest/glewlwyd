@@ -1760,7 +1760,7 @@ static char * get_username_from_sub(struct _oidc_config * config, const char * s
                         config->name,
                         "gposi_sub",
                         sub);
-  if (j_client == NULL) {
+  if (j_client != NULL) {
     if (config->subject_type == GLEWLWYD_OIDC_SUBJECT_TYPE_PAIRWISE) {
       if (json_string_length(json_object_get(j_client, "sector_identifier_uri"))) {
         json_object_set(json_object_get(j_query, "where"), "gposi_sector_identifier_uri", json_object_get(j_client, "sector_identifier_uri"));
