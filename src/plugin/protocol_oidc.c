@@ -15017,7 +15017,7 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
     if (0 == o_strcmp("rsa", json_string_value(json_object_get(config->j_params, "jwt-type")))) {
       if (0 == o_strcmp("256", json_string_value(json_object_get(config->j_params, "jwt-key-size")))) {
         alg = R_JWA_ALG_RS256;
-      } else if (0 == o_strcmp("256", json_string_value(json_object_get(config->j_params, "jwt-key-size")))) {
+      } else if (0 == o_strcmp("384", json_string_value(json_object_get(config->j_params, "jwt-key-size")))) {
         alg = R_JWA_ALG_RS384;
       } else { // 512
         alg = R_JWA_ALG_RS512;
