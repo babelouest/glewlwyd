@@ -6354,7 +6354,9 @@ static json_t * convert_client_registration_to_glewlwyd(json_t * j_registration)
         json_array_append_new(json_object_get(j_client, "authorization_type"), json_copy(j_element));
       }
     }
-    if (json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "none") || json_object_get(j_client, "token_endpoint_auth_method") == NULL) {
+    if (json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "none") ||
+        json_object_get(j_client, "token_endpoint_auth_method") == NULL ||
+        json_object_get(j_client, "client_confidential") == json_true()) {
       json_object_set(j_client, "confidential", json_false());
     } else {
       json_object_set(j_client, "confidential", json_true());
@@ -6571,7 +6573,8 @@ static json_t * client_register(struct _oidc_config * config, const struct _u_re
       token_endpoint_auth_method = json_string_value(json_object_get(j_registration, "token_endpoint_auth_method"));
       if (j_return == NULL && (0 == o_strcmp("client_secret_post", token_endpoint_auth_method) ||
                                0 == o_strcmp("client_secret_basic", token_endpoint_auth_method) ||
-                               0 == o_strcmp("client_secret_jwt", token_endpoint_auth_method))) {
+                               0 == o_strcmp("client_secret_jwt", token_endpoint_auth_method))
+                           && json_object_get(j_registration, "client_confidential") != json_false()) {
         rand_string(client_secret, GLEWLWYD_CLIENT_SECRET_LENGTH);
         if (!o_strlen(client_secret)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "client_register - Error generating client_secret");
