@@ -1339,6 +1339,7 @@ static int register_reset_credentials_trigger(struct _register_config * config, 
       }
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - Reset credentials - user '%s' not found at IP Address %s", email, ip_source);
+      ret = G_ERROR_NOT_FOUND;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "register_reset_credentials_trigger - Error glewlwyd_plugin_callback_get_user");
       ret = G_ERROR;
