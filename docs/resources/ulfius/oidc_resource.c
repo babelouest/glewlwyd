@@ -2,9 +2,9 @@
  *
  * Glewlwyd SSO Access Token token check
  *
- * Copyright 2016-2021 Nicolas Mora <mail@babelouest.org>
+ * Copyright 2016-2022 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20211029
+ * Version 20220308
  *
  * The MIT License (MIT)
  * 
@@ -101,6 +101,7 @@ static int access_token_check_validity(struct _oidc_resource_config * config, js
   time_t now;
   json_int_t expiration;
   int res;
+  const char * sub, * aud;
   
   if (j_access_token != NULL) {
     // Token is valid, check type and expiration date
@@ -109,13 +110,15 @@ static int access_token_check_validity(struct _oidc_resource_config * config, js
     if (now < expiration &&
         json_object_get(j_access_token, "type") != NULL &&
         json_is_string(json_object_get(j_access_token, "type"))) {
+      sub = json_string_value(json_object_get(j_access_token, "sub"));
+      aud = json_string_value(json_object_get(j_access_token, "aud"));
       if (config->accept_access_token &&
         0 == o_strcmp("access_token", json_string_value(json_object_get(j_access_token, "type"))) &&
-        json_string_length(json_object_get(j_access_token, "sub")) > 0) {
+        !o_strnullempty(sub)) {
         res = G_TOKEN_OK;
       } else if (config->accept_client_token &&
         0 == o_strcmp("client_token", json_string_value(json_object_get(j_access_token, "type"))) &&
-        json_string_length(json_object_get(j_access_token, "aud")) > 0) {
+        !o_strnullempty(aud)) {
         res = G_TOKEN_OK;
       } else {
         res = G_TOKEN_ERROR_INVALID_REQUEST;
@@ -227,7 +230,7 @@ int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request
             }
           }
           json_decref(j_res_scope);
-        } else if (res_validity == G_TOKEN_ERROR_INVALID_TOKEN) {
+        } else if (res_validity == G_TOKEN_ERROR_INVALID_TOKEN || res_validity == G_TOKEN_ERROR_INVALID_REQUEST) {
           response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_request\",error_description=\"The access token is invalid\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
           u_map_put(response->map_header, HEADER_RESPONSE, response_value);
           o_free(response_value);
