@@ -529,7 +529,7 @@ static json_t * register_check_session(struct _register_config * config, const c
   char * session_hash = NULL, * expires_at_clause = NULL;
   time_t now;
   
-  if (o_strlen(session)) {
+  if (!o_strnullempty(session)) {
     session_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, session);
     if (session_hash != NULL) {
       time(&now);
@@ -599,7 +599,7 @@ static json_t * register_check_username(struct _register_config * config, const 
   char * expires_at_clause = NULL;
   time_t now;
   
-  if (o_strlen(username)) {
+  if (!o_strnullempty(username)) {
     time(&now);
     if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
       expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
@@ -1122,7 +1122,7 @@ static json_t * reset_credentials_check_session(struct _register_config * config
   char * session_hash = NULL, * expires_at_clause = NULL;
   time_t now;
   
-  if (o_strlen(session)) {
+  if (!o_strnullempty(session)) {
     session_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, session);
     if (session_hash != NULL) {
       time(&now);
@@ -1556,7 +1556,7 @@ static int reset_credentials_code_verify(struct _register_config * config, const
   size_t i, array_size;
   const char * code_property = json_string_value(json_object_get(config->j_parameters, "reset-credentials-code-property"));
   
-  if (o_strlen(username) && o_strlen(code)) {
+  if (!o_strnullempty(username) && !o_strnullempty(code)) {
     j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username);
     if (check_result_value(j_user, G_OK) && (array_size = json_array_size(json_object_get(json_object_get(j_user, "user"), code_property))) >= (size_t)json_integer_value(json_object_get(config->j_parameters, "reset-credentials-code-list-size"))) {
       if ((code_deformatted = str_replace(code, "-", "")) != NULL) {
@@ -1774,7 +1774,7 @@ static int callback_register_send_email_verification(const struct _u_request * r
     } else {
       username = json_string_value(json_object_get(j_parameters, "username"));
     }
-    if (o_strlen(email) && o_strlen(username)) {
+    if (!o_strnullempty(email) && !o_strnullempty(username)) {
       issued_for = get_client_hostname(request);
       if (issued_for != NULL) {
         j_result = register_generate_email_verification_code(config, username, email, json_string_value(json_object_get(j_parameters, "lang")), json_string_value(json_object_get(j_parameters, "callback_url")), issued_for, u_map_get_case(request->map_header, "user-agent"), get_ip_source(request));
@@ -1840,7 +1840,7 @@ static int callback_register_check_email(const struct _u_request * request, stru
         response->status = 500;
       }
       json_decref(j_result);
-    } else if (o_strlen(email) && o_strlen(username)) {
+    } else if (!o_strnullempty(email) && !o_strnullempty(username)) {
       if ((json_int_t)json_string_length(json_object_get(j_parameters, "code")) == json_integer_value(json_object_get(config->j_parameters, "verification-code-length"))) {
         j_result = register_verify_email_code(config,
                                                username,

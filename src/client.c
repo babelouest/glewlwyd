@@ -75,7 +75,7 @@ json_t * get_client(struct config_elements * config, const char * client_id, con
   struct _client_module_instance * client_module;
   size_t index;
   
-  if (!o_strlen(client_id)) {
+  if (o_strnullempty(client_id)) {
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   } else if (source != NULL) {
     client_module = get_client_module_instance(config, source);

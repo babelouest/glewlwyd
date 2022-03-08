@@ -354,7 +354,7 @@ size_t client_module_count_total(struct config_module * config, const char * pat
   size_t index = 0, total;
   json_t * j_user = NULL;
 
-  if (o_strlen(pattern)) {
+  if (!o_strnullempty(pattern)) {
     total = 0;
     json_array_foreach((json_t *)cls, index, j_user) {
       if (json_has_str_pattern_case(j_user, pattern)) {
@@ -396,7 +396,7 @@ json_t * client_module_get_list(struct config_module * config, const char * patt
   size_t index = 0, counter = 0;
 
   if (limit > 0) {
-    if (o_strlen(pattern)) {
+    if (!o_strnullempty(pattern)) {
       j_array_pattern = json_array();
       json_array_foreach((json_t *)cls, index, j_user) {
         if (json_has_str_pattern_case(j_user, pattern)) {
@@ -451,7 +451,7 @@ json_t * client_module_get(struct config_module * config, const char * client_id
   json_t * j_client = NULL, * j_return = NULL;
   size_t index = 0;
   
-  if (client_id != NULL && o_strlen(client_id)) {
+  if (client_id != NULL && !o_strnullempty(client_id)) {
     json_array_foreach((json_t *)cls, index, j_client) {
       if (0 == o_strcmp(client_id, json_string_value(json_object_get(j_client, "client_id")))) {
         j_return = json_pack("{siso}", "result", G_OK, "client", json_deep_copy(j_client));

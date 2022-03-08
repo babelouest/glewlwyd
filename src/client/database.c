@@ -400,7 +400,7 @@ static json_t * database_client_get(const char * client_id, void * cls, int prof
 static char * get_password_clause_write(struct mod_parameters * param, const char * password) {
   char * clause = NULL, * password_encoded, digest[1024] = {0};
   
-  if (!o_strlen(password)) {
+  if (o_strnullempty(password)) {
     clause = o_strdup("''");
   } else if (param->conn->type == HOEL_DB_TYPE_SQLITE) {
     if (generate_digest_pbkdf2(password, param->PBKDF2_iterations, NULL, digest)) {
@@ -809,7 +809,7 @@ size_t client_module_count_total(struct config_module * config, const char * pat
                       G_TABLE_CLIENT,
                       "columns",
                         "count(gc_id) AS total");
-  if (o_strlen(pattern)) {
+  if (!o_strnullempty(pattern)) {
     pattern_clause = get_pattern_clause(param, pattern);
     json_object_set_new(j_query, "where", json_pack("{s{ssss}}", "gc_id", "operator", "raw", "value", pattern_clause));
     o_free(pattern_clause);
@@ -849,7 +849,7 @@ json_t * client_module_get_list(struct config_module * config, const char * patt
                       limit,
                       "order_by",
                       "gc_client_id");
-  if (o_strlen(pattern)) {
+  if (!o_strnullempty(pattern)) {
     pattern_clause = get_pattern_clause(param, pattern);
     json_object_set_new(j_query, "where", json_pack("{s{ssss}}", "gc_id", "operator", "raw", "value", pattern_clause));
     o_free(pattern_clause);

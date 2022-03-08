@@ -183,7 +183,7 @@ static int callback_static_file_uncompressed (const struct _u_request * request,
       *strchr(file_requested, '?') = '\0';
     }
 
-    if (file_requested == NULL || o_strlen(file_requested) == 0 || 0 == o_strcmp("/", file_requested)) {
+    if (file_requested == NULL || o_strnullempty(file_requested) || 0 == o_strcmp("/", file_requested)) {
       o_free(url_dup_save);
       url_dup_save = file_requested = o_strdup("index.html");
     }
@@ -270,7 +270,7 @@ void u_clean_compressed_inmemory_website_config(struct _u_compressed_inmemory_we
 
 int u_add_mime_types_compressed(struct _u_compressed_inmemory_website_config * config, const char * mime_type) {
   int ret;
-  if (config != NULL && o_strlen(mime_type)) {
+  if (config != NULL && !o_strnullempty(mime_type)) {
     if ((config->mime_types_compressed = o_realloc(config->mime_types_compressed, (config->mime_types_compressed_size+2)*sizeof(char*))) != NULL) {
       config->mime_types_compressed[config->mime_types_compressed_size] = o_strdup(mime_type);
       config->mime_types_compressed[config->mime_types_compressed_size+1] = NULL;
@@ -309,7 +309,7 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
     while (file_requested[0] == '/') {
       file_requested++;
     }
-    file_requested += o_strlen((config->url_prefix));
+    file_requested += !o_strnullempty((config->url_prefix));
     while (file_requested[0] == '/') {
       file_requested++;
     }
@@ -322,7 +322,7 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
       *strchr(file_requested, '?') = '\0';
     }
 
-    if (file_requested == NULL || o_strlen(file_requested) == 0 || 0 == o_strcmp("/", file_requested)) {
+    if (file_requested == NULL || o_strnullempty(file_requested) || 0 == o_strcmp("/", file_requested)) {
       o_free(url_dup_save);
       url_dup_save = file_requested = o_strdup("index.html");
     }

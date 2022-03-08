@@ -82,7 +82,7 @@ static json_t * get_current_user_from_session(struct config_elements * config, c
   char * session_hash;
   json_t * j_session, * j_return, * j_user;
 
-  if (session_uid != NULL && o_strlen(session_uid)) {
+  if (session_uid != NULL && !o_strnullempty(session_uid)) {
     if ((session_hash = generate_hash(config->hash_algorithm, session_uid)) != NULL) {
       j_session = get_current_session(config, session_hash);
       if (check_result_value(j_session, G_OK)) {
@@ -136,7 +136,7 @@ json_t * get_scope_list(struct config_elements * config, const char * pattern, s
   if (limit) {
     json_object_set_new(j_query, "limit", json_integer(limit));
   }
-  if (o_strlen(pattern)) {
+  if (!o_strnullempty(pattern)) {
     pattern_escaped = h_escape_string_with_quotes(config->conn, pattern);
     pattern_clause = msprintf("IN (SELECT gs_id FROM " GLEWLWYD_TABLE_SCOPE " WHERE gs_name LIKE '%%'||%s||'%%' OR gs_display_name LIKE '%%'||%s||'%%' OR gs_description LIKE '%%'||%s||'%%')", pattern_escaped, pattern_escaped, pattern_escaped);
     json_object_set_new(j_query, "where", json_pack("{s{ssss}}", "gs_id", "operator", "raw", "value", pattern_clause));
@@ -729,7 +729,7 @@ int set_granted_scopes_for_client(struct config_elements * config, json_t * j_us
   res = h_update(config->conn, j_query, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    if (scope_list != NULL && o_strlen(scope_list)) {
+    if (scope_list != NULL && !o_strnullempty(scope_list)) {
       if (split_string(scope_list, " ", &scope_array) > 0) {
         has_granted = 0;
         for (i=0; scope_array[i] != NULL && ret != G_ERROR_DB; i++) {

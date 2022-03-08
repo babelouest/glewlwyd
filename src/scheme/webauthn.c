@@ -569,7 +569,7 @@ static json_t * get_credential_from_session(struct config_module * config, json_
   int res;
   time_t now;
 
-  if (o_strlen(session)) {
+  if (!o_strnullempty(session)) {
     session_hash = generate_hash(config->hash_algorithm, session);
     if (session_hash != NULL) {
       time(&now);
@@ -766,7 +766,7 @@ static json_t * get_assertion_from_session(struct config_module * config, json_t
   int res;
   time_t now;
 
-  if (o_strlen(session)) {
+  if (!o_strnullempty(session)) {
     session_hash = generate_hash(config->hash_algorithm, session);
     if (session_hash != NULL) {
       time(&now);

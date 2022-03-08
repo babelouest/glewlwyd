@@ -86,7 +86,7 @@ int glewlwyd_metrics_increment_counter(struct config_elements * config, const ch
   int ret;
 
   if (config->metrics_endpoint) {
-    if (config != NULL && o_strlen(name)) {
+    if (config != NULL && !o_strnullempty(name)) {
       if ((data = o_malloc(sizeof(struct _glwd_increment_counter_data))) != NULL) {
         data->config = config;
         data->name = o_strdup(name);
@@ -127,7 +127,7 @@ int glewlwyd_metrics_increment_counter_va(struct config_elements * config, const
   int ret = G_OK;
 
   if (config->metrics_endpoint) {
-    if (config != NULL && o_strlen(name)) {
+    if (config != NULL && !o_strnullempty(name)) {
       va_start(vl, inc);
       label = glewlwyd_metrics_build_label(vl);
       va_end(vl);
@@ -162,7 +162,7 @@ int glewlwyd_metrics_add_metric(struct config_elements * config, const char * na
   int ret;
   
   if (config->metrics_endpoint) {
-    if (o_strlen(name)) {
+    if (!o_strnullempty(name)) {
       if ((glwd_metrics = o_malloc(sizeof(struct _glwd_metric))) != NULL) {
         glwd_metrics->name = o_strdup(name);
         glwd_metrics->help = o_strdup(help);

@@ -36,10 +36,11 @@
 #define GLEWLWYD_SCHEME_OAUTH2_REGISTRATION_TABLE "gs_oauth2_registration"
 #define GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE "gs_oauth2_session"
 
-#define GLEWLWYD_SCHEME_OAUTH2_STATE_ID_LENGTH    32
-#define GLEWLWYD_SCHEME_OAUTH2_NONCE_LENGTH       16
-#define GLEWLWYD_SCHEME_OAUTH2_STATE_REGISTRATION   "registration"
-#define GLEWLWYD_SCHEME_OAUTH2_STATE_AUTHENTICATION "authentication"
+#define GLEWLWYD_SCHEME_OAUTH2_STATE_ID_LENGTH              32
+#define GLEWLWYD_SCHEME_OAUTH2_NONCE_LENGTH                 16
+#define GLEWLWYD_SCHEME_OAUTH2_SERVER_JWKS_CACHE_EXPIRATION 86400
+#define GLEWLWYD_SCHEME_OAUTH2_STATE_REGISTRATION           "registration"
+#define GLEWLWYD_SCHEME_OAUTH2_STATE_AUTHENTICATION         "authentication"
 
 #define GLEWLWYD_SCHEME_OAUTH2_SESSION_REGISTRATION   0
 #define GLEWLWYD_SCHEME_OAUTH2_SESSION_AUTHENTICATION 1
@@ -253,10 +254,10 @@ static json_t * complete_session_identify(struct config_module * config, struct 
                   if (0 == o_strcmp("oidc", json_string_value(json_object_get(j_provider, "provider_type")))) {
                     if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
                       sub = o_strdup(json_string_value(json_object_get(i_session.id_token_payload, "sub")));
-                      ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                      ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                     } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
                       sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.id_token_payload, "sub")));
-                      ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                      ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                     } else {
                       y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Invalid userid_property format (1)");
                       ret = G_ERROR_PARAM;
@@ -265,10 +266,10 @@ static json_t * complete_session_identify(struct config_module * config, struct 
                     if ((res = i_get_userinfo(&i_session, 0)) == I_OK && i_session.j_userinfo != NULL) {
                       if (json_string_length((json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))))) {
                         sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
-                        ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                        ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                       } else if (json_is_integer(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
                         sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
-                        ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                        ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                       } else {
                         y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Invalid userid_property format (2)");
                         ret = G_ERROR_PARAM;
@@ -291,10 +292,10 @@ static json_t * complete_session_identify(struct config_module * config, struct 
                 if ((res = i_get_userinfo(&i_session, 0)) == I_OK && i_session.j_userinfo != NULL) {
                   if (json_string_length(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
                     sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
-                    ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                    ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                   } else if (json_is_integer(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
                     sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
-                    ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                    ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                   } else {
                     y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Invalid userid_property format (3)");
                     ret = G_ERROR_PARAM;
@@ -309,10 +310,10 @@ static json_t * complete_session_identify(struct config_module * config, struct 
               case I_RESPONSE_TYPE_ID_TOKEN:
                 if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
                   sub = o_strdup(json_string_value(json_object_get(i_session.id_token_payload, "sub")));
-                  ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                  ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                 } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
                   sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.id_token_payload, "sub")));
-                  ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                  ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_identify - Invalid userid_property format (4)");
                   ret = G_ERROR_PARAM;
@@ -914,10 +915,10 @@ static int complete_session_for_user(struct config_module * config, const char *
                   if (0 == o_strcmp("oidc", json_string_value(json_object_get(j_provider, "provider_type")))) {
                     if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
                       sub = o_strdup(json_string_value(json_object_get(i_session.id_token_payload, "sub")));
-                      ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                      ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                     } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
                       sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.id_token_payload, "sub")));
-                      ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                      ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                     } else {
                       y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Invalid userid_property format (1)");
                       ret = G_ERROR_PARAM;
@@ -926,10 +927,10 @@ static int complete_session_for_user(struct config_module * config, const char *
                     if ((res = i_get_userinfo(&i_session, 0)) == I_OK && i_session.j_userinfo != NULL) {
                       if (json_string_length((json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))))) {
                         sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
-                        ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                        ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                       } else if (json_is_integer(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
                         sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
-                        ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                        ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                       } else {
                         y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Invalid userid_property format (2)");
                         ret = G_ERROR_PARAM;
@@ -952,10 +953,10 @@ static int complete_session_for_user(struct config_module * config, const char *
                 if ((res = i_get_userinfo(&i_session, 0)) == I_OK && i_session.j_userinfo != NULL) {
                   if (json_string_length(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
                     sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
-                    ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                    ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                   } else if (json_is_integer(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
                     sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
-                    ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                    ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                   } else {
                     y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Invalid userid_property format (3)");
                     ret = G_ERROR_PARAM;
@@ -970,10 +971,10 @@ static int complete_session_for_user(struct config_module * config, const char *
               case I_RESPONSE_TYPE_ID_TOKEN:
                 if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
                   sub = o_strdup(json_string_value(json_object_get(i_session.id_token_payload, "sub")));
-                  ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                  ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                 } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
                   sub = msprintf("%"JSON_INTEGER_FORMAT, json_integer_value(json_object_get(i_session.id_token_payload, "sub")));
-                  ret = o_strlen(sub)?G_OK:G_ERROR_PARAM;
+                  ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "complete_session_for_user - Invalid userid_property format (4)");
                   ret = G_ERROR_PARAM;
@@ -1210,6 +1211,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
                                                                       I_OPT_REDIRECT_URI, json_string_value(json_object_get(j_parameters, "redirect_uri")),
                                                                       I_OPT_SCOPE, is_oidc?"openid":json_string_value(json_object_get(j_element, "scope")),
                                                                       I_OPT_TOKEN_METHOD, I_TOKEN_AUTH_METHOD_SECRET_BASIC,
+                                                                      I_OPT_SERVER_JWKS_CACHE_EXPIRATION, GLEWLWYD_SCHEME_OAUTH2_SERVER_JWKS_CACHE_EXPIRATION,
                                                                       I_OPT_NONE) != I_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init oauth2 - Error setting parameters for provider %s", json_string_value(json_object_get(j_element, "name")));
                 } else if (i_get_openid_config(&i_session) != I_OK) {
@@ -1241,6 +1243,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
                                                                       I_OPT_REDIRECT_URI, json_string_value(json_object_get(j_parameters, "redirect_uri")),
                                                                       I_OPT_SCOPE, is_oidc?"openid":json_string_value(json_object_get(j_element, "scope")),
                                                                       I_OPT_TOKEN_METHOD, I_TOKEN_AUTH_METHOD_SECRET_BASIC,
+                                                                      I_OPT_SERVER_JWKS_CACHE_EXPIRATION, GLEWLWYD_SCHEME_OAUTH2_SERVER_JWKS_CACHE_EXPIRATION,
                                                                       I_OPT_NONE) != I_OK) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init oauth2 - Error setting parameters for provider %s", json_string_value(json_object_get(j_element, "name")));
                 } else if ((j_export = i_export_session_json_t(&i_session)) == NULL) {

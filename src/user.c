@@ -312,7 +312,7 @@ json_t * get_user(struct config_elements * config, const char * username, const 
   struct _user_middleware_module_instance * user_middleware_module;
   size_t index, i;
   
-  if (!o_strlen(username)) {
+  if (o_strnullempty(username)) {
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   } else if (source != NULL) {
     user_module = get_user_module_instance(config, source);
@@ -1105,7 +1105,7 @@ int glewlwyd_module_callback_metrics_increment_counter(struct config_module * co
   char * label = NULL;
   int ret = G_OK;
 
-  if (config != NULL && o_strlen(name)) {
+  if (config != NULL && !o_strnullempty(name)) {
     va_start(vl, inc);
     label = glewlwyd_metrics_build_label(vl);
     va_end(vl);

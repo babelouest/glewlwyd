@@ -392,7 +392,7 @@ static json_t * database_user_get(const char * username, void * cls, int profile
 static char * get_password_clause_write(struct mod_parameters * param, const char * password) {
   char * clause = NULL, * password_encoded, digest[1024] = {0};
   
-  if (!o_strlen(password)) {
+  if (o_strnullempty(password)) {
     clause = o_strdup("''");
   } else if (param->conn->type == HOEL_DB_TYPE_SQLITE) {
     if (generate_digest_pbkdf2(password, param->PBKDF2_iterations, NULL, digest)) {
@@ -472,7 +472,7 @@ static int update_password_list(struct mod_parameters * param, json_int_t gu_id,
                             G_TABLE_USER_PASSWORD,
                             "values");
         for (i=0; i<new_passwords_len; i++) {
-          if (o_strlen(new_passwords[i])) {
+          if (!o_strnullempty(new_passwords[i])) {
             clause_password = get_password_clause_write(param, new_passwords[i]);
             json_array_append_new(json_object_get(j_query, "values"), json_pack("{sIs{ss}}", "gu_id", gu_id, "guw_password", "raw", clause_password));
             o_free(clause_password);
@@ -915,7 +915,7 @@ size_t user_module_count_total(struct config_module * config, const char * patte
                       G_TABLE_USER,
                       "columns",
                         "count(gu_id) AS total");
-  if (o_strlen(pattern)) {
+  if (!o_strnullempty(pattern)) {
     pattern_clause = get_pattern_clause(param, pattern);
     json_object_set_new(j_query, "where", json_pack("{s{ssss}}", "gu_id", "operator", "raw", "value", pattern_clause));
     o_free(pattern_clause);
@@ -954,7 +954,7 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
                       limit,
                       "order_by",
                       "gu_username");
-  if (o_strlen(pattern)) {
+  if (!o_strnullempty(pattern)) {
     pattern_clause = get_pattern_clause(param, pattern);
     json_object_set_new(j_query, "where", json_pack("{s{ssss}}", "gu_id", "operator", "raw", "value", pattern_clause));
     o_free(pattern_clause);

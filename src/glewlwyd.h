@@ -174,6 +174,7 @@ struct _user_auth_scheme_module * get_user_auth_scheme_module_lib(struct config_
 struct _plugin_module_instance * get_plugin_module_instance(struct config_elements * config, const char * name);
 struct _plugin_module * get_plugin_module_lib(struct config_elements * config, const char * name);
 char * get_ip_data(struct config_elements * config, const char * ip_address);
+int json_string_null_or_empty(json_t * j_str);
 
 // Modules generic functions
 int module_parameters_check(const char * module_parameters);

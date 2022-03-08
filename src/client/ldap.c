@@ -367,7 +367,7 @@ static const char * get_read_property(json_t * j_params, const char * property) 
 static char * get_ldap_filter_pattern(json_t * j_params, const char * pattern) {
   char * pattern_escaped, * filter, * name_filter, * description_filter;
   
-  if (o_strlen(pattern)) {
+  if (!o_strnullempty(pattern)) {
     pattern_escaped = escape_ldap(pattern);
     if (json_object_get(j_params, "name-property") != NULL) {
       name_filter = msprintf("(%s=*%s*)", get_read_property(j_params, "name-property"), pattern_escaped);

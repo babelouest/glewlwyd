@@ -90,7 +90,7 @@ json_t * glewlwyd_callback_check_session_valid(struct config_plugin * config, co
     j_user = get_current_user_for_session(config->glewlwyd_config, session_uid);
     // Check if session is valid
     if (check_result_value(j_user, G_OK)) {
-      if (o_strlen(scope_list)) {
+      if (!o_strnullempty(scope_list)) {
         // For all allowed scope, check that the current session has a valid session
         j_scope_allowed = get_validated_auth_scheme_list_from_scope_list(config->glewlwyd_config, scope_list, session_uid);
         if (check_result_value(j_scope_allowed, G_OK)) {
@@ -557,7 +557,7 @@ int glewlwyd_plugin_callback_delete_client(struct config_plugin * config, const 
 }
 
 json_t * glewlwyd_plugin_callback_get_scheme_module(struct config_plugin * config, const char * mod_name) {
-  if (o_strlen(mod_name)) {
+  if (!o_strnullempty(mod_name)) {
     return get_user_auth_scheme_module(config->glewlwyd_config, mod_name);
   } else {
     return json_pack("{si}", "result", G_ERROR_PARAM);
@@ -565,7 +565,7 @@ json_t * glewlwyd_plugin_callback_get_scheme_module(struct config_plugin * confi
 }
 
 json_t * glewlwyd_plugin_callback_get_scheme_list(struct config_plugin * config, const char * username) {
-  if (o_strlen(username)) {
+  if (!o_strnullempty(username)) {
     return get_scheme_list_for_user(config->glewlwyd_config, username);
   } else {
     return json_pack("{si}", "result", G_ERROR_PARAM);
@@ -629,7 +629,7 @@ int glewlwyd_plugin_callback_metrics_increment_counter(struct config_plugin * co
   char * label = NULL;
   int ret = G_OK;
 
-  if (config != NULL && o_strlen(name)) {
+  if (config != NULL && !o_strnullempty(name)) {
     va_start(vl, inc);
     label = glewlwyd_metrics_build_label(vl);
     va_end(vl);

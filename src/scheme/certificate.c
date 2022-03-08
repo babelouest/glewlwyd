@@ -136,7 +136,7 @@ static json_t * parse_certificate(const char * x509_data, int der_format) {
   unsigned char * der_dec = NULL, key_id_enc[257] = {0};
   size_t der_dec_len = 0;
   
-  if (o_strlen(x509_data)) {
+  if (!o_strnullempty(x509_data)) {
     if (!gnutls_x509_crt_init(&cert)) {
       if (der_format) {
         cert_dat.data = NULL;
@@ -546,7 +546,7 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
   char * expiration_clause, * activation_clause;
   int res, ret;
   
-  if (o_strlen(x509_data)) {
+  if (!o_strnullempty(x509_data)) {
     j_parsed_certificate = parse_certificate(x509_data, 0);
     if (check_result_value(j_parsed_certificate, G_OK)) {
       j_result = get_user_certificate_from_id_scheme_storage(config, j_parameters, username, json_string_value(json_object_get(json_object_get(j_parsed_certificate, "certificate"), "certificate_id")));
@@ -587,7 +587,7 @@ static int add_user_certificate_scheme_storage(struct config_module * config, js
                               json_null());
         o_free(expiration_clause);
         o_free(activation_clause);
-        if (o_strlen(user_agent)) {
+        if (!o_strnullempty(user_agent)) {
           json_object_set_new(json_object_get(j_query, "values"), "gsuc_last_user_agent", json_string(user_agent));
         }
         res = h_insert(config->conn, j_query, NULL);

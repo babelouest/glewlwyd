@@ -255,7 +255,7 @@ int main (int argc, char ** argv) {
     return 0;
   }
 
-  if (!o_strlen(config->cookie_domain)) {
+  if (o_strnullempty(config->cookie_domain)) {
     y_log_message(Y_LOG_LEVEL_WARNING, "Config property 'cookie_domain' is not set - cookie session may not be saved on the browser");
   } else if (o_strstr(config->external_url, config->cookie_domain) == NULL) {
     y_log_message(Y_LOG_LEVEL_WARNING, "Config property 'cookie_domain' seems different from 'external_url', cookie session may not be saved on the browser");
@@ -561,7 +561,7 @@ int main (int argc, char ** argv) {
   }
 
   // Check if cookie domain (if set) is the same domain as in external_url
-  if (o_strlen(config->cookie_domain)) {
+  if (!o_strnullempty(config->cookie_domain)) {
     if (0 == o_strncmp("http://", config->external_url, o_strlen("http://"))) {
       tmp = o_strdup(config->external_url);
       tmp2 = o_strchr(tmp+o_strlen("http://"), '/');
@@ -1240,7 +1240,7 @@ int build_config_from_env(struct config_elements * config) {
   json_t * j_mime_types, * j_element;
   size_t index;
 
-  if (!config->port && (value = getenv(GLEWLWYD_ENV_PORT)) != NULL && o_strlen(value)) {
+  if (!config->port && (value = getenv(GLEWLWYD_ENV_PORT)) != NULL && !o_strnullempty(value)) {
     endptr = NULL;
     lvalue = strtol(value, &endptr, 10);
     if (!(*endptr) && lvalue > 0 && lvalue < 65535) {
@@ -1251,7 +1251,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_BIND_ADDRESS)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_BIND_ADDRESS)) != NULL && !o_strnullempty(value)) {
     o_free(config->bind_address);
     config->bind_address = o_strdup(value);
     if (config->bind_address == NULL) {
@@ -1260,7 +1260,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_API_PREFIX)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_API_PREFIX)) != NULL && !o_strnullempty(value)) {
     o_free(config->api_prefix);
     config->api_prefix = o_strdup(value);
     if (config->api_prefix == NULL) {
@@ -1269,7 +1269,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_EXTERNAL_URL)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_EXTERNAL_URL)) != NULL && !o_strnullempty(value)) {
     o_free(config->external_url);
     config->external_url = o_strdup(value);
     if (config->external_url == NULL) {
@@ -1278,7 +1278,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_LOGIN_URL)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_LOGIN_URL)) != NULL && !o_strnullempty(value)) {
     o_free(config->login_url);
     config->login_url = o_strdup(value);
     if (config->login_url == NULL) {
@@ -1287,7 +1287,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_PROFILE_DELETE)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_PROFILE_DELETE)) != NULL && !o_strnullempty(value)) {
     if (0 == o_strcmp("no", value)) {
       config->delete_profile = GLEWLWYD_PROFILE_DELETE_UNAUTHORIZED;
     } else if (0 == o_strcmp("delete", value)) {
@@ -1300,7 +1300,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_STATIC_FILES_PATH)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_STATIC_FILES_PATH)) != NULL && !o_strnullempty(value)) {
     o_free(config->static_file_config->files_path);
     config->static_file_config->files_path = o_strdup(value);
     if (config->static_file_config->files_path == NULL) {
@@ -1309,7 +1309,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES)) != NULL && !o_strnullempty(value)) {
     j_mime_types = json_loads(value, JSON_DECODE_ANY, NULL);
     if (json_is_array(j_mime_types)) {
       json_array_foreach(j_mime_types, index, j_element) {
@@ -1335,7 +1335,7 @@ int build_config_from_env(struct config_elements * config) {
     json_decref(j_mime_types);
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_ALLOW_ORIGIN)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_ALLOW_ORIGIN)) != NULL && !o_strnullempty(value)) {
     o_free(config->allow_origin);
     config->allow_origin = o_strdup(value);
     if (config->allow_origin == NULL) {
@@ -1344,7 +1344,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if (!config->log_mode_args && (value = getenv(GLEWLWYD_ENV_LOG_MODE)) != NULL && o_strlen(value)) {
+  if (!config->log_mode_args && (value = getenv(GLEWLWYD_ENV_LOG_MODE)) != NULL && !o_strnullempty(value)) {
     config->log_mode = Y_LOG_MODE_NONE;
     one_log_mode = strtok((char *)value, ",");
     while (one_log_mode != NULL && ret == G_OK) {
@@ -1357,7 +1357,7 @@ int build_config_from_env(struct config_elements * config) {
       } else if (0 == o_strcmp("file", one_log_mode)) {
         config->log_mode |= Y_LOG_MODE_FILE;
         // Get log file path
-        if ((value2 = getenv(GLEWLWYD_ENV_LOG_FILE)) != NULL && o_strlen(value2)) {
+        if ((value2 = getenv(GLEWLWYD_ENV_LOG_FILE)) != NULL && !o_strnullempty(value2)) {
           o_free(config->log_file);
           config->log_file = o_strdup(value2);
           if (config->log_file == NULL) {
@@ -1373,7 +1373,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if (!config->log_level_args && (value = getenv(GLEWLWYD_ENV_LOG_LEVEL)) != NULL && o_strlen(value)) {
+  if (!config->log_level_args && (value = getenv(GLEWLWYD_ENV_LOG_LEVEL)) != NULL && !o_strnullempty(value)) {
     if (0 == o_strcmp("NONE", value)) {
       config->log_level = Y_LOG_LEVEL_NONE;
     } else if (0 == o_strcmp("ERROR", value)) {
@@ -1387,7 +1387,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_COOKIE_DOMAIN)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_COOKIE_DOMAIN)) != NULL && !o_strnullempty(value)) {
     config->cookie_domain = o_strdup(value);
     if (config->cookie_domain == NULL) {
       fprintf(stderr, "Error allocating config->cookie_domain (env), exiting\n");
@@ -1403,7 +1403,7 @@ int build_config_from_env(struct config_elements * config) {
     config->add_x_frame_option_header_deny = (uint)(o_strcmp(value, "1")==0);
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_SESSION_EXPIRATION)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_SESSION_EXPIRATION)) != NULL && !o_strnullempty(value)) {
     endptr = NULL;
     lvalue = strtol(value, &endptr, 10);
     if (!(*endptr) && lvalue > 0) {
@@ -1414,7 +1414,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_SESSION_KEY)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_SESSION_KEY)) != NULL && !o_strnullempty(value)) {
     o_free(config->session_key);
     config->session_key = o_strdup(value);
     if (config->session_key == NULL) {
@@ -1423,7 +1423,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_ADMIN_SCOPE)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_ADMIN_SCOPE)) != NULL && !o_strnullempty(value)) {
     o_free(config->admin_scope);
     config->admin_scope = o_strdup(value);
     if (config->admin_scope == NULL) {
@@ -1432,7 +1432,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_PROFILE_SCOPE)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_PROFILE_SCOPE)) != NULL && !o_strnullempty(value)) {
     o_free(config->profile_scope);
     config->profile_scope = o_strdup(value);
     if (config->profile_scope == NULL) {
@@ -1441,7 +1441,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_USER_MODULE_PATH)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_USER_MODULE_PATH)) != NULL && !o_strnullempty(value)) {
     o_free(config->user_module_path);
     config->user_module_path = o_strdup(value);
     if (config->user_module_path == NULL) {
@@ -1450,7 +1450,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_USER_MIDDLEWARE_MODULE_PATH)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_USER_MIDDLEWARE_MODULE_PATH)) != NULL && !o_strnullempty(value)) {
     o_free(config->user_middleware_module_path);
     config->user_middleware_module_path = o_strdup(value);
     if (config->user_middleware_module_path == NULL) {
@@ -1459,7 +1459,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_CLIENT_MODULE_PATH)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_CLIENT_MODULE_PATH)) != NULL && !o_strnullempty(value)) {
     o_free(config->client_module_path);
     config->client_module_path = o_strdup(value);
     if (config->client_module_path == NULL) {
@@ -1468,7 +1468,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_AUTH_SCHEME_MODULE_PATH)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_AUTH_SCHEME_MODULE_PATH)) != NULL && !o_strnullempty(value)) {
     o_free(config->user_auth_scheme_module_path);
     config->user_auth_scheme_module_path = o_strdup(value);
     if (config->user_auth_scheme_module_path == NULL) {
@@ -1477,7 +1477,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_PLUGIN_MODULE_PATH)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_PLUGIN_MODULE_PATH)) != NULL && !o_strnullempty(value)) {
     o_free(config->plugin_module_path);
     config->plugin_module_path = o_strdup(value);
     if (config->plugin_module_path == NULL) {
@@ -1490,7 +1490,7 @@ int build_config_from_env(struct config_elements * config) {
     config->use_secure_connection = (uint)(o_strcmp(value, "1")==0);
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_SECURE_CONNECTION_KEY_FILE)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_SECURE_CONNECTION_KEY_FILE)) != NULL && !o_strnullempty(value)) {
     o_free(config->secure_connection_key_file);
     config->secure_connection_key_file = o_strdup(value);
     if (config->secure_connection_key_file == NULL) {
@@ -1499,7 +1499,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_SECURE_CONNECTION_PEM_FILE)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_SECURE_CONNECTION_PEM_FILE)) != NULL && !o_strnullempty(value)) {
     o_free(config->secure_connection_pem_file);
     config->secure_connection_pem_file = o_strdup(value);
     if (config->secure_connection_pem_file == NULL) {
@@ -1508,7 +1508,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_SECURE_CONNECTION_CA_FILE)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_SECURE_CONNECTION_CA_FILE)) != NULL && !o_strnullempty(value)) {
     o_free(config->secure_connection_ca_file);
     config->secure_connection_ca_file = o_strdup(value);
     if (config->secure_connection_ca_file == NULL) {
@@ -1517,7 +1517,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_HASH_ALGORITHM)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_HASH_ALGORITHM)) != NULL && !o_strnullempty(value)) {
     if (!o_strcmp("SHA1", value)) {
       config->hash_algorithm = digest_SHA1;
     } else if (!o_strcmp("SHA224", value)) {
@@ -1536,7 +1536,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_DATABASE_TYPE)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_DATABASE_TYPE)) != NULL && !o_strnullempty(value)) {
     if (config->conn != NULL) {
       h_close_db(config->conn);
       h_clean_connection(config->conn);
@@ -1587,7 +1587,7 @@ int build_config_from_env(struct config_elements * config) {
     config->metrics_endpoint_admin_session = (ushort)(o_strcmp(value, "1")==0);
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_METRICS_BIND_ADDRESS)) != NULL && o_strlen(value)) {
+  if ((value = getenv(GLEWLWYD_ENV_METRICS_BIND_ADDRESS)) != NULL && !o_strnullempty(value)) {
     o_free(config->bind_address_metrics);
     config->bind_address_metrics = o_strdup(value);
     if (config->bind_address_metrics == NULL) {
@@ -1606,27 +1606,27 @@ int build_config_from_env(struct config_elements * config) {
 int check_config(struct config_elements * config) {
   int ret = G_OK;
 
-  if (!o_strlen(config->external_url)) {
+  if (o_strnullempty(config->external_url)) {
     fprintf(stderr, "Error - configuration external_url mandatory\n");
     ret = G_ERROR_PARAM;
   }
 
-  if (!o_strlen(config->user_module_path)) {
+  if (o_strnullempty(config->user_module_path)) {
     fprintf(stderr, "Error - configuration user_module_path mandatory\n");
     ret = G_ERROR_PARAM;
   }
 
-  if (!o_strlen(config->client_module_path)) {
+  if (o_strnullempty(config->client_module_path)) {
     fprintf(stderr, "Error - configuration client_module_path mandatory\n");
     ret = G_ERROR_PARAM;
   }
 
-  if (!o_strlen(config->user_auth_scheme_module_path)) {
+  if (o_strnullempty(config->user_auth_scheme_module_path)) {
     fprintf(stderr, "Error - configuration user_auth_scheme_module_path mandatory\n");
     ret = G_ERROR_PARAM;
   }
 
-  if (!o_strlen(config->plugin_module_path)) {
+  if (o_strnullempty(config->plugin_module_path)) {
     fprintf(stderr, "Error - configuration plugin_module_path mandatory\n");
     ret = G_ERROR_PARAM;
   }
@@ -1799,7 +1799,7 @@ static int load_user_module_file(struct config_elements * config, const char * f
           cur_user_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
           cur_user_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
           cur_user_module->api_version = json_real_value(json_object_get(j_parameters, "api_version"));
-          if (o_strlen(cur_user_module->name) && get_user_module_lib(config, cur_user_module->name) == NULL) {
+          if (!o_strnullempty(cur_user_module->name) && get_user_module_lib(config, cur_user_module->name) == NULL) {
             if (cur_user_module->api_version >= _GLEWLWYD_USER_MODULE_VERSION) {
               if (!pthread_mutex_lock(&config->module_lock)) {
                 if (pointer_list_append(config->user_module_list, (void*)cur_user_module)) {
@@ -2153,7 +2153,7 @@ static int load_user_middleware_module_file(struct config_elements * config, con
           cur_user_middleware_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
           cur_user_middleware_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
           cur_user_middleware_module->api_version = json_real_value(json_object_get(j_parameters, "api_version"));
-          if (o_strlen(cur_user_middleware_module->name) && get_user_middleware_module_lib(config, cur_user_middleware_module->name) == NULL) {
+          if (!o_strnullempty(cur_user_middleware_module->name) && get_user_middleware_module_lib(config, cur_user_middleware_module->name) == NULL) {
             if (cur_user_middleware_module->api_version >= _GLEWLWYD_USER_MODULE_VERSION) {
               if (!pthread_mutex_lock(&config->module_lock)) {
                 if (pointer_list_append(config->user_middleware_module_list, (void*)cur_user_middleware_module)) {
@@ -2246,7 +2246,7 @@ int init_user_middleware_module_list(struct config_elements * config) {
   config->user_middleware_module_list = o_malloc(sizeof(struct _pointer_list));
   if (config->user_middleware_module_list != NULL) {
     pointer_list_init(config->user_middleware_module_list);
-    if (o_strlen(config->user_middleware_module_path)) {
+    if (!o_strnullempty(config->user_middleware_module_path)) {
       // read module_path and load modules
       if (NULL == (modules_directory = opendir(config->user_middleware_module_path))) {
         y_log_message(Y_LOG_LEVEL_ERROR, "init_user_middleware_module_list - Error reading libraries folder %s", config->user_middleware_module_path);
@@ -2294,7 +2294,7 @@ int load_user_middleware_module_instance_list(struct config_elements * config) {
   config->user_middleware_module_instance_list = o_malloc(sizeof(struct _pointer_list));
   if (config->user_middleware_module_instance_list != NULL) {
     pointer_list_init(config->user_middleware_module_instance_list);
-    if (o_strlen(config->user_middleware_module_path)) {
+    if (!o_strnullempty(config->user_middleware_module_path)) {
       j_query = json_pack("{sss[sssss]ss}",
                           "table",
                           GLEWLWYD_TABLE_USER_MIDDLEWARE_MODULE_INSTANCE,
@@ -2509,7 +2509,7 @@ static int load_user_auth_scheme_module_file(struct config_elements * config, co
           cur_user_auth_scheme_module->display_name = o_strdup(json_string_value(json_object_get(j_module, "display_name")));
           cur_user_auth_scheme_module->description = o_strdup(json_string_value(json_object_get(j_module, "description")));
           cur_user_auth_scheme_module->api_version = json_real_value(json_object_get(j_module, "api_version"));
-          if (o_strlen(cur_user_auth_scheme_module->name) && get_user_auth_scheme_module_lib(config, cur_user_auth_scheme_module->name) == NULL) {
+          if (!o_strnullempty(cur_user_auth_scheme_module->name) && get_user_auth_scheme_module_lib(config, cur_user_auth_scheme_module->name) == NULL) {
             if (!pthread_mutex_lock(&config->module_lock)) {
               if (pointer_list_append(config->user_auth_scheme_module_list, cur_user_auth_scheme_module)) {
                 y_log_message(Y_LOG_LEVEL_INFO, "Loading user auth scheme module %s - %s", file_path, cur_user_auth_scheme_module->name);
@@ -2854,7 +2854,7 @@ static int load_client_module_file(struct config_elements * config, const char *
           cur_client_module->display_name = o_strdup(json_string_value(json_object_get(j_parameters, "display_name")));
           cur_client_module->description = o_strdup(json_string_value(json_object_get(j_parameters, "description")));
           cur_client_module->api_version = json_real_value(json_object_get(j_parameters, "api_version"));
-          if (o_strlen(cur_client_module->name) && get_client_module_lib(config, cur_client_module->name) == NULL) {
+          if (!o_strnullempty(cur_client_module->name) && get_client_module_lib(config, cur_client_module->name) == NULL) {
             if (!pthread_mutex_lock(&config->module_lock)) {
               if (pointer_list_append(config->client_module_list, cur_client_module)) {
                 y_log_message(Y_LOG_LEVEL_INFO, "Loading client module %s - %s", file_path, cur_client_module->name);
@@ -3179,7 +3179,7 @@ static int load_plugin_module_file(struct config_elements * config, const char *
           cur_plugin_module->display_name = o_strdup(json_string_value(json_object_get(j_result, "display_name")));
           cur_plugin_module->description = o_strdup(json_string_value(json_object_get(j_result, "description")));
           cur_plugin_module->api_version = json_real_value(json_object_get(j_result, "api_version"));
-          if (o_strlen(cur_plugin_module->name) && get_plugin_module_lib(config, cur_plugin_module->name) == NULL) {
+          if (!o_strnullempty(cur_plugin_module->name) && get_plugin_module_lib(config, cur_plugin_module->name) == NULL) {
             if (!pthread_mutex_lock(&config->module_lock)) {
               if (pointer_list_append(config->plugin_module_list, cur_plugin_module)) {
                 y_log_message(Y_LOG_LEVEL_INFO, "Loading plugin module %s - %s", file_path, cur_plugin_module->name);

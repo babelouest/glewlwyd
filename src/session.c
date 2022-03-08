@@ -275,7 +275,7 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
   size_t index;
   char * expire_clause, * session_uid_hash;
 
-  if (session_uid != NULL && o_strlen(session_uid)) {
+  if (session_uid != NULL && !o_strnullempty(session_uid)) {
     if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
       expire_clause = o_strdup("> NOW()");
     } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
@@ -355,7 +355,7 @@ json_t * get_current_user_for_session(struct config_elements * config, const cha
   int res;
   char * expire_clause, * session_uid_hash;
 
-  if (o_strlen(session_uid)) {
+  if (!o_strnullempty(session_uid)) {
     if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
       expire_clause = o_strdup("> NOW()");
     } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {

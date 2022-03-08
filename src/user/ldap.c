@@ -352,7 +352,7 @@ static const char * get_read_property(json_t * j_params, const char * property) 
 static char * get_ldap_filter_pattern(json_t * j_params, const char * pattern) {
   char * pattern_escaped, * filter, * name_filter, * email_filter;
 
-  if (o_strlen(pattern)) {
+  if (!o_strnullempty(pattern)) {
     pattern_escaped = escape_ldap(pattern);
     if (json_object_get(j_params, "name-property") != NULL) {
       name_filter = msprintf("(%s=*%s*)", get_read_property(j_params, "name-property"), pattern_escaped);
@@ -517,7 +517,7 @@ static int set_update_password_mod(json_t * j_params, LDAP * ldap, const char * 
           }
           counter = 0;
           for (i=0; i<(int)new_passwords_len; i++) {
-            if (o_strlen(new_passwords[i])) {
+            if (!o_strnullempty(new_passwords[i])) {
               mod->mod_values[counter] = generate_hash(get_digest_algorithm(j_params), new_passwords[i]);
               counter++;
             } else if (new_passwords[i] != NULL && i < nb_values) {
@@ -542,7 +542,7 @@ static int set_update_password_mod(json_t * j_params, LDAP * ldap, const char * 
       }
       counter = 0;
       for (i=0; i<(int)new_passwords_len; i++) {
-        if (o_strlen(new_passwords[i])) {
+        if (!o_strnullempty(new_passwords[i])) {
           mod->mod_values[counter] = generate_hash(get_digest_algorithm(j_params), new_passwords[i]);
           counter++;
         } else {

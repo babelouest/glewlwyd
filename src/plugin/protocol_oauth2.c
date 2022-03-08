@@ -490,7 +490,7 @@ static char * generate_access_token(struct _oauth2_config * config, const char *
           json_array_foreach(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))), index_p, j_value) {
             property = mstrcatf(property, ",%s", json_string_value(j_value));
           }
-          if (o_strlen(property)) {
+          if (!o_strnullempty(property)) {
             r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), property+1); // Skip first ','
           } else {
             r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), "");
@@ -1573,9 +1573,9 @@ static json_t * get_refresh_token_duration_rolling(struct _oauth2_config * confi
 
 static int is_code_challenge_valid(struct _oauth2_config * config, const char * code_challenge, const char * code_challenge_method, char * code_challenge_stored) {
   int ret;
-  if (o_strlen(code_challenge)) {
+  if (!o_strnullempty(code_challenge)) {
     if (json_object_get(config->j_params, "pkce-allowed") == json_true()) {
-      if (!o_strlen(code_challenge_method) || 0 == o_strcmp("plain", code_challenge_method)) {
+      if (o_strnullempty(code_challenge_method) || 0 == o_strcmp("plain", code_challenge_method)) {
         if (json_object_get(config->j_params, "pkce-method-plain-allowed") == json_true()) {
           if (is_pkce_char_valid(code_challenge)) {
             o_strcpy(code_challenge_stored, code_challenge);
@@ -1672,7 +1672,7 @@ static json_t * get_token_metadata(struct _oauth2_config * config, const char * 
   char * token_hash = NULL, * scope_list = NULL, * expires_at_clause;
   time_t now;
   
-  if (o_strlen(token)) {
+  if (!o_strnullempty(token)) {
     token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, token);
     time(&now);
     if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
@@ -1967,7 +1967,7 @@ static int validate_device_authorization_scope(struct _oauth2_config * config, j
     }
     free_string_array(scope_array);
   }
-  if (o_strlen(scope_clause)) {
+  if (!o_strnullempty(scope_clause)) {
     query = msprintf("UPDATE %s set gpgdas_allowed=1 WHERE gpgdas_scope IN (%s) AND gpgda_id=%"JSON_INTEGER_FORMAT, GLEWLWYD_PLUGIN_OAUTH2_TABLE_DEVICE_AUTHORIZATION_SCOPE, scope_clause, gpgda_id);
     res = h_execute_query(config->glewlwyd_config->glewlwyd_config->conn, query, NULL, H_OPTION_EXEC);
     o_free(query);
@@ -2404,7 +2404,7 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
   if (check_result_value(j_client, G_OK)) {
     // Client is allowed to use auth_code grant with this redirection_uri
     if (u_map_has_key(request->map_url, "g_continue")) {
-      if (o_strlen(u_map_get(request->map_url, "scope"))) {
+      if (!o_strnullempty(u_map_get(request->map_url, "scope"))) {
         j_session = validate_session_client_scope(config, request, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
         if (check_result_value(j_session, G_OK)) {
           if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == json_false()) {
@@ -2667,7 +2667,7 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
   if (check_result_value(j_client, G_OK)) {
     // Client is allowed to use auth_code grant with this redirection_uri
     if (u_map_has_key(request->map_url, "g_continue")) {
-      if (o_strlen(u_map_get(request->map_url, "scope"))) {
+      if (!o_strnullempty(u_map_get(request->map_url, "scope"))) {
         j_session = validate_session_client_scope(config, request, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
         if (check_result_value(j_session, G_OK)) {
           if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == json_false()) {
@@ -2957,7 +2957,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
   if (issued_for == NULL) {
     y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant - oauth2  - Error get_client_hostname");
     response->status = 500;
-  } else if (request->auth_basic_user != NULL && request->auth_basic_password != NULL && o_strlen(u_map_get(request->map_post_body, "scope")) > 0) {
+  } else if (request->auth_basic_user != NULL && request->auth_basic_password != NULL && !o_strnullempty(u_map_get(request->map_post_body, "scope"))) {
     j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, request->auth_basic_user, request->auth_basic_password);
     if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
       json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
@@ -3019,8 +3019,8 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
       }
       free_string_array(scope_array);
     } else {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "check_auth_type_client_credentials_grant - oauth2 - Error client_id '%s' invalid", request->auth_basic_user);
-      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", request->auth_basic_user, ip_source);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_auth_type_client_credentials_grant - Error client_id '%s' invalid", request->auth_basic_user);
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", request->auth_basic_user, ip_source);
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
       response->status = 403;
     }
@@ -3044,7 +3044,7 @@ static int get_access_token_from_refresh (const struct _u_request * request, str
   char * access_token, * scope_joined = NULL, * issued_for;
   int has_error = 0, has_issues = 0;
 
-  if (refresh_token != NULL && o_strlen(refresh_token)) {
+  if (refresh_token != NULL && !o_strnullempty(refresh_token)) {
     j_refresh = validate_refresh_token(config, refresh_token);
     if (check_result_value(j_refresh, G_OK)) {
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
@@ -3150,7 +3150,7 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
   char * issued_for;
   int has_issues = 0;
   
-  if (refresh_token != NULL && o_strlen(refresh_token)) {
+  if (refresh_token != NULL && !o_strnullempty(refresh_token)) {
     j_refresh = validate_refresh_token(config, refresh_token);
     if (check_result_value(j_refresh, G_OK)) {
       if (json_object_get(json_object_get(j_refresh, "token"), "client_id") != json_null()) {
@@ -3203,7 +3203,7 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
     }
     json_decref(j_introspect);
   } else {
-    if (o_strlen(u_map_get(request->map_url, "impersonate"))) {
+    if (!o_strnullempty(u_map_get(request->map_url, "impersonate"))) {
       j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, config->glewlwyd_config->glewlwyd_config->admin_scope);
       if (check_result_value(j_session, G_OK)) {
         j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, u_map_get(request->map_url, "impersonate"));
@@ -3423,7 +3423,7 @@ static int callback_oauth2_device_authorization(const struct _u_request * reques
   if (client_secret == NULL && u_map_get(request->map_post_body, "client_secret") != NULL) {
     client_secret = u_map_get(request->map_post_body, "client_secret");
   }
-  if (o_strlen(u_map_get(request->map_post_body, "scope"))) {
+  if (!o_strnullempty(u_map_get(request->map_post_body, "scope"))) {
     j_client = check_client_valid(config, 
                                  client_id, 
                                  client_id, 
@@ -3482,7 +3482,7 @@ static int callback_oauth2_device_verification(const struct _u_request * request
   struct _u_map param;
   json_t * j_result, * j_session;
   
-  if (!o_strlen(u_map_get(request->map_url, "code"))) {
+  if (!!o_strnullempty(u_map_get(request->map_url, "code"))) {
     if (u_map_init(&param) == U_OK) {
       u_map_put(&param, "prompt", "device");
       response->status = 302;

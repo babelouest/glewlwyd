@@ -109,7 +109,7 @@ char * get_client_hostname(const struct _u_request * request) {
   if (ip_source != NULL) {
     hostname = o_strdup(ip_source);
     if (!getaddrinfo(ip_source, NULL, &hints, &lookup)) {
-      if (o_strlen(lookup->ai_canonname)) {
+      if (!o_strnullempty(lookup->ai_canonname)) {
         hostname = mstrcatf(hostname, " - %s", lookup->ai_canonname);
       }
       freeaddrinfo(lookup);
@@ -557,4 +557,8 @@ char * generate_hash(digest_algorithm digest, const char * data) {
 int check_result_value(json_t * result, const int value) {
   return (json_is_integer(json_object_get(result, "result")) && 
           json_integer_value(json_object_get(result, "result")) == value);
+}
+
+int json_string_null_or_empty(json_t * j_str) {
+  return o_strnullempty(json_string_value(j_str));
 }

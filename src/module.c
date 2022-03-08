@@ -956,7 +956,7 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
   
-  if (o_strlen(name)) {
+  if (!o_strnullempty(name)) {
     j_query = json_pack("{sss[ssssssssss]s{ss}}",
                         "table",
                         GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,

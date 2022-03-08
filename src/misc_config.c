@@ -67,10 +67,10 @@ json_t * get_misc_config(struct config_elements * config, const char * type, con
                         "gmc_name AS name",
                         "gmc_value",
                       "where");
-  if (o_strlen(type)) {
+  if (!o_strnullempty(type)) {
     json_object_set_new(json_object_get(j_query, "where"), "gmc_type", json_string(type));
   }
-  if (o_strlen(name)) {
+  if (!o_strnullempty(name)) {
     json_object_set_new(json_object_get(j_query, "where"), "gmc_name", json_string(name));
   }
   res = h_select(config->conn, j_query, &j_result, NULL);
@@ -100,7 +100,7 @@ json_t * is_misc_config_valid(const char * name, json_t * j_misc_config) {
   char * value;
   
   if (j_error != NULL) {
-    if (!o_strlen(name) || o_strlen(name) > 128) {
+    if (o_strnullempty(name) || o_strlen(name) > 128) {
       json_array_append_new(j_error, json_string("name is mandatory and must be a non empty string, maximum 128 characters"));
     }
     if (!json_string_length(json_object_get(j_misc_config, "type")) || json_string_length(json_object_get(j_misc_config, "type")) > 128) {
@@ -237,7 +237,7 @@ void * run_thread_update_issued_for(void * args) {
   
   return NULL;
 }
- 
+
 void update_issued_for(struct config_elements * config, const struct _h_connection * conn, const char * sql_table, const char * issued_for_column, const char * issued_for_value, const char * id_column, json_int_t id_value) {
   struct _update_issued_for * thread_config = o_malloc(sizeof(struct _update_issued_for));
   pthread_t thread_update_issued_for;

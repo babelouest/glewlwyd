@@ -307,7 +307,7 @@ size_t user_module_count_total(struct config_module * config, const char * patte
   json_t * j_user = NULL;
   size_t index = 0, total;
 
-  if (o_strlen(pattern)) {
+  if (!o_strnullempty(pattern)) {
     total = 0;
     json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_user) {
       if (json_has_str_pattern_case(j_user, pattern)) {
@@ -353,7 +353,7 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
     password = (json_int_t)json_array_size(json_object_get((json_t *)cls, "password"));
   }
   if (limit) {
-    if (o_strlen(pattern)) {
+    if (!o_strnullempty(pattern)) {
       j_pattern_array = json_array();
       json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_user) {
         if (json_has_str_pattern_case(j_user, pattern)) {
@@ -410,7 +410,7 @@ json_t * user_module_get(struct config_module * config, const char * username, v
   json_t * j_user = NULL, * j_new_user;
   size_t index = 0;
   
-  if (username != NULL && o_strlen(username)) {
+  if (username != NULL && !o_strnullempty(username)) {
     json_array_foreach(json_object_get((json_t *)cls, "list"), index, j_user) {
       if (0 == o_strcmp(username, json_string_value(json_object_get(j_user, "username")))) {
         j_new_user = json_deep_copy(j_user);
@@ -756,7 +756,7 @@ int user_module_update_password(struct config_module * config, const char * user
   if (json_is_array(json_object_get((json_t *)cls, "password"))) {
     j_password = json_array();
     for (index=0; index<new_passwords_len; index++) {
-      if (o_strlen(new_passwords[index])) {
+      if (!o_strnullempty(new_passwords[index])) {
         json_array_append_new(j_password, json_string(new_passwords[index]));
       } else if (new_passwords[index] != NULL && json_string_length(json_array_get(json_object_get((json_t *)cls, "password"), index))) {
         json_array_append(j_password, json_array_get(json_object_get((json_t *)cls, "password"), index));

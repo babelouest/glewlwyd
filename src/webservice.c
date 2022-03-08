@@ -634,7 +634,7 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
   now += GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE;
   gmtime_r(&now, &ts);
   strftime(expires, 128, "%a, %d %b %Y %T %Z", &ts);
-  if (session_uid != NULL && o_strlen(session_uid)) {
+  if (!o_strnullempty(session_uid)) {
     j_session = get_users_for_session(config, session_uid);
     if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
       response->status = 404;
@@ -2351,9 +2351,9 @@ int callback_glewlwyd_user_get_profile (const struct _u_request * request, struc
   now += GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE;
   gmtime_r(&now, &ts);
   strftime(expires, 128, "%a, %d %b %Y %T %Z", &ts);
-  if (!o_strlen(u_map_get(request->map_url, "username"))) {
+  if (o_strnullempty(u_map_get(request->map_url, "username"))) {
     session_uid = get_session_id(config, request);
-    if (session_uid != NULL && o_strlen(session_uid)) {
+    if (!o_strnullempty(session_uid)) {
       j_session = get_users_for_session(config, session_uid);
       if (check_result_value(j_session, G_OK)) {
         ulfius_set_json_body_response(response, 200, json_object_get(j_session, "session"));
@@ -2462,7 +2462,7 @@ int callback_glewlwyd_user_update_password (const struct _u_request * request, s
   struct _user_module_instance * user_module;
   size_t index = 0;
 
-  if (session_uid != NULL && o_strlen(session_uid)) {
+  if (!o_strnullempty(session_uid)) {
     j_session = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_session, G_OK)) {
       j_password = ulfius_get_json_body_request(request, NULL);

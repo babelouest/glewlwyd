@@ -110,7 +110,7 @@ json_t * get_api_key_list(struct config_elements * config, const char * pattern,
   if (limit) {
     json_object_set_new(j_query, "limit", json_integer(limit));
   }
-  if (o_strlen(pattern)) {
+  if (!o_strnullempty(pattern)) {
     pattern_escaped = h_escape_string_with_quotes(config->conn, pattern);
     pattern_clause = msprintf("IN (SELECT gak_id FROM " GLEWLWYD_TABLE_API_KEY " WHERE gak_username LIKE '%%'||%s||'%%' OR gak_issued_for LIKE '%%'||%s||'%%' OR gak_user_agent LIKE '%%'||%s||'%%')", pattern_escaped, pattern_escaped, pattern_escaped);
     json_object_set_new(j_query, "where", json_pack("{s{ssss}}", "gak_id", "operator", "raw", "value", pattern_clause));
