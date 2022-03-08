@@ -52,7 +52,7 @@ The following OpenID Connect functionalities are not supported yet:
 
 ## Messages encryption
 
-Glewlwyd OIDC plugin relies on Rhonabwy library to sign and encrypt tokens. All the JWT signing algorithms are supported but not all the JWT key management encryption algorithms and data encryption algorithms. The discovery endpoint is up-to-date with the supported encryption algorithms.
+Glewlwyd OIDC plugin relies on Rhonabwy library to sign and encrypt tokens. Depending on your GnuTLS and Nettle version, you may not have all the encryption or signature algorithms available. The discovery endpoint is up-to-date with the supported encryption algorithms.
 
 Concerning key management encryption using symmetric keys, the encryption key is based on a hash of the client secret or the server secret depending on the token to encrypt.
 
