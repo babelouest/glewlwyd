@@ -80,7 +80,7 @@ static void * thread_send_mail_on_new_connexion(void * args) {
   
   if (check_result_value(j_misc_config, G_OK) && json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "enabled") == json_true()) {
     j_user = get_user(send_mail->config, send_mail->username, NULL);
-    if (check_result_value(j_user, G_OK) && json_string_length(json_object_get(json_object_get(j_user, "user"), "email"))) {
+    if (check_result_value(j_user, G_OK) && !json_string_null_or_empty(json_object_get(json_object_get(j_user, "user"), "email"))) {
       email = json_string_value(json_object_get(json_object_get(j_user, "user"), "email"));
       // Send an e-mail to the user to notify a new connexion
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - New connexion - Notification sent to username %s, e-mail %s at IP Address %s", send_mail->username, email, send_mail->ip_address);
@@ -98,13 +98,13 @@ static void * thread_send_mail_on_new_connexion(void * args) {
                                        json_integer_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "port")),
                                        json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "use-tls")==json_true()?1:0,
                                        json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "verify-certificate")==json_false()?0:1,
-                                       json_string_length(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user"))?json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user")):NULL,
-                                       json_string_length(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "password"))?json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "password")):NULL,
+                                       !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user"))?json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user")):NULL,
+                                       !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "password"))?json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "password")):NULL,
                                        json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "from")),
                                        email,
                                        NULL,
                                        NULL,
-                                       json_string_length(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "content-type"))?json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "content-type")):"text/plain; charset=utf-8",
+                                       !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "content-type"))?json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "content-type")):"text/plain; charset=utf-8",
                                        get_template_property(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), lang, "subject"),
                                        body) != U_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "thread_send_mail_on_new_connexion - Error ulfius_send_smtp_rich_email");

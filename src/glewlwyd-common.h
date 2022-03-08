@@ -487,6 +487,8 @@ int generate_digest_pbkdf2(const char * data, unsigned int iterations, const cha
  */
 int check_result_value(json_t * result, const int value);
 
+int json_string_null_or_empty(json_t * j_str);
+
 /**
  * Modules functions prototypes
  */

@@ -379,7 +379,7 @@ static json_t * get_user_certificate_list_user_property(struct config_module * c
   
   j_user = config->glewlwyd_module_callback_get_user(config, username);
   if (check_result_value(j_user, G_OK)) {
-    if (json_string_length(json_object_get(j_parameters, "user-certificate-property"))) {
+    if (!json_string_null_or_empty(json_object_get(j_parameters, "user-certificate-property"))) {
       if ((j_certificate_array = json_array()) != NULL) {
         j_user_certificate = json_object_get(json_object_get(j_user, "user"), json_string_value(json_object_get(j_parameters, "user-certificate-property")));
         if (json_is_string(j_user_certificate)) {
@@ -407,18 +407,18 @@ static json_t * get_user_certificate_list_user_property(struct config_module * c
         y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use certificate - Error allocating resources for j_certificate_array");
       }
     }
-    if (json_string_length(json_object_get(j_parameters, "user-dn-property"))) {
+    if (!json_string_null_or_empty(json_object_get(j_parameters, "user-dn-property"))) {
       j_user_dn = json_object_get(json_object_get(j_user, "user"), json_string_value(json_object_get(j_parameters, "user-dn-property")));
-      if (!json_string_length(j_user_dn)) {
+      if (json_string_null_or_empty(j_user_dn)) {
         j_user_dn = NULL;
       }
     }
-    if (json_array_size(j_certificate_array) || json_string_length(j_user_dn)) {
+    if (json_array_size(j_certificate_array) || !json_string_null_or_empty(j_user_dn)) {
       j_return = json_pack("{si}", "result", G_OK);
       if (json_array_size(j_certificate_array)) {
         json_object_set(j_return, "certificate", j_certificate_array);
       }
-      if (json_string_length(j_user_dn)) {
+      if (!json_string_null_or_empty(j_user_dn)) {
         json_object_set(j_return, "dn", j_user_dn);
       }
     } else {
@@ -731,7 +731,7 @@ static int is_user_certificate_valid_user_property(struct config_module * config
   gnutls_datum_t cert_dn = {NULL, 0};
   
   if (check_result_value(j_user_list, G_OK)) {
-    if (json_string_length(json_object_get(j_user_list, "dn"))) {
+    if (!json_string_null_or_empty(json_object_get(j_user_list, "dn"))) {
 #if GNUTLS_VERSION_NUMBER >= 0x030702
       if (gnutls_x509_crt_get_dn3(cert, &cert_dn, 0) == GNUTLS_E_SUCCESS)
 #else
@@ -995,17 +995,17 @@ static json_t * is_certificate_parameters_valid(json_t * j_parameters) {
       if (json_object_get(j_parameters, "cert-source") != NULL && 0 != o_strcmp("TLS", json_string_value(json_object_get(j_parameters, "cert-source"))) && 0 != o_strcmp("header", json_string_value(json_object_get(j_parameters, "cert-source"))) && 0 != o_strcmp("both", json_string_value(json_object_get(j_parameters, "cert-source")))) {
         json_array_append_new(j_array, json_string("cert-source is optional and must be one of the following values: 'TLS', 'header' or 'both'"));
       }
-      if ((0 == o_strcmp("header", json_string_value(json_object_get(j_parameters, "cert-source"))) || 0 == o_strcmp("both", json_string_value(json_object_get(j_parameters, "cert-source")))) && !json_string_length(json_object_get(j_parameters, "header-name"))) {
+      if ((0 == o_strcmp("header", json_string_value(json_object_get(j_parameters, "cert-source"))) || 0 == o_strcmp("both", json_string_value(json_object_get(j_parameters, "cert-source")))) && json_string_null_or_empty(json_object_get(j_parameters, "header-name"))) {
         json_array_append_new(j_array, json_string("header-name is mandatory when cert-source is 'header' or 'both' and must be a non empty string"));
       }
       if (json_object_get(j_parameters, "use-scheme-storage") != NULL && !json_is_boolean(json_object_get(j_parameters, "use-scheme-storage"))) {
         json_array_append_new(j_array, json_string("use-scheme-storage is optional and must be a boolean"));
       }
       if (json_object_get(j_parameters, "use-scheme-storage") != json_true()) {
-        if (!json_string_length(json_object_get(j_parameters, "user-certificate-property")) && !json_string_length(json_object_get(j_parameters, "user-dn-property"))) {
+        if (json_string_null_or_empty(json_object_get(j_parameters, "user-certificate-property")) && json_string_null_or_empty(json_object_get(j_parameters, "user-dn-property"))) {
           json_array_append_new(j_array, json_string("user-certificate-property or user-dn-property is mandatory and must be a non empty string"));
         }
-        if (json_string_length(json_object_get(j_parameters, "user-certificate-property")) &&
+        if (!json_string_null_or_empty(json_object_get(j_parameters, "user-certificate-property")) &&
             json_object_get(j_parameters, "user-certificate-format") != NULL && 
             0 != o_strcmp("PEM", json_string_value(json_object_get(j_parameters, "user-certificate-format"))) && 
             0 != o_strcmp("DER", json_string_value(json_object_get(j_parameters, "user-certificate-format")))) {
@@ -1016,7 +1016,7 @@ static json_t * is_certificate_parameters_valid(json_t * j_parameters) {
         json_array_append_new(j_array, json_string("ca-chain is optional and must be an array of JSON objects"));
       } else {
         json_array_foreach(json_object_get(j_parameters, "ca-chain"), index, j_element) {
-          if (!json_is_object(j_element) || !json_string_length(json_object_get(j_element, "file-name")) || !json_string_length(json_object_get(j_element, "cert-file"))) {
+          if (!json_is_object(j_element) || json_string_null_or_empty(json_object_get(j_element, "file-name")) || json_string_null_or_empty(json_object_get(j_element, "cert-file"))) {
             json_array_append_new(j_array, json_string("A ca-chain object must have the format {file-name: '', cert-file: ''} with non empty string values"));
           }
         }
@@ -1227,7 +1227,7 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
   
   if (json_object_get(((struct _cert_param *)cls)->j_parameters, "use-scheme-storage") != json_true()) {
     j_user_certificate = get_user_certificate_list_user_property(config, ((struct _cert_param *)cls)->j_parameters, username);
-    ret = (check_result_value(j_user_certificate, G_OK) && (json_array_size(json_object_get(j_user_certificate, "certificate")) || json_string_length(json_object_get(j_user_certificate, "dn"))))?GLEWLWYD_IS_REGISTERED:GLEWLWYD_IS_AVAILABLE;
+    ret = (check_result_value(j_user_certificate, G_OK) && (json_array_size(json_object_get(j_user_certificate, "certificate")) || !json_string_null_or_empty(json_object_get(j_user_certificate, "dn"))))?GLEWLWYD_IS_REGISTERED:GLEWLWYD_IS_AVAILABLE;
     json_decref(j_user_certificate);
   } else {
     j_user_certificate = get_user_certificate_list_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, 1);
@@ -1364,7 +1364,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
       }
     } else if (0 == o_strcmp("toggle-certificate", json_string_value(json_object_get(j_scheme_data, "register")))) {
-      if (json_string_length(json_object_get(j_scheme_data, "certificate_id"))) {
+      if (!json_string_null_or_empty(json_object_get(j_scheme_data, "certificate_id"))) {
         j_result = get_user_certificate_from_id_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, json_string_value(json_object_get(j_scheme_data, "certificate_id")));
         if (check_result_value(j_result, G_OK)) {
           if (update_user_certificate_enabled_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, json_string_value(json_object_get(j_scheme_data, "certificate_id")), json_object_get(j_scheme_data, "enabled") == json_true()) == G_OK) {
@@ -1384,7 +1384,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
       }
     } else if (0 == o_strcmp("delete-certificate", json_string_value(json_object_get(j_scheme_data, "register")))) {
-      if (json_string_length(json_object_get(j_scheme_data, "certificate_id"))) {
+      if (!json_string_null_or_empty(json_object_get(j_scheme_data, "certificate_id"))) {
         j_result = get_user_certificate_from_id_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, json_string_value(json_object_get(j_scheme_data, "certificate_id")));
         if (check_result_value(j_result, G_OK)) {
           if (delete_user_certificate_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, json_string_value(json_object_get(j_scheme_data, "certificate_id"))) == G_OK) {

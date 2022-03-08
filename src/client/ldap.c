@@ -43,13 +43,13 @@ static json_t * is_client_ldap_parameters_valid(json_t * j_params, int readonly)
     if (!json_is_object(j_params)) {
       json_array_append_new(j_error, json_string("parameters must be a JSON object"));
     } else {
-      if (!json_string_length(json_object_get(j_params, "uri"))) {
+      if (json_string_null_or_empty(json_object_get(j_params, "uri"))) {
         json_array_append_new(j_error, json_string("uri is mandatory and must be a string"));
       }
-      if (!json_string_length(json_object_get(j_params, "bind-dn"))) {
+      if (json_string_null_or_empty(json_object_get(j_params, "bind-dn"))) {
         json_array_append_new(j_error, json_string("bind-dn is mandatory and must be a string"));
       }
-      if (!json_string_length(json_object_get(j_params, "bind-password"))) {
+      if (json_string_null_or_empty(json_object_get(j_params, "bind-password"))) {
         json_array_append_new(j_error, json_string("bind-password is mandatory and must be a string"));
       }
       if (json_object_get(j_params, "search-scope") != NULL && !json_is_string(json_object_get(j_params, "search-scope"))) {
@@ -64,41 +64,41 @@ static json_t * is_client_ldap_parameters_valid(json_t * j_params, int readonly)
       } else if (json_object_get(j_params, "page-size") == NULL) {
         json_object_set_new(j_params, "page-size", json_integer(LDAP_DEFAULT_PAGE_SIZE));
       }
-      if (!json_string_length(json_object_get(j_params, "base-search"))) {
+      if (json_string_null_or_empty(json_object_get(j_params, "base-search"))) {
         json_array_append_new(j_error, json_string("base-search is mandatory and must be a string"));
       }
-      if (!json_string_length(json_object_get(j_params, "filter"))) {
+      if (json_string_null_or_empty(json_object_get(j_params, "filter"))) {
         json_array_append_new(j_error, json_string("filter is mandatory and must be a string"));
       }
       if (readonly) {
-        if (!json_string_length(json_object_get(j_params, "client_id-property"))) {
+        if (json_string_null_or_empty(json_object_get(j_params, "client_id-property"))) {
           json_array_append_new(j_error, json_string("client_id-property is mandatory and must be a non empty string"));
         }
       } else {
         if (json_object_get(j_params, "client_id-property") == NULL || (!json_is_string(json_object_get(j_params, "client_id-property")) && !json_is_array(json_object_get(j_params, "client_id-property")))) {
           json_array_append_new(j_error, json_string("client_id-property is mandatory and must be a non empty string or an array of non empty strings"));
-        } else if (json_is_string(json_object_get(j_params, "client_id-property")) && !json_string_length(json_object_get(j_params, "client_id-property"))) {
+        } else if (json_is_string(json_object_get(j_params, "client_id-property")) && json_string_null_or_empty(json_object_get(j_params, "client_id-property"))) {
           json_array_append_new(j_error, json_string("client_id-property is mandatory and must be a non empty string or an array of non empty strings"));
         } else if (json_is_array(json_object_get(j_params, "client_id-property"))) {
           json_array_foreach(json_object_get(j_params, "client_id-property"), index, j_element) {
-            if (!json_string_length(j_element)) {
+            if (json_string_null_or_empty(j_element)) {
               json_array_append_new(j_error, json_string("client_id-property is mandatory and must be a non empty string or an array of non empty strings"));
             }
           }
         }
       }
       if (readonly) {
-        if (!json_string_length(json_object_get(j_params, "scope-property"))) {
+        if (json_string_null_or_empty(json_object_get(j_params, "scope-property"))) {
           json_array_append_new(j_error, json_string("scope-property is mandatory and must be a non empty string"));
         }
       } else {
         if (json_object_get(j_params, "scope-property") == NULL || (!json_is_string(json_object_get(j_params, "scope-property")) && !json_is_array(json_object_get(j_params, "scope-property")))) {
           json_array_append_new(j_error, json_string("scope-property is mandatory and must be a non empty string or an array of non empty strings"));
-        } else if (json_is_string(json_object_get(j_params, "scope-property")) && !json_string_length(json_object_get(j_params, "scope-property"))) {
+        } else if (json_is_string(json_object_get(j_params, "scope-property")) && json_string_null_or_empty(json_object_get(j_params, "scope-property"))) {
           json_array_append_new(j_error, json_string("scope-property is mandatory and must be a non empty string or an array of non empty strings"));
         } else if (json_is_array(json_object_get(j_params, "scope-property"))) {
           json_array_foreach(json_object_get(j_params, "scope-property"), index, j_element) {
-            if (!json_string_length(j_element)) {
+            if (json_string_null_or_empty(j_element)) {
               json_array_append_new(j_error, json_string("scope-property is mandatory and must be a non empty string or an array of non empty strings"));
             }
           }
@@ -120,17 +120,17 @@ static json_t * is_client_ldap_parameters_valid(json_t * j_params, int readonly)
         }
       }
       if (readonly) {
-        if (!json_string_length(json_object_get(j_params, "name-property"))) {
+        if (json_string_null_or_empty(json_object_get(j_params, "name-property"))) {
           json_array_append_new(j_error, json_string("name-property is mandatory and must be a non empty string"));
         }
       } else {
         if (json_object_get(j_params, "name-property") == NULL || (!json_is_string(json_object_get(j_params, "name-property")) && !json_is_array(json_object_get(j_params, "name-property")))) {
           json_array_append_new(j_error, json_string("name-property is mandatory and must be a non empty string or an array of non empty strings"));
-        } else if (json_is_string(json_object_get(j_params, "name-property")) && !json_string_length(json_object_get(j_params, "name-property"))) {
+        } else if (json_is_string(json_object_get(j_params, "name-property")) && json_string_null_or_empty(json_object_get(j_params, "name-property"))) {
           json_array_append_new(j_error, json_string("name-property is mandatory and must be a non empty string or an array of non empty strings"));
         } else if (json_is_array(json_object_get(j_params, "name-property"))) {
           json_array_foreach(json_object_get(j_params, "name-property"), index, j_element) {
-            if (!json_string_length(j_element)) {
+            if (json_string_null_or_empty(j_element)) {
               json_array_append_new(j_error, json_string("name-property is mandatory and must be a non empty string or an array of non empty strings"));
             }
           }
@@ -152,25 +152,25 @@ static json_t * is_client_ldap_parameters_valid(json_t * j_params, int readonly)
         }
       }
       if (readonly) {
-        if (!json_string_length(json_object_get(j_params, "confidential-property"))) {
+        if (json_string_null_or_empty(json_object_get(j_params, "confidential-property"))) {
           json_array_append_new(j_error, json_string("confidential-property is mandatory and must be a non empty string"));
         }
       } else {
-        if (json_object_get(j_params, "confidential-property") == NULL || (!json_string_length(json_object_get(j_params, "confidential-property")) && !json_is_array(json_object_get(j_params, "confidential-property")))) {
+        if (json_object_get(j_params, "confidential-property") == NULL || (json_string_null_or_empty(json_object_get(j_params, "confidential-property")) && !json_is_array(json_object_get(j_params, "confidential-property")))) {
           json_array_append_new(j_error, json_string("confidential-property is mandatory and must be a non empty string or an array of non empty strings"));
         } else if (json_is_array(json_object_get(j_params, "confidential-property"))) {
           json_array_foreach(json_object_get(j_params, "confidential-property"), index, j_element) {
-            if (!json_string_length(j_element)) {
+            if (json_string_null_or_empty(j_element)) {
               json_array_append_new(j_error, json_string("confidential-property is mandatory and must be a non empty string or an array of non empty strings"));
             }
           }
         }
       }
       if (!readonly) {
-        if (!json_string_length(json_object_get(j_params, "rdn-property"))) {
+        if (json_string_null_or_empty(json_object_get(j_params, "rdn-property"))) {
           json_array_append_new(j_error, json_string("rdn-property is mandatory and must be a non empty string"));
         }
-        if (!json_string_length(json_object_get(j_params, "password-property"))) {
+        if (json_string_null_or_empty(json_object_get(j_params, "password-property"))) {
           json_array_append_new(j_error, json_string("password-property is mandatory and must be a non empty string"));
         }
         if (json_object_get(j_params, "password-algorithm") == NULL || 
@@ -196,11 +196,11 @@ static json_t * is_client_ldap_parameters_valid(json_t * j_params, int readonly)
         }
         if (json_object_get(j_params, "object-class") == NULL || (!json_is_string(json_object_get(j_params, "object-class")) && !json_is_array(json_object_get(j_params, "object-class")))) {
           json_array_append_new(j_error, json_string("object-class is mandatory and must be a non empty string or an array of non empty strings"));
-        } else if (json_is_string(json_object_get(j_params, "object-class")) && !json_string_length(json_object_get(j_params, "object-class"))) {
+        } else if (json_is_string(json_object_get(j_params, "object-class")) && json_string_null_or_empty(json_object_get(j_params, "object-class"))) {
           json_array_append_new(j_error, json_string("object-class is mandatory and must be a non empty string or an array of non empty strings"));
         } else {
           json_array_foreach(json_object_get(j_params, "object-class"), index, j_element) {
-            if (!json_string_length(j_element)) {
+            if (json_string_null_or_empty(j_element)) {
               json_array_append_new(j_error, json_string("object-class is mandatory and must be a non empty string or an array of non empty strings"));
             }
           }
@@ -215,19 +215,19 @@ static json_t * is_client_ldap_parameters_valid(json_t * j_params, int readonly)
               json_array_append_new(j_error, json_string("data-format can not have settings for properties 'client_id', 'name', 'description', 'enabled', 'confidential', 'scope' or 'password'"));
             } else {
               if (readonly) {
-                if (json_object_get(j_element, "property") == NULL || !json_string_length(json_object_get(j_element, "property"))) {
+                if (json_object_get(j_element, "property") == NULL || json_string_null_or_empty(json_object_get(j_element, "property"))) {
                   message = msprintf("property %s is mandatory and must be a non empty string or an array of non empty string", field);
                   json_array_append_new(j_error, json_string(message));
                   o_free(message);
                 }
               } else {
-                if (json_object_get(j_element, "property") == NULL || ((!json_is_string(json_object_get(j_element, "property")) || !json_string_length(json_object_get(j_element, "property"))) && !json_is_array(json_object_get(j_element, "property")))) {
+                if (json_object_get(j_element, "property") == NULL || ((!json_is_string(json_object_get(j_element, "property")) || json_string_null_or_empty(json_object_get(j_element, "property"))) && !json_is_array(json_object_get(j_element, "property")))) {
                   message = msprintf("property %s is mandatory and must be a non empty string or an array of non empty string", field);
                   json_array_append_new(j_error, json_string(message));
                   o_free(message);
                 } else if (json_is_array(json_object_get(j_element, "property"))) {
                   json_array_foreach(json_object_get(j_element, "property"), index, j_element_p) {
-                    if (!json_string_length(j_element_p)) {
+                    if (json_string_null_or_empty(j_element_p)) {
                       message = msprintf("property %s is mandatory and must be a non empty string or an array of non empty string", field);
                       json_array_append_new(j_error, json_string(message));
                       o_free(message);
@@ -527,7 +527,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
     if (json_object_get(j_client, "confidential") != NULL) {
       nb_attr += count_properties(j_params, "confidential-property");
     }
-    if (json_string_length(json_object_get(j_client, "password"))) {
+    if (!json_string_null_or_empty(json_object_get(j_client, "password"))) {
       nb_attr++;
     }
     json_object_foreach(j_client, field, j_property) {
@@ -789,7 +789,7 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
         }
         i++;
       }
-      if (json_string_length(json_object_get(j_client, "password"))) {
+      if (!json_string_null_or_empty(json_object_get(j_client, "password"))) {
         mods[i] = o_malloc(sizeof(LDAPMod));
         if (mods[i] != NULL) {
           mods[i]->mod_values = o_malloc(2 * sizeof(char *));
@@ -1327,7 +1327,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
   
   if (j_result != NULL) {
     if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
-      if (!json_is_string(json_object_get(j_client, "client_id")) || !json_string_length(json_object_get(j_client, "client_id"))) {
+      if (!json_is_string(json_object_get(j_client, "client_id")) || json_string_null_or_empty(json_object_get(j_client, "client_id"))) {
         json_array_append_new(j_result, json_string("client_id is mandatory and must be a non empty string"));
       } else {
         j_cur_client = client_module_get(config, json_string_value(json_object_get(j_client, "client_id")), cls);
@@ -1346,7 +1346,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
         json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
       } else {
         json_array_foreach(json_object_get(j_client, "scope"), index, j_element) {
-          if (!json_is_string(j_element) || !json_string_length(j_element)) {
+          if (!json_is_string(j_element) || json_string_null_or_empty(j_element)) {
             json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
           }
         }
@@ -1355,7 +1355,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
     if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE && json_object_get(j_client, "password") != NULL && !json_is_string(json_object_get(j_client, "password"))) {
       json_array_append_new(j_result, json_string("password must be a string"));
     }
-    if (json_object_get(j_client, "name") != NULL && (!json_is_string(json_object_get(j_client, "name")) || !json_string_length(json_object_get(j_client, "name")))) {
+    if (json_object_get(j_client, "name") != NULL && (!json_is_string(json_object_get(j_client, "name")) || json_string_null_or_empty(json_object_get(j_client, "name")))) {
       json_array_append_new(j_result, json_string("name must be a non empty string"));
     }
     if (json_object_get(j_client, "description") != NULL && !json_is_string(json_object_get(j_client, "description"))) {
@@ -1385,7 +1385,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
             o_free(message);
           } else {
             json_array_foreach(j_element, index, j_value) {
-              if ((!json_is_string(j_value) || !json_string_length(j_value)) && 0 != o_strcmp("jwks", json_string_value(json_object_get(j_format, "convert")))) {
+              if ((!json_is_string(j_value) || json_string_null_or_empty(j_value)) && 0 != o_strcmp("jwks", json_string_value(json_object_get(j_format, "convert")))) {
                 message = msprintf("%s must contain a non empty string value", property);
                 json_array_append_new(j_result, json_string(message));
                 o_free(message);

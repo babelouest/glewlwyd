@@ -202,7 +202,7 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
   json_t * j_return;
 
   if (json_object_get(j_parameters, "error") == NULL) {
-    if (json_string_length(json_object_get(j_parameters, "client-id-prefix"))) {
+    if (!json_string_null_or_empty(json_object_get(j_parameters, "client-id-prefix"))) {
       prefix = json_string_value(json_object_get(j_parameters, "client-id-prefix"));
     }
     *cls = (void*)json_pack("[{ss+ ss ss so s[ssssss] s[sss] ss s[] so}{ss+ ss ss so s[s] s[s] s[] so}{ss+ ss ss so ss s[ssssssss] s[ss] ss s[ss] so}{ss+ ss ss so ss s[ssss] s[s] ss so ss}]",

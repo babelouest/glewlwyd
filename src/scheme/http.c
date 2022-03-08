@@ -190,14 +190,14 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
   
   if (json_is_object(j_parameters)) {
     ret = G_OK;
-    if (!json_string_length(json_object_get(j_parameters, "url"))) {
+    if (json_string_null_or_empty(json_object_get(j_parameters, "url"))) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init http - parameter url is mandatory must be a non empty string");
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter url is mandatory must be a non empty string");
       ret = G_ERROR_PARAM;
     } else if (json_object_get(j_parameters, "check-server-certificate") != NULL && !json_is_boolean(json_object_get(j_parameters, "check-server-certificate"))) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init http - parameter check-server-certificate is optional and must be a boolean");
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter check-server-certificate is optional and must be a boolean");
-    } else if (json_string_length(json_object_get(j_parameters, "username-format")) && (o_strchr(json_string_value(json_object_get(j_parameters, "username-format")), '{') == NULL || o_strchr(json_string_value(json_object_get(j_parameters, "username-format")), '}') == NULL)) {
+    } else if (!json_string_null_or_empty(json_object_get(j_parameters, "username-format")) && (o_strchr(json_string_value(json_object_get(j_parameters, "username-format")), '{') == NULL || o_strchr(json_string_value(json_object_get(j_parameters, "username-format")), '}') == NULL)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init http - parameter username-format is optional and must contain a property name, e.g. {username}");
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter username-format is optional and must contain a property name, e.g. {username}");
       ret = G_ERROR_PARAM;
@@ -405,7 +405,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
   int res, ret;
   json_t * j_user = NULL;
   
-  if (json_string_length(json_object_get(j_scheme_data, "password"))) {
+  if (!json_string_null_or_empty(json_object_get(j_scheme_data, "password"))) {
     ulfius_init_request(&request);
     ulfius_init_response(&response);
     request.http_verb = o_strdup("GET");
@@ -413,7 +413,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
     if (json_object_get((json_t *)cls, "check-server-certificate") == json_false()) {
       request.check_server_certificate = 0;
     }
-    if (json_string_length(json_object_get((json_t *)cls, "username-format"))) {
+    if (!json_string_null_or_empty(json_object_get((json_t *)cls, "username-format"))) {
       j_user = config->glewlwyd_module_callback_get_user(config, username);
       if (check_result_value(j_user, G_OK)) {
         request.auth_basic_user = format_auth_basic_user(json_string_value(json_object_get((json_t *)cls, "username-format")), json_object_get(j_user, "user"));

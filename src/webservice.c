@@ -256,9 +256,9 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
   gmtime_r(&now, &ts);
   strftime(expires, 128, "%a, %d %b %Y %T %Z", &ts);
   if (j_param != NULL) {
-    if (json_string_length(json_object_get(j_param, "username"))) {
+    if (!json_string_null_or_empty(json_object_get(j_param, "username"))) {
       if (json_object_get(j_param, "scheme_type") == NULL || 0 == o_strcmp(json_string_value(json_object_get(j_param, "scheme_type")), "password")) {
-        if (json_string_length(json_object_get(j_param, "password"))) {
+        if (!json_string_null_or_empty(json_object_get(j_param, "password"))) {
           j_result = auth_check_user_credentials(config, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "password")));
           if (check_result_value(j_result, G_OK)) {
             if ((session_uid = get_session_id(config, request)) == NULL) {
@@ -306,7 +306,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
           json_decref(j_result);
         }
       } else {
-        if (json_string_length(json_object_get(j_param, "scheme_type")) && json_string_length(json_object_get(j_param, "scheme_name")) && json_is_object(json_object_get(j_param, "value"))) {
+        if (!json_string_null_or_empty(json_object_get(j_param, "scheme_type")) && !json_string_null_or_empty(json_object_get(j_param, "scheme_name")) && json_is_object(json_object_get(j_param, "value"))) {
           j_result = auth_check_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), json_object_get(j_param, "value"), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             ulfius_set_string_body_response(response, 400, "bad scheme response");
@@ -341,7 +341,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
         }
       }
     } else {
-      if (json_string_length(json_object_get(j_param, "scheme_type")) && json_string_length(json_object_get(j_param, "scheme_name")) && json_is_object(json_object_get(j_param, "value"))) {
+      if (!json_string_null_or_empty(json_object_get(j_param, "scheme_type")) && !json_string_null_or_empty(json_object_get(j_param, "scheme_name")) && json_is_object(json_object_get(j_param, "value"))) {
         j_result = auth_check_identify_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_object_get(j_param, "value"), request);
         if (check_result_value(j_result, G_ERROR_PARAM)) {
           ulfius_set_string_body_response(response, 400, "bad scheme response");
@@ -385,8 +385,8 @@ int callback_glewlwyd_user_auth_trigger (const struct _u_request * request, stru
   json_t * j_param = ulfius_get_json_body_request(request, NULL), * j_result = NULL;
 
   if (j_param != NULL) {
-    if (json_string_length(json_object_get(j_param, "scheme_type")) && json_string_length(json_object_get(j_param, "scheme_name"))) {
-      if (json_string_length(json_object_get(j_param, "username"))) {
+    if (!json_string_null_or_empty(json_object_get(j_param, "scheme_type")) && !json_string_null_or_empty(json_object_get(j_param, "scheme_name"))) {
+      if (!json_string_null_or_empty(json_object_get(j_param, "username"))) {
         j_result = auth_trigger_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), json_object_get(j_param, "value"), request);
         if (check_result_value(j_result, G_ERROR_PARAM)) {
           ulfius_set_string_body_response(response, 400, "bad scheme response");
@@ -436,9 +436,9 @@ int callback_glewlwyd_user_auth_register (const struct _u_request * request, str
   json_t * j_param = ulfius_get_json_body_request(request, NULL), * j_result = NULL;
 
   if (j_param != NULL) {
-    if (json_object_get(j_param, "username") != NULL && json_is_string(json_object_get(j_param, "username")) && json_string_length(json_object_get(j_param, "username"))) {
+    if (json_object_get(j_param, "username") != NULL && json_is_string(json_object_get(j_param, "username")) && !json_string_null_or_empty(json_object_get(j_param, "username"))) {
       if (0 == o_strcasecmp(json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_param, "username")))) {
-        if (json_object_get(j_param, "scheme_type") != NULL && json_is_string(json_object_get(j_param, "scheme_type")) && json_string_length(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_is_string(json_object_get(j_param, "scheme_name")) && json_string_length(json_object_get(j_param, "scheme_name"))) {
+        if (json_object_get(j_param, "scheme_type") != NULL && json_is_string(json_object_get(j_param, "scheme_type")) && !json_string_null_or_empty(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_is_string(json_object_get(j_param, "scheme_name")) && !json_string_null_or_empty(json_object_get(j_param, "scheme_name"))) {
           j_result = auth_register_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), 0, json_object_get(j_param, "value"), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             if (json_object_get(j_result, "register") != NULL) {
@@ -481,9 +481,9 @@ int callback_glewlwyd_user_auth_register_get (const struct _u_request * request,
   json_t * j_param = ulfius_get_json_body_request(request, NULL), * j_result = NULL;
 
   if (j_param != NULL) {
-    if (json_object_get(j_param, "username") != NULL && json_string_length(json_object_get(j_param, "username"))) {
+    if (json_object_get(j_param, "username") != NULL && !json_string_null_or_empty(json_object_get(j_param, "username"))) {
       if (0 == o_strcasecmp(json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_param, "username")))) {
-        if (json_object_get(j_param, "scheme_type") != NULL && json_string_length(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_string_length(json_object_get(j_param, "scheme_name"))) {
+        if (json_object_get(j_param, "scheme_type") != NULL && !json_string_null_or_empty(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && !json_string_null_or_empty(json_object_get(j_param, "scheme_name"))) {
           j_result = auth_register_get_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             ulfius_set_string_body_response(response, 400, "bad scheme response");
@@ -542,9 +542,9 @@ int callback_glewlwyd_user_auth_register_delegate (const struct _u_request * req
   json_t * j_param = ulfius_get_json_body_request(request, NULL), * j_result = NULL;
 
   if (j_param != NULL) {
-    if (json_object_get(j_param, "username") != NULL && json_is_string(json_object_get(j_param, "username")) && json_string_length(json_object_get(j_param, "username"))) {
+    if (json_object_get(j_param, "username") != NULL && json_is_string(json_object_get(j_param, "username")) && !json_string_null_or_empty(json_object_get(j_param, "username"))) {
       if (0 == o_strcasecmp(json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_param, "username")))) {
-        if (json_object_get(j_param, "scheme_type") != NULL && json_is_string(json_object_get(j_param, "scheme_type")) && json_string_length(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_is_string(json_object_get(j_param, "scheme_name")) && json_string_length(json_object_get(j_param, "scheme_name"))) {
+        if (json_object_get(j_param, "scheme_type") != NULL && json_is_string(json_object_get(j_param, "scheme_type")) && !json_string_null_or_empty(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_is_string(json_object_get(j_param, "scheme_name")) && !json_string_null_or_empty(json_object_get(j_param, "scheme_name"))) {
           j_result = auth_register_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), 1, json_object_get(j_param, "value"), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             if (json_object_get(j_result, "register") != NULL) {
@@ -587,9 +587,9 @@ int callback_glewlwyd_user_auth_register_get_delegate (const struct _u_request *
   json_t * j_param = ulfius_get_json_body_request(request, NULL), * j_result = NULL;
 
   if (j_param != NULL) {
-    if (json_object_get(j_param, "username") != NULL && json_string_length(json_object_get(j_param, "username"))) {
+    if (json_object_get(j_param, "username") != NULL && !json_string_null_or_empty(json_object_get(j_param, "username"))) {
       if (0 == o_strcasecmp(json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_param, "username")))) {
-        if (json_object_get(j_param, "scheme_type") != NULL && json_string_length(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && json_string_length(json_object_get(j_param, "scheme_name"))) {
+        if (json_object_get(j_param, "scheme_type") != NULL && !json_string_null_or_empty(json_object_get(j_param, "scheme_type")) && json_object_get(j_param, "scheme_name") != NULL && !json_string_null_or_empty(json_object_get(j_param, "scheme_name"))) {
           j_result = auth_register_get_user_scheme(config, json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")), json_string_value(json_object_get(j_param, "username")), request);
           if (check_result_value(j_result, G_ERROR_PARAM)) {
             ulfius_set_string_body_response(response, 400, "bad scheme response");
@@ -2468,7 +2468,7 @@ int callback_glewlwyd_user_update_password (const struct _u_request * request, s
       j_password = ulfius_get_json_body_request(request, NULL);
       user_module = get_user_module_instance(config, json_string_value(json_object_get(json_object_get(j_session, "user"), "source")));
       if (user_module && user_module->multiple_passwords) {
-        if (json_string_length(json_object_get(j_password, "old_password")) && json_is_array(json_object_get(j_password, "password"))) {
+        if (!json_string_null_or_empty(json_object_get(j_password, "old_password")) && json_is_array(json_object_get(j_password, "password"))) {
           if ((passwords = o_malloc(json_array_size(json_object_get(j_password, "password")) * sizeof(char *))) != NULL) {
             json_array_foreach(json_object_get(j_password, "password"), index, j_element) {
               passwords[index] = json_string_value(j_element);
@@ -2488,7 +2488,7 @@ int callback_glewlwyd_user_update_password (const struct _u_request * request, s
           response->status = 400;
         }
       } else {
-        if (json_string_length(json_object_get(j_password, "old_password")) && json_string_length(json_object_get(j_password, "password"))) {
+        if (!json_string_null_or_empty(json_object_get(j_password, "old_password")) && !json_string_null_or_empty(json_object_get(j_password, "password"))) {
           if ((passwords = o_malloc(sizeof(char *))) != NULL) {
             passwords[0] = json_string_value(json_object_get(j_password, "password"));
             if ((res = user_update_password(config, json_string_value(json_object_get(json_object_get(j_session, "user"), "username")), json_string_value(json_object_get(j_password, "old_password")), passwords, 1)) == G_ERROR_PARAM) {

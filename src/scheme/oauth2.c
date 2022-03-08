@@ -73,7 +73,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
   
   if (j_errors != NULL) {
     if (json_is_object(j_params)) {
-      if (!json_string_length(json_object_get(j_params, "redirect_uri"))) {
+      if (json_string_null_or_empty(json_object_get(j_params, "redirect_uri"))) {
         json_array_append_new(j_errors, json_string("redirect_uri is mandatory and must be a non empty string"));
       }
       if (json_integer_value(json_object_get(j_params, "session_expiration")) <= 0) {
@@ -83,7 +83,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
         json_array_append_new(j_errors, json_string("provider_list is mandatory and must be a JSON array"));
       } else {
         json_array_foreach(json_object_get(j_params, "provider_list"), index, j_element) {
-          if (!json_string_length(json_object_get(j_element, "name"))) {
+          if (json_string_null_or_empty(json_object_get(j_element, "name"))) {
             message = msprintf("name value is missing for provider at index %zu", index);
             json_array_append_new(j_errors, json_string(message));
             o_free(message);
@@ -112,7 +112,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
             json_array_append_new(j_errors, json_string(message));
             o_free(message);
           }
-          if (!json_string_length(json_object_get(j_element, "client_id"))) {
+          if (json_string_null_or_empty(json_object_get(j_element, "client_id"))) {
             message = msprintf("client_id string is missing for provider '%s' at index %zu", name, index);
             json_array_append_new(j_errors, json_string(message));
             o_free(message);
@@ -122,7 +122,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
             json_array_append_new(j_errors, json_string(message));
             o_free(message);
           }
-          if (!is_oidc && !json_string_length(json_object_get(j_element, "userid_property"))) {
+          if (!is_oidc && json_string_null_or_empty(json_object_get(j_element, "userid_property"))) {
             message = msprintf("userid_property string is missing for provider '%s' at index %zu", name, index);
             json_array_append_new(j_errors, json_string(message));
             o_free(message);
@@ -157,7 +157,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
             json_array_append_new(j_errors, json_string(message));
             o_free(message);
           }
-          if (!json_string_length(json_object_get(j_element, "config_endpoint")) && (!json_string_length(json_object_get(j_element, "auth_endpoint")) || !json_string_length(json_object_get(j_element, "userinfo_endpoint")))) {
+          if (json_string_null_or_empty(json_object_get(j_element, "config_endpoint")) && (json_string_null_or_empty(json_object_get(j_element, "auth_endpoint")) || json_string_null_or_empty(json_object_get(j_element, "userinfo_endpoint")))) {
             message = msprintf("You must set config_endpoint or auth_endpoint is mandatory for provider '%s' at index %zu", name, index);
             json_array_append_new(j_errors, json_string(message));
             o_free(message);
@@ -169,12 +169,12 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
               o_free(message);
             } else {
               json_array_foreach(json_object_get(j_element, "additional_parameters"), indexParam, j_param) {
-                if (!json_string_length(json_object_get(j_param, "key"))) {
+                if (json_string_null_or_empty(json_object_get(j_param, "key"))) {
                   message = msprintf("additional_parameters key must be a non empty string for provider '%s' at index %zu", name, index);
                   json_array_append_new(j_errors, json_string(message));
                   o_free(message);
                 }
-                if (!json_string_length(json_object_get(j_param, "value"))) {
+                if (json_string_null_or_empty(json_object_get(j_param, "value"))) {
                   message = msprintf("additional_parameters value must be a non empty string for provider '%s' at index %zu", name, index);
                   json_array_append_new(j_errors, json_string(message));
                   o_free(message);
@@ -252,7 +252,7 @@ static json_t * complete_session_identify(struct config_module * config, struct 
                 if ((res = i_run_token_request(&i_session)) == I_OK) {
                   ret = G_OK;
                   if (0 == o_strcmp("oidc", json_string_value(json_object_get(j_provider, "provider_type")))) {
-                    if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
+                    if (!json_string_null_or_empty(json_object_get(i_session.id_token_payload, "sub"))) {
                       sub = o_strdup(json_string_value(json_object_get(i_session.id_token_payload, "sub")));
                       ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                     } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
@@ -264,7 +264,7 @@ static json_t * complete_session_identify(struct config_module * config, struct 
                     }
                   } else {
                     if ((res = i_get_userinfo(&i_session, 0)) == I_OK && i_session.j_userinfo != NULL) {
-                      if (json_string_length((json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))))) {
+                      if (!json_string_null_or_empty((json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))))) {
                         sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
                         ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                       } else if (json_is_integer(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
@@ -290,7 +290,7 @@ static json_t * complete_session_identify(struct config_module * config, struct 
                 break;
               case I_RESPONSE_TYPE_TOKEN:
                 if ((res = i_get_userinfo(&i_session, 0)) == I_OK && i_session.j_userinfo != NULL) {
-                  if (json_string_length(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
+                  if (!json_string_null_or_empty(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
                     sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
                     ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                   } else if (json_is_integer(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
@@ -308,7 +308,7 @@ static json_t * complete_session_identify(struct config_module * config, struct 
                 }
                 break;
               case I_RESPONSE_TYPE_ID_TOKEN:
-                if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
+                if (!json_string_null_or_empty(json_object_get(i_session.id_token_payload, "sub"))) {
                   sub = o_strdup(json_string_value(json_object_get(i_session.id_token_payload, "sub")));
                   ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                 } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
@@ -913,7 +913,7 @@ static int complete_session_for_user(struct config_module * config, const char *
                 if ((res = i_run_token_request(&i_session)) == I_OK) {
                   ret = G_OK;
                   if (0 == o_strcmp("oidc", json_string_value(json_object_get(j_provider, "provider_type")))) {
-                    if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
+                    if (!json_string_null_or_empty(json_object_get(i_session.id_token_payload, "sub"))) {
                       sub = o_strdup(json_string_value(json_object_get(i_session.id_token_payload, "sub")));
                       ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                     } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
@@ -925,7 +925,7 @@ static int complete_session_for_user(struct config_module * config, const char *
                     }
                   } else {
                     if ((res = i_get_userinfo(&i_session, 0)) == I_OK && i_session.j_userinfo != NULL) {
-                      if (json_string_length((json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))))) {
+                      if (!json_string_null_or_empty((json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))))) {
                         sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
                         ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                       } else if (json_is_integer(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
@@ -951,7 +951,7 @@ static int complete_session_for_user(struct config_module * config, const char *
                 break;
               case I_RESPONSE_TYPE_TOKEN:
                 if ((res = i_get_userinfo(&i_session, 0)) == I_OK && i_session.j_userinfo != NULL) {
-                  if (json_string_length(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
+                  if (!json_string_null_or_empty(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
                     sub = o_strdup(json_string_value(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property")))));
                     ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                   } else if (json_is_integer(json_object_get(i_session.j_userinfo, json_string_value(json_object_get(j_provider, "userid_property"))))) {
@@ -969,7 +969,7 @@ static int complete_session_for_user(struct config_module * config, const char *
                 }
                 break;
               case I_RESPONSE_TYPE_ID_TOKEN:
-                if (json_string_length(json_object_get(i_session.id_token_payload, "sub"))) {
+                if (!json_string_null_or_empty(json_object_get(i_session.id_token_payload, "sub"))) {
                   sub = o_strdup(json_string_value(json_object_get(i_session.id_token_payload, "sub")));
                   ret = !o_strnullempty(sub)?G_OK:G_ERROR_PARAM;
                 } else if (json_is_integer(json_object_get(i_session.id_token_payload, "sub"))) {
@@ -1203,7 +1203,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
               json_array_foreach(json_object_get(j_element, "additional_parameters"), indexParam, j_param) {
                 i_set_additional_parameter(&i_session, json_string_value(json_object_get(j_param, "key")), json_string_value(json_object_get(j_param, "value")));
               }
-              if (json_string_length(json_object_get(j_element, "config_endpoint"))) {
+              if (!json_string_null_or_empty(json_object_get(j_element, "config_endpoint"))) {
                 if (i_set_parameter_list(&i_session, I_OPT_RESPONSE_TYPE, get_response_type(json_string_value(json_object_get(j_element, "response_type"))),
                                                                       I_OPT_OPENID_CONFIG_ENDPOINT, json_string_value(json_object_get(j_element, "config_endpoint")),
                                                                       I_OPT_CLIENT_ID, json_string_value(json_object_get(j_element, "client_id")),

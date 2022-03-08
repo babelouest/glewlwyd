@@ -1313,7 +1313,7 @@ int build_config_from_env(struct config_elements * config) {
     j_mime_types = json_loads(value, JSON_DECODE_ANY, NULL);
     if (json_is_array(j_mime_types)) {
       json_array_foreach(j_mime_types, index, j_element) {
-        if (json_string_length(json_object_get(j_element, "extension")) && json_string_length(json_object_get(j_element, "mime_type"))) {
+        if (!json_string_null_or_empty(json_object_get(j_element, "extension")) && json_string_length(json_object_get(j_element, "mime_type"))) {
           u_map_put(&config->static_file_config->mime_types, json_string_value(json_object_get(j_element, "extension")), json_string_value(json_object_get(j_element, "mime_type")));
           if (json_object_get(j_element, "compress") == json_true()) {
             if (u_add_mime_types_compressed(config->static_file_config, json_string_value(json_object_get(j_element, "mime_type"))) != U_OK) {

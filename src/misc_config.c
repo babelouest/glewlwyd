@@ -103,7 +103,7 @@ json_t * is_misc_config_valid(const char * name, json_t * j_misc_config) {
     if (o_strnullempty(name) || o_strlen(name) > 128) {
       json_array_append_new(j_error, json_string("name is mandatory and must be a non empty string, maximum 128 characters"));
     }
-    if (!json_string_length(json_object_get(j_misc_config, "type")) || json_string_length(json_object_get(j_misc_config, "type")) > 128) {
+    if (json_string_null_or_empty(json_object_get(j_misc_config, "type")) || json_string_length(json_object_get(j_misc_config, "type")) > 128) {
       json_array_append_new(j_error, json_string("type is mandatory and must be a non empty string, maximum 128 characters"));
     }
     if (json_object_get(j_misc_config, "value") != NULL) {

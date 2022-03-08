@@ -101,7 +101,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
       if (json_integer_value(json_object_get(j_params, "otp-length")) != 6 && json_integer_value(json_object_get(j_params, "otp-length")) != 7 && json_integer_value(json_object_get(j_params, "otp-length")) != 8) {
         json_array_append_new(j_error, json_string("otp-length is mandatory and must be 6, 7 or 8"));
       }
-      if (!json_string_length(json_object_get(j_params, "issuer"))) {
+      if (json_string_null_or_empty(json_object_get(j_params, "issuer"))) {
         json_array_append_new(j_error, json_string("issuer is mandatory and must be a non empty string"));
       }
       if (json_integer_value(json_object_get(j_params, "secret-minimum-size")) <= 0 || json_integer_value(json_object_get(j_params, "secret-minimum-size")) > 128) {
@@ -729,7 +729,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
   char * secret_decoded = NULL;
   size_t secret_decoded_len;
   
-  if (!json_string_length(json_object_get(j_scheme_data, "value")) || json_string_length(json_object_get(j_scheme_data, "value")) != (size_t)json_integer_value(json_object_get((json_t *)cls, "otp-length"))) {
+  if (json_string_null_or_empty(json_object_get(j_scheme_data, "value")) || json_string_length(json_object_get(j_scheme_data, "value")) != (size_t)json_integer_value(json_object_get((json_t *)cls, "otp-length"))) {
     ret = G_ERROR_UNAUTHORIZED;
   } else if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
     j_otp = get_otp(config, (json_t *)cls, username);

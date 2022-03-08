@@ -544,7 +544,7 @@ static char ** get_salt_from_password_hash(struct mod_parameters * param, const 
               gc_password_len = json_string_length(json_object_get(j_element, "guw_password"));
               json_array_append_new(j_iterations, json_integer(0));
             }
-            if (json_string_length(json_object_get(j_element, "guw_password")) && o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_element, "guw_password")), gc_password_len, password_b64_decoded, &password_b64_decoded_len)) {
+            if (!json_string_null_or_empty(json_object_get(j_element, "guw_password")) && o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_element, "guw_password")), gc_password_len, password_b64_decoded, &password_b64_decoded_len)) {
               if ((salt = o_strdup((const char *)password_b64_decoded + password_b64_decoded_len - GLEWLWYD_DEFAULT_SALT_LENGTH)) != NULL) {
                 salt_list[index] = salt;
               } else {
@@ -1030,7 +1030,7 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
           json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
         } else {
           json_array_foreach(json_object_get(j_user, "scope"), index, j_element) {
-            if (!json_is_string(j_element) || !json_string_length(j_element)) {
+            if (!json_is_string(j_element) || json_string_null_or_empty(j_element)) {
               json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
             }
           }
@@ -1146,7 +1146,7 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
           }
         }
       } else {
-        if (json_string_length(json_object_get(j_user, "password"))) {
+        if (!json_string_null_or_empty(json_object_get(j_user, "password"))) {
           if ((passwords = o_malloc(sizeof(char *))) != NULL) {
             passwords[0] = json_string_value(json_object_get(j_user, "password"));
             ret = update_password_list(param, json_integer_value(j_gu_id), passwords, 1, 1);
@@ -1232,7 +1232,7 @@ int user_module_update(struct config_module * config, const char * username, jso
             }
           }
         } else {
-          if (json_string_length(json_object_get(j_user, "password"))) {
+          if (!json_string_null_or_empty(json_object_get(j_user, "password"))) {
             if ((passwords = o_malloc(sizeof(char *))) != NULL) {
               passwords[0] = json_string_value(json_object_get(j_user, "password"));
               ret = update_password_list(param, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), passwords, 1, 0);

@@ -158,7 +158,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
       if (json_integer_value(json_object_get(j_params, "credential-assertion")) <= 0) {
         json_array_append_new(j_error, json_string("credential-assertion is mandatory and must be a positive integer"));
       }
-      if (!json_string_length(json_object_get(j_params, "rp-origin"))) {
+      if (json_string_null_or_empty(json_object_get(j_params, "rp-origin"))) {
         json_array_append_new(j_error, json_string("rp-origin is mandatory and must be a non empty string"));
       }
       if (!json_array_size(json_object_get(j_params, "pubKey-cred-params"))) {
@@ -181,7 +181,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
       }
       if (json_object_get(j_params, "google-root-ca-r2") != NULL && !json_is_string(json_object_get(j_params, "google-root-ca-r2"))) {
         json_array_append_new(j_error, json_string("google-root-ca-r2 is optional and must be a string"));
-      } else if (json_string_length(json_object_get(j_params, "google-root-ca-r2"))) {
+      } else if (!json_string_null_or_empty(json_object_get(j_params, "google-root-ca-r2"))) {
         j_cert = get_cert_from_file_path(json_string_value(json_object_get(j_params, "google-root-ca-r2")));
         if (check_result_value(j_cert, G_OK)) {
           json_object_set(j_params, "google-root-ca-r2-content", json_object_get(j_cert, "certificate"));
@@ -194,7 +194,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
       }
       if (json_object_get(j_params, "apple-root-ca") != NULL && !json_is_string(json_object_get(j_params, "apple-root-ca"))) {
         json_array_append_new(j_error, json_string("apple-root-ca is optional and must be a string"));
-      } else if (json_string_length(json_object_get(j_params, "apple-root-ca"))) {
+      } else if (!json_string_null_or_empty(json_object_get(j_params, "apple-root-ca"))) {
         j_cert = get_cert_from_file_path(json_string_value(json_object_get(j_params, "apple-root-ca")));
         if (check_result_value(j_cert, G_OK)) {
           json_object_set(j_params, "apple-root-ca-content", json_object_get(j_cert, "certificate"));
@@ -211,7 +211,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
         } else {
           json_object_set_new(j_params, "root-ca-array", json_array());
           json_array_foreach(json_object_get(j_params, "root-ca-list"), index, j_element) {
-            if (!json_string_length(j_element)) {
+            if (json_string_null_or_empty(j_element)) {
               json_array_append_new(j_error, json_string("root-ca-list is optional and must be an array of strings"));
             } else {
               j_cert = get_cert_from_file_path(json_string_value(j_element));
@@ -1989,12 +1989,12 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
     j_error = json_array();
     if (j_error != NULL) {
       do {
-        if (!json_string_length(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId"))) {
+        if (json_string_null_or_empty(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId"))) {
           json_array_append_new(j_error, json_string("rawId mandatory"));
           ret = G_ERROR_PARAM;
           break;
         }
-        if (!json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON"))) {
+        if (json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON"))) {
           json_array_append_new(j_error, json_string("clientDataJSON mandatory"));
           ret = G_ERROR_PARAM;
           break;
@@ -2025,7 +2025,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           break;
         }
         // Step 4
-        if (!json_string_length(json_object_get(j_client_data, "challenge"))) {
+        if (json_string_null_or_empty(json_object_get(j_client_data, "challenge"))) {
           json_array_append_new(j_error, json_string("clientDataJSON.challenge mandatory"));
           ret = G_ERROR_PARAM;
           break;
@@ -2054,7 +2054,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           break;
         }
         // Step 5
-        if (!json_string_length(json_object_get(j_client_data, "origin"))) {
+        if (json_string_null_or_empty(json_object_get(j_client_data, "origin"))) {
           json_array_append_new(j_error, json_string("clientDataJSON.origin mandatory"));
           ret = G_ERROR_PARAM;
           break;
@@ -2068,7 +2068,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         }
         // Step 6 ??
 
-        if (!json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attestationObject"))) {
+        if (json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "attestationObject"))) {
           json_array_append_new(j_error, json_string("attestationObject required"));
           ret = G_ERROR_PARAM;
           break;
@@ -2476,7 +2476,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
     do {
       ret = G_OK;
 
-      if (!json_is_string(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId")) || !json_string_length(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId"))) {
+      if (!json_is_string(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId")) || json_string_null_or_empty(json_object_get(json_object_get(j_scheme_data, "credential"), "rawId"))) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - rawId missing");
         ret = G_ERROR_PARAM;
         break;
@@ -2487,7 +2487,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         ret = G_ERROR_UNAUTHORIZED;
         break;
       }
-      if (!json_is_string(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")) || !json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON"))) {
+      if (!json_is_string(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")) || json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON"))) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - clientDataJSON mandatory");
         ret = G_ERROR_PARAM;
         break;
@@ -2516,7 +2516,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         break;
       }
       // Step 8
-      if (!json_string_length(json_object_get(j_client_data, "challenge"))) {
+      if (json_string_null_or_empty(json_object_get(j_client_data, "challenge"))) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - clientDataJSON.challenge mandatory");
         ret = G_ERROR_PARAM;
         break;
@@ -2543,7 +2543,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         break;
       }
       // Step 9
-      if (!json_string_length(json_object_get(j_client_data, "origin"))) {
+      if (json_string_null_or_empty(json_object_get(j_client_data, "origin"))) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - clientDataJSON.origin mandatory");
         ret = G_ERROR_PARAM;
         break;
@@ -2556,7 +2556,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       // Step 10 ??
 
       // Step 11
-      if (!json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "authenticatorData"))) {
+      if (json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "authenticatorData"))) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - authenticatorData mandatory");
         ret = G_ERROR_PARAM;
         break;
@@ -3011,7 +3011,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
                      "ctsProfileMatch", json_object_get(j_parameters, "ctsProfileMatch")!=NULL?json_integer_value(json_object_get(j_parameters, "ctsProfileMatch")):-1,
                      "basicIntegrity", json_object_get(j_parameters, "basicIntegrity")!=NULL?json_integer_value(json_object_get(j_parameters, "basicIntegrity")):-1,
                      "session-mandatory", json_object_get(j_parameters, "session-mandatory")!=NULL?json_object_get(j_parameters, "session-mandatory"):json_true(),
-                     "seed", !json_string_length(json_object_get(j_parameters, "seed"))?"":json_string_value(json_object_get(j_parameters, "seed")),
+                     "seed", json_string_null_or_empty(json_object_get(j_parameters, "seed"))?"":json_string_value(json_object_get(j_parameters, "seed")),
                      "fmt", json_object_get(j_parameters, "fmt")!=NULL?json_deep_copy(json_object_get(j_parameters, "fmt")):json_pack("{sosososososo}", "packed", json_true(), "tpm", json_true(), "android-key", json_true(), "android-safetynet", json_true(), "fido-u2f", json_true(), "none", json_true()),
                      "force-fmt-none", json_object_get(j_parameters, "force-fmt-none")!=NULL?json_object_get(j_parameters, "force-fmt-none"):json_false(),
                      "google-root-ca-r2", json_string_length(json_object_get(j_parameters, "google-root-ca-r2"))?json_object_get(j_parameters, "google-root-ca-r2"):json_null(),
@@ -3181,7 +3181,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       j_return = json_pack("{si}", "result", G_ERROR);
     }
     json_decref(j_credential);
-  } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "remove-credential") && json_string_length(json_object_get(j_scheme_data, "credential_id"))) {
+  } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "remove-credential") && !json_string_null_or_empty(json_object_get(j_scheme_data, "credential_id"))) {
     j_credential = get_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
     if (check_result_value(j_credential, G_OK)) {
       if ((res = update_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), 4)) == G_OK) {
@@ -3199,7 +3199,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       j_return = json_pack("{si}", "result", G_ERROR);
     }
     json_decref(j_credential);
-  } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "disable-credential") && json_string_length(json_object_get(j_scheme_data, "credential_id"))) {
+  } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "disable-credential") && !json_string_null_or_empty(json_object_get(j_scheme_data, "credential_id"))) {
     j_credential = get_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
     if (check_result_value(j_credential, G_OK)) {
       if ((res = update_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), 3)) == G_OK) {
@@ -3217,7 +3217,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       j_return = json_pack("{si}", "result", G_ERROR);
     }
     json_decref(j_credential);
-  } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "enable-credential") && json_string_length(json_object_get(j_scheme_data, "credential_id"))) {
+  } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "enable-credential") && !json_string_null_or_empty(json_object_get(j_scheme_data, "credential_id"))) {
     j_credential = get_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
     if (check_result_value(j_credential, G_OK)) {
       if ((res = update_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), 1)) == G_OK) {
@@ -3235,7 +3235,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       j_return = json_pack("{si}", "result", G_ERROR);
     }
     json_decref(j_credential);
-  } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "edit-credential") && json_string_length(json_object_get(j_scheme_data, "credential_id")) && json_string_length(json_object_get(j_scheme_data, "name"))) {
+  } else if (0 == o_strcmp(json_string_value(json_object_get(j_scheme_data, "register")), "edit-credential") && !json_string_null_or_empty(json_object_get(j_scheme_data, "credential_id")) && !json_string_null_or_empty(json_object_get(j_scheme_data, "name"))) {
     j_credential = get_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
     if (check_result_value(j_credential, G_OK)) {
       if ((res = update_credential_name(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), json_string_value(json_object_get(j_scheme_data, "name")))) == G_OK) {

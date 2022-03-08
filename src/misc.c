@@ -208,7 +208,7 @@ char * join_json_string_array(json_t * j_array, const char * separator) {
   
   if (j_array != NULL && json_is_array(j_array)) {
     json_array_foreach(j_array, index, j_element) {
-      if (json_is_string(j_element) && json_string_length(j_element)) {
+      if (json_is_string(j_element) && !json_string_null_or_empty(j_element)) {
         if (str_result == NULL) {
           str_result = o_strdup(json_string_value(j_element));
         } else {

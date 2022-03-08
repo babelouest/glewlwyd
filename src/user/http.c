@@ -57,7 +57,7 @@ json_t * user_module_init(struct config_module * config, int readonly, int multi
   
   if (json_is_object(j_params)) {
     ret = G_OK;
-    if (!json_string_length(json_object_get(j_params, "url"))) {
+    if (json_string_null_or_empty(json_object_get(j_params, "url"))) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter url is mandatory must be a non empty string");
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter url is mandatory must be a non empty string");
       ret = G_ERROR_PARAM;
@@ -68,13 +68,13 @@ json_t * user_module_init(struct config_module * config, int readonly, int multi
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter default-scope is mandatory must be an array of non empty strings");
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter default-scope is mandatory must be an array of non empty strings");
       ret = G_ERROR_PARAM;
-    } else if (json_string_length(json_object_get(j_params, "username-format")) && o_strstr(json_string_value(json_object_get(j_params, "username-format")), "{username}") == NULL) {
+    } else if (!json_string_null_or_empty(json_object_get(j_params, "username-format")) && o_strstr(json_string_value(json_object_get(j_params, "username-format")), "{username}") == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter username-format is optional and must contain {username}");
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter username-format is optional and must contain {username}");
       ret = G_ERROR_PARAM;
     } else {
       json_array_foreach(json_object_get(j_params, "default-scope"), index, j_element) {
-        if (!json_string_length(j_element)) {
+        if (json_string_null_or_empty(j_element)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_module_init http - parameter default-scope is mandatory must be an array of non empty strings");
           if (ret == G_OK) {
             j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "parameter default-scope is mandatory must be an array of non empty strings");
@@ -185,7 +185,7 @@ int user_module_check_password(struct config_module * config, const char * usern
   if (json_object_get((json_t *)cls, "check-server-certificate") == json_false()) {
     request.check_server_certificate = 0;
   }
-  if (json_string_length(json_object_get((json_t *)cls, "username-format"))) {
+  if (!json_string_null_or_empty(json_object_get((json_t *)cls, "username-format"))) {
     request.auth_basic_user = str_replace(json_string_value(json_object_get((json_t *)cls, "username-format")), "{username}", username);
   } else {
     request.auth_basic_user = o_strdup(username);

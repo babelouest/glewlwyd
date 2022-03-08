@@ -202,7 +202,7 @@ json_t * user_module_init(struct config_module * config, int readonly, int multi
   
   if (json_object_get(j_parameters, "error") == NULL) {
     const char * prefix = "";
-    if (json_string_length(json_object_get(j_parameters, "username-prefix"))) {
+    if (!json_string_null_or_empty(json_object_get(j_parameters, "username-prefix"))) {
       prefix = json_string_value(json_object_get(j_parameters, "username-prefix"));
     }
     if (password == NULL) {
@@ -544,7 +544,7 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
         j_pwd_cur = json_array_get(json_object_get((json_t *)cls, "password"), index);
         j_pwd_next = json_array_get(json_object_get(j_user, "password"), index);
         
-        if (json_string_length(j_pwd_next)) {
+        if (!json_string_null_or_empty(j_pwd_next)) {
           json_array_append(j_password, j_pwd_next);
         } else if (j_pwd_cur != NULL && 0 == o_strcmp("", json_string_value(j_pwd_next))) {
           json_array_append(j_password, j_pwd_cur);
@@ -552,7 +552,7 @@ int user_module_add(struct config_module * config, json_t * j_user, void * cls) 
       }
       json_object_set_new((json_t *)cls, "password", j_password);
     } else {
-      if (json_string_length(json_object_get(j_user, "password"))) {
+      if (!json_string_null_or_empty(json_object_get(j_user, "password"))) {
         json_object_set((json_t *)cls, "password", json_object_get(j_user, "password"));
       } else {
         json_object_set((json_t *)cls, "password", json_null());
@@ -595,7 +595,7 @@ int user_module_update(struct config_module * config, const char * username, jso
         j_pwd_cur = json_array_get(json_object_get((json_t *)cls, "password"), index);
         j_pwd_next = json_array_get(json_object_get(j_user, "password"), index);
         
-        if (json_string_length(j_pwd_next)) {
+        if (!json_string_null_or_empty(j_pwd_next)) {
           json_array_append(j_password, j_pwd_next);
         } else if (j_pwd_cur != NULL && 0 == o_strcmp("", json_string_value(j_pwd_next))) {
           json_array_append(j_password, j_pwd_cur);
@@ -603,7 +603,7 @@ int user_module_update(struct config_module * config, const char * username, jso
       }
       json_object_set_new((json_t *)cls, "password", j_password);
     } else {
-      if (json_string_length(json_object_get(j_user, "password"))) {
+      if (!json_string_null_or_empty(json_object_get(j_user, "password"))) {
         json_object_set((json_t *)cls, "password", json_object_get(j_user, "password"));
       } else {
         json_object_set((json_t *)cls, "password", json_null());
@@ -758,7 +758,7 @@ int user_module_update_password(struct config_module * config, const char * user
     for (index=0; index<new_passwords_len; index++) {
       if (!o_strnullempty(new_passwords[index])) {
         json_array_append_new(j_password, json_string(new_passwords[index]));
-      } else if (new_passwords[index] != NULL && json_string_length(json_array_get(json_object_get((json_t *)cls, "password"), index))) {
+      } else if (new_passwords[index] != NULL && !json_string_null_or_empty(json_array_get(json_object_get((json_t *)cls, "password"), index))) {
         json_array_append(j_password, json_array_get(json_object_get((json_t *)cls, "password"), index));
       }
     }

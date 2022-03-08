@@ -196,13 +196,13 @@ static json_t * register_generate_email_verification_code(struct _register_confi
                                                    json_integer_value(json_object_get(config->j_parameters, "port")),
                                                    json_object_get(config->j_parameters, "use-tls")==json_true()?1:0,
                                                    json_object_get(config->j_parameters, "verify-certificate")==json_false()?0:1,
-                                                   json_string_length(json_object_get(config->j_parameters, "user"))?json_string_value(json_object_get(config->j_parameters, "user")):NULL,
-                                                   json_string_length(json_object_get(config->j_parameters, "password"))?json_string_value(json_object_get(config->j_parameters, "password")):NULL,
+                                                   !json_string_null_or_empty(json_object_get(config->j_parameters, "user"))?json_string_value(json_object_get(config->j_parameters, "user")):NULL,
+                                                   !json_string_null_or_empty(json_object_get(config->j_parameters, "password"))?json_string_value(json_object_get(config->j_parameters, "password")):NULL,
                                                    json_string_value(json_object_get(config->j_parameters, "from")),
                                                    email,
                                                    NULL,
                                                    NULL,
-                                                   json_string_length(json_object_get(config->j_parameters, "content-type"))?json_string_value(json_object_get(config->j_parameters, "content-type")):"text/plain; charset=utf-8",
+                                                   !json_string_null_or_empty(json_object_get(config->j_parameters, "content-type"))?json_string_value(json_object_get(config->j_parameters, "content-type")):"text/plain; charset=utf-8",
                                                    get_template_property(config->j_parameters, lang, "subject"),
                                                    body) == U_OK) {
                       y_log_message(Y_LOG_LEVEL_WARNING, "Security - Register new user - code sent to email %s at IP Address %s", email, ip_source);
@@ -940,13 +940,13 @@ static int register_update_email_trigger(struct _register_config * config, const
                                            json_integer_value(json_object_get(config->j_parameters, "port")),
                                            json_object_get(config->j_parameters, "use-tls")==json_true()?1:0,
                                            json_object_get(config->j_parameters, "verify-certificate")==json_false()?0:1,
-                                           json_string_length(json_object_get(config->j_parameters, "user"))?json_string_value(json_object_get(config->j_parameters, "user")):NULL,
-                                           json_string_length(json_object_get(config->j_parameters, "password"))?json_string_value(json_object_get(config->j_parameters, "password")):NULL,
+                                           !json_string_null_or_empty(json_object_get(config->j_parameters, "user"))?json_string_value(json_object_get(config->j_parameters, "user")):NULL,
+                                           !json_string_null_or_empty(json_object_get(config->j_parameters, "password"))?json_string_value(json_object_get(config->j_parameters, "password")):NULL,
                                            json_string_value(json_object_get(config->j_parameters, "update-email-from")),
                                            email,
                                            NULL,
                                            NULL,
-                                           json_string_length(json_object_get(config->j_parameters, "update-email-content-type"))?json_string_value(json_object_get(config->j_parameters, "update-email-content-type")):"text/plain; charset=utf-8",
+                                           !json_string_null_or_empty(json_object_get(config->j_parameters, "update-email-content-type"))?json_string_value(json_object_get(config->j_parameters, "update-email-content-type")):"text/plain; charset=utf-8",
                                            get_template_email_update_property(config->j_parameters, lang, "subject"),
                                            body) == U_OK) {
               y_log_message(Y_LOG_LEVEL_WARNING, "Security - Update e-mail - token sent to email %s at IP Address %s", email, ip_source);
@@ -1227,7 +1227,7 @@ static int register_reset_credentials_trigger(struct _register_config * config, 
     y_log_message(Y_LOG_LEVEL_ERROR, "register_reset_credentials_trigger - Error pthread_mutex_lock");
     ret = G_ERROR;
   } else {
-    if (check_result_value(j_user, G_OK) && json_string_length(json_object_get(json_object_get(j_user, "user"), "email"))) {
+    if (check_result_value(j_user, G_OK) && !json_string_null_or_empty(json_object_get(json_object_get(j_user, "user"), "email"))) {
       email = json_string_value(json_object_get(json_object_get(j_user, "user"), "email"));
       // Disable existing sessions for the specified e-mail address
       time(&now);
@@ -1267,13 +1267,13 @@ static int register_reset_credentials_trigger(struct _register_config * config, 
                                              json_integer_value(json_object_get(config->j_parameters, "port")),
                                              json_object_get(config->j_parameters, "use-tls")==json_true()?1:0,
                                              json_object_get(config->j_parameters, "verify-certificate")==json_false()?0:1,
-                                             json_string_length(json_object_get(config->j_parameters, "user"))?json_string_value(json_object_get(config->j_parameters, "user")):NULL,
-                                             json_string_length(json_object_get(config->j_parameters, "password"))?json_string_value(json_object_get(config->j_parameters, "password")):NULL,
+                                             !json_string_null_or_empty(json_object_get(config->j_parameters, "user"))?json_string_value(json_object_get(config->j_parameters, "user")):NULL,
+                                             !json_string_null_or_empty(json_object_get(config->j_parameters, "password"))?json_string_value(json_object_get(config->j_parameters, "password")):NULL,
                                              json_string_value(json_object_get(config->j_parameters, "reset-credentials-from")),
                                              email,
                                              NULL,
                                              NULL,
-                                             json_string_length(json_object_get(config->j_parameters, "reset-credentials-content-type"))?json_string_value(json_object_get(config->j_parameters, "reset-credentials-content-type")):"text/plain; charset=utf-8",
+                                             !json_string_null_or_empty(json_object_get(config->j_parameters, "reset-credentials-content-type"))?json_string_value(json_object_get(config->j_parameters, "reset-credentials-content-type")):"text/plain; charset=utf-8",
                                              get_template_reset_credentials_property(config->j_parameters, lang, "subject"),
                                              body) == U_OK) {
                 y_log_message(Y_LOG_LEVEL_WARNING, "Security - Reset credentials - token sent to email %s at IP Address %s", email, ip_source);
@@ -1680,7 +1680,7 @@ static int callback_register_check_username(const struct _u_request * request, s
   struct _register_config * config = (struct _register_config *)user_data;
   json_t * j_params = ulfius_get_json_body_request(request, NULL), * j_user, * j_user_reg, * j_return;
 
-  if (j_params != NULL && json_string_length(json_object_get(j_params, "username"))) {
+  if (j_params != NULL && !json_string_null_or_empty(json_object_get(j_params, "username"))) {
     j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, json_string_value(json_object_get(j_params, "username")));
     if (check_result_value(j_user, G_OK)) {
       j_return = json_pack("{ss}", "error", "username already taken");
@@ -1724,7 +1724,7 @@ static int callback_register_register_user(const struct _u_request * request, st
   strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
   
   if (json_object_get(config->j_parameters, "verify-email") != json_true()) {
-    if (json_string_length(json_object_get(j_parameters, "username"))) {
+    if (!json_string_null_or_empty(json_object_get(j_parameters, "username"))) {
       issued_for = get_client_hostname(request);
       if (issued_for != NULL) {
         j_result = register_new_user(config, json_string_value(json_object_get(j_parameters, "username")), issued_for, u_map_get_case(request->map_header, "user-agent"));
@@ -1887,7 +1887,7 @@ static int callback_register_update_password(const struct _u_request * request, 
   json_t * j_parameters = ulfius_get_json_body_request(request, NULL);
   
   if (0 != o_strcmp("no", json_string_value(json_object_get(config->j_parameters, "set-password")))) {
-    if (json_string_length(json_object_get(j_parameters, "password"))) {
+    if (!json_string_null_or_empty(json_object_get(j_parameters, "password"))) {
       if (config->glewlwyd_config->glewlwyd_plugin_callback_user_update_password(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_parameters, "password"))) == G_OK) {
         if (register_user_password_set(config, json_string_value(json_object_get((json_t *)response->shared_data, "username"))) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_update_password - Error register_user_password_set");
@@ -1964,8 +1964,8 @@ static int callback_register_get_scheme_registration(const struct _u_request * r
   struct _register_config * config = (struct _register_config *)user_data;
   json_t * j_parameters = ulfius_get_json_body_request(request, NULL), * j_response;
   
-  if (json_string_length(json_object_get(j_parameters, "scheme_name")) && 
-      json_string_length(json_object_get(j_parameters, "username")) && 
+  if (!json_string_null_or_empty(json_object_get(j_parameters, "scheme_name")) && 
+      !json_string_null_or_empty(json_object_get(j_parameters, "username")) && 
       0 == o_strcmp(json_string_value(json_object_get(j_parameters, "username")), json_string_value(json_object_get((json_t *)response->shared_data, "username"))) && 
       can_register_scheme(config, request, json_string_value(json_object_get(j_parameters, "scheme_name")))) {
     j_response = config->glewlwyd_config->glewlwyd_plugin_callback_scheme_register_get(config->glewlwyd_config, json_string_value(json_object_get(j_parameters, "scheme_name")), request, json_string_value(json_object_get((json_t *)response->shared_data, "username")));
@@ -2019,9 +2019,9 @@ static int callback_register_update_scheme_registration(const struct _u_request 
   struct _register_config * config = (struct _register_config *)user_data;
   json_t * j_parameters = ulfius_get_json_body_request(request, NULL), * j_response;
   
-  if (json_string_length(json_object_get(j_parameters, "scheme_name")) &&
+  if (!json_string_null_or_empty(json_object_get(j_parameters, "scheme_name")) &&
       json_is_object(json_object_get(j_parameters, "value")) &&
-      json_string_length(json_object_get(j_parameters, "username")) &&
+      !json_string_null_or_empty(json_object_get(j_parameters, "username")) &&
       0 == o_strcmp(json_string_value(json_object_get(j_parameters, "username")), json_string_value(json_object_get((json_t *)response->shared_data, "username"))) && 
       can_register_scheme(config, request, json_string_value(json_object_get(j_parameters, "scheme_name")))) {
     j_response = config->glewlwyd_config->glewlwyd_plugin_callback_scheme_register(config->glewlwyd_config, json_string_value(json_object_get(j_parameters, "scheme_name")), request, json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_object_get(j_parameters, "value"));
@@ -2057,7 +2057,10 @@ static int callback_register_canuse_scheme_registration(const struct _u_request 
   json_t * j_parameters = ulfius_get_json_body_request(request, NULL);
   int ret;
   
-  if (json_string_length(json_object_get(j_parameters, "scheme_name")) && json_string_length(json_object_get(j_parameters, "username")) && 0 == o_strcmp(json_string_value(json_object_get(j_parameters, "username")), json_string_value(json_object_get((json_t *)response->shared_data, "username"))) && can_register_scheme(config, request, json_string_value(json_object_get(j_parameters, "scheme_name")))) {
+  if (!json_string_null_or_empty(json_object_get(j_parameters, "scheme_name")) &&
+      !json_string_null_or_empty(json_object_get(j_parameters, "username")) &&
+      0 == o_strcmp(json_string_value(json_object_get(j_parameters, "username")), json_string_value(json_object_get((json_t *)response->shared_data, "username"))) &&
+      can_register_scheme(config, request, json_string_value(json_object_get(j_parameters, "scheme_name")))) {
     ret = config->glewlwyd_config->glewlwyd_plugin_callback_scheme_can_use(config->glewlwyd_config, json_string_value(json_object_get(j_parameters, "scheme_name")), json_string_value(json_object_get((json_t *)response->shared_data, "username")));
     if (ret == GLEWLWYD_IS_NOT_AVAILABLE) {
       response->status = 403;
@@ -2167,7 +2170,7 @@ static int callback_register_update_email_trigger(const struct _u_request * requ
   json_t * j_parameters = ulfius_get_json_body_request(request, NULL);
   char * issued_for = NULL;
   
-  if (json_string_length(json_object_get(j_parameters, "email"))) {
+  if (!json_string_null_or_empty(json_object_get(j_parameters, "email"))) {
     issued_for = get_client_hostname(request);
     if (issued_for != NULL) {
       if (register_update_email_trigger(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_parameters, "email")), json_string_value(json_object_get(j_parameters, "lang")), issued_for, u_map_get_case(request->map_header, "user-agent"), get_ip_source(request)) != G_OK) {
@@ -2224,7 +2227,7 @@ static int callback_reset_credentials_update_password(const struct _u_request * 
   struct _register_config * config = (struct _register_config *)user_data;
   json_t * j_parameters = ulfius_get_json_body_request(request, NULL);
   
-  if (json_string_length(json_object_get(j_parameters, "password"))) {
+  if (!json_string_null_or_empty(json_object_get(j_parameters, "password"))) {
     if (config->glewlwyd_config->glewlwyd_plugin_callback_user_update_password(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_string_value(json_object_get(j_parameters, "password"))) == G_OK) {
       if (register_user_password_set(config, json_string_value(json_object_get((json_t *)response->shared_data, "username"))) != G_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_reset_credentials_update_password - Error register_user_password_set");
@@ -2295,7 +2298,7 @@ static int callback_register_reset_credentials_email_trigger(const struct _u_req
   json_t * j_parameters = ulfius_get_json_body_request(request, NULL);
   char * issued_for = NULL;
   
-  if (json_string_length(json_object_get(j_parameters, "username"))) {
+  if (!json_string_null_or_empty(json_object_get(j_parameters, "username"))) {
     issued_for = get_client_hostname(request);
     if (issued_for != NULL) {
       if (register_reset_credentials_trigger(config, json_string_value(json_object_get(j_parameters, "username")), json_string_value(json_object_get(j_parameters, "lang")), json_string_value(json_object_get(j_parameters, "callback_url")), issued_for, u_map_get_case(request->map_header, "user-agent"), get_ip_source(request)) != G_OK) {
@@ -2429,7 +2432,7 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
       json_array_append_new(j_errors, json_string("parameters must be a JSON object"));
     } else {
       if (json_object_get(j_params, "registration") == json_true() || json_object_get(j_params, "registration") == NULL) {
-        if (!json_string_length(json_object_get(j_params, "session-key"))) {
+        if (json_string_null_or_empty(json_object_get(j_params, "session-key"))) {
           json_array_append_new(j_errors, json_string("session-key is mandatory and must be a non empty string"));
         }
         if (json_integer_value(json_object_get(j_params, "session-duration")) <= 0) {
@@ -2450,7 +2453,7 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
           json_array_append_new(j_errors, json_string("scope is mandatory and must be a non empty array of non empty strings"));
         } else {
           json_array_foreach(json_object_get(j_params, "scope"), index, j_element) {
-            if (!json_string_length(j_element)) {
+            if (json_string_null_or_empty(j_element)) {
               json_array_append_new(j_errors, json_string("scope is mandatory and must be a non empty array of non empty strings"));
             }
           }
@@ -2459,10 +2462,10 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
           json_array_append_new(j_errors, json_string("schemes is optional and must be an array of objects"));
         } else {
           json_array_foreach(json_object_get(j_params, "schemes"), index, j_element) {
-            if (!json_string_length(json_object_get(j_element, "module"))) {
+            if (json_string_null_or_empty(json_object_get(j_element, "module"))) {
               json_array_append_new(j_errors, json_string("scheme object must have a attribute 'module' with a non empty string value"));
             }
-            if (!json_string_length(json_object_get(j_element, "name"))) {
+            if (json_string_null_or_empty(json_object_get(j_element, "name"))) {
               json_array_append_new(j_errors, json_string("scheme object must have a attribute 'name' with a non empty string value"));
             }
             if (0 != o_strcmp("always", json_string_value(json_object_get(j_element, "register"))) && 0 != o_strcmp("yes", json_string_value(json_object_get(j_element, "register")))) {
@@ -2484,10 +2487,10 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
         if (json_integer_value(json_object_get(j_params, "update-email-token-duration")) <= 0) {
           json_array_append_new(j_errors, json_string("update-email-token-duration is mandatory and must be a positive integer"));
         }
-        if (json_object_get(j_params, "update-email-from") != NULL && !json_string_length(json_object_get(j_params, "update-email-from"))) {
+        if (json_object_get(j_params, "update-email-from") != NULL && json_string_null_or_empty(json_object_get(j_params, "update-email-from"))) {
           json_array_append_new(j_errors, json_string("update-email-from is mandatory and must be a non empty string"));
         }
-        if (json_object_get(j_params, "update-email-content-type") != NULL && !json_string_length(json_object_get(j_params, "update-email-content-type"))) {
+        if (json_object_get(j_params, "update-email-content-type") != NULL && json_string_null_or_empty(json_object_get(j_params, "update-email-content-type"))) {
           json_array_append_new(j_errors, json_string("update-email-content-type is optional and must be a string"));
         }
         if (!json_is_object(json_object_get(j_params, "templatesUpdateEmail"))) {
@@ -2503,10 +2506,10 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
               }
               if (json_object_get(j_template, "defaultLang") == json_true()) {
                 nb_default_lang++;
-                if (!json_string_length(json_object_get(j_template, "subject"))) {
+                if (json_string_null_or_empty(json_object_get(j_template, "subject"))) {
                   json_array_append_new(j_errors, json_string("subject is mandatory for default lang and must be a non empty string"));
                 }
-                if (json_object_get(j_template, "body") != NULL && !json_string_length(json_object_get(j_template, "body"))) {
+                if (json_object_get(j_template, "body") != NULL && json_string_null_or_empty(json_object_get(j_template, "body"))) {
                   json_array_append_new(j_errors, json_string("body is mandatory for default lang and must be a non empty string"));
                 }
               }
@@ -2527,17 +2530,17 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
         if (!json_is_boolean(json_object_get(j_params, "email-is-username"))) {
           json_array_append_new(j_errors, json_string("email-is-username is optional and must be boolean"));
         }
-        if (json_object_get(j_params, "content-type") != NULL && !json_string_length(json_object_get(j_params, "content-type"))) {
+        if (json_object_get(j_params, "content-type") != NULL && json_string_null_or_empty(json_object_get(j_params, "content-type"))) {
           json_array_append_new(j_errors, json_string("content-type is optional and must be a string"));
         }
-        if (json_object_get(j_params, "from") != NULL && !json_string_length(json_object_get(j_params, "from"))) {
+        if (json_object_get(j_params, "from") != NULL && json_string_null_or_empty(json_object_get(j_params, "from"))) {
           json_array_append_new(j_errors, json_string("from is mandatory and must be a non empty string"));
         }
         if (json_object_get(j_params, "templates") == NULL) {
-          if (json_object_get(j_params, "subject") != NULL && !json_string_length(json_object_get(j_params, "subject"))) {
+          if (json_object_get(j_params, "subject") != NULL && json_string_null_or_empty(json_object_get(j_params, "subject"))) {
             json_array_append_new(j_errors, json_string("subject is mandatory and must be a non empty string"));
           }
-          if (json_object_get(j_params, "body-pattern") != NULL && !json_string_length(json_object_get(j_params, "body-pattern"))) {
+          if (json_object_get(j_params, "body-pattern") != NULL && json_string_null_or_empty(json_object_get(j_params, "body-pattern"))) {
             json_array_append_new(j_errors, json_string("body-pattern is mandatory and must be a non empty string"));
           }
         } else {
@@ -2554,10 +2557,10 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
                 }
                 if (json_object_get(j_template, "defaultLang") == json_true()) {
                   nb_default_lang++;
-                  if (!json_string_length(json_object_get(j_template, "subject"))) {
+                  if (json_string_null_or_empty(json_object_get(j_template, "subject"))) {
                     json_array_append_new(j_errors, json_string("subject is mandatory for default lang and must be a non empty string"));
                   }
-                  if (json_object_get(j_template, "body") != NULL && !json_string_length(json_object_get(j_template, "body"))) {
+                  if (json_object_get(j_template, "body") != NULL && json_string_null_or_empty(json_object_get(j_template, "body"))) {
                     json_array_append_new(j_errors, json_string("body is mandatory for default lang and must be a non empty string"));
                   }
                 }
@@ -2573,7 +2576,7 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
         json_array_append_new(j_errors, json_string("reset-credentials is optional and must be a boolean"));
       }
       if (json_object_get(j_params, "reset-credentials") == json_true()) {
-        if (!json_string_length(json_object_get(j_params, "reset-credentials-session-key"))) {
+        if (json_string_null_or_empty(json_object_get(j_params, "reset-credentials-session-key"))) {
           json_array_append_new(j_errors, json_string("reset-credentials-session-key is mandatory and must be a non empty string"));
         }
         if (json_integer_value(json_object_get(j_params, "reset-credentials-session-duration")) <= 0) {
@@ -2586,10 +2589,10 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
           if (json_integer_value(json_object_get(j_params, "reset-credentials-token-duration")) <= 0) {
             json_array_append_new(j_errors, json_string("reset-credentials-token-duration is mandatory and must be a positive integer"));
           }
-          if (json_object_get(j_params, "reset-credentials-from") != NULL && !json_string_length(json_object_get(j_params, "reset-credentials-from"))) {
+          if (json_object_get(j_params, "reset-credentials-from") != NULL && json_string_null_or_empty(json_object_get(j_params, "reset-credentials-from"))) {
             json_array_append_new(j_errors, json_string("reset-credentials-from is mandatory and must be a non empty string"));
           }
-          if (json_object_get(j_params, "reset-credentials-content-type") != NULL && !json_string_length(json_object_get(j_params, "reset-credentials-content-type"))) {
+          if (json_object_get(j_params, "reset-credentials-content-type") != NULL && json_string_null_or_empty(json_object_get(j_params, "reset-credentials-content-type"))) {
             json_array_append_new(j_errors, json_string("reset-credentials-content-type is optional and must be a string"));
           }
           if (!json_is_object(json_object_get(j_params, "templatesResetCredentials"))) {
@@ -2605,10 +2608,10 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
                 }
                 if (json_object_get(j_template, "defaultLang") == json_true()) {
                   nb_default_lang++;
-                  if (!json_string_length(json_object_get(j_template, "subject"))) {
+                  if (json_string_null_or_empty(json_object_get(j_template, "subject"))) {
                     json_array_append_new(j_errors, json_string("subject is mandatory for default lang and must be a non empty string"));
                   }
-                  if (json_object_get(j_template, "body") != NULL && !json_string_length(json_object_get(j_template, "body"))) {
+                  if (json_object_get(j_template, "body") != NULL && json_string_null_or_empty(json_object_get(j_template, "body"))) {
                     json_array_append_new(j_errors, json_string("body is mandatory for default lang and must be a non empty string"));
                   }
                 }
@@ -2623,7 +2626,7 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
           json_array_append_new(j_errors, json_string("reset-credentials-code is optional and must be a boolean"));
         }
         if (json_object_get(j_params, "reset-credentials-code") == json_true()) {
-          if (!json_string_length(json_object_get(j_params, "reset-credentials-code-property"))) {
+          if (json_string_null_or_empty(json_object_get(j_params, "reset-credentials-code-property"))) {
             json_array_append_new(j_errors, json_string("reset-credentials-code-property is mandatory and must be a non empty string"));
           }
           if (json_integer_value(json_object_get(j_params, "reset-credentials-code-list-size")) <= 0) {
@@ -2635,7 +2638,7 @@ json_t * is_plugin_parameters_valid(json_t * j_params) {
         }
       }
       if (json_object_get(j_params, "update-email") == json_true() || json_object_get(j_params, "verify-email") == json_true() || (json_object_get(j_params, "reset-credentials") == json_true() && json_object_get(j_params, "reset-credentials-email") == json_true())) {
-        if (!json_string_length(json_object_get(j_params, "host"))) {
+        if (json_string_null_or_empty(json_object_get(j_params, "host"))) {
           json_array_append_new(j_errors, json_string("host is mandatory and must be a non empty string"));
         }
         if (json_object_get(j_params, "port") != NULL && (!json_is_integer(json_object_get(j_params, "port")) || json_integer_value(json_object_get(j_params, "port")) < 0 || json_integer_value(json_object_get(j_params, "port")) > 65535)) {

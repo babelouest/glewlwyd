@@ -131,12 +131,12 @@ static json_t * check_parameters (json_t * j_params) {
     if ((0 == o_strcmp("rsa", json_string_value(json_object_get(j_params, "jwt-type"))) ||
                 0 == o_strcmp("ecdsa", json_string_value(json_object_get(j_params, "jwt-type")))) && 
                (json_object_get(j_params, "key") == NULL || json_object_get(j_params, "cert") == NULL ||
-               !json_is_string(json_object_get(j_params, "key")) || !json_is_string(json_object_get(j_params, "cert")) || !json_string_length(json_object_get(j_params, "key")) || !json_string_length(json_object_get(j_params, "cert")))) {
+               !json_is_string(json_object_get(j_params, "key")) || !json_is_string(json_object_get(j_params, "cert")) || json_string_null_or_empty(json_object_get(j_params, "key")) || json_string_null_or_empty(json_object_get(j_params, "cert")))) {
       json_array_append_new(j_error, json_string("Properties 'cert' and 'key' are mandatory and must be strings"));
       ret = G_ERROR_PARAM;
     }
     if (0 == o_strcmp("sha", json_string_value(json_object_get(j_params, "jwt-type"))) &&
-              (json_object_get(j_params, "key") == NULL || !json_is_string(json_object_get(j_params, "key")) || !json_string_length(json_object_get(j_params, "key")))) {
+              (json_object_get(j_params, "key") == NULL || !json_is_string(json_object_get(j_params, "key")) || json_string_null_or_empty(json_object_get(j_params, "key")))) {
       json_array_append_new(j_error, json_string("Property 'key' is mandatory and must be a string"));
       ret = G_ERROR_PARAM;
     }
@@ -186,7 +186,7 @@ static json_t * check_parameters (json_t * j_params) {
             json_array_append_new(j_error, json_string("'scope' element must be a JSON object"));
             ret = G_ERROR_PARAM;
           } else {
-            if (json_object_get(j_element, "name") == NULL || !json_is_string(json_object_get(j_element, "name")) || !json_string_length(json_object_get(j_element, "name"))) {
+            if (json_object_get(j_element, "name") == NULL || !json_is_string(json_object_get(j_element, "name")) || json_string_null_or_empty(json_object_get(j_element, "name"))) {
               json_array_append_new(j_error, json_string("'scope' element must have a property 'name' of type string and non empty"));
               ret = G_ERROR_PARAM;
             } else if (json_object_get(j_element, "refresh-token-rolling") != NULL && !json_is_boolean(json_object_get(j_element, "refresh-token-rolling"))) {
@@ -209,10 +209,10 @@ static json_t * check_parameters (json_t * j_params) {
             json_array_append_new(j_error, json_string("'additional-parameters' element must be a JSON object"));
             ret = G_ERROR_PARAM;
           } else {
-            if (json_object_get(j_element, "user-parameter") == NULL || !json_is_string(json_object_get(j_element, "user-parameter")) || !json_string_length(json_object_get(j_element, "user-parameter"))) {
+            if (json_object_get(j_element, "user-parameter") == NULL || !json_is_string(json_object_get(j_element, "user-parameter")) || json_string_null_or_empty(json_object_get(j_element, "user-parameter"))) {
               json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'user-parameter' of type string and non empty"));
               ret = G_ERROR_PARAM;
-            } else if (json_object_get(j_element, "token-parameter") == NULL || !json_is_string(json_object_get(j_element, "token-parameter")) || !json_string_length(json_object_get(j_element, "token-parameter"))) {
+            } else if (json_object_get(j_element, "token-parameter") == NULL || !json_is_string(json_object_get(j_element, "token-parameter")) || json_string_null_or_empty(json_object_get(j_element, "token-parameter"))) {
               json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'username', 'salt', 'type', 'iat', 'expires_in', 'scope'"));
               ret = G_ERROR_PARAM;
             } else if (0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "username") || 
@@ -484,7 +484,7 @@ static char * generate_access_token(struct _oauth2_config * config, const char *
     }
     if (json_object_get(config->j_params, "additional-parameters") != NULL && j_user != NULL) {
       json_array_foreach(json_object_get(config->j_params, "additional-parameters"), index, j_element) {
-        if (json_is_string(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))) && json_string_length(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
+        if (json_is_string(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))) && !json_string_null_or_empty(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
           r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), json_string_value(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))));
         } else if (json_is_array(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
           json_array_foreach(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))), index_p, j_value) {
@@ -919,7 +919,7 @@ static int validate_code_challenge(json_t * j_result_code, const char * code_ver
   size_t code_verifier_hash_len = 32, code_verifier_hash_b64_len = 0;
   gnutls_datum_t key_data;
   
-  if (json_string_length(json_object_get(j_result_code, "code_challenge"))) {
+  if (!json_string_null_or_empty(json_object_get(j_result_code, "code_challenge"))) {
     if (is_pkce_char_valid(code_verifier)) {
       if (0 == o_strncmp(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX, json_string_value(json_object_get(j_result_code, "code_challenge")), o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX))) {
         key_data.data = (unsigned char *)code_verifier;

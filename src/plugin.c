@@ -198,7 +198,7 @@ json_t * glewlwyd_callback_check_client_valid(struct config_plugin * config, con
     j_client = get_client(config->glewlwyd_config, client_id, NULL);
     if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
       if (password != NULL) {
-        if (json_string_length(json_object_get(json_object_get(j_client, "client"), "client_secret"))) {
+        if (!json_string_null_or_empty(json_object_get(json_object_get(j_client, "client"), "client_secret"))) {
           if (0 != o_strcmp(password, json_string_value(json_object_get(json_object_get(j_client, "client"), "client_secret")))) {
             password_checked = 0;
           }

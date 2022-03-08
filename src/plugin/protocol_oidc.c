@@ -303,7 +303,7 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("parameters invalid"));
       ret = G_ERROR_PARAM;
     }
-    if (json_object_get(j_params, "iss") == NULL || !json_string_length(json_object_get(j_params, "iss"))) {
+    if (json_object_get(j_params, "iss") == NULL || json_string_null_or_empty(json_object_get(j_params, "iss"))) {
       json_array_append_new(j_error, json_string("iss is mandatory must be a non empty string"));
       ret = G_ERROR_PARAM;
     }
@@ -331,8 +331,8 @@ static json_t * check_parameters (json_t * j_params) {
       json_array_append_new(j_error, json_string("jwks-public is optional must be a string"));
       ret = G_ERROR_PARAM;
     }
-    if (json_string_length(json_object_get(j_params, "jwks-public-uri")) || json_string_length(json_object_get(j_params, "jwks-public"))) {
-      if (json_string_length(json_object_get(j_params, "jwks-public-uri"))) {
+    if (!json_string_null_or_empty(json_object_get(j_params, "jwks-public-uri")) || !json_string_null_or_empty(json_object_get(j_params, "jwks-public"))) {
+      if (!json_string_null_or_empty(json_object_get(j_params, "jwks-public-uri"))) {
         if (r_jwks_init(&jwks) != RHN_OK || r_jwks_import_from_uri(jwks, json_string_value(json_object_get(j_params, "jwks-public-uri")), R_FLAG_FOLLOW_REDIRECT|(json_object_get(j_params, "request-uri-allow-https-non-secure")==json_true()?R_FLAG_IGNORE_SERVER_CERTIFICATE:0)) != RHN_OK) {
           json_array_append_new(j_error, json_string("jwks-public-uri leads to an invalid jwks"));
           ret = G_ERROR_PARAM;
@@ -346,7 +346,7 @@ static json_t * check_parameters (json_t * j_params) {
         r_jwks_free(jwks);
       }
     }
-    if (json_string_length(json_object_get(j_params, "jwks-uri")) || json_string_length(json_object_get(j_params, "jwks-private"))) {
+    if (!json_string_null_or_empty(json_object_get(j_params, "jwks-uri")) || !json_string_null_or_empty(json_object_get(j_params, "jwks-private"))) {
       if (json_object_get(j_params, "default-kid") != NULL && !json_is_string(json_object_get(j_params, "default-kid"))) {
         json_array_append_new(j_error, json_string("default-kid is optional must be a string"));
         ret = G_ERROR_PARAM;
@@ -355,7 +355,7 @@ static json_t * check_parameters (json_t * j_params) {
         json_array_append_new(j_error, json_string("Property 'client-sign_kid-parameter' is optional and must be a string"));
         ret = G_ERROR_PARAM;
       }
-      if (json_string_length(json_object_get(j_params, "jwks-uri"))) {
+      if (!json_string_null_or_empty(json_object_get(j_params, "jwks-uri"))) {
         if (r_jwks_init(&jwks) != RHN_OK || r_jwks_import_from_uri(jwks, json_string_value(json_object_get(j_params, "jwks-uri")), R_FLAG_FOLLOW_REDIRECT|(json_object_get(j_params, "request-uri-allow-https-non-secure")==json_true()?R_FLAG_IGNORE_SERVER_CERTIFICATE:0)) != RHN_OK) {
           json_array_append_new(j_error, json_string("jwks-uri leads to an invalid jwks"));
           ret = G_ERROR_PARAM;
@@ -388,11 +388,11 @@ static json_t * check_parameters (json_t * j_params) {
            0 == o_strcmp("eddsa", json_string_value(json_object_get(j_params, "jwt-type"))) ||
            0 == o_strcmp("rsa-pss", json_string_value(json_object_get(j_params, "jwt-type")))) &&
            (json_object_get(j_params, "key") == NULL || json_object_get(j_params, "cert") == NULL ||
-           !json_is_string(json_object_get(j_params, "key")) || !json_is_string(json_object_get(j_params, "cert")) || !json_string_length(json_object_get(j_params, "key")) || !json_string_length(json_object_get(j_params, "cert")))) {
+           !json_is_string(json_object_get(j_params, "key")) || !json_is_string(json_object_get(j_params, "cert")) || json_string_null_or_empty(json_object_get(j_params, "key")) || json_string_null_or_empty(json_object_get(j_params, "cert")))) {
         json_array_append_new(j_error, json_string("Properties 'cert' and 'key' are mandatory and must be strings"));
         ret = G_ERROR_PARAM;
       } else if (0 == o_strcmp("sha", json_string_value(json_object_get(j_params, "jwt-type"))) &&
-         (json_object_get(j_params, "key") == NULL || !json_is_string(json_object_get(j_params, "key")) || !json_string_length(json_object_get(j_params, "key")))) {
+         (json_object_get(j_params, "key") == NULL || !json_is_string(json_object_get(j_params, "key")) || json_string_null_or_empty(json_object_get(j_params, "key")))) {
         json_array_append_new(j_error, json_string("Property 'key' is mandatory and must be a string"));
         ret = G_ERROR_PARAM;
       }
@@ -483,7 +483,7 @@ static json_t * check_parameters (json_t * j_params) {
       ret = G_ERROR_PARAM;
     } else {
       json_array_foreach(json_object_get(j_params, "jwks-x5c"), index, j_element) {
-        if (!json_string_length(j_element)) {
+        if (json_string_null_or_empty(j_element)) {
           json_array_append_new(j_error, json_string("Property 'jwks-x5c' is optional and must be an array of strings"));
           ret = G_ERROR_PARAM;
         }
@@ -577,7 +577,7 @@ static json_t * check_parameters (json_t * j_params) {
             json_array_append_new(j_error, json_string("'scope' element must be a JSON object"));
             ret = G_ERROR_PARAM;
           } else {
-            if (json_object_get(j_element, "name") == NULL || !json_is_string(json_object_get(j_element, "name")) || !json_string_length(json_object_get(j_element, "name"))) {
+            if (json_object_get(j_element, "name") == NULL || !json_is_string(json_object_get(j_element, "name")) || json_string_null_or_empty(json_object_get(j_element, "name"))) {
               json_array_append_new(j_error, json_string("'scope' element must have a property 'name' of type string and non empty"));
               ret = G_ERROR_PARAM;
             } else if (json_object_get(j_element, "refresh-token-rolling") != NULL && !json_is_boolean(json_object_get(j_element, "refresh-token-rolling"))) {
@@ -601,10 +601,10 @@ static json_t * check_parameters (json_t * j_params) {
             json_array_append_new(j_error, json_string("'additional-parameters' element must be a JSON object"));
             ret = G_ERROR_PARAM;
           } else {
-            if (json_object_get(j_element, "user-parameter") == NULL || !json_is_string(json_object_get(j_element, "user-parameter")) || !json_string_length(json_object_get(j_element, "user-parameter"))) {
+            if (json_object_get(j_element, "user-parameter") == NULL || !json_is_string(json_object_get(j_element, "user-parameter")) || json_string_null_or_empty(json_object_get(j_element, "user-parameter"))) {
               json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'user-parameter' of type string and non empty"));
               ret = G_ERROR_PARAM;
-            } else if (json_object_get(j_element, "token-parameter") == NULL || !json_is_string(json_object_get(j_element, "token-parameter")) || !json_string_length(json_object_get(j_element, "token-parameter"))) {
+            } else if (json_object_get(j_element, "token-parameter") == NULL || !json_is_string(json_object_get(j_element, "token-parameter")) || json_string_null_or_empty(json_object_get(j_element, "token-parameter"))) {
               json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'username', 'salt', 'type', 'iat', 'expires_in', 'scope'"));
               ret = G_ERROR_PARAM;
             } else if (0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "sub") ||
@@ -630,7 +630,7 @@ static json_t * check_parameters (json_t * j_params) {
             json_array_append_new(j_error, json_string("'claims' element must be a JSON object"));
             ret = G_ERROR_PARAM;
           } else {
-            if (json_object_get(j_element, "name") == NULL || !json_string_length(json_object_get(j_element, "name"))) {
+            if (json_object_get(j_element, "name") == NULL || json_string_null_or_empty(json_object_get(j_element, "name"))) {
               json_array_append_new(j_error, json_string("'claims' element must have a property 'name' of type string and non empty"));
               ret = G_ERROR_PARAM;
             } else if (0 == o_strcmp("iss", json_string_value(json_object_get(j_element, "name"))) ||
@@ -649,7 +649,7 @@ static json_t * check_parameters (json_t * j_params) {
               json_array_append_new(j_error, json_string("'claims' property 'name' forbidden values are: 'iss', 'sub', 'aud', 'exp', 'iat', 'auth_time', 'nonce', 'acr', 'amr', 'azp', 'name', 'email', 'address'"));
               ret = G_ERROR_PARAM;
             }
-            if (json_object_get(j_element, "user-property") == NULL || !json_string_length(json_object_get(j_element, "user-property"))) {
+            if (json_object_get(j_element, "user-property") == NULL || json_string_null_or_empty(json_object_get(j_element, "user-property"))) {
               json_array_append_new(j_error, json_string("'claims' element must have a property 'user-property' of type string and non empty"));
               ret = G_ERROR_PARAM;
             }
@@ -657,8 +657,8 @@ static json_t * check_parameters (json_t * j_params) {
               json_array_append_new(j_error, json_string("'claims' element 'type' is optional and must be of type string and must have one of the following values: 'string', 'boolean', 'number'"));
               ret = G_ERROR_PARAM;
             } else if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_element, "type")))) {
-              if (json_object_get(j_element, "boolean-value-true") == NULL || !json_string_length(json_object_get(j_element, "boolean-value-true")) ||
-                  json_object_get(j_element, "boolean-value-false") == NULL || !json_string_length(json_object_get(j_element, "boolean-value-false"))) {
+              if (json_object_get(j_element, "boolean-value-true") == NULL || json_string_null_or_empty(json_object_get(j_element, "boolean-value-true")) ||
+                  json_object_get(j_element, "boolean-value-false") == NULL || json_string_null_or_empty(json_object_get(j_element, "boolean-value-false"))) {
                 json_array_append_new(j_error, json_string("'claims' elements 'boolean-value-true' and 'boolean-value-true' are mandatory when type is 'boolean' and they must be non empty strings"));
                 ret = G_ERROR_PARAM;
               }
@@ -676,7 +676,7 @@ static json_t * check_parameters (json_t * j_params) {
               ret = G_ERROR_PARAM;
             } else if (json_object_get(j_element, "scope")) {
               json_array_foreach(json_object_get(j_element, "scope"), indexScope, j_scope) {
-                if (!json_string_length(j_scope)) {
+                if (json_string_null_or_empty(j_scope)) {
                   json_array_append_new(j_error, json_string("'claims' element 'scope' is optional and must be a JSON array of strings"));
                   ret = G_ERROR_PARAM;
                 }
@@ -695,7 +695,7 @@ static json_t * check_parameters (json_t * j_params) {
       ret = G_ERROR_PARAM;
     } else if (json_object_get(j_params, "name-claim-scope") != NULL) {
       json_array_foreach(json_object_get(j_params, "name-claim-scope"), indexScope, j_scope) {
-        if (!json_string_length(j_scope)) {
+        if (json_string_null_or_empty(j_scope)) {
           json_array_append_new(j_error, json_string("Property 'name-claim-scope' is optional and must be an array of strings"));
           ret = G_ERROR_PARAM;
         }
@@ -710,7 +710,7 @@ static json_t * check_parameters (json_t * j_params) {
       ret = G_ERROR_PARAM;
     } else if (json_object_get(j_params, "email-claim-scope") != NULL) {
       json_array_foreach(json_object_get(j_params, "email-claim-scope"), indexScope, j_scope) {
-        if (!json_string_length(j_scope)) {
+        if (json_string_null_or_empty(j_scope)) {
           json_array_append_new(j_error, json_string("Property 'email-claim-scope' is optional and must be an array of strings"));
           ret = G_ERROR_PARAM;
         }
@@ -725,7 +725,7 @@ static json_t * check_parameters (json_t * j_params) {
       ret = G_ERROR_PARAM;
     } else if (json_object_get(j_params, "scope-claim-scope") != NULL) {
       json_array_foreach(json_object_get(j_params, "scope-claim-scope"), indexScope, j_scope) {
-        if (!json_string_length(j_scope)) {
+        if (json_string_null_or_empty(j_scope)) {
           json_array_append_new(j_error, json_string("Property 'scope-claim-scope' is optional and must be an array of strings"));
           ret = G_ERROR_PARAM;
         }
@@ -771,7 +771,7 @@ static json_t * check_parameters (json_t * j_params) {
         ret = G_ERROR_PARAM;
       } else {
         json_array_foreach(json_object_get(j_params, "allowed-scope"), index, j_element) {
-          if (!json_string_length(j_element)) {
+          if (json_string_null_or_empty(j_element)) {
             json_array_append_new(j_error, json_string("Property 'allowed-scope' is optional and must be an array of strings that includes the value 'openid'"));
             ret = G_ERROR_PARAM;
           } else if (0 == o_strcmp("openid", json_string_value(j_element))) {
@@ -802,7 +802,7 @@ static json_t * check_parameters (json_t * j_params) {
         ret = G_ERROR_PARAM;
       }
       json_array_foreach(json_object_get(j_params, "pkce-scopes"), index, j_element) {
-        if (!json_string_length(j_element)) {
+        if (json_string_null_or_empty(j_element)) {
           json_array_append_new(j_error, json_string("Property 'pkce-scopes' is optional and must be a JSON array of strings"));
           ret = G_ERROR_PARAM;
         }
@@ -825,7 +825,7 @@ static json_t * check_parameters (json_t * j_params) {
       ret = G_ERROR_PARAM;
     }
     if (json_object_get(j_params, "session-management-allowed") == json_true()) {
-      if (!json_string_length(json_object_get(j_params, "session-cookie-name"))) {
+      if (json_string_null_or_empty(json_object_get(j_params, "session-cookie-name"))) {
         json_array_append_new(j_error, json_string("Property 'session-cookie-name' is mandatory and must be a JSON string"));
         ret = G_ERROR_PARAM;
       }
@@ -869,7 +869,7 @@ static json_t * check_parameters (json_t * j_params) {
         ret = G_ERROR_PARAM;
       } else {
         json_array_foreach(json_object_get(j_params, "register-client-auth-scope"), index, j_element) {
-          if (!json_string_length(j_element) || json_string_length(j_element) > 128) {
+          if (json_string_null_or_empty(j_element) || json_string_length(j_element) > 128) {
             json_array_append_new(j_error, json_string("Property 'register-client-auth-scope' is optional and must be a JSON array of strings, maximum 128 characters"));
             ret = G_ERROR_PARAM;
           }
@@ -880,7 +880,7 @@ static json_t * check_parameters (json_t * j_params) {
         ret = G_ERROR_PARAM;
       } else {
         json_array_foreach(json_object_get(j_params, "register-client-credentials-scope"), index, j_element) {
-          if (!json_string_length(j_element) || json_string_length(j_element) > 128) {
+          if (json_string_null_or_empty(j_element) || json_string_length(j_element) > 128) {
             json_array_append_new(j_error, json_string("Property 'register-client-credentials-scope' is optional and must be a JSON array of strings, maximum 128 characters"));
             ret = G_ERROR_PARAM;
           }
@@ -904,7 +904,7 @@ static json_t * check_parameters (json_t * j_params) {
           ret = G_ERROR_PARAM;
         } else {
           json_array_foreach(json_object_get(j_params, "register-resource-default"), index, j_element) {
-            if (!json_string_length(j_element)) {
+            if (json_string_null_or_empty(j_element)) {
               json_array_append_new(j_error, json_string("Property 'register-resource-default' is optional and must be a JSON array of strings"));
               ret = G_ERROR_PARAM;
             }
@@ -914,12 +914,12 @@ static json_t * check_parameters (json_t * j_params) {
       json_object_foreach(json_object_get(j_params, "register-default-properties"), key, j_property) {
         if (json_is_array(json_object_get(j_property, "value"))) {
           json_array_foreach(json_object_get(j_property, "value"), index, j_element) {
-            if (!json_string_length(j_element)) {
+            if (json_string_null_or_empty(j_element)) {
               json_array_append_new(j_error, json_string("Property values in a 'register-default-properties' object is mandatory and must be a non empty string"));
               ret = G_ERROR_PARAM;
             }
           }
-        } else if (!json_string_length(json_object_get(j_property, "value"))) {
+        } else if (json_string_null_or_empty(json_object_get(j_property, "value"))) {
           json_array_append_new(j_error, json_string("Property value in a 'register-default-properties' object is mandatory and must be a non empty string"));
           ret = G_ERROR_PARAM;
         }
@@ -935,11 +935,11 @@ static json_t * check_parameters (json_t * j_params) {
         ret = G_ERROR_PARAM;
       }
     }
-    if (json_string_length(json_object_get(j_params, "client-cert-source")) && 0 != o_strcmp("TLS", json_string_value(json_object_get(j_params, "client-cert-source"))) && 0 != o_strcmp("header", json_string_value(json_object_get(j_params, "client-cert-source"))) && 0 != o_strcmp("both", json_string_value(json_object_get(j_params, "client-cert-source")))) {
+    if (!json_string_null_or_empty(json_object_get(j_params, "client-cert-source")) && 0 != o_strcmp("TLS", json_string_value(json_object_get(j_params, "client-cert-source"))) && 0 != o_strcmp("header", json_string_value(json_object_get(j_params, "client-cert-source"))) && 0 != o_strcmp("both", json_string_value(json_object_get(j_params, "client-cert-source")))) {
       json_array_append_new(j_error, json_string("client-cert-source is optional and must be one of the following values: 'TLS', 'header' or 'both'"));
     }
     if ((0 == o_strcmp("header", json_string_value(json_object_get(j_params, "client-cert-source"))) || 0 == o_strcmp("both", json_string_value(json_object_get(j_params, "client-cert-source"))))) {
-      if (!json_string_length(json_object_get(j_params, "client-cert-header-name"))) {
+      if (json_string_null_or_empty(json_object_get(j_params, "client-cert-header-name"))) {
         json_array_append_new(j_error, json_string("client-cert-header-name is mandatory when client-cert-source is 'header' or 'both' and must be a non empty string"));
       }
     }
@@ -969,7 +969,7 @@ static json_t * check_parameters (json_t * j_params) {
           ret = G_ERROR_PARAM;
         } else {
           json_array_foreach(j_scope, index, j_element) {
-            if (!json_string_length(j_element)) {
+            if (json_string_null_or_empty(j_element)) {
               json_array_append_new(j_error, json_string("A resource url must be a non empty string"));
               ret = G_ERROR_PARAM;
             }
@@ -994,7 +994,7 @@ static json_t * check_parameters (json_t * j_params) {
       ret = G_ERROR_PARAM;
     }
     if (json_object_get(j_params, "oauth-rar-allowed") == json_true()) {
-      if (!json_string_length(json_object_get(j_params, "rar-types-client-property"))) {
+      if (json_string_null_or_empty(json_object_get(j_params, "rar-types-client-property"))) {
         json_array_append_new(j_error, json_string("Property 'rar-types-client-property' is mandatory and must be a non empty string"));
         ret = G_ERROR_PARAM;
       }
@@ -1027,7 +1027,7 @@ static json_t * check_parameters (json_t * j_params) {
               ret = G_ERROR_PARAM;
             } else {
               json_array_foreach(json_object_get(j_rar_type, "scopes"), index, j_element) {
-                if (!json_string_length(j_element)) {
+                if (json_string_null_or_empty(j_element)) {
                   json_array_append_new(j_error, json_string("Property 'rar-types.scopes' is optional and must be a JSON array of strings"));
                   ret = G_ERROR_PARAM;
                 }
@@ -1038,7 +1038,7 @@ static json_t * check_parameters (json_t * j_params) {
               ret = G_ERROR_PARAM;
             } else {
               json_array_foreach(json_object_get(j_rar_type, "locations"), index, j_element) {
-                if (!json_string_length(j_element)) {
+                if (json_string_null_or_empty(j_element)) {
                   json_array_append_new(j_error, json_string("Property 'rar-types.locations' is optional and must be a JSON array of strings"));
                   ret = G_ERROR_PARAM;
                 }
@@ -1049,7 +1049,7 @@ static json_t * check_parameters (json_t * j_params) {
               ret = G_ERROR_PARAM;
             } else {
               json_array_foreach(json_object_get(j_rar_type, "actions"), index, j_element) {
-                if (!json_string_length(j_element)) {
+                if (json_string_null_or_empty(j_element)) {
                   json_array_append_new(j_error, json_string("Property 'rar-types.actions' is optional and must be a JSON array of strings"));
                   ret = G_ERROR_PARAM;
                 }
@@ -1060,7 +1060,7 @@ static json_t * check_parameters (json_t * j_params) {
               ret = G_ERROR_PARAM;
             } else {
               json_array_foreach(json_object_get(j_rar_type, "datatypes"), index, j_element) {
-                if (!json_string_length(j_element)) {
+                if (json_string_null_or_empty(j_element)) {
                   json_array_append_new(j_error, json_string("Property 'rar-types.datatypes' is optional and must be a JSON array of strings"));
                   ret = G_ERROR_PARAM;
                 }
@@ -1075,7 +1075,7 @@ static json_t * check_parameters (json_t * j_params) {
               ret = G_ERROR_PARAM;
             } else {
               json_array_foreach(json_object_get(j_rar_type, "privileges"), index, j_element) {
-                if (!json_string_length(j_element)) {
+                if (json_string_null_or_empty(j_element)) {
                   json_array_append_new(j_error, json_string("Property 'rar-types.privileges' is optional and must be a JSON array of strings"));
                   ret = G_ERROR_PARAM;
                 }
@@ -1094,7 +1094,7 @@ static json_t * check_parameters (json_t * j_params) {
         json_array_append_new(j_error, json_string("Property 'oauth-par-required' is optional and must be a boolean"));
         ret = G_ERROR_PARAM;
       }
-      if (!json_string_length(json_object_get(j_params, "oauth-par-request_uri-prefix"))) {
+      if (json_string_null_or_empty(json_object_get(j_params, "oauth-par-request_uri-prefix"))) {
         json_array_append_new(j_error, json_string("Property 'oauth-par-request_uri-prefix' is mandaotory and must be a non empty string"));
         ret = G_ERROR_PARAM;
       }
@@ -1129,7 +1129,7 @@ static json_t * check_parameters (json_t * j_params) {
         ret = G_ERROR_PARAM;
       }
       if (json_object_get(j_params, "oauth-ciba-user-code-allowed") == json_true()) {
-        if (!json_string_length(json_object_get(j_params, "oauth-ciba-user-code-property"))) {
+        if (json_string_null_or_empty(json_object_get(j_params, "oauth-ciba-user-code-property"))) {
           json_array_append_new(j_error, json_string("oauth-ciba-user-code-property is mandatory and must be a non empty string"));
         }
       }
@@ -1148,7 +1148,7 @@ static json_t * check_parameters (json_t * j_params) {
         ret = G_ERROR_PARAM;
       }
       if (json_object_get(j_params, "oauth-ciba-email-allowed") == json_true()) {
-        if (!json_string_length(json_object_get(j_params, "oauth-ciba-email-host"))) {
+        if (json_string_null_or_empty(json_object_get(j_params, "oauth-ciba-email-host"))) {
           json_array_append_new(j_error, json_string("oauth-ciba-email-host is mandatory and must be a non empty string"));
           ret = G_ERROR_PARAM;
         }
@@ -1174,15 +1174,15 @@ static json_t * check_parameters (json_t * j_params) {
           json_array_append_new(j_error, json_string("oauth-ciba-email-password is optional and must be a string"));
           ret = G_ERROR_PARAM;
         }
-        if (!json_string_length(json_object_get(j_params, "oauth-ciba-email-from"))) {
+        if (json_string_null_or_empty(json_object_get(j_params, "oauth-ciba-email-from"))) {
           json_array_append_new(j_error, json_string("oauth-ciba-email-from is mandatory and must be a non empty string"));
           ret = G_ERROR_PARAM;
         }
-        if (json_object_get(j_params, "oauth-ciba-email-content-type") != NULL && !json_string_length(json_object_get(j_params, "oauth-ciba-email-content-type"))) {
+        if (json_object_get(j_params, "oauth-ciba-email-content-type") != NULL && json_string_null_or_empty(json_object_get(j_params, "oauth-ciba-email-content-type"))) {
           json_array_append_new(j_error, json_string("oauth-ciba-email-content-type is optional and must be a string"));
           ret = G_ERROR_PARAM;
         }
-        if (!json_string_length(json_object_get(j_params, "oauth-ciba-email-user-lang-property"))) {
+        if (json_string_null_or_empty(json_object_get(j_params, "oauth-ciba-email-user-lang-property"))) {
           json_array_append_new(j_error, json_string("oauth-ciba-email-user-lang-property is mandatory and must be a non empty string"));
           ret = G_ERROR_PARAM;
         }
@@ -1199,11 +1199,11 @@ static json_t * check_parameters (json_t * j_params) {
                 json_array_append_new(j_error, json_string("oauth-ciba-email-defaultLang is madatory in a template and must be a boolean"));
                 ret = G_ERROR_PARAM;
               }
-              if (!json_string_length(json_object_get(j_template, "oauth-ciba-email-subject"))) {
+              if (json_string_null_or_empty(json_object_get(j_template, "oauth-ciba-email-subject"))) {
                 json_array_append_new(j_error, json_string("oauth-ciba-email-subject is mandatory for default lang and must be a non empty string"));
                 ret = G_ERROR_PARAM;
               }
-              if (json_object_get(j_template, "oauth-ciba-email-body-pattern") != NULL && !json_string_length(json_object_get(j_template, "oauth-ciba-email-body-pattern"))) {
+              if (json_object_get(j_template, "oauth-ciba-email-body-pattern") != NULL && json_string_null_or_empty(json_object_get(j_template, "oauth-ciba-email-body-pattern"))) {
                 json_array_append_new(j_error, json_string("oauth-ciba-email-body-pattern is mandatory for default lang and must be a non empty string"));
                 ret = G_ERROR_PARAM;
               }
@@ -1249,7 +1249,7 @@ static json_t * check_parameters (json_t * j_params) {
         } else {
           j_allowed_algs = json_pack("[sssssssssssssss]", "RSA-OAEP", "RSA-OAEP-256", "A128KW", "A192KW", "A256KW", "ECDH-ES", "ECDH-ES+A128KW", "ECDH-ES+A192KW", "ECDH-ES+A256KW", "A128GCMKW", "A192GCMKW", "A256GCMKW", "PBES2-HS256+A128KW", "PBES2-HS384+A192KW", "PBES2-HS512+A256KW");
           json_array_foreach(json_object_get(j_params, "oauth-fapi-restrict-alg"), index, j_element) {
-            if (!json_string_length(j_element) || !json_array_has_string(j_allowed_algs, json_string_value(j_element))) {
+            if (json_string_null_or_empty(j_element) || !json_array_has_string(j_allowed_algs, json_string_value(j_element))) {
               json_array_append_new(j_error, json_string("oauth-fapi-restrict-alg list invalid"));
               ret = G_ERROR_PARAM;
             }
@@ -1321,7 +1321,7 @@ static int verify_resource(struct _oidc_config * config, const char * resource, 
           break;
         }
       }
-      if (json_string_length(json_object_get(config->j_params, "resource-client-property")) && (j_scope = json_object_get(j_client, json_string_value(json_object_get(config->j_params, "resource-client-property")))) != NULL) {
+      if (!json_string_null_or_empty(json_object_get(config->j_params, "resource-client-property")) && (j_scope = json_object_get(j_client, json_string_value(json_object_get(config->j_params, "resource-client-property")))) != NULL) {
         json_array_foreach(j_scope, index, j_element) {
           if (0 == o_strcmp(resource, json_string_value(j_element))) {
             resource_client = 1;
@@ -1678,7 +1678,7 @@ static char * get_sub_pairwise(struct _oidc_config * config, const char * userna
                         "gposi_username",
                         username);
 
-  if (json_string_length(json_object_get(j_client, "sector_identifier_uri"))) {
+  if (!json_string_null_or_empty(json_object_get(j_client, "sector_identifier_uri"))) {
     json_object_set(json_object_get(j_query, "where"), "gposi_sector_identifier_uri", json_object_get(j_client, "sector_identifier_uri"));
     json_object_set(json_object_get(j_query, "where"), "gposi_client_id", json_null());
   } else {
@@ -1705,7 +1705,7 @@ static char * get_sub_pairwise(struct _oidc_config * config, const char * userna
                               sub,
                               "gposi_username",
                               username);
-        if (json_string_length(json_object_get(j_client, "sector_identifier_uri"))) {
+        if (!json_string_null_or_empty(json_object_get(j_client, "sector_identifier_uri"))) {
           json_object_set(json_object_get(j_query, "values"), "gposi_sector_identifier_uri", json_object_get(j_client, "sector_identifier_uri"));
           json_object_set(json_object_get(j_query, "where"), "gposi_client_id", json_null());
         } else {
@@ -1762,7 +1762,7 @@ static char * get_username_from_sub(struct _oidc_config * config, const char * s
                         sub);
   if (j_client != NULL) {
     if (config->subject_type == GLEWLWYD_OIDC_SUBJECT_TYPE_PAIRWISE) {
-      if (json_string_length(json_object_get(j_client, "sector_identifier_uri"))) {
+      if (!json_string_null_or_empty(json_object_get(j_client, "sector_identifier_uri"))) {
         json_object_set(json_object_get(j_query, "where"), "gposi_sector_identifier_uri", json_object_get(j_client, "sector_identifier_uri"));
         json_object_set(json_object_get(j_query, "where"), "gposi_client_id", json_null());
       } else {
@@ -1796,14 +1796,14 @@ static int is_claim_parameter_valid(json_t * j_claim) {
   } else if (!json_is_object(j_claim)) {
     return G_ERROR_PARAM;
   } else {
-    if (json_object_get(j_claim, "value") != NULL && !json_string_length(json_object_get(j_claim, "value"))) {
+    if (json_object_get(j_claim, "value") != NULL && json_string_null_or_empty(json_object_get(j_claim, "value"))) {
       return G_ERROR_PARAM;
     } else if (json_object_get(j_claim, "values")) {
       if (!json_is_array(json_object_get(j_claim, "values"))) {
         return G_ERROR_PARAM;
       } else {
         json_array_foreach(json_object_get(j_claim, "values"), index, j_element) {
-          if (!json_string_length(j_element)) {
+          if (json_string_null_or_empty(j_element)) {
             return G_ERROR_PARAM;
           }
         }
@@ -1890,7 +1890,7 @@ static jwa_alg get_token_sign_alg(struct _oidc_config * config, json_t * j_clien
   jwa_alg alg = R_JWA_ALG_UNKNOWN;
   
   if (j_client != NULL) {
-    if (json_string_length(json_object_get(j_client, sign_kid))) {
+    if (!json_string_null_or_empty(json_object_get(j_client, sign_kid))) {
       jwk = r_jwks_get_by_kid(config->jwks_sign, json_string_value(json_object_get(j_client, sign_kid)));
       alg = r_str_to_jwa_alg(r_jwk_get_property_str(jwk, "alg"));
       r_jwk_free(jwk);
@@ -1991,7 +1991,7 @@ static jwk_t * get_jwk_sign(struct _oidc_config * config, json_t * j_client, jwa
 
   if (r_jwks_size(config->jwks_sign) == 1 || j_client == NULL) {
     return r_jwks_get_at(config->jwks_sign, 0);
-  } else if (json_string_length(json_object_get(j_client, sign_kid))) {
+  } else if (!json_string_null_or_empty(json_object_get(j_client, sign_kid))) {
     return r_jwks_get_by_kid(config->jwks_sign, json_string_value(json_object_get(j_client, sign_kid)));
   } else {
     if (alg == R_JWA_ALG_HS256 || alg == R_JWA_ALG_HS384 || alg == R_JWA_ALG_HS512) {
@@ -2024,7 +2024,7 @@ static jwk_t * get_jwk_enc(struct _oidc_config * config, json_t * j_client, jwa_
   size_t key_len = 64;
 
   if (r_jwks_init(&jwks_pub) == RHN_OK) {
-    if (json_string_length(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-pubkey-parameter"))))) {
+    if (!json_string_null_or_empty(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-pubkey-parameter"))))) {
       if ((jwk_import = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_UNSPECIFIED, json_string_value(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-pubkey-parameter")))), json_string_length(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-pubkey-parameter")))))) != NULL) {
         r_jwks_append_jwk(jwks_pub, jwk_import);
         r_jwk_free(jwk_import);
@@ -2035,12 +2035,12 @@ static jwk_t * get_jwk_enc(struct _oidc_config * config, json_t * j_client, jwa_
         y_log_message(Y_LOG_LEVEL_ERROR, "get_jwk_enc - Error r_jwks_import_from_json_t");
       }
     }
-    if (json_string_length(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter"))))) {
+    if (!json_string_null_or_empty(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter"))))) {
       if (r_jwks_import_from_uri(jwks_pub, json_string_value(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))), config->x5u_flags) != RHN_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_jwk_enc - Error r_jwks_import_from_uri");
       }
     }
-    if (json_string_length(json_object_get(j_client, alg_kid_p))) {
+    if (!json_string_null_or_empty(json_object_get(j_client, alg_kid_p))) {
       jwk = r_jwks_get_by_kid(jwks_pub, json_string_value(json_object_get(j_client, alg_kid_p)));
       if (jwk == NULL) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "Error, kid '%s' specified for client '%s' is invalid", json_string_value(json_object_get(j_client, alg_kid_p)), json_string_value(json_object_get(j_client, "client_id")));
@@ -2061,7 +2061,7 @@ static jwk_t * get_jwk_enc(struct _oidc_config * config, json_t * j_client, jwa_
     } else if (alg == R_JWA_ALG_A128KW || alg == R_JWA_ALG_A192KW || alg == R_JWA_ALG_A256KW ||
                alg == R_JWA_ALG_A128GCMKW || alg == R_JWA_ALG_A192GCMKW || alg == R_JWA_ALG_A256GCMKW ||
                alg == R_JWA_ALG_PBES2_H256 || alg == R_JWA_ALG_PBES2_H384 || alg == R_JWA_ALG_PBES2_H512) {
-      if (json_string_length(json_object_get(j_client, "client_secret"))) {
+      if (!json_string_null_or_empty(json_object_get(j_client, "client_secret"))) {
         if (generate_digest_raw((alg == R_JWA_ALG_DIR?digest_SHA512:digest_SHA256), (const unsigned char *)json_string_value(json_object_get(j_client, "client_secret")), json_string_length(json_object_get(j_client, "client_secret")), key, &key_len)) {
           if (alg == R_JWA_ALG_DIR) {
             key_len = get_enc_key_size(enc);
@@ -2269,22 +2269,22 @@ static json_t * get_address_claim(struct _oidc_config * config, json_t * j_user)
   json_t * j_return, * j_address, * j_value;
 
   if ((j_address = json_object()) != NULL) {
-    if (json_string_length(json_object_get(json_object_get(config->j_params, "address-claim"), "formatted")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "formatted")))) != NULL) {
+    if (!json_string_null_or_empty(json_object_get(json_object_get(config->j_params, "address-claim"), "formatted")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "formatted")))) != NULL) {
       json_object_set(j_address, "formatted", j_value);
     }
-    if (json_string_length(json_object_get(json_object_get(config->j_params, "address-claim"), "street_address")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "street_address")))) != NULL) {
+    if (!json_string_null_or_empty(json_object_get(json_object_get(config->j_params, "address-claim"), "street_address")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "street_address")))) != NULL) {
       json_object_set(j_address, "street_address", j_value);
     }
-    if (json_string_length(json_object_get(json_object_get(config->j_params, "address-claim"), "locality")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "locality")))) != NULL) {
+    if (!json_string_null_or_empty(json_object_get(json_object_get(config->j_params, "address-claim"), "locality")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "locality")))) != NULL) {
       json_object_set(j_address, "locality", j_value);
     }
-    if (json_string_length(json_object_get(json_object_get(config->j_params, "address-claim"), "region")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "region")))) != NULL) {
+    if (!json_string_null_or_empty(json_object_get(json_object_get(config->j_params, "address-claim"), "region")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "region")))) != NULL) {
       json_object_set(j_address, "region", j_value);
     }
-    if (json_string_length(json_object_get(json_object_get(config->j_params, "address-claim"), "postal_code")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "postal_code")))) != NULL) {
+    if (!json_string_null_or_empty(json_object_get(json_object_get(config->j_params, "address-claim"), "postal_code")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "postal_code")))) != NULL) {
       json_object_set(j_address, "postal_code", j_value);
     }
-    if (json_string_length(json_object_get(json_object_get(config->j_params, "address-claim"), "country")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "country")))) != NULL) {
+    if (!json_string_null_or_empty(json_object_get(json_object_get(config->j_params, "address-claim"), "country")) && (j_value = json_object_get(j_user, json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "country")))) != NULL) {
       json_object_set(j_address, "country", j_value);
     }
     if (json_object_size(j_address)) {
@@ -2312,7 +2312,7 @@ static json_t * get_claim_value_from_request(struct _oidc_config * config, const
 
   json_array_foreach(json_object_get(config->j_params, "claims"), index, j_element) {
     if (j_return == NULL && 0 == o_strcmp(json_string_value(json_object_get(j_element, "name")), claim) && json_object_get(j_element, "on-demand") == json_true()) {
-      if ((j_user_property = json_object_get(j_user, json_string_value(json_object_get(j_element, "user-property")))) != NULL && (json_string_length(j_user_property) || json_array_size(j_user_property))) {
+      if ((j_user_property = json_object_get(j_user, json_string_value(json_object_get(j_element, "user-property")))) != NULL && (!json_string_null_or_empty(j_user_property) || json_array_size(j_user_property))) {
         if (json_object_get(j_claim_request, "value") != NULL) {
           if (!json_equal(json_object_get(j_claim_request, "value"), j_user_property)) {
             return_claim = 0;
@@ -2499,7 +2499,7 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
         json_array_foreach(json_object_get(j_claim, "scope"), index_scope, j_scope) {
           if (string_array_has_value((const char **)scopes_array, json_string_value(j_scope))) {
             j_user_property = json_object_get(j_user, json_string_value(json_object_get(j_claim, "user-property")));
-            if (json_string_length(j_user_property)) {
+            if (!json_string_null_or_empty(j_user_property)) {
               if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_claim, "type")))) {
                 if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-true")))) {
                   json_object_set(j_userinfo, json_string_value(json_object_get(j_claim, "name")), json_true());
@@ -2545,7 +2545,7 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
   json_array_foreach(json_object_get(config->j_params, "claims"), index, j_claim) {
     if (json_object_get(j_claim, "mandatory") == json_true()) {
       j_user_property = json_object_get(j_user, json_string_value(json_object_get(j_claim, "user-property")));
-      if (json_string_length(j_user_property)) {
+      if (!json_string_null_or_empty(j_user_property)) {
         if (0 == o_strcmp("boolean", json_string_value(json_object_get(j_claim, "type")))) {
           if (0 == o_strcmp(json_string_value(j_user_property), json_string_value(json_object_get(j_claim, "boolean-value-true")))) {
             json_object_set(j_userinfo, json_string_value(json_object_get(j_claim, "name")), json_true());
@@ -2790,7 +2790,7 @@ static char * generate_pushed_request_uri(struct _oidc_config * config) {
   char * request_uri = o_malloc((json_string_length(json_object_get(config->j_params, "oauth-par-request_uri-prefix"))+OIDC_REQUEST_URI_SUFFIX_LENGTH+1)*sizeof(char));
 
   if (request_uri != NULL) {
-    if (json_string_length(json_object_get(config->j_params, "oauth-par-request_uri-prefix"))) {
+    if (!json_string_null_or_empty(json_object_get(config->j_params, "oauth-par-request_uri-prefix"))) {
       o_strcpy(request_uri, json_string_value(json_object_get(config->j_params, "oauth-par-request_uri-prefix")));
       if (rand_string(request_uri+json_string_length(json_object_get(config->j_params, "oauth-par-request_uri-prefix")), OIDC_REQUEST_URI_SUFFIX_LENGTH) == NULL) {
         o_free(request_uri);
@@ -3225,7 +3225,7 @@ static char * generate_access_token(struct _oidc_config * config,
         json_decref(j_cnf);
         if (json_object_get(config->j_params, "additional-parameters") != NULL && j_user != NULL) {
           json_array_foreach(json_object_get(config->j_params, "additional-parameters"), index, j_element) {
-            if (json_is_string(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))) && json_string_length(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
+            if (!json_string_null_or_empty(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
               r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), json_string_value(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))));
             } else if (json_is_array(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
               json_array_foreach(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))), index_p, j_value) {
@@ -3511,7 +3511,7 @@ static json_t * check_client_valid_without_secret(struct _oidc_config * config,
 static int is_client_auth_method_allowed(json_t * j_client, int client_auth_method) {
   int ret = 0;
 
-  if (json_string_length(json_object_get(j_client, "token_endpoint_auth_method")) || json_array_size(json_object_get(j_client, "token_endpoint_auth_method"))) {
+  if (!json_string_null_or_empty(json_object_get(j_client, "token_endpoint_auth_method")) || json_array_size(json_object_get(j_client, "token_endpoint_auth_method"))) {
     switch (client_auth_method) {
       case GLEWLWYD_CLIENT_AUTH_METHOD_NONE:
         ret = 1;
@@ -4034,7 +4034,7 @@ static int validate_code_challenge(json_t * j_result_code, const char * code_ver
   size_t code_verifier_hash_len = 32, code_verifier_hash_b64_len = 0;
   gnutls_datum_t key_data;
 
-  if (json_string_length(json_object_get(j_result_code, "code_challenge"))) {
+  if (!json_string_null_or_empty(json_object_get(j_result_code, "code_challenge"))) {
     if (is_pkce_char_valid(code_verifier)) {
       if (0 == o_strncmp(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX, json_string_value(json_object_get(j_result_code, "code_challenge")), o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX))) {
         key_data.data = (unsigned char *)code_verifier;
@@ -5034,7 +5034,7 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
       if (alg == R_JWA_ALG_NONE || is_sig_alg_valid(config, json_object_get(j_client, "client"), alg, auth_type)) {
         if (json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
           if (alg == R_JWA_ALG_HS256 || alg == R_JWA_ALG_HS384 || alg == R_JWA_ALG_HS512) {
-            if (json_string_length(json_object_get(json_object_get(j_client, "client"), "client_secret"))) {
+            if (!json_string_null_or_empty(json_object_get(json_object_get(j_client, "client"), "client_secret"))) {
               if (r_jwk_init(&jwk) == RHN_OK &&
                   r_jwk_import_from_symmetric_key(jwk, (const unsigned char *)json_string_value(json_object_get(json_object_get(j_client, "client"), "client_secret")), json_string_length(json_object_get(json_object_get(j_client, "client"), "client_secret"))) == RHN_OK &&
                   r_jwt_verify_signature(jwt, jwk, 0) == RHN_OK) {
@@ -5054,7 +5054,7 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
               config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
             }
           } else if (alg == R_JWA_ALG_ES256 || alg == R_JWA_ALG_ES384 || alg == R_JWA_ALG_ES512 || alg == R_JWA_ALG_RS256 || alg == R_JWA_ALG_RS384 || alg == R_JWA_ALG_RS512 || alg == R_JWA_ALG_PS256 || alg == R_JWA_ALG_PS384 || alg == R_JWA_ALG_PS512 || alg == R_JWA_ALG_EDDSA) {
-            if (json_string_length(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))) && o_strlen(kid)) {
+            if (!json_string_null_or_empty(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))) && o_strlen(kid)) {
               if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_uri(jwks, json_string_value(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))), config->x5u_flags) == RHN_OK) {
                 if (json_object_get(config->j_params, "oauth-fapi-allow-multiple-kid") == json_true()) {
                   j_search = json_pack("{ss*}", "kid", kid);
@@ -5112,7 +5112,7 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
                 }
               }
               r_jwks_free(jwks);
-            } else if (json_string_length(json_object_get(json_object_get(j_client, "client"), pubkey_param))) {
+            } else if (!json_string_null_or_empty(json_object_get(json_object_get(j_client, "client"), pubkey_param))) {
               if (r_jwk_init(&jwk) != RHN_OK || r_jwk_import_from_pem_der(jwk, R_X509_TYPE_PUBKEY, R_FORMAT_PEM, (const unsigned char *)json_string_value(json_object_get(json_object_get(j_client, "client"), pubkey_param)), json_string_length(json_object_get(json_object_get(j_client, "client"), pubkey_param))) != RHN_OK) {
                 y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - unable to get pubkey from client, origin: %s", ip_source);
                 r_jwk_free(jwk);
@@ -5192,7 +5192,7 @@ static int decrypt_request_token(struct _oidc_config * config, jwt_t * jwt) {
         jwk = r_jwks_get_at(config->jwks_sign, 0);
       } else if (r_jwt_get_header_str_value(jwt, "kid") != NULL) {
         jwk = r_jwks_get_by_kid(config->jwks_sign, r_jwt_get_header_str_value(jwt, "kid"));
-      } else if (json_string_length(json_object_get(config->j_params, "default-kid"))) {
+      } else if (!json_string_null_or_empty(json_object_get(config->j_params, "default-kid"))) {
         jwk = r_jwks_get_by_kid(config->jwks_sign, json_string_value(json_object_get(config->j_params, "default-kid")));
       }
       if (jwk != NULL) {
@@ -6758,7 +6758,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       break;
     }
     json_array_foreach(json_object_get(j_registration, "contacts"), index, j_element) {
-      if (!json_string_length(j_element)) {
+      if (json_string_null_or_empty(j_element)) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "contact value must be a non empty string");
       }
     }
@@ -6963,7 +6963,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
     }
 
     if (json_object_get(j_registration, "access_token_signing_alg") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "access_token_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "access_token_signing_alg")))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "access_token_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "access_token_signing_alg")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "access_token_signing_alg is invalid");
         break;
       }
@@ -6973,7 +6973,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
     }
     if (json_object_get(j_registration, "access_token_encryption_alg") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "access_token_encryption_alg"))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "access_token_encryption_alg"))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "access_token_encryption_alg is invalid");
         break;
       }
@@ -6983,7 +6983,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
     }
     if (json_object_get(j_registration, "access_token_encryption_enc") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "access_token_encryption_enc"))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "access_token_encryption_enc"))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "access_token_encryption_enc is invalid");
         break;
       }
@@ -6998,7 +6998,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
     }
 
     if (json_object_get(j_registration, "id_token_signing_alg") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "id_token_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "id_token_signing_alg")))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "id_token_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "id_token_signing_alg")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "id_token_signing_alg is invalid");
         break;
       }
@@ -7008,7 +7008,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
     }
     if (json_object_get(j_registration, "id_token_encryption_alg") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "id_token_encryption_alg"))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "id_token_encryption_alg"))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "id_token_encryption_alg is invalid");
         break;
       }
@@ -7018,7 +7018,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
     }
     if (json_object_get(j_registration, "id_token_encryption_enc") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "id_token_encryption_enc"))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "id_token_encryption_enc"))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "id_token_encryption_enc is invalid");
         break;
       }
@@ -7033,7 +7033,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
     }
 
     if (json_object_get(j_registration, "userinfo_signing_alg") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "userinfo_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "userinfo_signing_alg")))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "userinfo_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "userinfo_signing_alg")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "userinfo_signing_alg is invalid");
         break;
       }
@@ -7043,7 +7043,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
     }
     if (json_object_get(j_registration, "userinfo_encryption_alg") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "userinfo_encryption_alg"))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "userinfo_encryption_alg"))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "userinfo_encryption_alg is invalid");
         break;
       }
@@ -7053,7 +7053,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
     }
     if (json_object_get(j_registration, "userinfo_encryption_enc") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "userinfo_encryption_enc"))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "userinfo_encryption_enc"))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "userinfo_encryption_enc is invalid");
         break;
       }
@@ -7068,7 +7068,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
     }
 
     if (json_object_get(j_registration, "request_object_signing_alg") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "request_object_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "request_object_signing_alg")))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "request_object_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "request_object_signing_alg")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "request_object_signing_alg is invalid");
         break;
       }
@@ -7078,7 +7078,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
     }
     if (json_object_get(j_registration, "request_object_encryption_alg") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "request_object_encryption_alg"))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "request_object_encryption_alg"))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "request_object_encryption_alg is invalid");
         break;
       }
@@ -7088,7 +7088,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
     }
     if (json_object_get(j_registration, "request_object_encryption_enc") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "request_object_encryption_enc"))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "request_object_encryption_enc"))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "request_object_encryption_enc is invalid");
         break;
       }
@@ -7103,7 +7103,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
     }
 
     if (json_object_get(j_registration, "token_endpoint_signing_alg") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "token_endpoint_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "token_endpoint_signing_alg")))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "token_endpoint_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "token_endpoint_signing_alg")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "token_endpoint_signing_alg is invalid");
         break;
       }
@@ -7113,7 +7113,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
     }
     if (json_object_get(j_registration, "token_endpoint_encryption_alg") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "token_endpoint_encryption_alg"))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "token_endpoint_encryption_alg"))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "token_endpoint_encryption_alg is invalid");
         break;
       }
@@ -7123,7 +7123,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
     }
     if (json_object_get(j_registration, "token_endpoint_encryption_enc") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "token_endpoint_encryption_enc"))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "token_endpoint_encryption_enc"))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "token_endpoint_encryption_enc is invalid");
         break;
       }
@@ -7138,7 +7138,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
     }
 
     if (json_object_get(j_registration, "backchannel_authentication_request_signing_alg") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "backchannel_authentication_request_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "backchannel_authentication_request_signing_alg")))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "backchannel_authentication_request_signing_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "backchannel_authentication_request_signing_alg")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "backchannel_authentication_request_signing_alg is invalid");
         break;
       }
@@ -7148,7 +7148,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
     }
     if (json_object_get(j_registration, "backchannel_authentication_request_encryption_alg") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "backchannel_authentication_request_encryption_alg"))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "backchannel_authentication_request_encryption_alg"))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "backchannel_authentication_request_encryption_alg is invalid");
         break;
       }
@@ -7158,7 +7158,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
     }
     if (json_object_get(j_registration, "backchannel_authentication_request_encryption_enc") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "backchannel_authentication_request_encryption_enc"))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "backchannel_authentication_request_encryption_enc"))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "backchannel_authentication_request_encryption_enc is invalid");
         break;
       }
@@ -7173,7 +7173,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
     }
 
     if (json_object_get(j_registration, "authorization_signed_response_alg") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "authorization_signed_response_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "authorization_signed_response_alg")))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "authorization_signed_response_alg")) || 0 == o_strcmp("none", json_string_value(json_object_get(j_registration, "authorization_signed_response_alg")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "authorization_signed_response_alg is invalid");
         break;
       }
@@ -7183,7 +7183,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
     }
     if (json_object_get(j_registration, "authorization_encrypted_response_alg") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "authorization_encrypted_response_alg"))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "authorization_encrypted_response_alg"))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "authorization_encrypted_response_alg is invalid");
         break;
       }
@@ -7193,7 +7193,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
       }
     }
     if (json_object_get(j_registration, "authorization_encrypted_response_enc") != NULL) {
-      if (!json_string_length(json_object_get(j_registration, "authorization_encrypted_response_enc"))) {
+      if (json_string_null_or_empty(json_object_get(j_registration, "authorization_encrypted_response_enc"))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "authorization_encrypted_response_enc is invalid");
         break;
       }
@@ -8294,7 +8294,7 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
           j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, u_map_get(http_request->map_post_body, "client_id"));
           if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
             if (is_client_auth_method_allowed(json_object_get(j_client, "client"), GLEWLWYD_CLIENT_AUTH_METHOD_TLS)) {
-              if (json_string_length(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_subject_dn"))) {
+              if (!json_string_null_or_empty(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_subject_dn"))) {
 #if GNUTLS_VERSION_NUMBER >= 0x030702
                 if (gnutls_x509_crt_get_dn3(cert, &cert_dn, 0) == GNUTLS_E_SUCCESS)
 #else
@@ -8314,16 +8314,16 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
                   j_return = json_pack("{si}", "result", G_ERROR);
                 }
               } else {
-                if (json_string_length(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_san_dns"))) {
+                if (!json_string_null_or_empty(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_san_dns"))) {
                   san_type_expected = GNUTLS_SAN_DNSNAME;
                   san_value = json_string_value(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_san_dns"));
-                } else if (json_string_length(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_san_uri"))) {
+                } else if (!json_string_null_or_empty(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_san_uri"))) {
                   san_type_expected = GNUTLS_SAN_URI;
                   san_value = json_string_value(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_san_uri"));
-                } else if (json_string_length(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_san_ip"))) {
+                } else if (!json_string_null_or_empty(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_san_ip"))) {
                   san_type_expected = GNUTLS_SAN_IPADDRESS;
                   san_value = json_string_value(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_san_ip"));
-                } else if (json_string_length(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_san_email"))) {
+                } else if (!json_string_null_or_empty(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_san_email"))) {
                   san_type_expected = GNUTLS_SAN_RFC822NAME;
                   san_value = json_string_value(json_object_get(json_object_get(j_client, "client"), "tls_client_auth_san_email"));
                 }
@@ -8391,7 +8391,7 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
                     y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_certificate_valid - Error r_jwks_import_from_json_t");
                     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
                   }
-                } else if (json_string_length(json_object_get(json_object_get(j_client, "client"), "jwks_uri"))) {
+                } else if (!json_string_null_or_empty(json_object_get(json_object_get(j_client, "client"), "jwks_uri"))) {
                   if (r_jwks_import_from_uri(jwks, json_string_value(json_object_get(json_object_get(j_client, "client"), "jwks_uri")), config->x5u_flags) == RHN_OK) {
                     for (index = 0; index < r_jwks_size(jwks); index++) {
                       jwk = r_jwks_get_at(jwks, index);
@@ -8555,7 +8555,7 @@ static int generate_discovery_content(struct _oidc_config * config) {
       }
       json_array_append_new(json_object_get(j_discovery, "token_endpoint_auth_methods_supported"), json_string("client_secret_jwt"));
       json_object_set(j_discovery, "token_endpoint_auth_signing_alg_values_supported", j_sign_pubkey);
-      if (json_string_length(json_object_get(config->j_params, "client-pubkey-parameter")) || json_string_length(json_object_get(config->j_params, "client-jwks-parameter")) || json_string_length(json_object_get(config->j_params, "client-jwks_uri-parameter"))) {
+      if (!json_string_null_or_empty(json_object_get(config->j_params, "client-pubkey-parameter")) || !json_string_null_or_empty(json_object_get(config->j_params, "client-jwks-parameter")) || !json_string_null_or_empty(json_object_get(config->j_params, "client-jwks_uri-parameter"))) {
         json_array_append_new(json_object_get(j_discovery, "token_endpoint_auth_methods_supported"), json_string("private_key_jwt"));
       }
     }
@@ -8619,17 +8619,17 @@ static int generate_discovery_content(struct _oidc_config * config) {
     if (0 == o_strcmp("on-demand", json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "type"))) || 0 == o_strcmp("mandatory", json_string_value(json_object_get(json_object_get(config->j_params, "address-claim"), "type")))) {
       json_array_append_new(json_object_get(j_discovery, "claims_supported"), json_string("address"));
     }
-    if (json_string_length(json_object_get(config->j_params, "service-documentation"))) {
+    if (!json_string_null_or_empty(json_object_get(config->j_params, "service-documentation"))) {
       json_object_set(j_discovery, "service_documentation", json_object_get(config->j_params, "service-documentation"));
     }
     json_object_set_new(j_discovery, "ui_locales_supported", json_pack("[ssss]", "en", "fr", "nl", "de"));
     json_object_set(j_discovery, "request_parameter_supported", json_object_get(config->j_params, "request-parameter-allow")==json_false()?json_false():json_true());
     json_object_set(j_discovery, "request_uri_parameter_supported", json_object_get(config->j_params, "request-parameter-allow")==json_false()?json_false():json_true());
     json_object_set_new(j_discovery, "require_request_uri_registration", json_false());
-    if (json_string_length(json_object_get(config->j_params, "op-policy-uri"))) {
+    if (!json_string_null_or_empty(json_object_get(config->j_params, "op-policy-uri"))) {
       json_object_set(j_discovery, "op_policy_uri", json_object_get(config->j_params, "op-policy-uri"));
     }
-    if (json_string_length(json_object_get(config->j_params, "op-tos-uri"))) {
+    if (!json_string_null_or_empty(json_object_get(config->j_params, "op-tos-uri"))) {
       json_object_set(j_discovery, "op_tos_uri", json_object_get(config->j_params, "op-tos-uri"));
     }
     if (config->subject_type == GLEWLWYD_OIDC_SUBJECT_TYPE_PAIRWISE) {
@@ -8676,7 +8676,7 @@ static int generate_discovery_content(struct _oidc_config * config) {
       json_object_set_new(j_discovery, "device_authorization_endpoint", json_pack("s+", plugin_url, "/device_authorization"));
       json_array_append_new(json_object_get(j_discovery, "grant_types_supported"), json_string(GLEWLWYD_DEVICE_AUTH_GRANT_TYPE));
     }
-    if (json_string_length(json_object_get(config->j_params, "client-cert-source"))) {
+    if (!json_string_null_or_empty(json_object_get(config->j_params, "client-cert-source"))) {
       if (json_object_get(config->j_params, "client-cert-use-endpoint-aliases") == json_true()) {
         json_object_set_new(j_discovery, "mtls_endpoint_aliases", json_pack("{ss+}", "token_endpoint", plugin_url, "/mtls/token"));
         if (json_object_get(config->j_params, "auth-type-device-enabled") == json_true()) {
@@ -9024,13 +9024,13 @@ static int authorization_details_validate(struct _oidc_config * config, json_t *
       if (split_string(scope, " ", &scope_list)) {
         json_array_foreach(j_authorization_details, index, j_rar_element) {
           if (json_is_object(j_rar_element)) {
-            if (json_string_length(json_object_get(j_rar_element, "type"))) {
+            if (!json_string_null_or_empty(json_object_get(j_rar_element, "type"))) {
               if (json_array_has_string(j_client_auth_types, json_string_value(json_object_get(j_rar_element, "type")))) {
                 if ((j_rar_type = json_object_get(json_object_get(config->j_params, "rar-types"), json_string_value(json_object_get(j_rar_element, "type")))) != NULL) {
                   if (json_array_size(json_object_get(j_rar_type, "locations"))) {
                     if (json_is_array(json_object_get(j_rar_element, "locations"))) {
                       json_array_foreach(json_object_get(j_rar_element, "locations"), index_param, j_element) {
-                        if (json_string_length(j_element)) {
+                        if (!json_string_null_or_empty(j_element)) {
                           if (!json_array_has_string(json_object_get(j_rar_type, "locations"), json_string_value(j_element))) {
                             y_log_message(Y_LOG_LEVEL_DEBUG, "authorization_details_validate - Error authorization_details type %s has unauthorized locations", json_string_value(json_object_get(j_rar_element, "type")));
                             ret = G_ERROR_PARAM;
@@ -9049,7 +9049,7 @@ static int authorization_details_validate(struct _oidc_config * config, json_t *
                   if (json_array_size(json_object_get(j_rar_type, "actions"))) {
                     if (json_is_array(json_object_get(j_rar_element, "actions"))) {
                       json_array_foreach(json_object_get(j_rar_element, "actions"), index_param, j_element) {
-                        if (json_string_length(j_element)) {
+                        if (!json_string_null_or_empty(j_element)) {
                           if (!json_array_has_string(json_object_get(j_rar_type, "actions"), json_string_value(j_element))) {
                             y_log_message(Y_LOG_LEVEL_DEBUG, "authorization_details_validate - Error authorization_details type %s has unauthorized actions", json_string_value(json_object_get(j_rar_element, "type")));
                             ret = G_ERROR_PARAM;
@@ -9068,7 +9068,7 @@ static int authorization_details_validate(struct _oidc_config * config, json_t *
                   if (json_array_size(json_object_get(j_rar_type, "datatypes"))) {
                     if (json_is_array(json_object_get(j_rar_element, "datatypes"))) {
                       json_array_foreach(json_object_get(j_rar_element, "datatypes"), index_param, j_element) {
-                        if (json_string_length(j_element)) {
+                        if (!json_string_null_or_empty(j_element)) {
                           if (!json_array_has_string(json_object_get(j_rar_type, "datatypes"), json_string_value(j_element))) {
                             y_log_message(Y_LOG_LEVEL_DEBUG, "authorization_details_validate - Error authorization_details type %s has unauthorized datatypes", json_string_value(json_object_get(j_rar_element, "type")));
                             ret = G_ERROR_PARAM;
@@ -9108,7 +9108,7 @@ static int authorization_details_validate(struct _oidc_config * config, json_t *
                   if (json_array_size(json_object_get(j_rar_type, "privileges"))) {
                     if (json_is_array(json_object_get(j_rar_element, "privileges"))) {
                       json_array_foreach(json_object_get(j_rar_element, "privileges"), index_param, j_element) {
-                        if (json_string_length(j_element)) {
+                        if (!json_string_null_or_empty(j_element)) {
                           if (!json_array_has_string(json_object_get(j_rar_type, "privileges"), json_string_value(j_element))) {
                             y_log_message(Y_LOG_LEVEL_DEBUG, "authorization_details_validate - Error authorization_details type %s has unauthorized privileges", json_string_value(json_object_get(j_rar_element, "type")));
                             ret = G_ERROR_PARAM;
@@ -9124,7 +9124,7 @@ static int authorization_details_validate(struct _oidc_config * config, json_t *
                     ret = G_ERROR_PARAM;
                   }
 
-                  if (json_object_get(j_rar_element, "identifier") != NULL && !json_string_length(json_object_get(j_rar_element, "identifier"))) {
+                  if (json_object_get(j_rar_element, "identifier") != NULL && json_string_null_or_empty(json_object_get(j_rar_element, "identifier"))) {
                     y_log_message(Y_LOG_LEVEL_DEBUG, "authorization_details_validate - Error authorization_details type %s invalid identifier", json_string_value(json_object_get(j_rar_element, "type")));
                     ret = G_ERROR_PARAM;
                   }
@@ -9602,7 +9602,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
               resource_checked = 1;
             }
             if (resource_checked) {
-              if (json_string_length(json_object_get(json_object_get(j_code, "code"), "claims_request"))) {
+              if (!json_string_null_or_empty(json_object_get(json_object_get(j_code, "code"), "claims_request"))) {
                 if ((j_claims_request = json_loads(json_string_value(json_object_get(json_object_get(j_code, "code"), "claims_request")), JSON_DECODE_ANY, NULL)) == NULL) {
                   y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_access_token_request - Error loading JSON claims_request");
                 }
@@ -10483,17 +10483,17 @@ static int check_pushed_authorization_request (const struct _u_request * request
           break;
         } else {
           client_auth_method = (int)json_integer_value(json_object_get(j_request, "client_auth_method"));
-          if (!json_string_length(json_object_get(json_object_get(j_request, "request"), "client_id")) || (client_id != NULL && 0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_request, "request"), "client_id")), client_id))) {
+          if (json_string_null_or_empty(json_object_get(json_object_get(j_request, "request"), "client_id")) || (client_id != NULL && 0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_request, "request"), "client_id")), client_id))) {
             // url parameter client_id can't differ from request parameter if set and must be present in request
             y_log_message(Y_LOG_LEVEL_DEBUG, "check_pushed_authorization_request oidc - client_id missing or invalid, origin: %s", ip_source);
             response->status = 403;
             break;
-          } else if (!json_string_length(json_object_get(json_object_get(j_request, "request"), "response_type")) || (u_map_has_key(request->map_post_body, "response_type") && 0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_request, "request"), "response_type")), u_map_get(request->map_post_body, "response_type")))) {
+          } else if (json_string_null_or_empty(json_object_get(json_object_get(j_request, "request"), "response_type")) || (u_map_has_key(request->map_post_body, "response_type") && 0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_request, "request"), "response_type")), u_map_get(request->map_post_body, "response_type")))) {
             // url parameter response_type can't differ from request parameter if set and must be present in request
             y_log_message(Y_LOG_LEVEL_DEBUG, "check_pushed_authorization_request oidc - response_type missing or invalid, origin: %s", ip_source);
             response->status = 403;
             break;
-          } else if (!json_string_length(json_object_get(json_object_get(j_request, "request"), "redirect_uri"))) {
+          } else if (json_string_null_or_empty(json_object_get(json_object_get(j_request, "request"), "redirect_uri"))) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "check_pushed_authorization_request oidc - redirect_uri missing, origin: %s", ip_source);
             // redirect_uri is mandatory
             response->status = 403;
@@ -10579,7 +10579,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
       break;
     }
 
-    if (json_string_length(json_object_get(config->j_params, "restrict-scope-client-property"))) {
+    if (!json_string_null_or_empty(json_object_get(config->j_params, "restrict-scope-client-property"))) {
       j_result = reduce_scope(scope, json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "restrict-scope-client-property"))));
       if (check_result_value(j_result, G_OK)) {
         scope_reduced = o_strdup(json_string_value(json_object_get(j_result, "scope")));
@@ -10689,7 +10689,7 @@ static json_t * get_ciba_email_content_from_template(struct _oidc_config * confi
       tmp = NULL;
     }
     if (o_strstr(body, "{CLIENT}") != NULL) {
-      if (json_string_length(json_object_get(j_client, "name"))) {
+      if (!json_string_null_or_empty(json_object_get(j_client, "name"))) {
         str_client = msprintf("%s (%s)", json_string_value(json_object_get(j_client, "name")), json_string_value(json_object_get(j_client, "client_id")));
       } else {
         str_client = msprintf("%s", json_string_value(json_object_get(j_client, "client_id")));
@@ -10715,20 +10715,20 @@ static int send_ciba_email(struct _oidc_config * config, json_t * j_user, json_t
   int ret;
   json_t * j_email_template;
   
-  if (json_string_length(json_object_get(j_user, "email"))) {
+  if (!json_string_null_or_empty(json_object_get(j_user, "email"))) {
     j_email_template = get_ciba_email_content_from_template(config, j_user, j_client, user_req_id, binding_message);
     if (check_result_value(j_email_template, G_OK)) {
       if (ulfius_send_smtp_rich_email(json_string_value(json_object_get(config->j_params, "oauth-ciba-email-host")),
                                      json_integer_value(json_object_get(config->j_params, "oauth-ciba-email-port")),
                                      json_object_get(config->j_params, "oauth-ciba-email-use-tls")==json_true()?1:0,
                                      json_object_get(config->j_params, "oauth-ciba-email-verify-certificate")==json_false()?0:1,
-                                     json_string_length(json_object_get(config->j_params, "oauth-ciba-email-user"))?json_string_value(json_object_get(config->j_params, "oauth-ciba-email-user")):NULL,
-                                     json_string_length(json_object_get(config->j_params, "oauth-ciba-email-password"))?json_string_value(json_object_get(config->j_params, "oauth-ciba-email-password")):NULL,
+                                     !json_string_null_or_empty(json_object_get(config->j_params, "oauth-ciba-email-user"))?json_string_value(json_object_get(config->j_params, "oauth-ciba-email-user")):NULL,
+                                     !json_string_null_or_empty(json_object_get(config->j_params, "oauth-ciba-email-password"))?json_string_value(json_object_get(config->j_params, "oauth-ciba-email-password")):NULL,
                                      json_string_value(json_object_get(config->j_params, "oauth-ciba-email-from")),
                                      json_string_value(json_object_get(j_user, "email")),
                                      NULL,
                                      NULL,
-                                     json_string_length(json_object_get(config->j_params, "oauth-ciba-email-content-type"))?json_string_value(json_object_get(config->j_params, "oauth-ciba-email-content-type")):"text/plain; charset=utf-8",
+                                     !json_string_null_or_empty(json_object_get(config->j_params, "oauth-ciba-email-content-type"))?json_string_value(json_object_get(config->j_params, "oauth-ciba-email-content-type")):"text/plain; charset=utf-8",
                                      json_string_value(json_object_get(j_email_template, "subject")),
                                      json_string_value(json_object_get(j_email_template, "body"))) == U_OK) {
         ret = G_OK;
@@ -10862,7 +10862,7 @@ static json_t * check_ciba_login_hint(struct _oidc_config * config, json_t * j_c
       j_result = verify_request_signature(config, j_login_hint_token, json_string_value(json_object_get(j_client, "client_id")), GLEWLWYD_AUTH_CIBA, ip_source);
       if (check_result_value(j_result, G_OK)) {
         j_login_hint = r_jwt_get_full_claims_json_t(j_login_hint_token);
-        if (!json_string_length(json_object_get(j_login_hint, "username")) && !json_string_length(json_object_get(j_login_hint, "sub"))) {
+        if (json_string_null_or_empty(json_object_get(j_login_hint, "username")) && json_string_null_or_empty(json_object_get(j_login_hint, "sub"))) {
           json_decref(j_login_hint);
           j_login_hint = NULL;
           j_return = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -10881,7 +10881,7 @@ static json_t * check_ciba_login_hint(struct _oidc_config * config, json_t * j_c
     r_jwt_free(j_login_hint_token);
   } else if (!o_strnullempty(login_hint)) {
     j_login_hint = json_loads(login_hint, JSON_DECODE_ANY, NULL);
-    if (j_login_hint == NULL || (!json_string_length(json_object_get(j_login_hint, "username")) && !json_string_length(json_object_get(j_login_hint, "sub")))) {
+    if (j_login_hint == NULL || (json_string_null_or_empty(json_object_get(j_login_hint, "username")) && json_string_null_or_empty(json_object_get(j_login_hint, "sub")))) {
       json_decref(j_login_hint);
       j_login_hint = NULL;
       j_return = json_pack("{si}", "result", G_ERROR_PARAM);
@@ -10904,11 +10904,11 @@ static json_t * check_ciba_login_hint(struct _oidc_config * config, json_t * j_c
     j_return = json_pack("{si}", "result", G_ERROR);
   }
   if (j_return == NULL && j_login_hint != NULL) {
-    if (json_string_length(json_object_get(j_login_hint, "sub"))) {
+    if (!json_string_null_or_empty(json_object_get(j_login_hint, "sub"))) {
       if ((username_from_sub = get_username_from_sub(config, json_string_value(json_object_get(j_login_hint, "sub")), j_client)) == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_ciba_login_hint - Invalid sub '%s' for client_id '%s'", json_string_value(json_object_get(j_login_hint, "sub")), json_string_value(json_object_get(j_client, "client_id")));
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
-      } else if (json_string_length(json_object_get(j_login_hint, "username")) && 0 != o_strcmp(username_from_sub, json_string_value(json_object_get(j_login_hint, "username")))) {
+      } else if (!json_string_null_or_empty(json_object_get(j_login_hint, "username")) && 0 != o_strcmp(username_from_sub, json_string_value(json_object_get(j_login_hint, "username")))) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_ciba_login_hint - sub '%s' does not match username '%s' for client_id '%s'", json_string_value(json_object_get(j_login_hint, "sub")), json_string_value(json_object_get(j_login_hint, "username")), json_string_value(json_object_get(j_client, "client_id")));
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
       }
@@ -11090,7 +11090,7 @@ static int process_ciba_request (const struct _u_request * request,
       break;
     }
 
-    if (json_string_length(json_object_get(config->j_params, "restrict-scope-client-property"))) {
+    if (!json_string_null_or_empty(json_object_get(config->j_params, "restrict-scope-client-property"))) {
       j_result = reduce_scope(scope, json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "restrict-scope-client-property"))));
       if (check_result_value(j_result, G_OK)) {
         scope_reduced = o_strdup(json_string_value(json_object_get(j_result, "scope")));
@@ -11710,7 +11710,7 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
       }
       
       // Check if x5t_s256 matches
-      if ((x5t_s256 != NULL || json_string_length(json_object_get(json_object_get(j_ciba_request, "ciba"), "x5t_s256"))) &&
+      if ((x5t_s256 != NULL || !json_string_null_or_empty(json_object_get(json_object_get(j_ciba_request, "ciba"), "x5t_s256"))) &&
           0 != o_strcmp(x5t_s256, json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "x5t_s256")))) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_ciba_auth_req_id oidc - client '%s' mismatch x5t#s256, origin: %s", client_id, ip_source);
         j_response = json_pack("{ss}", "error", "unauthorized_client");
@@ -12034,7 +12034,7 @@ static void * run_backchannel_logout_thread(void * args) {
   json_array_foreach(elt->j_client_id_list, index, j_element) {
     j_client = elt->config->glewlwyd_config->glewlwyd_plugin_callback_get_client(elt->config->glewlwyd_config, json_string_value(json_object_get(j_element, "client_id")));
     if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true() &&
-        json_string_length(json_object_get(json_object_get(j_client, "client"), "backchannel_logout_uri"))) {
+        !json_string_null_or_empty(json_object_get(json_object_get(j_client, "client"), "backchannel_logout_uri"))) {
       alg = get_token_sign_alg(elt->config, json_object_get(j_client, "client"), GLEWLWYD_TOKEN_TYPE_ID_TOKEN);
       jwk = get_jwk_sign(elt->config, json_object_get(j_client, "client"), alg);
       if (alg != R_JWA_ALG_UNKNOWN && alg != R_JWA_ALG_NONE && jwk != NULL) {
@@ -12250,7 +12250,7 @@ static json_t * get_session_front_client_list(struct _oidc_config * config, cons
             json_array_foreach(j_result, index, j_element) {
               j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, json_string_value(json_object_get(j_element, "client_id")));
               if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
-                if (json_string_length(json_object_get(json_object_get(j_client, "client"), "frontchannel_logout_uri"))) {
+                if (!json_string_null_or_empty(json_object_get(json_object_get(j_client, "client"), "frontchannel_logout_uri"))) {
                   json_array_append_new(json_object_get(json_object_get(j_return, "session"), "client"),
                                         json_pack("{sOsOso}",
                                                   "client_id", json_object_get(j_element, "client_id"),
@@ -12335,7 +12335,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
   if (refresh_token != NULL && o_strlen(refresh_token) == OIDC_REFRESH_TOKEN_LENGTH) {
     j_refresh = validate_refresh_token(config, refresh_token);
     if (check_result_value(j_refresh, G_OK)) {
-      if (json_string_length(json_object_get(json_object_get(j_refresh, "token"), "claims_request"))) {
+      if (!json_string_null_or_empty(json_object_get(json_object_get(j_refresh, "token"), "claims_request"))) {
         if ((j_claims_request = json_loads(json_string_value(json_object_get(json_object_get(j_refresh, "token"), "claims_request")), JSON_DECODE_ANY, NULL)) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh oidc - Error loading JSON claims request");
         }
@@ -12976,15 +12976,15 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       } else if (!check_result_value(j_request, G_OK)) {
         response->status = 500;
       } else {
-        if (!json_string_length(json_object_get(json_object_get(j_request, "request"), "client_id")) || (u_map_has_key(map, "client_id") && 0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_request, "request"), "client_id")), u_map_get(map, "client_id")))) {
+        if (json_string_null_or_empty(json_object_get(json_object_get(j_request, "request"), "client_id")) || (u_map_has_key(map, "client_id") && 0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_request, "request"), "client_id")), u_map_get(map, "client_id")))) {
           // url parameter client_id can't differ from request parameter if set and must be present in request
           y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - client_id missing or invalid, origin: %s", ip_source);
           response->status = 403;
-        } else if (!json_string_length(json_object_get(json_object_get(j_request, "request"), "response_type")) || (u_map_has_key(map, "response_type") && 0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_request, "request"), "response_type")), u_map_get(map, "response_type")))) {
+        } else if (json_string_null_or_empty(json_object_get(json_object_get(j_request, "request"), "response_type")) || (u_map_has_key(map, "response_type") && 0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_request, "request"), "response_type")), u_map_get(map, "response_type")))) {
           // url parameter response_type can't differ from request parameter if set and must be present in request
           y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - response_type missing or invalid, origin: %s", ip_source);
           response->status = 403;
-        } else if (!json_string_length(json_object_get(json_object_get(j_request, "request"), "redirect_uri"))) {
+        } else if (json_string_null_or_empty(json_object_get(json_object_get(j_request, "request"), "redirect_uri"))) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - redirect_uri missing, origin: %s", ip_source);
           // redirect_uri is mandatory
           response->status = 403;
@@ -13243,7 +13243,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       break;
     }
 
-    if (json_string_length(json_object_get(config->j_params, "restrict-scope-client-property"))) {
+    if (!json_string_null_or_empty(json_object_get(config->j_params, "restrict-scope-client-property"))) {
       j_reduced_scope = reduce_scope(scope, json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "restrict-scope-client-property"))));
       if (check_result_value(j_reduced_scope, G_OK)) {
         scope_reduced = o_strdup(json_string_value(json_object_get(j_reduced_scope, "scope")));
@@ -15032,7 +15032,7 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
       } else { // 512
         alg = R_JWA_ALG_RS512;
       }
-      if (json_string_length(json_object_get(config->j_params, "key")) && json_string_length(json_object_get(config->j_params, "cert"))) {
+      if (!json_string_null_or_empty(json_object_get(config->j_params, "key")) && !json_string_null_or_empty(json_object_get(config->j_params, "cert"))) {
         if ((jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_PRIVKEY, json_string_value(json_object_get(config->j_params, "key")), json_string_length(json_object_get(config->j_params, "key")))) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "build_sign_keys_from_params - oidc - Error r_jwk_quick_import key rsa");
           ret = G_ERROR_PARAM;
@@ -15072,7 +15072,7 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
       } else { // 512
         alg = R_JWA_ALG_ES512;
       }
-      if (json_string_length(json_object_get(config->j_params, "key")) && json_string_length(json_object_get(config->j_params, "cert"))) {
+      if (!json_string_null_or_empty(json_object_get(config->j_params, "key")) && !json_string_null_or_empty(json_object_get(config->j_params, "cert"))) {
         if ((jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_PRIVKEY, json_string_value(json_object_get(config->j_params, "key")), json_string_length(json_object_get(config->j_params, "key")))) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "build_sign_keys_from_params - oidc - Error r_jwk_quick_import key ecdsa");
           ret = G_ERROR_PARAM;
@@ -15112,7 +15112,7 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
       } else { // 512
         alg = R_JWA_ALG_PS512;
       }
-      if (json_string_length(json_object_get(config->j_params, "key")) && json_string_length(json_object_get(config->j_params, "cert"))) {
+      if (!json_string_null_or_empty(json_object_get(config->j_params, "key")) && !json_string_null_or_empty(json_object_get(config->j_params, "cert"))) {
         if ((jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_PRIVKEY, json_string_value(json_object_get(config->j_params, "key")), json_string_length(json_object_get(config->j_params, "key")))) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "build_sign_keys_from_params - oidc - Error r_jwk_quick_import key rsa-pss");
           ret = G_ERROR_PARAM;
@@ -15146,7 +15146,7 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
       }
     } else if (0 == o_strcmp("eddsa", json_string_value(json_object_get(config->j_params, "jwt-type")))) {
       alg = R_JWA_ALG_EDDSA;
-      if (json_string_length(json_object_get(config->j_params, "key")) && json_string_length(json_object_get(config->j_params, "cert"))) {
+      if (!json_string_null_or_empty(json_object_get(config->j_params, "key")) && !json_string_null_or_empty(json_object_get(config->j_params, "cert"))) {
         if ((jwk = r_jwk_quick_import(R_IMPORT_PEM, R_X509_TYPE_PRIVKEY, json_string_value(json_object_get(config->j_params, "key")), json_string_length(json_object_get(config->j_params, "key")))) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "build_sign_keys_from_params - oidc - Error r_jwk_quick_import key eddsa");
           ret = G_ERROR_PARAM;
@@ -15186,7 +15186,7 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
       } else { // 512
         alg = R_JWA_ALG_HS512;
       }
-      if (json_string_length(json_object_get(config->j_params, "key"))) {
+      if (!json_string_null_or_empty(json_object_get(config->j_params, "key"))) {
         if ((jwk = r_jwk_quick_import(R_IMPORT_SYMKEY, json_string_value(json_object_get(config->j_params, "key")), json_string_length(json_object_get(config->j_params, "key")))) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "build_sign_keys_from_params - oidc - Error r_jwk_quick_import sha");
           ret = G_ERROR_PARAM;
@@ -15210,9 +15210,9 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
       }
     }
 
-    if (json_string_length(json_object_get(config->j_params, "jwks-private")) || json_string_length(json_object_get(config->j_params, "jwks-uri"))) {
+    if (!json_string_null_or_empty(json_object_get(config->j_params, "jwks-private")) || !json_string_null_or_empty(json_object_get(config->j_params, "jwks-uri"))) {
       r_jwks_empty(config->jwks_sign);
-      if (json_string_length(json_object_get(config->j_params, "jwks-uri"))) {
+      if (!json_string_null_or_empty(json_object_get(config->j_params, "jwks-uri"))) {
         if (r_jwks_import_from_uri(config->jwks_sign, json_string_value(json_object_get(config->j_params, "jwks-uri")), config->x5u_flags) != RHN_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "build_sign_keys_from_params - oidc - Error importing jwks_sign from uri");
           ret = G_ERROR_PARAM;
@@ -15264,9 +15264,9 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
       }
     }
 
-    if (json_string_length(json_object_get(config->j_params, "jwks-public-uri")) || json_string_length(json_object_get(config->j_params, "jwks-public"))) {
+    if (!json_string_null_or_empty(json_object_get(config->j_params, "jwks-public-uri")) || !json_string_null_or_empty(json_object_get(config->j_params, "jwks-public"))) {
       r_jwks_empty(jwks_pub_export);
-      if (json_string_length(json_object_get(config->j_params, "jwks-public-uri"))) {
+      if (!json_string_null_or_empty(json_object_get(config->j_params, "jwks-public-uri"))) {
         if (r_jwks_import_from_uri(jwks_pub_export, json_string_value(json_object_get(config->j_params, "jwks-public-uri")), config->x5u_flags) != RHN_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "build_sign_keys_from_params - oidc - Error importing jwks-public from uri");
           ret = G_ERROR;

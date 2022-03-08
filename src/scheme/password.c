@@ -345,7 +345,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
   UNUSED(cls);
   int ret;
   
-  if (json_string_length(json_object_get(j_scheme_data, "password"))) {
+  if (!json_string_null_or_empty(json_object_get(j_scheme_data, "password"))) {
     ret = config->glewlwyd_module_callback_check_user_password(config, username, json_string_value(json_object_get(j_scheme_data, "password")));
     if (ret != G_OK && ret != G_ERROR_UNAUTHORIZED) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate password - Error glewlwyd_module_callback_check_user_password");

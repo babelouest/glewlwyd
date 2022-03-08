@@ -453,7 +453,7 @@ static char * get_salt_from_password_hash(struct mod_parameters * param, const c
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    if (json_array_size(j_result) && json_string_length(json_object_get(json_array_get(j_result, 0), "gc_password"))) {
+    if (json_array_size(j_result) && !json_string_null_or_empty(json_object_get(json_array_get(j_result, 0), "gc_password"))) {
       if ((str_iterator = o_strchr(json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password")), G_PBKDF2_ITERATOR_SEP)) != NULL) {
         gc_password_len = o_strchr(json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password")), G_PBKDF2_ITERATOR_SEP) - json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password"));
         *iterations = (unsigned int)strtol(str_iterator+1, NULL, 10);
@@ -920,7 +920,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
           json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
         } else {
           json_array_foreach(json_object_get(j_client, "scope"), index, j_element) {
-            if (!json_is_string(j_element) || !json_string_length(j_element)) {
+            if (!json_is_string(j_element) || json_string_null_or_empty(j_element)) {
               json_array_append_new(j_result, json_string("scope must be a JSON array of string"));
             }
           }
