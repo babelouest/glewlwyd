@@ -4,7 +4,7 @@
  *
  * Copyright 2020-2022 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20220212
+ * Version 20220309
  *
  * The MIT License (MIT)
  *
@@ -52,10 +52,6 @@
  * {
  *   key = ".js"
  *   value = "application/javascript"
- * },
- * {
- *   key = ".json"
- *   value = "application/json"
  * },
  * {
  *   key = ".png"
@@ -289,7 +285,7 @@ int u_add_mime_types_compressed(struct _u_compressed_inmemory_website_config * c
 int callback_static_compressed_inmemory_website (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _u_compressed_inmemory_website_config * config = (struct _u_compressed_inmemory_website_config *)user_data;
   char ** accept_list = NULL;
-  int ret = U_CALLBACK_CONTINUE, compress_mode = U_COMPRESS_NONE, res, unknown_mime_type = 0;
+  int ret = U_CALLBACK_CONTINUE, compress_mode = U_COMPRESS_NONE, res;
   z_stream defstream;
   unsigned char * file_content, * file_content_orig = NULL;
   size_t length, read_length, offset, data_zip_len = 0;
@@ -309,7 +305,7 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
     while (file_requested[0] == '/') {
       file_requested++;
     }
-    file_requested += !o_strnullempty((config->url_prefix));
+    file_requested += o_strlen((config->url_prefix));
     while (file_requested[0] == '/') {
       file_requested++;
     }
@@ -327,13 +323,6 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
       url_dup_save = file_requested = o_strdup("index.html");
     }
 
-    content_type = u_map_get_case(&config->mime_types, get_filename_ext(file_requested));
-    if (content_type == NULL) {
-      content_type = u_map_get(&config->mime_types, "*");
-      unknown_mime_type = 1;
-    }
-    u_map_copy_into(response->map_header, &config->map_header);
-
     if (!u_map_has_key_case(response->map_header, U_CONTENT_HEADER)) {
       if (split_string(u_map_get_case(request->map_header, U_ACCEPT_HEADER), ",", &accept_list)) {
         if (config->allow_gzip && string_array_has_trimmed_value((const char **)accept_list, U_ACCEPT_GZIP)) {
@@ -342,22 +331,23 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
           compress_mode = U_COMPRESS_DEFL;
         }
 
+
         if (compress_mode != U_COMPRESS_NONE) {
           if (compress_mode == U_COMPRESS_GZIP && config->allow_cache_compressed && u_map_has_key(&config->gzip_files, file_requested)) {
             ulfius_set_binary_body_response(response, 200, u_map_get(&config->gzip_files, file_requested), u_map_get_length(&config->gzip_files, file_requested));
             u_map_put(response->map_header, U_CONTENT_HEADER, U_ACCEPT_GZIP);
-            u_map_put(response->map_header, "Content-Type", content_type);
           } else if (compress_mode == U_COMPRESS_DEFL && config->allow_cache_compressed && u_map_has_key(&config->deflate_files, file_requested)) {
             ulfius_set_binary_body_response(response, 200, u_map_get(&config->deflate_files, file_requested), u_map_get_length(&config->deflate_files, file_requested));
             u_map_put(response->map_header, U_CONTENT_HEADER, U_ACCEPT_DEFLATE);
-            u_map_put(response->map_header, "Content-Type", content_type);
           } else {
             file_path = msprintf("%s/%s", ((struct _u_compressed_inmemory_website_config *)user_data)->files_path, file_requested);
 
             if (!pthread_mutex_lock(&config->lock)) {
               f = fopen (file_path, "rb");
               if (f) {
-                if (unknown_mime_type) {
+                content_type = u_map_get_case(&config->mime_types, get_filename_ext(file_requested));
+                if (content_type == NULL) {
+                  content_type = u_map_get(&config->mime_types, "*");
                   y_log_message(Y_LOG_LEVEL_WARNING, "Static File Server - Unknown mime type for extension %s", get_filename_ext(file_requested));
                 }
                 if (!string_array_has_value((const char **)config->mime_types_compressed, content_type)) {
@@ -365,7 +355,8 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
                 }
 
                 u_map_put(response->map_header, "Content-Type", content_type);
-
+                u_map_copy_into(response->map_header, &config->map_header);
+                
                 fseek (f, 0, SEEK_END);
                 offset = length = ftell (f);
                 fseek (f, 0, SEEK_SET);
