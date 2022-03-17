@@ -2638,7 +2638,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       }
 
       if (!o_base64_decode((const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "signature")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "signature")), NULL, &sig_len)) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error o_base64_decode signature (1)");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Invalid signature format");
         ret = G_ERROR_PARAM;
         break;
       }
@@ -2650,7 +2650,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       }
 
       if (!o_base64_decode((const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "signature")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "signature")), sig, &sig_len)) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error o_base64_decode signature (2)");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error o_base64_decode signature");
         ret = G_ERROR;
         break;
       }
