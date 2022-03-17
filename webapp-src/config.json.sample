@@ -368,6 +368,12 @@
       "forceShow": true,
       "label": "admin.client-backchannel_logout_session_required",
       "listElements": ["no","yes"]
+    },{
+      "name": "dpop_bound_access_tokens",
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.client-dpop_bound_access_tokens",
+      "listElements": ["no","yes"]
     }]
   },
   "defaultScheme": "",

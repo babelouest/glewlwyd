@@ -310,6 +310,7 @@
     "client-backchannel_logout_uri": "backchannel_logout_uri",
     "client-backchannel_logout_uri-ph": "Ex: https://client.example.com/back-logout/",
     "client-backchannel_logout_session_required": "backchannel_logout_session_required",
+    "client-dpop_bound_access_tokens": "dpop_bound_access_tokens",
     "nav-search-placeholder": "Motif de recherche",
     "nav-search-title": "Rechercher",
     "nav-search": "Rechercher",
