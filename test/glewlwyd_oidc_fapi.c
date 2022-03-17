@@ -537,6 +537,7 @@ START_TEST(test_oidc_fapi_id_token_state_valid)
   s_data.size = o_strlen(STATE);
   ck_assert_int_eq(gnutls_fingerprint(alg, &s_data, s_hash, &s_hash_len), GNUTLS_E_SUCCESS);
   ck_assert_int_eq(o_base64url_encode((unsigned char *)s_hash, s_hash_len/2, (unsigned char *)s_hash_encoded, &s_hash_encoded_len), 1);
+  s_hash_encoded[s_hash_encoded_len] = '\0';
 
   ck_assert_str_eq(s_hash_encoded, r_jwt_get_claim_str_value(jwt, "s_hash"));
 
@@ -590,6 +591,7 @@ START_TEST(test_oidc_fapi_id_token_state_valid)
   s_data.size = o_strlen(STATE);
   ck_assert_int_eq(gnutls_fingerprint(alg, &s_data, s_hash, &s_hash_len), GNUTLS_E_SUCCESS);
   ck_assert_int_eq(o_base64url_encode((unsigned char *)s_hash, s_hash_len/2, (unsigned char *)s_hash_encoded, &s_hash_encoded_len), 1);
+  s_hash_encoded[s_hash_encoded_len] = '\0';
 
   ck_assert_str_eq(s_hash_encoded, r_jwt_get_claim_str_value(jwt, "s_hash"));
 

@@ -454,6 +454,7 @@ static json_t * add_session_identify(struct config_module * config, struct _oaut
         state_export = json_dumps(j_state, JSON_COMPACT);
         if ((state_export_b64 = o_malloc(2*o_strlen(state_export))) != NULL) {
           if (o_base64url_encode((const unsigned char *)state_export, o_strlen(state_export), (unsigned char *)state_export_b64, &state_export_b64_len)) {
+            state_export_b64[state_export_b64_len] = '\0';
             i_set_str_parameter(&i_session, I_OPT_STATE, state_export_b64);
             if (i_build_auth_url_get(&i_session) == I_OK) {
               time(&now);
@@ -566,6 +567,7 @@ static json_t * add_session_for_user(struct config_module * config, struct _oaut
           state_export = json_dumps(j_state, JSON_COMPACT);
           if ((state_export_b64 = o_malloc(2*o_strlen(state_export))) != NULL) {
             if (o_base64url_encode((const unsigned char *)state_export, o_strlen(state_export), (unsigned char *)state_export_b64, &state_export_b64_len)) {
+              state_export_b64[state_export_b64_len] = '\0';
               i_set_str_parameter(&i_session, I_OPT_STATE, state_export_b64);
               if (i_build_auth_url_get(&i_session) == I_OK) {
                 time(&now);
@@ -744,6 +746,7 @@ static json_t * add_registration_for_user(struct config_module * config, struct 
           state_export = json_dumps(j_state, JSON_COMPACT);
           if ((state_export_b64 = o_malloc(2*o_strlen(state_export))) != NULL) {
             if (o_base64url_encode((const unsigned char *)state_export, o_strlen(state_export), (unsigned char *)state_export_b64, &state_export_b64_len)) {
+              state_export_b64[state_export_b64_len] = '\0';
               i_set_str_parameter(&i_session, I_OPT_STATE, state_export_b64);
               if (i_build_auth_url_get(&i_session) == I_OK) {
                 j_query = json_pack("{sss{sOsOssss}}",

@@ -545,6 +545,7 @@ static char ** get_salt_from_password_hash(struct mod_parameters * param, const 
               json_array_append_new(j_iterations, json_integer(0));
             }
             if (!json_string_null_or_empty(json_object_get(j_element, "guw_password")) && o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_element, "guw_password")), gc_password_len, password_b64_decoded, &password_b64_decoded_len)) {
+              password_b64_decoded[password_b64_decoded_len] = '\0';
               if ((salt = o_strdup((const char *)password_b64_decoded + password_b64_decoded_len - GLEWLWYD_DEFAULT_SALT_LENGTH)) != NULL) {
                 salt_list[index] = salt;
               } else {

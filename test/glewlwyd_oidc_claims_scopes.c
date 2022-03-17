@@ -147,6 +147,7 @@ START_TEST(test_oidc_claims_scopes_scope1)
   }
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), payload_dec, &payload_dec_len), 1);
+  payload_dec[payload_dec_len] = '\0';
   ck_assert_ptr_ne((j_payload = json_loads((const char *)payload_dec, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_ptr_ne(json_object_get(j_payload, "claim-1"), NULL);
   ck_assert_ptr_eq(json_object_get(j_payload, "claim-2"), NULL);
@@ -200,6 +201,7 @@ START_TEST(test_oidc_claims_scopes_claims_all)
   }
   ck_assert_int_eq(split_string(id_token, ".", &id_token_split), 3);
   ck_assert_int_eq(o_base64url_decode((const unsigned char *)id_token_split[1], o_strlen(id_token_split[1]), payload_dec, &payload_dec_len), 1);
+  payload_dec[payload_dec_len] = '\0';
   ck_assert_ptr_ne((j_payload = json_loads((const char *)payload_dec, JSON_DECODE_ANY, NULL)), NULL);
   ck_assert_ptr_ne(json_object_get(j_payload, "claim-1"), NULL);
   ck_assert_ptr_eq(json_object_get(j_payload, "claim-2"), NULL);

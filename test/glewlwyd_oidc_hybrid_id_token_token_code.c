@@ -98,12 +98,14 @@ START_TEST(test_oidc_hybrid_id_token_token_code_valid)
   at_data.size = o_strlen(access_token);
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &at_data, at_hash, &at_hash_len), GNUTLS_E_SUCCESS);
   ck_assert_int_eq(o_base64url_encode((unsigned char *)at_hash, at_hash_len/2, (unsigned char *)at_hash_encoded, &at_hash_encoded_len), 1);
+  at_hash_encoded[at_hash_encoded_len] = '\0';
   ck_assert_str_eq(at_hash_encoded, json_string_value(json_object_get(j_payload, "at_hash")));
 
   at_data.data = (unsigned char*)code;
   at_data.size = o_strlen(code);
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &at_data, at_hash, &at_hash_len), GNUTLS_E_SUCCESS);
   ck_assert_int_eq(o_base64url_encode((unsigned char *)at_hash, at_hash_len/2, (unsigned char *)at_hash_encoded, &at_hash_encoded_len), 1);
+  at_hash_encoded[at_hash_encoded_len] = '\0';
   ck_assert_str_eq(at_hash_encoded, json_string_value(json_object_get(j_payload, "c_hash")));
 
   ulfius_clean_response(&resp);
@@ -166,12 +168,14 @@ START_TEST(test_oidc_hybrid_id_token_token_code_valid_post)
   at_data.size = o_strlen(access_token);
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &at_data, at_hash, &at_hash_len), GNUTLS_E_SUCCESS);
   ck_assert_int_eq(o_base64url_encode((unsigned char *)at_hash, at_hash_len/2, (unsigned char *)at_hash_encoded, &at_hash_encoded_len), 1);
+  at_hash_encoded[at_hash_encoded_len] = '\0';
   ck_assert_str_eq(at_hash_encoded, json_string_value(json_object_get(j_payload, "at_hash")));
 
   at_data.data = (unsigned char*)code;
   at_data.size = o_strlen(code);
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &at_data, at_hash, &at_hash_len), GNUTLS_E_SUCCESS);
   ck_assert_int_eq(o_base64url_encode((unsigned char *)at_hash, at_hash_len/2, (unsigned char *)at_hash_encoded, &at_hash_encoded_len), 1);
+  at_hash_encoded[at_hash_encoded_len] = '\0';
   ck_assert_str_eq(at_hash_encoded, json_string_value(json_object_get(j_payload, "c_hash")));
 
   ulfius_clean_response(&resp);

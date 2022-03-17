@@ -1631,6 +1631,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error o_base64_encode for nonce_base_hash_b64");
         break;
       }
+      nonce_base_hash_b64[nonce_base_hash_b64_len] = '\0';
 
       if (response == NULL) {
         json_array_append_new(j_error, json_string("response invalid"));
@@ -2636,9 +2637,21 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         break;
       }
 
-      if (!o_base64url_decode((const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "signature")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "signature")), sig, &sig_len)) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error o_base64url_decode signature");
+      if (!o_base64_decode((const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "signature")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "signature")), NULL, &sig_len)) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error o_base64_decode signature (1)");
         ret = G_ERROR_PARAM;
+        break;
+      }
+      
+      if (sig_len > 128) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Invalid signature");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+
+      if (!o_base64_decode((const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "signature")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "signature")), sig, &sig_len)) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error o_base64_decode signature (2)");
+        ret = G_ERROR;
         break;
       }
 
@@ -2777,6 +2790,7 @@ static json_t * generate_credential_fake_from_seed(const char * seed) {
   if ((seed_credential_id = msprintf("%s-credential_id", seed)) != NULL) {
     if (generate_digest_raw(digest_SHA512, (unsigned char *)seed_credential_id, o_strlen(seed_credential_id), credential_id, &credential_id_len)) {
       if (o_base64_encode(credential_id, credential_id_len, credential_id_b64, &credential_id_b64_len)) {
+        credential_id_b64[credential_id_b64_len] = '\0';
         if ((seed_name = msprintf("%s-name", seed)) != NULL) {
           if (generate_digest_raw(digest_SHA256, (unsigned char *)seed_name, o_strlen(seed_name), name_hash, &name_hash_len)) {
             if (name_hash[0]%2) {
@@ -2892,6 +2906,7 @@ static int generate_fake_user_id(json_t * j_params, const char * username, unsig
   if ((seed = msprintf("%s%s-user_id", username, json_string_value(json_object_get(j_params, "seed")))) != NULL) {
     if (generate_digest_raw(digest_SHA256, (unsigned char *)seed, o_strlen(seed), seed_hash, &seed_hash_len)) {
       if (o_base64_encode(seed_hash, seed_hash_len, user_id, &seed_hash_b64_len)) {
+        user_id[seed_hash_b64_len] = '\0';
         ret = G_OK;
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_credential_fake_from_seed - Error o_base64_encode");
@@ -3590,8 +3605,8 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
     if (check_result_value(j_assertion, G_OK)) {
       if ((res = check_assertion(config, (json_t *)cls, username, j_scheme_data, json_object_get(j_assertion, "assertion"))) == G_OK) {
         ret = G_OK;
-      } else if (res == G_ERROR_UNAUTHORIZED) {
-        ret = G_ERROR_UNAUTHORIZED;
+      } else if (res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM) {
+        ret = res;
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate webauthn - Error check_assertion");
         ret = G_ERROR;

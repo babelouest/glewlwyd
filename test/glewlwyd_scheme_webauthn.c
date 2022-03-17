@@ -216,6 +216,22 @@ tH8bQpT9ojrUnc/hKSm9h1ANH5JHglHCQphHQPPNjFZxhIamqn7RuYEIBA==\
 struct _u_request user_req;
 struct _u_request admin_req;
 
+static int oh_my_base64_encode(const unsigned char * src, size_t len, unsigned char * out, size_t * out_len) {
+  int ret = o_base64_encode(src, len, out, out_len);
+  if (out != NULL) {
+    out[*out_len] = '\0';
+  }
+  return ret;
+}
+
+static int oh_my_base64url_encode(const unsigned char * src, size_t len, unsigned char * out, size_t * out_len) {
+  int ret = o_base64url_encode(src, len, out, out_len);
+  if (out != NULL) {
+    out[*out_len] = '\0';
+  }
+  return ret;
+}
+
 static char * get_file_content(const char * file_path) {
   char * buffer = NULL;
   size_t length, res;
@@ -600,14 +616,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -749,10 +765,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -859,14 +875,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
                             "webauthn.create");
   ck_assert_ptr_ne(j_client_data, NULL);
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -1008,10 +1024,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -1118,14 +1134,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
                             "error");
   ck_assert_ptr_ne(j_client_data, NULL);
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -1267,10 +1283,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -1377,14 +1393,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_rpid)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -1527,10 +1543,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_rpid)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -1637,14 +1653,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_a
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -1786,10 +1802,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_a
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -1896,14 +1912,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_u
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -2045,10 +2061,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_u
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -2155,14 +2171,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -2305,10 +2321,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -2415,14 +2431,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -2565,10 +2581,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -2675,14 +2691,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -2825,10 +2841,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -2935,14 +2951,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -3084,10 +3100,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -3194,14 +3210,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -3343,10 +3359,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -3453,14 +3469,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -3602,10 +3618,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -3712,14 +3728,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -3861,10 +3877,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -3971,14 +3987,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -4121,10 +4137,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -4231,14 +4247,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_map
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -4386,10 +4402,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_map
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -4496,14 +4512,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_cer
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -4645,10 +4661,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_cer
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -4755,14 +4771,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_x5c
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -4905,10 +4921,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_x5c
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -5015,14 +5031,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_pre
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -5164,10 +5180,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_pre
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -5274,14 +5290,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_rpi
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -5424,10 +5440,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_rpi
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -5534,14 +5550,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -5684,10 +5700,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -5794,14 +5810,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -5944,10 +5960,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -6054,14 +6070,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -6203,10 +6219,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -6313,14 +6329,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -6464,10 +6480,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -6574,14 +6590,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -6725,10 +6741,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -6835,14 +6851,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_siz
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -6985,10 +7001,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_siz
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -7095,14 +7111,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_con
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -7246,10 +7262,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_con
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -7356,14 +7372,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_key)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -7506,10 +7522,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_key)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -7616,14 +7632,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_obj_size
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -7767,10 +7783,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_obj_size
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -7877,14 +7893,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_auth_data_ke
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -8027,10 +8043,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_auth_data_ke
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -8137,14 +8153,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_key
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -8287,10 +8303,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_key
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -8397,14 +8413,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -8546,10 +8562,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -8654,14 +8670,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success_already_registered
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -8803,10 +8819,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success_already_registered
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -8913,14 +8929,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_success)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -9062,10 +9078,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_success)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -9170,14 +9186,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_collision_error)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -9319,10 +9335,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_collision_error)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -9427,14 +9443,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_in_2_success)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -9576,10 +9592,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_in_2_success)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -9694,10 +9710,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_error_session_invalid)
                             "webauthn.get");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
@@ -9706,8 +9722,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_error_session_invalid)
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -9725,16 +9741,16 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_error_session_invalid)
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
   
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -9824,10 +9840,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_challenge)
                             "webauthn.get");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
@@ -9836,8 +9852,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_challenge)
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -9855,16 +9871,16 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_challenge)
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
   
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -9955,10 +9971,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_origin)
                             "webauthn.get");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
@@ -9967,8 +9983,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_origin)
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -9986,16 +10002,16 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_origin)
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
   
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -10086,10 +10102,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_type
                             "error");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
@@ -10098,8 +10114,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_type
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -10117,16 +10133,16 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_type
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
   
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -10218,10 +10234,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_enco
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
   client_data_json[0]++;
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
@@ -10230,8 +10246,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_enco
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -10249,16 +10265,16 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_enco
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
   
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -10349,10 +10365,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_rp_id_hash)
                             "webauthn.get");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
@@ -10361,8 +10377,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_rp_id_hash)
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -10381,16 +10397,16 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_rp_id_hash)
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
   
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -10481,10 +10497,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_flag_user_presen
                             "webauthn.get");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
@@ -10493,8 +10509,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_flag_user_presen
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -10512,16 +10528,16 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_flag_user_presen
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
   
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -10612,10 +10628,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_hash
                             "webauthn.get");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
@@ -10624,8 +10640,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_hash
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -10644,16 +10660,16 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_hash
   auth_data[auth_data_len]++;
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
   
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -10670,7 +10686,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_client_data_hash
                                 "clientDataJSON", client_data_json_enc,
                                 "authenticatorData", auth_data_enc,
                                 "signature", signature_enc);
-  
+  ck_assert_ptr_ne(NULL, j_attestation);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "profile/scheme/register/", NULL, NULL, j_attestation, NULL, 401, NULL, NULL, NULL), 1);
 
   /*ck_assert_int_eq(ulfius_set_json_body_request(&user_req, j_credential), U_OK);
@@ -10744,10 +10760,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_signature)
                             "webauthn.get");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
@@ -10756,8 +10772,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_signature)
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -10775,7 +10791,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_signature)
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
@@ -10783,9 +10799,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_signature)
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   signature.data[0]++;
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -10876,10 +10892,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_success)
                             "webauthn.get");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
@@ -10888,8 +10904,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_success)
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -10907,16 +10923,16 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_success)
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
   
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -11007,10 +11023,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_credential_id)
                             "webauthn.get");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
@@ -11019,8 +11035,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_credential_id)
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -11038,16 +11054,16 @@ START_TEST(test_glwd_scheme_webauthn_irl_test_assertion_invalid_credential_id)
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
   
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -11162,10 +11178,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_success)
                             "webauthn.get");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
@@ -11174,8 +11190,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_success)
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -11193,16 +11209,16 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_success)
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
   
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -11292,10 +11308,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_2_in_2_success)
                             "webauthn.get");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY_2;
@@ -11304,8 +11320,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_2_in_2_success)
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -11323,16 +11339,16 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_2_in_2_success)
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
   
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -11422,10 +11438,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_2_in_1_error)
                             "webauthn.get");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY_2;
@@ -11434,8 +11450,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_2_in_1_error)
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -11453,16 +11469,16 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_2_in_1_error)
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
   
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -11552,10 +11568,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_invalid_credential_id)
                             "webauthn.get");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   ck_assert_int_eq(gnutls_privkey_init(&privkey), 0);
   ck_assert_int_eq(gnutls_x509_privkey_init(&key), 0);
   key_data.data = (unsigned char *)CREDENTIAL_PRIVATE_KEY;
@@ -11564,8 +11580,8 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_invalid_credential_id)
   ck_assert_int_eq(gnutls_privkey_import_x509(privkey, key, 0), 0);
 
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTHENTICATOR_DATA_SIZE);
@@ -11583,16 +11599,16 @@ START_TEST(test_glwd_scheme_webauthn_irl_auth_invalid_credential_id)
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, (auth_data+auth_data_len), &client_data_json_hash_len), GNUTLS_E_SUCCESS);
   auth_data_len += client_data_json_hash_len;
   
-  ck_assert_int_eq(o_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(auth_data, 37, auth_data_enc, &auth_data_enc_len), 1);
   
   key_data.data = auth_data;
   key_data.size = auth_data_len;
   
   ck_assert_int_eq(gnutls_privkey_sign_data(privkey, GNUTLS_DIG_SHA256, 0, &key_data, &signature), 0);
   
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, NULL, &signature_enc_len), 1);
   ck_assert_ptr_ne((signature_enc = o_malloc(signature_enc_len+1)), NULL);
-  ck_assert_int_eq(o_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(signature.data, signature.size, signature_enc, &signature_enc_len), 1);
   
   j_attestation = json_pack("{ss ss ss s{ss ss s{ss% ss% ss s{ss ss ss}}}}",
                            "username", USERNAME,
@@ -11640,7 +11656,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_remove_credential_success)
   unsigned char credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2];
   size_t credential_id_enc_len;
   
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
   j_params = json_pack("{sssssss{ssss%}}",
                       "username", USERNAME, 
                       "scheme_type", MODULE_MODULE, 
@@ -11660,7 +11676,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_remove_credential_2_success)
   unsigned char credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2];
   size_t credential_id_enc_len;
   
-  ck_assert_int_eq(o_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
   j_params = json_pack("{sssssss{ssss%}}",
                       "username", USERNAME, 
                       "scheme_type", MODULE_MODULE, 
@@ -11680,7 +11696,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_remove_credential_2_in_2_success)
   unsigned char credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2];
   size_t credential_id_enc_len;
   
-  ck_assert_int_eq(o_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id_2, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
   j_params = json_pack("{sssssss{ssss%}}",
                       "username", USERNAME, 
                       "scheme_type", MODULE_MODULE, 
@@ -11751,14 +11767,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -11841,9 +11857,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
   key_data.size = o_strlen(ANDROID_SAFETYNET_CERT_FAKE);
   ck_assert_int_ge(gnutls_x509_crt_import(cert, &key_data, GNUTLS_X509_FMT_PEM), 0);
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
   cert_der_enc = o_malloc(cert_der_enc_len+1);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
@@ -11862,7 +11878,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
   key_data.size = nonce_len;
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
-  ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
                       "nonce", nonce_hash_enc,
                       "timestampMs", time(NULL)*1000,
@@ -11908,10 +11924,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_key)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -12020,14 +12036,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -12110,9 +12126,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
   key_data.size = o_strlen(ANDROID_SAFETYNET_CERT_FAKE);
   ck_assert_int_ge(gnutls_x509_crt_import(cert, &key_data, GNUTLS_X509_FMT_PEM), 0);
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
   cert_der_enc = o_malloc(cert_der_enc_len+1);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
@@ -12131,7 +12147,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
   key_data.size = nonce_len;
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
-  ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
                       "nonce", nonce_hash_enc,
                       "timestampMs", time(NULL)*1000,
@@ -12172,10 +12188,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_ver_type)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -12284,14 +12300,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -12374,9 +12390,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
   key_data.size = o_strlen(ANDROID_SAFETYNET_CERT_FAKE);
   ck_assert_int_ge(gnutls_x509_crt_import(cert, &key_data, GNUTLS_X509_FMT_PEM), 0);
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
   cert_der_enc = o_malloc(cert_der_enc_len+1);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
   cert_der_enc[0]++;
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
@@ -12396,7 +12412,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
   key_data.size = nonce_len;
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
-  ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
                       "nonce", nonce_hash_enc,
                       "timestampMs", time(NULL)*1000,
@@ -12437,10 +12453,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -12549,14 +12565,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -12639,9 +12655,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
   key_data.size = o_strlen(ANDROID_SAFETYNET_CERT_FAKE);
   ck_assert_int_ge(gnutls_x509_crt_import(cert, &key_data, GNUTLS_X509_FMT_PEM), 0);
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
   cert_der_enc = o_malloc(cert_der_enc_len+1);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
@@ -12657,7 +12673,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
   key_data.size = nonce_len;
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
-  ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
                       "nonce", nonce_hash_enc,
                       "timestampMs", time(NULL)*1000,
@@ -12698,10 +12714,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_cert_missing)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -12810,14 +12826,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -12900,9 +12916,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
   key_data.size = o_strlen(ANDROID_SAFETYNET_CERT_FAKE);
   ck_assert_int_ge(gnutls_x509_crt_import(cert, &key_data, GNUTLS_X509_FMT_PEM), 0);
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
   cert_der_enc = o_malloc(cert_der_enc_len+1);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
@@ -12921,7 +12937,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
   key_data.size = nonce_len;
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
-  ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   nonce_hash_enc[0]++;
   j_grant = json_pack("{sssisssssosos[s]}",
                       "nonce", nonce_hash_enc,
@@ -12963,10 +12979,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_nonce_invalid)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -13075,14 +13091,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -13165,9 +13181,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
   key_data.size = o_strlen(ANDROID_SAFETYNET_CERT_FAKE);
   ck_assert_int_ge(gnutls_x509_crt_import(cert, &key_data, GNUTLS_X509_FMT_PEM), 0);
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
   cert_der_enc = o_malloc(cert_der_enc_len+1);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
@@ -13186,7 +13202,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
   key_data.size = nonce_len;
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
-  ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
                       "nonce", nonce_hash_enc,
                       "timestampMs", time(NULL)*1000,
@@ -13228,10 +13244,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -13340,14 +13356,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -13430,9 +13446,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
   key_data.size = o_strlen(ANDROID_SAFETYNET_CERT_FAKE);
   ck_assert_int_ge(gnutls_x509_crt_import(cert, &key_data, GNUTLS_X509_FMT_PEM), 0);
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
   cert_der_enc = o_malloc(cert_der_enc_len+1);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
@@ -13451,7 +13467,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
   key_data.size = nonce_len;
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
-  ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
                       "nonce", nonce_hash_enc,
                       "timestampMs", time(NULL)*1000,
@@ -13492,10 +13508,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_fmt_invalid_ke
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -13604,14 +13620,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -13694,9 +13710,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
   key_data.size = o_strlen(ANDROID_SAFETYNET_CERT_FAKE);
   ck_assert_int_ge(gnutls_x509_crt_import(cert, &key_data, GNUTLS_X509_FMT_PEM), 0);
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
   cert_der_enc = o_malloc(cert_der_enc_len+1);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
@@ -13715,7 +13731,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
   key_data.size = nonce_len;
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
-  ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
                       "nonce", nonce_hash_enc,
                       "timestampMs", time(NULL)*1000,
@@ -13757,10 +13773,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_safetynet_jws_invalid_si
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -13869,14 +13885,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -13959,9 +13975,9 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
   key_data.size = o_strlen(ANDROID_SAFETYNET_CERT_FAKE);
   ck_assert_int_ge(gnutls_x509_crt_import(cert, &key_data, GNUTLS_X509_FMT_PEM), 0);
   ck_assert_int_eq(gnutls_x509_crt_export(cert, GNUTLS_X509_FMT_DER, cert_der, &cert_der_len), 0);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, NULL, &cert_der_enc_len), 1);
   cert_der_enc = o_malloc(cert_der_enc_len+1);
-  ck_assert_int_eq(o_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(cert_der, cert_der_len, cert_der_enc, &cert_der_enc_len), 1);
 
   ck_assert_int_eq(r_jwt_init(&jwt_response), RHN_OK);
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt_response, R_JWA_ALG_RS256), RHN_OK);
@@ -13980,7 +13996,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
   key_data.size = nonce_len;
   ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, nonce_hash, &nonce_hash_len), GNUTLS_E_SUCCESS);
   
-  ck_assert_int_eq(o_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(nonce_hash, nonce_hash_len, nonce_hash_enc, &nonce_hash_enc_len), 1);
   j_grant = json_pack("{sssisssssosos[s]}",
                       "nonce", nonce_hash_enc,
                       "timestampMs", time(NULL)*1000,
@@ -14021,10 +14037,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_safetynet_success)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -14130,14 +14146,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_success)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -14269,10 +14285,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_success)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -14377,14 +14393,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_signature)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -14517,10 +14533,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_signature)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -14625,14 +14641,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_algorithm)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -14764,10 +14780,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_algorithm)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -14872,14 +14888,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_cert)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -15012,10 +15028,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_cert)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -15120,14 +15136,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_no_algorithm)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -15252,10 +15268,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_no_algorithm)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -15360,14 +15376,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_no_signature)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -15494,10 +15510,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_no_signature)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -15602,14 +15618,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_self_signed_success)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -15726,10 +15742,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_self_signed_success)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -15833,14 +15849,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_self_signed_invalid_sig
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -15958,10 +15974,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_self_signed_invalid_sig
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -16065,14 +16081,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_self_signed_invalid_pub
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -16189,10 +16205,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_self_signed_invalid_pub
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -16372,14 +16388,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_unregistered_ca)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -16511,10 +16527,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_unregistered_ca)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -16619,14 +16635,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_ui)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -16758,10 +16774,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_ui)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -16866,14 +16882,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_c)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -17005,10 +17021,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_c)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -17113,14 +17129,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_c)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -17252,10 +17268,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_c)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -17360,14 +17376,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_o)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -17499,10 +17515,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_o)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -17607,14 +17623,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_cn)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -17746,10 +17762,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_cn)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -17856,14 +17872,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_aaguid)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -17995,10 +18011,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_aaguid)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -18104,14 +18120,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_success)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -18268,10 +18284,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_success)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+4);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -18386,14 +18402,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_intermediate_2_success)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -18560,10 +18576,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_intermediate_2_success)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+4);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -18679,14 +18695,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_invalid_aaguid)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -18844,10 +18860,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_invalid_aaguid)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+4);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -18962,14 +18978,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_x5c_invalid_nonce)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -19127,10 +19143,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_x5c_invalid_nonce)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+4);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -19245,14 +19261,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_x5c_invalid_pubkey)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -19415,10 +19431,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_x5c_invalid_pubkey)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+4);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -19533,14 +19549,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_x5c_invalid_root_ca)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -19697,10 +19713,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_x5c_invalid_root_ca)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+4);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -19798,7 +19814,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_disable_credential_success)
   unsigned char credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2];
   size_t credential_id_enc_len;
   
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
   j_params = json_pack("{sssssss{ssss%}}",
                       "username", USERNAME, 
                       "scheme_type", MODULE_MODULE, 
@@ -19856,7 +19872,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_enable_credential_success)
   unsigned char credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2];
   size_t credential_id_enc_len;
   
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
   j_params = json_pack("{sssssss{ssss%}}",
                       "username", USERNAME, 
                       "scheme_type", MODULE_MODULE, 
@@ -19876,7 +19892,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_edit_credential_error)
   unsigned char credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2];
   size_t credential_id_enc_len;
   
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
   j_params = json_pack("{sssssss{ssssss}}",
                       "username", USERNAME, 
                       "scheme_type", MODULE_MODULE, 
@@ -19921,7 +19937,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_edit_credential_success)
   unsigned char credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2];
   size_t credential_id_enc_len;
   
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
   j_params = json_pack("{sssssss{ssssss}}",
                       "username", USERNAME, 
                       "scheme_type", MODULE_MODULE, 
@@ -19947,7 +19963,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_list_credential_success)
   unsigned char credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2];
   size_t credential_id_enc_len;
   
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
   j_result = json_stringn((char *)credential_id_enc, credential_id_enc_len);
   ck_assert_ptr_ne(j_result, NULL);
   ck_assert_int_eq(run_simple_test(&user_req, "PUT", SERVER_URI "profile/scheme/register/", NULL, NULL, j_params, NULL, 200, j_result, NULL, NULL), 1);
@@ -20011,14 +20027,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_none_error_format)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -20111,10 +20127,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_none_error_format)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -20217,14 +20233,14 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_none_success)
                             "webauthn.create");
   
   client_data_json = json_dumps(j_client_data, JSON_COMPACT);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), NULL, &client_data_json_enc_len), 1);
   client_data_json_enc = o_malloc(client_data_json_enc_len+1);
   ck_assert_ptr_ne(client_data_json_enc, NULL);
-  ck_assert_int_eq(o_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode((unsigned char *)client_data_json, o_strlen(client_data_json), client_data_json_enc, &client_data_json_enc_len), 1);
   
   // Generate credential_id
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
-  ck_assert_int_eq(o_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64url_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc_url, &credential_id_enc_url_len), 1);
   
   // Let's build auth_data
   memset(auth_data, 0, AUTH_DATA_SIZE);
@@ -20317,10 +20333,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_none_success)
   cbor_decref(&cose_pair.key);
   
   ck_assert_int_gt(cbor_serialize_alloc(att_obj, &att_obj_ser, &att_obj_ser_len), 0);
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, NULL, &att_obj_ser_enc_len), 1);
   att_obj_ser_enc = o_malloc(att_obj_ser_enc_len+1);
   att_obj_ser_enc_len = 0;
-  ck_assert_int_eq(o_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(att_obj_ser, att_obj_ser_len, att_obj_ser_enc, &att_obj_ser_enc_len), 1);
   
   j_credential = json_pack("{ss ss ss s{ss ss ss s{ss% ss% ss s{ss% ss%}}}}",
                            "username", USERNAME,
@@ -20374,7 +20390,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_remove_credential_none_success)
   unsigned char credential_id_enc[WEBAUTHN_CREDENTIAL_ID_LEN*2];
   size_t credential_id_enc_len;
   
-  ck_assert_int_eq(o_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
+  ck_assert_int_eq(oh_my_base64_encode(credential_id, WEBAUTHN_CREDENTIAL_ID_LEN, credential_id_enc, &credential_id_enc_len), 1);
   j_params = json_pack("{sssssss{ssss%}}",
                       "username", USERNAME, 
                       "scheme_type", MODULE_MODULE, 
