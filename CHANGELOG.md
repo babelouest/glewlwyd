@@ -1,5 +1,11 @@
 # Glewlwyd Changelog
 
+## 2.6.2
+
+This is a security release, if you use the webauthn scheme, please upgrade your Glewlwyd version.
+
+- Fix possible buffer overflow in webauthn assertion
+
 ## 2.6.1
 
 This is a security release, please upgrade your Glewlwyd version.
