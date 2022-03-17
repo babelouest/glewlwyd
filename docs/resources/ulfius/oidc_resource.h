@@ -41,20 +41,26 @@
 #define G_METHOD_BODY   1
 #define G_METHOD_URL    2
 
-#define HEADER_PREFIX_BEARER "Bearer "
-#define HEADER_RESPONSE      "WWW-Authenticate"
-#define HEADER_AUTHORIZATION "Authorization"
-#define BODY_URL_PARAMETER   "access_token"
-#define HEADER_DPOP          "DPoP"
+#define HEADER_PREFIX_BEARER     "Bearer "
+#define HEADER_PREFIX_BEARER_LEN 7
+#define HEADER_PREFIX_DPOP       "DPoP "
+#define HEADER_PREFIX_DPOP_LEN   5
+#define HEADER_RESPONSE          "WWW-Authenticate"
+#define HEADER_AUTHORIZATION     "Authorization"
+#define BODY_URL_PARAMETER       "access_token"
+#define HEADER_DPOP              "DPoP"
 
 struct _oidc_resource_config {
-  int       method;
-  char    * oauth_scope;
-  jwks_t  * jwks_public;
-  int       x5u_flags;
-  char    * realm;
+  int            method;
+  char         * oauth_scope;
+  jwks_t       * jwks_public;
+  int            x5u_flags;
+  char         * realm;
   unsigned short accept_access_token;
   unsigned short accept_client_token;
+  const char   * htm;
+  const char   * htu;
+  time_t         max_iat;
 };
 
 /**
@@ -69,4 +75,4 @@ int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request
 /**
  * Verifies if a DPoP header exists and if it does, verifies that it's a valid DPoP header
  */
-json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, const char * htu, time_t max_iat, const char * jkt, const char * access_token);
+json_t * verify_dpop_proof(const char * dpop_header, const char * access_token, const char * htm, const char * htu, time_t max_iat, const char * jkt);

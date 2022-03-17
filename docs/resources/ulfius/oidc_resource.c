@@ -176,8 +176,8 @@ static json_t * access_token_check_signature(struct _oidc_resource_config * conf
  */
 int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_resource_config * config = (struct _oidc_resource_config *)user_data;
-  json_t * j_access_token = NULL, * j_res_scope;
-  int res = U_CALLBACK_UNAUTHORIZED, res_validity;
+  json_t * j_access_token = NULL, * j_res_scope, * j_check_dpop;
+  int res = U_CALLBACK_UNAUTHORIZED, res_validity, is_dpop = 0;
   const char * token_value = NULL;
   char * response_value = NULL;
   
@@ -185,8 +185,11 @@ int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request
     switch (config->method) {
       case G_METHOD_HEADER:
         if (u_map_get_case(request->map_header, HEADER_AUTHORIZATION) != NULL) {
-          if (o_strstr(u_map_get_case(request->map_header, HEADER_AUTHORIZATION), HEADER_PREFIX_BEARER) == u_map_get_case(request->map_header, HEADER_AUTHORIZATION)) {
+          if (0 == o_strncmp(u_map_get_case(request->map_header, HEADER_AUTHORIZATION), HEADER_PREFIX_BEARER, o_strlen(HEADER_PREFIX_BEARER))) {
             token_value = u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_BEARER);
+          } else if (0 == o_strncmp(u_map_get_case(request->map_header, HEADER_AUTHORIZATION), HEADER_PREFIX_DPOP, o_strlen(HEADER_PREFIX_DPOP))) {
+            token_value = u_map_get_case(request->map_header, HEADER_AUTHORIZATION) + o_strlen(HEADER_PREFIX_DPOP);
+            is_dpop = 1;
           }
         }
         break;
@@ -214,18 +217,53 @@ int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request
             u_map_put(response->map_header, HEADER_RESPONSE, response_value);
             o_free(response_value);
           } else {
-            if (ulfius_set_response_shared_data(response, json_pack("{ss?sOsO*}", "sub", json_string_value(json_object_get(json_object_get(j_access_token, "grants"), "sub")), "scope", json_object_get(j_res_scope, "scope"), "jkt", json_object_get(json_object_get(json_object_get(j_access_token, "grants"), "cnf"), "jkt")), (void (*)(void *))&json_decref) != U_OK) {
-              res = U_CALLBACK_ERROR;
+            if (is_dpop) {
+              j_check_dpop = verify_dpop_proof(u_map_get_case(request->map_header, HEADER_DPOP), token_value, config->htm, config->htu, config->max_iat, json_string_value(json_object_get(json_object_get(json_object_get(j_access_token, "grants"), "cnf"), "jkt")));
+              if (check_result_value(j_check_dpop, G_TOKEN_OK)) {
+                if (ulfius_set_response_shared_data(response, json_pack("{ss?sOsO}", "sub", json_string_value(json_object_get(json_object_get(j_access_token, "grants"), "sub")), "scope", json_object_get(j_res_scope, "scope"), "jkt", json_object_get(json_object_get(json_object_get(j_access_token, "grants"), "cnf"), "jkt")), (void (*)(void *))&json_decref) != U_OK) {
+                  res = U_CALLBACK_ERROR;
+                } else {
+                  res = U_CALLBACK_CONTINUE;
+                  if (json_object_get(json_object_get(j_access_token, "grants"), "aud") != NULL) {
+                    json_object_set((json_t *)response->shared_data, "aud", json_object_get(json_object_get(j_access_token, "grants"), "aud"));
+                  }
+                  if (json_object_get(json_object_get(j_access_token, "grants"), "client_id") != NULL) {
+                    json_object_set((json_t *)response->shared_data, "client_id", json_object_get(json_object_get(j_access_token, "grants"), "client_id"));
+                  }
+                  if (json_object_get(json_object_get(j_access_token, "grants"), "claims") != NULL) {
+                    json_object_set((json_t *)response->shared_data, "claims", json_object_get(json_object_get(j_access_token, "grants"), "claims"));
+                  }
+                }
+              } else if (check_result_value(j_check_dpop, G_TOKEN_ERROR_INVALID_TOKEN)) {
+                response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_request\",error_description=\"The access token is invalid\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
+                u_map_put(response->map_header, HEADER_RESPONSE, response_value);
+                o_free(response_value);
+              } else {
+                response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_request\",error_description=\"Internal server error\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
+                u_map_put(response->map_header, HEADER_RESPONSE, response_value);
+                o_free(response_value);
+              }
+              json_decref(j_check_dpop);
             } else {
-              res = U_CALLBACK_CONTINUE;
-              if (json_object_get(json_object_get(j_access_token, "grants"), "aud") != NULL) {
-                json_object_set((json_t *)response->shared_data, "aud", json_object_get(json_object_get(j_access_token, "grants"), "aud"));
-              }
-              if (json_object_get(json_object_get(j_access_token, "grants"), "client_id") != NULL) {
-                json_object_set((json_t *)response->shared_data, "client_id", json_object_get(json_object_get(j_access_token, "grants"), "client_id"));
-              }
-              if (json_object_get(json_object_get(j_access_token, "grants"), "claims") != NULL) {
-                json_object_set((json_t *)response->shared_data, "claims", json_object_get(json_object_get(j_access_token, "grants"), "claims"));
+              if (json_object_get(json_object_get(json_object_get(j_access_token, "grants"), "cnf"), "jkt") == NULL) {
+                if (ulfius_set_response_shared_data(response, json_pack("{ss?sO}", "sub", json_string_value(json_object_get(json_object_get(j_access_token, "grants"), "sub")), "scope", json_object_get(j_res_scope, "scope")), (void (*)(void *))&json_decref) != U_OK) {
+                  res = U_CALLBACK_ERROR;
+                } else {
+                  res = U_CALLBACK_CONTINUE;
+                  if (json_object_get(json_object_get(j_access_token, "grants"), "aud") != NULL) {
+                    json_object_set((json_t *)response->shared_data, "aud", json_object_get(json_object_get(j_access_token, "grants"), "aud"));
+                  }
+                  if (json_object_get(json_object_get(j_access_token, "grants"), "client_id") != NULL) {
+                    json_object_set((json_t *)response->shared_data, "client_id", json_object_get(json_object_get(j_access_token, "grants"), "client_id"));
+                  }
+                  if (json_object_get(json_object_get(j_access_token, "grants"), "claims") != NULL) {
+                    json_object_set((json_t *)response->shared_data, "claims", json_object_get(json_object_get(j_access_token, "grants"), "claims"));
+                  }
+                }
+              } else {
+                response_value = msprintf(HEADER_PREFIX_BEARER "%s%s%serror=\"invalid_request\",error_description=\"DPoP required\"", (config->realm!=NULL?"realm=":""), (config->realm!=NULL?config->realm:""), (config->realm!=NULL?",":""));
+                u_map_put(response->map_header, HEADER_RESPONSE, response_value);
+                o_free(response_value);
               }
             }
           }
@@ -257,9 +295,8 @@ int callback_check_glewlwyd_oidc_access_token (const struct _u_request * request
 /**
  * Parse the DPoP header and extract its jkt value if the DPoP is valid
  */
-json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, const char * htu, time_t max_iat, const char * jkt, const char * access_token) {
+json_t * verify_dpop_proof(const char * dpop_header, const char * access_token, const char * htm, const char * htu, time_t max_iat, const char * jkt) {
   json_t * j_return = NULL, * j_header = NULL, * j_claims = NULL;
-  const char * dpop_header;
   jwt_t * dpop_jwt = NULL;
   jwa_alg alg;
   jwk_t * jwk_header = NULL;
@@ -269,7 +306,7 @@ json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, 
   size_t ath_len = 32, ath_enc_len = 64;
   gnutls_datum_t hash_data;
   
-  if ((dpop_header = u_map_get_case(request->map_header, HEADER_DPOP)) != NULL) {
+  if (dpop_header != NULL && access_token != NULL && htm != NULL && htu != NULL && max_iat && !o_strnullempty(jkt)) {
     if (r_jwt_init(&dpop_jwt) == RHN_OK) {
       if (r_jwt_parse(dpop_jwt, dpop_header, R_FLAG_IGNORE_REMOTE) == RHN_OK) {
         if (r_jwt_verify_signature(dpop_jwt, NULL, R_FLAG_IGNORE_REMOTE) == RHN_OK) {
@@ -289,12 +326,12 @@ json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, 
             }
             if ((j_header = r_jwt_get_full_header_json_t(dpop_jwt)) == NULL) {
               y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error r_jwt_get_full_header_json_t");
-              j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INTERNAL);
               break;
             }
             if ((j_claims = r_jwt_get_full_claims_json_t(dpop_jwt)) == NULL) {
               y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error r_jwt_get_full_claims_json_t");
-              j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INTERNAL);
               break;
             }
             if (json_object_get(j_header, "x5c") != NULL || json_object_get(j_header, "x5u") != NULL) {
@@ -304,7 +341,7 @@ json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, 
             }
             if (r_jwk_init(&jwk_header) != RHN_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error r_jwk_init");
-              j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INTERNAL);
               break;
             }
             if (r_jwk_import_from_json_t(jwk_header, json_object_get(j_header, "jwk")) != RHN_OK) {
@@ -337,12 +374,12 @@ json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, 
             hash_data.size = o_strlen(access_token);
             if (gnutls_fingerprint(GNUTLS_DIG_SHA256, &hash_data, ath, &ath_len) != GNUTLS_E_SUCCESS) {
               y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error gnutls_fingerprint");
-              j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INTERNAL);
               break;
             }
             if (!o_base64url_encode(ath, ath_len, ath_enc, &ath_enc_len)) {
               y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error o_base64url_encode ath");
-              j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INTERNAL);
               break;
             }
             if (0 != o_strcmp((const char *)ath_enc, r_jwt_get_claim_str_value(dpop_jwt, "ath"))) {
@@ -352,7 +389,7 @@ json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, 
             }
             if ((jkt_from_token = r_jwk_thumbprint(jwk_header, R_JWK_THUMB_SHA256, R_FLAG_IGNORE_REMOTE)) == NULL) {
               y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error r_jwk_thumbprint");
-              j_return = json_pack("{si}", "result", G_TOKEN_ERROR);
+              j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INTERNAL);
               break;
             }
             if (0 != o_strcmp(jkt, jkt_from_token)) {
@@ -361,6 +398,7 @@ json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, 
               break;
             }
           } while (0);
+
           if (j_return == NULL) {
             j_return = json_pack("{sisO*sO*}", "result", G_TOKEN_OK, "header", j_header, "claims", j_claims);
           }
@@ -382,7 +420,8 @@ json_t * verify_dpop_proof(const struct _u_request * request, const char * htm, 
     }
     r_jwt_free(dpop_jwt);
   } else {
-    j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
+    y_log_message(Y_LOG_LEVEL_ERROR, "verify_dpop_proof - Error input parameters");
+    j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_REQUEST);
   }
   return j_return;
 }
