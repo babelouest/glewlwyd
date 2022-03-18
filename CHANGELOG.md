@@ -8,6 +8,12 @@
 - Allow to fetch a geolocation API to improve the `issued_for` records
 - Fix oidc plugin bug: allow to add the `username` as claim in the access token
 
+## 2.6.2
+
+This is a security release, if you use the webauthn scheme, please upgrade your Glewlwyd version.
+
+- Security: Fix possible buffer overflow in webauthn assertion (CVE-2022-27240)
+
 ## 2.6.1
 
 This is a security release, please upgrade your Glewlwyd version.
