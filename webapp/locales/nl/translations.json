@@ -996,6 +996,8 @@
     "mod-glwd-oauth-dpop-iat-duration": "DPoP Token iat claim maximale duur (seconden)",
     "mod-glwd-oauth-dpop-iat-duration-ph": "Bijv.: 10",
     "mod-glwd-oauth-dpop-iat-duration-error": "DPoP Token iat claim maximale duur is vereist",
+    "mod-glwd-oauth-dpop-dpop_bound_access_tokens-property": "Client dpop_bound_access_tokens eigenschap",
+    "mod-glwd-oauth-dpop-dpop_bound_access_tokens-property-ph": "Bijv.: dpop_bound_access_tokens",
     "mod-glwd-resource-title": "Resource Indicatoren (RFC 8707)",
     "mod-glwd-resource-allowed": "Sta resource indicatoren toe",
     "mod-glwd-resource-change-allowed": "Sta het veranderen van de resource indicator op 'access token refresh'",
