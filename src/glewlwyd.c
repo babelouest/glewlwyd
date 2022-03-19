@@ -1116,7 +1116,7 @@ int build_config_from_file(struct config_elements * config) {
               ret = G_ERROR_PARAM;
               break;
             } else {
-              if (h_exec_query_sqlite(config->conn, "PRAGMA foreign_keys = ON;") != H_OK) {
+              if (h_execute_query_sqlite(config->conn, "PRAGMA foreign_keys = ON;") != H_OK) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "Error executing sqlite3 query 'PRAGMA foreign_keys = ON;, exiting'");
                 ret = G_ERROR_PARAM;
                 break;
@@ -1546,7 +1546,7 @@ int build_config_from_env(struct config_elements * config) {
         fprintf(stderr, "Error opening sqlite database '%s' (env), exiting\n", getenv(GLEWLWYD_ENV_DATABASE_SQLITE3_PATH));
         ret = G_ERROR_PARAM;
       } else {
-        if (h_exec_query_sqlite(config->conn, "PRAGMA foreign_keys = ON;") != H_OK) {
+        if (h_execute_query_sqlite(config->conn, "PRAGMA foreign_keys = ON;") != H_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "Error executing sqlite3 query 'PRAGMA foreign_keys = ON; (env), exiting'");
           ret = G_ERROR_PARAM;
         }
