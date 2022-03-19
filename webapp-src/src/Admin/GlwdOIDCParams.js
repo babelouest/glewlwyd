@@ -94,6 +94,7 @@ let defaultParam = {
   "client-cert-self-signed-allowed":false,
   "oauth-dpop-allowed":false,
   "oauth-dpop-iat-duration":10,
+  "oauth-dpop-dpop_bound_access_tokens-property":"dpop_bound_access_tokens",
   "resource-allowed":false,
   "resource-scope":{},
   "resource-client-property":"",
@@ -3054,6 +3055,14 @@ class GlwdOIDCParams extends Component {
                     <input type="number" min="1" step="1" className="form-control" id="mod-glwd-oauth-dpop-iat-duration" onChange={(e) => this.changeNumberParam(e, "oauth-dpop-iat-duration")} value={this.state.mod.parameters["oauth-dpop-iat-duration"]} placeholder={i18next.t("admin.mod-glwd-oauth-dpop-iat-duration-ph")} disabled={!this.state.mod.parameters["oauth-dpop-allowed"]} />
                   </div>
                   {this.state.errorList["oauth-dpop-iat-duration"]?<span className="error-input">{this.state.errorList["oauth-dpop-iat-duration"]}</span>:""}
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-oauth-dpop-dpop_bound_access_tokens-property">{i18next.t("admin.mod-glwd-oauth-dpop-dpop_bound_access_tokens-property")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-glwd-oauth-dpop-dpop_bound_access_tokens-property" onChange={(e) => this.changeNumberParam(e, "oauth-dpop-dpop_bound_access_tokens-property")} value={this.state.mod.parameters["oauth-dpop-dpop_bound_access_tokens-property"]} placeholder={i18next.t("admin.mod-glwd-oauth-dpop-dpop_bound_access_tokens-property-ph")} disabled={!this.state.mod.parameters["oauth-dpop-allowed"]} />
+                  </div>
                 </div>
               </div>
             </div>

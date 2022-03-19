@@ -1078,6 +1078,8 @@
     "mod-glwd-oauth-dpop-iat-duration": "Durée maximum du champ iat dans le token DPoP (secondes)",
     "mod-glwd-oauth-dpop-iat-duration-ph": "Ex: 10",
     "mod-glwd-oauth-dpop-iat-duration-error": "La durée maximum du champ iat dans le token DPoP est obligatoire",
+    "mod-glwd-oauth-dpop-dpop_bound_access_tokens-property": "Propriété du client pour dpop_bound_access_tokens",
+    "mod-glwd-oauth-dpop-dpop_bound_access_tokens-property-ph": "Ex: dpop_bound_access_tokens",
     "mod-glwd-resource-title": "Indicateurs de ressources (RFC 8707)",
     "mod-glwd-resource-allowed": "Autoriser les indicateurs de ressource",
     "mod-glwd-resource-change-allowed": "Autoriser le changement d'indicateur de ressource lors d'un rafraîchissement d'access token",
