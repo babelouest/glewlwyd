@@ -2272,6 +2272,7 @@ static char * generate_client_access_token(struct _oidc_config * config,
                                            time_t now,
                                            char * jti,
                                            const char * x5t_s256,
+                                           const char * dpop_jkt,
                                            const char * ip_source) {
   jwt_t * jwt;
   jwa_alg alg = get_token_sign_alg(config, j_client, GLEWLWYD_TOKEN_TYPE_ACCESS_TOKEN);
@@ -2299,11 +2300,17 @@ static char * generate_client_access_token(struct _oidc_config * config,
       r_jwt_set_claim_str_value(jwt, "jti", jti);
       r_jwt_set_claim_str_value(jwt, "type", "client_token");
       r_jwt_set_claim_str_value(jwt, "scope", scope_list);
+      j_cnf = json_object();
       if (x5t_s256 != NULL) {
-        j_cnf = json_pack("{ss}", "x5t#S256", x5t_s256);
-        r_jwt_set_claim_json_t_value(jwt, "cnf", j_cnf);
-        json_decref(j_cnf);
+        json_object_set_new(j_cnf, "x5t#S256", json_string(x5t_s256));
       }
+      if (dpop_jkt != NULL) {
+        json_object_set_new(j_cnf, "jkt", json_string(dpop_jkt));
+      }
+      if (json_object_size(j_cnf)) {
+        r_jwt_set_claim_json_t_value(jwt, "cnf", j_cnf);
+      }
+      json_decref(j_cnf);
       token = r_jwt_serialize_signed(jwt, jwk, 0);
       if (token == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - oidc - Error generating token");
@@ -10158,7 +10165,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
                                                             issued_for,
                                                             u_map_get_case(request->map_header, "user-agent"),
                                                             jti_r,
-                                                            NULL,
+                                                            json_string_value(json_object_get(j_jkt, "jkt")),
                                                             NULL);
                   if (check_result_value(j_refresh_token, G_OK)) {
                     j_user_only = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username);
@@ -10173,7 +10180,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
                                                                 now,
                                                                 jti,
                                                                 x5t_s256,
-                                                                NULL,
+                                                                json_string_value(json_object_get(j_jkt, "jkt")),
                                                                 NULL,
                                                                 get_ip_source(request))) != NULL) {
                         if (serialize_access_token(config,
@@ -10508,6 +10515,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
                                                                  now,
                                                                  jti,
                                                                  x5t_s256,
+                                                                 json_string_value(json_object_get(j_jkt, "jkt")),
                                                                  ip_source)) != NULL) {
                   if (serialize_access_token(config,
                                              GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS,
