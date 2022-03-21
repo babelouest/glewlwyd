@@ -400,6 +400,7 @@ CREATE TABLE gpo_code (
   gpoc_issued_for TEXT, -- IP address or hostname
   gpoc_user_agent TEXT,
   gpoc_code_challenge TEXT,
+  gpoc_dpop_jkt TEXT,
   gpoc_enabled INTEGER DEFAULT 1
 );
 CREATE INDEX i_gpoc_code_hash ON gpo_code(gpoc_code_hash);
@@ -550,6 +551,7 @@ CREATE TABLE gpo_device_authorization (
   gpoda_sid TEXT,
   gpoda_status INTEGER DEFAULT 0, -- 0: created, 1: user verified, 2 device completed, 3 disabled
   gpoda_authorization_details TEXT DEFAULT NULL,
+  gpoda_dpop_jkt TEXT,
   gpoda_last_check TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX i_gpoda_device_code_hash ON gpo_device_authorization(gpoda_device_code_hash);
@@ -608,6 +610,7 @@ CREATE TABLE gpo_par (
   gpop_nonce TEXT,
   gpop_code_challenge TEXT,
   gpop_resource TEXT,
+  gpop_dpop_jkt TEXT,
   gpop_claims_request TEXT DEFAULT NULL,
   gpop_authorization_details TEXT DEFAULT NULL,
   gpop_additional_parameters TEXT DEFAULT NULL,

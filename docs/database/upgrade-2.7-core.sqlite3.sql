@@ -12,3 +12,12 @@ CREATE TABLE g_misc_config (
 );
 CREATE INDEX i_gmc_type ON g_misc_config(gmc_type);
 CREATE INDEX i_gmc_name ON g_misc_config(gmc_name);
+
+ALTER TABLE gpo_code
+Add gpoc_dpop_jkt TEXT;
+
+ALTER TABLE gpo_device_authorization
+Add gpoc_dpop_jkt TEXT;
+
+ALTER TABLE gpo_par
+Add gpop_dpop_jkt TEXT;
