@@ -40,14 +40,11 @@ misc.o: ../misc.c ../glewlwyd-common.h
 glewlwyd_resource.o: $(RESOURCES_ULFIUS)/glewlwyd_resource.c $(RESOURCES_ULFIUS)/glewlwyd_resource.h
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(RESOURCES_ULFIUS)/glewlwyd_resource.c
 
-oidc_resource.o: $(RESOURCES_ULFIUS)/oidc_resource.c $(RESOURCES_ULFIUS)/oidc_resource.h
-	$(CC) $(CFLAGS) $(CPPFLAGS) $(RESOURCES_ULFIUS)/oidc_resource.c
-
 libprotocol_oauth2.so: protocol_oauth2.o misc.o glewlwyd_resource.o $(GLWD_SRC)/glewlwyd-common.h $(RESOURCES_ULFIUS)/glewlwyd_resource.h
 	$(CC) -shared -Wl,-soname,libprotocol_oauth2.so -o libprotocol_oauth2.so protocol_oauth2.o misc.o glewlwyd_resource.o $(LIBS)
 
-libprotocol_oidc.so: protocol_oidc.o misc.o oidc_resource.o $(GLWD_SRC)/glewlwyd-common.h $(RESOURCES_ULFIUS)/oidc_resource.h
-	$(CC) -shared -Wl,-soname,libprotocol_oidc.so -o libprotocol_oidc.so protocol_oidc.o misc.o oidc_resource.o $(LIBS) $(shell pkg-config --libs gnutls)
+libprotocol_oidc.so: protocol_oidc.o misc.o $(GLWD_SRC)/glewlwyd-common.h
+	$(CC) -shared -Wl,-soname,libprotocol_oidc.so -o libprotocol_oidc.so protocol_oidc.o misc.o $(LIBS) $(shell pkg-config --libs gnutls)
 
 libprotocol_mock.so: mock.o misc.o $(GLWD_SRC)/glewlwyd-common.h
 	$(CC) -shared -Wl,-soname,libprotocol_mock.so -o libprotocol_mock.so mock.o misc.o $(LIBS)
