@@ -10701,7 +10701,9 @@ static int check_pushed_authorization_request (const struct _u_request * request
          * j_request = NULL,
          * j_authorization_details = NULL,
          * j_response = NULL,
-         * j_result = NULL;
+         * j_result = NULL,
+         * j_jkt = NULL,
+         * json_body = NULL;
   char  code_challenge_stored[GLEWLWYD_CODE_CHALLENGE_MAX_LENGTH + 1] = {0},
        * request_uri = NULL,
        ** response_type_array = NULL,
@@ -10869,11 +10871,52 @@ static int check_pushed_authorization_request (const struct _u_request * request
     } else {
       j_client = check_client_valid(config, client_id, client_secret, redirect_uri, auth_type, 0, ip_source);
     }
-
+    
     if (!check_result_value(j_client, G_OK)) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "check_pushed_authorization_request oidc - client '%s' is invalid, origin: %s", client_id, ip_source);
       response->status = 403;
       break;
+    }
+
+    j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/par", json_object_get(j_client, "client"), NULL);
+    if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+      json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+      ulfius_set_json_body_response(response, 403, json_body);
+      json_decref(json_body);
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+      break;
+    }
+    if (!check_result_value(j_jkt, G_OK)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "check_pushed_authorization_request - Error oidc_verify_dpop_proof");
+      response->status = 500;
+      break;
+    }
+    if (json_object_get(j_jkt, "jkt") != NULL) {
+      if ((res = check_dpop_jti(config,
+                              json_string_value(json_object_get(json_object_get(j_jkt, "claims"), "jti")),
+                              json_string_value(json_object_get(json_object_get(j_jkt, "claims"), "htm")),
+                              json_string_value(json_object_get(json_object_get(j_jkt, "claims"), "htu")),
+                              json_integer_value(json_object_get(json_object_get(j_jkt, "claims"), "iat")),
+                              client_id,
+                              json_string_value(json_object_get(j_jkt, "jkt")),
+                              ip_source)) == G_ERROR_UNAUTHORIZED) {
+        json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+        ulfius_set_json_body_response(response, 403, json_body);
+        json_decref(json_body);
+        break;
+      } else if (res != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_pushed_authorization_request - oidc - Error check_dpop_jti");
+        response->status = 500;
+        break;
+      }
+      if (!o_strnullempty(dpop_jkt) && 0 != o_strcmp(dpop_jkt, json_string_value(json_object_get(j_jkt, "jkt")))) {
+        json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP - dpop_jkt doesn't match");
+        ulfius_set_json_body_response(response, 403, json_body);
+        json_decref(json_body);
+        break;
+      }
+      dpop_jkt = json_string_value(json_object_get(j_jkt, "jkt"));
     }
 
     if (!json_string_null_or_empty(json_object_get(config->j_params, "restrict-scope-client-property"))) {
@@ -10936,6 +10979,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
   json_decref(j_request);
   json_decref(j_authorization_details);
   json_decref(j_result);
+  json_decref(j_jkt);
   o_free(request_uri);
   o_free(scope_reduced);
   free_string_array(response_type_array);
@@ -15052,11 +15096,9 @@ static int callback_pushed_authorization_request(const struct _u_request * reque
       client_auth_method = (int)json_integer_value(json_object_get(j_assertion, "client_auth_method"));
     }
   }
-
   if (result == U_CALLBACK_CONTINUE) {
     result = check_pushed_authorization_request(request, response, user_data, j_assertion_client, client_auth_method);
   }
-
   json_decref(j_assertion);
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
