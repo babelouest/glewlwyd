@@ -30,8 +30,8 @@
 #define PLUGIN_PAR_PREFIX "urn:ietf:params:oauth:request_uri:"
 #define PLUGIN_PAR_DURATION 90
 
-#define CLIENT_ID "client_device"
-#define CLIENT_NAME "client for device"
+#define CLIENT_ID "client_dpop"
+#define CLIENT_NAME "client for DPoP"
 #define CLIENT_SECRET "very-secret"
 #define CLIENT_REDIRECT "../../test-oidc.html?param=client1_cb1"
 #define STATE "state1234Abcd"
@@ -87,7 +87,7 @@ char * rand_jti(char * str) {
 
 START_TEST(test_oidc_dpop_add_plugin)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssisisisososososososososososssisosi}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssisisisosososososososososososssisosiss}}",
                                 "module", "oidc",
                                 "name", PLUGIN_NAME,
                                 "display_name", PLUGIN_NAME,
@@ -107,14 +107,65 @@ START_TEST(test_oidc_dpop_add_plugin)
                                   "auth-type-device-enabled", json_true(),
                                   "auth-type-client-enabled", json_true(),
                                   "auth-type-refresh-enabled", json_true(),
+                                  "auth-type-password-enabled", json_true(),
                                   "oauth-par-allowed", json_true(),
                                   "oauth-par-required", json_false(),
                                   "oauth-par-request_uri-prefix", PLUGIN_PAR_PREFIX,
                                   "oauth-par-duration", PLUGIN_PAR_DURATION,
                                   "oauth-dpop-allowed", json_true(),
-                                  "oauth-dpop-iat-duration", 60);
+                                  "oauth-dpop-iat-duration", 60,
+                                  "oauth-dpop-dpop_bound_access_tokens-property", "dpop_client_bound");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
+}
+END_TEST
+
+START_TEST(test_oidc_dpop_add_client_confidential_ok)
+{
+  json_t * j_parameters = json_pack("{sssssssos[ssss]s[s]s[ss]so}",
+                                "client_id", CLIENT_ID,
+                                "client_name", CLIENT_NAME,
+                                "client_secret", CLIENT_SECRET,
+                                "confidential", json_true(),
+                                "authorization_type", 
+                                  "device_authorization",
+                                  "code",
+                                  "client_credentials",
+                                  "password",
+                                "redirect_uri",
+                                  CLIENT_REDIRECT,
+                                "scope",
+                                  SCOPE_1,
+                                  SCOPE_2,
+                                "enabled", json_true());
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_oidc_dpop_add_client_confidential_dpop_mandatory_ok)
+{
+  json_t * j_parameters = json_pack("{sssssssos[ssss]s[s]s[ss]ssso}",
+                                "client_id", CLIENT_ID,
+                                "client_name", CLIENT_NAME,
+                                "client_secret", CLIENT_SECRET,
+                                "confidential", json_true(),
+                                "authorization_type", 
+                                  "device_authorization",
+                                  "code",
+                                  "client_credentials",
+                                  "password",
+                                "redirect_uri",
+                                  CLIENT_REDIRECT,
+                                "scope",
+                                  SCOPE_1,
+                                  SCOPE_2,
+                                "dpop_client_bound", "1",
+                                "enabled", json_true());
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
 }
 END_TEST
 
@@ -123,7 +174,7 @@ START_TEST(test_oidc_dpop_get_at_with_jkt_invalid)
   struct _u_response resp;
   struct _u_request req;
   char * code, jti[17], * dpop_token;
-  json_t * j_dpop_pub;
+  json_t * j_dpop_pub, * j_dpop_priv;
   jwt_t * jwt_dpop;
   jwk_t * jwk_dpop_pub;
   
@@ -144,6 +195,7 @@ START_TEST(test_oidc_dpop_get_at_with_jkt_invalid)
   ck_assert_int_eq(r_jwk_init(&jwk_dpop_pub), RHN_OK);
   ck_assert_int_eq(r_jwk_import_from_json_str(jwk_dpop_pub, jwk_pubkey_sign_str), RHN_OK);
   ck_assert_ptr_ne(NULL, j_dpop_pub = r_jwk_export_to_json_t(jwk_dpop_pub));
+  ck_assert_ptr_ne(NULL, j_dpop_priv = json_loads(jwk_privkey_sign_str, JSON_DECODE_ANY, NULL));
   ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
   rand_jti(jti);
@@ -460,9 +512,28 @@ START_TEST(test_oidc_dpop_get_at_with_jkt_invalid)
   ck_assert_int_eq(resp.status, 403);
   o_free(dpop_token);
   ulfius_clean_response(&resp);
+  
+  // Invalid jwk
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/token"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_int_value(jwt_dpop, "iat", time(NULL)), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt_dpop, "typ", "dpop+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_dpop, "jwk", j_dpop_priv), RHN_OK);
+  ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
+  
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, 
+                                                 U_OPT_HEADER_PARAMETER, "DPoP", dpop_token,
+                                                 U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 403);
+  o_free(dpop_token);
+  ulfius_clean_response(&resp);
   ulfius_clean_request(&req);
   
   json_decref(j_dpop_pub);
+  json_decref(j_dpop_priv);
   o_free(code);
   r_jwt_free(jwt_dpop);
   r_jwk_free(jwk_dpop_pub);
@@ -1309,22 +1380,6 @@ START_TEST(test_oidc_dpop_userinfo_with_jkt_jti_replay)
 }
 END_TEST
 
-START_TEST(test_oidc_dpop_add_client_confidential_ok)
-{
-  json_t * j_parameters = json_pack("{sssssssos[ss]s[s]so}",
-                                "client_id", CLIENT_ID,
-                                "client_name", CLIENT_NAME,
-                                "client_secret", CLIENT_SECRET,
-                                "confidential", json_true(),
-                                "authorization_type", "device_authorization", "code",
-                                "redirect_uri", CLIENT_REDIRECT,
-                                "enabled", json_true());
-
-  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
-  json_decref(j_parameters);
-}
-END_TEST
-
 START_TEST(test_oidc_dpop_device_verification_with_jkt_invalid)
 {
   struct _u_request req;
@@ -2001,6 +2056,302 @@ START_TEST(test_oidc_dpop_par_with_jkt_valid)
 }
 END_TEST
 
+START_TEST(test_oidc_dpop_par_with_dpop_valid)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_response;
+  char * code, jti[17], * dpop_token;
+  json_t * j_result, * j_dpop_pub, * j_cnf;
+  jwt_t * jwt_dpop, * jwt_at;
+  jwk_t * jwk_dpop_pub;
+
+  ck_assert_int_eq(r_jwk_init(&jwk_dpop_pub), RHN_OK);
+  ck_assert_int_eq(r_jwk_import_from_json_str(jwk_dpop_pub, jwk_pubkey_sign_str), RHN_OK);
+  ck_assert_ptr_ne(NULL, j_dpop_pub = r_jwk_export_to_json_t(jwk_dpop_pub));
+  ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
+  rand_jti(jti);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/par"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_int_value(jwt_dpop, "iat", time(NULL)), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt_dpop, "typ", "dpop+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_dpop, "jwk", j_dpop_pub), RHN_OK);
+  ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
+  r_jwt_free(jwt_dpop);
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  ulfius_set_request_properties(&req, 
+                                U_OPT_HTTP_VERB, "POST",
+                                U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/par"),
+                                U_OPT_AUTH_BASIC_USER, CLIENT_ID,
+                                U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                U_OPT_POST_BODY_PARAMETER, "response_type", RESPONSE_TYPE,
+                                U_OPT_POST_BODY_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
+                                U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                U_OPT_POST_BODY_PARAMETER, "state", STATE,
+                                U_OPT_POST_BODY_PARAMETER, "nonce", NONCE,
+                                U_OPT_HEADER_PARAMETER, "DPoP", dpop_token,
+                                U_OPT_NONE);
+  o_free(dpop_token);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(201, resp.status);
+  ck_assert_ptr_ne(NULL, j_response = ulfius_get_json_body_response(&resp, NULL));
+  ck_assert_int_gt(json_string_length(json_object_get(j_response, "request_uri")), o_strlen(PLUGIN_PAR_PREFIX));
+  ck_assert_int_eq(0, o_strncmp(json_string_value(json_object_get(j_response, "request_uri")), PLUGIN_PAR_PREFIX, o_strlen(PLUGIN_PAR_PREFIX)));
+  ck_assert_int_eq(PLUGIN_PAR_DURATION, json_integer_value(json_object_get(j_response, "expires_in")));
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+
+  ulfius_init_request(&req);
+  ulfius_copy_request(&req, &user_req);
+  ulfius_init_response(&resp);
+  ulfius_set_request_properties(&req, 
+                                U_OPT_HTTP_VERB, "GET",
+                                U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/auth"),
+                                U_OPT_URL_PARAMETER, "client_id", CLIENT_ID,
+                                U_OPT_URL_PARAMETER, "nonce", NONCE,
+                                U_OPT_URL_PARAMETER, "request_uri", json_string_value(json_object_get(j_response, "request_uri")),
+                                U_OPT_URL_PARAMETER, "g_continue", NULL,
+                                U_OPT_NONE);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(302, resp.status);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
+  code = o_strdup(strstr(u_map_get(resp.map_header, "Location"), "code=")+strlen("code="));
+  if (strchr(code, '&') != NULL) {
+    *strchr(code, '&') = '\0';
+  }
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+  json_decref(j_response);
+
+  ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
+  rand_jti(jti);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/token"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_int_value(jwt_dpop, "iat", time(NULL)), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt_dpop, "typ", "dpop+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_dpop, "jwk", j_dpop_pub), RHN_OK);
+  ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, 
+                                                 U_OPT_HTTP_VERB, "POST",
+                                                 U_OPT_AUTH_BASIC_USER, CLIENT_ID,
+                                                 U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                                 U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/token",
+                                                 U_OPT_POST_BODY_PARAMETER, "code", code,
+                                                 U_OPT_POST_BODY_PARAMETER, "grant_type", "authorization_code",
+                                                 U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT_ID,
+                                                 U_OPT_POST_BODY_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
+                                                 U_OPT_HEADER_PARAMETER, "DPoP", dpop_token,
+                                                 U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne(NULL, j_result = ulfius_get_json_body_response(&resp, NULL));
+  ck_assert_int_eq(r_jwt_init(&jwt_at), RHN_OK);
+  ck_assert_int_eq(r_jwt_parse(jwt_at, json_string_value(json_object_get(j_result, "access_token")), 0), RHN_OK);
+  ck_assert_ptr_ne(NULL, j_cnf = r_jwt_get_claim_json_t_value(jwt_at, "cnf"));
+  ck_assert_int_gt(json_string_length(json_object_get(j_cnf, "jkt")), 0);
+  json_decref(j_result);
+  json_decref(j_dpop_pub);
+  json_decref(j_cnf);
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+  o_free(dpop_token);
+  r_jwt_free(jwt_dpop);
+  r_jwt_free(jwt_at);
+  r_jwk_free(jwk_dpop_pub);
+  o_free(code);
+}
+END_TEST
+
+START_TEST(test_oidc_dpop_par_with_dpop_jtk_valid)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_response;
+  char * code, jti[17], * dpop_token, * dpop_jkt;
+  json_t * j_result, * j_dpop_pub, * j_cnf;
+  jwt_t * jwt_dpop, * jwt_at;
+  jwk_t * jwk_dpop_pub, * jwk_dpop_priv;
+
+  ck_assert_ptr_ne(NULL, jwk_dpop_priv = r_jwk_quick_import(R_IMPORT_JSON_STR, jwk_privkey_sign_str));
+  ck_assert_ptr_ne(NULL, dpop_jkt = r_jwk_thumbprint(jwk_dpop_priv, R_JWK_THUMB_SHA256, 0));
+
+  ck_assert_int_eq(r_jwk_init(&jwk_dpop_pub), RHN_OK);
+  ck_assert_int_eq(r_jwk_import_from_json_str(jwk_dpop_pub, jwk_pubkey_sign_str), RHN_OK);
+  ck_assert_ptr_ne(NULL, j_dpop_pub = r_jwk_export_to_json_t(jwk_dpop_pub));
+  ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
+  rand_jti(jti);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/par"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_int_value(jwt_dpop, "iat", time(NULL)), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt_dpop, "typ", "dpop+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_dpop, "jwk", j_dpop_pub), RHN_OK);
+  ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
+  r_jwt_free(jwt_dpop);
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  ulfius_set_request_properties(&req, 
+                                U_OPT_HTTP_VERB, "POST",
+                                U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/par"),
+                                U_OPT_AUTH_BASIC_USER, CLIENT_ID,
+                                U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                U_OPT_POST_BODY_PARAMETER, "response_type", RESPONSE_TYPE,
+                                U_OPT_POST_BODY_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
+                                U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                U_OPT_POST_BODY_PARAMETER, "state", STATE,
+                                U_OPT_POST_BODY_PARAMETER, "nonce", NONCE,
+                                U_OPT_HEADER_PARAMETER, "DPoP", dpop_token,
+                                U_OPT_POST_BODY_PARAMETER, "dpop_jkt", dpop_jkt,
+                                U_OPT_NONE);
+  o_free(dpop_token);
+  o_free(dpop_jkt);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(201, resp.status);
+  ck_assert_ptr_ne(NULL, j_response = ulfius_get_json_body_response(&resp, NULL));
+  ck_assert_int_gt(json_string_length(json_object_get(j_response, "request_uri")), o_strlen(PLUGIN_PAR_PREFIX));
+  ck_assert_int_eq(0, o_strncmp(json_string_value(json_object_get(j_response, "request_uri")), PLUGIN_PAR_PREFIX, o_strlen(PLUGIN_PAR_PREFIX)));
+  ck_assert_int_eq(PLUGIN_PAR_DURATION, json_integer_value(json_object_get(j_response, "expires_in")));
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+
+  ulfius_init_request(&req);
+  ulfius_copy_request(&req, &user_req);
+  ulfius_init_response(&resp);
+  ulfius_set_request_properties(&req, 
+                                U_OPT_HTTP_VERB, "GET",
+                                U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/auth"),
+                                U_OPT_URL_PARAMETER, "client_id", CLIENT_ID,
+                                U_OPT_URL_PARAMETER, "nonce", NONCE,
+                                U_OPT_URL_PARAMETER, "request_uri", json_string_value(json_object_get(j_response, "request_uri")),
+                                U_OPT_URL_PARAMETER, "g_continue", NULL,
+                                U_OPT_NONE);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(302, resp.status);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
+  code = o_strdup(strstr(u_map_get(resp.map_header, "Location"), "code=")+strlen("code="));
+  if (strchr(code, '&') != NULL) {
+    *strchr(code, '&') = '\0';
+  }
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+  json_decref(j_response);
+
+  ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
+  rand_jti(jti);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/token"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_int_value(jwt_dpop, "iat", time(NULL)), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt_dpop, "typ", "dpop+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_dpop, "jwk", j_dpop_pub), RHN_OK);
+  ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, 
+                                                 U_OPT_HTTP_VERB, "POST",
+                                                 U_OPT_AUTH_BASIC_USER, CLIENT_ID,
+                                                 U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                                 U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/token",
+                                                 U_OPT_POST_BODY_PARAMETER, "code", code,
+                                                 U_OPT_POST_BODY_PARAMETER, "grant_type", "authorization_code",
+                                                 U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT_ID,
+                                                 U_OPT_POST_BODY_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
+                                                 U_OPT_HEADER_PARAMETER, "DPoP", dpop_token,
+                                                 U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne(NULL, j_result = ulfius_get_json_body_response(&resp, NULL));
+  ck_assert_int_eq(r_jwt_init(&jwt_at), RHN_OK);
+  ck_assert_int_eq(r_jwt_parse(jwt_at, json_string_value(json_object_get(j_result, "access_token")), 0), RHN_OK);
+  ck_assert_ptr_ne(NULL, j_cnf = r_jwt_get_claim_json_t_value(jwt_at, "cnf"));
+  ck_assert_int_gt(json_string_length(json_object_get(j_cnf, "jkt")), 0);
+  json_decref(j_result);
+  json_decref(j_dpop_pub);
+  json_decref(j_cnf);
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+  o_free(dpop_token);
+  r_jwt_free(jwt_dpop);
+  r_jwt_free(jwt_at);
+  r_jwk_free(jwk_dpop_pub);
+  r_jwk_free(jwk_dpop_priv);
+  o_free(code);
+}
+END_TEST
+
+START_TEST(test_oidc_dpop_par_with_dpop_jtk_inconsistent)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  char jti[17], * dpop_token, * dpop_jkt;
+  json_t * j_dpop_pub;
+  jwt_t * jwt_dpop;
+  jwk_t * jwk_dpop_pub, * jwk_dpop_priv;
+
+  ck_assert_ptr_ne(NULL, jwk_dpop_priv = r_jwk_quick_import(R_IMPORT_JSON_STR, jwk_privkey_sign_str_2));
+  ck_assert_ptr_ne(NULL, dpop_jkt = r_jwk_thumbprint(jwk_dpop_priv, R_JWK_THUMB_SHA256, 0));
+
+  ck_assert_int_eq(r_jwk_init(&jwk_dpop_pub), RHN_OK);
+  ck_assert_int_eq(r_jwk_import_from_json_str(jwk_dpop_pub, jwk_pubkey_sign_str), RHN_OK);
+  ck_assert_ptr_ne(NULL, j_dpop_pub = r_jwk_export_to_json_t(jwk_dpop_pub));
+  ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
+  rand_jti(jti);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/par"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_int_value(jwt_dpop, "iat", time(NULL)), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt_dpop, "typ", "dpop+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_dpop, "jwk", j_dpop_pub), RHN_OK);
+  ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  ulfius_set_request_properties(&req, 
+                                U_OPT_HTTP_VERB, "POST",
+                                U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/par"),
+                                U_OPT_AUTH_BASIC_USER, CLIENT_ID,
+                                U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                U_OPT_POST_BODY_PARAMETER, "response_type", RESPONSE_TYPE,
+                                U_OPT_POST_BODY_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
+                                U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                U_OPT_POST_BODY_PARAMETER, "state", STATE,
+                                U_OPT_POST_BODY_PARAMETER, "nonce", NONCE,
+                                U_OPT_HEADER_PARAMETER, "DPoP", dpop_token,
+                                U_OPT_POST_BODY_PARAMETER, "dpop_jkt", dpop_jkt,
+                                U_OPT_NONE);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(403, resp.status);
+
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+  o_free(dpop_token);
+  o_free(dpop_jkt);
+  json_decref(j_dpop_pub);
+  r_jwt_free(jwt_dpop);
+  r_jwk_free(jwk_dpop_pub);
+  r_jwk_free(jwk_dpop_priv);
+}
+END_TEST
+
 START_TEST(test_oidc_dpop_par_with_jkt_invalid)
 {
   struct _u_request req;
@@ -2101,6 +2452,140 @@ START_TEST(test_oidc_dpop_par_with_jkt_invalid)
 }
 END_TEST
 
+START_TEST(test_oidc_dpop_client_credentials_at_with_jkt)
+{
+  struct _u_response resp;
+  struct _u_request req;
+  char jti[17], * dpop_token;
+  json_t * j_result, * j_dpop_pub, * j_cnf;
+  jwt_t * jwt_dpop, * jwt_at;
+  jwk_t * jwk_dpop_pub;
+  
+  ck_assert_int_eq(r_jwk_init(&jwk_dpop_pub), RHN_OK);
+  ck_assert_int_eq(r_jwk_import_from_json_str(jwk_dpop_pub, jwk_pubkey_sign_str), RHN_OK);
+  ck_assert_ptr_ne(NULL, j_dpop_pub = r_jwk_export_to_json_t(jwk_dpop_pub));
+  ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
+  rand_jti(jti);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/token"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_int_value(jwt_dpop, "iat", time(NULL)), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt_dpop, "typ", "dpop+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_dpop, "jwk", j_dpop_pub), RHN_OK);
+  ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, 
+                                                 U_OPT_HTTP_VERB, "POST",
+                                                 U_OPT_AUTH_BASIC_USER, CLIENT_ID,
+                                                 U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                                 U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/token",
+                                                 U_OPT_POST_BODY_PARAMETER, "grant_type", "client_credentials",
+                                                 U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT,
+                                                 U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_1,
+                                                 U_OPT_HEADER_PARAMETER, "DPoP", dpop_token,
+                                                 U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne(NULL, j_result = ulfius_get_json_body_response(&resp, NULL));
+  ck_assert_int_eq(r_jwt_init(&jwt_at), RHN_OK);
+  ck_assert_int_eq(r_jwt_parse(jwt_at, json_string_value(json_object_get(j_result, "access_token")), 0), RHN_OK);
+  ck_assert_ptr_ne(NULL, j_cnf = r_jwt_get_claim_json_t_value(jwt_at, "cnf"));
+  ck_assert_int_gt(json_string_length(json_object_get(j_cnf, "jkt")), 0);
+  json_decref(j_result);
+  json_decref(j_dpop_pub);
+  json_decref(j_cnf);
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+  o_free(dpop_token);
+  r_jwt_free(jwt_dpop);
+  r_jwt_free(jwt_at);
+  r_jwk_free(jwk_dpop_pub);
+}
+END_TEST
+
+START_TEST(test_oidc_dpop_password_at_with_jkt)
+{
+  struct _u_response resp;
+  struct _u_request req;
+  char jti[17], * dpop_token;
+  json_t * j_result, * j_dpop_pub, * j_cnf;
+  jwt_t * jwt_dpop, * jwt_at;
+  jwk_t * jwk_dpop_pub;
+  
+  ck_assert_int_eq(r_jwk_init(&jwk_dpop_pub), RHN_OK);
+  ck_assert_int_eq(r_jwk_import_from_json_str(jwk_dpop_pub, jwk_pubkey_sign_str), RHN_OK);
+  ck_assert_ptr_ne(NULL, j_dpop_pub = r_jwk_export_to_json_t(jwk_dpop_pub));
+  ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_sign_keys_json_str(jwt_dpop, jwk_privkey_sign_str, NULL), RHN_OK);
+  rand_jti(jti);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", jti), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "POST"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", SERVER_URI "/" PLUGIN_NAME "/token"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_int_value(jwt_dpop, "iat", time(NULL)), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt_dpop, "typ", "dpop+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_dpop, "jwk", j_dpop_pub), RHN_OK);
+  ck_assert_ptr_ne(NULL, dpop_token = r_jwt_serialize_signed(jwt_dpop, NULL, 0));
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, 
+                                                 U_OPT_HTTP_VERB, "POST",
+                                                 U_OPT_AUTH_BASIC_USER, CLIENT_ID,
+                                                 U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                                 U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/token",
+                                                 U_OPT_POST_BODY_PARAMETER, "grant_type", "password",
+                                                 U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_1,
+                                                 U_OPT_POST_BODY_PARAMETER, "username", USER_USERNAME,
+                                                 U_OPT_POST_BODY_PARAMETER, "password", USER_PASSWORD,
+                                                 U_OPT_HEADER_PARAMETER, "DPoP", dpop_token,
+                                                 U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne(NULL, j_result = ulfius_get_json_body_response(&resp, NULL));
+  ck_assert_int_eq(r_jwt_init(&jwt_at), RHN_OK);
+  ck_assert_int_eq(r_jwt_parse(jwt_at, json_string_value(json_object_get(j_result, "access_token")), 0), RHN_OK);
+  ck_assert_ptr_ne(NULL, j_cnf = r_jwt_get_claim_json_t_value(jwt_at, "cnf"));
+  ck_assert_int_gt(json_string_length(json_object_get(j_cnf, "jkt")), 0);
+  json_decref(j_result);
+  json_decref(j_dpop_pub);
+  json_decref(j_cnf);
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+  o_free(dpop_token);
+  r_jwt_free(jwt_dpop);
+  r_jwt_free(jwt_at);
+  r_jwk_free(jwk_dpop_pub);
+}
+END_TEST
+
+START_TEST(test_oidc_dpop_client_credentials_at_without_jkt_error)
+{
+  struct _u_response resp;
+  struct _u_request req;
+  
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, 
+                                                 U_OPT_HTTP_VERB, "POST",
+                                                 U_OPT_AUTH_BASIC_USER, CLIENT_ID,
+                                                 U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                                 U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/token",
+                                                 U_OPT_POST_BODY_PARAMETER, "grant_type", "client_credentials",
+                                                 U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT,
+                                                 U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_1,
+                                                 U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 403);
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+}
+END_TEST
+
 START_TEST(test_oidc_dpop_delete_client)
 {
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/client/" CLIENT_ID, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
@@ -2121,6 +2606,7 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd oidc dpop");
   tc_core = tcase_create("test_oidc_dpop");
   tcase_add_test(tc_core, test_oidc_dpop_add_plugin);
+  tcase_add_test(tc_core, test_oidc_dpop_add_client_confidential_ok);
   tcase_add_test(tc_core, test_oidc_dpop_get_at_with_jkt_invalid);
   tcase_add_test(tc_core, test_oidc_dpop_get_at_with_jkt_jti_replay);
   tcase_add_test(tc_core, test_oidc_dpop_get_at_with_jkt);
@@ -2129,14 +2615,21 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_dpop_userinfo_with_jkt_invalid);
   tcase_add_test(tc_core, test_oidc_dpop_userinfo_with_jkt);
   tcase_add_test(tc_core, test_oidc_dpop_userinfo_with_jkt_jti_replay);
-  tcase_add_test(tc_core, test_oidc_dpop_add_client_confidential_ok);
   tcase_add_test(tc_core, test_oidc_dpop_device_verification_valid);
   tcase_add_test(tc_core, test_oidc_dpop_device_verification_with_jkt_invalid);
   tcase_add_test(tc_core, test_oidc_dpop_device_verification_with_jkt_valid);
   tcase_add_test(tc_core, test_oidc_dpop_refresh_token_management_with_jkt);
   tcase_add_test(tc_core, test_oidc_dpop_par_valid);
   tcase_add_test(tc_core, test_oidc_dpop_par_with_jkt_valid);
+  tcase_add_test(tc_core, test_oidc_dpop_par_with_dpop_valid);
+  tcase_add_test(tc_core, test_oidc_dpop_par_with_dpop_jtk_valid);
+  tcase_add_test(tc_core, test_oidc_dpop_par_with_dpop_jtk_inconsistent);
   tcase_add_test(tc_core, test_oidc_dpop_par_with_jkt_invalid);
+  tcase_add_test(tc_core, test_oidc_dpop_client_credentials_at_with_jkt);
+  tcase_add_test(tc_core, test_oidc_dpop_password_at_with_jkt);
+  tcase_add_test(tc_core, test_oidc_dpop_delete_client);
+  tcase_add_test(tc_core, test_oidc_dpop_add_client_confidential_dpop_mandatory_ok);
+  tcase_add_test(tc_core, test_oidc_dpop_client_credentials_at_without_jkt_error);
   tcase_add_test(tc_core, test_oidc_dpop_delete_client);
   tcase_add_test(tc_core, test_oidc_dpop_delete_plugin);
   tcase_set_timeout(tc_core, 30);
