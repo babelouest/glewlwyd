@@ -213,6 +213,7 @@ struct _oidc_config {
   char                         * introspect_revoke_scope;
   char                         * client_register_scope;
   time_t                         dpop_max_iat;
+  time_t                         dpop_max_iat_gap;
 };
 
 static size_t get_enc_key_size(jwa_enc enc) {
@@ -982,6 +983,10 @@ static json_t * check_parameters (json_t * j_params) {
         json_array_append_new(j_error, json_string("Property 'oauth-dpop-iat-duration' is mandatory and must be a non null positive integer"));
         ret = G_ERROR_PARAM;
       }
+      if (json_object_get(j_params, "oauth-dpop-iat-gap-duration") != NULL && (!json_is_integer(json_object_get(j_params, "oauth-dpop-iat-gap-duration")) || json_integer_value(json_object_get(j_params, "oauth-dpop-iat-gap-duration")) < 0)) {
+        json_array_append_new(j_error, json_string("Property 'oauth-dpop-iat-gap-duration' is optional and must be a positive integer"));
+        ret = G_ERROR_PARAM;
+      }
       if (json_object_get(j_params, "oauth-dpop-dpop_bound_access_tokens-property") != NULL && !json_is_string(json_object_get(j_params, "oauth-dpop-dpop_bound_access_tokens-property"))) {
         json_array_append_new(j_error, json_string("Property 'oauth-dpop-dpop_bound_access_tokens-property' is optional and must be a string"));
         ret = G_ERROR_PARAM;
@@ -1432,23 +1437,114 @@ static int verify_resource(struct _oidc_config * config, const char * resource, 
 
 /**
  * Decrement counter for client_id
- * if counter is 0 or no dpop nonce exists for client_id, generate one, then returns it
- 
+ * if counter is 0 for client_id, generate one, then returns it
+ */
 static char * refresh_client_dpop_nonce(struct _oidc_config * config, const char * client_id) {
-  // TODO
-  UNUSED(config);
-  UNUSED(client_id);
-  return NULL;
-}*/
+  json_t * j_query, * j_result;
+  int res;
+  char * nonce = NULL, new_nonce[OIDC_DPOP_NONCE_LENGTH+1];
+  
+  if (!pthread_mutex_lock(&config->insert_lock)) {
+    j_query = json_pack("{sss[s]s{ss}}",
+                        "table", GLEWLWYD_PLUGIN_OIDC_TABLE_DPOP_CLIENT_NONCE,
+                        "columns",
+                          "gpodcn_counter AS counter",
+                        "where",
+                          "gpodcn_client_id", client_id);
+    res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
+    json_decref(j_query);
+    if (res == H_OK) {
+      if (json_array_size(j_result)) {
+        j_query = json_pack("{sss{}s{ss}}",
+                            "table", GLEWLWYD_PLUGIN_OIDC_TABLE_DPOP_CLIENT_NONCE,
+                            "set",
+                            "where",
+                              "gpodcn_client_id", client_id);
+        if (json_integer_value(json_object_get(json_array_get(j_result, 0), "counter"))) {
+          json_object_set_new(json_object_get(j_query, "set"), "gpodcn_counter", json_integer(json_integer_value(json_object_get(json_array_get(j_result, 0), "counter"))-1));
+        } else {
+          rand_string_nonce(new_nonce, OIDC_DPOP_NONCE_LENGTH);
+          json_object_set(json_object_get(j_query, "set"), "gpodcn_counter", json_object_get(config->j_params, "oauth-dpop-nonce-counter"));
+          json_object_set_new(json_object_get(j_query, "set"), "gpodcn_nonce", json_string(new_nonce));
+          nonce = o_strdup(new_nonce);
+        }
+        res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res != H_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "refresh_client_dpop_nonce - Error executing j_query (3)");
+        }
+      } else {
+        rand_string_nonce(new_nonce, OIDC_DPOP_NONCE_LENGTH);
+        j_query = json_pack("{sss{sssssI}}",
+                            "table", GLEWLWYD_PLUGIN_OIDC_TABLE_DPOP_CLIENT_NONCE,
+                            "values",
+                              "gpodcn_client_id", client_id,
+                              "gpodcn_nonce", new_nonce,
+                              "gpodcn_counter", json_integer_value(json_object_get(config->j_params, "oauth-dpop-nonce-counter")));
+        res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          nonce = o_strdup(new_nonce);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "refresh_client_dpop_nonce - Error executing j_query (2)");
+        }
+      }
+      json_decref(j_result);
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "refresh_client_dpop_nonce - Error executing j_query (1)");
+    }
+    pthread_mutex_unlock(&config->insert_lock);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "refresh_client_dpop_nonce - Error pthread_mutex_lock");
+  }
+  return nonce;
+}
 
 /**
  * Return current dpop nonce for client_id
  */
 static char * get_client_dpop_nonce(struct _oidc_config * config, const char * client_id) {
-  // TODO
-  UNUSED(config);
-  UNUSED(client_id);
-  return NULL;
+  json_t * j_query, * j_result;
+  int res;
+  char * nonce = NULL, new_nonce[OIDC_DPOP_NONCE_LENGTH+1];
+  
+  j_query = json_pack("{sss[s]s{ss}}",
+                      "table", GLEWLWYD_PLUGIN_OIDC_TABLE_DPOP_CLIENT_NONCE,
+                      "columns",
+                        "gpodcn_nonce AS nonce",
+                      "where",
+                        "gpodcn_client_id", client_id);
+  res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
+  json_decref(j_query);
+  if (res == H_OK) {
+    if (json_array_size(j_result)) {
+      nonce = o_strdup(json_string_value(json_object_get(json_array_get(j_result, 0), "nonce")));
+    } else {
+      if (!pthread_mutex_lock(&config->insert_lock)) {
+        rand_string_nonce(new_nonce, OIDC_DPOP_NONCE_LENGTH);
+        j_query = json_pack("{sss{sssssI}}",
+                            "table", GLEWLWYD_PLUGIN_OIDC_TABLE_DPOP_CLIENT_NONCE,
+                            "values",
+                              "gpodcn_client_id", client_id,
+                              "gpodcn_nonce", new_nonce,
+                              "gpodcn_counter", json_integer_value(json_object_get(config->j_params, "oauth-dpop-nonce-counter")));
+        res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+        json_decref(j_query);
+        if (res == H_OK) {
+          nonce = o_strdup(new_nonce);
+        } else {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_client_dpop_nonce - Error executing j_query (2)");
+        }
+        pthread_mutex_unlock(&config->insert_lock);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "refresh_client_dpop_nonce - Error pthread_mutex_lock");
+      }
+    }
+    json_decref(j_result);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_client_dpop_nonce - Error executing j_query (1)");
+  }
+  return nonce;
 }
 
 /**
@@ -1471,7 +1567,7 @@ static json_t * oidc_verify_dpop_proof(struct _oidc_config * config, const struc
       if (r_jwt_advanced_parse(dpop_jwt, dpop_header, R_PARSE_HEADER_JWK, R_FLAG_IGNORE_REMOTE) == RHN_OK) {
         if (r_jwt_verify_signature(dpop_jwt, NULL, R_FLAG_IGNORE_REMOTE) == RHN_OK) {
           do {
-            if (0 != o_strcmp("dpop+jwt", r_jwt_get_header_str_value(dpop_jwt, "typ"))) {
+            if (NULL == o_strstr(r_jwt_get_header_str_value(dpop_jwt, "typ"), "dpop+jwt")) {
               y_log_message(Y_LOG_LEVEL_DEBUG, "oidc_verify_dpop_proof - Invalid typ");
               j_return = json_pack("{si}", "result", G_ERROR_PARAM);
               break;
@@ -1525,7 +1621,7 @@ static json_t * oidc_verify_dpop_proof(struct _oidc_config * config, const struc
               break;
             }
             time(&now);
-            if ((time_t)r_jwt_get_claim_int_value(dpop_jwt, "iat") > now || ((time_t)r_jwt_get_claim_int_value(dpop_jwt, "iat"))+((time_t)json_integer_value(json_object_get(config->j_params, "oauth-dpop-iat-duration"))) < now) {
+            if (((time_t)r_jwt_get_claim_int_value(dpop_jwt, "iat")-config->dpop_max_iat_gap) > now || ((time_t)r_jwt_get_claim_int_value(dpop_jwt, "iat"))+(config->dpop_max_iat) < now) {
               y_log_message(Y_LOG_LEVEL_DEBUG, "oidc_verify_dpop_proof - Invalid iat");
               j_return = json_pack("{si}", "result", G_ERROR_PARAM);
               break;
@@ -1558,7 +1654,7 @@ static json_t * oidc_verify_dpop_proof(struct _oidc_config * config, const struc
               nonce = get_client_dpop_nonce(config, json_string_value(json_object_get(j_client, "client_id")));
               if (0 != o_strcmp(nonce, r_jwt_get_claim_str_value(dpop_jwt, "nonce"))) {
                 y_log_message(Y_LOG_LEVEL_DEBUG, "oidc_verify_dpop_proof - Invalid nonce");
-                j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+                j_return = json_pack("{siss}", "result", G_ERROR_PARAM, "nonce", nonce);
                 break;
               }
             }
@@ -7925,7 +8021,8 @@ static int check_auth_type_device_code(const struct _u_request * request,
          * j_refresh_token = NULL,
          * j_refresh = NULL,
          * j_amr = NULL,
-         * j_jkt = NULL;
+         * j_jkt = NULL,
+         * json_body = NULL;
   const char * device_code = u_map_get(request->map_post_body, "device_code"),
              * client_id = request->auth_basic_user,
              * client_secret = request->auth_basic_password,
@@ -7943,7 +8040,8 @@ static int check_auth_type_device_code(const struct _u_request * request,
          jti[OIDC_JTI_LENGTH+1] = {0},
          jti_r[OIDC_JTI_LENGTH+1] = {0},
        * scope = NULL,
-       * issued_for = get_client_hostname(request);
+       * issued_for = get_client_hostname(request),
+       * dpop_nonce;
   time_t now;
   size_t index = 0;
 
@@ -8055,6 +8153,12 @@ static int check_auth_type_device_code(const struct _u_request * request,
                                                     client_id,
                                                     json_string_value(json_object_get(j_jkt, "jkt")),
                                                     ip_source)) == G_OK) {
+                            if (json_object_get(j_jkt, "jkt") != NULL && json_object_get(config->j_params, "oauth-dpop-nonce-mandatory") == json_true()) {
+                              if ((dpop_nonce = refresh_client_dpop_nonce(config, client_id)) != NULL) {
+                                ulfius_set_response_properties(response, U_OPT_HEADER_PARAMETER, "DPoP-Nonce", dpop_nonce, U_OPT_NONE);
+                                o_free(dpop_nonce);
+                              }
+                            }
                             if (json_object_get(json_array_get(j_result, 0), "dpop_jkt") != json_null() && 0 != o_strcmp(json_string_value(json_object_get(json_array_get(j_result, 0), "dpop_jkt")), json_string_value(json_object_get(j_jkt, "jkt")))) {
                               j_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
                               ulfius_set_json_body_response(response, 403, j_body);
@@ -8254,11 +8358,21 @@ static int check_auth_type_device_code(const struct _u_request * request,
                             json_decref(j_body);
                           }
                         } else if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
-                          y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-                          j_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
-                          ulfius_set_json_body_response(response, 403, j_body);
-                          json_decref(j_body);
-                          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+                          if (json_object_get(j_jkt, "nonce") != NULL) {
+                            json_body = json_pack("{ssss}", "error", "use_dpop_nonce", "error_description", "Authorization server requires nonce in DPoP proof");
+                            ulfius_set_response_properties(response, U_OPT_STATUS, 400,
+                                                                     U_OPT_HEADER_PARAMETER, "DPoP-Nonce", json_string_value(json_object_get(j_jkt, "nonce")),
+                                                                     U_OPT_JSON_BODY, json_body,
+                                                                     U_OPT_NONE);
+                            json_decref(json_body);
+                            
+                          } else {
+                            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+                            json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+                            ulfius_set_json_body_response(response, 403, json_body);
+                            json_decref(json_body);
+                            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+                          }
                         } else {
                           y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oidc - Error oidc_verify_dpop_proof");
                           j_body = json_pack("{ss}", "error", "server_error");
@@ -9424,11 +9538,12 @@ static int callback_client_registration(const struct _u_request * request, struc
 
 static int callback_check_registration(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_introspect, * j_dpop;
+  json_t * j_introspect, * j_dpop, * json_body;
   int ret = U_CALLBACK_UNAUTHORIZED, is_header_dpop = 0, res;
   const char * access_token = get_auth_header_token(u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION), &is_header_dpop),
              * dpop = u_map_get_case(request->map_header, GLEWLWYD_HEADER_DPOP),
              * ip_source = get_ip_source(request);
+  char * dpop_nonce;
 
   if (config->client_register_scope == NULL) {
     ret = U_CALLBACK_CONTINUE;
@@ -9446,6 +9561,12 @@ static int callback_check_registration(const struct _u_request * request, struct
                                     json_string_value(json_object_get(json_object_get(j_introspect, "token"), "client_id")),
                                     json_string_value(json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt")),
                                     ip_source)) == G_OK) {
+            if (json_object_get(j_dpop, "jkt") != NULL && json_object_get(config->j_params, "oauth-dpop-nonce-mandatory") == json_true()) {
+              if ((dpop_nonce = refresh_client_dpop_nonce(config, json_string_value(json_object_get(json_object_get(j_introspect, "token"), "client_id")))) != NULL) {
+                ulfius_set_response_properties(response, U_OPT_HEADER_PARAMETER, "DPoP-Nonce", dpop_nonce, U_OPT_NONE);
+                o_free(dpop_nonce);
+              }
+            }
             if (ulfius_set_response_shared_data(response, json_incref(json_object_get(j_introspect, "token")), (void (*)(void *))&json_decref) == U_OK) {
               json_object_set((json_t *)response->shared_data, "username", json_object_get(j_introspect, "username"));
               json_object_set((json_t *)response->shared_data, "client", json_object_get(j_introspect, "client"));
@@ -9459,6 +9580,19 @@ static int callback_check_registration(const struct _u_request * request, struct
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_userinfo - Error check_dpop_jti");
             ret = U_CALLBACK_ERROR;
+          }
+        } else if (check_result_value(j_dpop, G_ERROR_PARAM) || check_result_value(j_dpop, G_ERROR_UNAUTHORIZED)) {
+          if (json_object_get(j_dpop, "nonce") != NULL) {
+            ulfius_set_response_properties(response, U_OPT_STATUS, 401,
+                                                     U_OPT_HEADER_PARAMETER, "DPoP-Nonce", json_string_value(json_object_get(j_dpop, "nonce")),
+                                                     U_OPT_HEADER_PARAMETER, "WWW-Authenticate", "DPoP error=\"use_dpop_nonce\", error_description=\"Resource server requires nonce in DPoP proof\"",
+                                                     U_OPT_NONE);
+          } else {
+            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+            json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+            ulfius_set_json_body_response(response, 401, json_body);
+            json_decref(json_body);
+            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
           }
         } else if (check_result_value(j_dpop, G_ERROR)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_userinfo - Error oidc_verify_dpop_proof");
@@ -9623,13 +9757,14 @@ static int callback_introspection(const struct _u_request * request, struct _u_r
 
 static int callback_check_intropect_revoke(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_client, * j_introspect, * j_assertion, * j_dpop;
+  json_t * j_client, * j_introspect, * j_assertion, * j_dpop, * json_body;
   int ret = U_CALLBACK_UNAUTHORIZED, client_auth_method = GLEWLWYD_CLIENT_AUTH_METHOD_NONE, is_header_dpop = 0, res;
-  const char * client_id, * client_secret;
-  const char * access_token = get_auth_header_token(u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION), &is_header_dpop),
+  const char * client_id,
+             * client_secret,
+             * access_token = get_auth_header_token(u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION), &is_header_dpop),
              * dpop = u_map_get_case(request->map_header, GLEWLWYD_HEADER_DPOP),
              * ip_source = get_ip_source(request);
-
+  char * dpop_nonce;
   if (access_token != NULL && config->introspect_revoke_scope != NULL) {
     j_introspect = get_token_metadata(config, access_token, "access_token", NULL);
     if (check_result_value(j_introspect, G_OK) &&
@@ -9646,6 +9781,12 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
                                     json_string_value(json_object_get(json_object_get(j_introspect, "token"), "client_id")),
                                     json_string_value(json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt")),
                                     ip_source)) == G_OK) {
+            if (json_object_get(j_dpop, "jkt") != NULL && json_object_get(config->j_params, "oauth-dpop-nonce-mandatory") == json_true()) {
+              if ((dpop_nonce = refresh_client_dpop_nonce(config, json_string_value(json_object_get(json_object_get(j_introspect, "token"), "client_id")))) != NULL) {
+                ulfius_set_response_properties(response, U_OPT_HEADER_PARAMETER, "DPoP-Nonce", dpop_nonce, U_OPT_NONE);
+                o_free(dpop_nonce);
+              }
+            }
             if (ulfius_set_response_shared_data(response, json_incref(json_object_get(j_introspect, "token")), (void (*)(void *))&json_decref) == U_OK) {
               json_object_set((json_t *)response->shared_data, "username", json_object_get(j_introspect, "username"));
               json_object_set((json_t *)response->shared_data, "client", json_object_get(j_introspect, "client"));
@@ -9659,6 +9800,19 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_userinfo - Error check_dpop_jti");
             ret = U_CALLBACK_ERROR;
+          }
+        } else if (check_result_value(j_dpop, G_ERROR_PARAM) || check_result_value(j_dpop, G_ERROR_UNAUTHORIZED)) {
+          if (json_object_get(j_dpop, "nonce") != NULL) {
+            ulfius_set_response_properties(response, U_OPT_STATUS, 401,
+                                                     U_OPT_HEADER_PARAMETER, "DPoP-Nonce", json_string_value(json_object_get(j_dpop, "nonce")),
+                                                     U_OPT_HEADER_PARAMETER, "WWW-Authenticate", "DPoP error=\"use_dpop_nonce\", error_description=\"Resource server requires nonce in DPoP proof\"",
+                                                     U_OPT_NONE);
+          } else {
+            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+            json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+            ulfius_set_json_body_response(response, 401, json_body);
+            json_decref(json_body);
+            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
           }
         } else if (check_result_value(j_dpop, G_ERROR)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_userinfo - Error oidc_verify_dpop_proof");
@@ -9766,7 +9920,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
        * access_token = NULL,
        * access_token_out = NULL,
          jti[OIDC_JTI_LENGTH+1] = {0},
-         jti_r[OIDC_JTI_LENGTH+1] = {0};
+         jti_r[OIDC_JTI_LENGTH+1] = {0},
+       * dpop_nonce;
   json_t * j_code,
          * j_body,
          * j_refresh_token,
@@ -9775,7 +9930,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
          * j_amr,
          * j_claims_request = NULL,
          * j_jkt = NULL,
-         * j_authorization_details_processed = NULL;
+         * j_authorization_details_processed = NULL,
+         * json_body;
   time_t now;
   int res, resource_checked = 0, r_enc_res = G_OK, a_enc_res = G_OK, i_enc_res = G_OK;
 
@@ -9813,6 +9969,12 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                                     client_id,
                                     json_string_value(json_object_get(j_jkt, "jkt")),
                                     ip_source)) == G_OK) {
+            if (json_object_get(j_jkt, "jkt") != NULL && json_object_get(config->j_params, "oauth-dpop-nonce-mandatory") == json_true()) {
+              if ((dpop_nonce = refresh_client_dpop_nonce(config, client_id)) != NULL) {
+                ulfius_set_response_properties(response, U_OPT_HEADER_PARAMETER, "DPoP-Nonce", dpop_nonce, U_OPT_NONE);
+                o_free(dpop_nonce);
+              }
+            }
             if (json_object_get(j_jkt, "jkt") != NULL && json_object_get(json_object_get(j_code, "code"), "dpop_jkt") != json_null() && 0 != o_strcmp(json_string_value(json_object_get(j_jkt, "jkt")), json_string_value(json_object_get(json_object_get(j_code, "code"), "dpop_jkt")))) {
               j_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
               ulfius_set_json_body_response(response, 403, j_body);
@@ -10066,11 +10228,21 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
             json_decref(j_body);
           }
         } else if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
-          y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-          j_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
-          ulfius_set_json_body_response(response, 403, j_body);
-          json_decref(j_body);
-          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+          if (json_object_get(j_jkt, "nonce") != NULL) {
+            json_body = json_pack("{ssss}", "error", "use_dpop_nonce", "error_description", "Authorization server requires nonce in DPoP proof");
+            ulfius_set_response_properties(response, U_OPT_STATUS, 400,
+                                                     U_OPT_HEADER_PARAMETER, "DPoP-Nonce", json_string_value(json_object_get(j_jkt, "nonce")),
+                                                     U_OPT_JSON_BODY, json_body,
+                                                     U_OPT_NONE);
+            json_decref(json_body);
+            
+          } else {
+            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+            json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+            ulfius_set_json_body_response(response, 403, json_body);
+            json_decref(json_body);
+            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+          }
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_access_token_request - Error oidc_verify_dpop_proof");
           j_body = json_pack("{ss}", "error", "server_error");
@@ -10120,7 +10292,8 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
          * j_element = NULL,
          * j_refresh = NULL,
          * j_amr = NULL,
-         * j_jkt;
+         * j_jkt,
+         * json_body;
   int ret = G_OK, auth_type_allowed = 0, has_openid = 0, r_enc_res = G_OK, a_enc_res = G_OK, i_enc_res = G_OK, res;
   const char * username = u_map_get(request->map_post_body, "username"),
              * password = u_map_get(request->map_post_body, "password"),
@@ -10138,7 +10311,8 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
        * id_token_out = NULL,
          jti[OIDC_JTI_LENGTH+1] = {0},
          jti_r[OIDC_JTI_LENGTH+1] = {0},
-      ** scope_array = NULL;
+      ** scope_array = NULL,
+       * dpop_nonce;
   time_t now;
   size_t index = 0;
 
@@ -10218,6 +10392,12 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
                                       ip_source)) == G_OK) {
               if (!o_strnullempty(json_string_value(json_object_get(j_jkt, "jkt")))) {
                 token_type = GLEWLWYD_TOKEN_TYPE_DPOP;
+              }
+              if (json_object_get(j_jkt, "jkt") != NULL && json_object_get(config->j_params, "oauth-dpop-nonce-mandatory") == json_true()) {
+                if ((dpop_nonce = refresh_client_dpop_nonce(config, client_id)) != NULL) {
+                  ulfius_set_response_properties(response, U_OPT_HEADER_PARAMETER, "DPoP-Nonce", dpop_nonce, U_OPT_NONE);
+                  o_free(dpop_nonce);
+                }
               }
               j_refresh = get_refresh_token_duration_rolling(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")));
               time(&now);
@@ -10429,11 +10609,21 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
               json_decref(j_body);
             }
           } else if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
-            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-            j_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
-            ulfius_set_json_body_response(response, 403, j_body);
-            json_decref(j_body);
-            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+            if (json_object_get(j_jkt, "nonce") != NULL) {
+              json_body = json_pack("{ssss}", "error", "use_dpop_nonce", "error_description", "Authorization server requires nonce in DPoP proof");
+              ulfius_set_response_properties(response, U_OPT_STATUS, 400,
+                                                       U_OPT_HEADER_PARAMETER, "DPoP-Nonce", json_string_value(json_object_get(j_jkt, "nonce")),
+                                                       U_OPT_JSON_BODY, json_body,
+                                                       U_OPT_NONE);
+              json_decref(json_body);
+              
+            } else {
+              y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+              json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+              ulfius_set_json_body_response(response, 403, json_body);
+              json_decref(json_body);
+              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+            }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant - Error oidc_verify_dpop_proof");
             j_body = json_pack("{ss}", "error", "server_error");
@@ -10490,7 +10680,8 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
         * access_token = NULL,
         * access_token_out = NULL,
         * issued_for = get_client_hostname(request),
-          jti[OIDC_JTI_LENGTH+1] = {0};
+          jti[OIDC_JTI_LENGTH+1] = {0},
+        * dpop_nonce;
   size_t index = 0;
   int i, auth_type_allowed = 0, res, enc_res = G_OK;
   time_t now;
@@ -10563,6 +10754,12 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
                                       client_id,
                                       json_string_value(json_object_get(j_jkt, "jkt")),
                                       ip_source)) == G_OK) {
+              if (json_object_get(j_jkt, "jkt") != NULL && json_object_get(config->j_params, "oauth-dpop-nonce-mandatory") == json_true()) {
+                if ((dpop_nonce = refresh_client_dpop_nonce(config, client_id)) != NULL) {
+                  ulfius_set_response_properties(response, U_OPT_HEADER_PARAMETER, "DPoP-Nonce", dpop_nonce, U_OPT_NONE);
+                  o_free(dpop_nonce);
+                }
+              }
               if (!o_strnullempty(json_string_value(json_object_get(j_jkt, "jkt")))) {
                 token_type = GLEWLWYD_TOKEN_TYPE_DPOP;
               }
@@ -10642,11 +10839,21 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
               json_decref(json_body);
             }
           } else if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
-            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-            json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
-            ulfius_set_json_body_response(response, 403, json_body);
-            json_decref(json_body);
-            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+            if (json_object_get(j_jkt, "nonce") != NULL) {
+              json_body = json_pack("{ssss}", "error", "use_dpop_nonce", "error_description", "Authorization server requires nonce in DPoP proof");
+              ulfius_set_response_properties(response, U_OPT_STATUS, 400,
+                                                       U_OPT_HEADER_PARAMETER, "DPoP-Nonce", json_string_value(json_object_get(j_jkt, "nonce")),
+                                                       U_OPT_JSON_BODY, json_body,
+                                                       U_OPT_NONE);
+              json_decref(json_body);
+              
+            } else {
+              y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+              json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+              ulfius_set_json_body_response(response, 403, json_body);
+              json_decref(json_body);
+              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+            }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant - Error oidc_verify_dpop_proof");
             json_body = json_pack("{ss}", "error", "server_error");
@@ -10707,7 +10914,8 @@ static int check_pushed_authorization_request (const struct _u_request * request
   char  code_challenge_stored[GLEWLWYD_CODE_CHALLENGE_MAX_LENGTH + 1] = {0},
        * request_uri = NULL,
        ** response_type_array = NULL,
-       * scope_reduced = NULL;
+       * scope_reduced = NULL,
+       * dpop_nonce;
   int res, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NULL_FLAG;
   struct _u_map * additional_parameters = NULL;
 
@@ -10917,6 +11125,12 @@ static int check_pushed_authorization_request (const struct _u_request * request
         break;
       }
       dpop_jkt = json_string_value(json_object_get(j_jkt, "jkt"));
+      if (json_object_get(config->j_params, "oauth-dpop-nonce-mandatory") == json_true()) {
+        if ((dpop_nonce = refresh_client_dpop_nonce(config, client_id)) != NULL) {
+          ulfius_set_response_properties(response, U_OPT_HEADER_PARAMETER, "DPoP-Nonce", dpop_nonce, U_OPT_NONE);
+          o_free(dpop_nonce);
+        }
+      }
     }
 
     if (!json_string_null_or_empty(json_object_get(config->j_params, "restrict-scope-client-property"))) {
@@ -12660,7 +12874,8 @@ static int get_access_token_from_refresh (const struct _u_request * request,
        * new_refresh_token_out = NULL,
        * scope_joined = NULL,
        * issued_for = NULL,
-         jti[OIDC_JTI_LENGTH+1] = {0};
+         jti[OIDC_JTI_LENGTH+1] = {0},
+       * dpop_nonce;
   int has_error = 0, has_issues = 0, resource_checked = 0, res, enc_res = G_OK;
   json_int_t gpor_id = 0;
 
@@ -12723,6 +12938,12 @@ static int get_access_token_from_refresh (const struct _u_request * request,
                                   json_string_value(json_object_get(j_jkt, "jkt")),
                                   ip_source)) == G_OK &&
             0 == o_strcmp(json_string_value(json_object_get(j_jkt, "jkt")), json_string_value(json_object_get(json_object_get(j_refresh, "token"), "dpop_jkt"))))) {
+          if (json_object_get(j_jkt, "jkt") != NULL && json_object_get(config->j_params, "oauth-dpop-nonce-mandatory") == json_true()) {
+            if ((dpop_nonce = refresh_client_dpop_nonce(config, client_id)) != NULL) {
+              ulfius_set_response_properties(response, U_OPT_HEADER_PARAMETER, "DPoP-Nonce", dpop_nonce, U_OPT_NONE);
+              o_free(dpop_nonce);
+            }
+          }
           if (!o_strnullempty(json_string_value(json_object_get(j_jkt, "jkt")))) {
             token_type = GLEWLWYD_TOKEN_TYPE_DPOP;
           }
@@ -12932,11 +13153,21 @@ static int get_access_token_from_refresh (const struct _u_request * request,
           json_decref(json_body);
         }
       } else if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
-        y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-        json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
-        ulfius_set_json_body_response(response, 403, json_body);
-        json_decref(json_body);
-        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+        if (json_object_get(j_jkt, "nonce") != NULL) {
+          json_body = json_pack("{ssss}", "error", "use_dpop_nonce", "error_description", "Authorization server requires nonce in DPoP proof");
+          ulfius_set_response_properties(response, U_OPT_STATUS, 400,
+                                                   U_OPT_HEADER_PARAMETER, "DPoP-Nonce", json_string_value(json_object_get(j_jkt, "nonce")),
+                                                   U_OPT_JSON_BODY, json_body,
+                                                   U_OPT_NONE);
+          json_decref(json_body);
+          
+        } else {
+          y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+          json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+          ulfius_set_json_body_response(response, 403, json_body);
+          json_decref(json_body);
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+        }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant - Error oidc_verify_dpop_proof");
         json_body = json_pack("{ss}", "error", "server_error");
@@ -13058,11 +13289,12 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
  */
 static int callback_check_userinfo(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_introspect, * j_dpop;
+  json_t * j_introspect, * j_dpop, * json_body;
   int ret = U_CALLBACK_UNAUTHORIZED, is_header_dpop = 0, res;
   const char * access_token = get_auth_header_token(u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION), &is_header_dpop),
              * dpop = u_map_get_case(request->map_header, GLEWLWYD_HEADER_DPOP),
              * ip_source = get_ip_source(request);
+  char * dpop_nonce;
 
   if (access_token != NULL) {
     j_introspect = get_token_metadata(config, access_token, "access_token", NULL);
@@ -13070,7 +13302,8 @@ static int callback_check_userinfo(const struct _u_request * request, struct _u_
       if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
         j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, (request->url_path + 2 + o_strlen(config->glewlwyd_config->glewlwyd_config->api_prefix) + o_strlen(config->name)), json_object_get(j_introspect, "client"), access_token);
         if (check_result_value(j_dpop, G_OK)) {
-          if ((res = check_dpop_jti(config, 
+          if (json_object_get(j_dpop, "jkt") == NULL ||
+              (res = check_dpop_jti(config, 
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "jti")),
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "htm")),
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "htu")),
@@ -13078,6 +13311,12 @@ static int callback_check_userinfo(const struct _u_request * request, struct _u_
                                     json_string_value(json_object_get(json_object_get(j_introspect, "token"), "client_id")),
                                     json_string_value(json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt")),
                                     ip_source)) == G_OK) {
+            if (json_object_get(j_dpop, "jkt") != NULL && json_object_get(config->j_params, "oauth-dpop-nonce-mandatory") == json_true()) {
+              if ((dpop_nonce = refresh_client_dpop_nonce(config, json_string_value(json_object_get(json_object_get(j_introspect, "token"), "client_id")))) != NULL) {
+                ulfius_set_response_properties(response, U_OPT_HEADER_PARAMETER, "DPoP-Nonce", dpop_nonce, U_OPT_NONE);
+                o_free(dpop_nonce);
+              }
+            }
             if (ulfius_set_response_shared_data(response, json_incref(json_object_get(j_introspect, "token")), (void (*)(void *))&json_decref) == U_OK) {
               json_object_set((json_t *)response->shared_data, "username", json_object_get(j_introspect, "username"));
               json_object_set((json_t *)response->shared_data, "client", json_object_get(j_introspect, "client"));
@@ -13092,8 +13331,21 @@ static int callback_check_userinfo(const struct _u_request * request, struct _u_
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_userinfo - Error check_dpop_jti");
             ret = U_CALLBACK_ERROR;
           }
+        } else if (check_result_value(j_dpop, G_ERROR_PARAM) || check_result_value(j_dpop, G_ERROR_UNAUTHORIZED)) {
+          if (json_object_get(j_dpop, "nonce") != NULL) {
+            ulfius_set_response_properties(response, U_OPT_STATUS, 401,
+                                                     U_OPT_HEADER_PARAMETER, "DPoP-Nonce", json_string_value(json_object_get(j_dpop, "nonce")),
+                                                     U_OPT_HEADER_PARAMETER, "WWW-Authenticate", "DPoP error=\"use_dpop_nonce\", error_description=\"Resource server requires nonce in DPoP proof\"",
+                                                     U_OPT_NONE);
+          } else {
+            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+            json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+            ulfius_set_json_body_response(response, 401, json_body);
+            json_decref(json_body);
+            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+          }
         } else if (check_result_value(j_dpop, G_ERROR)) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_userinfo - Error verify_dpop_proof");
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_userinfo - Error oidc_verify_dpop_proof");
           ret = U_CALLBACK_ERROR;
         }
         json_decref(j_dpop);
@@ -13122,11 +13374,12 @@ static int callback_check_userinfo(const struct _u_request * request, struct _u_
  */
 static int callback_check_glewlwyd_session_or_token(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_session, * j_user, * j_introspect, * j_dpop;
+  json_t * j_session, * j_user, * j_introspect, * j_dpop, * json_body;
   int ret = U_CALLBACK_UNAUTHORIZED, is_header_dpop = 0, res;
   const char * access_token = get_auth_header_token(u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION), &is_header_dpop),
              * dpop = u_map_get_case(request->map_header, GLEWLWYD_HEADER_DPOP),
              * ip_source = get_ip_source(request);
+  char * dpop_nonce;
 
   if (access_token != NULL) {
     j_introspect = get_token_metadata(config, access_token, "access_token", NULL);
@@ -13134,7 +13387,8 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
       if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
         j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, (request->url_path + 2 + o_strlen(config->glewlwyd_config->glewlwyd_config->api_prefix) + o_strlen(config->name)), json_object_get(j_introspect, "client"), access_token);
         if (check_result_value(j_dpop, G_OK)) {
-          if ((res = check_dpop_jti(config, 
+          if (json_object_get(j_dpop, "jkt") == NULL ||
+              (res = check_dpop_jti(config, 
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "jti")),
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "htm")),
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "htu")),
@@ -13142,6 +13396,12 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
                                     json_string_value(json_object_get(json_object_get(j_introspect, "token"), "client_id")),
                                     json_string_value(json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt")),
                                     ip_source)) == G_OK) {
+            if (json_object_get(j_dpop, "jkt") != NULL && json_object_get(config->j_params, "oauth-dpop-nonce-mandatory") == json_true()) {
+              if ((dpop_nonce = refresh_client_dpop_nonce(config, json_string_value(json_object_get(json_object_get(j_introspect, "token"), "client_id")))) != NULL) {
+                ulfius_set_response_properties(response, U_OPT_HEADER_PARAMETER, "DPoP-Nonce", dpop_nonce, U_OPT_NONE);
+                o_free(dpop_nonce);
+              }
+            }
             if (ulfius_set_response_shared_data(response, json_incref(json_object_get(j_introspect, "token")), (void (*)(void *))&json_decref) == U_OK) {
               json_object_set((json_t *)response->shared_data, "username", json_object_get(j_introspect, "username"));
               json_object_set((json_t *)response->shared_data, "client", json_object_get(j_introspect, "client"));
@@ -13155,6 +13415,19 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_userinfo - Error check_dpop_jti");
             ret = U_CALLBACK_ERROR;
+          }
+        } else if (check_result_value(j_dpop, G_ERROR_PARAM) || check_result_value(j_dpop, G_ERROR_UNAUTHORIZED)) {
+          if (json_object_get(j_dpop, "nonce") != NULL) {
+            ulfius_set_response_properties(response, U_OPT_STATUS, 401,
+                                                     U_OPT_HEADER_PARAMETER, "DPoP-Nonce", json_string_value(json_object_get(j_dpop, "nonce")),
+                                                     U_OPT_HEADER_PARAMETER, "WWW-Authenticate", "DPoP error=\"use_dpop_nonce\", error_description=\"Resource server requires nonce in DPoP proof\"",
+                                                     U_OPT_NONE);
+          } else {
+            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+            json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+            ulfius_set_json_body_response(response, 401, json_body);
+            json_decref(json_body);
+            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
           }
         } else if (check_result_value(j_dpop, G_ERROR)) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_userinfo - Error oidc_verify_dpop_proof");
@@ -15941,6 +16214,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       }
 
       p_config->dpop_max_iat = (time_t)json_integer_value(json_object_get(p_config->j_params, "oauth-dpop-iat-duration"));
+      p_config->dpop_max_iat_gap = (time_t)json_integer_value(json_object_get(p_config->j_params, "oauth-dpop-iat-gap-duration"));
 
       p_config->access_token_duration = json_integer_value(json_object_get(p_config->j_params, "access-token-duration"));
       if (!p_config->access_token_duration) {
