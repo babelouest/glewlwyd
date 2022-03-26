@@ -1082,7 +1082,7 @@ static json_t * check_parameters (json_t * j_params) {
               ret = G_ERROR_PARAM;
             } else {
               json_array_foreach(json_object_get(j_rar_type, "locations"), index, j_element) {
-                if (json_string_null_or_empty(j_element)) {
+                if (!json_is_string(j_element)) {
                   json_array_append_new(j_error, json_string("Property 'rar-types.locations' is optional and must be a JSON array of strings"));
                   ret = G_ERROR_PARAM;
                 }
@@ -6411,6 +6411,9 @@ static json_t * get_token_metadata(struct _oidc_config * config, const char * to
                 if (r_jwt_advanced_parse(jwt, token, R_PARSE_NONE, config->x5u_flags) == RHN_OK) {
                   if ((j_cnf = r_jwt_get_claim_json_t_value(jwt, "cnf")) != NULL) {
                     json_object_set_new(json_object_get(j_return, "token"), "cnf", j_cnf);
+                    if (json_object_get(j_cnf, "jkt") != NULL) {
+                      json_object_set_new(json_object_get(j_return, "token"), "token_type", json_string("access_token+DPoP"));
+                    }
                   }
                   if ((j_claims = r_jwt_get_claim_json_t_value(jwt, "claims")) != NULL) {
                     json_object_set_new(json_object_get(j_return, "token"), "claims", j_claims);
@@ -8957,10 +8960,9 @@ static int generate_discovery_content(struct _oidc_config * config) {
       }
     }
     if (json_object_get(config->j_params, "oauth-rar-allowed") == json_true()) {
-      json_object_set_new(j_discovery, "authorization_details_supported", json_true());
-      json_object_set_new(j_discovery, "authorization_data_types_supported", json_array());
+      json_object_set_new(j_discovery, "authorization_details_types_supported", json_array());
       json_object_foreach(json_object_get(config->j_params, "rar-types"), key, j_element) {
-        json_array_append_new(json_object_get(j_discovery, "authorization_data_types_supported"), json_string(key));
+        json_array_append_new(json_object_get(j_discovery, "authorization_details_types_supported"), json_string(key));
       }
     }
     if (json_object_get(config->j_params, "oauth-par-allowed") == json_true()) {
