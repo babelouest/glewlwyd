@@ -7,6 +7,7 @@
 - Allow to send an e-mail to an account when a new connection occurs
 - Allow to fetch a geolocation API to improve the `issued_for` records
 - Fix oidc plugin bug: allow to add the `username` as claim in the access token
+- Improve OIDC DPoP implementation to [Draft 07](https://www.ietf.org/archive/id/draft-ietf-oauth-dpop-07.html#name-document-history)
 
 ## 2.6.2
 
