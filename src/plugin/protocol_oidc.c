@@ -8163,7 +8163,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
                               }
                             }
                             if (json_object_get(json_array_get(j_result, 0), "dpop_jkt") != json_null() && 0 != o_strcmp(json_string_value(json_object_get(json_array_get(j_result, 0), "dpop_jkt")), json_string_value(json_object_get(j_jkt, "jkt")))) {
-                              j_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+                              j_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
                               ulfius_set_json_body_response(response, 403, j_body);
                               json_decref(j_body);
                             } else {
@@ -8351,7 +8351,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
                               }
                             }
                           } else if (res == G_ERROR_UNAUTHORIZED) {
-                            j_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+                            j_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
                             ulfius_set_json_body_response(response, 403, j_body);
                             json_decref(j_body);
                           } else {
@@ -8371,7 +8371,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
                             
                           } else {
                             y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-                            json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+                            json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
                             ulfius_set_json_body_response(response, 403, json_body);
                             json_decref(json_body);
                             config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
@@ -9591,7 +9591,7 @@ static int callback_check_registration(const struct _u_request * request, struct
                                                      U_OPT_NONE);
           } else {
             y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-            json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+            json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
             ulfius_set_json_body_response(response, 401, json_body);
             json_decref(json_body);
             config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
@@ -9811,7 +9811,7 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
                                                      U_OPT_NONE);
           } else {
             y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-            json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+            json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
             ulfius_set_json_body_response(response, 401, json_body);
             json_decref(json_body);
             config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
@@ -9978,7 +9978,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
               }
             }
             if (json_object_get(j_jkt, "jkt") != NULL && json_object_get(json_object_get(j_code, "code"), "dpop_jkt") != json_null() && 0 != o_strcmp(json_string_value(json_object_get(j_jkt, "jkt")), json_string_value(json_object_get(json_object_get(j_code, "code"), "dpop_jkt")))) {
-              j_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+              j_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
               ulfius_set_json_body_response(response, 403, j_body);
               json_decref(j_body);
             } else {
@@ -10220,7 +10220,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
               }
             }
           } else if (res == G_ERROR_UNAUTHORIZED) {
-            j_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+            j_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
             ulfius_set_json_body_response(response, 403, j_body);
             json_decref(j_body);
           } else {
@@ -10240,7 +10240,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
             
           } else {
             y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-            json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+            json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
             ulfius_set_json_body_response(response, 403, json_body);
             json_decref(json_body);
             config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
@@ -10601,7 +10601,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
               }
               json_decref(j_refresh);
             } else if (res == G_ERROR_UNAUTHORIZED) {
-              j_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+              j_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
               ulfius_set_json_body_response(response, 403, j_body);
               json_decref(j_body);
             } else {
@@ -10621,7 +10621,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
               
             } else {
               y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-              json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+              json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
               ulfius_set_json_body_response(response, 403, json_body);
               json_decref(json_body);
               config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
@@ -10831,7 +10831,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
                 o_free(access_token);
               }
             } else if (res == G_ERROR_UNAUTHORIZED) {
-              json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+              json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
               ulfius_set_json_body_response(response, 403, json_body);
               json_decref(json_body);
             } else {
@@ -10851,7 +10851,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
               
             } else {
               y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-              json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+              json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
               ulfius_set_json_body_response(response, 403, json_body);
               json_decref(json_body);
               config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
@@ -11091,7 +11091,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
     j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/par", json_object_get(j_client, "client"), NULL);
     if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-      json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+      json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
       ulfius_set_json_body_response(response, 403, json_body);
       json_decref(json_body);
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
@@ -11111,7 +11111,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
                               client_id,
                               json_string_value(json_object_get(j_jkt, "jkt")),
                               ip_source)) == G_ERROR_UNAUTHORIZED) {
-        json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+        json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
         ulfius_set_json_body_response(response, 403, json_body);
         json_decref(json_body);
         break;
@@ -11121,7 +11121,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
         break;
       }
       if (!o_strnullempty(dpop_jkt) && 0 != o_strcmp(dpop_jkt, json_string_value(json_object_get(j_jkt, "jkt")))) {
-        json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP - dpop_jkt doesn't match");
+        json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP - dpop_jkt doesn't match");
         ulfius_set_json_body_response(response, 403, json_body);
         json_decref(json_body);
         break;
@@ -13145,7 +13145,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
             response->status = 400;
           }
         } else if (res == G_ERROR_UNAUTHORIZED || 0 != o_strcmp(json_string_value(json_object_get(j_jkt, "jkt")), json_string_value(json_object_get(json_object_get(j_refresh, "token"), "dpop_jkt")))) {
-          json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+          json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
           ulfius_set_json_body_response(response, 403, json_body);
           json_decref(json_body);
         } else {
@@ -13165,7 +13165,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
           
         } else {
           y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-          json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+          json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
           ulfius_set_json_body_response(response, 403, json_body);
           json_decref(json_body);
           config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
@@ -13341,7 +13341,7 @@ static int callback_check_userinfo(const struct _u_request * request, struct _u_
                                                      U_OPT_NONE);
           } else {
             y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-            json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+            json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
             ulfius_set_json_body_response(response, 401, json_body);
             json_decref(json_body);
             config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
@@ -13426,7 +13426,7 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
                                                      U_OPT_NONE);
           } else {
             y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-            json_body = json_pack("{ssss}", "error", "access_denied", "error_description", "Invalid DPoP");
+            json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
             ulfius_set_json_body_response(response, 401, json_body);
             json_decref(json_body);
             config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
