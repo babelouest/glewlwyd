@@ -311,7 +311,7 @@ json_t * verify_dpop_proof(const char * dpop_header, const char * access_token, 
       if (r_jwt_parse(dpop_jwt, dpop_header, R_FLAG_IGNORE_REMOTE) == RHN_OK) {
         if (r_jwt_verify_signature(dpop_jwt, NULL, R_FLAG_IGNORE_REMOTE) == RHN_OK) {
           do {
-            if (0 != o_strcmp("dpop+jwt", r_jwt_get_header_str_value(dpop_jwt, "typ"))) {
+            if (NULL != o_strstr(r_jwt_get_header_str_value(dpop_jwt, "typ"), "dpop+jwt")) {
               y_log_message(Y_LOG_LEVEL_DEBUG, "verify_dpop_proof - Invalid typ");
               j_return = json_pack("{si}", "result", G_TOKEN_ERROR_INVALID_TOKEN);
               break;
