@@ -94,7 +94,10 @@ let defaultParam = {
   "client-cert-self-signed-allowed":false,
   "oauth-dpop-allowed":false,
   "oauth-dpop-iat-duration":10,
+  "oauth-dpop-iat-gap-duration":0,
   "oauth-dpop-dpop_bound_access_tokens-property":"dpop_bound_access_tokens",
+  "oauth-dpop-nonce-mandatory": false,
+  "oauth-dpop-nonce-counter": 10,
   "resource-allowed":false,
   "resource-scope":{},
   "resource-client-property":"",
@@ -946,6 +949,16 @@ class GlwdOIDCParams extends Component {
     if (this.state.mod.parameters["oauth-dpop-allowed"] && !this.state.mod.parameters["oauth-dpop-iat-duration"]) {
       hasError = true;
       errorList["oauth-dpop-iat-duration"] = i18next.t("admin.mod-glwd-oauth-dpop-iat-duration-error");
+      errorList["oauth-dpop"] = true;
+    }
+    if (this.state.mod.parameters["oauth-dpop-allowed"] && !this.state.mod.parameters["oauth-dpop-iat-gap-duration"]) {
+      hasError = true;
+      errorList["oauth-dpop-iat-gap-duration"] = i18next.t("admin.mod-glwd-oauth-dpop-iat-gap-duration-error");
+      errorList["oauth-dpop"] = true;
+    }
+    if (this.state.mod.parameters["oauth-dpop-allowed"] && !this.state.mod.parameters["oauth-dpop-nonce-counter"]) {
+      hasError = true;
+      errorList["oauth-dpop-nonce-counter"] = i18next.t("admin.mod-glwd-oauth-dpop-nonce-counter-error");
       errorList["oauth-dpop"] = true;
     }
     if (this.state.mod.parameters["resource-allowed"]) {
@@ -3052,9 +3065,34 @@ class GlwdOIDCParams extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-glwd-oauth-dpop-iat-duration">{i18next.t("admin.mod-glwd-oauth-dpop-iat-duration")}</label>
                     </div>
-                    <input type="number" min="1" step="1" className="form-control" id="mod-glwd-oauth-dpop-iat-duration" onChange={(e) => this.changeNumberParam(e, "oauth-dpop-iat-duration")} value={this.state.mod.parameters["oauth-dpop-iat-duration"]} placeholder={i18next.t("admin.mod-glwd-oauth-dpop-iat-duration-ph")} disabled={!this.state.mod.parameters["oauth-dpop-allowed"]} />
+                    <input type="number"
+                           min="1"
+                           step="1"
+                           className="form-control"
+                           id="mod-glwd-oauth-dpop-iat-duration"
+                           onChange={(e) => this.changeNumberParam(e, "oauth-dpop-iat-duration")}
+                           value={this.state.mod.parameters["oauth-dpop-iat-duration"]}
+                           placeholder={i18next.t("admin.mod-glwd-oauth-dpop-iat-duration-ph")}
+                           disabled={!this.state.mod.parameters["oauth-dpop-allowed"]} />
                   </div>
                   {this.state.errorList["oauth-dpop-iat-duration"]?<span className="error-input">{this.state.errorList["oauth-dpop-iat-duration"]}</span>:""}
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-oauth-dpop-iat-gap-duration">{i18next.t("admin.mod-glwd-oauth-dpop-iat-gap-duration")}</label>
+                    </div>
+                    <input type="number"
+                           min="1"
+                           step="1"
+                           className="form-control"
+                           id="mod-glwd-oauth-dpop-iat-gap-duration"
+                           onChange={(e) => this.changeNumberParam(e, "oauth-dpop-iat-gap-duration")}
+                           value={this.state.mod.parameters["oauth-dpop-iat-gap-duration"]}
+                           placeholder={i18next.t("admin.mod-glwd-oauth-dpop-iat-gap-duration-ph")}
+                           disabled={!this.state.mod.parameters["oauth-dpop-allowed"]} />
+                  </div>
+                  {this.state.errorList["oauth-dpop-iat-gap-duration"]?<span className="error-input">{this.state.errorList["oauth-dpop-iat-gap-duration"]}</span>:""}
                 </div>
                 <div className="form-group">
                   <div className="input-group mb-3">
@@ -3063,6 +3101,32 @@ class GlwdOIDCParams extends Component {
                     </div>
                     <input type="text" className="form-control" id="mod-glwd-oauth-dpop-dpop_bound_access_tokens-property" onChange={(e) => this.changeNumberParam(e, "oauth-dpop-dpop_bound_access_tokens-property")} value={this.state.mod.parameters["oauth-dpop-dpop_bound_access_tokens-property"]} placeholder={i18next.t("admin.mod-glwd-oauth-dpop-dpop_bound_access_tokens-property-ph")} disabled={!this.state.mod.parameters["oauth-dpop-allowed"]} />
                   </div>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-oauth-dpop-nonce-mandatory"
+                         onChange={(e) => this.toggleParam(e, "oauth-dpop-nonce-mandatory")}
+                         checked={this.state.mod.parameters["oauth-dpop-nonce-mandatory"]}
+                         disabled={!this.state.mod.parameters["oauth-dpop-allowed"]} />
+                  <label className="form-check-label" htmlFor="mod-glwd-oauth-dpop-nonce-mandatory">{i18next.t("admin.mod-glwd-oauth-dpop-nonce-mandatory")}</label>
+                </div>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-glwd-oauth-dpop-nonce-counter">{i18next.t("admin.mod-glwd-oauth-dpop-nonce-counter")}</label>
+                    </div>
+                    <input type="number"
+                           min="1"
+                           step="1"
+                           className="form-control"
+                           id="mod-glwd-oauth-dpop-nonce-counter"
+                           onChange={(e) => this.changeNumberParam(e, "oauth-dpop-nonce-counter")}
+                           value={this.state.mod.parameters["oauth-dpop-nonce-counter"]}
+                           placeholder={i18next.t("admin.mod-glwd-oauth-dpop-nonce-counter-ph")}
+                           disabled={!this.state.mod.parameters["oauth-dpop-allowed"] || !this.state.mod.parameters["oauth-dpop-nonce-mandatory"]} />
+                  </div>
+                  {this.state.errorList["oauth-dpop-nonce-counter"]?<span className="error-input">{this.state.errorList["oauth-dpop-nonce-counter"]}</span>:""}
                 </div>
               </div>
             </div>

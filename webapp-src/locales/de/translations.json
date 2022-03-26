@@ -673,7 +673,7 @@
     "mod-glwd-device-authorization-expiration-ph": "z.B.: 600",
     "mod-glwd-device-authorization-interval": "Suggested interval between code verification (seconds)",
     "mod-glwd-device-authorization-interval-ph": "z.B.: 5",
-    "mod-glwd-mtls-client-title": "Mutual-TLS Client Authentication (rfc8705)",
+    "mod-glwd-mtls-client-title": "Mutual-TLS Client Authentication (RFC8705)",
     "mod-glwd-mtls-client-source": "Certificate source",
     "mod-glwd-mtls-client-source-no": "None",
     "mod-glwd-mtls-client-source-TLS": "TLS session",
