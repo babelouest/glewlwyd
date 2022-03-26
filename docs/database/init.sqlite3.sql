@@ -42,6 +42,7 @@ DROP TABLE IF EXISTS gpo_ciba;
 DROP TABLE IF EXISTS gpo_par_scope;
 DROP TABLE IF EXISTS gpo_par;
 DROP TABLE IF EXISTS gpo_rar;
+DROP TABLE IF EXISTS gpo_dpop_client_nonce;
 DROP TABLE IF EXISTS gpo_dpop;
 DROP TABLE IF EXISTS gpo_device_scheme;
 DROP TABLE IF EXISTS gpo_device_authorization_scope;
@@ -584,6 +585,13 @@ CREATE TABLE gpo_dpop (
   gpod_last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX i_gpod_jti_hash ON gpo_dpop(gpod_jti_hash);
+
+CREATE TABLE gpo_dpop_client_nonce (
+  gpodcn_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  gpodcn_client_id TEXT NOT NULL,
+  gpodcn_nonce TEXT NOT NULL,
+  gpodcn_counter INTEGER DEFAULT 0
+);
 
 CREATE TABLE gpo_rar (
   gporar_id INTEGER PRIMARY KEY AUTOINCREMENT,
