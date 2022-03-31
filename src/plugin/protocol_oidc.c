@@ -183,6 +183,10 @@
 #define GLEWLWYD_TOKEN_TYPE_BEARER "bearer"
 #define GLEWLWYD_TOKEN_TYPE_DPOP "DPoP"
 
+#define GLEWLWYD_INTROSPECT_TOKEN_TYPE_ACCESS_TOKEN 0
+#define GLEWLWYD_INTROSPECT_TOKEN_TYPE_CLIENT_TOKEN 1
+#define GLEWLWYD_INTROSPECT_TOKEN_TYPE_DPOP         2
+
 /**
  * Structure used to store all the plugin parameters and data duringexecution
  */
@@ -3433,7 +3437,6 @@ static char * generate_access_token(struct _oidc_config * config,
         }
         r_jwt_set_claim_str_value(jwt, "sub", sub);
         r_jwt_set_claim_str_value(jwt, "jti", jti);
-        r_jwt_set_claim_str_value(jwt, "type", "access_token");
         r_jwt_set_claim_int_value(jwt, "iat", now);
         r_jwt_set_claim_int_value(jwt, "exp", (((json_int_t)now) + config->access_token_duration));
         r_jwt_set_claim_int_value(jwt, "nbf", now);
@@ -6352,10 +6355,9 @@ static json_t * get_token_metadata(struct _oidc_config * config, const char * to
       if (res == H_OK) {
         if (json_array_size(j_result)) {
           found_access = 1;
+          json_object_set_new(json_array_get(j_result, 0), "token_type", json_string("bearer"));
           if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpoa_enabled")) && json_integer_value(json_object_get(json_array_get(j_result, 0), "iat")) + json_integer_value(json_object_get(config->j_params, "access-token-duration")) > now) {
-            json_object_set_new(json_array_get(j_result, 0), "sub", json_string(sub));
             json_object_set_new(json_array_get(j_result, 0), "active", json_true());
-            json_object_set_new(json_array_get(j_result, 0), "token_type", json_string("access_token"));
             json_object_set_new(json_array_get(j_result, 0), "exp", json_integer(json_integer_value(json_object_get(json_array_get(j_result, 0), "iat")) + json_integer_value(json_object_get(config->j_params, "access-token-duration"))));
             json_object_del(json_array_get(j_result, 0), "gpoa_enabled");
             if (json_object_get(json_array_get(j_result, 0), "gpoa_authorization_details") != json_null()) {
@@ -6412,7 +6414,7 @@ static json_t * get_token_metadata(struct _oidc_config * config, const char * to
                   if ((j_cnf = r_jwt_get_claim_json_t_value(jwt, "cnf")) != NULL) {
                     json_object_set_new(json_object_get(j_return, "token"), "cnf", j_cnf);
                     if (json_object_get(j_cnf, "jkt") != NULL) {
-                      json_object_set_new(json_object_get(j_return, "token"), "token_type", json_string("access_token+DPoP"));
+                      json_object_set_new(json_array_get(j_result, 0), "token_type", json_string("DPoP"));
                     }
                   }
                   if ((j_claims = r_jwt_get_claim_json_t_value(jwt, "claims")) != NULL) {
@@ -6420,10 +6422,12 @@ static json_t * get_token_metadata(struct _oidc_config * config, const char * to
                   }
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "get_token_metadata - Error r_jwt_advanced_parse");
+                  json_decref(j_return);
                   j_return = json_pack("{si}", "result", G_ERROR);
                 }
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_token_metadata - Error r_jwt_init");
+                json_decref(j_return);
                 j_return = json_pack("{si}", "result", G_ERROR);
               }
               r_jwt_free(jwt);
@@ -9553,7 +9557,7 @@ static int callback_check_registration(const struct _u_request * request, struct
     j_introspect = get_token_metadata(config, access_token, "access_token", NULL);
     if (check_result_value(j_introspect, G_OK) && json_object_get(json_object_get(j_introspect, "token"), "active") == json_true() && check_scope_list(config->client_register_scope, json_string_value(json_object_get(json_object_get(j_introspect, "token"), "scope")))) {
       if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
-        j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, (request->url_path + 2 + o_strlen(config->glewlwyd_config->glewlwyd_config->api_prefix) + o_strlen(config->name)), json_object_get(j_introspect, "client"), access_token);
+        j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, "/register", json_object_get(j_introspect, "client"), access_token);
         if (check_result_value(j_dpop, G_OK)) {
           if ((res = check_dpop_jti(config, 
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "jti")),
@@ -9765,7 +9769,8 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
              * client_secret,
              * access_token = get_auth_header_token(u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION), &is_header_dpop),
              * dpop = u_map_get_case(request->map_header, GLEWLWYD_HEADER_DPOP),
-             * ip_source = get_ip_source(request);
+             * ip_source = get_ip_source(request),
+             * htu = o_strstr(request->url_path, "/introspect")!=NULL?"/introspect":"revoke";
   char * dpop_nonce;
   if (access_token != NULL && config->introspect_revoke_scope != NULL) {
     j_introspect = get_token_metadata(config, access_token, "access_token", NULL);
@@ -9773,7 +9778,7 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
         json_object_get(json_object_get(j_introspect, "token"), "active") == json_true() &&
         check_scope_list(config->introspect_revoke_scope, json_string_value(json_object_get(json_object_get(j_introspect, "token"), "scope")))) {
       if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
-        j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, (request->url_path + 2 + o_strlen(config->glewlwyd_config->glewlwyd_config->api_prefix) + o_strlen(config->name)), json_object_get(j_introspect, "client"), access_token);
+        j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, htu, json_object_get(j_introspect, "client"), access_token);
         if (check_result_value(j_dpop, G_OK)) {
           if ((res = check_dpop_jti(config, 
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "jti")),
@@ -13302,7 +13307,7 @@ static int callback_check_userinfo(const struct _u_request * request, struct _u_
     j_introspect = get_token_metadata(config, access_token, "access_token", NULL);
     if (check_result_value(j_introspect, G_OK) && json_object_get(json_object_get(j_introspect, "token"), "active") == json_true()) {
       if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
-        j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, (request->url_path + 2 + o_strlen(config->glewlwyd_config->glewlwyd_config->api_prefix) + o_strlen(config->name)), json_object_get(j_introspect, "client"), access_token);
+        j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, "/userinfo", json_object_get(j_introspect, "client"), access_token);
         if (check_result_value(j_dpop, G_OK)) {
           if (json_object_get(j_dpop, "jkt") == NULL ||
               (res = check_dpop_jti(config, 
