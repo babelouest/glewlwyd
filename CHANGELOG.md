@@ -2,6 +2,8 @@
 
 ## 2.7.0
 
+The `"Third dose Release"`
+
 - Fix delegation session
 - Add SMTP configuration template
 - Allow to send an e-mail to an account when a new connection occurs
