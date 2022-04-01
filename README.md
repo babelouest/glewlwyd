@@ -113,6 +113,9 @@ You can visit the IRC channel #glewlwyd on the [Libera.​Chat](https://libera.c
 ## Disclaimer
 
 Glewlwyd is mostly developped by myself on my free time, with gracious help from users.
+
 Nevertheless, it hasn't been audited or fully tested by external developpers.
+
 Glewlwyd can take a central place in a system where applications and environments need authentication and authorization, be aware of the risks.
+
 It's highly recommended to follow the documentation and enable only the features you intend to use.
