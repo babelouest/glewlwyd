@@ -277,7 +277,7 @@ static int get_key_size_from_alg(const char * str_alg) {
 static int str_has_valid_charset(const char * str, const char * charset) {
   size_t i;
   int is_valid = 1;
-  
+
   for (i=0; i<o_strlen(str); i++) {
     if (o_strchr(charset, str[i]) == NULL) {
       is_valid = 0;
@@ -1335,7 +1335,7 @@ static int check_scope_list(const char * scope_expected, const char * scope_toke
   int ret = 1, scope_expected_count, scope_token_count;
   char ** scope_expected_list = NULL, ** scope_token_list = NULL;
   size_t i;
-  
+
   if (scope_expected == NULL) {
     return 1;
   }
@@ -1447,7 +1447,7 @@ static char * refresh_client_dpop_nonce(struct _oidc_config * config, const char
   json_t * j_query, * j_result;
   int res;
   char * nonce = NULL, new_nonce[OIDC_DPOP_NONCE_LENGTH+1];
-  
+
   if (!pthread_mutex_lock(&config->insert_lock)) {
     j_query = json_pack("{sss[s]s{ss}}",
                         "table", GLEWLWYD_PLUGIN_OIDC_TABLE_DPOP_CLIENT_NONCE,
@@ -1511,7 +1511,7 @@ static char * get_client_dpop_nonce(struct _oidc_config * config, const char * c
   json_t * j_query, * j_result;
   int res;
   char * nonce = NULL, new_nonce[OIDC_DPOP_NONCE_LENGTH+1];
-  
+
   j_query = json_pack("{sss[s]s{ss}}",
                       "table", GLEWLWYD_PLUGIN_OIDC_TABLE_DPOP_CLIENT_NONCE,
                       "columns",
@@ -2080,7 +2080,7 @@ static int parse_claims_request(json_t * j_claims) {
 
 static int is_encrypt_token_allowed(struct _oidc_config * config, json_t * j_client, int type) {
   int ret;
-  
+
   switch (type) {
     case GLEWLWYD_TOKEN_TYPE_CODE:
       ret = is_true(json_string_value(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-encrypt_code-parameter")))));
@@ -2117,7 +2117,7 @@ static jwa_alg get_token_sign_alg(struct _oidc_config * config, json_t * j_clien
   const char * sign_kid = json_string_value(json_object_get(config->j_params, "client-sign_kid-parameter"));
   jwk_t * jwk = NULL;
   jwa_alg alg = R_JWA_ALG_UNKNOWN;
-  
+
   if (j_client != NULL) {
     if (!json_string_null_or_empty(json_object_get(j_client, sign_kid))) {
       jwk = r_jwks_get_by_kid(config->jwks_sign, json_string_value(json_object_get(j_client, sign_kid)));
@@ -2162,7 +2162,7 @@ static jwa_alg get_token_sign_alg(struct _oidc_config * config, json_t * j_clien
 static jwa_alg get_token_enc_alg(struct _oidc_config * config, json_t * j_client, int type) {
   jwa_alg alg = R_JWA_ALG_UNKNOWN;
   const char * alg_p = json_string_value(json_object_get(config->j_params, "client-alg-parameter"));
-  
+
   if (json_object_get(j_client, alg_p) != NULL) {
     alg = r_str_to_jwa_alg(json_string_value(json_object_get(j_client, alg_p)));
   } else {
@@ -2189,7 +2189,7 @@ static jwa_alg get_token_enc_alg(struct _oidc_config * config, json_t * j_client
 static jwa_enc get_token_enc(struct _oidc_config * config, json_t * j_client, int type) {
   jwa_enc enc = R_JWA_ENC_A128CBC;
   const char * enc_p = json_string_value(json_object_get(config->j_params, "client-enc-parameter"));
-  
+
   if (json_object_get(j_client, enc_p) != NULL) {
     enc = r_str_to_jwa_enc(json_string_value(json_object_get(j_client, enc_p)));
   } else {
@@ -2368,7 +2368,7 @@ static int get_session_token(struct _oidc_config * config, const struct _u_reque
   char expires[129];
   time_t now;
   struct tm ts;
-  
+
   time(&now);
   now += (time_t)json_integer_value(json_object_get(config->j_params, "session-cookie-expiration"));
   gmtime_r(&now, &ts);
@@ -5137,7 +5137,7 @@ static int is_enc_alg_valid(struct _oidc_config * config, json_t * j_client, jwt
   int is_valid = 1;
   jwa_alg alg = r_jwt_get_enc_alg(jwt);
   jwa_enc enc = r_jwt_get_enc(jwt);
-  
+
   if (alg != R_JWA_ALG_UNKNOWN && json_object_get(config->j_params, "oauth-fapi-allow-restrict-alg") == json_true() && !json_array_has_string(json_object_get(config->j_params, "oauth-fapi-restrict-alg"), r_jwa_alg_to_str(alg))) {
     is_valid = 0;
   } else {
@@ -5185,7 +5185,7 @@ static int is_enc_alg_valid(struct _oidc_config * config, json_t * j_client, jwt
 
 static int is_sig_alg_valid(struct _oidc_config * config, json_t * j_client, jwa_alg alg, int auth_type) {
   int is_valid = 1;
-  
+
   switch (auth_type) {
     case GLEWLWYD_AUTH_REQUEST_OBJECT:
       if (json_object_get(j_client, "request_object_signing_alg") != NULL) {
@@ -5233,7 +5233,7 @@ static json_t * get_jwk_search_pattern(jwt_t * jwt, jwks_t * jwks) {
   jwk_t * jwk;
   int s_alg = 1;
   size_t i;
-  
+
   if (alg == R_JWA_ALG_HS256 || alg == R_JWA_ALG_HS384 || alg == R_JWA_ALG_HS512) {
     json_object_set_new(j_search, "kty", json_string("oct"));
   } else if (alg == R_JWA_ALG_RS256 || alg == R_JWA_ALG_RS384 || alg == R_JWA_ALG_RS512 ||
@@ -5597,7 +5597,13 @@ static json_t * validate_ciba_jwt_request(struct _oidc_config * config, const ch
                   }
                 }
                 json_decref(j_claims);
-                j_return = json_pack("{sisosOsOsiss}", "result", G_OK, "request", r_jwt_get_full_claims_json_t(jwt), "client", json_object_get(j_result, "client"), "client_auth_method", json_object_get(j_result, "client_auth_method"), "type", r_jwt_get_type(jwt), "jti", r_jwt_get_claim_str_value(jwt, "jti"));
+                j_return = json_pack("{sisosOsOsiss}",
+                                     "result", G_OK,
+                                     "request", r_jwt_get_full_claims_json_t(jwt),
+                                     "client", json_object_get(j_result, "client"),
+                                     "client_auth_method", json_object_get(j_result, "client_auth_method"),
+                                     "type", r_jwt_get_type(jwt),
+                                     "jti", r_jwt_get_claim_str_value(jwt, "jti"));
               } else if (res == G_ERROR_UNAUTHORIZED) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "validate_ciba_jwt_request - Error jti already used for client_id '%s', origin: %s", client_id, ip_source);
                 j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
@@ -5645,7 +5651,7 @@ static int check_ciba_user_code(struct _oidc_config * config, json_t * j_user, c
   }
 }
 
-static json_t * generate_ciba_token_response(struct _oidc_config * config, json_t * j_client, json_t * j_user, json_t * j_ciba_request, const char * scope_list, const char * sid) {
+static json_t * generate_ciba_token_response(struct _oidc_config * config, json_t * j_client, json_t * j_user, json_t * j_ciba_request, const char * scope_list, const char * sid, const char * dpop_jkt) {
   json_t * j_return, * j_refresh_token, * j_amr, * j_refresh;
   time_t now;
   char * refresh_token,
@@ -5661,7 +5667,7 @@ static json_t * generate_ciba_token_response(struct _oidc_config * config, json_
              * x5t_s256 = json_string_value(json_object_get(j_ciba_request, "x5t_s256")),
              * username = json_string_value(json_object_get(j_user, "username"));
   int has_openid = 0, r_enc_res = G_OK, a_enc_res = G_OK, i_enc_res = G_OK;
-  
+
   if (split_string(scope_list, " ", &scope_array)) {
     has_openid = string_array_has_value((const char **)scope_array, "openid");
   }
@@ -5686,7 +5692,7 @@ static json_t * generate_ciba_token_response(struct _oidc_config * config, json_
                                                 json_string_value(json_object_get(j_ciba_request, "issued_for")),
                                                 json_string_value(json_object_get(j_ciba_request, "user_agent")),
                                                 jti_r,
-                                                NULL,
+                                                dpop_jkt,
                                                 NULL);
       if (check_result_value(j_refresh_token, G_OK)) {
           if ((access_token = generate_access_token(config,
@@ -5699,7 +5705,7 @@ static json_t * generate_ciba_token_response(struct _oidc_config * config, json_
                                                     now,
                                                     jti,
                                                     x5t_s256,
-                                                    NULL,
+                                                    dpop_jkt,
                                                     NULL,
                                                     json_string_value(json_object_get(j_ciba_request, "issued_for")))) != NULL) {
             if (serialize_access_token(config,
@@ -5863,7 +5869,7 @@ static int send_ciba_client_notification(struct _oidc_config * config, json_t * 
   struct _u_response resp;
   char * bearer_token;
   json_t * j_body, * j_ciba_token;
-  
+
   if (0 == o_strcmp(json_string_value(json_object_get(j_client, "backchannel_token_delivery_mode")), "poll")) {
     ret = G_OK; // Nothing to do, client will poll token endpoint
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_client, "backchannel_token_delivery_mode")), "ping")) {
@@ -5904,7 +5910,7 @@ static int send_ciba_client_notification(struct _oidc_config * config, json_t * 
     }
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_client, "backchannel_token_delivery_mode")), "push")) {
     if (status == 1) {
-      j_ciba_token = generate_ciba_token_response(config, j_client, j_user, j_ciba_request, scope_list, sid);
+      j_ciba_token = generate_ciba_token_response(config, j_client, j_user, j_ciba_request, scope_list, sid, json_string_value(json_object_get(j_ciba_request, "dpop_jkt")));
       if (check_result_value(j_ciba_token, G_OK)) {
         if (close_ciba_request(config, json_integer_value(json_object_get(j_ciba_request, "gpob_id"))) == G_OK) {
           if (ulfius_init_request(&req) == U_OK) {
@@ -7468,7 +7474,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         break;
       }
     }
-    
+
     if (json_object_get(j_registration, "post_logout_redirect_uri") != NULL) {
       resource = json_string_value(json_object_get(j_registration, "post_logout_redirect_uri"));
       if (!is_redirect_uri_valid_without_credential(resource) ||
@@ -7589,7 +7595,7 @@ static void build_auth_response(struct _oidc_config * config, struct _u_response
   size_t i;
   char * redirect_url = NULL, * key_encoded, * value_encoded, * token = NULL;
   int enc_res = G_OK, has_param = 0;
-  
+
   if (!o_strnullempty(redirect_uri)) {
     if (response_mode == GLEWLWYD_RESPONSE_MODE_QUERY_JWT || response_mode == GLEWLWYD_RESPONSE_MODE_FRAGMENT_JWT || response_mode == GLEWLWYD_RESPONSE_MODE_FORM_POST_JWT) {
       token = build_jwt_auth_response(config, j_client, map_query, &enc_res);
@@ -8372,7 +8378,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
                                                                      U_OPT_JSON_BODY, json_body,
                                                                      U_OPT_NONE);
                             json_decref(json_body);
-                            
+
                           } else {
                             y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
                             json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
@@ -8745,7 +8751,7 @@ static int generate_discovery_content(struct _oidc_config * config) {
       }
     }
     r_jwks_free(jwks_res);
-    
+
     jwks_res = r_jwks_search_json_str(config->jwks_sign, "{\"kty\":\"RSA\"}");
     if (r_jwks_size(jwks_res)) {
       if (json_array_has_string(json_object_get(j_rhon_info, "jws"), "alg"), "RS256") {
@@ -8768,7 +8774,7 @@ static int generate_discovery_content(struct _oidc_config * config) {
       }
     }
     r_jwks_free(jwks_res);
-    
+
     jwks_res = r_jwks_search_json_str(config->jwks_sign, "{\"kty\":\"EC\"}");
     if (r_jwks_size(jwks_res)) {
       if (json_array_has_string(json_object_get(j_rhon_info, "jws"), "alg"), "ES256") {
@@ -8782,7 +8788,7 @@ static int generate_discovery_content(struct _oidc_config * config) {
       }
     }
     r_jwks_free(jwks_res);
-    
+
     jwks_res = r_jwks_search_json_str(config->jwks_sign, "{\"kty\":\"OKP\"}");
     if (r_jwks_size(jwks_res)) {
       if (json_array_has_string(json_object_get(j_rhon_info, "jws"), "alg"), "EdDSA") {
@@ -8793,7 +8799,7 @@ static int generate_discovery_content(struct _oidc_config * config) {
       }
     }
     r_jwks_free(jwks_res);
-    
+
     json_object_set(j_discovery, "issuer", json_object_get(config->j_params, "iss"));
     json_object_set_new(j_discovery, "authorization_endpoint", json_pack("s+", plugin_url, "/auth"));
     json_object_set_new(j_discovery, "token_endpoint", json_pack("s+", plugin_url, "/token"));
@@ -9559,7 +9565,7 @@ static int callback_check_registration(const struct _u_request * request, struct
       if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
         j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, "/register", json_object_get(j_introspect, "client"), access_token);
         if (check_result_value(j_dpop, G_OK)) {
-          if ((res = check_dpop_jti(config, 
+          if ((res = check_dpop_jti(config,
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "jti")),
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "htm")),
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "htu")),
@@ -9780,7 +9786,7 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
       if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
         j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, htu, json_object_get(j_introspect, "client"), access_token);
         if (check_result_value(j_dpop, G_OK)) {
-          if ((res = check_dpop_jti(config, 
+          if ((res = check_dpop_jti(config,
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "jti")),
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "htm")),
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "htu")),
@@ -10242,7 +10248,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                                                      U_OPT_JSON_BODY, json_body,
                                                      U_OPT_NONE);
             json_decref(json_body);
-            
+
           } else {
             y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
             json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
@@ -10623,7 +10629,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
                                                        U_OPT_JSON_BODY, json_body,
                                                        U_OPT_NONE);
               json_decref(json_body);
-              
+
             } else {
               y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
               json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
@@ -10853,7 +10859,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
                                                        U_OPT_JSON_BODY, json_body,
                                                        U_OPT_NONE);
               json_decref(json_body);
-              
+
             } else {
               y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
               json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
@@ -11086,7 +11092,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
     } else {
       j_client = check_client_valid(config, client_id, client_secret, redirect_uri, auth_type, 0, ip_source);
     }
-    
+
     if (!check_result_value(j_client, G_OK)) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "check_pushed_authorization_request oidc - client '%s' is invalid, origin: %s", client_id, ip_source);
       response->status = 403;
@@ -11218,7 +11224,7 @@ static json_t * get_ciba_email_content_from_template(struct _oidc_config * confi
   const char * lang = json_string_value(json_object_get(j_user, json_string_value(json_object_get(config->j_params, "oauth-ciba-email-user-lang-property"))));
   json_t * j_template = NULL, * j_element = NULL, * j_return;
   o_free(external_url);
-  
+
   if (!!o_strnullempty(lang)) {
     json_object_foreach(json_object_get(config->j_params, "oauth-ciba-email-templates"), lang, j_element) {
       if (json_object_get(j_element, "oauth-ciba-email-defaultLang") == json_true()) {
@@ -11276,7 +11282,7 @@ static json_t * get_ciba_email_content_from_template(struct _oidc_config * confi
 static int send_ciba_email(struct _oidc_config * config, json_t * j_user, json_t * j_client, const char * user_req_id, const char * binding_message) {
   int ret;
   json_t * j_email_template;
-  
+
   if (!json_string_null_or_empty(json_object_get(j_user, "email"))) {
     j_email_template = get_ciba_email_content_from_template(config, j_user, j_client, user_req_id, binding_message);
     if (check_result_value(j_email_template, G_OK)) {
@@ -11321,19 +11327,20 @@ static int serialize_ciba_request(struct _oidc_config * config,
                                   const char * user_agent,
                                   const char * scope,
                                   const char * x5t_s256,
-                                  const char * jti_hash) {
+                                  const char * jti_hash,
+                                  const char * dpop_jkt) {
   int ret, res;
   json_t * j_query, * j_last_id;
   char ** scope_array = NULL, * expires_at_clause;
   size_t i;
   time_t now;
-  
+
   if (pthread_mutex_lock(&config->insert_lock)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "serialize_ciba_request oidc - Error pthread_mutex_lock");
     ret = G_ERROR;
   } else {
     // disable all other enabled ciba requests from the same client_id to the same username
-    j_query = json_pack("{sss{si}s{ss ss sO si}}", 
+    j_query = json_pack("{sss{si}s{ss ss sO si}}",
                         "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
                         "set",
                          "gpob_enabled", 0,
@@ -11353,7 +11360,7 @@ static int serialize_ciba_request(struct _oidc_config * config,
       } else { // HOEL_DB_TYPE_SQLITE
         expires_at_clause = msprintf("%u", (now + (unsigned int)requested_expiry));
       }
-      j_query = json_pack("{sss{ss ss ss* sO ss* ss* ss ss ss* s{ss} ss ss*}}",
+      j_query = json_pack("{sss{ss ss ss* sO ss* ss* ss ss ss* s{ss} ss ss* ss*}}",
                           "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
                           "values",
                             "gpob_plugin_name", config->name,
@@ -11365,10 +11372,11 @@ static int serialize_ciba_request(struct _oidc_config * config,
                             "gpob_auth_req_id", auth_req_id,
                             "gpob_user_req_id", user_req_id,
                             "gpob_binding_message", binding_message,
-                            "gpob_expires_at", 
+                            "gpob_expires_at",
                               "raw", expires_at_clause,
                             "gpob_issued_for", ip_source,
-                            "gpob_user_agent", user_agent);
+                            "gpob_user_agent", user_agent,
+                            "gpob_dpop_jkt", dpop_jkt);
       res = h_insert(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
       json_decref(j_query);
       o_free(expires_at_clause);
@@ -11406,10 +11414,10 @@ static int serialize_ciba_request(struct _oidc_config * config,
       y_log_message(Y_LOG_LEVEL_ERROR, "serialize_ciba_request - Error executing j_query (1)");
       ret = G_ERROR_DB;
     }
-    
+
     pthread_mutex_unlock(&config->insert_lock);
   }
-  
+
   return ret;
 }
 
@@ -11417,7 +11425,7 @@ static json_t * check_ciba_login_hint(struct _oidc_config * config, json_t * j_c
   json_t * j_return = NULL, * j_login_hint = NULL, * j_result, * j_user;
   jwt_t * j_login_hint_token = NULL;
   char * username_from_sub = NULL;
-  
+
   // expected values in the login_hint: sub or username, nothing else can be used as an identifier
   if (!o_strnullempty(login_hint_token)) {
     if ((j_login_hint_token = r_jwt_quick_parse(login_hint_token, R_PARSE_NONE, 0)) != NULL && decrypt_request_token(config, j_login_hint_token) == G_OK) {
@@ -11516,16 +11524,23 @@ static int process_ciba_request (const struct _u_request * request,
              * client_id = request->auth_basic_user,
              * client_secret = request->auth_basic_password,
              * user_agent = u_map_get_case(request->map_header, "user-agent"),
+             * dpop_jkt = u_map_get_case(request->map_post_body, "dpop_jkt"),
              * ip_source = get_ip_source(request),
              * x5t_s256 = NULL;
-  json_t * j_user_hint = NULL, * j_request = NULL, * j_client = NULL, * j_result = NULL, * j_return = NULL;
+  json_t * j_user_hint = NULL,
+         * j_request = NULL,
+         * j_client = NULL,
+         * j_result = NULL,
+         * j_return = NULL,
+         * j_jkt = NULL;
   long int l_requested_expiry = 0;
   char * scope_reduced = NULL,
        * jti_hash = NULL,
+       * dpop_nonce = NULL,
          auth_req_id[GLEWLWYD_CIBA_REQ_ID_LENGTH+1] = {0},
          user_req_id[GLEWLWYD_CIBA_REQ_ID_LENGTH+1] = {0};
   int hint_count = 0, res;
-  
+
   if (j_assertion_client != NULL) {
     client_id = json_string_value(json_object_get(j_assertion_client, "client_id"));
     x5t_s256 = json_string_value(json_object_get(j_assertion_client, "x5t#S256"));
@@ -11579,6 +11594,7 @@ static int process_ciba_request (const struct _u_request * request,
           binding_message = json_string_value(json_object_get(json_object_get(j_request, "request"), "binding_message"));
           user_code = json_string_value(json_object_get(json_object_get(j_request, "request"), "user_code"));
           requested_expiry = json_string_value(json_object_get(json_object_get(j_request, "request"), "requested_expiry"));
+          dpop_jkt = json_string_value(json_object_get(json_object_get(j_request, "request"), "dpop_jkt"));
         }
       }
     }
@@ -11591,14 +11607,14 @@ static int process_ciba_request (const struct _u_request * request,
       j_client = check_client_valid(config, client_id, client_secret, NULL, GLEWLWYD_AUTHORIZATION_TYPE_CIBA_FLAG, 0, ip_source);
     }
 
-    if (!check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
+    if (!check_result_value(j_client, G_OK) || json_object_get(json_object_get(j_client, "client"), "enabled") != json_true()) {
       j_return = json_pack("{ss}", "error", "invalid_client");
       ulfius_set_json_body_response(response, 401, j_return);
       json_decref(j_return);
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s' is invalid, origin: %s", client_id, ip_source);
       break;
     }
-    
+
     if (o_strnullempty(scope)) {
       j_return = json_pack("{ss}", "error", "invalid_scope");
       ulfius_set_json_body_response(response, 401, j_return);
@@ -11606,7 +11622,7 @@ static int process_ciba_request (const struct _u_request * request,
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s', scope is mandatory, origin: %s", client_id, ip_source);
       break;
     }
-    
+
     if (json_object_get(config->j_params, "oauth-fapi-ciba-push-forbidden") == json_true()) {
       if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "push")) {
         j_return = json_pack("{ss}", "error", "invalid_client");
@@ -11616,7 +11632,7 @@ static int process_ciba_request (const struct _u_request * request,
         break;
       }
     }
-    
+
     if (json_object_get(config->j_params, "oauth-fapi-ciba-confidential-client") == json_true() && json_object_get(json_object_get(j_client, "client"), "confidential") != json_true()) {
       j_return = json_pack("{ss}", "error", "invalid_client");
       ulfius_set_json_body_response(response, 401, j_return);
@@ -11624,7 +11640,7 @@ static int process_ciba_request (const struct _u_request * request,
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s' is not confidential, which is forbidden, origin: %s", client_id, ip_source);
       break;
     }
-    
+
     if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "poll") &&
         json_true() != json_object_get(config->j_params, "oauth-ciba-mode-poll-allowed")) {
       j_return = json_pack("{ss}", "error", "invalid_request");
@@ -11657,24 +11673,26 @@ static int process_ciba_request (const struct _u_request * request,
       if (check_result_value(j_result, G_OK)) {
         scope_reduced = o_strdup(json_string_value(json_object_get(j_result, "scope")));
       } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - error client %s is not allowed to claim scopes '%s'", client_id, scope);
+        y_log_message(Y_LOG_LEVEL_ERROR, "process_ciba_request oidc - error client %s is not allowed to claim scopes '%s'", client_id, scope);
         y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
         j_return = json_pack("{ss}", "error", "invalid_request");
         ulfius_set_json_body_response(response, 400, j_return);
         json_decref(j_return);
         config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+        break;
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "process_ciba_request oidc - error reduce_scope");
         j_return = json_pack("{ss}", "error", "server_error");
         ulfius_set_json_body_response(response, 500, j_return);
         json_decref(j_return);
+        break;
       }
     } else {
       scope_reduced = o_strdup(scope);
     }
 
     if (!is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s' authentication method is invalid, origin: %s", client_id, ip_source);
+      y_log_message(Y_LOG_LEVEL_ERROR, "process_ciba_request oidc - client '%s' authentication method is invalid, origin: %s", client_id, ip_source);
       j_return = json_pack("{ss}", "error", "invalid_client");
       ulfius_set_json_body_response(response, 401, j_return);
       json_decref(j_return);
@@ -11688,7 +11706,7 @@ static int process_ciba_request (const struct _u_request * request,
       json_decref(j_return);
       break;
     }
-    
+
     // Check client_notification_token
     if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "ping") ||
         0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "push")) {
@@ -11699,7 +11717,7 @@ static int process_ciba_request (const struct _u_request * request,
         json_decref(j_return);
         break;
       }
-      
+
       if (!str_has_valid_charset(client_notification_token, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~+/=")) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client_notification_token invalid charset for the client '%s', origin: %s", client_id, ip_source);
         j_return = json_pack("{ss}", "error", "invalid_request");
@@ -11708,7 +11726,7 @@ static int process_ciba_request (const struct _u_request * request,
         break;
       }
     }
-    
+
     // Validate login hints
     if (o_strnullempty(login_hint_token) && o_strnullempty(id_token_hint) && o_strnullempty(login_hint)) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - missing login hint for the client '%s', origin: %s", client_id, ip_source);
@@ -11717,9 +11735,9 @@ static int process_ciba_request (const struct _u_request * request,
       json_decref(j_return);
       break;
     }
-    
+
     hint_count = (!o_strnullempty(login_hint_token)?1:0) + (!o_strnullempty(id_token_hint)?1:0) + (!o_strnullempty(login_hint)?1:0);
-    
+
     if (hint_count > 1) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - too many login hints for the client '%s', origin: %s", client_id, ip_source);
       j_return = json_pack("{ss}", "error", "invalid_request");
@@ -11727,7 +11745,7 @@ static int process_ciba_request (const struct _u_request * request,
       json_decref(j_return);
       break;
     }
-    
+
     j_user_hint = check_ciba_login_hint(config, json_object_get(j_client, "client"), login_hint_token, id_token_hint, login_hint, ip_source);
     if (check_result_value(j_user_hint, G_ERROR_UNAUTHORIZED)) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - login hint unauthorized for the client '%s', origin: %s", client_id, ip_source);
@@ -11748,7 +11766,7 @@ static int process_ciba_request (const struct _u_request * request,
       json_decref(j_return);
       break;
     }
-    
+
     // Validate binding_message
     if (o_strlen(binding_message) > 256) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - binding_message too long for the client '%s', maximum 256 characters, origin: %s", client_id, ip_source);
@@ -11757,7 +11775,7 @@ static int process_ciba_request (const struct _u_request * request,
       json_decref(j_return);
       break;
     }
-    
+
     // Validate user_code
     if (json_object_get(config->j_params, "oauth-ciba-user-code-allowed") == json_true()) {
       if (!o_strnullempty(user_code) && check_ciba_user_code(config, json_object_get(j_user_hint, "user"), user_code) != G_OK) {
@@ -11770,7 +11788,7 @@ static int process_ciba_request (const struct _u_request * request,
     } else {
       user_code = NULL;
     }
-    
+
     // Validate requested_expiry
     if (!o_strnullempty(requested_expiry)) {
       l_requested_expiry = strtol(requested_expiry, NULL, 10);
@@ -11788,11 +11806,59 @@ static int process_ciba_request (const struct _u_request * request,
         break;
       }
     }
-    
+
     if (!l_requested_expiry) {
       l_requested_expiry = (long int)json_integer_value(json_object_get(config->j_params, "oauth-ciba-default-expiry"));
     }
-    
+
+    // Validate DPoP
+    j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/ciba", json_object_get(j_client, "client"), NULL);
+    if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+      j_return = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
+      ulfius_set_json_body_response(response, 403, j_return);
+      json_decref(j_return);
+      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+      break;
+    }
+    if (!check_result_value(j_jkt, G_OK)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "process_ciba_request - Error oidc_verify_dpop_proof");
+      response->status = 500;
+      break;
+    }
+    if (json_object_get(j_jkt, "jkt") != NULL) {
+      if ((res = check_dpop_jti(config,
+                              json_string_value(json_object_get(json_object_get(j_jkt, "claims"), "jti")),
+                              json_string_value(json_object_get(json_object_get(j_jkt, "claims"), "htm")),
+                              json_string_value(json_object_get(json_object_get(j_jkt, "claims"), "htu")),
+                              json_integer_value(json_object_get(json_object_get(j_jkt, "claims"), "iat")),
+                              client_id,
+                              json_string_value(json_object_get(j_jkt, "jkt")),
+                              ip_source)) == G_ERROR_UNAUTHORIZED) {
+        j_return = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
+        ulfius_set_json_body_response(response, 403, j_return);
+        json_decref(j_return);
+        break;
+      } else if (res != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "process_ciba_request - oidc - Error check_dpop_jti");
+        response->status = 500;
+        break;
+      }
+      if (!o_strnullempty(dpop_jkt) && 0 != o_strcmp(dpop_jkt, json_string_value(json_object_get(j_jkt, "jkt")))) {
+        j_return = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP - dpop_jkt doesn't match");
+        ulfius_set_json_body_response(response, 403, j_return);
+        json_decref(j_return);
+        break;
+      }
+      dpop_jkt = json_string_value(json_object_get(j_jkt, "jkt"));
+      if (json_object_get(config->j_params, "oauth-dpop-nonce-mandatory") == json_true()) {
+        if ((dpop_nonce = refresh_client_dpop_nonce(config, client_id)) != NULL) {
+          ulfius_set_response_properties(response, U_OPT_HEADER_PARAMETER, "DPoP-Nonce", dpop_nonce, U_OPT_NONE);
+          o_free(dpop_nonce);
+        }
+      }
+    }
+
     // Generate auth_req_id
     if (rand_string(auth_req_id, GLEWLWYD_CIBA_REQ_ID_LENGTH) == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "process_ciba_request oidc - Error rand_string auth_req_id");
@@ -11801,7 +11867,7 @@ static int process_ciba_request (const struct _u_request * request,
       json_decref(j_return);
       break;
     }
-    
+
     // Generate user_req_id
     if (rand_string(user_req_id, GLEWLWYD_CIBA_REQ_ID_LENGTH) == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "process_ciba_request oidc - Error rand_string user_req_id");
@@ -11810,15 +11876,15 @@ static int process_ciba_request (const struct _u_request * request,
       json_decref(j_return);
       break;
     }
-    
-    if (serialize_ciba_request(config, client_id, json_object_get(j_user_hint, "user"), client_notification_token, auth_req_id, user_req_id, binding_message, l_requested_expiry, ip_source, user_agent, scope_reduced, x5t_s256, jti_hash) != G_OK) {
+
+    if (serialize_ciba_request(config, client_id, json_object_get(j_user_hint, "user"), client_notification_token, auth_req_id, user_req_id, binding_message, l_requested_expiry, ip_source, user_agent, scope_reduced, x5t_s256, jti_hash, dpop_jkt) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "process_ciba_request oidc - Error serialize_ciba_request");
       j_return = json_pack("{ss}", "error", "server_error");
       ulfius_set_json_body_response(response, 500, j_return);
       json_decref(j_return);
       break;
     }
-    
+
     if (json_object_get(config->j_params, "oauth-ciba-email-allowed") == json_true()) {
       if ((res = send_ciba_email(config, json_object_get(j_user_hint, "user"), json_object_get(j_client, "client"), user_req_id, binding_message)) == G_ERROR_PARAM) {
         y_log_message(Y_LOG_LEVEL_INFO, "Send ciba e-mail, user '%s' has no e-mail address", json_string_value(json_object_get(json_object_get(j_user_hint, "user"), "email")));
@@ -11826,7 +11892,7 @@ static int process_ciba_request (const struct _u_request * request,
         y_log_message(Y_LOG_LEVEL_ERROR, "process_ciba_request oidc - Error send_ciba_email");
       }
     }
-    
+
     j_return = json_pack("{sssi}", "auth_req_id", auth_req_id, "expires_in", l_requested_expiry);
     if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "poll")) {
       // This is only to avoid clients that would expect an interval value,
@@ -11840,6 +11906,7 @@ static int process_ciba_request (const struct _u_request * request,
   json_decref(j_client);
   json_decref(j_request);
   json_decref(j_result);
+  json_decref(j_jkt);
   o_free(scope_reduced);
   o_free(jti_hash);
   return U_CALLBACK_CONTINUE;
@@ -11853,7 +11920,7 @@ static json_t * get_ciba_requests_for_user(struct _oidc_config * config, const c
   size_t index = 0, index_scope = 0;
   char * external_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, config->name);
 
-  
+
   time(&now);
   if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
     expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
@@ -11927,7 +11994,7 @@ static int update_ciba_request(struct _oidc_config * config, json_int_t gpob_id,
   int res, ret;
   char ** scope_array = NULL, * scope_escaped, * scope_clause = NULL;
   size_t i = 0;
-  
+
   j_query = json_pack("{sss{siss?}s{sI}}",
                       "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
                       "set",
@@ -12039,7 +12106,7 @@ static json_t * get_ciba_request_from_user_req_id(struct _oidc_config * config, 
     } else { // HOEL_DB_TYPE_SQLITE
       expires_at_clause = msprintf("> %u", (now));
     }
-    j_query = json_pack("{sss[ssssssssss]s{sssssis{ssss}si}}",
+    j_query = json_pack("{sss[sssssssssss]s{sssssis{ssss}si}}",
                         "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
                         "columns",
                           "gpob_id",
@@ -12052,6 +12119,7 @@ static json_t * get_ciba_request_from_user_req_id(struct _oidc_config * config, 
                           "gpob_auth_req_id AS auth_req_id",
                           "gpob_issued_for AS issued_for",
                           "gpob_user_agent AS user_agent",
+                          "gpob_dpop_jkt AS dpop_jkt",
                         "where",
                           "gpob_plugin_name", config->name,
                           "gpob_user_req_id", user_req_id,
@@ -12140,7 +12208,7 @@ static json_t * get_ciba_request_from_auth_req_id(struct _oidc_config * config, 
   char * scope_list = NULL;
   size_t index = 0;
 
-  j_query = json_pack("{sss[ssssssssssss]s{sssssi}}",
+  j_query = json_pack("{sss[sssssssssssss]s{sssssi}}",
                       "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
                       "columns",
                         "gpob_id",
@@ -12155,6 +12223,7 @@ static json_t * get_ciba_request_from_auth_req_id(struct _oidc_config * config, 
                         "gpob_user_agent AS user_agent",
                         SWITCH_DB_TYPE(config->glewlwyd_config->glewlwyd_config->conn->type, "UNIX_TIMESTAMP(gpob_expires_at) AS expires_at", "gpob_expires_at AS expires_at", "EXTRACT(EPOCH FROM gpob_expires_at)::integer AS expires_at"),
                         "gpob_sid AS sid",
+                        "gpob_dpop_jkt AS dpop_jkt",
                       "where",
                         "gpob_plugin_name", config->name,
                         "gpob_auth_req_id", auth_req_id,
@@ -12233,9 +12302,16 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
              * client_id = request->auth_basic_user,
              * client_secret = request->auth_basic_password,
              * ip_source = get_ip_source(request);
-  json_t * j_ciba_request = get_ciba_request_from_auth_req_id(config, auth_req_id), * j_response, * j_client = NULL, * j_user = NULL, * j_token;
+  json_t * j_ciba_request = get_ciba_request_from_auth_req_id(config, auth_req_id),
+         * j_response,
+         * j_client = NULL,
+         * j_user = NULL,
+         * j_token = NULL,
+         * j_jkt = NULL;
   time_t now;
-  
+  int res;
+  char * dpop_nonce = NULL;
+
   if (check_result_value(j_ciba_request, G_OK)) {
     if (client_id == NULL && u_map_get(request->map_post_body, "client_id") != NULL) {
       client_id = u_map_get(request->map_post_body, "client_id");
@@ -12258,9 +12334,9 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
           j_client = check_client_valid(config, client_id, client_secret, NULL, GLEWLWYD_AUTHORIZATION_TYPE_CIBA_FLAG, 0, ip_source);
         }
       }
-      if (!check_result_value(j_client, G_OK) && is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
+      if (!check_result_value(j_client, G_OK) || !is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
         j_response = json_pack("{ss}", "error", "unauthorized_client");
-        ulfius_set_json_body_response(response, 400, j_response);
+        ulfius_set_json_body_response(response, 403, j_response);
         json_decref(j_response);
         break;
       } else if (client_id == NULL && client_secret == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
@@ -12270,7 +12346,7 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
         json_decref(j_response);
         break;
       }
-      
+
       // Check if x5t_s256 matches
       if ((x5t_s256 != NULL || !json_string_null_or_empty(json_object_get(json_object_get(j_ciba_request, "ciba"), "x5t_s256"))) &&
           0 != o_strcmp(x5t_s256, json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "x5t_s256")))) {
@@ -12280,7 +12356,7 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
         json_decref(j_response);
         break;
       }
-      
+
       // Check that client delivery mode is allowed
       if (0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "ping") &&
           0 != o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "poll")) {
@@ -12290,7 +12366,7 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
         json_decref(j_response);
         break;
       }
-      
+
       // Check if request has expired
       time(&now);
       if (now > (time_t)json_integer_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "expires_at"))) {
@@ -12299,7 +12375,7 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
         json_decref(j_response);
         break;
       }
-      
+
       // Check if authorization request is still pending
       if (0 == json_integer_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "status"))) {
         j_response = json_pack("{ss}", "error", "authorization_pending");
@@ -12307,7 +12383,7 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
         json_decref(j_response);
         break;
       }
-      
+
       // Check if authorization request is denied or error
       if (1 != json_integer_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "status"))) {
         j_response = json_pack("{ss}", "error", "access_denied");
@@ -12315,11 +12391,73 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
         json_decref(j_response);
         break;
       }
+
+      j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token", json_object_get(j_client, "client"), NULL);
       
+      if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
+        if (json_object_get(j_jkt, "nonce") != NULL) {
+          j_response = json_pack("{ssss}", "error", "use_dpop_nonce", "error_description", "Authorization server requires nonce in DPoP proof");
+          ulfius_set_response_properties(response, U_OPT_STATUS, 400,
+                                                   U_OPT_HEADER_PARAMETER, "DPoP-Nonce", json_string_value(json_object_get(j_jkt, "nonce")),
+                                                   U_OPT_JSON_BODY, j_response,
+                                                   U_OPT_NONE);
+          json_decref(j_response);
+          break;
+        } else {
+          y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+          j_response = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
+          ulfius_set_json_body_response(response, 403, j_response);
+          json_decref(j_response);
+          config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
+          break;
+        }
+      }
+      
+      if (!check_result_value(j_jkt, G_OK)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_ciba_auth_req_id - oidc - Error oidc_verify_dpop_proof");
+        j_response = json_pack("{ss}", "error", "server_error");
+        ulfius_set_json_body_response(response, 500, j_response);
+        json_decref(j_response);
+        break;
+      }
+
+      if (json_object_get(j_jkt, "jkt") != NULL) {
+        res = check_dpop_jti(config,
+                             json_string_value(json_object_get(json_object_get(j_jkt, "claims"), "jti")),
+                             json_string_value(json_object_get(json_object_get(j_jkt, "claims"), "htm")),
+                             json_string_value(json_object_get(json_object_get(j_jkt, "claims"), "htu")),
+                             json_integer_value(json_object_get(json_object_get(j_jkt, "claims"), "iat")),
+                             client_id,
+                             json_string_value(json_object_get(j_jkt, "jkt")),
+                             ip_source);
+        if (res == G_ERROR_UNAUTHORIZED) {
+          j_response = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
+          ulfius_set_json_body_response(response, 403, j_response);
+          json_decref(j_response);
+          break;
+        }
+        if (res != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "check_ciba_auth_req_id - oidc - Error check_dpop_jti");
+          j_response = json_pack("{ss}", "error", "server_error");
+          ulfius_set_json_body_response(response, 500, j_response);
+          json_decref(j_response);
+          break;
+        }
+        if ((dpop_nonce = refresh_client_dpop_nonce(config, client_id)) != NULL) {
+          ulfius_set_response_properties(response, U_OPT_HEADER_PARAMETER, "DPoP-Nonce", dpop_nonce, U_OPT_NONE);
+          o_free(dpop_nonce);
+        }
+      }
+
       // If we arrive here, request is accepted and valid, let's send the tokens!
       j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "username")));
       if (check_result_value(j_user, G_OK)) {
-        j_token = generate_ciba_token_response(config, json_object_get(j_client, "client"), json_object_get(j_user, "user"), json_object_get(j_ciba_request, "ciba"), json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "scope")), json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "sid")));
+        j_token = generate_ciba_token_response(config, json_object_get(j_client, "client"),
+                                               json_object_get(j_user, "user"),
+                                               json_object_get(j_ciba_request, "ciba"),
+                                               json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "scope")),
+                                               json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "sid")),
+                                               json_string_value(json_object_get(j_jkt, "jkt")));
         if (check_result_value(j_token, G_OK)) {
           if (close_ciba_request(config, json_integer_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "gpob_id"))) == G_OK) {
             ulfius_set_json_body_response(response, 200, json_object_get(j_token, "token"));
@@ -12349,6 +12487,7 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
       json_decref(j_user);
     } while (0);
     json_decref(j_client);
+    json_decref(j_jkt);
   } else if (check_result_value(j_ciba_request, G_ERROR_NOT_FOUND)) {
     j_response = json_pack("{ss}", "error", "invalid_grant");
     ulfius_set_json_body_response(response, 400, j_response);
@@ -12734,7 +12873,7 @@ static int disable_tokens_from_session(struct _oidc_config * config, const char 
   sid_escaped = h_escape_string_with_quotes(config->glewlwyd_config->glewlwyd_config->conn, sid);
   name_escaped = h_escape_string_with_quotes(config->glewlwyd_config->glewlwyd_config->conn, config->name);
   username_escaped = h_escape_string_with_quotes(config->glewlwyd_config->glewlwyd_config->conn, username);
-  
+
   // Disable access tokens
   query = msprintf("UPDATE "GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN" SET gpoa_enabled=0 WHERE gpoa_enabled=1 AND gpor_id IN (SELECT gpor_id FROM "GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN" WHERE gpor_enabled=1 AND gpor_expires_at %s AND gpoc_id IN (SELECT gpoc_id FROM "GLEWLWYD_PLUGIN_OIDC_TABLE_CODE" WHERE gpoc_plugin_name=%s AND gpoc_username=%s AND gpoc_sid=%s))", expires_at_clause, name_escaped, username_escaped, sid_escaped);
   res = h_execute_query(config->glewlwyd_config->glewlwyd_config->conn, query, NULL, H_OPTION_EXEC);
@@ -12781,7 +12920,7 @@ static json_t * get_session_front_client_list(struct _oidc_config * config, cons
   json_t * j_query, * j_result = NULL, * j_client, * j_client_alpha, * j_return, * j_element = NULL;
   int res;
   size_t index = 0;
-  
+
   if (!o_strnullempty(sid) && !o_strnullempty(client_id)) {
     j_client_alpha = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, client_id);
     if (check_result_value(j_client_alpha, G_OK) && json_object_get(json_object_get(j_client_alpha, "client"), "enabled") == json_true()) {
@@ -13167,7 +13306,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
                                                    U_OPT_JSON_BODY, json_body,
                                                    U_OPT_NONE);
           json_decref(json_body);
-          
+
         } else {
           y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
           json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
@@ -13310,7 +13449,7 @@ static int callback_check_userinfo(const struct _u_request * request, struct _u_
         j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, "/userinfo", json_object_get(j_introspect, "client"), access_token);
         if (check_result_value(j_dpop, G_OK)) {
           if (json_object_get(j_dpop, "jkt") == NULL ||
-              (res = check_dpop_jti(config, 
+              (res = check_dpop_jti(config,
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "jti")),
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "htm")),
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "htu")),
@@ -13395,7 +13534,7 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
         j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, (request->url_path + 2 + o_strlen(config->glewlwyd_config->glewlwyd_config->api_prefix) + o_strlen(config->name)), json_object_get(j_introspect, "client"), access_token);
         if (check_result_value(j_dpop, G_OK)) {
           if (json_object_get(j_dpop, "jkt") == NULL ||
-              (res = check_dpop_jti(config, 
+              (res = check_dpop_jti(config,
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "jti")),
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "htm")),
                                     json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "htu")),
@@ -13567,7 +13706,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
   u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
-  
+
   time(&now);
 
   if (u_map_init(&map_redirect) != U_OK) {
@@ -13632,7 +13771,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
     if (u_map_has_key(map, "dpop_jkt") && json_object_get(config->j_params, "oauth-dpop-allowed") == json_true()) {
       dpop_jkt = u_map_get(map, "dpop_jkt");
     }
-    
+
     if (u_map_has_key(map, "response_type")) {
       response_type = u_map_get(map, "response_type");
       if (o_strstr(response_type, "code") == NULL) {
@@ -13845,19 +13984,19 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       build_auth_response(config, response, response_mode, json_object_get(j_client, "client"), redirect_uri, &map_redirect);
       break;
     }
-    
+
     if (!split_string(response_type, " ", &resp_type_array)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_oidc_authorization - Error split_string");
       u_map_put(&map_redirect, "error", "server_error");
       build_auth_response(config, response, response_mode, json_object_get(j_client, "client"), redirect_uri, &map_redirect);
       break;
     }
-    
+
     has_code = string_array_has_value((const char **)resp_type_array, "code");
     has_token = string_array_has_value((const char **)resp_type_array, "token");
     has_id_token = string_array_has_value((const char **)resp_type_array, "id_token");
     has_none = string_array_has_value((const char **)resp_type_array, "none");
-    
+
     if (request_par && json_object_get(json_object_get(j_request, "request"), "additional_parameters") != NULL) {
       json_object_foreach(json_object_get(json_object_get(j_request, "request"), "additional_parameters"), key, j_element) {
         u_map_put(&map_redirect, key, json_string_value(j_element));
@@ -14809,7 +14948,7 @@ static int callback_oidc_end_session_list(const struct _u_request * request, str
 static int callback_oidc_get_session_list(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   json_t * j_session = get_session_front_client_list(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "sid"), u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "post_redirect_to"));
-  
+
   if (check_result_value(j_session, G_OK)) {
     ulfius_set_json_body_response(response, 200, json_object_get(j_session, "session"));
   } else if (check_result_value(j_session, G_ERROR_PARAM)) {
@@ -15441,7 +15580,7 @@ static int callback_ciba_request(const struct _u_request * request, struct _u_re
 static int callback_ciba_user_list(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   json_t * j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, NULL), * j_result;
-  
+
   if (check_result_value(j_session, G_OK)) {
     j_result = get_ciba_requests_for_user(config, json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")));
     if (check_result_value(j_result, G_OK)) {
@@ -15463,7 +15602,7 @@ static int callback_ciba_user_check(const struct _u_request * request, struct _u
   json_t * j_ciba_request = get_ciba_request_from_user_req_id(config, u_map_get(request->map_url, "user_req_id")), * j_session, * j_client;
   struct _u_map additional_parameters;
   char * redirect_url, sid[OIDC_SID_LENGTH+1] = {0};
-  
+
   u_map_init(&additional_parameters);
   if (check_result_value(j_ciba_request, G_OK)) {
     if (get_session_token(config, request, response, sid) == G_OK) {
@@ -15690,7 +15829,7 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
   size_t i;
   int type;
   char * kid;
-  
+
   do {
     if (r_jwks_init(&config->jwks_sign) != RHN_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "build_sign_keys_from_params - Error r_jwks_init jwks_sign");
@@ -15991,7 +16130,7 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
 static int remove_subject_identifier(struct _oidc_config * config, const char * username) {
   json_t * j_query;
   int res, ret = G_OK;
-  
+
   j_query = json_pack("{sss{ssss}}",
                         "table", GLEWLWYD_PLUGIN_OIDC_TABLE_SUBJECT_IDENTIFIER,
                         "where",
@@ -16011,7 +16150,7 @@ static int remove_subject_identifier(struct _oidc_config * config, const char * 
 static int disable_user_data(struct _oidc_config * config, const char * username) {
   json_t * j_query;
   int res, ret = G_OK;
-  
+
   do {
     j_query = json_pack("{sss{si}s{sssssi}}",
                         "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CODE,
