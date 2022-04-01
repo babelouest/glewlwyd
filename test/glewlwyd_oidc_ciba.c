@@ -743,6 +743,43 @@ START_TEST(test_oidc_ciba_request_login_hint_error_format)
 }
 END_TEST
 
+START_TEST(test_oidc_ciba_request_login_hint_invalid_client)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/ciba",
+                                                       U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_AUTH_BASIC_USER, CLIENT_ID_PING,
+                                                       U_OPT_AUTH_BASIC_PASSWORD, "error",
+                                                       U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                                       U_OPT_POST_BODY_PARAMETER, "client_notification_token", CIBA_CLIENT_NOTIFICATION_TOKEN,
+                                                       U_OPT_POST_BODY_PARAMETER, "login_hint", "{\"username\":\""USER_USERNAME"\"}",
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(403, resp.status);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/ciba",
+                                                       U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_AUTH_BASIC_USER, "error",
+                                                       U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                                       U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                                       U_OPT_POST_BODY_PARAMETER, "client_notification_token", CIBA_CLIENT_NOTIFICATION_TOKEN,
+                                                       U_OPT_POST_BODY_PARAMETER, "login_hint", "{\"username\":\""USER_USERNAME"\"}",
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(403, resp.status);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
 START_TEST(test_oidc_ciba_request_login_hint_ok)
 {
   struct _u_request req;
@@ -985,7 +1022,7 @@ START_TEST(test_oidc_ciba_signed_request_login_hint_invalid_signature)
                                                        U_OPT_POST_BODY_PARAMETER, "request", token,
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
-  ck_assert_int_eq(401, resp.status);
+  ck_assert_int_eq(403, resp.status);
   ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
   ck_assert_str_eq("invalid_client", json_string_value(json_object_get(j_body, "error")));
   
@@ -1041,7 +1078,7 @@ START_TEST(test_oidc_ciba_signed_request_login_hint_replay_jti)
   
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
   ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
-  ck_assert_int_eq(401, resp.status);
+  ck_assert_int_eq(403, resp.status);
   ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
   ck_assert_str_eq("invalid_client", json_string_value(json_object_get(j_body, "error")));
   
@@ -1092,7 +1129,7 @@ START_TEST(test_oidc_ciba_signed_request_login_hint_invalid_aud)
                                                        U_OPT_POST_BODY_PARAMETER, "request", token,
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
-  ck_assert_int_eq(401, resp.status);
+  ck_assert_int_eq(403, resp.status);
   ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
   ck_assert_str_eq("invalid_request", json_string_value(json_object_get(j_body, "error")));
   
@@ -1143,7 +1180,7 @@ START_TEST(test_oidc_ciba_signed_request_login_hint_invalid_iss)
                                                        U_OPT_POST_BODY_PARAMETER, "request", token,
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
-  ck_assert_int_eq(401, resp.status);
+  ck_assert_int_eq(403, resp.status);
   ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
   ck_assert_str_eq("invalid_client", json_string_value(json_object_get(j_body, "error")));
   
@@ -1923,6 +1960,77 @@ START_TEST(test_oidc_ciba_request_user_code_invalid)
 }
 END_TEST
 
+START_TEST(test_oidc_ciba_request_client_invalid)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_body;
+  char * url, * auth_req_id;
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/ciba",
+                                                       U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_AUTH_BASIC_USER, CLIENT_ID_POLL,
+                                                       U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                                       U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                                       U_OPT_POST_BODY_PARAMETER, "client_notification_token", CIBA_CLIENT_NOTIFICATION_TOKEN,
+                                                       U_OPT_POST_BODY_PARAMETER, "login_hint", "{\"username\":\""USER_USERNAME"\"}",
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(200, resp.status);
+  ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
+  ck_assert_ptr_ne(NULL, auth_req_id = o_strdup(json_string_value(json_object_get(j_body, "auth_req_id"))));
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  json_decref(j_body);
+
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&user_req, U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/ciba_user_list", U_OPT_HTTP_VERB, "GET", U_OPT_NONE), U_OK);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&user_req, &resp));
+  ck_assert_int_eq(200, resp.status);
+  ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  
+  url = msprintf("%s&g_continue", json_string_value(json_object_get(json_array_get(j_body, 0), "connect_uri")));
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "ciba_message=complete"), 1);
+  o_free(url);
+  json_decref(j_body);
+
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/token",
+                                                       U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_AUTH_BASIC_USER, CLIENT_ID_POLL,
+                                                       U_OPT_AUTH_BASIC_PASSWORD, "error",
+                                                       U_OPT_POST_BODY_PARAMETER, "grant_type", "urn:openid:params:grant-type:ciba",
+                                                       U_OPT_POST_BODY_PARAMETER, "auth_req_id", auth_req_id,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(403, resp.status);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/token",
+                                                       U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_AUTH_BASIC_USER, "error",
+                                                       U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                                       U_OPT_POST_BODY_PARAMETER, "grant_type", "urn:openid:params:grant-type:ciba",
+                                                       U_OPT_POST_BODY_PARAMETER, "auth_req_id", auth_req_id,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(403, resp.status);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+
+  o_free(auth_req_id);
+}
+END_TEST
+
 START_TEST(test_oidc_ciba_request_user_code_ok)
 {
   struct _u_request req;
@@ -2268,6 +2376,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_ciba_request_login_hint_invalid);
   tcase_add_test(tc_core, test_oidc_ciba_request_login_hint_error_key);
   tcase_add_test(tc_core, test_oidc_ciba_request_login_hint_error_format);
+  tcase_add_test(tc_core, test_oidc_ciba_request_login_hint_invalid_client);
   tcase_add_test(tc_core, test_oidc_ciba_request_login_hint_ok);
   tcase_add_test(tc_core, test_oidc_ciba_request_id_token_hint_invalid);
   tcase_add_test(tc_core, test_oidc_ciba_request_id_token_hint_ok);
@@ -2293,6 +2402,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_ciba_delete_plugin);
   tcase_add_test(tc_core, test_oidc_ciba_add_plugin_user_code_email_no);
   tcase_add_test(tc_core, test_oidc_ciba_request_user_code_invalid);
+  tcase_add_test(tc_core, test_oidc_ciba_request_client_invalid);
   tcase_add_test(tc_core, test_oidc_ciba_request_user_code_ok);
   tcase_add_test(tc_core, test_oidc_ciba_delete_plugin);
   tcase_add_test(tc_core, test_oidc_ciba_add_plugin_user_code_no_email);

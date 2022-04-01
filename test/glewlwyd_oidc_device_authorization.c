@@ -134,12 +134,13 @@ START_TEST(test_oidc_device_authorization_client_cred_post_valid)
   
   ck_assert_int_eq(ulfius_init_request(&req), U_OK);
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
-  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/device_authorization/");
-  req.http_verb = o_strdup("POST");
-  u_map_put(req.map_post_body, "grant_type", "device_authorization");
-  u_map_put(req.map_post_body, "client_id", CLIENT_ID);
-  u_map_put(req.map_post_body, "client_secret", CLIENT_SECRET);
-  u_map_put(req.map_post_body, "scope", SCOPE_LIST);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/device_authorization/",
+                                                       U_OPT_POST_BODY_PARAMETER, "grant_type", "device_authorization",
+                                                       U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT_ID,
+                                                       U_OPT_POST_BODY_PARAMETER, "client_secret", CLIENT_SECRET,
+                                                       U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                                       U_OPT_NONE), U_OK);
   
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(200, resp.status);
@@ -165,13 +166,14 @@ START_TEST(test_oidc_device_authorization_client_cred_header_valid)
   
   ck_assert_int_eq(ulfius_init_request(&req), U_OK);
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
-  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/device_authorization/");
-  req.http_verb = o_strdup("POST");
-  u_map_put(req.map_post_body, "grant_type", "device_authorization");
-  u_map_put(req.map_post_body, "client_id", CLIENT_ID);
-  u_map_put(req.map_post_body, "scope", SCOPE_LIST);
-  req.auth_basic_user = o_strdup(CLIENT_ID);
-  req.auth_basic_password = o_strdup(CLIENT_SECRET);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/device_authorization/",
+                                                       U_OPT_POST_BODY_PARAMETER, "grant_type", "device_authorization",
+                                                       U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT_ID,
+                                                       U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                                       U_OPT_AUTH_BASIC_USER, CLIENT_ID,
+                                                       U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
+                                                       U_OPT_NONE), U_OK);
   
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(200, resp.status);
@@ -196,14 +198,15 @@ START_TEST(test_oidc_device_authorization_client_cred_header_invalid)
   
   ck_assert_int_eq(ulfius_init_request(&req), U_OK);
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
-  req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/device_authorization/");
-  req.http_verb = o_strdup("POST");
-  u_map_put(req.map_post_body, "grant_type", "device_authorization");
-  u_map_put(req.map_post_body, "client_id", CLIENT_ID);
-  u_map_put(req.map_post_body, "scope", SCOPE_LIST);
-  req.auth_basic_user = o_strdup(CLIENT_ID);
-  req.auth_basic_password = o_strdup("error");
-  
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/device_authorization/",
+                                                       U_OPT_POST_BODY_PARAMETER, "grant_type", "device_authorization",
+                                                       U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT_ID,
+                                                       U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                                       U_OPT_AUTH_BASIC_USER, CLIENT_ID,
+                                                       U_OPT_AUTH_BASIC_PASSWORD, "error",
+                                                       U_OPT_NONE), U_OK);
+
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(403, resp.status);
 
