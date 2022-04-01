@@ -2468,7 +2468,7 @@ static char * generate_client_access_token(struct _oidc_config * config,
       r_jwt_set_claim_int_value(jwt, "exp", (((json_int_t)now) + config->access_token_duration));
       r_jwt_set_claim_int_value(jwt, "nbf", now);
       r_jwt_set_claim_str_value(jwt, "jti", jti);
-      r_jwt_set_claim_str_value(jwt, "type", "client_token");
+      r_jwt_set_claim_str_value(jwt, "type", "access_token");
       r_jwt_set_claim_str_value(jwt, "scope", scope_list);
       j_cnf = json_object();
       if (x5t_s256 != NULL) {
@@ -3437,6 +3437,7 @@ static char * generate_access_token(struct _oidc_config * config,
         }
         r_jwt_set_claim_str_value(jwt, "sub", sub);
         r_jwt_set_claim_str_value(jwt, "jti", jti);
+        r_jwt_set_claim_str_value(jwt, "type", "access_token");
         r_jwt_set_claim_int_value(jwt, "iat", now);
         r_jwt_set_claim_int_value(jwt, "exp", (((json_int_t)now) + config->access_token_duration));
         r_jwt_set_claim_int_value(jwt, "nbf", now);
@@ -6313,7 +6314,7 @@ static json_t * get_token_metadata(struct _oidc_config * config, const char * to
               o_free(scope_list);
               json_decref(j_result_scope);
               json_object_del(json_array_get(j_result, 0), "gpor_id");
-              j_return = json_pack("{sisOsO*}", "result", G_OK, "token", json_array_get(j_result, 0), "username", json_object_get(json_array_get(j_result, 0), "username"));
+              j_return = json_pack("{sisOsO*ss}", "result", G_OK, "token", json_array_get(j_result, 0), "username", json_object_get(json_array_get(j_result, 0), "username"), "type", "refresh_token");
               if (j_client != NULL) {
                 json_object_set(j_return, "client", json_object_get(j_client, "client"));
               }
@@ -6411,7 +6412,7 @@ static json_t * get_token_metadata(struct _oidc_config * config, const char * to
               o_free(scope_list);
               json_decref(j_result_scope);
               json_object_del(json_array_get(j_result, 0), "gpoa_id");
-              j_return = json_pack("{sisOsO*}", "result", G_OK, "token", json_array_get(j_result, 0), "username", json_object_get(json_array_get(j_result, 0), "username"));
+              j_return = json_pack("{sisOsO*ss}", "result", G_OK, "token", json_array_get(j_result, 0), "username", json_object_get(json_array_get(j_result, 0), "username"), "type", "access_token");
               if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
                 json_object_set(j_return, "client", json_object_get(j_client, "client"));
               }
@@ -6479,7 +6480,7 @@ static json_t * get_token_metadata(struct _oidc_config * config, const char * to
       if (res == H_OK) {
         if (json_array_size(j_result)) {
           found_id_token = 1;
-          if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpoi_enabled")) && json_integer_value(json_object_get(json_array_get(j_result, 0), "iat")) + json_integer_value(json_object_get(config->j_params, "access-token-duration")) > now) {
+          if (json_integer_value(json_object_get(json_array_get(j_result, 0), "gpoi_enabled"))) {
             json_object_set_new(json_array_get(j_result, 0), "sub", json_string(sub));
             json_object_set_new(json_array_get(j_result, 0), "active", json_true());
             json_object_set_new(json_array_get(j_result, 0), "token_type", json_string("id_token"));
@@ -6502,7 +6503,7 @@ static json_t * get_token_metadata(struct _oidc_config * config, const char * to
             if (json_object_get(json_array_get(j_result, 0), "username") == json_null()) {
               json_object_del(json_array_get(j_result, 0), "username");
             }
-            j_return = json_pack("{sisOsO*}", "result", G_OK, "token", json_array_get(j_result, 0), "username", json_object_get(json_array_get(j_result, 0), "username"));
+            j_return = json_pack("{sisOsO*ss}", "result", G_OK, "token", json_array_get(j_result, 0), "username", json_object_get(json_array_get(j_result, 0), "username"), "type", "id_token");
             if (j_client != NULL) {
               json_object_set(j_return, "client", json_object_get(j_client, "client"));
             }
@@ -9638,14 +9639,21 @@ static int callback_revocation(const struct _u_request * request, struct _u_resp
   j_result = get_token_metadata(config, u_map_get(request->map_post_body, "token"), u_map_get(request->map_post_body, "token_type_hint"), get_client_id_for_introspection(config, request));
   if (check_result_value(j_result, G_OK)) {
     if (json_object_get(json_object_get(j_result, "token"), "active") == json_true()) {
-      if (0 == o_strcmp("refresh_token", json_string_value(json_object_get(json_object_get(j_result, "token"), "token_type")))) {
+      if (0 == o_strcmp("refresh_token", json_string_value(json_object_get(j_result, "type")))) {
         if (revoke_refresh_token(config, u_map_get(request->map_post_body, "token")) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_refresh_token");
           response->status = 500;
         } else {
           y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request));
         }
-      } else if (0 == o_strcmp("access_token", json_string_value(json_object_get(json_object_get(j_result, "token"), "token_type")))) {
+      } else if (0 == o_strcmp("id_token", json_string_value(json_object_get(j_result, "type")))) {
+        if (revoke_id_token(config, u_map_get(request->map_post_body, "token")) != G_OK) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_id_token");
+          response->status = 500;
+        } else {
+          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - id_token revoked for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request));
+        }
+      } else if (0 == o_strcmp("access_token", json_string_value(json_object_get(j_result, "type")))) {
         if (revoke_access_token(config, u_map_get(request->map_post_body, "token")) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_access_token");
           response->status = 500;
@@ -9653,12 +9661,8 @@ static int callback_revocation(const struct _u_request * request, struct _u_resp
           y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token jti '%s' generated for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "jti")), json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request));
         }
       } else {
-        if (revoke_id_token(config, u_map_get(request->map_post_body, "token")) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_id_token");
-          response->status = 500;
-        } else {
-          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - id_token revoked for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request));
-        }
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error token type: '%s'", json_string_value(json_object_get(j_result, "type")));
+        response->status = 500;
       }
     }
   } else if (check_result_value(j_result, G_ERROR_PARAM)) {
@@ -9691,7 +9695,7 @@ static int callback_introspection(const struct _u_request * request, struct _u_r
         0 == o_strcmp("jwt", u_map_get(request->map_post_body, "format")) ||
         0 == o_strcasecmp("application/jwt", u_map_get_case(request->map_header, "Accept")) ||
         0 == o_strcasecmp("application/token-introspection+jwt", u_map_get_case(request->map_header, "Accept"))) {
-      if (0 == o_strcmp("access_token", json_string_value(json_object_get(json_object_get(j_result, "token"), "token_type")))) {
+      if (0 == o_strcmp("access_token", json_string_value(json_object_get(j_result, "type")))) {
         if (jwk != NULL && alg != R_JWA_ALG_UNKNOWN) {
           if (r_jwt_init(&jwt) == RHN_OK) {
             r_jwt_set_sign_alg(jwt, alg);
