@@ -42,6 +42,7 @@
 #define TOKEN_TYPE_HINT_REFRESH "refresh_token"
 #define TOKEN_TYPE_HINT_ACCESS "access_token"
 #define TOKEN_TYPE_HINT_ID_TOKEN "id_token"
+#define TOKEN_TYPE_BEARER "bearer"
 
 struct _u_request admin_req;
 
@@ -171,7 +172,7 @@ START_TEST(test_oidc_revocation_access_token_target_client)
   ulfius_clean_response(&resp);
   ulfius_clean_request(&req);
   
-  j_response = json_pack("{sossssssss}", "active", json_true(), "username", USERNAME, "client_id", CLIENT_CONFIDENTIAL_1, "token_type", TOKEN_TYPE_HINT_ACCESS, "scope", SCOPE_LIST);
+  j_response = json_pack("{sossssssss}", "active", json_true(), "username", USERNAME, "client_id", CLIENT_CONFIDENTIAL_1, "token_type", TOKEN_TYPE_BEARER, "scope", SCOPE_LIST);
   ck_assert_int_eq(u_map_init(&param), U_OK);
   ck_assert_int_eq(u_map_put(&param, "token", token), U_OK);
   ck_assert_int_eq(u_map_put(&param, "token_type_hint", TOKEN_TYPE_HINT_ACCESS), U_OK);
@@ -338,7 +339,7 @@ START_TEST(test_oidc_revocation_access_token_target_bearer)
   u_map_put(req.map_header, "Authorization", tmp);
   o_free(tmp);
   
-  j_response = json_pack("{sossssssss}", "active", json_true(), "username", USERNAME, "client_id", CLIENT_CONFIDENTIAL_1, "token_type", TOKEN_TYPE_HINT_ACCESS, "scope", SCOPE_LIST);
+  j_response = json_pack("{sossssssss}", "active", json_true(), "username", USERNAME, "client_id", CLIENT_CONFIDENTIAL_1, "token_type", TOKEN_TYPE_BEARER, "scope", SCOPE_LIST);
   ck_assert_int_eq(u_map_init(&param), U_OK);
   ck_assert_int_eq(u_map_put(&param, "token", token), U_OK);
   ck_assert_int_eq(u_map_put(&param, "token_type_hint", TOKEN_TYPE_HINT_ACCESS), U_OK);

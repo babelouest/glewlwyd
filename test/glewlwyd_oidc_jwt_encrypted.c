@@ -795,7 +795,7 @@ START_TEST(test_oidc_jwt_encrypted_introspection_access_token_target_bearer_jwt)
   ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, NULL, 0, (unsigned char *)pubkey_2_pem, o_strlen(pubkey_2_pem)), RHN_OK);
   ck_assert_int_eq(r_jwt_decrypt_verify_signature_nested(jwt, NULL, 0, NULL, 0), RHN_OK);
   ck_assert_ptr_ne(NULL, j_response = r_jwt_get_full_claims_json_t(jwt));
-  j_verify = json_pack("{sossssssssss}", "active", json_true(), "username", USER_USERNAME, "client_id", CLIENT_ID, "token_type", "access_token", "scope", SCOPE_LIST, "iss", PLUGIN_ISS);
+  j_verify = json_pack("{sossssssssss}", "active", json_true(), "username", USER_USERNAME, "client_id", CLIENT_ID, "token_type", "bearer", "scope", SCOPE_LIST, "iss", PLUGIN_ISS);
   ck_assert_ptr_ne(NULL, json_search(j_response, j_verify));
   ck_assert_str_eq("token-introspection+jwt", r_jwt_get_header_str_value(jwt, "typ"));
 
