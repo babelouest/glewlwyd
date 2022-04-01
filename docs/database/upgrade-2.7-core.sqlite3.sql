@@ -22,6 +22,9 @@ Add gpoc_dpop_jkt TEXT;
 ALTER TABLE gpo_par
 Add gpop_dpop_jkt TEXT;
 
+ALTER TABLE gpo_ciba
+Add gpob_dpop_jkt TEXT;
+
 CREATE TABLE gpo_dpop_client_nonce (
   gpodcn_id INTEGER PRIMARY KEY AUTOINCREMENT,
   gpodcn_client_id TEXT NOT NULL,

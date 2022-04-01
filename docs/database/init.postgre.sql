@@ -650,6 +650,7 @@ CREATE TABLE gpo_ciba (
   gpob_user_req_id VARCHAR(128),
   gpob_binding_message VARCHAR(256),
   gpob_sid VARCHAR(128),
+  gpob_dpop_jkt VARCHAR(512),
   gpob_status SMALLINT DEFAULT 0, -- 0: created, 1: accepted, 2: error, 3: closed
   gpob_expires_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   gpob_issued_for VARCHAR(256), -- IP address or hostname

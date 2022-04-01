@@ -22,6 +22,9 @@ Add gpoda_dpop_jkt VARCHAR(512);
 ALTER TABLE gpo_par
 Add gpop_dpop_jkt VARCHAR(512);
 
+ALTER TABLE gpo_ciba
+Add gpob_dpop_jkt VARCHAR(512);
+
 CREATE TABLE gpo_dpop_client_nonce (
   gpodcn_id INT(11) PRIMARY KEY AUTO_INCREMENT,
   gpodcn_client_id VARCHAR(256) NOT NULL,
