@@ -224,6 +224,8 @@
     "user-cert-ph": "Ex: -----BEGIN CERTIFICATE-----MIIF...",
     "user-picture": "Image",
     "user-pictures": "Images",
+    "user-code": "Code Utilisateur CIBA",
+    "user-code-ph": "Ex: xyz1234",
     "user-password-error-match": "Les mots de passe ne correspondent pas",
     "user-password-error-invalid": "Le mot de passe doit faire au moins {{minLength}} caractères",
     "user-password-mandatory": "Le mot de passe est obligatoire",

@@ -69,6 +69,15 @@
       "forceShow": true,
       "edit": true,
       "label": "admin.user-enabled"
+    },{
+      "name": "user-code",
+      "profile": true,
+      "edit": true,
+      "forceShow": true,
+      "label": "admin.user-code",
+      "placeholder": "admin.user-code-ph",
+      "profile-read": true,
+      "profile-write": true
     }],
     "client": [{
       "name": "client_id",
