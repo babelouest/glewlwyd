@@ -11572,12 +11572,12 @@ static int process_ciba_request (const struct _u_request * request,
         j_request = validate_ciba_jwt_request(config, u_map_get(request->map_post_body, "request"), ip_source);
         if (check_result_value(j_request, G_ERROR_UNAUTHORIZED)) {
           j_return = json_pack("{ss}", "error", "invalid_client");
-          ulfius_set_json_body_response(response, 401, j_return);
+          ulfius_set_json_body_response(response, 403, j_return);
           json_decref(j_return);
           break;
         } else if (check_result_value(j_request, G_ERROR_PARAM)) {
           j_return = json_pack("{ss}", "error", "invalid_request");
-          ulfius_set_json_body_response(response, 401, j_return);
+          ulfius_set_json_body_response(response, 403, j_return);
           json_decref(j_return);
           break;
         } else if (!check_result_value(j_request, G_OK)) {
@@ -11613,7 +11613,7 @@ static int process_ciba_request (const struct _u_request * request,
 
     if (!check_result_value(j_client, G_OK) || json_object_get(json_object_get(j_client, "client"), "enabled") != json_true()) {
       j_return = json_pack("{ss}", "error", "invalid_client");
-      ulfius_set_json_body_response(response, 401, j_return);
+      ulfius_set_json_body_response(response, 403, j_return);
       json_decref(j_return);
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s' is invalid, origin: %s", client_id, ip_source);
       break;
@@ -11621,7 +11621,7 @@ static int process_ciba_request (const struct _u_request * request,
 
     if (o_strnullempty(scope)) {
       j_return = json_pack("{ss}", "error", "invalid_scope");
-      ulfius_set_json_body_response(response, 401, j_return);
+      ulfius_set_json_body_response(response, 403, j_return);
       json_decref(j_return);
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s', scope is mandatory, origin: %s", client_id, ip_source);
       break;
@@ -11630,7 +11630,7 @@ static int process_ciba_request (const struct _u_request * request,
     if (json_object_get(config->j_params, "oauth-fapi-ciba-push-forbidden") == json_true()) {
       if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "push")) {
         j_return = json_pack("{ss}", "error", "invalid_client");
-        ulfius_set_json_body_response(response, 401, j_return);
+        ulfius_set_json_body_response(response, 403, j_return);
         json_decref(j_return);
         y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s' uses ciba mode push, which is forbidden, origin: %s", client_id, ip_source);
         break;
@@ -11639,7 +11639,7 @@ static int process_ciba_request (const struct _u_request * request,
 
     if (json_object_get(config->j_params, "oauth-fapi-ciba-confidential-client") == json_true() && json_object_get(json_object_get(j_client, "client"), "confidential") != json_true()) {
       j_return = json_pack("{ss}", "error", "invalid_client");
-      ulfius_set_json_body_response(response, 401, j_return);
+      ulfius_set_json_body_response(response, 403, j_return);
       json_decref(j_return);
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s' is not confidential, which is forbidden, origin: %s", client_id, ip_source);
       break;
@@ -11648,7 +11648,7 @@ static int process_ciba_request (const struct _u_request * request,
     if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "poll") &&
         json_true() != json_object_get(config->j_params, "oauth-ciba-mode-poll-allowed")) {
       j_return = json_pack("{ss}", "error", "invalid_request");
-      ulfius_set_json_body_response(response, 401, j_return);
+      ulfius_set_json_body_response(response, 403, j_return);
       json_decref(j_return);
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s', mode poll unauthorized, origin: %s", client_id, ip_source);
       break;
@@ -11657,7 +11657,7 @@ static int process_ciba_request (const struct _u_request * request,
     if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "ping") &&
         json_true() != json_object_get(config->j_params, "oauth-ciba-mode-ping-allowed")) {
       j_return = json_pack("{ss}", "error", "invalid_request");
-      ulfius_set_json_body_response(response, 401, j_return);
+      ulfius_set_json_body_response(response, 403, j_return);
       json_decref(j_return);
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s', mode ping unauthorized, origin: %s", client_id, ip_source);
       break;
@@ -11666,7 +11666,7 @@ static int process_ciba_request (const struct _u_request * request,
     if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_client, "client"), "backchannel_token_delivery_mode")), "push") &&
         json_true() != json_object_get(config->j_params, "oauth-ciba-mode-push-allowed")) {
       j_return = json_pack("{ss}", "error", "invalid_request");
-      ulfius_set_json_body_response(response, 401, j_return);
+      ulfius_set_json_body_response(response, 403, j_return);
       json_decref(j_return);
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s', mode push unauthorized, origin: %s", client_id, ip_source);
       break;
@@ -11698,7 +11698,7 @@ static int process_ciba_request (const struct _u_request * request,
     if (!is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "process_ciba_request oidc - client '%s' authentication method is invalid, origin: %s", client_id, ip_source);
       j_return = json_pack("{ss}", "error", "invalid_client");
-      ulfius_set_json_body_response(response, 401, j_return);
+      ulfius_set_json_body_response(response, 403, j_return);
       json_decref(j_return);
       break;
     }
@@ -11706,7 +11706,7 @@ static int process_ciba_request (const struct _u_request * request,
     if (client_id == NULL && client_secret == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "process_ciba_request oidc - client '%s' is invalid or is not confidential, origin: %s", client_id, ip_source);
       j_return = json_pack("{ss}", "error", "invalid_client");
-      ulfius_set_json_body_response(response, 401, j_return);
+      ulfius_set_json_body_response(response, 403, j_return);
       json_decref(j_return);
       break;
     }
