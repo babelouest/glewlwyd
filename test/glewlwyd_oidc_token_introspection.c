@@ -170,8 +170,8 @@ START_TEST(test_oidc_introspection_invalid_format_target_client)
   ck_assert_int_eq(u_map_init(&param), U_OK);
   ck_assert_int_eq(u_map_put(&param, "error", access_token), U_OK);
   ck_assert_int_eq(u_map_put(&param, "error_hint", "error"), U_OK);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", CLIENT_CONFIDENTIAL_1, CLIENT_CONFIDENTIAL_1_SECRET, NULL, NULL, 400, NULL, NULL, NULL), 1);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", CLIENT_CONFIDENTIAL_1, "error", NULL, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", CLIENT_CONFIDENTIAL_1, CLIENT_CONFIDENTIAL_1_SECRET, NULL, &param, 400, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", CLIENT_CONFIDENTIAL_1, "error", NULL, &param, 401, NULL, NULL, NULL), 1);
   u_map_clean(&param);
   json_decref(j_body);
 }
@@ -314,10 +314,10 @@ START_TEST(test_oidc_introspection_invalid_format_bearer)
   ck_assert_int_eq(u_map_init(&param), U_OK);
   ck_assert_int_eq(u_map_put(&param, "error", access_token), U_OK);
   ck_assert_int_eq(u_map_put(&param, "error_hint", "error"), U_OK);
-  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, NULL, 400, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 400, NULL, NULL, NULL), 1);
   tmp = msprintf("Bearer %s", "error");
   u_map_put(req.map_header, "Authorization", tmp);
-  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/introspect", NULL, NULL, NULL, &param, 401, NULL, NULL, NULL), 1);
   o_free(tmp);
   ulfius_clean_request(&req);
   u_map_clean(&param);

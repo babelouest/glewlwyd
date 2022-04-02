@@ -964,7 +964,7 @@ START_TEST(test_oidc_fapi_ciba_request_invalid_delivery_mode)
                                                        U_OPT_POST_BODY_PARAMETER, "login_hint", "{\"username\":\""USER_USERNAME"\"}",
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
-  ck_assert_int_eq(401, resp.status);
+  ck_assert_int_eq(403, resp.status);
   ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
   ck_assert_str_eq("invalid_client", json_string_value(json_object_get(j_body, "error")));
   
@@ -990,7 +990,7 @@ START_TEST(test_oidc_fapi_ciba_request_invalid_client_public)
                                                        U_OPT_POST_BODY_PARAMETER, "login_hint", "{\"username\":\""USER_USERNAME"\"}",
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
-  ck_assert_int_eq(401, resp.status);
+  ck_assert_int_eq(403, resp.status);
   ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
   ck_assert_str_eq("invalid_client", json_string_value(json_object_get(j_body, "error")));
   
