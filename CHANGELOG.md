@@ -10,6 +10,7 @@ The `"Third dose Release"`
 - Allow to fetch a geolocation API to improve the `issued_for` records
 - Fix oidc plugin bug: allow to add the `username` as claim in the access token
 - Improve OIDC DPoP implementation to [Draft 07](https://www.ietf.org/archive/id/draft-ietf-oauth-dpop-07.html#name-document-history)
+- Front-end: Remove polyfill build script
 
 ## 2.6.2
 
