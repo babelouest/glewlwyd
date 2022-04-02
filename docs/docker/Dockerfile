@@ -20,10 +20,8 @@ RUN apk add --no-cache \
     cmake \
     autoconf \
     automake \
+    libcbor \
     libtool && \
-    (cd /opt && wget https://github.com/PJK/libcbor/archive/v0.7.0.tar.gz -O libcbor.tar.gz && \
-    tar xf libcbor.tar.gz && cd libcbor-0.7.0 && mkdir build && cd build && \
-    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib .. && make && make install) && \
     cd /opt && \
     tar xf ./glewlwyd.tar.gz && \
     tar xf liborcania_*.tar.gz -C /usr/ --strip 1 && \

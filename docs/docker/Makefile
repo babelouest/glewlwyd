@@ -1,5 +1,7 @@
 GLEWLWYD_VERSION=$(shell curl -s https://api.github.com/repos/babelouest/glewlwyd/releases/latest | grep tag_name | cut -d '"' -f 4 | cut -c 2-)
-ALPINE_VERSION=3.15.0
+ALPINE_VERSION=3.15.2
+
+all: build
 
 glewlwyd-full_$(GLEWLWYD_VERSION)_alpine_$(ALPINE_VERSION)_x86_64.tar.gz:
 	wget https://github.com/babelouest/glewlwyd/releases/download/v${GLEWLWYD_VERSION}/glewlwyd-full_$(GLEWLWYD_VERSION)_alpine_$(ALPINE_VERSION)_x86_64.tar.gz
