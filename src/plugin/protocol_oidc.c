@@ -301,6 +301,53 @@ static const char * get_auth_header_token(const char * auth_header, int * is_hea
   }
 }
 
+static const char * get_authorization_type_name(unsigned short authorization_type) {
+  switch (authorization_type) {
+    case GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG:
+      return "code";
+      break;
+    case GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_FLAG:
+      return "token";
+      break;
+    case GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG:
+      return "id_token";
+      break;
+    case GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG|GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG:
+      return "code id_token";
+      break;
+    case GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG|GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_FLAG:
+      return "code token";
+      break;
+    case GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG|GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_FLAG|GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG:
+      return "code token id_token";
+      break;
+    case GLEWLWYD_AUTHORIZATION_TYPE_NONE_FLAG:
+      return "nonce";
+      break;
+    case GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_FLAG:
+      return "refresh_token";
+      break;
+    case GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS_FLAG:
+      return "client_credentials";
+      break;
+    case GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS_FLAG:
+      return "password";
+      break;
+    case GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_FLAG:
+      return "delete_token";
+      break;
+    case GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION_FLAG:
+      return "device";
+      break;
+    case GLEWLWYD_AUTHORIZATION_TYPE_CIBA_FLAG:
+      return "ciba";
+      break;
+    default:
+      return "";
+      break;
+  }
+}
+
 /**
  * return true if the JSON array has a element matching value
  */
@@ -3705,35 +3752,55 @@ static json_t * check_client_valid_without_secret(struct _oidc_config * config,
       uri_found = 1;
     }
 
-    authorization_type_enabled = 0;
-    json_array_foreach(json_object_get(json_object_get(j_client, "client"), "authorization_type"), index, j_element) {
-      if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG && 0 == o_strcmp(json_string_value(j_element), "code")) {
-        authorization_type_enabled = 1;
-      } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_FLAG && 0 == o_strcmp(json_string_value(j_element), "token")) {
-        authorization_type_enabled = 1;
-      } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG && 0 == o_strcmp(json_string_value(j_element), "id_token")) {
-        authorization_type_enabled = 1;
-      } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_NONE_FLAG && 0 == o_strcmp(json_string_value(j_element), "none")) {
-        authorization_type_enabled = 1;
-      } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_FLAG && 0 == o_strcmp(json_string_value(j_element), "refresh_token")) {
-        authorization_type_enabled = 1;
-        uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
-      } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS_FLAG && 0 == o_strcmp(json_string_value(j_element), "client_credentials")) {
-        authorization_type_enabled = 1;
-        uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
-      } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS_FLAG && 0 == o_strcmp(json_string_value(j_element), "password")) {
-        authorization_type_enabled = 1;
-        uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
-      } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_FLAG && 0 == o_strcmp(json_string_value(j_element), "delete_token")) {
-        authorization_type_enabled = 1;
-        uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
+    authorization_type_enabled = 1;
+    if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE_FLAG) {
+      if (!json_array_has_string(json_object_get(json_object_get(j_client, "client"), "authorization_type"), "code")) {
+        authorization_type_enabled = 0;
+      }
+    }
+    if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_TOKEN_FLAG) {
+      if (!json_array_has_string(json_object_get(json_object_get(j_client, "client"), "authorization_type"), "token")) {
+        authorization_type_enabled = 0;
+      }
+    }
+    if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_ID_TOKEN_FLAG) {
+      if (!json_array_has_string(json_object_get(json_object_get(j_client, "client"), "authorization_type"), "id_token")) {
+        authorization_type_enabled = 0;
+      }
+    }
+    if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_NONE_FLAG) {
+      if (!json_array_has_string(json_object_get(json_object_get(j_client, "client"), "authorization_type"), "none")) {
+        authorization_type_enabled = 0;
+      }
+    }
+    if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_FLAG) {
+      if (!json_array_has_string(json_object_get(json_object_get(j_client, "client"), "authorization_type"), "refresh_token")) {
+        authorization_type_enabled = 0;
+      }
+    }
+    if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS_FLAG) {
+      authorization_type_enabled = 1; // bypass redirect_uri check for client credentials since it's not needed
+      if (!json_array_has_string(json_object_get(json_object_get(j_client, "client"), "authorization_type"), "client_credentials")) {
+        authorization_type_enabled = 0;
+      }
+    }
+    if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS_FLAG) {
+      authorization_type_enabled = 1; // bypass redirect_uri check for client credentials since it's not needed
+      if (!json_array_has_string(json_object_get(json_object_get(j_client, "client"), "authorization_type"), "password")) {
+        authorization_type_enabled = 0;
+      }
+    }
+    if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_DELETE_TOKEN_FLAG) {
+      authorization_type_enabled = 1; // bypass redirect_uri check for client credentials since it's not needed
+      if (!json_array_has_string(json_object_get(json_object_get(j_client, "client"), "authorization_type"), "delete_token")) {
+        authorization_type_enabled = 0;
       }
     }
     if (!uri_found) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid_without_secret - oidc - Error, redirect_uri '%s' is invalid for the client '%s', origin: %s", redirect_uri, client_id, ip_source);
     }
     if (!authorization_type_enabled) {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid_without_secret - oidc - Error, authorization type %d is not enabled for the client '%s', origin: %s", authorization_type, client_id, ip_source);
+      y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid_without_secret - oidc - Error, authorization type '%s' is not enabled for the client '%s', origin: %s", get_authorization_type_name(authorization_type), client_id, ip_source);
     }
     if (uri_found && authorization_type_enabled) {
       j_return = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_client, "client"));
@@ -3900,7 +3967,7 @@ static json_t * check_client_valid(struct _oidc_config * config,
         error_description = "redirect_uri invalid";
       }
       if (!authorization_type_enabled) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid - oidc - Error, authorization type %d is not enabled for the client '%s', origin: %s", authorization_type, client_id, ip_source);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid - oidc - Error, authorization type '%s' is not enabled for the client '%s', origin: %s", get_authorization_type_name(authorization_type), client_id, ip_source);
         error_description = "authorization type invalid";
       }
       if (uri_found && authorization_type_enabled) {
