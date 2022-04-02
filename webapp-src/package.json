@@ -4,9 +4,8 @@
 	"description": "Glewlwyd SSO Server Front-end Application",
 	"main": "index.js",
 	"scripts": {
-		"dev": "webpack-dev-server --config webpack.dev.config.js",
-		"build": "webpack",
-		"polyfill": "webpack --config webpack.polyfill.config.js"
+		"dev": "webpack serve --config ./webpack.config.js --mode development",
+		"build": "webpack"
 	},
 	"author": "",
 	"license": "MIT",
@@ -23,13 +22,10 @@
 		"@babel/preset-env": "^7.16.11",
 		"@babel/preset-react": "^7.16.7",
 		"babel-loader": "^8.2.4",
-		"chokidar": "^3.5.2",
-		"core-js": "^3.8.2",
-		"css-loader": "^5.0.1",
-		"style-loader": "^2.0.0",
-		"uglifyjs-webpack-plugin": "^1.3.0",
-		"webpack": "^4.43.0",
-		"webpack-cli": "^4.9.1",
-		"webpack-dev-server": "^4.4.0"
+		"qrcode-generator": "^1.4.4",
+		"react-hot-loader": "^4.13.0",
+		"webpack": "^5.70.0",
+		"webpack-cli": "^4.9.2",
+		"webpack-dev-server": "^4.7.4"
 	}
 }
