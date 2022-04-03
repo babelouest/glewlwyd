@@ -1603,7 +1603,7 @@ static char * get_client_dpop_nonce(struct _oidc_config * config, const char * c
 /**
  * Parse the DPoP header and extract its jkt value if the DPoP is valid
  */
-static json_t * oidc_verify_dpop_proof(struct _oidc_config * config, const struct _u_request * request, const char * htm, const char * url, json_t * j_client, const char * access_token) {
+static json_t * oidc_verify_dpop_proof(struct _oidc_config * config, const struct _u_request * request, const char * htm, const char * url, json_t * j_client, const char * access_token, const char * previous_jkt) {
   json_t * j_return = NULL, * j_header = NULL, * j_claims = NULL;
   const char * dpop_header;
   jwt_t * dpop_jwt = NULL;
@@ -1684,6 +1684,11 @@ static json_t * oidc_verify_dpop_proof(struct _oidc_config * config, const struc
               j_return = json_pack("{si}", "result", G_ERROR);
               break;
             }
+            if (previous_jkt != NULL && 0 != o_strcmp(previous_jkt, jkt)) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "oidc_verify_dpop_proof - Invalid");
+              j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+              break;
+            }
             if (access_token != NULL) {
               hash_data.data = (unsigned char*)access_token;
               hash_data.size = o_strlen(access_token);
@@ -1734,9 +1739,10 @@ static json_t * oidc_verify_dpop_proof(struct _oidc_config * config, const struc
     }
     r_jwt_free(dpop_jwt);
   } else {
-    if (!json_string_null_or_empty(json_object_get(config->j_params, "oauth-dpop-dpop_bound_access_tokens-property")) &&
+    if ((!json_string_null_or_empty(json_object_get(config->j_params, "oauth-dpop-dpop_bound_access_tokens-property")) &&
         !json_string_null_or_empty(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "oauth-dpop-dpop_bound_access_tokens-property")))) &&
-        is_true(json_string_value(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "oauth-dpop-dpop_bound_access_tokens-property")))))) {
+        is_true(json_string_value(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "oauth-dpop-dpop_bound_access_tokens-property")))))) ||
+        previous_jkt != NULL) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc_verify_dpop_proof - DPoP required for client %s", json_string_value(json_object_get(j_client, "client_id")));
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     } else {
@@ -1765,17 +1771,13 @@ static int check_dpop_jti(struct _oidc_config * config,
   int res, ret;
 
   j_query = json_pack("{sss[s]s{ssssss}}",
-                      "table",
-                      GLEWLWYD_PLUGIN_OIDC_TABLE_DPOP,
+                      "table", GLEWLWYD_PLUGIN_OIDC_TABLE_DPOP,
                       "columns",
                         "gpod_id",
                       "where",
-                        "gpod_plugin_name",
-                        config->name,
-                        "gpod_jti_hash",
-                        jti_hash,
-                        "gpod_client_id",
-                        client_id);
+                        "gpod_plugin_name", config->name,
+                        "gpod_jti_hash", jti_hash,
+                        "gpod_client_id", client_id);
   res = h_select(config->glewlwyd_config->glewlwyd_config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
@@ -1788,21 +1790,14 @@ static int check_dpop_jti(struct _oidc_config * config,
         iat_clause = msprintf("%"JSON_INTEGER_FORMAT, iat);
       }
       j_query = json_pack("{sss{sssssssssssss{ss}}}",
-                          "table",
-                          GLEWLWYD_PLUGIN_OIDC_TABLE_DPOP,
+                          "table", GLEWLWYD_PLUGIN_OIDC_TABLE_DPOP,
                           "values",
-                            "gpod_plugin_name",
-                            config->name,
-                            "gpod_client_id",
-                            client_id,
-                            "gpod_jti_hash",
-                            jti_hash,
-                            "gpod_jkt",
-                            jkt,
-                            "gpod_htm",
-                            htm,
-                            "gpod_htu",
-                            htu,
+                            "gpod_plugin_name", config->name,
+                            "gpod_client_id", client_id,
+                            "gpod_jti_hash", jti_hash,
+                            "gpod_jkt", jkt,
+                            "gpod_htm", htm,
+                            "gpod_htu", htu,
                             "gpod_iat",
                               "raw",
                               iat_clause);
@@ -3957,7 +3952,7 @@ static json_t * check_client_valid(struct _oidc_config * config,
         }
         uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
       } else if (authorization_type & GLEWLWYD_AUTHORIZATION_TYPE_CIBA_FLAG) {
-        if (!json_array_has_string(json_object_get(json_object_get(j_client, "client"), "authorization_type"), "urn:openid:params:grant-type:ciba")) {
+        if (!json_array_has_string(json_object_get(json_object_get(j_client, "client"), "authorization_type"), GLEWLWYD_CIBA_GRANT_TYPE)) {
           authorization_type_enabled = 0;
         }
         uri_found = 1; // bypass redirect_uri check for client credentials since it's not needed
@@ -6676,6 +6671,7 @@ static json_t * convert_client_registration_to_glewlwyd(json_t * j_registration)
                  0 == o_strcmp(json_string_value(j_element), "refresh_token") ||
                  0 == o_strcmp(json_string_value(j_element), "delete_token") ||
                  0 == o_strcmp(json_string_value(j_element), "device_authorization") ||
+                 0 == o_strcmp(json_string_value(j_element), GLEWLWYD_CIBA_GRANT_TYPE) ||
                  0 == o_strcmp(json_string_value(j_element), "none")) {
         json_array_append_new(json_object_get(j_client, "authorization_type"), json_copy(j_element));
       }
@@ -8228,7 +8224,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
                         j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username);
                         if (check_result_value(j_user, G_OK)) {
                           time(&now);
-                          j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token", json_object_get(j_client, "client"), NULL);
+                          j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token", json_object_get(j_client, "client"), NULL, json_string_value(json_object_get(json_array_get(j_result, 0), "dpop_jkt")));
                           if (check_result_value(j_jkt, G_OK)) {
                             if (json_object_get(j_jkt, "jkt") == NULL ||
                                 (res = check_dpop_jti(config,
@@ -9641,7 +9637,7 @@ static int callback_check_registration(const struct _u_request * request, struct
       j_introspect = get_token_metadata(config, access_token, "access_token", NULL);
       if (check_result_value(j_introspect, G_OK) && json_object_get(json_object_get(j_introspect, "token"), "active") == json_true() && check_scope_list(config->client_register_scope, json_string_value(json_object_get(json_object_get(j_introspect, "token"), "scope")))) {
         if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
-          j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, "/register", json_object_get(j_introspect, "client"), access_token);
+          j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, "/register", json_object_get(j_introspect, "client"), access_token, NULL);
           if (check_result_value(j_dpop, G_OK)) {
             if ((res = check_dpop_jti(config,
                                       json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "jti")),
@@ -9868,7 +9864,7 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
           json_object_get(json_object_get(j_introspect, "token"), "active") == json_true() &&
           check_scope_list(config->introspect_revoke_scope, json_string_value(json_object_get(json_object_get(j_introspect, "token"), "scope")))) {
         if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
-          j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, htu, json_object_get(j_introspect, "client"), access_token);
+          j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, htu, json_object_get(j_introspect, "client"), access_token, NULL);
           if (check_result_value(j_dpop, G_OK)) {
             if ((res = check_dpop_jti(config,
                                       json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "jti")),
@@ -10057,7 +10053,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
     if (check_result_value(j_client, G_OK) && is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
       j_code = validate_authorization_code(config, code, client_id, redirect_uri, code_verifier, ip_source);
       if (check_result_value(j_code, G_OK)) {
-        j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token", json_object_get(j_client, "client"), NULL);
+        j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token", json_object_get(j_client, "client"), NULL, json_string_value(json_object_get(json_object_get(j_code, "code"), "dpop_jkt")));
         if (check_result_value(j_jkt, G_OK)) {
           if (json_object_get(j_jkt, "jkt") == NULL ||
               (res = check_dpop_jti(config,
@@ -10478,7 +10474,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
             }
           }
           free_string_array(scope_array);
-          j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token", json_object_get(j_client, "client"), NULL);
+          j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token", json_object_get(j_client, "client"), NULL, NULL);
           if (check_result_value(j_jkt, G_OK)) {
             if (json_object_get(j_jkt, "jkt") == NULL ||
                 (res = check_dpop_jti(config,
@@ -10842,7 +10838,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
           ulfius_set_json_body_response(response, 400, json_body);
           json_decref(json_body);
         } else {
-          j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token", json_object_get(j_client, "client"), NULL);
+          j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token", json_object_get(j_client, "client"), NULL, NULL);
           if (check_result_value(j_jkt, G_OK)) {
             if (json_object_get(j_jkt, "jkt") == NULL ||
                 (res = check_dpop_jti(config,
@@ -11185,7 +11181,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
       break;
     }
 
-    j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/par", json_object_get(j_client, "client"), NULL);
+    j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/par", json_object_get(j_client, "client"), NULL, NULL);
     if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
       json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
@@ -11898,7 +11894,7 @@ static int process_ciba_request (const struct _u_request * request,
     }
 
     // Validate DPoP
-    j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/ciba", json_object_get(j_client, "client"), NULL);
+    j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/ciba", json_object_get(j_client, "client"), NULL, NULL);
     if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
       y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
       j_return = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
@@ -12478,7 +12474,7 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
         break;
       }
 
-      j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token", json_object_get(j_client, "client"), NULL);
+      j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token", json_object_get(j_client, "client"), NULL, json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "dpop_jkt")));
       
       if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
         if (json_object_get(j_jkt, "nonce") != NULL) {
@@ -13158,7 +13154,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
         }
         j_client_for_sub = json_incref(json_object_get(j_client, "client"));
       }
-      j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token", json_object_get(j_client, "client"), NULL);
+      j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token", json_object_get(j_client, "client"), NULL, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "dpop_jkt")));
       if (check_result_value(j_jkt, G_OK)) {
         if (json_object_get(j_jkt, "jkt") == NULL ||
             ((res = check_dpop_jti(config,
@@ -13532,7 +13528,7 @@ static int callback_check_userinfo(const struct _u_request * request, struct _u_
     j_introspect = get_token_metadata(config, access_token, "access_token", NULL);
     if (check_result_value(j_introspect, G_OK) && json_object_get(json_object_get(j_introspect, "token"), "active") == json_true()) {
       if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
-        j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, "/userinfo", json_object_get(j_introspect, "client"), access_token);
+        j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, "/userinfo", json_object_get(j_introspect, "client"), access_token, NULL);
         if (check_result_value(j_dpop, G_OK)) {
           if (json_object_get(j_dpop, "jkt") == NULL ||
               (res = check_dpop_jti(config,
@@ -13617,7 +13613,7 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
     j_introspect = get_token_metadata(config, access_token, "access_token", NULL);
     if (check_result_value(j_introspect, G_OK) && json_object_get(json_object_get(j_introspect, "token"), "active") == json_true() && check_scope_list(NULL, json_string_value(json_object_get(json_object_get(j_introspect, "token"), "scope")))) {
       if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
-        j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, (request->url_path + 2 + o_strlen(config->glewlwyd_config->glewlwyd_config->api_prefix) + o_strlen(config->name)), json_object_get(j_introspect, "client"), access_token);
+        j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, (request->url_path + 2 + o_strlen(config->glewlwyd_config->glewlwyd_config->api_prefix) + o_strlen(config->name)), json_object_get(j_introspect, "client"), access_token, NULL);
         if (check_result_value(j_dpop, G_OK)) {
           if (json_object_get(j_dpop, "jkt") == NULL ||
               (res = check_dpop_jti(config,
