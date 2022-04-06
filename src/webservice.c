@@ -2545,7 +2545,7 @@ int callback_glewlwyd_user_get_client_grant_list (const struct _u_request * requ
   if (check_result_value(j_client_grant_list, G_OK)) {
     ulfius_set_json_body_response(response, 200, json_object_get(j_client_grant_list, "client_grant"));
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_get_session_list - Error get_user_session_list");
+    y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_get_client_grant_list - Error get_user_session_list");
     response->status = 500;
   }
   json_decref(j_client_grant_list);
