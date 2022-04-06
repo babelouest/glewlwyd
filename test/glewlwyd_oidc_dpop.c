@@ -3435,7 +3435,7 @@ START_TEST(test_oidc_dpop_ciba_poll_ok)
   ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
   ck_assert_str_eq(auth_req_id, json_string_value(json_object_get(j_body, "auth_req_id")));
   ck_assert_ptr_ne(NULL, json_string_value(json_object_get(j_body, "access_token")));
-  ck_assert_str_eq("bearer", json_string_value(json_object_get(j_body, "token_type")));
+  ck_assert_str_eq("DPoP", json_string_value(json_object_get(j_body, "token_type")));
   ck_assert_ptr_ne(NULL, json_string_value(json_object_get(j_body, "refresh_token")));
   ck_assert_ptr_ne(NULL, json_string_value(json_object_get(j_body, "id_token")));
   ck_assert_ptr_ne(NULL, jwt = r_jwt_quick_parse(json_string_value(json_object_get(j_body, "access_token")), R_PARSE_NONE, 0));
@@ -3534,7 +3534,7 @@ START_TEST(test_oidc_dpop_ciba_poll_with_jkt_ok)
   ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
   ck_assert_str_eq(auth_req_id, json_string_value(json_object_get(j_body, "auth_req_id")));
   ck_assert_ptr_ne(NULL, json_string_value(json_object_get(j_body, "access_token")));
-  ck_assert_str_eq("bearer", json_string_value(json_object_get(j_body, "token_type")));
+  ck_assert_str_eq("DPoP", json_string_value(json_object_get(j_body, "token_type")));
   ck_assert_ptr_ne(NULL, json_string_value(json_object_get(j_body, "refresh_token")));
   ck_assert_ptr_ne(NULL, json_string_value(json_object_get(j_body, "id_token")));
   ck_assert_ptr_ne(NULL, jwt = r_jwt_quick_parse(json_string_value(json_object_get(j_body, "access_token")), R_PARSE_NONE, 0));
@@ -3640,7 +3640,7 @@ START_TEST(test_oidc_dpop_ciba_poll_with_jkt_and_dpop_ok)
   ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
   ck_assert_str_eq(auth_req_id, json_string_value(json_object_get(j_body, "auth_req_id")));
   ck_assert_ptr_ne(NULL, json_string_value(json_object_get(j_body, "access_token")));
-  ck_assert_str_eq("bearer", json_string_value(json_object_get(j_body, "token_type")));
+  ck_assert_str_eq("DPoP", json_string_value(json_object_get(j_body, "token_type")));
   ck_assert_ptr_ne(NULL, json_string_value(json_object_get(j_body, "refresh_token")));
   ck_assert_ptr_ne(NULL, json_string_value(json_object_get(j_body, "id_token")));
   ck_assert_ptr_ne(NULL, jwt = r_jwt_quick_parse(json_string_value(json_object_get(j_body, "access_token")), R_PARSE_NONE, 0));
