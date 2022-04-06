@@ -2171,25 +2171,41 @@ static int check_auth_type_device_code(const struct _u_request * request, struct
                                                                   now,
                                                                   ip_source)) != NULL) {
                           if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION, json_integer_value(json_object_get(j_refresh_token, "gpgr_id")), username, client_id, scope, now, issued_for, u_map_get_case(request->map_header, "user-agent"), access_token) == G_OK) {
-                            j_body = json_pack("{sssssssisIss}",
-                                               "token_type",
-                                               "bearer",
-                                               "access_token",
-                                               access_token,
-                                               "refresh_token",
-                                               refresh_token,
-                                               "iat",
-                                               now,
-                                               "expires_in",
-                                               config->access_token_duration,
-                                               "scope",
-                                               scope);
-                            ulfius_set_json_body_response(response, 200, j_body);
-                            json_decref(j_body);
-                            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_REFRESH_TOKEN, 1, "plugin", config->name, "response_type", "device_code", NULL);
-                            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_REFRESH_TOKEN, 1, "plugin", config->name, NULL);
-                            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 1, "plugin", config->name, "response_type", "device_code", NULL);
-                            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 1, "plugin", config->name, NULL);
+                            j_query = json_pack("{sss{si}s{sO}}",
+                                                "table",
+                                                GLEWLWYD_PLUGIN_OAUTH2_TABLE_DEVICE_AUTHORIZATION,
+                                                "set",
+                                                  "gpgda_status", 2,
+                                                "where",
+                                                  "gpgda_id", json_object_get(json_array_get(j_result, 0), "gpgda_id"));
+                            res = h_update(config->glewlwyd_config->glewlwyd_config->conn, j_query, NULL);
+                            json_decref(j_query);
+                            if (res == H_OK) {
+                              j_body = json_pack("{sssssssisIss}",
+                                                 "token_type",
+                                                 "bearer",
+                                                 "access_token",
+                                                 access_token,
+                                                 "refresh_token",
+                                                 refresh_token,
+                                                 "iat",
+                                                 now,
+                                                 "expires_in",
+                                                 config->access_token_duration,
+                                                 "scope",
+                                                 scope);
+                              ulfius_set_json_body_response(response, 200, j_body);
+                              json_decref(j_body);
+                              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_REFRESH_TOKEN, 1, "plugin", config->name, "response_type", "device_code", NULL);
+                              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_REFRESH_TOKEN, 1, "plugin", config->name, NULL);
+                              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 1, "plugin", config->name, "response_type", "device_code", NULL);
+                              config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_USER_ACCESS_TOKEN, 1, "plugin", config->name, NULL);
+                            } else {
+                              y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oauth2 - Error executing j_query (4)");
+                              j_body = json_pack("{ss}", "error", "server_error");
+                              ulfius_set_json_body_response(response, 500, j_body);
+                              json_decref(j_body);
+                            }
                           } else {
                             y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_device_code - oauth2 - Error serialize_access_token");
                             j_body = json_pack("{ss}", "error", "server_error");
