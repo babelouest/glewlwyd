@@ -101,7 +101,7 @@ static json_t * get_cert_from_file_path(const char * path) {
           if (gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER) >= 0 || gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_PEM) >= 0) {
             if (!gnutls_x509_crt_get_dn(cert, issued_for, &issued_for_len)) {
               if (gnutls_x509_crt_export2(cert, GNUTLS_X509_FMT_PEM, &export_dat) >= 0) {
-                j_return = json_pack("{sis{ss%ss%}}", "result", G_OK, "certificate", "dn", issued_for, issued_for_len, "x509", export_dat.data, export_dat.size);
+                j_return = json_pack("{sis{ss%ss%}}", "result", G_OK, "certificate", "dn", issued_for, issued_for_len, "x509", export_dat.data, (size_t)export_dat.size);
                 gnutls_free(export_dat.data);
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error gnutls_x509_crt_export2");
