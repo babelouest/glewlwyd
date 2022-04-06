@@ -213,6 +213,7 @@ START_TEST(test_oauth2_refresh_manage_delete_ok)
   ck_assert_int_gt(json_array_size(j_body), 0);
   ck_assert_ptr_eq(json_object_get(json_array_get(j_body, 0), "enabled"), json_false());
 
+  sleep(1);
   res = run_simple_test(NULL, "POST", url, NULL, NULL, NULL, &body, 400, NULL, NULL, NULL);
   free(url);
   u_map_clean(&body);
@@ -264,6 +265,7 @@ START_TEST(test_oauth2_refresh_manage_delete_all_ok)
   ck_assert_int_eq(resp.status, 200);
   ulfius_clean_response(&resp);
 
+  sleep(1);
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
   o_free(user_req.http_verb);
