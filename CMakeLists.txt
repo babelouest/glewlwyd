@@ -29,7 +29,7 @@ set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, Openid Connect, multiple
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(ORCANIA_VERSION_REQUIRED "2.2.2")
 set(YDER_VERSION_REQUIRED "1.4.15")
-set(ULFIUS_VERSION_REQUIRED "2.7.8")
+set(ULFIUS_VERSION_REQUIRED "2.7.9")
 set(HOEL_VERSION_REQUIRED "1.4.20")
 set(RHONABWY_VERSION_REQUIRED "1.1.4")
 set(IDDAWC_VERSION_REQUIRED "1.1.2")
