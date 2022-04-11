@@ -353,7 +353,7 @@ START_TEST(test_oidc_par_invalid_parameters)
                                 U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/par"),
                                 U_OPT_NONE);
   ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
-  ck_assert_int_eq(400, resp.status);
+  ck_assert_int_eq(403, resp.status);
   ulfius_clean_response(&resp);
   
   ulfius_init_response(&resp);
