@@ -545,9 +545,11 @@ int main (int argc, char ** argv) {
   if (config->add_x_frame_option_header_deny) {
     u_map_put(config->instance->default_headers, "X-Frame-Options", "deny");
   }
+  config->instance->allowed_post_processor = U_POST_PROCESS_URL_ENCODED;
 
   // metrics endpoint configuration
   if (config->metrics_endpoint) {
+    config->instance_metrics->allowed_post_processor = U_POST_PROCESS_NONE;
     if (config->metrics_endpoint_admin_session) {
       ulfius_add_endpoint_by_val(config->instance_metrics, "GET", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session, (void*)config);
     }
