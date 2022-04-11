@@ -760,7 +760,7 @@ If this is set to true, clients will be allowed to add a `authorization_details`
 
 If this is set to true, clients will be allowed to add a `authorization_details` in authorization request objects without encryption, signed requests are mandatory though.
 
-### Client authorization_data_types property
+### Client authorization_details_types property
 
 The client property that will store the authorization requests types allowed for this client
 
