@@ -6990,7 +6990,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
   json_t * j_error = NULL, * j_return, * j_element = NULL, * j_resp = NULL, * j_info = r_library_info_json_t(), * j_response_modes_supported = NULL;
   size_t index = 0;
   jwks_t * jwks = NULL;
-  const char * resource = NULL, * response_mode = NULL;
+  const char * resource = NULL, * response_mode = NULL, * key = NULL;
   struct _u_request req;
   struct _u_response resp;
   memset(&req, 0, sizeof(struct _u_request));
@@ -7595,6 +7595,24 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         json_object_set_new(j_registration, "backchannel_logout_session_required", json_string("1"));
       } else {
         json_object_set_new(j_registration, "backchannel_logout_session_required", json_string("0"));
+      }
+    }
+    if (json_object_get(j_registration, "authorization_details_types") != NULL) {
+      if (!json_is_array(json_object_get(j_registration, "authorization_details_types"))) {
+        j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "authorization_details_types is not a JSON array");
+        break;
+      }
+      json_array_foreach(json_object_get(j_registration, "authorization_details_types"), index, j_element) {
+        if (!json_string_length(j_element)) {
+          j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "authorization_details_types must contain JSON strings");
+          break;
+        }
+      }
+      json_object_foreach(json_object_get(config->j_params, "rar-types"), key, j_element) {
+        if (!json_array_has_string(json_object_get(j_registration, "authorization_details_types"), key)) {
+          j_error = json_pack("{ssss++}", "error", "invalid_client_metadata", "error_description", "authorization_details_type '", key, "' doesn't exist");
+          break;
+        }
       }
     }
   } while(0);
@@ -14005,6 +14023,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
             if ((j_authorization_details == NULL || request_par) && json_object_get(json_object_get(j_request, "request"), "authorization_details") != NULL) {
               if (json_object_get(config->j_params, "oauth-rar-allowed") == json_true()) {
                 if ((json_integer_value(json_object_get(j_request, "type")) != R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT && json_object_get(config->j_params, "rar-allow-auth-unencrypted") == json_true()) || json_integer_value(json_object_get(j_request, "type")) == R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT) {
+                  json_decref(j_authorization_details);
                   j_authorization_details = json_incref(json_object_get(json_object_get(j_request, "request"), "authorization_details"));
                 } else {
                   y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - unencrypted authorization_details fobidden, origin: %s", ip_source);
@@ -14199,6 +14218,8 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         }
         u_map_put(&map_redirect, "authorization_details", rar_list);
         u_map_put(&map_redirect, "plugin", config->name);
+        u_map_put(&map_login, "authorization_details", rar_list);
+        u_map_put(&map_login, "plugin", config->name);
         o_free(rar_list);
       }
 
