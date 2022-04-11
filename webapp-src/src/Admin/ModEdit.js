@@ -25,7 +25,7 @@ let defaultParamClient = {
   "encrypt_id_token":{"multiple":false},
   "encrypt_refresh_token":{"multiple":false},
   "resource":{"multiple":true},
-  "authorization_data_types":{"multiple":true},
+  "authorization_details_types":{"multiple":true},
   "tls_client_auth_san_dns":{"multiple":false},
   "tls_client_auth_san_uri":{"multiple":false},
   "tls_client_auth_san_ip":{"multiple":false},

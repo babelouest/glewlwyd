@@ -245,7 +245,7 @@
       "list": true,
       "label": "admin.client-resource"
     },{
-      "name": "authorization_data_types",
+      "name": "authorization_details_types",
       "list": true,
       "edit": true,
       "forceShow": true,

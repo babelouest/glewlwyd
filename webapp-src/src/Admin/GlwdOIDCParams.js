@@ -104,7 +104,7 @@ let defaultParam = {
   "resource-scope-and-client-property":false,
   "resource-change-allowed":false,
   "oauth-rar-allowed":false,
-  "rar-types-client-property":"authorization_data_types",
+  "rar-types-client-property":"authorization_details_types",
   "rar-allow-auth-unsigned":false,
   "rar-allow-auth-unencrypted":true,
   "rar-types":{},
