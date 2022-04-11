@@ -1,5 +1,5 @@
 GLEWLWYD_VERSION=$(shell curl -s https://api.github.com/repos/babelouest/glewlwyd/releases/latest | grep tag_name | cut -d '"' -f 4 | cut -c 2-)
-ALPINE_VERSION=3.15.2
+ALPINE_VERSION=3.15.4
 
 all: build
 
