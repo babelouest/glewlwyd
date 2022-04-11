@@ -35,7 +35,7 @@ The following OpenID Connect and OAuth2 functionalities are currently supported:
 - [OAuth 2.0 Demonstration of Proof-of-Possession at the Application Layer (DPoP) Draft 07](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-dpop-07)
 - [JWT Response for OAuth Token Introspection Draft 12](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-jwt-introspection-response-12)
 - [Resource Indicators for OAuth 2.0](https://tools.ietf.org/html/rfc8707)
-- [OAuth 2.0 Rich Authorization Requests Draft 03](https://www.ietf.org/archive/id/draft-ietf-oauth-rar-03.html)
+- [OAuth 2.0 Rich Authorization Requests Draft 11](https://www.ietf.org/archive/id/draft-ietf-oauth-rar-11.html)
 - [OAuth 2.0 Pushed Authorization Requests](https://datatracker.ietf.org/doc/html/rfc9126)
 - [OAuth 2.0 JWT Secured Authorization Request (JAR)](https://datatracker.ietf.org/doc/html/rfc9101)
 - [OpenID Connect Client-Initiated Backchannel Authentication Flow](https://openid.net/specs/openid-client-initiated-backchannel-authentication-core-1_0.html)
