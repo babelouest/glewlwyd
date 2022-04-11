@@ -217,7 +217,7 @@ START_TEST(test_oidc_rar_add_plugin_unsigned)
                                   "introspection-revocation-allowed", json_true(),
                                   "introspection-revocation-allow-target-client", json_true(),
                                   "oauth-rar-allowed", json_true(),
-                                  "rar-types-client-property", "authorization_data_types",
+                                  "rar-types-client-property", "authorization_details_types",
                                   "rar-allow-auth-unsigned", json_true(),
                                   "rar-allow-auth-unencrypted", json_true(),
                                   "rar-types",
@@ -308,7 +308,7 @@ START_TEST(test_oidc_rar_add_plugin_signed_unencrypted)
                                   "client-jwks-parameter", CLIENT_JWKS_PARAM,
                                   "client-jwks_uri-parameter", CLIENT_JWKS_URI_PARAM,
                                   "oauth-rar-allowed", json_true(),
-                                  "rar-types-client-property", "authorization_data_types",
+                                  "rar-types-client-property", "authorization_details_types",
                                   "rar-allow-auth-unsigned", json_false(),
                                   "rar-allow-auth-unencrypted", json_true(),
                                   "rar-types",
@@ -400,7 +400,7 @@ START_TEST(test_oidc_rar_add_plugin_signed_encrypted)
                                   "client-jwks-parameter", CLIENT_JWKS_PARAM,
                                   "client-jwks_uri-parameter", CLIENT_JWKS_URI_PARAM,
                                   "oauth-rar-allowed", json_true(),
-                                  "rar-types-client-property", "authorization_data_types",
+                                  "rar-types-client-property", "authorization_details_types",
                                   "rar-allow-auth-unsigned", json_false(),
                                   "rar-allow-auth-unencrypted", json_false(),
                                   "rar-types",
@@ -1135,7 +1135,7 @@ END_TEST
 
 START_TEST(test_oidc_rar_add_client_pubkey)
 {
-  json_t * j_client = json_pack("{ss ss so s[s] s[ssss] s[s] ss so s[sss]}", "client_id", CLIENT_PUBKEY_ID, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, CLIENT_PUBKEY_PARAM, pubkey_1_pem, "enabled", json_true(), "authorization_data_types", RAR1, RAR2, RAR3);
+  json_t * j_client = json_pack("{ss ss so s[s] s[ssss] s[s] ss so s[sss]}", "client_id", CLIENT_PUBKEY_ID, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, CLIENT_PUBKEY_PARAM, pubkey_1_pem, "enabled", json_true(), "authorization_details_types", RAR1, RAR2, RAR3);
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -1518,7 +1518,7 @@ int main(int argc, char *argv[])
   ulfius_send_http_request(&client_req, &client_resp);
   j_client = ulfius_get_json_body_response(&client_resp, NULL);
   ulfius_clean_response(&client_resp);
-  json_object_set_new(j_client, "authorization_data_types", json_pack("[sss]", RAR1, RAR2, RAR3));
+  json_object_set_new(j_client, "authorization_details_types", json_pack("[sss]", RAR1, RAR2, RAR3));
   json_array_append_new(json_object_get(j_client, "authorization_type"), json_string("device_authorization"));
   ulfius_set_request_properties(&client_req,
                                 U_OPT_HTTP_URL, SERVER_URI "/client/" CLIENT,
@@ -1586,7 +1586,7 @@ int main(int argc, char *argv[])
   run_simple_test(&user_req, "DELETE", url, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
   o_free(url);
 
-  json_object_set_new(j_client, "authorization_data_types", json_pack("[]"));
+  json_object_set_new(j_client, "authorization_details_types", json_pack("[]"));
   json_array_remove(json_object_get(j_client, "authorization_type"), json_array_size(json_object_get(j_client, "authorization_type"))-1);
   ulfius_set_request_properties(&client_req,
                                 U_OPT_HTTP_URL, SERVER_URI "/client/" CLIENT,
