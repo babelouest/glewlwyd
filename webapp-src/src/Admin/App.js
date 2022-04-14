@@ -128,6 +128,8 @@ class App extends Component {
         this.setState({lang: i18next.language});
       } else if (message.type === 'reloadMods') {
         this.reloadMods();
+      } else if (message.type === 'reloadApp') {
+        this.reloadApp();
       } else if (message.type === 'delete') {
         if (message.role === 'user') {
           var confirmModal = {
@@ -617,6 +619,19 @@ class App extends Component {
     }).fail((err) => {
       messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
     });
+  }
+
+  reloadApp() {
+    this.fetchModTypes();
+    this.fetchUserMods();
+    this.fetchUserMiddlewareMods();
+    this.fetchClientMods();
+    this.fetchSchemeMods();
+    this.fetchPlugins();
+    this.fetchApiKeys();
+    this.fetchUsers();
+    this.fetchClients();
+    this.fetchScopes();
   }
 
   fetchApi() {

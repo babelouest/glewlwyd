@@ -36,6 +36,10 @@ class Navbar extends Component {
     this.setState({curNav: page, navDropdown: navDropdown});
   }
 
+  reloadApp(e) {
+    messageDispatcher.sendMessage('App', {type: "reloadApp"});
+  }
+
   toggleLogin() {
     if (this.state.loggedIn) {
       apiManager.glewlwydRequest("/auth/?username=" + encodeURIComponent(this.state.profileList[0].username), "DELETE")
@@ -252,6 +256,9 @@ class Navbar extends Component {
         <form className="form-inline my-2 my-lg-0">
           <div className="btn-group" role="group">
             <div className="btn-group" role="group">
+              <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.reloadApp(e)} title={i18next.t("login.btn-reload")}>
+                <i className="fas fa-refresh"></i>
+              </button>
               <button className="btn btn-secondary dropdown-toggle" type="button" id="dropdownLang" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <i className="fas fa-language"></i>
               </button>
