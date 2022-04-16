@@ -12,6 +12,7 @@ The `"Third dose Release"`
 - Improve OIDC DPoP implementation to [Draft 07](https://www.ietf.org/archive/id/draft-ietf-oauth-dpop-07.html#name-document-history)
 - Front-end: Remove polyfill build script
 - Fix Rich Authorization Requests and update its implementation to [Draft 11](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-rar-11)
+- UI Improvements
 
 ## 2.6.2
 
