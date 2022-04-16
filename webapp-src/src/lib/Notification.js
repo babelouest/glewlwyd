@@ -7,8 +7,7 @@ class Notification extends Component {
     super(props);
     this.state = {
       message: [],
-      counter: 0,
-      loggedIn: props.loggedIn
+      counter: 0
     }
 
     messageDispatcher.subscribe('Notification', (message) => {
@@ -16,27 +15,22 @@ class Notification extends Component {
         var myMessage = this.state.message;
         myMessage.push({type: message.type, message: message.message, id: this.state.counter});
         this.setState({message: myMessage, counter: this.state.counter+1}, () => {
-          this.timeoutClose(this.state.counter-1);
+          var autohide = message.autohide;
+          if (autohide === undefined) {
+            autohide = true;
+          }
+          $("#toast-"+(this.state.counter-1)).toast({animation: true, autohide: autohide, delay: 5000}).toast('show');
         });
       }
     });
     
     this.close = this.close.bind(this);
-    this.timeoutClose = this.timeoutClose.bind(this);
   }
   
-  componentWillReceiveProps(nextProps) {
-    this.setState({
-      loggedIn: nextProps.loggedIn
-    });
+  static getDerivedStateFromProps(props, state) {
+    return props;
   }
 
-  timeoutClose(id) {
-    setTimeout(() => {
-      this.close(id);
-    }, 5000);
-  }
-  
   close(id) {
     var myMessages = this.state.message;
     myMessages.forEach((message, index) => {
@@ -49,67 +43,34 @@ class Notification extends Component {
   
   render() {
     var toast = [];
-    var showMessage = this.state.loggedIn;
-    this.state.message.forEach((message) => {
-      if (message.type === "danger" || message.type === "warning") {
-        showMessage = true;
+    this.state.message.forEach((message, index) => {
+      var icon;
+      if (message.type === "success") {
+        icon = <i className="fa fa-check-square-o text-success btn-icon"></i>;
+      } else if (message.type === "danger") {
+        icon = <i className="fa fa-exclamation-circle text-danger btn-icon"></i>;
+      } else if (message.type === "warning") {
+        icon = <i className="fa fa-exclamation-triangle text-warning btn-icon"></i>;
+      } else { // info
+        icon = <i className="fa fa-info-circle btn-icon text-info"></i>;
       }
-    });
-    if (showMessage) {
-      this.state.message.forEach((message, index) => {
-        var badge;
-        if (message.type === "success") {
-          badge = 
-            <strong className="mr-auto">
-              <span className="badge badge-success btn-icon">
-                <i className="fas fa-check-circle"></i>
-              </span>
-              Glewlwyd
-            </strong>
-        } else if (message.type === "danger") {
-          badge = 
-            <strong className="mr-auto">
-              <span className="badge badge-danger btn-icon">
-                <i className="fas fa-exclamation-circle"></i>
-              </span>
-              Glewlwyd
-            </strong>
-        } else if (message.type === "warning") {
-          badge = 
-            <strong className="mr-auto">
-              <span className="badge badge-warning btn-icon">
-                <i className="fas fa-exclamation-circle"></i>
-              </span>
-              Glewlwyd
-            </strong>
-        } else { // info
-          badge = 
-            <strong className="mr-auto">
-              <span className="badge badge-info btn-icon">
-                <i className="fas fa-info-circle"></i>
-              </span>
-              Glewlwyd
-            </strong>
-        }
-        toast.push(
-          <div className="toast-container" style={{top: (95 + (index * 90)), right: 5}} key={index}>
-            <div className="toast glwd-toast" role="alert" aria-live="assertive" aria-atomic="true">
-              <div className="toast-header">
-                {badge}
-                <button type="button" className="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close" onClick={() => this.close(message.id)}>
-                  <span aria-hidden="true">&times;</span>
-                </button>
-              </div>
-              <div className="toast-body">
-                {message.message}
-              </div>
-            </div>
+      toast.push(
+        <div className="toast" role="alert" aria-live="assertive" aria-atomic="true" key={index} id={"toast-"+message.id}>
+          <div className="toast-header">
+            {icon}
+            <strong className="mr-auto">Esras</strong>
+            <button type="button" className="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close" onClick={(e) => this.close(message.id)}>
+              <span aria-hidden="true">&times;</span>
+            </button>
           </div>
-        );
-      });
-    }
+          <div className="toast-body">
+            {message.message}
+          </div>
+        </div>
+      );
+    });
     return (
-      <div>
+      <div className="position-fixed" style={{top: 45, right: 20, zIndex: 9999}}>
         {toast}
       </div>
     );
