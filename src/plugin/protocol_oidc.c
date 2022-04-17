@@ -6985,12 +6985,13 @@ static int is_redirect_uri_valid_without_credential(const char * redirect_uri) {
 }
 
 static json_t * is_client_registration_valid(struct _oidc_config * config, json_t * j_registration, const char * client_id) {
-  json_t * j_error = NULL, * j_return, * j_element = NULL, * j_resp = NULL, * j_info = r_library_info_json_t(), * j_response_modes_supported = NULL;
+  json_t * j_error = NULL, * j_return, * j_element = NULL, * j_authorization_details, * j_resp = NULL, * j_info = r_library_info_json_t(), * j_response_modes_supported = NULL;
   size_t index = 0;
   jwks_t * jwks = NULL;
   const char * resource = NULL, * response_mode = NULL, * key = NULL;
   struct _u_request req;
   struct _u_response resp;
+  int auth_detail_found;
   memset(&req, 0, sizeof(struct _u_request));
   memset(&resp, 0, sizeof(struct _u_response));
 
@@ -7605,10 +7606,14 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
           j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "authorization_details_types must contain JSON strings");
           break;
         }
-      }
-      json_object_foreach(json_object_get(config->j_params, "rar-types"), key, j_element) {
-        if (!json_array_has_string(json_object_get(j_registration, "authorization_details_types"), key)) {
-          j_error = json_pack("{ssss++}", "error", "invalid_client_metadata", "error_description", "authorization_details_type '", key, "' doesn't exist");
+        auth_detail_found = 0;
+        json_object_foreach(json_object_get(config->j_params, "rar-types"), key, j_authorization_details) {
+          if (0 == o_strcmp(key, json_string_value(j_element))) {
+            auth_detail_found = 1;
+          }
+        }
+        if (!auth_detail_found) {
+          j_error = json_pack("{ssss++}", "error", "invalid_client_metadata", "error_description", "authorization_details_type '", json_string_value(j_element), "' doesn't exist");
           break;
         }
       }
