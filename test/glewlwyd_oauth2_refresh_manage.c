@@ -200,6 +200,8 @@ START_TEST(test_oauth2_refresh_manage_delete_ok)
   ck_assert_int_eq(resp.status, 200);
   ulfius_clean_response(&resp);
 
+  usleep(50000);
+
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
   o_free(user_req.http_verb);
@@ -264,7 +266,8 @@ START_TEST(test_oauth2_refresh_manage_delete_all_ok)
   ck_assert_int_eq(resp.status, 200);
   ulfius_clean_response(&resp);
 
-  sleep(1);
+  usleep(50000);
+
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
   o_free(user_req.http_verb);

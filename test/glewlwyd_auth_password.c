@@ -295,7 +295,7 @@ END_TEST
 START_TEST(test_glwd_auth_password_max_age_scope_set_OK)
 {
   char * url = msprintf("%s/scope/%s", SERVER_URI, SCOPE_MAX_AGE);
-  json_t * j_parameters = json_pack("{ss ss ss so si}", "name", SCOPE_MAX_AGE, "display_name", "Glewlwyd profile", "description", "Access to the user's profile API", "password_required", json_true(), "password_max_age", 1);
+  json_t * j_parameters = json_pack("{ss ss ss so si}", "name", SCOPE_MAX_AGE, "display_name", "Glewlwyd profile", "description", "Access to the user's profile API", "password_required", json_true(), "password_max_age", 4);
   
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", url, NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   o_free(url);
@@ -340,7 +340,7 @@ START_TEST(test_glwd_auth_password_max_age)
   json_decref(j_body);
   ulfius_clean_response(&scope_resp);
   
-  sleep(2);
+  sleep(6);
   
   // Second check for scope 3, password_authenticated should be false
   ulfius_init_response(&scope_resp);

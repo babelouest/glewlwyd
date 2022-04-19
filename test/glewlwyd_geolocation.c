@@ -517,14 +517,14 @@ START_TEST(test_glwd_geolocation_incomplete)
   ulfius_clean_request(&req);
 
   ulfius_init_request(&admin_req_copy);
+  ck_assert_int_eq(ulfius_copy_request(&admin_req_copy, &admin_req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&admin_req_copy, U_OPT_HTTP_VERB, "GET",
+                                                                  U_OPT_HTTP_URL, SERVER_URI "/delegate/" USER1 "/profile/session",
+                                                                  U_OPT_URL_PARAMETER, "pattern", user_agent,
+                                                                  U_OPT_NONE), U_OK);
   
   do {
     ulfius_init_response(&resp);
-    ck_assert_int_eq(ulfius_copy_request(&admin_req_copy, &admin_req), U_OK);
-    ck_assert_int_eq(ulfius_set_request_properties(&admin_req_copy, U_OPT_HTTP_VERB, "GET",
-                                                                    U_OPT_HTTP_URL, SERVER_URI "/delegate/" USER1 "/profile/session",
-                                                                    U_OPT_URL_PARAMETER, "pattern", user_agent,
-                                                                    U_OPT_NONE), U_OK);
     ck_assert_int_eq(ulfius_send_http_request(&admin_req_copy, &resp), U_OK);
     ck_assert_int_eq(resp.status, 200);
     ck_assert_ptr_ne(NULL, j_response = ulfius_get_json_body_response(&resp, NULL));
@@ -548,16 +548,16 @@ START_TEST(test_glwd_geolocation_incomplete)
   ulfius_clean_request(&req);
 
   ulfius_init_request(&admin_req_copy);
+  ck_assert_int_eq(ulfius_copy_request(&admin_req_copy, &admin_req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&admin_req_copy, U_OPT_HTTP_VERB, "GET",
+                                                                  U_OPT_HTTP_URL, SERVER_URI "/delegate/" USER1 "/profile/session",
+                                                                  U_OPT_URL_PARAMETER, "pattern", user_agent,
+                                                                  U_OPT_NONE), U_OK);
   
   json_object_set_new(j_geoloc, "city", json_string(GEOLOCATION_CITY));
   counter = 10;
   do {
     ulfius_init_response(&resp);
-    ck_assert_int_eq(ulfius_copy_request(&admin_req_copy, &admin_req), U_OK);
-    ck_assert_int_eq(ulfius_set_request_properties(&admin_req_copy, U_OPT_HTTP_VERB, "GET",
-                                                                    U_OPT_HTTP_URL, SERVER_URI "/delegate/" USER1 "/profile/session",
-                                                                    U_OPT_URL_PARAMETER, "pattern", user_agent,
-                                                                    U_OPT_NONE), U_OK);
     ck_assert_int_eq(ulfius_send_http_request(&admin_req_copy, &resp), U_OK);
     ck_assert_int_eq(resp.status, 200);
     ck_assert_ptr_ne(NULL, j_response = ulfius_get_json_body_response(&resp, NULL));
@@ -581,17 +581,17 @@ START_TEST(test_glwd_geolocation_incomplete)
   ulfius_clean_request(&req);
 
   ulfius_init_request(&admin_req_copy);
+  ck_assert_int_eq(ulfius_copy_request(&admin_req_copy, &admin_req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&admin_req_copy, U_OPT_HTTP_VERB, "GET",
+                                                                  U_OPT_HTTP_URL, SERVER_URI "/delegate/" USER1 "/profile/session",
+                                                                  U_OPT_URL_PARAMETER, "pattern", user_agent,
+                                                                  U_OPT_NONE), U_OK);
   
   json_object_set_new(j_geoloc, "country_name", json_string(GEOLOCATION_COUNTRY));
   json_object_del(j_geoloc, "city");
   counter = 10;
   do {
     ulfius_init_response(&resp);
-    ck_assert_int_eq(ulfius_copy_request(&admin_req_copy, &admin_req), U_OK);
-    ck_assert_int_eq(ulfius_set_request_properties(&admin_req_copy, U_OPT_HTTP_VERB, "GET",
-                                                                    U_OPT_HTTP_URL, SERVER_URI "/delegate/" USER1 "/profile/session",
-                                                                    U_OPT_URL_PARAMETER, "pattern", user_agent,
-                                                                    U_OPT_NONE), U_OK);
     ck_assert_int_eq(ulfius_send_http_request(&admin_req_copy, &resp), U_OK);
     ck_assert_int_eq(resp.status, 200);
     ck_assert_ptr_ne(NULL, j_response = ulfius_get_json_body_response(&resp, NULL));
@@ -615,17 +615,17 @@ START_TEST(test_glwd_geolocation_incomplete)
   ulfius_clean_request(&req);
 
   ulfius_init_request(&admin_req_copy);
+  ck_assert_int_eq(ulfius_copy_request(&admin_req_copy, &admin_req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&admin_req_copy, U_OPT_HTTP_VERB, "GET",
+                                                                  U_OPT_HTTP_URL, SERVER_URI "/delegate/" USER1 "/profile/session",
+                                                                  U_OPT_URL_PARAMETER, "pattern", user_agent,
+                                                                  U_OPT_NONE), U_OK);
   
   json_object_del(j_geoloc, "country_name");
   json_object_del(j_geoloc, "city");
   counter = 10;
   do {
     ulfius_init_response(&resp);
-    ck_assert_int_eq(ulfius_copy_request(&admin_req_copy, &admin_req), U_OK);
-    ck_assert_int_eq(ulfius_set_request_properties(&admin_req_copy, U_OPT_HTTP_VERB, "GET",
-                                                                    U_OPT_HTTP_URL, SERVER_URI "/delegate/" USER1 "/profile/session",
-                                                                    U_OPT_URL_PARAMETER, "pattern", user_agent,
-                                                                    U_OPT_NONE), U_OK);
     ck_assert_int_eq(ulfius_send_http_request(&admin_req_copy, &resp), U_OK);
     ck_assert_int_eq(resp.status, 200);
     ck_assert_ptr_ne(NULL, j_response = ulfius_get_json_body_response(&resp, NULL));
@@ -643,6 +643,7 @@ START_TEST(test_glwd_geolocation_incomplete)
   ulfius_clean_request(&admin_req_copy);
 
   json_decref(j_body);
+  json_decref(j_geoloc);
 }
 END_TEST
 

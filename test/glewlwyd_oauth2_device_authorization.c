@@ -615,6 +615,7 @@ START_TEST(test_oauth2_device_authorization_device_verification_code_replay_inva
   
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(200, resp.status);
+  json_decref(j_resp);
   ck_assert_ptr_ne(j_resp = ulfius_get_json_body_response(&resp, NULL), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "access_token"), NULL);
   ck_assert_ptr_ne(json_object_get(j_resp, "refresh_token"), NULL);
