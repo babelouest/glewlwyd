@@ -61,6 +61,9 @@ class PluginEdit extends Component {
     this.changeDisplayName = this.changeDisplayName.bind(this);
     this.changeType = this.changeType.bind(this);
     this.changeParameters = this.changeParameters.bind(this);
+    this.exportRecord = this.exportRecord.bind(this);
+    this.importRecord = this.importRecord.bind(this);
+    this.getImportPlugin = this.getImportPlugin.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -116,6 +119,41 @@ class PluginEdit extends Component {
     this.setState({mod: mod, parametersValid: parametersValid});
   }
   
+  exportRecord() {
+    var exported = Object.assign({}, this.state.mod);
+    var $anchor = $("#plugin-download");
+    $anchor.attr("href", "data:application/octet-stream;base64,"+btoa(JSON.stringify(exported)));
+    $anchor.attr("download", (exported.name)+".json");
+    $anchor[0].click();
+  }
+  
+  importRecord() {
+    $("#plugin-upload").click();
+  }
+
+  getImportPlugin(e) {
+    var file = e.target.files[0];
+    var fr = new FileReader();
+    fr.onload = (ev2) => {
+      try {
+        let imported = JSON.parse(ev2.target.result);
+        console.log(imported);
+        if (!this.state.add) {
+          if (this.state.mod.name) {
+            imported.name = this.state.mod.name;
+          }
+          if (this.state.mod.module) {
+            imported.module = this.state.mod.module;
+          }
+        }
+        this.setState({mod: imported});
+      } catch (err) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.import-error")});
+      }
+    };
+    fr.readAsText(file);
+  }
+  
 	render() {
     var typeList = [];
     var modType;
@@ -162,6 +200,14 @@ class PluginEdit extends Component {
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title" id="confirmModalLabel">{this.state.title}</h5>
+              <div className="btn-group btn-icon-right" role="group">
+                <button disabled={this.state.add} type="button" className="btn btn-secondary" onClick={this.exportRecord} title={i18next.t("admin.export")}>
+                  <i className="fas fa-save"></i>
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={this.importRecord} title={i18next.t("admin.import")}>
+                  <i className="fas fa-upload"></i>
+                </button>
+              </div>
               <button type="button" className="close" aria-label={i18next.t("modal.close")} onClick={(e) => this.closeModal(e, false)}>
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -204,6 +250,11 @@ class PluginEdit extends Component {
             </div>
           </div>
         </div>
+        <input type="file"
+               className="upload"
+               id="plugin-upload"
+               onChange={this.getImportPlugin} />
+        <a className="upload" id="plugin-download" />
       </div>
 		);
 	}

@@ -147,3 +147,7 @@
 .glwd-toast {
   opacity: 0.9; important!
 }
+
+.upload {
+  display:none;
+}

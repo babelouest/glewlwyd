@@ -24,6 +24,9 @@ class ScopeEdit extends Component {
     this.addScheme = this.addScheme.bind(this);
     this.handleRemoveScheme = this.handleRemoveScheme.bind(this);
     this.handleSelectSchemeRequired = this.handleSelectSchemeRequired.bind(this);
+    this.exportRecord = this.exportRecord.bind(this);
+    this.importRecord = this.importRecord.bind(this);
+    this.getImportScope = this.getImportScope.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -148,6 +151,38 @@ class ScopeEdit extends Component {
     this.setState({scope: scope});
   }
 
+  exportRecord() {
+    var exported = Object.assign({}, this.state.scope);
+    var $anchor = $("#scope-download");
+    $anchor.attr("href", "data:application/octet-stream;base64,"+btoa(JSON.stringify(exported)));
+    $anchor.attr("download", (exported.name)+".json");
+    $anchor[0].click();
+  }
+  
+  importRecord() {
+    $("#scope-upload").click();
+  }
+
+  getImportScope(e) {
+    var file = e.target.files[0];
+    var fr = new FileReader();
+    fr.onload = (ev2) => {
+      try {
+        let imported = JSON.parse(ev2.target.result);
+        console.log(imported);
+        if (!this.state.add) {
+          if (this.state.scope.name) {
+            imported.name = this.state.scope.name;
+          }
+        }
+        this.setState({scope: imported});
+      } catch (err) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.import-error")});
+      }
+    };
+    fr.readAsText(file);
+  }
+  
 	render() {
     var groupList = [];
     var i = 0;
@@ -253,6 +288,14 @@ class ScopeEdit extends Component {
           <div className="modal-content">
             <div className="modal-header">
               <h5 className="modal-title" id="confirmModalLabel">{this.state.title}</h5>
+              <div className="btn-group btn-icon-right" role="group">
+                <button disabled={this.state.add} type="button" className="btn btn-secondary" onClick={this.exportRecord} title={i18next.t("admin.export")}>
+                  <i className="fas fa-save"></i>
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={this.importRecord} title={i18next.t("admin.import")}>
+                  <i className="fas fa-upload"></i>
+                </button>
+              </div>
               <button type="button" className="close" aria-label={i18next.t("modal.close")} onClick={(e) => this.closeModal(e, false)}>
                 <span aria-hidden="true">&times;</span>
               </button>
@@ -317,6 +360,11 @@ class ScopeEdit extends Component {
             </div>
           </div>
         </div>
+        <input type="file"
+               className="upload"
+               id="scope-upload"
+               onChange={this.getImportScope} />
+        <a className="upload" id="scope-download" />
       </div>
 		);
 	}

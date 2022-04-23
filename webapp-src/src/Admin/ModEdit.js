@@ -184,6 +184,10 @@ class ModEdit extends Component {
       typeInvalidMessage: false,
       hasError: false
     });
+
+    this.exportRecord = this.exportRecord.bind(this);
+    this.importRecord = this.importRecord.bind(this);
+    this.getImportMod = this.getImportMod.bind(this);
   }
     
   closeModal(e, result) {
@@ -254,6 +258,41 @@ class ModEdit extends Component {
     var mod = this.state.mod;
     mod.forbid_user_reset_credential = !mod.forbid_user_reset_credential;
     this.setState({mod: mod});
+  }
+  
+  exportRecord() {
+    var exported = Object.assign({}, this.state.mod);
+    var $anchor = $("#mod-download");
+    $anchor.attr("href", "data:application/octet-stream;base64,"+btoa(JSON.stringify(exported)));
+    $anchor.attr("download", (exported.name)+".json");
+    $anchor[0].click();
+  }
+  
+  importRecord() {
+    $("#mod-upload").click();
+  }
+
+  getImportMod(e) {
+    var file = e.target.files[0];
+    var fr = new FileReader();
+    fr.onload = (ev2) => {
+      try {
+        let imported = JSON.parse(ev2.target.result);
+        console.log(imported);
+        if (!this.state.add) {
+          if (this.state.mod.name) {
+            imported.name = this.state.mod.name;
+          }
+          if (this.state.mod.module) {
+            imported.module = this.state.mod.module;
+          }
+        }
+        this.setState({mod: imported});
+      } catch (err) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.import-error")});
+      }
+    };
+    fr.readAsText(file);
   }
   
 	render() {
@@ -348,57 +387,70 @@ class ModEdit extends Component {
       </div>
     }
 		return (
-    <div className="modal fade" id="editModModal" tabIndex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
-      <div className="modal-dialog modal-lg" role="document">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title" id="confirmModalLabel">{this.state.title}</h5>
-            <button type="button" className="close" aria-label={i18next.t("modal.close")} onClick={(e) => this.closeModal(e, false)}>
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div className="modal-body">
-            <form className="needs-validation" noValidate>
-              <div className="form-group">
-                <div className="input-group mb-3">
-                  <div className="input-group-prepend">
-                    <label className="input-group-text" htmlFor="mod-type">{i18next.t("admin.mod-type")}</label>
-                  </div>
-                  {modType}
-                  <span className={"error-input" + (this.state.typeInvalidMessage?"":" hidden")}>{this.state.typeInvalidMessage}</span>
-                </div>
+      <div className="modal fade" id="editModModal" tabIndex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div className="modal-dialog modal-lg" role="document">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="confirmModalLabel">{this.state.title}</h5>
+              <div className="btn-group btn-icon-right" role="group">
+                <button disabled={this.state.add} type="button" className="btn btn-secondary" onClick={this.exportRecord} title={i18next.t("admin.export")}>
+                  <i className="fas fa-save"></i>
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={this.importRecord} title={i18next.t("admin.import")}>
+                  <i className="fas fa-upload"></i>
+                </button>
               </div>
-              <div className="form-group">
-                <div className="input-group mb-3">
-                  <div className="input-group-prepend">
-                    <label className="input-group-text" htmlFor="mod-name">{i18next.t("admin.mod-name")}</label>
+              <button type="button" className="close" aria-label={i18next.t("modal.close")} onClick={(e) => this.closeModal(e, false)}>
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div className="modal-body">
+              <form className="needs-validation" noValidate>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-type">{i18next.t("admin.mod-type")}</label>
+                    </div>
+                    {modType}
+                    <span className={"error-input" + (this.state.typeInvalidMessage?"":" hidden")}>{this.state.typeInvalidMessage}</span>
                   </div>
-                  <input type="text" className={"form-control" + (this.state.nameInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("admin.mod-name-ph")} maxLength="128" value={this.state.mod.name||""} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
-                  <span className={"error-input" + (this.state.nameInvalid?"":" hidden")}>{this.state.nameInvalidMessage}</span>
                 </div>
-              </div>
-              <div className="form-group">
-                <div className="input-group mb-3">
-                  <div className="input-group-prepend">
-                    <label className="input-group-text" htmlFor="mod-display-name">{i18next.t("admin.mod-display-name")}</label>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-name">{i18next.t("admin.mod-name")}</label>
+                    </div>
+                    <input type="text" className={"form-control" + (this.state.nameInvalid?" is-invalid":"")} id="mod-name" placeholder={i18next.t("admin.mod-name-ph")} maxLength="128" value={this.state.mod.name||""} onChange={(e) => this.changeName(e)} disabled={!this.state.add} />
+                    <span className={"error-input" + (this.state.nameInvalid?"":" hidden")}>{this.state.nameInvalidMessage}</span>
                   </div>
-                  <input type="text" className="form-control" id="mod-display-name" placeholder={i18next.t("admin.mod-display-name-ph")} maxLength="256" value={this.state.mod.display_name||""} onChange={(e) => this.changeDisplayName(e)}/>
                 </div>
-              </div>
-              {readonly}
-              {multiplePasswords}
-              {schemeParams}
-              <ModEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} miscConfig={this.state.miscConfig} />
-            </form>
-          </div>
-          <div className="modal-footer">
-            {hasError}
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.closeModal(e, false)}>{i18next.t("modal.close")}</button>
-            <button type="button" className="btn btn-primary" onClick={(e) => this.closeModal(e, true)}>{i18next.t("modal.ok")}</button>
+                <div className="form-group">
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <label className="input-group-text" htmlFor="mod-display-name">{i18next.t("admin.mod-display-name")}</label>
+                    </div>
+                    <input type="text" className="form-control" id="mod-display-name" placeholder={i18next.t("admin.mod-display-name-ph")} maxLength="256" value={this.state.mod.display_name||""} onChange={(e) => this.changeDisplayName(e)}/>
+                  </div>
+                </div>
+                {readonly}
+                {multiplePasswords}
+                {schemeParams}
+                <ModEditParameters mod={this.state.mod} role={this.state.role} check={this.state.check} config={this.state.config} miscConfig={this.state.miscConfig} />
+              </form>
+            </div>
+            <div className="modal-footer">
+              {hasError}
+              <button type="button" className="btn btn-secondary" onClick={(e) => this.closeModal(e, false)}>{i18next.t("modal.close")}</button>
+              <button type="button" className="btn btn-primary" onClick={(e) => this.closeModal(e, true)}>{i18next.t("modal.ok")}</button>
+            </div>
           </div>
         </div>
+        <input type="file"
+               className="upload"
+               id="mod-upload"
+               onChange={this.getImportMod} />
+        <a className="upload" id="mod-download" />
       </div>
-    </div>
 		);
 	}
 }

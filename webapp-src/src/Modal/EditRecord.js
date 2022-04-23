@@ -44,6 +44,9 @@ class EditRecord extends Component {
     this.removeImage = this.removeImage.bind(this);
     this.setPwd = this.setPwd.bind(this);
     this.hasMultiplePasswords = this.hasMultiplePasswords.bind(this);
+    this.exportRecord = this.exportRecord.bind(this);
+    this.importRecord = this.importRecord.bind(this);
+    this.getImportFile = this.getImportFile.bind(this);
 
     if (this.state.add) {
       this.createData();
@@ -727,6 +730,44 @@ class EditRecord extends Component {
     return false;
   }
   
+  exportRecord() {
+    var exported = Object.assign({}, this.state.data);
+    delete exported.password;
+    delete exported.confirmPassword;
+    var $anchor = $("#record-download");
+    $anchor.attr("href", "data:application/octet-stream;base64,"+btoa(JSON.stringify(exported)));
+    $anchor.attr("download", (exported.username||exported.client_id)+".json");
+    $anchor[0].click();
+  }
+  
+  importRecord() {
+    $("#record-upload").click();
+  }
+
+  getImportFile(e) {
+    var file = e.target.files[0];
+    var fr = new FileReader();
+    fr.onload = (ev2) => {
+      try {
+        let imported = JSON.parse(ev2.target.result);
+        if (!this.state.add) {
+          if (this.state.data.username) {
+            imported.username = this.state.data.username;
+          }
+          if (this.state.data.client_id) {
+            imported.client_id = this.state.data.client_id;
+          }
+        }
+        delete imported.password;
+        delete imported.confirmPassword;
+        this.setState({data: imported});
+      } catch (err) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.import-error")});
+      }
+    };
+    fr.readAsText(file);
+  }
+  
 	render() {
     var editLines = [], sourceLine = [], curSource = false, hasError;
     this.state.pattern.forEach((pat, index) => {
@@ -765,29 +806,42 @@ class EditRecord extends Component {
       </div>
     </div>
 		return (
-    <div className="modal fade" id="editRecordModal" tabIndex="-1" role="dialog" aria-labelledby="editRecordModalLabel" aria-hidden="true">
-      <div className="modal-dialog modal-lg" role="document">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title" id="editRecordModalLabel">{this.state.title}</h5>
-            <button type="button" className="close" aria-label={i18next.t("modal.close")} onClick={(e) => this.closeModal(e, false)}>
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div className="modal-body">
-            <form className="needs-validation" noValidate>
-              {sourceJsx}
-              {editLines}
-            </form>
-          </div>
-          <div className="modal-footer">
-            {hasError}
-            <button type="button" className="btn btn-secondary" onClick={(e) => this.closeModal(e, false)}>{i18next.t("modal.close")}</button>
-            <button type="button" className="btn btn-primary " onClick={(e) => this.closeModal(e, true)} disabled={!this.state.data || !this.state.data.source || this.state.data.source.readonly}>{i18next.t("modal.ok")}</button>
+      <div className="modal fade" id="editRecordModal" tabIndex="-1" role="dialog" aria-labelledby="editRecordModalLabel" aria-hidden="true">
+        <div className="modal-dialog modal-lg" role="document">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="editRecordModalLabel">{this.state.title}</h5>
+              <div className="btn-group btn-icon-right" role="group">
+                <button disabled={this.state.add} type="button" className="btn btn-secondary" onClick={this.exportRecord} title={i18next.t("admin.export")}>
+                  <i className="fas fa-save"></i>
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={this.importRecord} title={i18next.t("admin.import")}>
+                  <i className="fas fa-upload"></i>
+                </button>
+              </div>
+              <button type="button" className="close" aria-label={i18next.t("modal.close")} onClick={(e) => this.closeModal(e, false)}>
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div className="modal-body">
+              <form className="needs-validation" noValidate>
+                {sourceJsx}
+                {editLines}
+              </form>
+            </div>
+            <div className="modal-footer">
+              {hasError}
+              <button type="button" className="btn btn-secondary" onClick={(e) => this.closeModal(e, false)}>{i18next.t("modal.close")}</button>
+              <button type="button" className="btn btn-primary " onClick={(e) => this.closeModal(e, true)} disabled={!this.state.data || !this.state.data.source || this.state.data.source.readonly}>{i18next.t("modal.ok")}</button>
+            </div>
           </div>
         </div>
+        <input type="file"
+               className="upload"
+               id="record-upload"
+               onChange={this.getImportFile} />
+        <a className="upload" id="record-download" />
       </div>
-    </div>
 		);
 	}
 }
