@@ -4,7 +4,7 @@
  *
  * Copyright 2020-2022 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20220423
+ * Version 20220425
  *
  * The MIT License (MIT)
  *
@@ -302,9 +302,6 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
     file_requested = o_strdup(request->http_url);
     url_dup_save = file_requested;
 
-    while (file_requested[0] == '/') {
-      file_requested++;
-    }
     file_requested += o_strlen((config->url_prefix));
     while (file_requested[0] == '/') {
       file_requested++;
