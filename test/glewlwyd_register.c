@@ -466,7 +466,7 @@ START_TEST(test_glwd_register_add_mod_noverify_session_expired)
                               "display_name", MOD_DISPLAY_NAME,
                               "parameters",
                                 "session-key", SESSION_KEY,
-                                "session-duration", 1,
+                                "session-duration", 4,
                                 "scope",
                                   SCOPE,
                                   SCOPE_SCHEME,
@@ -1473,7 +1473,7 @@ START_TEST(test_glwd_register_noverify_session_expired)
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" MOD_NAME "/profile/password", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
-  sleep(2);
+  sleep(6);
   
   // Set password after session expiration
   j_body = json_pack("{ss}", "password", NEW_PASSWORD);
@@ -1517,7 +1517,7 @@ START_TEST(test_glwd_register_verify_without_username_code_expired)
   ck_assert_int_eq(run_simple_test(NULL, "PUT", SERVER_URI "/" MOD_NAME "/verify", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
-  sleep(2);
+  sleep(6);
   
   // Send verification code after code expiration
   j_body = json_pack("{ssss}", "email", NEW_EMAIL, "code", manager.mail_data);
