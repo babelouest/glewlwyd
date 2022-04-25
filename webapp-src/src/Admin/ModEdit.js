@@ -394,7 +394,7 @@ class ModEdit extends Component {
               <h5 className="modal-title" id="confirmModalLabel">{this.state.title}</h5>
               <div className="btn-group btn-icon-right" role="group">
                 <button disabled={this.state.add} type="button" className="btn btn-secondary" onClick={this.exportRecord} title={i18next.t("admin.export")}>
-                  <i className="fas fa-save"></i>
+                  <i className="fas fa-download"></i>
                 </button>
                 <button type="button" className="btn btn-secondary" onClick={this.importRecord} title={i18next.t("admin.import")}>
                   <i className="fas fa-upload"></i>
