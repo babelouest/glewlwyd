@@ -86,46 +86,48 @@ static json_t * get_cert_from_file_path(const char * path) {
   if (fl != NULL) {
     fseek(fl, 0, SEEK_END);
     len = ftell(fl);
-    cert_content = o_malloc(len);
-    if (cert_content != NULL) {
-      if (fseek(fl, 0, SEEK_SET) == -1) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error fseek");
-        j_return = json_pack("{si}", "result", G_ERROR);
-      } else if (fread(cert_content, 1, len, fl) != len) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error fread");
-        j_return = json_pack("{si}", "result", G_ERROR);
-      } else {
-        cert_dat.data = (unsigned char *)cert_content;
-        cert_dat.size = len;
-        if (!gnutls_x509_crt_init(&cert)) {
-          if (gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER) >= 0 || gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_PEM) >= 0) {
-            if (!gnutls_x509_crt_get_dn(cert, issued_for, &issued_for_len)) {
-              if (gnutls_x509_crt_export2(cert, GNUTLS_X509_FMT_PEM, &export_dat) >= 0) {
-                j_return = json_pack("{sis{ss%ss%}}", "result", G_OK, "certificate", "dn", issued_for, issued_for_len, "x509", export_dat.data, (size_t)export_dat.size);
-                gnutls_free(export_dat.data);
+    if (len) {
+      cert_content = o_malloc(len);
+      if (cert_content != NULL) {
+        if (fseek(fl, 0, SEEK_SET) == -1) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error fseek");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        } else if (fread(cert_content, 1, len, fl) != len) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error fread");
+          j_return = json_pack("{si}", "result", G_ERROR);
+        } else {
+          cert_dat.data = (unsigned char *)cert_content;
+          cert_dat.size = len;
+          if (!gnutls_x509_crt_init(&cert)) {
+            if (gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER) >= 0 || gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_PEM) >= 0) {
+              if (!gnutls_x509_crt_get_dn(cert, issued_for, &issued_for_len)) {
+                if (gnutls_x509_crt_export2(cert, GNUTLS_X509_FMT_PEM, &export_dat) >= 0) {
+                  j_return = json_pack("{sis{ss%ss%}}", "result", G_OK, "certificate", "dn", issued_for, issued_for_len, "x509", export_dat.data, (size_t)export_dat.size);
+                  gnutls_free(export_dat.data);
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error gnutls_x509_crt_export2");
+                  j_return = json_pack("{si}", "result", G_ERROR);
+                }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error gnutls_x509_crt_export2");
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error gnutls_x509_crt_get_dn");
                 j_return = json_pack("{si}", "result", G_ERROR);
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error gnutls_x509_crt_get_dn");
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error gnutls_x509_crt_import");
               j_return = json_pack("{si}", "result", G_ERROR);
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error gnutls_x509_crt_import");
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error gnutls_x509_crt_init");
             j_return = json_pack("{si}", "result", G_ERROR);
           }
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error gnutls_x509_crt_init");
-          j_return = json_pack("{si}", "result", G_ERROR);
+          gnutls_x509_crt_deinit(cert);
         }
-        gnutls_x509_crt_deinit(cert);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error o_malloc cert_content");
+        j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
       }
-    } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error o_malloc cert_content");
-      j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
+      o_free(cert_content);
     }
-    o_free(cert_content);
     fclose(fl);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_cert_from_file_path - Error fopen %s", path);
@@ -1028,27 +1030,32 @@ static int validate_safetynet_ca_root(json_t * j_params, gnutls_x509_crt_t cert_
   for (i=1; i<json_array_size(j_header_x5c); i++) {
     j_cert = json_array_get(j_header_x5c, i);
 
-    if ((header_cert_decoded = o_malloc(json_string_length(j_cert))) != NULL) {
-      if (o_base64_decode((const unsigned char *)json_string_value(j_cert), json_string_length(j_cert), header_cert_decoded, &header_cert_decoded_len)) {
-        if (!gnutls_x509_crt_init(&cert_x509[i])) {
-          cert_dat.data = header_cert_decoded;
-          cert_dat.size = header_cert_decoded_len;
-          if ((ret = gnutls_x509_crt_import(cert_x509[i], &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_crt_import: %d", ret);
+    if (!json_string_null_or_empty(j_cert)) {
+      if ((header_cert_decoded = o_malloc(json_string_length(j_cert))) != NULL) {
+        if (o_base64_decode((const unsigned char *)json_string_value(j_cert), json_string_length(j_cert), header_cert_decoded, &header_cert_decoded_len)) {
+          if (!gnutls_x509_crt_init(&cert_x509[i])) {
+            cert_dat.data = header_cert_decoded;
+            cert_dat.size = header_cert_decoded_len;
+            if ((ret = gnutls_x509_crt_import(cert_x509[i], &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_crt_import: %d", ret);
+              ret = G_ERROR;
+            }
+          } else {
+            y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_crt_init");
             ret = G_ERROR;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_crt_init");
+          y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error o_base64_decode x5c leaf");
           ret = G_ERROR;
         }
+        o_free(header_cert_decoded);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error o_base64_decode x5c leaf");
-        ret = G_ERROR;
+        y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error allocating resources for header_cert_decoded");
+        ret = G_ERROR_MEMORY;
       }
-      o_free(header_cert_decoded);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error allocating resources for header_cert_decoded");
-      ret = G_ERROR_MEMORY;
+      y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error invalid x5c leaf");
+      ret = G_ERROR;
     }
   }
 
@@ -1691,6 +1698,11 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
       if (!json_is_string((j_cert = json_array_get(j_header_x5c, 0)))) {
         json_array_append_new(j_error, json_string("response invalid"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error x5c leaf not a string");
+        break;
+      }
+      
+      if (json_string_null_or_empty(j_cert)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error x5c leaf invalid");
         break;
       }
 

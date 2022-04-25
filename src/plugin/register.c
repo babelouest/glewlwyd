@@ -185,7 +185,7 @@ static json_t * register_generate_email_verification_code(struct _register_confi
     json_decref(j_query);
     if (res == H_OK) {
       code_len = json_integer_value(json_object_get(config->j_parameters, "verification-code-length"));
-      if ((code = o_malloc((code_len+1)*sizeof(char))) != NULL) {
+      if ((code = o_malloc((code_len+1))) != NULL) {
         if (rand_code(code, code_len)) {
           if ((code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code)) != NULL) {
             if (rand_string_nonce(token, GLEWLWYD_TOKEN_LENGTH)) {

@@ -59,7 +59,7 @@ char * get_file_content(const char * file_path) {
     fseek (f, 0, SEEK_END);
     length = ftell (f);
     fseek (f, 0, SEEK_SET);
-    buffer = o_malloc((length+1)*sizeof(char));
+    buffer = o_malloc((length+1));
     if (buffer) {
       res = fread (buffer, 1, length, f);
       if (res != length) {

@@ -1898,7 +1898,7 @@ static char * get_sub_public(struct _oidc_config * config, const char * username
     if (json_array_size(j_result)) {
       sub = o_strdup(json_string_value(json_object_get(json_array_get(j_result, 0), "gposi_sub")));
     } else {
-      sub = o_malloc((GLEWLWYD_SUB_LENGTH+1)*sizeof(char));
+      sub = o_malloc((GLEWLWYD_SUB_LENGTH+1));
       if (sub != NULL) {
         *sub = '\0';
         rand_string(sub, GLEWLWYD_SUB_LENGTH);
@@ -1966,7 +1966,7 @@ static char * get_sub_pairwise(struct _oidc_config * config, const char * userna
     if (json_array_size(j_result)) {
       sub = o_strdup(json_string_value(json_object_get(json_array_get(j_result, 0), "gposi_sub")));
     } else {
-      sub = o_malloc((GLEWLWYD_SUB_LENGTH+1)*sizeof(char));
+      sub = o_malloc((GLEWLWYD_SUB_LENGTH+1));
       if (sub != NULL) {
         *sub = '\0';
         rand_string(sub, GLEWLWYD_SUB_LENGTH);
@@ -3067,7 +3067,7 @@ static int serialize_pushed_request_uri(struct _oidc_config * config,
 }
 
 static char * generate_pushed_request_uri(struct _oidc_config * config) {
-  char * request_uri = o_malloc((json_string_length(json_object_get(config->j_params, "oauth-par-request_uri-prefix"))+OIDC_REQUEST_URI_SUFFIX_LENGTH+1)*sizeof(char));
+  char * request_uri = o_malloc((json_string_length(json_object_get(config->j_params, "oauth-par-request_uri-prefix"))+OIDC_REQUEST_URI_SUFFIX_LENGTH+1));
 
   if (request_uri != NULL) {
     if (!json_string_null_or_empty(json_object_get(config->j_params, "oauth-par-request_uri-prefix"))) {
@@ -3702,7 +3702,7 @@ static json_t * serialize_refresh_token(struct _oidc_config * config,
  * Builds an refresh token from the given parameters
  */
 static char * generate_refresh_token() {
-  char * token = o_malloc((OIDC_REFRESH_TOKEN_LENGTH+1)*sizeof(char));
+  char * token = o_malloc((OIDC_REFRESH_TOKEN_LENGTH+1));
 
   if (token != NULL) {
     if (rand_string(token, OIDC_REFRESH_TOKEN_LENGTH) == NULL) {
@@ -4052,7 +4052,7 @@ static json_t * generate_authorization_code(struct _oidc_config * config,
     y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - Error pthread_mutex_lock");
     j_return = json_pack("{si}", "result", G_ERROR);
   } else {
-    if ((code = o_malloc(33*sizeof(char))) != NULL) {
+    if ((code = o_malloc(33)) != NULL) {
       if (rand_string_nonce(code, 32) != NULL) {
         code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code);
         if (code_hash != NULL) {

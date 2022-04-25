@@ -747,7 +747,7 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
   if (pthread_mutex_lock(&config->insert_lock)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oauth2 - Error pthread_mutex_lock");
   } else {
-    code = o_malloc(33*sizeof(char));
+    code = o_malloc(33);
     if (code != NULL) {
       if (rand_string_nonce(code, 32) != NULL) {
         code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code);
