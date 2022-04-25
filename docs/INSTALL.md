@@ -3,6 +3,7 @@
 [![License: CC BY 4.0](https://licensebuttons.net/l/by/4.0/80x15.png)](https://creativecommons.org/licenses/by/4.0/)
 
 1.  [Upgrade Glewlwyd](#upgrade-glewlwyd)
+    * [Upgrade to Glewlwyd 2.7.0](#upgrade-to-glewlwyd-270)
     * [Upgrade to Glewlwyd 2.6.1](#upgrade-to-glewlwyd-261)
     * [Upgrade to Glewlwyd 2.6.0](#upgrade-to-glewlwyd-260)
     * [Upgrade to Glewlwyd 2.5.4](#upgrade-to-glewlwyd-254)
@@ -57,6 +58,30 @@
 
 Glewlwyd upgrades usually come with database changes. It is highly recommended to backup your database before performing the upgrade. You must perform the database upgrades in the correct order. i.e. if you upgrade from Glewlwyd 2.3 to Glewlwyd 2.6, you must first install the 2.4 upgrade, then the 2.5.
 
+### Upgrade to Glewlwyd 2.7.0
+
+If your current version is prior to 2.6.0, first follow the security instructions in the paragraph [Upgrade to Glewlwyd 2.5.0](#upgrade-to-glewlwyd-250).
+
+Some changes were added to the core tables. You must execute the script depending on your database backend:
+
+- MariaDB: [upgrade-2.7-core.mariadb.sql](database/upgrade-2.7-core.mariadb.sql)
+
+```shell
+$ mysql glewlwyd < docs/database/upgrade-2.7-core.mariadb.sql
+```
+
+- SQLite3: [upgrade-2.7-core.sqlite3.sql](database/upgrade-2.7-core.sqlite3.sql)
+
+```shell
+$ sqlite3 /path/to/glewlwyd.db < docs/database/upgrade-2.7-core.sqlite3.sql
+```
+
+- PostgreSQL: [upgrade-2.7-core.postgresql.sql](database/upgrade-2.7-core.postgresql.sql)
+
+```shell
+$ psql glewlwyd < docs/database/upgrade-2.7-core.postgresql.sql
+```
+
 ### Upgrade to Glewlwyd 2.6.1
 
 This is a security release, please upgrade your Glewlwyd version.
@@ -67,7 +92,7 @@ If your current version is prior to 2.5.0, first follow the security instruction
 
 Some changes were added to the core tables. You must execute the script depending on your database backend:
 
-- MariaDB: [upgrade-2.6-core.mariadb.sql](database/upgrade-2.5-core.mariadb.sql)
+- MariaDB: [upgrade-2.6-core.mariadb.sql](database/upgrade-2.6-core.mariadb.sql)
 
 ```shell
 $ mysql glewlwyd < docs/database/upgrade-2.6-core.mariadb.sql
@@ -79,7 +104,7 @@ $ mysql glewlwyd < docs/database/upgrade-2.6-core.mariadb.sql
 $ sqlite3 /path/to/glewlwyd.db < docs/database/upgrade-2.6-core.sqlite3.sql
 ```
 
-- PostgreSQL: [upgrade-2.5-core.postgresql.sql](database/upgrade-2.6-core.postgresql.sql)
+- PostgreSQL: [upgrade-2.6-core.postgresql.sql](database/upgrade-2.6-core.postgresql.sql)
 
 ```shell
 $ psql glewlwyd < docs/database/upgrade-2.6-core.postgresql.sql
