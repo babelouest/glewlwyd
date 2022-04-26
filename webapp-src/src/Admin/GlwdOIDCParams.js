@@ -2918,7 +2918,7 @@ class GlwdOIDCParams extends Component {
                     <input type="text"
                            className="form-control"
                            id="mod-glwd-session-cookie-name"
-                           onChange={(e) => this.changeNumberParam(e, "session-cookie-name")}
+                           onChange={(e) => this.changeParam(e, "session-cookie-name")}
                            value={this.state.mod.parameters["session-cookie-name"]}
                            placeholder={i18next.t("admin.mod-glwd-session-cookie-name-ph")}
                            disabled={!this.state.mod.parameters["session-management-allowed"]} />
