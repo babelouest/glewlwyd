@@ -200,7 +200,7 @@ class App extends Component {
   }
 
   getRegisterConfig() {
-    if (this.state.config.register) {
+    if (this.state.config.register && !this.state.config.params.delegate) {
       this.state.config.register.forEach((register, index) => {
         apiManager.glewlwydRequest("/" + register.name + "/config")
         .then((config) => {
