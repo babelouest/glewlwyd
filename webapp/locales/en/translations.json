@@ -198,6 +198,7 @@
     "export": "Export",
     "import": "Import",
     "import-error": "Error while importing file, The file may be in an incorrect format.",
+    "data-reloaded": "Data reloaded",
     "confirm-delete-user-title": "Delete {{user}}",
     "confirm-delete-user": "Are you sure you want to delete {{- name}} ({{- username}})",
     "edit-user-title": "Update a user",
