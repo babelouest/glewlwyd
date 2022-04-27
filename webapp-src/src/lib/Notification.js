@@ -58,7 +58,7 @@ class Notification extends Component {
         <div className="toast" role="alert" aria-live="assertive" aria-atomic="true" key={index} id={"toast-"+message.id}>
           <div className="toast-header">
             {icon}
-            <strong className="mr-auto">Esras</strong>
+            <strong className="mr-auto">Glewlwyd</strong>
             <button type="button" className="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close" onClick={(e) => this.close(message.id)}>
               <span aria-hidden="true">&times;</span>
             </button>
