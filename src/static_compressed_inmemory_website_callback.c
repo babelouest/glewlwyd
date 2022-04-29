@@ -4,7 +4,7 @@
  *
  * Copyright 2020-2022 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20220428
+ * Version 20220429
  *
  * The MIT License (MIT)
  *
@@ -214,10 +214,10 @@ static int callback_static_file_uncompressed (const struct _u_request * request,
           response->status = 302;
         }
       }
-      o_free(url_dup_save);
     } else {
       response->status = 403;
     }
+    o_free(url_dup_save);
     o_free(file_path);
     free(real_path); // realpath uses malloc
 
