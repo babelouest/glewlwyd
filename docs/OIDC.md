@@ -164,7 +164,7 @@ $ rnbyc -j -g ec256 -k key-1 -a ES256 -p /dev/null
 #### Example 2: Generate a JWKS with a ECDSA 256 private key and a 2048 bits RSA key
 
 ```shell
-$ rnbyc -j -g ecdsa256 -k key-1 -p /dev/null -g rsa2048 -k key-2 -p /dev/null
+$ rnbyc -j -g ec256 -k key-1 -a ES256 -g rsa2048 -k key-2 -a PS256 -p /dev/null
 {
   "keys": [
     {
