@@ -806,18 +806,27 @@ class GlwdOIDCParams extends Component {
           hasError = true;
           errorList["jwks-private"] = i18next.t("admin.mod-glwd-jwks-error");
           errorList["signature"] = true;
-        } else if (this.state.mod.parameters["default-kid"]) {
-          var kidFound = false;
+        } else {
+          if (this.state.mod.parameters["default-kid"]) {
+            var kidFound = false;
+            jwks.keys.forEach((key) => {
+              if (key.kid === this.state.mod.parameters["default-kid"]) {
+                kidFound = true;
+              }
+            });
+            if (!kidFound) {
+              hasError = true;
+              errorList["default-kid"] = i18next.t("admin.mod-glwd-default-kid-error");
+              errorList["signature"] = true;
+            }
+          }
           jwks.keys.forEach((key) => {
-            if (key.kid === this.state.mod.parameters["default-kid"]) {
-              kidFound = true;
+            if (!key.alg) {
+              hasError = true;
+              errorList["jwks-private"] = i18next.t("admin.mod-glwd-jwks-error");
+              errorList["signature"] = true;
             }
           });
-          if (!kidFound) {
-            hasError = true;
-            errorList["default-kid"] = i18next.t("admin.mod-glwd-default-kid-error");
-            errorList["signature"] = true;
-          }
         }
       }
     }
