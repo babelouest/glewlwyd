@@ -215,7 +215,12 @@ static int callback_static_file_uncompressed (const struct _u_request * request,
         }
       }
     } else {
-      response->status = 403;
+      if (((struct _u_compressed_inmemory_website_config *)user_data)->redirect_on_404 == NULL) {
+        ret = U_CALLBACK_IGNORE;
+      } else {
+        ulfius_add_header_to_response(response, "Location", ((struct _u_compressed_inmemory_website_config *)user_data)->redirect_on_404);
+        response->status = 302;
+      }
     }
     o_free(url_dup_save);
     o_free(file_path);
@@ -468,7 +473,12 @@ int callback_static_compressed_inmemory_website (const struct _u_request * reque
                 ret = U_CALLBACK_ERROR;
               }
             } else {
-              response->status = 403;
+              if (((struct _u_compressed_inmemory_website_config *)user_data)->redirect_on_404 == NULL) {
+                ret = U_CALLBACK_IGNORE;
+              } else {
+                ulfius_add_header_to_response(response, "Location", ((struct _u_compressed_inmemory_website_config *)user_data)->redirect_on_404);
+                response->status = 302;
+              }
             }
             o_free(file_path);
             free(real_path); // realpath uses malloc
