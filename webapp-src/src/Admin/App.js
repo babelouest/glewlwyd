@@ -65,7 +65,6 @@ class App extends Component {
     }
 
     this.fetchApi = this.fetchApi.bind(this);
-    this.reloadMods = this.reloadMods.bind(this);
 
     this.fetchUsers = this.fetchUsers.bind(this);
     this.confirmDeleteUser = this.confirmDeleteUser.bind(this);
@@ -126,8 +125,6 @@ class App extends Component {
         });
       } else if (message.type === 'lang') {
         this.setState({lang: i18next.language});
-      } else if (message.type === 'reloadMods') {
-        this.reloadMods();
       } else if (message.type === 'reloadApp') {
         this.reloadApp();
       } else if (message.type === 'delete') {
@@ -604,21 +601,6 @@ class App extends Component {
     if (this.state.config) {
       this.fetchApi();
     }
-  }
-
-  reloadMods() {
-    apiManager.glewlwydRequest("/mod/reload", "PUT")
-    .then(() => {
-      this.fetchModTypes();
-      this.fetchUserMods();
-      this.fetchUserMiddlewareMods();
-      this.fetchClientMods();
-      this.fetchSchemeMods();
-      this.fetchPlugins();
-      this.fetchApiKeys();
-    }).fail((err) => {
-      messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
-    });
   }
 
   reloadApp() {
