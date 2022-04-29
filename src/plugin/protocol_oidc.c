@@ -16199,9 +16199,9 @@ static int build_sign_keys_from_params(struct _oidc_config * config) {
           }
         }
         r_jwk_free(jwk);
-      }
-      if (ret != G_OK) {
-        break;
+        if (ret != G_OK) {
+          break;
+        }
       }
     }
 
