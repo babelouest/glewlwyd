@@ -63,7 +63,7 @@ COPY --from=builder /usr/share/glewlwyd/webapp/config.json /etc/glewlwyd/
 COPY --from=builder /usr/etc/glewlwyd/ /etc/glewlwyd/
 
 RUN rm /usr/share/glewlwyd/webapp/config.json
-RUN ln -s /etc/glewlwyd/config.json /usr/share/glewlwyd/webapp/config.json
+RUN cp /etc/glewlwyd/config.json /usr/share/glewlwyd/webapp/config.json
 
 COPY ["entrypoint.sh", "/"]
 
