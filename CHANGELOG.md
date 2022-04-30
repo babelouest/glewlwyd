@@ -4,6 +4,7 @@
 
 The `"Third dose Release"`
 
+- Bugfixes
 - Fix delegation session
 - Add SMTP configuration template
 - Allow to send an e-mail to an account when a new connection occurs
@@ -14,6 +15,7 @@ The `"Third dose Release"`
 - Fix Rich Authorization Requests and update its implementation to [Draft 11](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-rar-11)
 - Allow Import/Export users/clients/modules/plugins in the UI
 - UI Improvements
+- Security: Fix directory traversal bug (CVE-2022-29967)
 
 ## 2.6.2
 
