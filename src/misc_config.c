@@ -274,6 +274,6 @@ void update_issued_for(struct config_elements * config, const struct _h_connecti
       o_free(thread_config);
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "update_issued_for - Error allocating resoures for thread_config");
+    y_log_message(Y_LOG_LEVEL_ERROR, "update_issued_for - Error allocating resources for thread_config");
   }
 }
