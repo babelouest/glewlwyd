@@ -6,7 +6,7 @@
 
 ## Single-Sign-On (SSO) server with multiple factor authentication for OAuth2 and OpenID Connect authentication
 
-**[Glewlwyd 2.6.2 is available](https://github.com/babelouest/glewlwyd/releases/latest). Feel free to [install](docs/INSTALL.md) it, test it, use it, and [send feedback](https://github.com/babelouest/glewlwyd/issues) if you feel like it!**
+**[Glewlwyd 2.7.0 is available](https://github.com/babelouest/glewlwyd/releases/latest). Feel free to [install](docs/INSTALL.md) it, test it, use it, and [send feedback](https://github.com/babelouest/glewlwyd/issues) if you feel like it!**
 
 **Go to the [online demo](https://babelouest.io/glewlwyd) to test Glewlwyd's features**
 
@@ -116,6 +116,6 @@ Glewlwyd is mostly developped by myself on my free time, with gracious help from
 
 Nevertheless, it hasn't been audited or fully tested by external developpers.
 
-Glewlwyd can take a central place in a system where applications and environments need authentication and authorization, be aware of the risks.
+Glewlwyd can take a central place in a system where applications and environments need authentication and authorization, be aware of the risks: bugs, non discovered vulnerabilities, etc.
 
 It's highly recommended to follow the documentation and enable only the features you intend to use.
