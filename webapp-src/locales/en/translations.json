@@ -1149,7 +1149,7 @@
     "confirm-remove-misc-smtp-message": "Are you sure you want to remove this SMTP configurations?",
     "success-api-delete-misc-smtp": "Configuration removed",
     "error-api-delete-misc-smtp": "Error while removing SMTP configurations",
-    "misc-send-mail-on-new-connexion": "Send an e-mail on a new connexion from a new device",
+    "misc-send-mail-on-new-connexion": "Send an e-mail on a new connection from a new device",
     "modal-misc-mail-on-connexion-title": "E-mail send configuration",
     "smtp-config": "SMTP Configuration",
     "smtp-config-none": "none",
