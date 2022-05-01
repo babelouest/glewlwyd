@@ -1,5 +1,9 @@
 # Glewlwyd Changelog
 
+## 2.7.1
+
+- Allow to disable static files server
+
 ## 2.7.0
 
 The `"Third dose Release"`
