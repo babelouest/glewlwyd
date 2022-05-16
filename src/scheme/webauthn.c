@@ -1264,7 +1264,7 @@ static json_t * check_attestation_apple(json_t * j_params, cbor_item_t * auth_da
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_apple - Error gnutls_x509_crt_import: %d", ret);
         break;
       }
-      
+
       if (gnutls_pubkey_init(&pubkey)) {
         json_array_append_new(j_error, json_string("check_attestation_apple - Error gnutls_pubkey_init"));
         break;
@@ -1694,13 +1694,13 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error parsing x5c JSON");
         break;
       }
-      
+
       if (!json_is_string((j_cert = json_array_get(j_header_x5c, 0)))) {
         json_array_append_new(j_error, json_string("response invalid"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error x5c leaf not a string");
         break;
       }
-      
+
       if (json_string_null_or_empty(j_cert)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error x5c leaf invalid");
         break;
@@ -1734,7 +1734,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error gnutls_pcert_import_x509_raw: %d", ret);
         break;
       }
-      
+
       if (r_jwt_verify_signature(j_response, NULL, 0) != RHN_OK) {
         json_array_append_new(j_error, json_string("Invalid signature"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwt_verify_signature");
@@ -2654,7 +2654,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         ret = G_ERROR_PARAM;
         break;
       }
-      
+
       if (sig_len > 128) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Invalid signature");
         ret = G_ERROR_PARAM;
@@ -3139,6 +3139,7 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
  * @return value: a json_t * value with the following pattern:
  *                {
  *                  result: number (G_OK on success, another value on error)
+ *                  updated: boolean (true if the scheme has been registered or updated, optional)
  *                  response: JSON object, optional
  *                }
  *
@@ -3189,7 +3190,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     if (check_result_value(j_credential, G_OK)) {
       j_result = register_new_attestation(config, (json_t *)cls, j_scheme_data, json_object_get(j_credential, "credential"));
       if (check_result_value(j_result, G_OK)) {
-        j_return = json_pack("{si}", "result", G_OK);
+        j_return = json_pack("{siso}", "result", G_OK, "updated", json_true());
       } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
         j_return = json_pack("{sisO}", "result", G_ERROR_UNAUTHORIZED, "response", json_object_get(j_result, "error"));
       } else if (check_result_value(j_result, G_ERROR_PARAM)) {
@@ -3212,7 +3213,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     j_credential = get_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
     if (check_result_value(j_credential, G_OK)) {
       if ((res = update_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), 4)) == G_OK) {
-        j_return = json_pack("{si}", "result", G_OK);
+        j_return = json_pack("{siso}", "result", G_OK, "updated", json_true());
       } else if (res == G_ERROR_PARAM) {
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
       } else {
@@ -3230,7 +3231,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     j_credential = get_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
     if (check_result_value(j_credential, G_OK)) {
       if ((res = update_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), 3)) == G_OK) {
-        j_return = json_pack("{si}", "result", G_OK);
+        j_return = json_pack("{siso}", "result", G_OK, "updated", json_true());
       } else if (res == G_ERROR_PARAM) {
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
       } else {
@@ -3248,7 +3249,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     j_credential = get_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")));
     if (check_result_value(j_credential, G_OK)) {
       if ((res = update_credential(config, (json_t *)cls, username, json_string_value(json_object_get(j_scheme_data, "credential_id")), 1)) == G_OK) {
-        j_return = json_pack("{si}", "result", G_OK);
+        j_return = json_pack("{siso}", "result", G_OK, "updated", json_true());
       } else if (res == G_ERROR_PARAM) {
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
       } else {

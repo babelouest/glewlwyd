@@ -1247,6 +1247,7 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
  * @return value: a json_t * value with the following pattern:
  *                {
  *                  result: number (G_OK on success, another value on error)
+ *                  updated: boolean (true if the scheme has been registered or updated, optional)
  *                  response: JSON object, optional
  *                }
  * 
@@ -1327,7 +1328,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
   } else if (json_object_get(((struct _cert_param *)cls)->j_parameters, "use-scheme-storage") == json_true()) {
     if (0 == o_strcmp("upload-certificate", json_string_value(json_object_get(j_scheme_data, "register")))) {
       if ((ret = add_user_certificate_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, json_string_value(json_object_get(j_scheme_data, "x509")), username, u_map_get_case(http_request->map_header, "user-agent"))) == G_OK) {
-        j_return = json_pack("{si}", "result", G_OK);
+        j_return = json_pack("{siso}", "result", G_OK, "updated", json_true());
       } else if (ret == G_ERROR_PARAM) {
         j_return = json_pack("{si}", "result", G_ERROR_PARAM);
       } else {
@@ -1338,7 +1339,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
       if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_TLS) && http_request->client_cert != NULL) {
         if ((x509_data = ulfius_export_client_certificate_pem(http_request)) != NULL) {
           if ((ret = add_user_certificate_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, x509_data, username, u_map_get_case(http_request->map_header, "user-agent"))) == G_OK) {
-            j_return = json_pack("{si}", "result", G_OK);
+            j_return = json_pack("{siso}", "result", G_OK, "updated", json_true());
           } else if (ret == G_ERROR_PARAM) {
             j_return = json_pack("{si}", "result", G_ERROR_PARAM);
           } else {
@@ -1352,7 +1353,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
         }
       } else if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL) {
         if ((ret = add_user_certificate_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, header_cert, username, u_map_get_case(http_request->map_header, "user-agent"))) == G_OK) {
-          j_return = json_pack("{si}", "result", G_OK);
+          j_return = json_pack("{siso}", "result", G_OK, "updated", json_true());
         } else if (ret == G_ERROR_PARAM) {
           j_return = json_pack("{si}", "result", G_ERROR_PARAM);
         } else {
@@ -1368,7 +1369,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
         j_result = get_user_certificate_from_id_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, json_string_value(json_object_get(j_scheme_data, "certificate_id")));
         if (check_result_value(j_result, G_OK)) {
           if (update_user_certificate_enabled_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, json_string_value(json_object_get(j_scheme_data, "certificate_id")), json_object_get(j_scheme_data, "enabled") == json_true()) == G_OK) {
-            j_return = json_pack("{si}", "result", G_OK);
+            j_return = json_pack("{siso}", "result", G_OK, "updated", json_true());
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register certificate - Error update_user_certificate_enabled_scheme_storage");
             j_return = json_pack("{si}", "result", G_ERROR);
@@ -1388,7 +1389,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
         j_result = get_user_certificate_from_id_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, json_string_value(json_object_get(j_scheme_data, "certificate_id")));
         if (check_result_value(j_result, G_OK)) {
           if (delete_user_certificate_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, username, json_string_value(json_object_get(j_scheme_data, "certificate_id"))) == G_OK) {
-            j_return = json_pack("{si}", "result", G_OK);
+            j_return = json_pack("{siso}", "result", G_OK, "updated", json_true());
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register certificate - Error delete_user_certificate_scheme_storage");
             j_return = json_pack("{si}", "result", G_ERROR);

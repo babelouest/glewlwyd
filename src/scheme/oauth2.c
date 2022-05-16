@@ -5,9 +5,9 @@
  * Authentiation server
  * Users are authenticated via various backend available: database, ldap
  * Using various authentication methods available: password, OTP, send code, etc.
- * 
+ *
  * OAuth2 authentication scheme module
- * 
+ *
  * Copyright 2020 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -70,7 +70,7 @@ static json_t * is_scheme_parameters_valid(json_t * j_params) {
   char * message;
   const char * name;
   int is_oidc = 0;
-  
+
   if (j_errors != NULL) {
     if (json_is_object(j_params)) {
       if (json_string_null_or_empty(json_object_get(j_params, "redirect_uri"))) {
@@ -211,7 +211,7 @@ static json_t * complete_session_identify(struct config_module * config, struct 
   time_t now;
   char * expires_at_clause, * sub = NULL;
   struct _i_session i_session;
-  
+
   time(&now);
   if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
     expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
@@ -524,7 +524,7 @@ static json_t * add_session_identify(struct config_module * config, struct _oaut
     y_log_message(Y_LOG_LEVEL_ERROR, "add_session_identify - Error i_init_session");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
-  
+
   return j_return;
 }
 
@@ -535,7 +535,7 @@ static json_t * add_session_for_user(struct config_module * config, struct _oaut
   char * expires_at_clause, * i_export, * state_export = NULL, * state_export_b64 = NULL;
   struct _i_session i_session;
   size_t state_export_b64_len = 0;
-  
+
   time(&now);
   if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
     expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
@@ -652,7 +652,7 @@ static json_t * add_session_for_user(struct config_module * config, struct _oaut
 static json_t * get_last_session_for_registration(struct config_module * config, json_int_t gsor_id) {
   json_t * j_query, * j_result = NULL, * j_return;
   int res;
-  
+
   j_query = json_pack("{sss[s]s{sIsi}sssi}",
                       "table",
                       GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE,
@@ -688,7 +688,7 @@ static json_t * get_registration_for_user(struct config_module * config, struct 
   json_t * j_query, * j_result = NULL, * j_return, * j_element = NULL, * j_session;
   int res;
   size_t index = 0;
-  
+
   j_query = json_pack("{sss[ssss]s{sOss}}",
                       "table",
                       GLEWLWYD_SCHEME_OAUTH2_REGISTRATION_TABLE,
@@ -745,7 +745,7 @@ static json_t * add_registration_for_user(struct config_module * config, struct 
   char * expires_at_clause, * i_export, * state_export = NULL, * state_export_b64 = NULL;
   struct _i_session i_session;
   size_t state_export_b64_len = 0;
-  
+
   if (!pthread_mutex_lock(&oauth2_config->insert_lock)) {
     if (i_init_session(&i_session) == I_OK) {
       if (i_import_session_json_t(&i_session, json_object_get(j_provider, "export")) == I_OK) {
@@ -857,7 +857,7 @@ static json_t * add_registration_for_user(struct config_module * config, struct 
 static int delete_registration_for_user(struct config_module * config, struct _oauth2_config * oauth2_config, const char * username, const char * provider) {
   json_t * j_query;
   int res, ret;
-  
+
   j_query = json_pack("{sss{sOss}}",
                       "table",
                       GLEWLWYD_SCHEME_OAUTH2_REGISTRATION_TABLE,
@@ -887,7 +887,7 @@ static int complete_session_for_user(struct config_module * config, const char *
   time_t now;
   char * expires_at_clause, * sub = NULL;
   struct _i_session i_session;
-  
+
   time(&now);
   if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
     expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
@@ -1089,7 +1089,7 @@ static int complete_session_for_user(struct config_module * config, const char *
 static json_t * get_provider(struct _oauth2_config * oauth2_config, const char * provider_name) {
   json_t * j_element = NULL, * j_return = NULL;
   size_t index = 0;
-  
+
   json_array_foreach(json_object_get(oauth2_config->j_parameters, "provider_list"), index, j_element) {
     if (j_return == NULL && 0 == o_strcmp(json_string_value(json_object_get(j_element, "name")), provider_name) && json_object_get(j_element, "enabled") != json_false()) {
       j_return = json_pack("{sisO}", "result", G_OK, "provider", j_element);
@@ -1102,14 +1102,14 @@ static json_t * get_provider(struct _oauth2_config * oauth2_config, const char *
 }
 
 /**
- * 
+ *
  * user_auth_scheme_module_load
- * 
+ *
  * Executed once when Glewlwyd service is started
  * Used to identify the module and to show its parameters on init
  * You can also use it to load resources that are required once for all
  * instance modules for example
- * 
+ *
  * @return value: a json_t * value with the following pattern:
  *                {
  *                  result: number (G_OK on success, another value on error)
@@ -1118,7 +1118,7 @@ static json_t * get_provider(struct _oauth2_config * oauth2_config, const char *
  *                  description: string, optional, description for the module
  *                  parameters: object, optional, parameters description for the module
  *                }
- * 
+ *
  *                Example:
  *                {
  *                  result: G_OK,
@@ -1132,10 +1132,10 @@ static json_t * get_provider(struct _oauth2_config * oauth2_config, const char *
  *                    }
  *                  }
  *                }
- * 
+ *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
- * 
+ *
  */
 json_t * user_auth_scheme_module_load(struct config_module * config) {
   UNUSED(config);
@@ -1149,18 +1149,18 @@ json_t * user_auth_scheme_module_load(struct config_module * config) {
 }
 
 /**
- * 
+ *
  * user_auth_scheme_module_unload
- * 
+ *
  * Executed once when Glewlwyd service is stopped
  * You can also use it to release resources that are required once for all
  * instance modules for example
- * 
+ *
  * @return value: G_OK on success, another value on error
- * 
+ *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
- * 
+ *
  */
 int user_auth_scheme_module_unload(struct config_module * config) {
   UNUSED(config);
@@ -1170,19 +1170,19 @@ int user_auth_scheme_module_unload(struct config_module * config) {
 }
 
 /**
- * 
+ *
  * user_auth_scheme_module_init
- * 
+ *
  * Initialize an instance of this module declared in Glewlwyd service.
  * If required, you must dynamically allocate a pointer to the configuration
  * for this instance and pass it to *cls
- * 
+ *
  * @return value: a json_t * value with the following pattern:
  *                {
  *                  result: number (G_OK on success, G_ERROR_PARAM on input parameters error, another value on error)
  *                  error: array of strings containg the list of input errors, mandatory on result G_ERROR_PARAM, ignored otherwise
  *                }
- * 
+ *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
  * @parameter j_parameters: used to initialize an instance in JSON format
@@ -1190,7 +1190,7 @@ int user_auth_scheme_module_unload(struct config_module * config) {
  * @parameter mod_name: module name in glewlwyd service
  * @parameter cls: will contain an allocated void * pointer that will be sent back
  *                 as void * in all module functions
- * 
+ *
  */
 json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_parameters, const char * mod_name, void ** cls) {
   UNUSED(config);
@@ -1202,7 +1202,7 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
   struct _i_session i_session;
   pthread_mutexattr_t mutexattr;
   int is_oidc;
-  
+
   j_result = is_scheme_parameters_valid(j_parameters);
   if (check_result_value(j_result, G_OK)) {
     *cls = o_malloc(sizeof(struct _oauth2_config));
@@ -1299,19 +1299,19 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
 }
 
 /**
- * 
+ *
  * user_auth_scheme_module_close
- * 
+ *
  * Close an instance of this module declared in Glewlwyd service.
  * You must free the memory previously allocated in
  * the user_auth_scheme_module_init function as void * cls
- * 
+ *
  * @return value: G_OK on success, another value on error
- * 
+ *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
- * 
+ *
  */
 int user_auth_scheme_module_close(struct config_module * config, void * cls) {
   UNUSED(config);
@@ -1322,26 +1322,26 @@ int user_auth_scheme_module_close(struct config_module * config, void * cls) {
 }
 
 /**
- * 
+ *
  * user_auth_scheme_module_can_use
- * 
+ *
  * Validate if the user is allowed to use this scheme prior to the
  * authentication or registration
- * 
+ *
  * @return value: GLEWLWYD_IS_REGISTERED - User can use scheme and has registered
  *                GLEWLWYD_IS_AVAILABLE - User can use scheme but hasn't registered
  *                GLEWLWYD_IS_NOT_AVAILABLE - User can't use scheme
- * 
+ *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
  * @parameter username: username to identify the user
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
- * 
+ *
  */
 int user_auth_scheme_module_can_use(struct config_module * config, const char * username, void * cls) {
   int ret;
   json_t * j_registration = get_registration_for_user(config, (struct _oauth2_config *)cls, username, NULL);
-  
+
   if (check_result_value(j_registration, G_OK)) {
     ret = GLEWLWYD_IS_REGISTERED;
   } else if (check_result_value(j_registration, G_ERROR_NOT_FOUND)) {
@@ -1355,18 +1355,19 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
 }
 
 /**
- * 
+ *
  * user_auth_scheme_module_register
- * 
+ *
  * Register the scheme for a user
  * Ex: add a certificate, add new TOTP values, etc.
- * 
+ *
  * @return value: a json_t * value with the following pattern:
  *                {
  *                  result: number (G_OK on success, another value on error)
+ *                  updated: boolean (true if the scheme has been registered or updated, optional)
  *                  response: JSON object, optional
  *                }
- * 
+ *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
  * @parameter http_request: the original struct _u_request from the HTTP API
@@ -1374,14 +1375,14 @@ int user_auth_scheme_module_can_use(struct config_module * config, const char * 
  * @parameter j_scheme_data: additional data used to register the scheme for the user
  *                           in JSON format
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
- * 
+ *
  */
 json_t * user_auth_scheme_module_register(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls) {
   UNUSED(http_request);
   json_t * j_return, * j_result, * j_provider, * j_register;
   int res;
   struct _oauth2_config * oauth2_config = (struct _oauth2_config *)cls;
-  
+
   if (json_is_object(j_scheme_data)) {
     j_provider = get_provider(oauth2_config, json_string_value(json_object_get(j_scheme_data, "provider")));
     if (check_result_value(j_provider, G_OK)) {
@@ -1407,7 +1408,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
         j_result = get_registration_for_user(config, oauth2_config, username, json_string_value(json_object_get(j_scheme_data, "provider")));
         if (check_result_value(j_result, G_OK)) {
           if ((res = complete_session_for_user(config, json_string_value(json_object_get(oauth2_config->j_parameters, "redirect_uri")), json_array_get(json_object_get(j_result, "registration"), 0), json_object_get(j_provider, "provider"), json_string_value(json_object_get(j_scheme_data, "redirect_to")), json_string_value(json_object_get(j_scheme_data, "state")), GLEWLWYD_SCHEME_OAUTH2_SESSION_REGISTRATION)) == G_OK) {
-            j_return = json_pack("{si}", "result", G_OK);
+            j_return = json_pack("{siso}", "result", G_OK, "updated", json_true());
           } else if (res == G_ERROR_PARAM || res == G_ERROR_UNAUTHORIZED || res == G_ERROR_NOT_FOUND) {
             j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "Registration completion invalid");
           } else {
@@ -1425,7 +1426,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
         j_result = get_registration_for_user(config, oauth2_config, username, json_string_value(json_object_get(j_scheme_data, "provider")));
         if (check_result_value(j_result, G_OK)) {
           if (delete_registration_for_user(config, oauth2_config, username, json_string_value(json_object_get(j_scheme_data, "provider"))) == G_OK) {
-            j_return = json_pack("{si}", "result", G_OK);
+            j_return = json_pack("{siso}", "result", G_OK, "updated", json_true());
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register oauth2 - Error delete_registration_for_user");
             j_return = json_pack("{si}", "result", G_ERROR);
@@ -1452,25 +1453,25 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
 }
 
 /**
- * 
+ *
  * user_auth_scheme_module_deregister
- * 
+ *
  * Deregister all the scheme data for a user
  * Ex: remove certificates, TOTP values, etc.
- * 
+ *
  * @return value: G_OK on success, even if no data has been removed
  *                G_ERROR on another error
- * 
+ *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
  * @parameter username: username to identify the user
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
- * 
+ *
  */
 int user_auth_scheme_module_deregister(struct config_module * config, const char * username, void * cls) {
   int ret;
   struct _oauth2_config * oauth2_config = (struct _oauth2_config *)cls;
-  
+
   if (delete_registration_for_user(config, oauth2_config, username, NULL) == G_OK) {
     ret = G_OK;
   } else {
@@ -1481,23 +1482,23 @@ int user_auth_scheme_module_deregister(struct config_module * config, const char
 }
 
 /**
- * 
+ *
  * user_auth_scheme_module_register_get
- * 
+ *
  * Get the registration value(s) of the scheme for a user
- * 
+ *
  * @return value: a json_t * value with the following pattern:
  *                {
  *                  result: number (G_OK on success, another value on error)
  *                  response: JSON object, optional
  *                }
- * 
+ *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
  * @parameter http_request: the original struct _u_request from the API, must be casted to be available
  * @parameter username: username to identify the user
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
- * 
+ *
  */
 json_t * user_auth_scheme_module_register_get(struct config_module * config, const struct _u_request * http_request, const char * username, void * cls) {
   UNUSED(http_request);
@@ -1537,18 +1538,18 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
 }
 
 /**
- * 
+ *
  * user_auth_scheme_module_trigger
- * 
+ *
  * Trigger the scheme for a user
  * Ex: send the code to a device, generate a challenge, etc.
- * 
+ *
  * @return value: a json_t * value with the following pattern:
  *                {
  *                  result: number (G_OK on success, another value on error)
  *                  response: JSON object, optional
  *                }
- * 
+ *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
  * @parameter http_request: the original struct _u_request from the API, must be casted to be available
@@ -1556,7 +1557,7 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
  * @parameter scheme_trigger: data sent to trigger the scheme for the user
  *                           in JSON format
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
- * 
+ *
  */
 json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls) {
   json_t * j_return = NULL, * j_session = NULL, * j_result, * j_element = NULL, * j_register = NULL, * j_provider;
@@ -1603,7 +1604,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
           j_return = json_pack("{si}", "result", G_ERROR);
         }
         json_decref(j_result);
-        
+
       } else {
         j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "response", "provider invalid");
       }
@@ -1617,17 +1618,17 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
 }
 
 /**
- * 
+ *
  * user_auth_scheme_module_validate
- * 
+ *
  * Validate the scheme for a user
  * Ex: check the code sent to a device, verify the challenge, etc.
- * 
+ *
  * @return value: G_OK on success
  *                G_ERROR_UNAUTHORIZED if validation fails
  *                G_ERROR_PARAM if error in parameters
  *                G_ERROR on another error
- * 
+ *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
  * @parameter http_request: the original struct _u_request from the API, must be casted to be available
@@ -1635,7 +1636,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
  * @parameter j_scheme_data: data sent to validate the scheme for the user
  *                           in JSON format
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
- * 
+ *
  */
 int user_auth_scheme_module_validate(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_data, void * cls) {
   UNUSED(http_request);
@@ -1670,27 +1671,27 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
 }
 
 /**
- * 
+ *
  * user_auth_scheme_module_identify
- * 
+ *
  * Identify the user using the scheme without the username to be previously given
  * This functionality isn't available for all schemes, because the scheme authentification
  * must be triggered without username and the authentication result must contain the username
- * 
+ *
  * @return value: a json_t * value with the following pattern:
  *                {
  *                  result: number (G_OK on success, another value on error)
  *                  username: string value of the user identified - if the function is called within /auth
  *                  response: JSON object, optional - if the function is called within /auth/scheme/trigger
  *                }
- * 
+ *
  * @parameter config: a struct config_module with acess to some Glewlwyd
  *                    service and data
  * @parameter http_request: the original struct _u_request from the API, must be casted to be available
  * @parameter j_scheme_data: data sent to validate the scheme for the user
  *                           in JSON format
  * @parameter cls: pointer to the void * cls value allocated in user_auth_scheme_module_init
- * 
+ *
  */
 json_t * user_auth_scheme_module_identify(struct config_module * config, const struct _u_request * http_request, json_t * j_scheme_data, void * cls) {
   UNUSED(http_request);
@@ -1738,6 +1739,6 @@ json_t * user_auth_scheme_module_identify(struct config_module * config, const s
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
-  
+
   return j_return;
 }
