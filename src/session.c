@@ -26,133 +26,73 @@
  */
 #include "glewlwyd.h"
 
-static const char * get_template_property(json_t * j_params, const char * user_lang, const char * property_field) {
-  json_t * j_template = NULL;
-  const char * property = NULL, * property_default = NULL, * lang = NULL;
-  
-  if (json_object_get(j_params, "templates") == NULL) {
-    property = json_string_value(json_object_get(j_params, property_field));
-  } else {
-    json_object_foreach(json_object_get(j_params, "templates"), lang, j_template) {
-      if (0 == o_strcmp(user_lang, lang)) {
-        property = json_string_value(json_object_get(j_template, property_field));
-      }
-      if (json_object_get(j_template, "defaultLang") == json_true()) {
-        property_default = json_string_value(json_object_get(j_template, property_field));
-      }
-    }
-    if (property == NULL) {
-      property = property_default;
-    }
+static void send_mail_on_new_connexion(struct config_elements * config, const char * username, const char * ip_address) {
+  struct send_mail_content_struct * send_mail;
+  pthread_t thread_mail_connexion;
+  int thread_ret, thread_detach;
+  pthread_attr_t attr;
+  struct sched_param param;
+  json_t * j_misc_config = get_misc_config(config, GLEWLWYD_MAIL_ON_CONNEXION_TYPE, NULL), * j_user;
+  char * body, * ip_data = NULL, * ip_address_parsed = o_strdup(ip_address);
+  const char * lang, * body_pattern;
+  if (o_strchr(ip_address_parsed, ',') != NULL) {
+    *o_strchr(ip_address_parsed, ',') = '\0';
   }
-  return property;
-}
 
-static char * complete_template(const char * template, ...) {
-  va_list vl;
-  const char * variable, * value;
-  char * to_return = NULL, * tmp;
-  
-  va_start(vl, template);
-  variable = va_arg(vl, const char *);
-  to_return = o_strdup(template);
-  for (; variable != NULL; variable = va_arg(vl, const char *)) {
-    value = va_arg(vl, const char *);
-    tmp = str_replace(to_return, variable, value);
-    o_free(to_return);
-    to_return = tmp;
-    tmp = NULL;
-  }
-  return to_return;
-}
-
-struct send_mail_struct {
-  struct config_elements * config;
-  char                   * username;
-  char                   * ip_address;
-};
-
-static void * thread_send_mail_on_new_connexion(void * args) {
-  struct send_mail_struct * send_mail = (struct send_mail_struct *)args;
-  json_t * j_misc_config = get_misc_config(send_mail->config, GLEWLWYD_MAIL_ON_CONNEXION_TYPE, NULL), * j_user;
-  char * body, * ip_data = NULL;
-  const char * lang, * email, * body_pattern;
-  
-  if (check_result_value(j_misc_config, G_OK) && json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "enabled") == json_true()) {
-    j_user = get_user(send_mail->config, send_mail->username, NULL);
+  if (check_result_value(j_misc_config, G_OK) && json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "enabled") == json_true() && json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "templatesDisabled") != json_true()) {
+    j_user = get_user(config, username, NULL);
     if (check_result_value(j_user, G_OK) && !json_string_null_or_empty(json_object_get(json_object_get(j_user, "user"), "email"))) {
-      email = json_string_value(json_object_get(json_object_get(j_user, "user"), "email"));
-      // Send an e-mail to the user to notify a new connexion
-      y_log_message(Y_LOG_LEVEL_WARNING, "Security - New connexion - Notification sent to username %s, e-mail %s at IP Address %s", send_mail->username, email, send_mail->ip_address);
-      lang = json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user-lang-property"));
-      body_pattern = get_template_property(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), lang, "body-pattern");
+      lang = json_string_value(json_object_get(json_object_get(j_user, "user"), json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user-lang-property"))));
+      body_pattern = get_template_property(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "templates", lang, "body-pattern");
       if (o_strstr(body_pattern, "{LOCATION}") != NULL) {
-        ip_data = get_ip_data(send_mail->config, send_mail->ip_address);
-        body = complete_template(body_pattern, "{USERNAME}", send_mail->username, "{IP}", send_mail->ip_address, "{LOCATION}", ip_data!=NULL?ip_data:"-", NULL);
+        ip_data = get_ip_data(config, ip_address_parsed);
+        body = complete_template(body_pattern, "{USERNAME}", username, "{IP}", ip_address_parsed, "{LOCATION}", ip_data!=NULL?ip_data:"-", NULL);
         o_free(ip_data);
       } else {
-        body = complete_template(body_pattern, "{USERNAME}", send_mail->username, "{IP}", send_mail->ip_address, NULL);
+        body = complete_template(body_pattern, "{USERNAME}", username, "{IP}", ip_address_parsed, NULL);
       }
-      if (body != NULL) {
-        if (ulfius_send_smtp_rich_email(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "host")),
-                                       json_integer_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "port")),
-                                       json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "use-tls")==json_true()?1:0,
-                                       json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "verify-certificate")==json_false()?0:1,
-                                       !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user"))?json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user")):NULL,
-                                       !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "password"))?json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "password")):NULL,
-                                       json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "from")),
-                                       email,
-                                       NULL,
-                                       NULL,
-                                       !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "content-type"))?json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "content-type")):"text/plain; charset=utf-8",
-                                       get_template_property(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), lang, "subject"),
-                                       body) != U_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "thread_send_mail_on_new_connexion - Error ulfius_send_smtp_rich_email");
+      // Send an e-mail to the user to notify a new connexion
+      send_mail = o_malloc(sizeof(struct send_mail_content_struct));
+      if (send_mail != NULL) {
+        send_mail->host = o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "host")));
+        send_mail->port = (int)json_integer_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "port"));
+        send_mail->use_tls = json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "use-tls")==json_true()?1:0;
+        send_mail->verify_certificate = json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "verify-certificate")==json_false()?0:1;
+        send_mail->user = !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user"))?o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user"))):NULL;
+        send_mail->password = !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "password"))?o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "password"))):NULL;
+        send_mail->from = o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "from")));
+        send_mail->content_type = !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "content-type"))?o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "content-type"))):o_strdup("text/plain; charset=utf-8");
+        send_mail->email = o_strdup(json_string_value(json_object_get(json_object_get(j_user, "user"), "email")));
+        send_mail->subject = o_strdup(get_template_property(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "templates", lang, "subject"));
+        send_mail->body = o_strdup(body);
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - New connexion - Notification sent to username %s, e-mail %s at IP Address %s", username, send_mail->email, ip_address);
+        pthread_attr_init (&attr);
+        pthread_attr_getschedparam (&attr, &param);
+        param.sched_priority = 0;
+        pthread_attr_setschedparam (&attr, &param);
+        thread_ret = pthread_create(&thread_mail_connexion, &attr, thread_send_mail, (void *)send_mail);
+        thread_detach = pthread_detach(thread_mail_connexion);
+        if (thread_ret || thread_detach) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "send_mail_on_new_connexion - Error thread");
+          o_free(send_mail->host);
+          o_free(send_mail->user);
+          o_free(send_mail->password);
+          o_free(send_mail->from);
+          o_free(send_mail->content_type);
+          o_free(send_mail->email);
+          o_free(send_mail->subject);
+          o_free(send_mail->body);
+          o_free(send_mail);
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "thread_send_mail_on_new_connexion - Error complete_template");
+        y_log_message(Y_LOG_LEVEL_ERROR, "send_mail_on_new_connexion - Error allocating resources for send_mail");
       }
       o_free(body);
     }
     json_decref(j_user);
   }
-  o_free(send_mail->username);
-  o_free(send_mail->ip_address);
-  o_free(send_mail);
+  o_free(ip_address_parsed);
   json_decref(j_misc_config);
-  
-  return NULL;
-}
-
-static void send_mail_on_new_connexion(struct config_elements * config, const char * username, const char * ip_address) {
-  struct send_mail_struct * send_mail = o_malloc(sizeof(struct send_mail_struct));
-  pthread_t thread_mail_connexion;
-  int thread_ret, thread_detach;
-  pthread_attr_t attr;
-  struct sched_param param;
-
-  if (send_mail != NULL) {
-    send_mail->config = config;
-    send_mail->username = o_strdup(username);
-    send_mail->ip_address = o_strdup(ip_address);
-    if (o_strchr(send_mail->ip_address, ',') != NULL) {
-      *o_strchr(send_mail->ip_address, ',') = '\0';
-    }
-    pthread_attr_init (&attr);
-    pthread_attr_getschedparam (&attr, &param);
-    param.sched_priority = 0;
-    pthread_attr_setschedparam (&attr, &param);
-    thread_ret = pthread_create(&thread_mail_connexion, &attr, thread_send_mail_on_new_connexion, (void *)send_mail);
-    thread_detach = pthread_detach(thread_mail_connexion);
-    if (thread_ret || thread_detach) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "send_mail_on_new_connexion - Error thread");
-      o_free(send_mail->username);
-      o_free(send_mail->ip_address);
-      o_free(send_mail);
-    }
-  } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "send_mail_on_new_connexion - Error allocating resources for send_mail");
-  }
 }
 
 json_t * get_session_scheme(struct config_elements * config, json_int_t gus_id) {

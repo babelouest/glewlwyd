@@ -26,6 +26,144 @@
  */
 #include "glewlwyd.h"
 
+static void send_mail_on_registration(struct config_elements * config, const char * username, const char * scheme, const char * ip_address) {
+  struct send_mail_content_struct * send_mail;
+  pthread_t thread_mail_connexion;
+  int thread_ret, thread_detach;
+  pthread_attr_t attr;
+  struct sched_param param;
+  json_t * j_misc_config = get_misc_config(config, GLEWLWYD_MAIL_ON_CONNEXION_TYPE, NULL), * j_user;
+  char * body, * ip_data = NULL, * ip_address_parsed = o_strdup(ip_address);
+  const char * lang, * body_pattern;
+  if (o_strchr(ip_address_parsed, ',') != NULL) {
+    *o_strchr(ip_address_parsed, ',') = '\0';
+  }
+
+  if (check_result_value(j_misc_config, G_OK) && json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "enabled") == json_true() && json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "templatesRegisterSchemeDisabled") != json_true()) {
+    j_user = get_user(config, username, NULL);
+    if (check_result_value(j_user, G_OK) && !json_string_null_or_empty(json_object_get(json_object_get(j_user, "user"), "email"))) {
+      lang = json_string_value(json_object_get(json_object_get(j_user, "user"), json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user-lang-property"))));
+      body_pattern = get_template_property(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "templatesRegisterScheme", lang, "body-pattern");
+      if (o_strstr(body_pattern, "{LOCATION}") != NULL) {
+        ip_data = get_ip_data(config, ip_address_parsed);
+        body = complete_template(body_pattern, "{USERNAME}", username, "{SCHEME}", scheme, "{IP}", ip_address_parsed, "{LOCATION}", ip_data!=NULL?ip_data:"-", NULL);
+        o_free(ip_data);
+      } else {
+        body = complete_template(body_pattern, "{USERNAME}", username, "{SCHEME}", scheme, "{IP}", ip_address_parsed, NULL);
+      }
+      // Send an e-mail to the user to notify a new connexion
+      send_mail = o_malloc(sizeof(struct send_mail_content_struct));
+      if (send_mail != NULL) {
+        send_mail->host = o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "host")));
+        send_mail->port = (int)json_integer_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "port"));
+        send_mail->use_tls = json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "use-tls")==json_true()?1:0;
+        send_mail->verify_certificate = json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "verify-certificate")==json_false()?0:1;
+        send_mail->user = !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user"))?o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user"))):NULL;
+        send_mail->password = !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "password"))?o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "password"))):NULL;
+        send_mail->from = o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "from")));
+        send_mail->content_type = !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "content-type"))?o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "content-type"))):o_strdup("text/plain; charset=utf-8");
+        send_mail->email = o_strdup(json_string_value(json_object_get(json_object_get(j_user, "user"), "email")));
+        send_mail->subject = o_strdup(get_template_property(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "templatesRegisterScheme", lang, "subject"));
+        send_mail->body = o_strdup(body);
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - New connexion - Notification sent to username %s, e-mail %s at IP Address %s", username, send_mail->email, ip_address);
+        pthread_attr_init (&attr);
+        pthread_attr_getschedparam (&attr, &param);
+        param.sched_priority = 0;
+        pthread_attr_setschedparam (&attr, &param);
+        thread_ret = pthread_create(&thread_mail_connexion, &attr, thread_send_mail, (void *)send_mail);
+        thread_detach = pthread_detach(thread_mail_connexion);
+        if (thread_ret || thread_detach) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "send_mail_on_new_connexion - Error thread");
+          o_free(send_mail->host);
+          o_free(send_mail->user);
+          o_free(send_mail->password);
+          o_free(send_mail->from);
+          o_free(send_mail->content_type);
+          o_free(send_mail->email);
+          o_free(send_mail->subject);
+          o_free(send_mail->body);
+          o_free(send_mail);
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "send_mail_on_new_connexion - Error allocating resources for send_mail");
+      }
+      o_free(body);
+    }
+    json_decref(j_user);
+  }
+  o_free(ip_address_parsed);
+  json_decref(j_misc_config);
+}
+
+static void send_mail_on_update_password(struct config_elements * config, const char * username, const char * ip_address) {
+  struct send_mail_content_struct * send_mail;
+  pthread_t thread_mail_connexion;
+  int thread_ret, thread_detach;
+  pthread_attr_t attr;
+  struct sched_param param;
+  json_t * j_misc_config = get_misc_config(config, GLEWLWYD_MAIL_ON_CONNEXION_TYPE, NULL), * j_user;
+  char * body, * ip_data = NULL, * ip_address_parsed = o_strdup(ip_address);
+  const char * lang, * body_pattern;
+  if (o_strchr(ip_address_parsed, ',') != NULL) {
+    *o_strchr(ip_address_parsed, ',') = '\0';
+  }
+
+  if (check_result_value(j_misc_config, G_OK) && json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "enabled") == json_true() && json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "templatesUpdatePasswordDisabled") != json_true()) {
+    j_user = get_user(config, username, NULL);
+    if (check_result_value(j_user, G_OK) && !json_string_null_or_empty(json_object_get(json_object_get(j_user, "user"), "email"))) {
+      lang = json_string_value(json_object_get(json_object_get(j_user, "user"), json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user-lang-property"))));
+      body_pattern = get_template_property(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "templatesUpdatePassword", lang, "body-pattern");
+      if (o_strstr(body_pattern, "{LOCATION}") != NULL) {
+        ip_data = get_ip_data(config, ip_address_parsed);
+        body = complete_template(body_pattern, "{USERNAME}", username, "{IP}", ip_address_parsed, "{LOCATION}", ip_data!=NULL?ip_data:"-", NULL);
+        o_free(ip_data);
+      } else {
+        body = complete_template(body_pattern, "{USERNAME}", username, "{IP}", ip_address_parsed, NULL);
+      }
+      // Send an e-mail to the user to notify a new connexion
+      send_mail = o_malloc(sizeof(struct send_mail_content_struct));
+      if (send_mail != NULL) {
+        send_mail->host = o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "host")));
+        send_mail->port = (int)json_integer_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "port"));
+        send_mail->use_tls = json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "use-tls")==json_true()?1:0;
+        send_mail->verify_certificate = json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "verify-certificate")==json_false()?0:1;
+        send_mail->user = !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user"))?o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "user"))):NULL;
+        send_mail->password = !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "password"))?o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "password"))):NULL;
+        send_mail->from = o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "from")));
+        send_mail->content_type = !json_string_null_or_empty(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "content-type"))?o_strdup(json_string_value(json_object_get(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "content-type"))):o_strdup("text/plain; charset=utf-8");
+        send_mail->email = o_strdup(json_string_value(json_object_get(json_object_get(j_user, "user"), "email")));
+        send_mail->subject = o_strdup(get_template_property(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "templatesUpdatePassword", lang, "subject"));
+        send_mail->body = o_strdup(body);
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - New connexion - Notification sent to username %s, e-mail %s at IP Address %s", username, send_mail->email, ip_address);
+        pthread_attr_init (&attr);
+        pthread_attr_getschedparam (&attr, &param);
+        param.sched_priority = 0;
+        pthread_attr_setschedparam (&attr, &param);
+        thread_ret = pthread_create(&thread_mail_connexion, &attr, thread_send_mail, (void *)send_mail);
+        thread_detach = pthread_detach(thread_mail_connexion);
+        if (thread_ret || thread_detach) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "send_mail_on_new_connexion - Error thread");
+          o_free(send_mail->host);
+          o_free(send_mail->user);
+          o_free(send_mail->password);
+          o_free(send_mail->from);
+          o_free(send_mail->content_type);
+          o_free(send_mail->email);
+          o_free(send_mail->subject);
+          o_free(send_mail->body);
+          o_free(send_mail);
+        }
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "send_mail_on_new_connexion - Error allocating resources for send_mail");
+      }
+      o_free(body);
+    }
+    json_decref(j_user);
+  }
+  o_free(ip_address_parsed);
+  json_decref(j_misc_config);
+}
+
 json_t * auth_check_user_credentials(struct config_elements * config, const char * username, const char * password) {
   int res;
   json_t * j_return = NULL, * j_module_list = get_user_module_list(config), * j_module, * j_user;
@@ -186,7 +324,7 @@ json_t * auth_register_user_scheme(struct config_elements * config, const char *
   struct _user_auth_scheme_module_instance * scheme_instance;
   json_t * j_return = NULL, * j_response = NULL;
   int res;
-  
+
   if ((res = user_has_scheme(config, username, scheme_name)) == G_OK) {
     if (json_is_object(j_register_parameters)) {
       scheme_instance = get_user_auth_scheme_module_instance(config, scheme_name);
@@ -194,17 +332,10 @@ json_t * auth_register_user_scheme(struct config_elements * config, const char *
         if (delegate || scheme_instance->guasmi_allow_user_register) {
           j_response = scheme_instance->module->user_auth_scheme_module_register(config->config_m, request, username, j_register_parameters, scheme_instance->cls);
           if (check_result_value(j_response, G_OK)) {
-            if (json_object_get(j_response, "response") != NULL) {
-              j_return = json_pack("{sisO}", "result", G_OK, "register", json_object_get(j_response, "response"));
-            } else {
-              j_return = json_pack("{si}", "result", G_OK);
-            }
+            send_mail_on_registration(config, username, scheme_name, get_ip_source(request));
+            j_return = json_pack("{sisO*so*}", "result", G_OK, "register", json_object_get(j_response, "response"), "updated", json_object_get(j_response, "updated"));
           } else if (j_response != NULL && !check_result_value(j_response, G_ERROR)) {
-            if (json_object_get(j_response, "response") != NULL) {
-              j_return = json_pack("{sIsO}", "result", json_integer_value(json_object_get(j_response, "result")), "register", json_object_get(j_response, "response"));
-            } else {
-              j_return = json_pack("{sI}", "result", json_integer_value(json_object_get(j_response, "result")));
-            }
+            j_return = json_pack("{sIsO*}", "result", json_integer_value(json_object_get(j_response, "result")), "register", json_object_get(j_response, "response"));
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "auth_register_user_scheme - Error user_auth_scheme_module_register");
             j_return = json_pack("{si}", "result", G_ERROR);
@@ -976,7 +1107,7 @@ int user_delete_profile(struct config_elements * config, const char * username) 
   return ret;
 }
 
-int user_update_password(struct config_elements * config, const char * username, const char * old_password, const char ** new_passwords, size_t new_passwords_len) {
+int user_update_password(struct config_elements * config, const char * username, const char * old_password, const char ** new_passwords, size_t new_passwords_len, const char * ip_address) {
   json_t * j_user = get_user(config, username, NULL);
   struct _user_module_instance * user_module;
   int ret;
@@ -986,6 +1117,7 @@ int user_update_password(struct config_elements * config, const char * username,
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
       if ((ret = user_module->module->user_module_check_password(config->config_m, username, old_password, user_module->cls)) == G_OK) {
         ret = user_module->module->user_module_update_password(config->config_m, username, new_passwords, new_passwords_len, user_module->cls);
+        send_mail_on_update_password(config, username, ip_address);
       } else if (ret == G_ERROR_UNAUTHORIZED) {
         ret = G_ERROR_PARAM;
       } else {

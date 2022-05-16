@@ -3512,3 +3512,77 @@ char * get_ip_data(struct config_elements * config, const char * ip_address) {
   json_decref(j_misc_config);
   return data;
 }
+
+const char * get_template_property(json_t * j_params, const char * template_property, const char * user_lang, const char * property_field) {
+  json_t * j_template = NULL;
+  const char * property = NULL, * property_default = NULL, * lang = NULL;
+  
+  if (json_object_get(j_params, template_property) == NULL) {
+    property = json_string_value(json_object_get(j_params, property_field));
+  } else {
+    json_object_foreach(json_object_get(j_params, template_property), lang, j_template) {
+      if (0 == o_strcmp(user_lang, lang)) {
+        property = json_string_value(json_object_get(j_template, property_field));
+      }
+      if (json_object_get(j_template, "defaultLang") == json_true()) {
+        property_default = json_string_value(json_object_get(j_template, property_field));
+      }
+    }
+    if (property == NULL) {
+      property = property_default;
+    }
+  }
+  return property;
+}
+
+char * complete_template(const char * template, ...) {
+  va_list vl;
+  const char * variable, * value;
+  char * to_return = NULL, * tmp;
+  
+  va_start(vl, template);
+  variable = va_arg(vl, const char *);
+  to_return = o_strdup(template);
+  for (; variable != NULL; variable = va_arg(vl, const char *)) {
+    value = va_arg(vl, const char *);
+    tmp = str_replace(to_return, variable, value);
+    o_free(to_return);
+    to_return = tmp;
+    tmp = NULL;
+  }
+  return to_return;
+}
+
+void * thread_send_mail(void * args) {
+  struct send_mail_content_struct * send_mail = (struct send_mail_content_struct *)args;
+  if (send_mail != NULL) {
+    if (ulfius_send_smtp_rich_email(send_mail->host,
+                                   send_mail->port,
+                                   send_mail->use_tls,
+                                   send_mail->verify_certificate,
+                                   send_mail->user,
+                                   send_mail->password,
+                                   send_mail->from,
+                                   send_mail->email,
+                                   NULL,
+                                   NULL,
+                                   send_mail->content_type,
+                                   send_mail->subject,
+                                   send_mail->body) != U_OK) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "thread_send_mail - Error ulfius_send_smtp_rich_email");
+    }
+    o_free(send_mail->host);
+    o_free(send_mail->user);
+    o_free(send_mail->password);
+    o_free(send_mail->from);
+    o_free(send_mail->content_type);
+    o_free(send_mail->email);
+    o_free(send_mail->subject);
+    o_free(send_mail->body);
+    o_free(send_mail);
+  } else {
+    y_log_message(Y_LOG_LEVEL_ERROR, "thread_send_mail - Error send_mail ivalid");
+  }
+  
+  return NULL;
+}

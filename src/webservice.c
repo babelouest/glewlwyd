@@ -453,8 +453,10 @@ int callback_glewlwyd_user_auth_register (const struct _u_request * request, str
           } else if (check_result_value(j_result, G_OK)) {
             if (json_object_get(j_result, "register") != NULL) {
               ulfius_set_json_body_response(response, 200, json_object_get(j_result, "register"));
+              if (json_object_get(j_result, "updated") == json_true()) {
+                y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' registered scheme '%s/%s'", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")));
+              }
             }
-            y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' registered scheme '%s/%s'", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")));
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth_register - Error auth_check_user_scheme");
             response->status = 500;
@@ -559,8 +561,10 @@ int callback_glewlwyd_user_auth_register_delegate (const struct _u_request * req
           } else if (check_result_value(j_result, G_OK)) {
             if (json_object_get(j_result, "register") != NULL) {
               ulfius_set_json_body_response(response, 200, json_object_get(j_result, "register"));
+              if (json_object_get(j_result, "updated") == json_true()) {
+                y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' registered scheme '%s/%s' (delegation)", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")));
+              }
             }
-            y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' registered scheme '%s/%s' (delegation)", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")));
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth_register_delegate - Error auth_check_user_scheme");
             response->status = 500;
@@ -2473,7 +2477,7 @@ int callback_glewlwyd_user_update_password (const struct _u_request * request, s
             json_array_foreach(json_object_get(j_password, "password"), index, j_element) {
               passwords[index] = json_string_value(j_element);
             }
-            if ((res = user_update_password(config, json_string_value(json_object_get(json_object_get(j_session, "user"), "username")), json_string_value(json_object_get(j_password, "old_password")), passwords, json_array_size(json_object_get(j_password, "password")))) == G_ERROR_PARAM) {
+            if ((res = user_update_password(config, json_string_value(json_object_get(json_object_get(j_session, "user"), "username")), json_string_value(json_object_get(j_password, "old_password")), passwords, json_array_size(json_object_get(j_password, "password")), get_ip_source(request))) == G_ERROR_PARAM) {
               response->status = 400;
             } else if (res != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_update_password - Error user_update_password (1)");
@@ -2491,7 +2495,7 @@ int callback_glewlwyd_user_update_password (const struct _u_request * request, s
         if (!json_string_null_or_empty(json_object_get(j_password, "old_password")) && !json_string_null_or_empty(json_object_get(j_password, "password"))) {
           if ((passwords = o_malloc(sizeof(char *))) != NULL) {
             passwords[0] = json_string_value(json_object_get(j_password, "password"));
-            if ((res = user_update_password(config, json_string_value(json_object_get(json_object_get(j_session, "user"), "username")), json_string_value(json_object_get(j_password, "old_password")), passwords, 1)) == G_ERROR_PARAM) {
+            if ((res = user_update_password(config, json_string_value(json_object_get(json_object_get(j_session, "user"), "username")), json_string_value(json_object_get(j_password, "old_password")), passwords, 1, get_ip_source(request))) == G_ERROR_PARAM) {
               response->status = 400;
             } else if (res != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_update_password - Error user_update_password (2)");

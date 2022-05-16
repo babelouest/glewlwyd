@@ -144,6 +144,20 @@
 #define GLEWLWYD_ENV_METRICS_ADMIN               "GLWD_METRICS_ADMIN"
 #define GLEWLWYD_ENV_METRICS_BIND_ADDRESS        "GLWD_METRICS_BIND_ADDRESS"
 
+struct send_mail_content_struct {
+  char                   * host;
+  int                      port;
+  int                      use_tls;
+  int                      verify_certificate;
+  char                   * user;
+  char                   * password;
+  char                   * from;
+  char                   * content_type;
+  char                   * email;
+  char                   * subject;
+  char                   * body;
+};
+
 // Main functions and misc functions
 int build_config_from_env(struct config_elements * config);
 int  build_config_from_file(struct config_elements * config);
@@ -174,6 +188,9 @@ struct _user_auth_scheme_module * get_user_auth_scheme_module_lib(struct config_
 struct _plugin_module_instance * get_plugin_module_instance(struct config_elements * config, const char * name);
 struct _plugin_module * get_plugin_module_lib(struct config_elements * config, const char * name);
 char * get_ip_data(struct config_elements * config, const char * ip_address);
+const char * get_template_property(json_t * j_params, const char * template_property, const char * user_lang, const char * property_field);
+char * complete_template(const char * template, ...);
+void * thread_send_mail(void * args);
 
 // Modules generic functions
 int module_parameters_check(const char * module_parameters);
@@ -203,7 +220,7 @@ int delete_user_session_from_hash(struct config_elements * config, const char * 
 json_t * user_set_profile(struct config_elements * config, const char * username, json_t * j_profile);
 int user_delete_profile(struct config_elements * config, const char * username);
 json_t * user_get_profile(struct config_elements * config, const char * username);
-int user_update_password(struct config_elements * config, const char * username, const char * old_password, const char ** new_passwords, size_t new_passwords_len);
+int user_update_password(struct config_elements * config, const char * username, const char * old_password, const char ** new_passwords, size_t new_passwords_len, const char * ip_address);
 int user_set_password(struct config_elements * config, const char * username, const char ** new_passwords, size_t new_passwords_len);
 json_t * get_scheme_list_for_user(struct config_elements * config, const char * username);
 
