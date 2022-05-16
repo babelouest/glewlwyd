@@ -39,9 +39,14 @@ class MiscConfig extends Component {
         password: "",
         from: "",
         "content-type": "text/plain; charset=utf-8",
-        templates: {}
+        templatesDisabled: false,
+        templates: {},
+        templatesUpdatePasswordDisabled: false,
+        templatesUpdatePassword: {},
+        templatesRegisterSchemeDisabled: false,
+        templatesRegisterScheme: {}
       },
-      errorMailOnConnexionList: {},
+      errorList: {},
       currentLang: i18next.language,
       newLang: "",
       geolocation: {
@@ -180,10 +185,17 @@ class MiscConfig extends Component {
         user: "",
         password: "",
         from: "",
-        "content-type": "",
-        templates: {}
+        "content-type": "text/plain; charset=utf-8",
+        templatesDisabled: false,
+        templates: {},
+        templatesUpdatePasswordDisabled: false,
+        templatesUpdatePassword: {},
+        templatesRegisterSchemeDisabled: false,
+        templatesRegisterScheme: {}
       };
       mailOnConnexion.templates[i18next.language] = {subject: "", "body-pattern": "", defaultLang: true}
+      mailOnConnexion.templatesUpdatePassword[i18next.language] = {subject: "", "body-pattern": "", defaultLang: true}
+      mailOnConnexion.templatesRegisterScheme[i18next.language] = {subject: "", "body-pattern": "", defaultLang: true}
     }
     this.setState({mailOnConnexion: mailOnConnexion}, () => {
       if (!found) {
@@ -261,6 +273,8 @@ class MiscConfig extends Component {
     });
     if (!found && this.state.newLang) {
       mailOnConnexion.templates[this.state.newLang] = {subject: "", "body-pattern": "", defaultLang: false};
+      mailOnConnexion.templatesUpdatePassword[this.state.newLang] = {subject: "", "body-pattern": "", defaultLang: false};
+      mailOnConnexion.templatesRegisterScheme[this.state.newLang] = {subject: "", "body-pattern": "", defaultLang: false};
       this.setState({mailOnConnexion: mailOnConnexion, newLang: "", currentLang: this.state.newLang});
     }
   }
@@ -269,6 +283,8 @@ class MiscConfig extends Component {
     var mailOnConnexion = this.state.mailOnConnexion;
     var currentLang = false;
     delete(mailOnConnexion.templates[lang]);
+    delete(mailOnConnexion.templatesUpdatePassword[lang]);
+    delete(mailOnConnexion.templatesRegisterScheme[lang]);
     if (lang == this.state.currentLang) {
       Object.keys(mailOnConnexion.templates).forEach(lang => {
         if (!currentLang) {
@@ -287,7 +303,37 @@ class MiscConfig extends Component {
   
   changeTemplate(e, param) {
     var mailOnConnexion = this.state.mailOnConnexion;
+    if (mailOnConnexion.templates === undefined) {
+      mailOnConnexion.templates = {};
+    }
+    if (mailOnConnexion.templates[this.state.currentLang] === undefined) {
+      mailOnConnexion.templates[this.state.currentLang] = {};
+    }
     mailOnConnexion.templates[this.state.currentLang][param] = e.target.value;
+    this.setState({mailOnConnexion: mailOnConnexion});
+  }
+  
+  changeTemplateUpdatePassword(e, param) {
+    var mailOnConnexion = this.state.mailOnConnexion;
+    if (mailOnConnexion.templatesUpdatePassword === undefined) {
+      mailOnConnexion.templatesUpdatePassword = {};
+    }
+    if (mailOnConnexion.templatesUpdatePassword[this.state.currentLang] === undefined) {
+      mailOnConnexion.templatesUpdatePassword[this.state.currentLang] = {};
+    }
+    mailOnConnexion.templatesUpdatePassword[this.state.currentLang][param] = e.target.value;
+    this.setState({mailOnConnexion: mailOnConnexion});
+  }
+  
+  changeTemplateRegisterScheme(e, param) {
+    var mailOnConnexion = this.state.mailOnConnexion;
+    if (mailOnConnexion.templatesRegisterScheme === undefined) {
+      mailOnConnexion.templatesRegisterScheme = {};
+    }
+    if (mailOnConnexion.templatesRegisterScheme[this.state.currentLang] === undefined) {
+      mailOnConnexion.templatesRegisterScheme[this.state.currentLang] = {};
+    }
+    mailOnConnexion.templatesRegisterScheme[this.state.currentLang][param] = e.target.value;
     this.setState({mailOnConnexion: mailOnConnexion});
   }
   
@@ -312,14 +358,32 @@ class MiscConfig extends Component {
       }
       errorList["subject"] = "";
       errorList["body-pattern"] = "";
-      Object.keys(this.state.mailOnConnexion.templates).forEach(lang => {
-        if (!this.state.mailOnConnexion.templates[lang]["subject"]) {
-          hasError = true;
-          errorList["subject"] += i18next.t("admin.mod-email-subject-error", {lang: lang})
-        }
-      });
+      if (!this.state.mailOnConnexion.templatesDisabled) {
+        Object.keys(this.state.mailOnConnexion.templates).forEach(lang => {
+          if (!this.state.mailOnConnexion.templates[lang]["subject"]) {
+            hasError = true;
+            errorList["subject"] = i18next.t("admin.mod-email-subject-error", {lang: lang})
+          }
+        });
+      }
+      if (!this.state.mailOnConnexion.templatesUpdatePasswordDisabled) {
+        Object.keys(this.state.mailOnConnexion.templatesUpdatePassword).forEach(lang => {
+          if (!this.state.mailOnConnexion.templatesUpdatePassword[lang]["subject"]) {
+            hasError = true;
+            errorList["subjectUpdatePassword"] = i18next.t("admin.mod-email-subject-error", {lang: lang})
+          }
+        });
+      }
+      if (!this.state.mailOnConnexion.templatesRegisterSchemeDisabled) {
+        Object.keys(this.state.mailOnConnexion.templatesRegisterScheme).forEach(lang => {
+          if (!this.state.mailOnConnexion.templatesRegisterScheme[lang]["subject"]) {
+            hasError = true;
+            errorList["subjectRegisterSchemeDisabled"] = i18next.t("admin.mod-email-subject-error", {lang: lang})
+          }
+        });
+      }
       if (!hasError) {
-        this.setState({errorMailOnConnexionList: {}}, () => {
+        this.setState({errorList: {}}, () => {
           apiManager.glewlwydRequest("/misc/cur-mail-on-connexion", "PUT", {type: "mail-on-connexion", value: this.state.mailOnConnexion})
           .then(() => {
             messageDispatcher.sendMessage('Notification', {type: "success", message: i18next.t("admin.success-api-mail-on-connexion")});
@@ -333,7 +397,7 @@ class MiscConfig extends Component {
           });
         });
       } else {
-        this.setState({errorMailOnConnexionList: errorList});
+        this.setState({errorList: errorList});
       }
     } else {
       $("#mailOnConnexionModal").modal("hide");
@@ -499,7 +563,18 @@ class MiscConfig extends Component {
       );
       langList.push(<div key={(index*2)+1} className="dropdown-divider"></div>);
     });
-    let template = this.state.mailOnConnexion.templates[this.state.currentLang]||{};
+    let templateMailOnConnexion = {};
+    let templateMailOnUpdatePassword = {};
+    let templateMailOnRegisterScheme = {};
+    if (this.state.mailOnConnexion.templates) {
+      templateMailOnConnexion = this.state.mailOnConnexion.templates[this.state.currentLang]||{};
+    }
+    if (this.state.mailOnConnexion.templatesUpdatePassword) {
+      templateMailOnUpdatePassword = this.state.mailOnConnexion.templatesUpdatePassword[this.state.currentLang]||{};
+    }
+    if (this.state.mailOnConnexion.templatesRegisterScheme) {
+      templateMailOnRegisterScheme = this.state.mailOnConnexion.templatesRegisterScheme[this.state.currentLang]||{};
+    }
 		return (
       <div>
         <div className="table-responsive">
@@ -659,9 +734,9 @@ class MiscConfig extends Component {
                       <div className="input-group-prepend">
                         <label className="input-group-text" htmlFor="mod-email-host">{i18next.t("admin.mod-email-host")}</label>
                       </div>
-                      <input type="text" className={this.state.errorMailOnConnexionList["host"]?"form-control is-invalid":"form-control"} id="mod-email-host" onChange={(e) => this.changeMailConnexionValue(e, "host")} value={this.state.mailOnConnexion["host"]} placeholder={i18next.t("admin.mod-email-host-ph")} />
+                      <input type="text" className={this.state.errorList["host"]?"form-control is-invalid":"form-control"} id="mod-email-host" onChange={(e) => this.changeMailConnexionValue(e, "host")} value={this.state.mailOnConnexion["host"]} placeholder={i18next.t("admin.mod-email-host-ph")} />
                     </div>
-                    {this.state.errorMailOnConnexionList["host"]?<span className="error-input">{this.state.errorMailOnConnexionList["host"]}</span>:""}
+                    {this.state.errorList["host"]?<span className="error-input">{this.state.errorList["host"]}</span>:""}
                   </div>
                   <div className="form-group">
                     <div className="input-group mb-3">
@@ -684,9 +759,9 @@ class MiscConfig extends Component {
                       <div className="input-group-prepend">
                         <label className="input-group-text" htmlFor="mod-email-user">{i18next.t("admin.mod-email-user")}</label>
                       </div>
-                      <input type="text" className={this.state.errorMailOnConnexionList["user"]?"form-control is-invalid":"form-control"} id="mod-email-user" onChange={(e) => this.changeMailConnexionValue(e, "user")} value={this.state.mailOnConnexion["user"]} placeholder={i18next.t("admin.mod-email-user-ph")} />
+                      <input type="text" className={this.state.errorList["user"]?"form-control is-invalid":"form-control"} id="mod-email-user" onChange={(e) => this.changeMailConnexionValue(e, "user")} value={this.state.mailOnConnexion["user"]} placeholder={i18next.t("admin.mod-email-user-ph")} />
                     </div>
-                    {this.state.errorMailOnConnexionList["user"]?<span className="error-input">{this.state.errorMailOnConnexionList["user"]}</span>:""}
+                    {this.state.errorList["user"]?<span className="error-input">{this.state.errorList["user"]}</span>:""}
                   </div>
                   <div className="form-group">
                     <div className="input-group mb-3">
@@ -701,27 +776,27 @@ class MiscConfig extends Component {
                       <div className="input-group-prepend">
                         <label className="input-group-text" htmlFor="mod-email-from">{i18next.t("admin.mod-email-from")}</label>
                       </div>
-                      <input type="text" className={this.state.errorMailOnConnexionList["from"]?"form-control is-invalid":"form-control"} id="mod-email-from" onChange={(e) => this.changeMailConnexionValue(e, "from")} value={this.state.mailOnConnexion["from"]} placeholder={i18next.t("admin.mod-email-from-ph")} />
+                      <input type="text" className={this.state.errorList["from"]?"form-control is-invalid":"form-control"} id="mod-email-from" onChange={(e) => this.changeMailConnexionValue(e, "from")} value={this.state.mailOnConnexion["from"]} placeholder={i18next.t("admin.mod-email-from-ph")} />
                     </div>
-                    {this.state.errorMailOnConnexionList["from"]?<span className="error-input">{this.state.errorMailOnConnexionList["from"]}</span>:""}
+                    {this.state.errorList["from"]?<span className="error-input">{this.state.errorList["from"]}</span>:""}
                   </div>
                   <div className="form-group">
                     <div className="input-group mb-3">
                       <div className="input-group-prepend">
                         <label className="input-group-text" htmlFor="mod-email-content-type">{i18next.t("admin.mod-email-content-type")}</label>
                       </div>
-                      <input type="text" className={this.state.errorMailOnConnexionList["content-type"]?"form-control is-invalid":"form-control"} id="mod-content-type-from" onChange={(e) => this.changeMailConnexionValue(e, "content-type")} value={this.state.mailOnConnexion["content-type"]} placeholder={i18next.t("admin.mod-email-content-type-ph")} />
+                      <input type="text" className={this.state.errorList["content-type"]?"form-control is-invalid":"form-control"} id="mod-content-type-from" onChange={(e) => this.changeMailConnexionValue(e, "content-type")} value={this.state.mailOnConnexion["content-type"]} placeholder={i18next.t("admin.mod-email-content-type-ph")} />
                     </div>
-                    {this.state.errorMailOnConnexionList["content-type"]?<span className="error-input">{this.state.errorMailOnConnexionList["content-type"]}</span>:""}
+                    {this.state.errorList["content-type"]?<span className="error-input">{this.state.errorList["content-type"]}</span>:""}
                   </div>
                   <div className="form-group">
                     <div className="input-group mb-3">
                       <div className="input-group-prepend">
                         <label className="input-group-text" htmlFor="mod-email-user-lang-property">{i18next.t("admin.mod-email-user-lang-property")}</label>
                       </div>
-                      <input type="text" className={this.state.errorMailOnConnexionList["user-lang-property"]?"form-control is-invalid":"form-control"} id="mod-email-user-lang-property" onChange={(e) => this.changeMailConnexionValue(e, "user-lang-property")} value={this.state.mailOnConnexion["user-lang-property"]} placeholder={i18next.t("admin.mod-email-user-lang-property-ph")} />
+                      <input type="text" className={this.state.errorList["user-lang-property"]?"form-control is-invalid":"form-control"} id="mod-email-user-lang-property" onChange={(e) => this.changeMailConnexionValue(e, "user-lang-property")} value={this.state.mailOnConnexion["user-lang-property"]} placeholder={i18next.t("admin.mod-email-user-lang-property-ph")} />
                     </div>
-                    {this.state.errorMailOnConnexionList["user-lang-property"]?<span className="error-input">{this.state.errorMailOnConnexionList["user-lang-property"]}</span>:""}
+                    {this.state.errorList["user-lang-property"]?<span className="error-input">{this.state.errorList["user-lang-property"]}</span>:""}
                   </div>
                   <div className="form-group">
                     <div className="input-group mb-3">
@@ -739,26 +814,127 @@ class MiscConfig extends Component {
                     </div>
                   </div>
                   <div className="form-group form-check">
-                    <input type="checkbox" className="form-check-input" id="mod-email-lang-default" onChange={(e) => this.toggleLangDefault()} checked={template.defaultLang} />
+                    <input type="checkbox" className="form-check-input" id="mod-email-lang-default" onChange={(e) => this.toggleLangDefault()} checked={templateMailOnConnexion.defaultLang} />
                     <label className="form-check-label" htmlFor="mod-email-lang-default">{i18next.t("admin.mod-email-lang-default")}</label>
+                  </div>
+                  <h3>
+                    {i18next.t("admin.mail-on-connexion-title")}
+                  </h3>
+                  <div className="form-group form-check">
+                    <input type="checkbox"
+                           className="form-check-input"
+                           id="mail-on-connexion-enabled"
+                           onChange={(e) => this.toggleMailConnexionValue("templatesDisabled")}
+                           checked={!this.state.mailOnConnexion.templatesDisabled} />
+                    <label className="form-check-label" htmlFor="mail-on-connexion-enabled">{i18next.t("admin.enabled")}</label>
                   </div>
                   <div className="form-group">
                     <div className="input-group mb-3">
                       <div className="input-group-prepend">
                         <label className="input-group-text" htmlFor="mod-email-subject">{i18next.t("admin.mod-email-subject")}</label>
                       </div>
-                      <input type="text" className={this.state.errorMailOnConnexionList["subject"]?"form-control is-invalid":"form-control"} id="mod-email-subject" onChange={(e) => this.changeTemplate(e, "subject")} value={template["subject"]} placeholder={i18next.t("admin.mail-on-connexion-subject-ph")} />
+                      <input type="text"
+                             className={this.state.errorList["subject"]?"form-control is-invalid":"form-control"}
+                             id="mod-email-subject"
+                             disabled={this.state.mailOnConnexion.templatesDisabled}
+                             onChange={(e) => this.changeTemplate(e, "subject")}
+                             value={templateMailOnConnexion["subject"]}
+                             placeholder={i18next.t("admin.mail-on-connexion-subject-ph")} />
                     </div>
-                    {this.state.errorMailOnConnexionList["subject"]?<span className="error-input">{this.state.errorMailOnConnexionList["subject"]}</span>:""}
+                    {this.state.errorList["subject"]?<span className="error-input">{this.state.errorList["subject"]}</span>:""}
                   </div>
                   <div className="form-group">
                     <div className="input-group mb-3">
                       <div className="input-group-prepend">
                         <span className="input-group-text" >{i18next.t("admin.mail-on-connexion-body-pattern")}</span>
                       </div>
-                      <textarea className={this.state.errorMailOnConnexionList["body-pattern"]?"form-control is-invalid":"form-control"} id="mod-email-body-pattern" onChange={(e) => this.changeTemplate(e, "body-pattern")} placeholder={i18next.t("admin.mail-on-connexion-body-pattern-ph")} value={template["body-pattern"]}></textarea>
+                      <textarea className="form-control"
+                                id="mod-email-body-pattern"
+                                disabled={this.state.mailOnConnexion.templatesDisabled}
+                                onChange={(e) => this.changeTemplate(e, "body-pattern")}
+                                placeholder={i18next.t("admin.mail-on-connexion-body-pattern-ph")}
+                                value={templateMailOnConnexion["body-pattern"]}></textarea>
                     </div>
-                    {this.state.errorMailOnConnexionList["body-pattern"]?<span className="error-input">{this.state.errorMailOnConnexionList["body-pattern"]}</span>:""}
+                  </div>
+                  <hr/>
+                  <h3>
+                    {i18next.t("admin.mail-on-update-password-title")}
+                  </h3>
+                  <div className="form-group form-check">
+                    <input type="checkbox"
+                           className="form-check-input"
+                           id="mail-update-password-enabled"
+                           onChange={(e) => this.toggleMailConnexionValue("templatesUpdatePasswordDisabled")}
+                           checked={!this.state.mailOnConnexion.templatesUpdatePasswordDisabled} />
+                    <label className="form-check-label" htmlFor="mail-update-password-enabled">{i18next.t("admin.enabled")}</label>
+                  </div>
+                  <div className="form-group">
+                    <div className="input-group mb-3">
+                      <div className="input-group-prepend">
+                        <label className="input-group-text" htmlFor="mod-email-update-password-subject">{i18next.t("admin.mod-email-subject")}</label>
+                      </div>
+                      <input type="text"
+                             className={this.state.errorList["subjectUpdatePassword"]?"form-control is-invalid":"form-control"}
+                             id="mod-email-update-password-subject"
+                             disabled={this.state.mailOnConnexion.templatesUpdatePasswordDisabled}
+                             onChange={(e) => this.changeTemplateUpdatePassword(e, "subject")}
+                             value={templateMailOnUpdatePassword["subject"]}
+                             placeholder={i18next.t("admin.mail-on-update-password-subject-ph")} />
+                    </div>
+                    {this.state.errorList["subjectUpdatePassword"]?<span className="error-input">{this.state.errorList["subjectUpdatePassword"]}</span>:""}
+                  </div>
+                  <div className="form-group">
+                    <div className="input-group mb-3">
+                      <div className="input-group-prepend">
+                        <span className="input-group-text" >{i18next.t("admin.mail-on-update-password-body-pattern")}</span>
+                      </div>
+                      <textarea className="form-control"
+                                id="mod-email-update-password-body-pattern"
+                                disabled={this.state.mailOnConnexion.templatesUpdatePasswordDisabled}
+                                onChange={(e) => this.changeTemplateUpdatePassword(e, "body-pattern")}
+                                placeholder={i18next.t("admin.mail-on-connexion-body-pattern-ph")}
+                                value={templateMailOnUpdatePassword["body-pattern"]}></textarea>
+                    </div>
+                  </div>
+                  <hr/>
+                  <h3>
+                    {i18next.t("admin.mail-on-register-scheme-title")}
+                  </h3>
+                  <div className="form-group form-check">
+                    <input type="checkbox"
+                           className="form-check-input"
+                           id="mail-register-scheme-enabled"
+                           onChange={(e) => this.toggleMailConnexionValue("templatesRegisterSchemeDisabled")}
+                           checked={!this.state.mailOnConnexion.templatesRegisterSchemeDisabled} />
+                    <label className="form-check-label" htmlFor="mail-register-scheme-enabled">{i18next.t("admin.enabled")}</label>
+                  </div>
+                  <div className="form-group">
+                    <div className="input-group mb-3">
+                      <div className="input-group-prepend">
+                        <label className="input-group-text" htmlFor="mod-email-register-scheme-subject">{i18next.t("admin.mod-email-subject")}</label>
+                      </div>
+                      <input type="text"
+                             className={this.state.errorList["subjectRegisterSchemeDisabled"]?"form-control is-invalid":"form-control"}
+                             id="mod-email-register-scheme-subject"
+                             disabled={this.state.mailOnConnexion.templatesRegisterSchemeDisabled}
+                             onChange={(e) => this.changeTemplateRegisterScheme(e, "subject")}
+                             value={templateMailOnRegisterScheme["subject"]}
+                             placeholder={i18next.t("admin.mail-on-register-scheme-subject-ph")} />
+                    </div>
+                    {this.state.errorList["subjectRegisterSchemeDisabled"]?<span className="error-input">{this.state.errorList["subjectRegisterSchemeDisabled"]}</span>:""}
+                  </div>
+                  <div className="form-group">
+                    <div className="input-group mb-3">
+                      <div className="input-group-prepend">
+                        <span className="input-group-text" >{i18next.t("admin.mail-on-register-scheme-body-pattern")}</span>
+                      </div>
+                      <textarea className="form-control"
+                                id="mod-email-register-scheme-body-pattern"
+                                disabled={this.state.mailOnConnexion.templatesRegisterSchemeDisabled}
+                                onChange={(e) => this.changeTemplateRegisterScheme(e, "body-pattern")}
+                                placeholder={i18next.t("admin.mail-on-register-scheme-body-pattern-ph")}
+                                value={templateMailOnRegisterScheme["body-pattern"]}></textarea>
+                    </div>
                   </div>
                 </form>
               </div>
@@ -785,18 +961,18 @@ class MiscConfig extends Component {
                       <div className="input-group-prepend">
                         <label className="input-group-text" htmlFor="misc-geolocation-url">{i18next.t("admin.misc-geolocation-url")}</label>
                       </div>
-                      <input type="text" className={this.state.errorGeolocationList["url"]?"form-control is-invalid":"form-control"} id="misc-geolocation-url" onChange={(e) => this.changeGeolocationValue(e, "url")} value={this.state.geolocation["url"]} placeholder={i18next.t("admin.misc-geolocation-url-ph")} />
+                      <input type="text" className={this.state.errorList["url"]?"form-control is-invalid":"form-control"} id="misc-geolocation-url" onChange={(e) => this.changeGeolocationValue(e, "url")} value={this.state.geolocation["url"]} placeholder={i18next.t("admin.misc-geolocation-url-ph")} />
                     </div>
-                    {this.state.errorGeolocationList["url"]?<span className="error-input">{this.state.errorGeolocationList["url"]}</span>:""}
+                    {this.state.errorList["url"]?<span className="error-input">{this.state.errorList["url"]}</span>:""}
                   </div>
                   <div className="form-group">
                     <div className="input-group mb-3">
                       <div className="input-group-prepend">
                         <label className="input-group-text" htmlFor="misc-geolocation-output-properties">{i18next.t("admin.misc-geolocation-output-properties")}</label>
                       </div>
-                      <input type="text" className={this.state.errorGeolocationList["output-properties"]?"form-control is-invalid":"form-control"} id="misc-geolocation-output-properties" onChange={(e) => this.changeGeolocationValue(e, "output-properties")} value={this.state.geolocation["output-properties"]} placeholder={i18next.t("admin.misc-geolocation-output-properties-ph")} />
+                      <input type="text" className={this.state.errorList["output-properties"]?"form-control is-invalid":"form-control"} id="misc-geolocation-output-properties" onChange={(e) => this.changeGeolocationValue(e, "output-properties")} value={this.state.geolocation["output-properties"]} placeholder={i18next.t("admin.misc-geolocation-output-properties-ph")} />
                     </div>
-                    {this.state.errorGeolocationList["output-properties"]?<span className="error-input">{this.state.errorGeolocationList["output-properties"]}</span>:""}
+                    {this.state.errorList["output-properties"]?<span className="error-input">{this.state.errorList["output-properties"]}</span>:""}
                   </div>
                 </form>
               </div>
