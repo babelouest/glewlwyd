@@ -1739,6 +1739,7 @@ static int callback_register_register_user(const struct _u_request * request, st
                                         config->glewlwyd_config->glewlwyd_config->cookie_secure, 
                                         0);
           config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_REGISTRATION_STARTED, 1, "plugin", config->name, NULL);
+          y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' started registration, origin: %s", config->name, json_string_value(json_object_get(j_parameters, "username")), get_ip_source(request));
         } else if (check_result_value(j_result, G_ERROR_PARAM)) {
           response->status = 400;
         } else {
@@ -1945,6 +1946,7 @@ static int callback_register_cancel(const struct _u_request * request, struct _u
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_cancel - Error register_delete_new_user");
     response->status = 500;
   } else {
+    y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' cancel registration, origin: %s", config->name, json_string_value(json_object_get((json_t *)response->shared_data, "username")), get_ip_source(request));
     ulfius_add_cookie_to_response(response, 
                                   json_string_value(json_object_get(config->j_parameters, "session-key")), 
                                   "", 
