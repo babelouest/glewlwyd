@@ -169,7 +169,6 @@ class ScopeEdit extends Component {
     fr.onload = (ev2) => {
       try {
         let imported = JSON.parse(ev2.target.result);
-        console.log(imported);
         if (!this.state.add) {
           if (this.state.scope.name) {
             imported.name = this.state.scope.name;
