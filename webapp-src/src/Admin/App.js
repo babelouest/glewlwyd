@@ -613,7 +613,8 @@ class App extends Component {
     this.fetchApiKeys();
     this.fetchUsers();
     this.fetchClients();
-    this.fetchScopes();
+    this.fetchAllScopes();
+    this.fetchMiscConfig();
     messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("admin.data-reloaded")});
   }
 
