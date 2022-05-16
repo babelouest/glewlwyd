@@ -10,6 +10,7 @@ const path = require('path');
 const webpack = require('webpack');
 
 module.exports = {
+  mode: 'production',
   entry: {
 		admin: path.resolve(__dirname, 'src/admin.js'),
 		login: path.resolve(__dirname, 'src/login.js'),
