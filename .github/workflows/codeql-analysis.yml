@@ -49,6 +49,9 @@ jobs:
     - run: |
         sudo apt-get update
         sudo apt-get install -y libconfig-dev libsystemd-dev libjansson-dev libcurl4-gnutls-dev libldap2-dev libmicrohttpd-dev libsqlite3-dev sqlite3 libpq-dev liboath-dev default-libmysqlclient-dev cmake pkg-config gnutls-bin libcbor-dev git
+    - name: dependencies
+      run: |
+        cd /opt
         git clone https://github.com/babelouest/orcania.git
         git clone https://github.com/babelouest/yder.git
         git clone https://github.com/babelouest/hoel.git
@@ -88,6 +91,8 @@ jobs:
         sudo make install
         rm -rf *
         
+    - name: build
+      run: |
         mkdir build
         cd build
         cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib ..
