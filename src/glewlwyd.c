@@ -141,6 +141,7 @@ int main (int argc, char ** argv) {
   config->external_url = NULL;
   config->cookie_domain = NULL;
   config->cookie_secure = 0;
+  config->cookie_same_site = U_COOKIE_SAME_SITE_EMPTY;
   config->add_x_frame_option_header_deny = 1;
   config->log_mode_args = 0;
   config->log_level_args = 0;
@@ -184,6 +185,19 @@ int main (int argc, char ** argv) {
   config->metrics_endpoint_admin_session = 0;
   http_comression_config.allow_gzip = 1;
   http_comression_config.allow_deflate = 1;
+
+  // Initialize module lock
+  pthread_mutexattr_init ( &mutexattr );
+  pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
+  if (pthread_mutex_init(&config->module_lock, &mutexattr) != 0) {
+    fprintf(stderr, "Error initializing modules mutex\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  if (pthread_mutex_init(&config->insert_lock, &mutexattr) != 0) {
+    fprintf(stderr, "Error initializing insert mutex\n");
+    exit_server(&config, GLEWLWYD_ERROR);
+  }
+  pthread_mutexattr_destroy(&mutexattr);
 
   config->static_file_config = o_malloc(sizeof(struct _u_compressed_inmemory_website_config));
   if (config->static_file_config == NULL) {
@@ -321,19 +335,6 @@ int main (int argc, char ** argv) {
   glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", "password", NULL);
   glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", "password", NULL);
   glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 0, NULL);
-
-  // Initialize module lock
-  pthread_mutexattr_init ( &mutexattr );
-  pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
-  if (pthread_mutex_init(&config->module_lock, &mutexattr) != 0) {
-    fprintf(stderr, "Error initializing modules mutex\n");
-    exit_server(&config, GLEWLWYD_ERROR);
-  }
-  if (pthread_mutex_init(&config->insert_lock, &mutexattr) != 0) {
-    fprintf(stderr, "Error initializing insert mutex\n");
-    exit_server(&config, GLEWLWYD_ERROR);
-  }
-  pthread_mutexattr_destroy(&mutexattr);
 
   config->config_m->external_url = config->external_url;
   config->config_m->login_url = config->login_url;
@@ -937,6 +938,22 @@ int build_config_from_file(struct config_elements * config) {
       config->cookie_secure = (uint)int_value;
     }
 
+    if (config_lookup_string(&cfg, "cookie_same_site", &str_value) == CONFIG_TRUE) {
+      if (0 == o_strcasecmp("empty", str_value)) {
+        config->cookie_same_site = U_COOKIE_SAME_SITE_EMPTY;
+      } else if (0 == o_strcasecmp("none", str_value)) {
+        config->cookie_same_site = U_COOKIE_SAME_SITE_NONE;
+      } else if (0 == o_strcasecmp("lax", str_value)) {
+        config->cookie_same_site = U_COOKIE_SAME_SITE_LAX;
+      } else if (0 == o_strcasecmp("strict", str_value)) {
+        config->cookie_same_site = U_COOKIE_SAME_SITE_STRICT;
+      } else {
+        fprintf(stderr, "Error invalid cookie_same_site, exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+    }
+
     if (config_lookup_bool(&cfg, "add_x_frame_option_header_deny", &int_value) == CONFIG_TRUE) {
       config->add_x_frame_option_header_deny = (uint)int_value;
     }
@@ -1464,6 +1481,21 @@ int build_config_from_env(struct config_elements * config) {
     config->cookie_domain = o_strdup(value);
     if (config->cookie_domain == NULL) {
       fprintf(stderr, "Error allocating config->cookie_domain (env), exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_COOKIE_SAME_SITE)) != NULL && !o_strnullempty(value)) {
+    if (0 == o_strcasecmp("empty", value)) {
+      config->cookie_same_site = U_COOKIE_SAME_SITE_EMPTY;
+    } else if (0 == o_strcasecmp("none", value)) {
+      config->cookie_same_site = U_COOKIE_SAME_SITE_NONE;
+    } else if (0 == o_strcasecmp("lax", value)) {
+      config->cookie_same_site = U_COOKIE_SAME_SITE_LAX;
+    } else if (0 == o_strcasecmp("strict", value)) {
+      config->cookie_same_site = U_COOKIE_SAME_SITE_STRICT;
+    } else {
+      fprintf(stderr, "Error invalid cookie_same_site, exiting\n");
       ret = G_ERROR_PARAM;
     }
   }

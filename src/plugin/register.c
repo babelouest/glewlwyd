@@ -1729,7 +1729,7 @@ static int callback_register_register_user(const struct _u_request * request, st
       if (issued_for != NULL) {
         j_result = register_new_user(config, json_string_value(json_object_get(j_parameters, "username")), issued_for, u_map_get_case(request->map_header, "user-agent"));
         if (check_result_value(j_result, G_OK)) {
-          ulfius_add_cookie_to_response(response, 
+          ulfius_add_same_site_cookie_to_response(response, 
                                         json_string_value(json_object_get(config->j_parameters, "session-key")), 
                                         json_string_value(json_object_get(j_result, "session")), 
                                         expires, 
@@ -1737,7 +1737,8 @@ static int callback_register_register_user(const struct _u_request * request, st
                                         config->glewlwyd_config->glewlwyd_config->cookie_domain, 
                                         "/", 
                                         config->glewlwyd_config->glewlwyd_config->cookie_secure, 
-                                        0);
+                                        0,
+                                        config->glewlwyd_config->glewlwyd_config->cookie_same_site);
           config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_REGISTRATION_STARTED, 1, "plugin", config->name, NULL);
           y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' started registration, origin: %s", config->name, json_string_value(json_object_get(j_parameters, "username")), get_ip_source(request));
         } else if (check_result_value(j_result, G_ERROR_PARAM)) {
@@ -1825,7 +1826,7 @@ static int callback_register_check_email(const struct _u_request * request, stru
         now += json_integer_value(json_object_get(config->j_parameters, "session-duration"));
         gmtime_r(&now, &ts);
         strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
-        ulfius_add_cookie_to_response(response, 
+        ulfius_add_same_site_cookie_to_response(response, 
                                       json_string_value(json_object_get(config->j_parameters, "session-key")),
                                       json_string_value(json_object_get(j_result, "session")),
                                       expires,
@@ -1833,7 +1834,8 @@ static int callback_register_check_email(const struct _u_request * request, stru
                                       config->glewlwyd_config->glewlwyd_config->cookie_domain,
                                       "/",
                                       config->glewlwyd_config->glewlwyd_config->cookie_secure,
-                                      0);
+                                      0,
+                                      config->glewlwyd_config->glewlwyd_config->cookie_same_site);
       } else if (check_result_value(j_result, G_ERROR_PARAM)) {
         response->status = 401;
       } else {
@@ -1853,7 +1855,7 @@ static int callback_register_check_email(const struct _u_request * request, stru
           now += json_integer_value(json_object_get(config->j_parameters, "session-duration"));
           gmtime_r(&now, &ts);
           strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
-          ulfius_add_cookie_to_response(response, 
+          ulfius_add_same_site_cookie_to_response(response, 
                                         json_string_value(json_object_get(config->j_parameters, "session-key")),
                                         json_string_value(json_object_get(j_result, "session")),
                                         expires,
@@ -1861,7 +1863,8 @@ static int callback_register_check_email(const struct _u_request * request, stru
                                         config->glewlwyd_config->glewlwyd_config->cookie_domain,
                                         "/",
                                         config->glewlwyd_config->glewlwyd_config->cookie_secure,
-                                        0);
+                                        0,
+                                        config->glewlwyd_config->glewlwyd_config->cookie_same_site);
         } else if (check_result_value(j_result, G_ERROR_PARAM)) {
           response->status = 401;
         } else {
@@ -1947,7 +1950,7 @@ static int callback_register_cancel(const struct _u_request * request, struct _u
     response->status = 500;
   } else {
     y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' cancel registration, origin: %s", config->name, json_string_value(json_object_get((json_t *)response->shared_data, "username")), get_ip_source(request));
-    ulfius_add_cookie_to_response(response, 
+    ulfius_add_same_site_cookie_to_response(response, 
                                   json_string_value(json_object_get(config->j_parameters, "session-key")), 
                                   "", 
                                   0, 
@@ -1955,7 +1958,8 @@ static int callback_register_cancel(const struct _u_request * request, struct _u
                                   config->glewlwyd_config->glewlwyd_config->cookie_domain, 
                                   "/", 
                                   config->glewlwyd_config->glewlwyd_config->cookie_secure, 
-                                  0);
+                                  0,
+                                  config->glewlwyd_config->glewlwyd_config->cookie_same_site);
     config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_REGISTRATION_CANCELLED, 1, "plugin", config->name, NULL);
   }
   
@@ -2112,7 +2116,7 @@ static int callback_register_complete_registration(const struct _u_request * req
         json_object_set(json_object_get(j_user, "user"), "enabled", json_true());
         if (config->glewlwyd_config->glewlwyd_plugin_callback_set_user(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_object_get(j_user, "user")) == G_OK) {
           if (register_user_complete(config, json_string_value(json_object_get((json_t *)response->shared_data, "username"))) == G_OK) {
-            ulfius_add_cookie_to_response(response, 
+            ulfius_add_same_site_cookie_to_response(response, 
                                           json_string_value(json_object_get(config->j_parameters, "session-key")), 
                                           "", 
                                           0, 
@@ -2120,7 +2124,8 @@ static int callback_register_complete_registration(const struct _u_request * req
                                           config->glewlwyd_config->glewlwyd_config->cookie_domain, 
                                           "/", 
                                           config->glewlwyd_config->glewlwyd_config->cookie_secure, 
-                                          0);
+                                          0,
+                                          config->glewlwyd_config->glewlwyd_config->cookie_same_site);
             y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' registered, origin: %s", config->name, json_string_value(json_object_get((json_t *)response->shared_data, "username")), get_ip_source(request));
             config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_REGISTRATION_COMPLETED, 1, "plugin", config->name, NULL);
           } else {
@@ -2276,7 +2281,7 @@ static int callback_reset_credentials_complete_registration(const struct _u_requ
     now -= 3600;
     gmtime_r(&now, &ts);
     strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
-    ulfius_add_cookie_to_response(response, 
+    ulfius_add_same_site_cookie_to_response(response, 
                                   json_string_value(json_object_get(config->j_parameters, "reset-credentials-session-key")),
                                   "disabled",
                                   expires,
@@ -2284,7 +2289,8 @@ static int callback_reset_credentials_complete_registration(const struct _u_requ
                                   config->glewlwyd_config->glewlwyd_config->cookie_domain,
                                   "/",
                                   config->glewlwyd_config->glewlwyd_config->cookie_secure,
-                                  0);
+                                  0,
+                                  config->glewlwyd_config->glewlwyd_config->cookie_same_site);
     config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_RESET_CREDENTIALS_COMPLETED, 1, "plugin", config->name, NULL);
   } else if (res == G_ERROR_PARAM) {
     response->status = 400;
@@ -2334,7 +2340,7 @@ static int callback_register_reset_credentials_email_verify(const struct _u_requ
       now += json_integer_value(json_object_get(config->j_parameters, "reset-credentials-session-duration"));
       gmtime_r(&now, &ts);
       strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
-      ulfius_add_cookie_to_response(response, 
+      ulfius_add_same_site_cookie_to_response(response, 
                                     json_string_value(json_object_get(config->j_parameters, "reset-credentials-session-key")), 
                                     json_string_value(json_object_get(j_session, "session")), 
                                     expires, 
@@ -2342,7 +2348,8 @@ static int callback_register_reset_credentials_email_verify(const struct _u_requ
                                     config->glewlwyd_config->glewlwyd_config->cookie_domain, 
                                     "/", 
                                     config->glewlwyd_config->glewlwyd_config->cookie_secure, 
-                                    0);
+                                    0,
+                                    config->glewlwyd_config->glewlwyd_config->cookie_same_site);
       y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' opened a reset credential session with e-mail token, origin: %s", config->name, json_string_value(json_object_get(j_result, "username")), get_ip_source(request));
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_RESET_CREDENTIALS_STARTED, 1, "plugin", config->name, "verification", "email", NULL);
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_RESET_CREDENTIALS_STARTED, 1, "plugin", config->name, NULL);
@@ -2379,7 +2386,7 @@ static int callback_register_reset_credentials_code_verify(const struct _u_reque
       now += json_integer_value(json_object_get(config->j_parameters, "reset-credentials-session-duration"));
       gmtime_r(&now, &ts);
       strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
-      ulfius_add_cookie_to_response(response, 
+      ulfius_add_same_site_cookie_to_response(response, 
                                     json_string_value(json_object_get(config->j_parameters, "reset-credentials-session-key")), 
                                     json_string_value(json_object_get(j_session, "session")), 
                                     expires, 
@@ -2387,7 +2394,8 @@ static int callback_register_reset_credentials_code_verify(const struct _u_reque
                                     config->glewlwyd_config->glewlwyd_config->cookie_domain, 
                                     "/", 
                                     config->glewlwyd_config->glewlwyd_config->cookie_secure, 
-                                    0);
+                                    0,
+                                    config->glewlwyd_config->glewlwyd_config->cookie_same_site);
       y_log_message(Y_LOG_LEVEL_INFO, "Event register - Plugin '%s' - user '%s' opened a reset credential session with code, origin: %s", config->name, json_string_value(json_object_get(j_parameters, "username")), get_ip_source(request));
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_RESET_CREDENTIALS_STARTED, 1, "plugin", config->name, "verification", "code", NULL);
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_RESET_CREDENTIALS_STARTED, 1, "plugin", config->name, NULL);
