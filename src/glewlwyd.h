@@ -62,6 +62,9 @@
 #define GLEWLWYD_DEFAULT_METRICS_PORT                      4594
 #define GLEWLWYD_DEFAULT_API_PREFIX                        "api"
 #define GLEWLWYD_DEFAULT_ALLOW_ORIGIN                      "*"
+#define GLEWLWYD_DEFAULT_ALLOW_METHODS                     "GET, POST, PUT, DELETE, OPTIONS"
+#define GLEWLWYD_DEFAULT_ALLOW_HEADERS                     "Origin, X-Requested-With, Content-Type, Accept, Bearer, Authorization, DPoP"
+#define GLEWLWYD_DEFAULT_EXPOSE_HEADERS                    "Content-Encoding, Authorization"
 #define GLEWLWYD_DEFAULT_ADMIN_SCOPE                       "g_admin"
 #define GLEWLWYD_DEFAULT_PROFILE_SCOPE                     "g_profile"
 #define GLEWLWYD_DEFAULT_HASH_ALGORITHM                    digest_SHA256
@@ -111,6 +114,9 @@
 #define GLEWLWYD_ENV_STATIC_FILES_PATH           "GLWD_STATIC_FILES_PATH"
 #define GLEWLWYD_ENV_STATIC_FILES_MIME_TYPES     "GLWD_STATIC_FILES_MIME_TYPES"
 #define GLEWLWYD_ENV_ALLOW_ORIGIN                "GLWD_ALLOW_ORIGIN"
+#define GLEWLWYD_ENV_ALLOW_METHODS               "GLWD_ALLOW_METHODS"
+#define GLEWLWYD_ENV_ALLOW_HEADERS               "GLWD_ALLOW_HEADERS"
+#define GLEWLWYD_ENV_EXPOSE_HEADERS              "GLWD_EXPOSE_HEADERS"
 #define GLEWLWYD_ENV_LOG_MODE                    "GLWD_LOG_MODE"
 #define GLEWLWYD_ENV_LOG_LEVEL                   "GLWD_LOG_LEVEL"
 #define GLEWLWYD_ENV_LOG_FILE                    "GLWD_LOG_FILE"

@@ -148,6 +148,9 @@ int main (int argc, char ** argv) {
   config->log_level = Y_LOG_LEVEL_NONE;
   config->log_file = NULL;
   config->allow_origin = o_strdup(GLEWLWYD_DEFAULT_ALLOW_ORIGIN);
+  config->allow_methods = o_strdup(GLEWLWYD_DEFAULT_ALLOW_METHODS);
+  config->allow_headers = o_strdup(GLEWLWYD_DEFAULT_ALLOW_HEADERS);
+  config->expose_headers = o_strdup(GLEWLWYD_DEFAULT_EXPOSE_HEADERS);
   config->use_secure_connection = 0;
   config->secure_connection_key_file = NULL;
   config->secure_connection_pem_file = NULL;
@@ -699,6 +702,9 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free((*config)->external_url);
     o_free((*config)->log_file);
     o_free((*config)->allow_origin);
+    o_free((*config)->allow_methods);
+    o_free((*config)->allow_headers);
+    o_free((*config)->expose_headers);
     o_free((*config)->secure_connection_key_file);
     o_free((*config)->secure_connection_pem_file);
     o_free((*config)->secure_connection_ca_file);
@@ -991,6 +997,39 @@ int build_config_from_file(struct config_elements * config) {
       config->allow_origin = o_strdup(str_value);
       if (config->allow_origin == NULL) {
         fprintf(stderr, "Error allocating config->allow_origin, exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+    }
+
+    // Get allow-methods value for CORS
+    if (config_lookup_string(&cfg, "allow_methods", &str_value) == CONFIG_TRUE) {
+      o_free(config->allow_methods);
+      config->allow_methods = o_strdup(str_value);
+      if (config->allow_methods == NULL) {
+        fprintf(stderr, "Error allocating config->allow_methods, exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+    }
+
+    // Get allow-origin value for CORS
+    if (config_lookup_string(&cfg, "allow_headers", &str_value) == CONFIG_TRUE) {
+      o_free(config->allow_headers);
+      config->allow_headers = o_strdup(str_value);
+      if (config->allow_headers == NULL) {
+        fprintf(stderr, "Error allocating config->allow_headers, exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+    }
+
+    // Get allow-origin value for CORS
+    if (config_lookup_string(&cfg, "expose_headers", &str_value) == CONFIG_TRUE) {
+      o_free(config->expose_headers);
+      config->expose_headers = o_strdup(str_value);
+      if (config->expose_headers == NULL) {
+        fprintf(stderr, "Error allocating config->expose_headers, exiting\n");
         ret = G_ERROR_PARAM;
         break;
       }
@@ -1347,6 +1386,33 @@ int build_config_from_env(struct config_elements * config) {
     config->allow_origin = o_strdup(value);
     if (config->allow_origin == NULL) {
       fprintf(stderr, "Error allocating config->allow_origin (env), exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_ALLOW_METHODS)) != NULL && !o_strnullempty(value)) {
+    o_free(config->allow_methods);
+    config->allow_methods = o_strdup(value);
+    if (config->allow_methods == NULL) {
+      fprintf(stderr, "Error allocating config->allow_methods (env), exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_ALLOW_HEADERS)) != NULL && !o_strnullempty(value)) {
+    o_free(config->allow_headers);
+    config->allow_headers = o_strdup(value);
+    if (config->allow_headers == NULL) {
+      fprintf(stderr, "Error allocating config->allow_headers (env), exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_EXPOSE_HEADERS)) != NULL && !o_strnullempty(value)) {
+    o_free(config->expose_headers);
+    config->expose_headers = o_strdup(value);
+    if (config->expose_headers == NULL) {
+      fprintf(stderr, "Error allocating config->expose_headers (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }

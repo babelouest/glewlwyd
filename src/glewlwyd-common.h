@@ -348,6 +348,9 @@ struct config_elements {
   char *                                         admin_scope;
   char *                                         profile_scope;
   char *                                         allow_origin;
+  char *                                         allow_methods;
+  char *                                         allow_headers;
+  char *                                         expose_headers;
   unsigned int                                   use_secure_connection;
   char *                                         secure_connection_key_file;
   char *                                         secure_connection_pem_file;
