@@ -25,8 +25,17 @@ api_prefix="api"
 # path to static files for /webapp url
 static_files_path="/usr/share/glewlwyd/webapp/"
 
-# access-control-allow-origin value
+# Access-Control-Allow-Origin header value, default '*'
 allow_origin="*"
+
+# Access-Control-Allow-Methods header value, default 'GET, POST, PUT, DELETE, OPTIONS'
+allow_methods="GET, POST, PUT, DELETE, OPTIONS"
+
+# Access-Control-Allow-Headers header value, default 'Origin, X-Requested-With, Content-Type, Accept, Bearer, Authorization, DPoP'
+allow_headers="Origin, X-Requested-With, Content-Type, Accept, Bearer, Authorization, DPoP"
+
+# Access-Control-Expose-Headers header value, default 'Content-Encoding, Authorization'
+expose_headers="Content-Encoding, Authorization"
 
 # log mode (console, syslog, journald, file)
 log_mode="console"
