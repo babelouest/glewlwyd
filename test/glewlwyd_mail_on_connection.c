@@ -31,7 +31,7 @@
 #define SCOPE3 "scope1"
 
 #define CONFIG_TYPE "mail-on-connexion"
-#define CONFIG_NAME "cur-mail-on-connexion"
+#define CONFIG_NAME "cur-mail-on-connection"
 #define HOST "localhost"
 #define PORT_2525 2525
 #define PORT_2526 2526
@@ -41,14 +41,22 @@
 #define PORT_2530 2530
 #define PORT_2531 2531
 #define PORT_2532 2532
+#define PORT_2533 2533
+#define PORT_2534 2534
+#define PORT_2535 2535
 #define CONTENT_TYPE "text/plain; charset=utf-8"
 #define FROM "glewlwyd@mail.tld"
 #define LANG_PROPERTY "lang"
-#define SUBJECT "New connexion"
-#define BODY_PATTERN_USERNAME "New connexion for "
-#define BODY_PATTERN_IP "New connexion at "
+#define SUBJECT "New connection"
+#define BODY_PATTERN_USERNAME "New connection for "
+#define BODY_PATTERN_IP "New connection at "
+#define SUBJECT_FR "Nouvelle connexion"
+#define BODY_PATTERN_USERNAME_FR "Nouvelle connexion pour "
 
 struct _u_request admin_req;
+
+static pthread_mutex_t smtp_lock;
+static pthread_cond_t  smtp_cond;
 
 #define BACKLOG_MAX  (10)
 #define BUF_SIZE     4096
@@ -217,6 +225,9 @@ static void * simple_smtp(void * args) {
 
       if (!bind(server_fd, (struct sockaddr *)&address, sizeof(address))) {
         if (listen(server_fd, 3) >= 0) {
+          pthread_mutex_lock(&smtp_lock);
+          pthread_cond_signal(&smtp_cond);
+          pthread_mutex_unlock(&smtp_lock);
           if ((manager->sockfd = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) >= 0) {
             handle_smtp(manager);
           } else {
@@ -241,7 +252,7 @@ static void * simple_smtp(void * args) {
   pthread_exit(NULL);
 }
 
-START_TEST(test_glwd_mail_on_connexion_add_users)
+START_TEST(test_glwd_mail_on_connection_add_users)
 {
   json_t * j_body;
 
@@ -271,7 +282,7 @@ START_TEST(test_glwd_mail_on_connexion_add_users)
 }
 END_TEST
 
-START_TEST(test_glwd_mail_on_connexion_remove_users)
+START_TEST(test_glwd_mail_on_connection_remove_users)
 {
   json_t * j_body = json_pack("{sssssss{so}}", "username", USER1, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "register", json_false());
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/delegate/" USER1 "/profile/scheme/register/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
@@ -291,13 +302,13 @@ START_TEST(test_glwd_mail_on_connexion_remove_users)
 }
 END_TEST
 
-START_TEST(test_glwd_mail_on_connexion_delete_misc_config)
+START_TEST(test_glwd_mail_on_connection_delete_misc_config)
 {
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/misc/" CONFIG_NAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
 }
 END_TEST
 
-START_TEST(test_glwd_mail_on_connexion_email_username_ok)
+START_TEST(test_glwd_mail_on_connection_email_username_ok)
 {
   struct smtp_manager manager;
   pthread_t thread;
@@ -325,6 +336,10 @@ START_TEST(test_glwd_mail_on_connexion_email_username_ok)
   manager.body_pattern = BODY_PATTERN_USERNAME;
   pthread_create(&thread, NULL, simple_smtp, &manager);
 
+  pthread_mutex_lock(&smtp_lock);
+  pthread_cond_wait(&smtp_cond, &smtp_lock);
+  pthread_mutex_unlock(&smtp_lock);
+
   j_body = json_pack("{ssss}", "username", USER1, "password", USER_PASSWORD);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/auth/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
 
@@ -337,7 +352,7 @@ START_TEST(test_glwd_mail_on_connexion_email_username_ok)
 }
 END_TEST
 
-START_TEST(test_glwd_mail_on_connexion_email_ip_ok)
+START_TEST(test_glwd_mail_on_connection_email_ip_ok)
 {
   struct smtp_manager manager;
   pthread_t thread;
@@ -365,6 +380,10 @@ START_TEST(test_glwd_mail_on_connexion_email_ip_ok)
   manager.body_pattern = BODY_PATTERN_IP;
   pthread_create(&thread, NULL, simple_smtp, &manager);
 
+  pthread_mutex_lock(&smtp_lock);
+  pthread_cond_wait(&smtp_cond, &smtp_lock);
+  pthread_mutex_unlock(&smtp_lock);
+
   j_body = json_pack("{ssss}", "username", USER1, "password", USER_PASSWORD);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/auth/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
 
@@ -377,7 +396,7 @@ START_TEST(test_glwd_mail_on_connexion_email_ip_ok)
 }
 END_TEST
 
-START_TEST(test_glwd_mail_on_connexion_email_mfa)
+START_TEST(test_glwd_mail_on_connection_email_mfa)
 {
   struct smtp_manager manager;
   pthread_t thread;
@@ -405,6 +424,10 @@ START_TEST(test_glwd_mail_on_connexion_email_mfa)
   manager.body_pattern = BODY_PATTERN_USERNAME;
   pthread_create(&thread, NULL, simple_smtp, &manager);
 
+  pthread_mutex_lock(&smtp_lock);
+  pthread_cond_wait(&smtp_cond, &smtp_lock);
+  pthread_mutex_unlock(&smtp_lock);
+
   j_body = json_pack("{sssssss{ss}}", "username", USER1, "scheme_type", "mock", "scheme_name", "mock_scheme_42", "value", "code", "42");
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/auth/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
 
@@ -417,7 +440,7 @@ START_TEST(test_glwd_mail_on_connexion_email_mfa)
 }
 END_TEST
 
-START_TEST(test_glwd_mail_on_connexion_no_email_ok)
+START_TEST(test_glwd_mail_on_connection_no_email_ok)
 {
   struct smtp_manager manager;
   pthread_t thread;
@@ -445,6 +468,10 @@ START_TEST(test_glwd_mail_on_connexion_no_email_ok)
   manager.body_pattern = BODY_PATTERN_USERNAME;
   pthread_create(&thread, NULL, simple_smtp, &manager);
 
+  pthread_mutex_lock(&smtp_lock);
+  pthread_cond_wait(&smtp_cond, &smtp_lock);
+  pthread_mutex_unlock(&smtp_lock);
+
   j_body = json_pack("{ssss}", "username", USER3, "password", USER_PASSWORD);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/auth/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_body);
@@ -461,7 +488,7 @@ START_TEST(test_glwd_mail_on_connexion_no_email_ok)
 }
 END_TEST
 
-START_TEST(test_glwd_mail_on_connexion_reconnexion_no_email_ok)
+START_TEST(test_glwd_mail_on_connection_reconnection_no_email_ok)
 {
   struct smtp_manager manager;
   pthread_t thread;
@@ -492,6 +519,10 @@ START_TEST(test_glwd_mail_on_connexion_reconnexion_no_email_ok)
   manager.body_pattern = BODY_PATTERN_USERNAME;
   pthread_create(&thread, NULL, simple_smtp, &manager);
 
+  pthread_mutex_lock(&smtp_lock);
+  pthread_cond_wait(&smtp_cond, &smtp_lock);
+  pthread_mutex_unlock(&smtp_lock);
+
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
   j_body = json_pack("{ssss}", "username", USER1, "password", USER_PASSWORD);
@@ -509,7 +540,7 @@ START_TEST(test_glwd_mail_on_connexion_reconnexion_no_email_ok)
 
   pthread_join(thread, NULL);
 
-  // First connexion, e-mail sent to USER1
+  // First connection, e-mail sent to USER1
   ck_assert_str_eq(manager.mail_data, USER1);
   o_free(manager.mail_data);
   
@@ -536,6 +567,10 @@ START_TEST(test_glwd_mail_on_connexion_reconnexion_no_email_ok)
   manager.body_pattern = BODY_PATTERN_USERNAME;
   pthread_create(&thread, NULL, simple_smtp, &manager);
 
+  pthread_mutex_lock(&smtp_lock);
+  pthread_cond_wait(&smtp_cond, &smtp_lock);
+  pthread_mutex_unlock(&smtp_lock);
+
   ulfius_init_request(&req);
   j_body = json_pack("{ssss}", "username", USER1, "password", USER_PASSWORD);
   ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "POST",
@@ -560,7 +595,7 @@ START_TEST(test_glwd_mail_on_connexion_reconnexion_no_email_ok)
 
   pthread_join(thread, NULL);
   
-  // Second connexion, e-mail sent to USER2 only, not USER1
+  // Second connection, e-mail sent to USER2 only, not USER1
   ck_assert_str_eq(manager.mail_data, USER2);
 
   o_free(manager.mail_data);
@@ -568,7 +603,7 @@ START_TEST(test_glwd_mail_on_connexion_reconnexion_no_email_ok)
 }
 END_TEST
 
-START_TEST(test_glwd_mail_on_connexion_reconnexion_mfa_no_email_ok)
+START_TEST(test_glwd_mail_on_connection_reconnection_mfa_no_email_ok)
 {
   struct smtp_manager manager;
   pthread_t thread;
@@ -599,6 +634,10 @@ START_TEST(test_glwd_mail_on_connexion_reconnexion_mfa_no_email_ok)
   manager.body_pattern = BODY_PATTERN_USERNAME;
   pthread_create(&thread, NULL, simple_smtp, &manager);
 
+  pthread_mutex_lock(&smtp_lock);
+  pthread_cond_wait(&smtp_cond, &smtp_lock);
+  pthread_mutex_unlock(&smtp_lock);
+
   ulfius_init_request(&req);
   ulfius_init_response(&resp);
   j_body = json_pack("{ssss}", "username", USER1, "password", USER_PASSWORD);
@@ -616,7 +655,7 @@ START_TEST(test_glwd_mail_on_connexion_reconnexion_mfa_no_email_ok)
 
   pthread_join(thread, NULL);
 
-  // First connexion, e-mail sent to USER1
+  // First connection, e-mail sent to USER1
   ck_assert_str_eq(manager.mail_data, USER1);
   o_free(manager.mail_data);
   
@@ -667,11 +706,153 @@ START_TEST(test_glwd_mail_on_connexion_reconnexion_mfa_no_email_ok)
 
   pthread_join(thread, NULL);
   
-  // Second connexion, e-mail sent to USER2 only, not USER1
+  // Second connection, e-mail sent to USER2 only, not USER1
   ck_assert_str_eq(manager.mail_data, USER2);
 
   o_free(manager.mail_data);
   o_free(cookie);
+}
+END_TEST
+
+START_TEST(test_glwd_mail_on_connection_email_username_lang)
+{
+  struct smtp_manager manager;
+  pthread_t thread;
+
+  json_t * j_body = json_pack("{sss{so ss si ss ss ss s{s{sossss}s{sossss}}}}",
+                              "type", CONFIG_TYPE,
+                              "value",
+                                "enabled", json_true(),
+                                "host", HOST,
+                                "port", PORT_2533,
+                                "content-type", CONTENT_TYPE,
+                                "from", FROM,
+                                "user-lang-property", LANG_PROPERTY,
+                                "templates",
+                                  "en",
+                                    "defaultLang", json_true(),
+                                    "subject", SUBJECT,
+                                    "body-pattern", BODY_PATTERN_USERNAME "{USERNAME}",
+                                  "fr",
+                                    "defaultLang", json_false(),
+                                    "subject", SUBJECT_FR,
+                                    "body-pattern", BODY_PATTERN_USERNAME_FR "{USERNAME}");
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/misc/" CONFIG_NAME, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+
+  ck_assert_ptr_ne(NULL, (j_body = json_pack("{sssssssss[sss]so}", "username", USER1, "password", USER_PASSWORD, "email", MAIL1, LANG_PROPERTY, "en", "scope", SCOPE1, SCOPE2, SCOPE3, "enabled", json_true())));
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USER1, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+
+  manager.mail_data = NULL;
+  manager.port = PORT_2533;
+  manager.sockfd = 0;
+  manager.body_pattern = BODY_PATTERN_USERNAME;
+  pthread_create(&thread, NULL, simple_smtp, &manager);
+
+  pthread_mutex_lock(&smtp_lock);
+  pthread_cond_wait(&smtp_cond, &smtp_lock);
+  pthread_mutex_unlock(&smtp_lock);
+
+  j_body = json_pack("{ssss}", "username", USER1, "password", USER_PASSWORD);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/auth/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+
+  pthread_join(thread, NULL);
+
+  ck_assert_str_eq(manager.mail_data, USER1);
+
+  json_decref(j_body);
+  o_free(manager.mail_data);
+
+  j_body = json_pack("{sss{so ss si ss ss ss s{s{sossss}s{sossss}}}}",
+                      "type", CONFIG_TYPE,
+                      "value",
+                        "enabled", json_true(),
+                        "host", HOST,
+                        "port", PORT_2534,
+                        "content-type", CONTENT_TYPE,
+                        "from", FROM,
+                        "user-lang-property", LANG_PROPERTY,
+                        "templates",
+                          "en",
+                            "defaultLang", json_true(),
+                            "subject", SUBJECT,
+                            "body-pattern", BODY_PATTERN_USERNAME "{USERNAME}",
+                          "fr",
+                            "defaultLang", json_false(),
+                            "subject", SUBJECT_FR,
+                            "body-pattern", BODY_PATTERN_USERNAME_FR "{USERNAME}");
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/misc/" CONFIG_NAME, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  ck_assert_ptr_ne(NULL, (j_body = json_pack("{sssssssss[sss]so}", "username", USER1, "password", USER_PASSWORD, "email", MAIL1, LANG_PROPERTY, "fr", "scope", SCOPE1, SCOPE2, SCOPE3, "enabled", json_true())));
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USER1, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+
+  manager.mail_data = NULL;
+  manager.port = PORT_2534;
+  manager.sockfd = 0;
+  manager.body_pattern = BODY_PATTERN_USERNAME_FR;
+  pthread_create(&thread, NULL, simple_smtp, &manager);
+
+  pthread_mutex_lock(&smtp_lock);
+  pthread_cond_wait(&smtp_cond, &smtp_lock);
+  pthread_mutex_unlock(&smtp_lock);
+
+  j_body = json_pack("{ssss}", "username", USER1, "password", USER_PASSWORD);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/auth/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+
+  pthread_join(thread, NULL);
+
+  ck_assert_str_eq(manager.mail_data, USER1);
+
+  json_decref(j_body);
+  o_free(manager.mail_data);
+
+  j_body = json_pack("{sss{so ss si ss ss ss s{s{sossss}s{sossss}}}}",
+                      "type", CONFIG_TYPE,
+                      "value",
+                        "enabled", json_true(),
+                        "host", HOST,
+                        "port", PORT_2535,
+                        "content-type", CONTENT_TYPE,
+                        "from", FROM,
+                        "user-lang-property", LANG_PROPERTY,
+                        "templates",
+                          "en",
+                            "defaultLang", json_true(),
+                            "subject", SUBJECT,
+                            "body-pattern", BODY_PATTERN_USERNAME "{USERNAME}",
+                          "fr",
+                            "defaultLang", json_false(),
+                            "subject", SUBJECT_FR,
+                            "body-pattern", BODY_PATTERN_USERNAME_FR "{USERNAME}");
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/misc/" CONFIG_NAME, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  ck_assert_ptr_ne(NULL, (j_body = json_pack("{sssssssss[sss]so}", "username", USER1, "password", USER_PASSWORD, "email", MAIL1, LANG_PROPERTY, "de", "scope", SCOPE1, SCOPE2, SCOPE3, "enabled", json_true())));
+  ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USER1, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+
+  manager.mail_data = NULL;
+  manager.port = PORT_2535;
+  manager.sockfd = 0;
+  manager.body_pattern = BODY_PATTERN_USERNAME;
+  pthread_create(&thread, NULL, simple_smtp, &manager);
+
+  pthread_mutex_lock(&smtp_lock);
+  pthread_cond_wait(&smtp_cond, &smtp_lock);
+  pthread_mutex_unlock(&smtp_lock);
+
+  j_body = json_pack("{ssss}", "username", USER1, "password", USER_PASSWORD);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/auth/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+
+  pthread_join(thread, NULL);
+
+  ck_assert_str_eq(manager.mail_data, USER1);
+
+  json_decref(j_body);
+  o_free(manager.mail_data);
 }
 END_TEST
 
@@ -680,17 +861,18 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd mail on connexion");
-  tc_core = tcase_create("test_glwd_mail_on_connexion");
-  tcase_add_test(tc_core, test_glwd_mail_on_connexion_add_users);
-  tcase_add_test(tc_core, test_glwd_mail_on_connexion_email_username_ok);
-  tcase_add_test(tc_core, test_glwd_mail_on_connexion_email_ip_ok);
-  tcase_add_test(tc_core, test_glwd_mail_on_connexion_email_mfa);
-  tcase_add_test(tc_core, test_glwd_mail_on_connexion_no_email_ok);
-  tcase_add_test(tc_core, test_glwd_mail_on_connexion_reconnexion_no_email_ok);
-  tcase_add_test(tc_core, test_glwd_mail_on_connexion_reconnexion_mfa_no_email_ok);
-  tcase_add_test(tc_core, test_glwd_mail_on_connexion_delete_misc_config);
-  tcase_add_test(tc_core, test_glwd_mail_on_connexion_remove_users);
+  s = suite_create("Glewlwyd mail on connection");
+  tc_core = tcase_create("test_glwd_mail_on_connection");
+  tcase_add_test(tc_core, test_glwd_mail_on_connection_add_users);
+  tcase_add_test(tc_core, test_glwd_mail_on_connection_email_username_ok);
+  tcase_add_test(tc_core, test_glwd_mail_on_connection_email_ip_ok);
+  tcase_add_test(tc_core, test_glwd_mail_on_connection_email_mfa);
+  tcase_add_test(tc_core, test_glwd_mail_on_connection_no_email_ok);
+  tcase_add_test(tc_core, test_glwd_mail_on_connection_reconnection_no_email_ok);
+  tcase_add_test(tc_core, test_glwd_mail_on_connection_reconnection_mfa_no_email_ok);
+  tcase_add_test(tc_core, test_glwd_mail_on_connection_email_username_lang);
+  tcase_add_test(tc_core, test_glwd_mail_on_connection_delete_misc_config);
+  tcase_add_test(tc_core, test_glwd_mail_on_connection_remove_users);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
@@ -709,6 +891,9 @@ int main(int argc, char *argv[])
   char * cookie;
 
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
+
+  pthread_mutex_init(&smtp_lock, NULL);
+  pthread_cond_init(&smtp_cond, NULL);
 
   ulfius_init_request(&admin_req);
   // Getting a valid session id for authenticated http requests
@@ -743,6 +928,9 @@ int main(int argc, char *argv[])
   }
 
   run_simple_test(&admin_req, "DELETE", SERVER_URI "/auth/", NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
+
+  pthread_mutex_destroy(&smtp_lock);
+  pthread_cond_destroy(&smtp_cond);
 
   ulfius_clean_request(&admin_req);
   y_close_logs();
