@@ -58,7 +58,8 @@ include(CheckSymbolExists)
 
 # cmake modules
 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
+set(G_CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
+list(APPEND CMAKE_MODULE_PATH "${O_CMAKE_MODULE_PATH}")
 
 # check if _GNU_SOURCE is available
 
@@ -900,7 +901,7 @@ if (BUILD_GLEWLWYD_TESTING)
     endif ()
     
     configure_file(
-        "${CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
+        "${G_CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
         "${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake"
         @ONLY)
 
@@ -1056,7 +1057,7 @@ install(TARGETS ${TARGETS}
 
 if (NOT TARGET uninstall)
   configure_file(
-    "${CMAKE_MODULE_PATH}/CMakeUninstall.cmake.in"
+    "${G_CMAKE_MODULE_PATH}/CMakeUninstall.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
     IMMEDIATE @ONLY)
   add_custom_target(uninstall
