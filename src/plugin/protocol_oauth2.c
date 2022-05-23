@@ -433,11 +433,13 @@ static int serialize_access_token(struct _oauth2_config * config, uint auth_type
 /**
  * Generates a client_access_token from the specified parameters that are considered valid
  */
-static char * generate_client_access_token(struct _oauth2_config * config, const char * client_id, const char * scope_list, time_t now, const char * ip_source) {
+static char * generate_client_access_token(struct _oauth2_config * config, const char * client_id, const char * scope_list, json_t * j_client, time_t now, const char * ip_source) {
   jwt_t * jwt;
-  char * token = NULL;
+  char * token = NULL, * property = NULL;
   char salt[OAUTH2_SALT_LENGTH + 1] = {0};
-  
+  json_t * j_element = NULL, * j_value;
+  size_t index = 0, index_p = 0;
+ 
   jwt = r_jwt_copy(config->jwt_key);
   if (jwt != NULL) {
     // Build jwt payload
@@ -450,6 +452,24 @@ static char * generate_client_access_token(struct _oauth2_config * config, const
     r_jwt_set_claim_int_value(jwt, "expires_in", config->access_token_duration);
     r_jwt_set_claim_int_value(jwt, "exp", (((json_int_t)now)+config->access_token_duration));
     r_jwt_set_claim_int_value(jwt, "nbf", now);
+    if (json_object_get(config->j_params, "additional-parameters") != NULL && j_client != NULL) {
+      json_array_foreach(json_object_get(config->j_params, "additional-parameters"), index, j_element) {
+        if (json_is_string(json_object_get(j_client, json_string_value(json_object_get(j_element, "user-parameter")))) && json_string_length(json_object_get(j_client, json_string_value(json_object_get(j_element, "user-parameter"))))) {
+          r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), json_string_value(json_object_get(j_client, json_string_value(json_object_get(j_element, "user-parameter")))));
+        } else if (json_is_array(json_object_get(j_client, json_string_value(json_object_get(j_element, "user-parameter"))))) {
+          json_array_foreach(json_object_get(j_client, json_string_value(json_object_get(j_element, "user-parameter"))), index_p, j_value) {
+            property = mstrcatf(property, ",%s", json_string_value(j_value));
+          }
+          if (o_strlen(property)) {
+            r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), property+1); // Skip first ','
+          } else {
+            r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), "");
+          }
+          o_free(property);
+          property = NULL;
+        }
+      }
+    }
     token = r_jwt_serialize_signed(jwt, NULL, 0);
     if (token == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - oauth2 - Error generating token");
@@ -3007,7 +3027,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
         } else {
           scope_joined = string_array_join((const char **)scope_allowed, " ");
           time(&now);
-          if ((access_token = generate_client_access_token(config, request->auth_basic_user, scope_joined, now, ip_source)) != NULL) {
+          if ((access_token = generate_client_access_token(config, request->auth_basic_user, scope_joined, json_object_get(j_client, "client"), now, ip_source)) != NULL) {
             if (serialize_access_token(config, GLEWLWYD_AUTHORIZATION_TYPE_CLIENT_CREDENTIALS, 0, NULL, request->auth_basic_user, scope_joined, now, issued_for, u_map_get_case(request->map_header, "user-agent"), access_token) == G_OK) {
               json_body = json_pack("{sssssIss}",
                                     "access_token", access_token,
