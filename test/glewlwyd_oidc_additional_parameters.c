@@ -9,6 +9,7 @@
 #include <gnutls/crypto.h>
 
 #include <check.h>
+#include <rhonabwy.h>
 #include <ulfius.h>
 #include <orcania.h>
 #include <yder.h>
@@ -25,13 +26,16 @@
 #define SCOPE_LIST "g_profile openid"
 #define CLIENT "client1_id"
 #define RESPONSE_TYPE "id_token token"
+#define CLIENT_CONFIDENTIAL "client_with_params"
+#define CLIENT_SECRET "very-secret"
+#define CLIENT_SCOPE "openid"
 
 struct _u_request admin_req;
 struct _u_request user_req;
 
 START_TEST(test_oidc_additional_parameters_add_plugin)
 {
-  json_t * j_param = json_pack("{sssssss{sssssssssisisisosososososososos[{ssss}{ssss}{ssss}{ssss}]}}",
+  json_t * j_param = json_pack("{sssssss{sssssssssisisisosososososososos[{ssssss}{ssssss}{ssssss}{ssssss}{ssssss}{ssss}{ssss}]}}",
                                 "module",
                                 "oidc",
                                 "name",
@@ -70,27 +74,40 @@ START_TEST(test_oidc_additional_parameters_add_plugin)
                                   "auth-type-refresh-enabled",
                                   json_true(),
                                   "additional-parameters",
-                                    "user-parameter",
-                                    "claim-str",
-                                    "token-parameter",
-                                    "claim-str",
-                                    "user-parameter",
-                                    "claim-number",
-                                    "token-parameter",
-                                    "claim-number",
-                                    "user-parameter",
-                                    "claim-bool",
-                                    "token-parameter",
-                                    "claim-bool",
-                                    "user-parameter",
-                                    "claim-mandatory",
-                                    "token-parameter",
-                                    "claim-mandatory");
+                                    "user-parameter", "claim-str",
+                                    "client-parameter", "claim-str",
+                                    "token-parameter", "claim-str",
+                                    
+                                    "user-parameter", "claim-number",
+                                    "client-parameter", "claim-number",
+                                    "token-parameter", "claim-number",
+                                    
+                                    "user-parameter", "claim-bool",
+                                    "client-parameter", "claim-bool",
+                                    "token-parameter", "claim-bool",
+                                    
+                                    "user-parameter", "claim-mandatory",
+                                    "client-parameter", "claim-mandatory",
+                                    "token-parameter", "claim-mandatory",
+                                    
+                                    "user-parameter", "claim-missing",
+                                    "client-parameter", "claim-missing",
+                                    "token-parameter", "claim-missing",
+                                    
+                                    "user-parameter", "claim-user",
+                                    "token-parameter", "claim-user",
+                                    
+                                    "client-parameter", "claim-client",
+                                    "token-parameter", "claim-client");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
   
-  j_param = json_pack("{ssssssss}", "claim-str", "the-str", "claim-number", "42", "claim-bool", "1", "claim-mandatory", "I'M aliiiiiive!");
+  j_param = json_pack("{ssssssssss}", "claim-str", "the-str", "claim-number", "42", "claim-bool", "1", "claim-mandatory", "I'M aliiiiiive!", "claim-user", "the-claim-user");
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USER_USERNAME, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_param);
+  
+  j_param = json_pack("{sssssosos[s]s[s]ssssssssss}", "client_id", CLIENT_CONFIDENTIAL, "client_secret", CLIENT_SECRET, "confidential", json_true(), "enabled", json_true(), "scope", CLIENT_SCOPE, "authorization_type", "client_credentials", "claim-str", "the-str", "claim-number", "42", "claim-bool", "1", "claim-mandatory", "I'M aliiiiiive!", "claim-client", "the-claim-client");
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
 }
 END_TEST
@@ -124,13 +141,16 @@ START_TEST(test_oidc_additional_parameters)
   ck_assert_int_eq(o_base64url_decode((unsigned char *)access_token_split[1], o_strlen(access_token_split[1]), (unsigned char *)str_payload, &str_payload_len), 1);
   str_payload[str_payload_len] = '\0';
   ck_assert_ptr_ne((j_payload = json_loads(str_payload, JSON_DECODE_ANY, NULL)), NULL);
-  ck_assert_int_eq(json_object_size(j_payload), 14);
+  ck_assert_int_eq(json_object_size(j_payload), 15);
   ck_assert_ptr_ne(json_string_value(json_object_get(j_payload, "sub")), NULL);
   ck_assert_str_eq(json_string_value(json_object_get(j_payload, "scope")), SCOPE_LIST);
   ck_assert_str_eq(json_string_value(json_object_get(j_payload, "claim-bool")), "1");
   ck_assert_str_eq(json_string_value(json_object_get(j_payload, "claim-mandatory")), "I'M aliiiiiive!");
   ck_assert_str_eq(json_string_value(json_object_get(j_payload, "claim-number")), "42");
   ck_assert_str_eq(json_string_value(json_object_get(j_payload, "claim-str")), "the-str");
+  ck_assert_str_eq(json_string_value(json_object_get(j_payload, "claim-user")), "the-claim-user");
+  ck_assert_ptr_eq(json_object_get(j_payload, "claim-client"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_payload, "claim-missing"), NULL);
   
   ulfius_clean_request(&req);
   o_free(access_token);
@@ -177,12 +197,91 @@ START_TEST(test_oidc_no_additional_parameters)
   ck_assert_ptr_eq(json_object_get(j_payload, "claim-mandatory"), NULL);
   ck_assert_ptr_eq(json_object_get(j_payload, "claim-number"), NULL);
   ck_assert_ptr_eq(json_object_get(j_payload, "claim-str"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_payload, "claim-missing"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_payload, "claim-user"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_payload, "claim-client"), NULL);
   
   ulfius_clean_request(&req);
   o_free(access_token);
   o_free(str_payload);
   free_string_array(access_token_split);
   json_decref(j_payload);
+}
+END_TEST
+
+START_TEST(test_oidc_client_cred_additional_parameters)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_body, * j_claims;
+  jwt_t * jwt;
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/token",
+                                                       U_OPT_AUTH_BASIC, CLIENT_CONFIDENTIAL, CLIENT_SECRET,
+                                                       U_OPT_POST_BODY_PARAMETER, "grant_type", "client_credentials",
+                                                       U_OPT_POST_BODY_PARAMETER, "scope", CLIENT_SCOPE,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
+  ck_assert_ptr_ne(NULL, jwt = r_jwt_quick_parse(json_string_value(json_object_get(j_body, "access_token")), R_PARSE_NONE, 0));
+  ck_assert_ptr_ne(NULL, j_claims = r_jwt_get_full_claims_json_t(jwt));
+  ck_assert_int_eq(json_object_size(j_claims), 15);
+  ck_assert_ptr_ne(json_string_value(json_object_get(j_claims, "sub")), NULL);
+  ck_assert_str_eq(json_string_value(json_object_get(j_claims, "scope")), CLIENT_SCOPE);
+  ck_assert_str_eq(json_string_value(json_object_get(j_claims, "claim-bool")), "1");
+  ck_assert_str_eq(json_string_value(json_object_get(j_claims, "claim-mandatory")), "I'M aliiiiiive!");
+  ck_assert_str_eq(json_string_value(json_object_get(j_claims, "claim-number")), "42");
+  ck_assert_str_eq(json_string_value(json_object_get(j_claims, "claim-str")), "the-str");
+  ck_assert_ptr_eq(json_object_get(j_claims, "claim-missing"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_claims, "claim-user"), NULL);
+  ck_assert_str_eq(json_string_value(json_object_get(j_claims, "claim-client")), "the-claim-client");
+  r_jwt_free(jwt);
+  json_decref(j_body);
+  json_decref(j_claims);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
+START_TEST(test_oidc_client_cred_no_additional_parameters)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_body, * j_claims;
+  jwt_t * jwt;
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN "/token",
+                                                       U_OPT_AUTH_BASIC, CLIENT_CONFIDENTIAL, CLIENT_SECRET,
+                                                       U_OPT_POST_BODY_PARAMETER, "grant_type", "client_credentials",
+                                                       U_OPT_POST_BODY_PARAMETER, "scope", CLIENT_SCOPE,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne(NULL, j_body = ulfius_get_json_body_response(&resp, NULL));
+  ck_assert_ptr_ne(NULL, jwt = r_jwt_quick_parse(json_string_value(json_object_get(j_body, "access_token")), R_PARSE_NONE, 0));
+  ck_assert_ptr_ne(NULL, j_claims = r_jwt_get_full_claims_json_t(jwt));
+  ck_assert_int_eq(json_object_size(j_claims), 10);
+  ck_assert_ptr_ne(json_object_get(j_claims, "sub"), NULL);
+  ck_assert_ptr_ne(json_object_get(j_claims, "scope"), CLIENT_SCOPE);
+  ck_assert_ptr_eq(json_object_get(j_claims, "claim-bool"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_claims, "claim-mandatory"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_claims, "claim-number"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_claims, "claim-str"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_claims, "claim-missing"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_claims, "claim-user"), NULL);
+  ck_assert_ptr_eq(json_object_get(j_claims, "claim-client"), NULL);
+  r_jwt_free(jwt);
+  json_decref(j_body);
+  json_decref(j_claims);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -208,6 +307,8 @@ START_TEST(test_oidc_additional_parameters_delete_plugin)
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/user/", NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/client/" CLIENT_CONFIDENTIAL, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
 }
 END_TEST
 
@@ -221,6 +322,8 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_additional_parameters_add_plugin);
   tcase_add_test(tc_core, test_oidc_additional_parameters);
   tcase_add_test(tc_core, test_oidc_no_additional_parameters);
+  tcase_add_test(tc_core, test_oidc_client_cred_additional_parameters);
+  tcase_add_test(tc_core, test_oidc_client_cred_no_additional_parameters);
   tcase_add_test(tc_core, test_oidc_additional_parameters_delete_plugin);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
