@@ -209,8 +209,9 @@ static json_t * check_parameters (json_t * j_params) {
             json_array_append_new(j_error, json_string("'additional-parameters' element must be a JSON object"));
             ret = G_ERROR_PARAM;
           } else {
-            if (json_object_get(j_element, "user-parameter") == NULL || !json_is_string(json_object_get(j_element, "user-parameter")) || json_string_null_or_empty(json_object_get(j_element, "user-parameter"))) {
-              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'user-parameter' of type string and non empty"));
+            if ((json_object_get(j_element, "user-parameter") == NULL || !json_is_string(json_object_get(j_element, "user-parameter"))) &&
+                (json_object_get(j_element, "client-parameter") == NULL || !json_is_string(json_object_get(j_element, "client-parameter")))) {
+              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'user-parameter' or 'client-parameter' of type string"));
               ret = G_ERROR_PARAM;
             } else if (json_object_get(j_element, "token-parameter") == NULL || !json_is_string(json_object_get(j_element, "token-parameter")) || json_string_null_or_empty(json_object_get(j_element, "token-parameter"))) {
               json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'username', 'salt', 'type', 'iat', 'expires_in', 'scope'"));
@@ -454,19 +455,21 @@ static char * generate_client_access_token(struct _oauth2_config * config, const
     r_jwt_set_claim_int_value(jwt, "nbf", now);
     if (json_object_get(config->j_params, "additional-parameters") != NULL && j_client != NULL) {
       json_array_foreach(json_object_get(config->j_params, "additional-parameters"), index, j_element) {
-        if (json_is_string(json_object_get(j_client, json_string_value(json_object_get(j_element, "user-parameter")))) && json_string_length(json_object_get(j_client, json_string_value(json_object_get(j_element, "user-parameter"))))) {
-          r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), json_string_value(json_object_get(j_client, json_string_value(json_object_get(j_element, "user-parameter")))));
-        } else if (json_is_array(json_object_get(j_client, json_string_value(json_object_get(j_element, "user-parameter"))))) {
-          json_array_foreach(json_object_get(j_client, json_string_value(json_object_get(j_element, "user-parameter"))), index_p, j_value) {
-            property = mstrcatf(property, ",%s", json_string_value(j_value));
+        if (!json_string_null_or_empty(json_object_get(j_element, "client-parameter"))) {
+          if (json_is_string(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter")))) && json_string_length(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter"))))) {
+            r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), json_string_value(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter")))));
+          } else if (json_is_array(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter"))))) {
+            json_array_foreach(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter"))), index_p, j_value) {
+              property = mstrcatf(property, ",%s", json_string_value(j_value));
+            }
+            if (o_strlen(property)) {
+              r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), property+1); // Skip first ','
+            } else {
+              r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), "");
+            }
+            o_free(property);
+            property = NULL;
           }
-          if (o_strlen(property)) {
-            r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), property+1); // Skip first ','
-          } else {
-            r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), "");
-          }
-          o_free(property);
-          property = NULL;
         }
       }
     }
@@ -492,6 +495,26 @@ static char * generate_access_token(struct _oauth2_config * config, const char *
   
   if ((jwt = r_jwt_copy(config->jwt_key)) != NULL) {
     rand_string_nonce(salt, OAUTH2_SALT_LENGTH);
+    if (json_object_get(config->j_params, "additional-parameters") != NULL && j_user != NULL) {
+      json_array_foreach(json_object_get(config->j_params, "additional-parameters"), index, j_element) {
+        if (!json_string_null_or_empty(json_object_get(j_element, "user-parameter"))) {
+          if (json_is_string(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))) && !json_string_null_or_empty(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
+            r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), json_string_value(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))));
+          } else if (json_is_array(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
+            json_array_foreach(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))), index_p, j_value) {
+              property = mstrcatf(property, ",%s", json_string_value(j_value));
+            }
+            if (!o_strnullempty(property)) {
+              r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), property+1); // Skip first ','
+            } else {
+              r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), "");
+            }
+            o_free(property);
+            property = NULL;
+          }
+        }
+      }
+    }
     r_jwt_set_claim_str_value(jwt, "username", username);
     r_jwt_set_claim_str_value(jwt, "salt", salt);
     r_jwt_set_claim_str_value(jwt, "type", "access_token");
@@ -501,24 +524,6 @@ static char * generate_access_token(struct _oauth2_config * config, const char *
     r_jwt_set_claim_int_value(jwt, "nbf", now);
     if (scope_list != NULL) {
       r_jwt_set_claim_str_value(jwt, "scope", scope_list);
-    }
-    if (json_object_get(config->j_params, "additional-parameters") != NULL && j_user != NULL) {
-      json_array_foreach(json_object_get(config->j_params, "additional-parameters"), index, j_element) {
-        if (json_is_string(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))) && !json_string_null_or_empty(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
-          r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), json_string_value(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))));
-        } else if (json_is_array(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
-          json_array_foreach(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))), index_p, j_value) {
-            property = mstrcatf(property, ",%s", json_string_value(j_value));
-          }
-          if (!o_strnullempty(property)) {
-            r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), property+1); // Skip first ','
-          } else {
-            r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), "");
-          }
-          o_free(property);
-          property = NULL;
-        }
-      }
     }
     token = r_jwt_serialize_signed(jwt, NULL, 0);
     if (token == NULL) {

@@ -676,19 +676,26 @@ static json_t * check_parameters (json_t * j_params) {
             json_array_append_new(j_error, json_string("'additional-parameters' element must be a JSON object"));
             ret = G_ERROR_PARAM;
           } else {
-            if (json_object_get(j_element, "user-parameter") == NULL || !json_is_string(json_object_get(j_element, "user-parameter")) || json_string_null_or_empty(json_object_get(j_element, "user-parameter"))) {
-              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'user-parameter' of type string and non empty"));
+            if ((json_object_get(j_element, "user-parameter") == NULL || !json_is_string(json_object_get(j_element, "user-parameter"))) &&
+                (json_object_get(j_element, "client-parameter") == NULL || !json_is_string(json_object_get(j_element, "client-parameter")))) {
+              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'user-parameter' or 'client-parameter' of type string"));
               ret = G_ERROR_PARAM;
             } else if (json_object_get(j_element, "token-parameter") == NULL || !json_is_string(json_object_get(j_element, "token-parameter")) || json_string_null_or_empty(json_object_get(j_element, "token-parameter"))) {
-              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'username', 'salt', 'type', 'iat', 'expires_in', 'scope'"));
+              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'iss', 'sub', 'aud', 'client_id', 'jti', 'type', 'iat', 'exp', 'nbf', 'claims', 'cnf', 'scope'"));
               ret = G_ERROR_PARAM;
-            } else if (0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "sub") ||
-                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "salt") ||
+            } else if (0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "iss") ||
+                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "sub") ||
+                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "aud") ||
+                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "client_id") ||
+                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "jti") ||
                        0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "type") ||
                        0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "iat") ||
-                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "expires_in") ||
+                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "exp") ||
+                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "nbf") ||
+                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "claims") ||
+                       0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "cnf") ||
                        0 == o_strcmp(json_string_value(json_object_get(j_element, "token-parameter")), "scope")) {
-              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'sub', 'salt', 'type', 'iat', 'expires_in', 'scope'"));
+              json_array_append_new(j_error, json_string("'additional-parameters' element must have a property 'token-parameter' of type string and non empty, forbidden values are: 'iss', 'sub', 'aud', 'client_id', 'jti', 'type', 'iat', 'exp', 'nbf', 'claims', 'cnf', 'scope'"));
               ret = G_ERROR_PARAM;
             }
           }
@@ -2489,8 +2496,9 @@ static char * generate_client_access_token(struct _oidc_config * config,
   jwt_t * jwt;
   jwa_alg alg = get_token_sign_alg(config, j_client, GLEWLWYD_TOKEN_TYPE_ACCESS_TOKEN);
   jwk_t * jwk = get_jwk_sign(config, j_client, alg);
-  char * token = NULL;
-  json_t * j_cnf;
+  char * token = NULL, * property = NULL;
+  json_t * j_element = NULL, * j_value, * j_cnf;
+  size_t index = 0, index_p = 0;
 
   if (jwk != NULL && alg != R_JWA_ALG_UNKNOWN) {
     if (r_jwt_init(&jwt) == RHN_OK) {
@@ -2498,6 +2506,26 @@ static char * generate_client_access_token(struct _oidc_config * config,
       rand_string_nonce(jti, OIDC_JTI_LENGTH);
       r_jwt_set_header_str_value(jwt, "typ", "at+jwt");
       // Build jwt payload
+      if (json_object_get(config->j_params, "additional-parameters") != NULL && j_client != NULL) {
+        json_array_foreach(json_object_get(config->j_params, "additional-parameters"), index, j_element) {
+          if (!json_string_null_or_empty(json_object_get(j_element, "client-parameter"))) {
+            if (!json_string_null_or_empty(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter"))))) {
+              r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), json_string_value(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter")))));
+            } else if (json_is_array(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter"))))) {
+              json_array_foreach(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter"))), index_p, j_value) {
+                property = mstrcatf(property, ",%s", json_string_value(j_value));
+              }
+              if (!o_strnullempty(property)) {
+                r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), property+1); // Skip first ','
+              } else {
+                r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), "");
+              }
+              o_free(property);
+              property = NULL;
+            }
+          }
+        }
+      }
       r_jwt_set_claim_str_value(jwt, "iss", json_string_value(json_object_get(config->j_params, "iss")));
       if (resource != NULL) {
         r_jwt_set_claim_str_value(jwt, "aud", resource);
@@ -3467,6 +3495,26 @@ static char * generate_access_token(struct _oidc_config * config,
       if (sub != NULL) {
         r_jwt_set_sign_alg(jwt, alg);
         r_jwt_set_header_str_value(jwt, "typ", "at+jwt");
+        if (json_object_get(config->j_params, "additional-parameters") != NULL && j_user != NULL) {
+          json_array_foreach(json_object_get(config->j_params, "additional-parameters"), index, j_element) {
+            if (!json_string_null_or_empty(json_object_get(j_element, "user-parameter"))) {
+              if (!json_string_null_or_empty(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
+                r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), json_string_value(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))));
+              } else if (json_is_array(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
+                json_array_foreach(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))), index_p, j_value) {
+                  property = mstrcatf(property, ",%s", json_string_value(j_value));
+                }
+                if (!o_strnullempty(property)) {
+                  r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), property+1); // Skip first ','
+                } else {
+                  r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), "");
+                }
+                o_free(property);
+                property = NULL;
+              }
+            }
+          }
+        }
         rand_string_nonce(jti, OIDC_JTI_LENGTH);
         r_jwt_set_claim_str_value(jwt, "iss", json_string_value(json_object_get(config->j_params, "iss")));
         if (j_client != NULL) {
@@ -3503,24 +3551,6 @@ static char * generate_access_token(struct _oidc_config * config,
           r_jwt_set_claim_json_t_value(jwt, "authorization_details", j_authorization_details);
         }
         json_decref(j_cnf);
-        if (json_object_get(config->j_params, "additional-parameters") != NULL && j_user != NULL) {
-          json_array_foreach(json_object_get(config->j_params, "additional-parameters"), index, j_element) {
-            if (!json_string_null_or_empty(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
-              r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), json_string_value(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter")))));
-            } else if (json_is_array(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))))) {
-              json_array_foreach(json_object_get(j_user, json_string_value(json_object_get(j_element, "user-parameter"))), index_p, j_value) {
-                property = mstrcatf(property, ",%s", json_string_value(j_value));
-              }
-              if (!o_strnullempty(property)) {
-                r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), property+1); // Skip first ','
-              } else {
-                r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), "");
-              }
-              o_free(property);
-              property = NULL;
-            }
-          }
-        }
         if (jwk != NULL) {
           if (r_jwk_get_property_str(jwk, "alg") != NULL) {
             r_jwt_set_sign_alg(jwt, r_str_to_jwa_alg(r_jwk_get_property_str(jwk, "alg")));
