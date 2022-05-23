@@ -58,6 +58,7 @@ class GlwdOauth2Params extends Component {
     this.toggleScopeOverrideRolling = this.toggleScopeOverrideRolling.bind(this);
     this.addAdditionalParameter = this.addAdditionalParameter.bind(this);
     this.setAdditionalPropertyUserParameter = this.setAdditionalPropertyUserParameter.bind(this);
+    this.setAdditionalPropertyClientParameter = this.setAdditionalPropertyClientParameter.bind(this);
     this.setAdditionalPropertyTokenParameter = this.setAdditionalPropertyTokenParameter.bind(this);
     this.deleteAdditionalProperty = this.deleteAdditionalProperty.bind(this);
     this.addScope = this.addScope.bind(this);
@@ -219,6 +220,17 @@ class GlwdOauth2Params extends Component {
     this.setState({mod: mod, newScopeOverride: false});
   }
   
+  setAdditionalPropertyClientParameter(e, index) {
+    var mod = this.state.mod;
+    if (mod.parameters["additional-parameters"][index]) {
+      mod.parameters["additional-parameters"][index]["client-parameter"] = e.target.value;
+      if (!mod.parameters["additional-parameters"][index]["token-changed"]) {
+        mod.parameters["additional-parameters"][index]["token-parameter"] = e.target.value;
+      }
+    }
+    this.setState({mod: mod, newScopeOverride: false});
+  }
+  
   setAdditionalPropertyTokenParameter(e, index) {
     var mod = this.state.mod;
     if (mod.parameters["additional-parameters"][index]) {
@@ -278,7 +290,7 @@ class GlwdOauth2Params extends Component {
       errorList["token"] = true;
     }
     this.state.mod.parameters["additional-parameters"].forEach((addParam, index) => {
-      if (!addParam["user-parameter"]) {
+      if (!addParam["user-parameter"] && !addParam["client-parameter"]) {
         hasError = true;
         if (!errorList["additional-parameters"]) {
           errorList["additional-parameters"] = [];
@@ -451,7 +463,13 @@ class GlwdOauth2Params extends Component {
               <label className="input-group-text" htmlFor={"mod-glwd-additional-parameter-user-parameter-"+parameter["user-parameter"]}>{i18next.t("admin.mod-glwd-additional-parameter-user-parameter")}</label>
             </div>
             <input type="text" className={hasUserError?"form-control is-invalid":"form-control"} id={"mod-glwd-additional-parameter-user-parameter-"+parameter["user-parameter"]} onChange={(e) => this.setAdditionalPropertyUserParameter(e, index)} value={parameter["user-parameter"]} placeholder={i18next.t("admin.mod-glwd-additional-parameter-user-parameter-ph")} />
-            {hasUserError?<span className="error-input">{this.state.errorList["additional-parameters"][index]["user"]}</span>:""}
+          </div>
+          <div className="input-group mb-3">
+            <div className="input-group-prepend">
+              <label className="input-group-text" htmlFor={"mod-glwd-additional-parameter-client-parameter-"+parameter["client-parameter"]}>{i18next.t("admin.mod-glwd-additional-parameter-client-parameter")}</label>
+            </div>
+            <input type="text" className={hasUserError?"form-control is-invalid":"form-control"} id={"mod-glwd-additional-parameter-client-parameter-"+parameter["client-parameter"]} onChange={(e) => this.setAdditionalPropertyClientParameter(e, index)} value={parameter["client-parameter"]} placeholder={i18next.t("admin.mod-glwd-additional-parameter-client-parameter-ph")} />
+            {hasUserError?<span className="error-input">{i18next.t(this.state.errorList["additional-parameters"][index]["user"])}</span>:""}
           </div>
         </div>
         <div className="form-group">
