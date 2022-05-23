@@ -766,8 +766,9 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_mod_client_irl
               glewlwyd_profile_delete
               glewlwyd_scheme_forbidden
-              glewlwyd_mail_on_connexion
+              glewlwyd_mail_on_connection
               glewlwyd_geolocation
+              glewlwyd_mail_on_scheme_register
               )
 
     if (WITH_PLUGIN_OAUTH2)
