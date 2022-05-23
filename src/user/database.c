@@ -513,7 +513,7 @@ static char ** get_salt_from_password_hash(struct mod_parameters * param, const 
   int res;
   unsigned char password_b64_decoded[1024] = {0};
   char * salt = NULL, * username_escaped, * username_clause, ** salt_list = NULL, * str_iterator;
-  size_t password_b64_decoded_len, index = 0, gc_password_len;
+  size_t password_b64_decoded_len = 0, index = 0, gc_password_len;
   
   if (j_iterations != NULL) {
     username_escaped = h_escape_string_with_quotes(param->conn, username);

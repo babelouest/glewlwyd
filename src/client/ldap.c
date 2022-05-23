@@ -507,9 +507,8 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
   unsigned int i;
   size_t index = 0, index_scope = 0;
   int has_error = 0;
-  unsigned char * value_enc = NULL;
-  size_t value_enc_len = 0;
-  
+  struct _o_datum dat = {0, NULL};
+
   if (j_mod_value_free_array != NULL) {
     // Count attrs
     if (add) {
@@ -822,18 +821,10 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
                     mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
                     json_array_foreach(j_property, index_scope, j_property_value) {
                       if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
-                        if (o_base64_decode((const unsigned char *)json_string_value(j_property_value), json_string_length(j_property_value), NULL, &value_enc_len)) {
-                          if ((value_enc = o_malloc(value_enc_len+1)) != NULL) {
-                            if (o_base64_decode((const unsigned char *)json_string_value(j_property_value), json_string_length(j_property_value), value_enc, &value_enc_len)) {
-                              value_enc[value_enc_len] = '\0';
-                              mods[i]->mod_values[index_scope] = (char *)value_enc;
-                            } else {
-                              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (1-2)", json_string_value(j_property_value));
-                              has_error = 1;
-                            }
-                          } else {
-                            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for value_enc (1)");
-                          }
+                        if (o_base64_decode_alloc((const unsigned char *)json_string_value(j_property_value), json_string_length(j_property_value), &dat)) {
+                          mods[i]->mod_values[index_scope] = o_strndup((const char *)dat.data, dat.size);
+                          o_free(dat.data);
+                          dat.data = NULL;
                         } else {
                           y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (1-1)", json_string_value(j_property_value));
                           has_error = 1;
@@ -864,20 +855,12 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
                     mods[i]->mod_op = add?LDAP_MOD_ADD:LDAP_MOD_REPLACE;
                     mods[i]->mod_type = (char *)json_string_value(json_object_get(j_format, "property"));
                     if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
-                      if (o_base64_decode((const unsigned char *)json_string_value(j_property), json_string_length(j_property), NULL, &value_enc_len)) {
-                        if ((value_enc = o_malloc(value_enc_len+1)) != NULL) {
-                          if (o_base64_decode((const unsigned char *)json_string_value(j_property), json_string_length(j_property), value_enc, &value_enc_len)) {
-                            value_enc[value_enc_len] = '\0';
-                            mods[i]->mod_values[0] = (char *)value_enc;
-                          } else {
-                            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (2-2)", json_string_value(j_property));
-                            has_error = 1;
-                          }
-                        } else {
-                          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for value_enc (2)");
-                        }
+                      if (o_base64_decode_alloc((const unsigned char *)json_string_value(j_property), json_string_length(j_property), &dat)) {
+                        mods[i]->mod_values[0] = o_strndup((const char *)dat.data, dat.size);
+                        o_free(dat.data);
+                        dat.data = NULL;
                       } else {
-                        y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode for LDAP property '%s' (2-1)", json_string_value(j_property));
+                        y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error o_base64_decode_alloc for LDAP property '%s' (2-1)", json_string_value(j_property));
                         has_error = 1;
                       }
                       json_array_append_new(j_mod_value_free_array, json_integer(i));
@@ -951,8 +934,7 @@ static json_t * get_client_from_result(json_t * j_params, json_t * j_properties_
   char * str_scope;
   struct berval ** result_values = NULL;
   int i;
-  unsigned char * value_enc = NULL;
-  size_t value_enc_len = 0;
+  struct _o_datum dat = {0, NULL};
   
   if (j_client != NULL) {
     json_object_foreach(j_properties_client, field, j_property) {
@@ -972,18 +954,10 @@ static json_t * get_client_from_result(json_t * j_params, json_t * j_properties_
           }
         } else if (0 == o_strcmp(field, "client_id") || 0 == o_strcmp(field, "name") || 0 == o_strcmp(field, "description") || (json_object_get(json_object_get(j_params, "data-format"), field) != NULL && json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "multiple") != json_true())) {
           if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
-            if (o_base64_encode((const unsigned char *)result_values[0]->bv_val, result_values[0]->bv_len, NULL, &value_enc_len)) {
-              if ((value_enc = o_malloc(value_enc_len+1)) != NULL) {
-                if (o_base64_encode((const unsigned char *)result_values[0]->bv_val, result_values[0]->bv_len, value_enc, &value_enc_len)) {
-                  value_enc[value_enc_len] = '\0';
-                  json_object_set_new(j_client, field, json_stringn((const char *)value_enc, value_enc_len));
-                } else {
-                  y_log_message(Y_LOG_LEVEL_WARNING, "get_client_from_result - Error o_base64_encode for LDAP property '%s' (2)", json_string_value(j_property));
-                }
-                o_free(value_enc);
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "get_client_from_result - Error allocating resources for value_enc");
-              }
+            if (o_base64_encode_alloc((const unsigned char *)result_values[0]->bv_val, result_values[0]->bv_len, &dat)) {
+              json_object_set_new(j_client, field, json_stringn((const char *)dat.data, dat.size));
+              o_free(dat.data);
+              dat.data = NULL;
             } else {
               y_log_message(Y_LOG_LEVEL_WARNING, "get_client_from_result - Error o_base64_encode for LDAP property '%s' (1)", json_string_value(j_property));
             }
@@ -1000,20 +974,12 @@ static json_t * get_client_from_result(json_t * j_params, json_t * j_properties_
           json_object_set_new(j_client, field, json_array());
           for (i=0; i<ldap_count_values_len(result_values); i++) {
             if (0 == o_strcmp("base64", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
-              if (o_base64_encode((const unsigned char *)result_values[i]->bv_val, result_values[i]->bv_len, NULL, &value_enc_len)) {
-                if ((value_enc = o_malloc(value_enc_len+1)) != NULL) {
-                  if (o_base64_encode((const unsigned char *)result_values[i]->bv_val, result_values[i]->bv_len, value_enc, &value_enc_len)) {
-                    value_enc[value_enc_len] = '\0';
-                    json_array_append_new(json_object_get(j_client, field), json_stringn((const char *)value_enc, value_enc_len));
-                  } else {
-                    y_log_message(Y_LOG_LEVEL_WARNING, "get_client_from_result - Error o_base64_encode for LDAP property '%s' (2)", json_string_value(j_property));
-                  }
-                  o_free(value_enc);
-                } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_client_from_result - Error allocating resources for value_enc");
-                }
+              if (o_base64_encode_alloc((const unsigned char *)result_values[i]->bv_val, result_values[i]->bv_len, &dat)) {
+                json_array_append_new(json_object_get(j_client, field), json_stringn((const char *)dat.data, dat.size));
+                o_free(dat.data);
+                dat.data = NULL;
               } else {
-                y_log_message(Y_LOG_LEVEL_WARNING, "get_client_from_result - Error o_base64_encode for LDAP property '%s' (1)", json_string_value(j_property));
+                y_log_message(Y_LOG_LEVEL_WARNING, "get_client_from_result - Error o_base64_encode_alloc for LDAP property '%s'", json_string_value(j_property));
               }
             } else if (0 == o_strcmp("jwks", json_string_value(json_object_get(json_object_get(json_object_get(j_params, "data-format"), field), "convert")))) {
               if (json_array_append_new(json_object_get(j_client, field), json_loads(result_values[i]->bv_val, JSON_DECODE_ANY, NULL))) {

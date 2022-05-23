@@ -103,7 +103,6 @@ static int get_certificate_id(gnutls_x509_crt_t cert, unsigned char * cert_id, s
   gnutls_datum_t dat;
   dat.data = NULL;
   
-  
   if (gnutls_x509_crt_export2(cert, GNUTLS_X509_FMT_DER, &dat) >= 0) {
     if (gnutls_fingerprint(GNUTLS_DIG_SHA256, &dat, cert_digest, &cert_digest_len) == GNUTLS_E_SUCCESS) {
       if (o_base64_encode(cert_digest, cert_digest_len, cert_id, cert_id_len)) {
@@ -133,27 +132,19 @@ static json_t * parse_certificate(const char * x509_data, int der_format) {
   size_t key_id_enc_len = 256, dn_len = 0, issuer_dn_len = 0;
   time_t expires_at = 0, issued_at = 0;
   int ret;
-  unsigned char * der_dec = NULL, key_id_enc[257] = {0};
-  size_t der_dec_len = 0;
+  unsigned char key_id_enc[257] = {0};
+  struct _o_datum dat = {0, NULL};
   
   if (!o_strnullempty(x509_data)) {
     if (!gnutls_x509_crt_init(&cert)) {
       if (der_format) {
         cert_dat.data = NULL;
         cert_dat.size = 0;
-        if (o_base64_decode((const unsigned char *)x509_data, o_strlen(x509_data), NULL, &der_dec_len)) {
-          if ((der_dec = o_malloc(der_dec_len+4)) != NULL) {
-            if (o_base64_decode((const unsigned char *)x509_data, o_strlen(x509_data), der_dec, &der_dec_len)) {
-              cert_dat.data = der_dec;
-              cert_dat.size = der_dec_len;
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "parse_certificate - Error o_base64_decode (2)");
-            }
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "parse_certificate - Error allocating resources for der_dec");
-          }
+        if (o_base64_decode_alloc((const unsigned char *)x509_data, o_strlen(x509_data), &dat)) {
+          cert_dat.data = dat.data;
+          cert_dat.size = dat.size;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "parse_certificate - Error o_base64_decode (1)");
+          y_log_message(Y_LOG_LEVEL_ERROR, "parse_certificate - Error o_base64_decode_alloc");
         }
       } else {
         cert_dat.data = (unsigned char *)x509_data;
@@ -224,7 +215,7 @@ static json_t * parse_certificate(const char * x509_data, int der_format) {
       y_log_message(Y_LOG_LEVEL_ERROR, "parse_certificate - Error gnutls_x509_crt_init");
       j_return = json_pack("{si}", "result", G_ERROR);
     }
-    o_free(der_dec);
+    o_free(dat.data);
   } else {
     j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }

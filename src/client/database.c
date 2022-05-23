@@ -433,7 +433,7 @@ static char * get_salt_from_password_hash(struct mod_parameters * param, const c
   int res;
   unsigned char password_b64_decoded[1024] = {0};
   char * salt = NULL, * client_id_escaped, * client_id_clause, * str_iterator;
-  size_t password_b64_decoded_len, gc_password_len;
+  size_t password_b64_decoded_len = 0, gc_password_len;
   
   client_id_escaped = h_escape_string_with_quotes(param->conn, client_id);
   client_id_clause = msprintf(" = UPPER(%s)", client_id_escaped);

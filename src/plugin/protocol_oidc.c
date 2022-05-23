@@ -4921,7 +4921,7 @@ static json_t * refresh_token_list_get(struct _oidc_config * config, const char 
   int res;
   size_t index = 0, token_hash_dec_len = 0;
   char * pattern_escaped, * pattern_clause, * name_escaped = NULL;
-  unsigned char token_hash_dec[128];
+  unsigned char token_hash_dec[128] = {0};
 
   j_query = json_pack("{sss[ssssssssss]s{ssss}sisiss}",
                       "table",
