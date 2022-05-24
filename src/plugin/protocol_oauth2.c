@@ -445,24 +445,16 @@ static char * generate_client_access_token(struct _oauth2_config * config, const
   if (jwt != NULL) {
     // Build jwt payload
     rand_string_nonce(salt, OAUTH2_SALT_LENGTH);
-    r_jwt_set_claim_str_value(jwt, "salt", salt);
-    r_jwt_set_claim_str_value(jwt, "client_id", client_id);
-    r_jwt_set_claim_str_value(jwt, "type", "client_token");
-    r_jwt_set_claim_str_value(jwt, "scope", scope_list);
-    r_jwt_set_claim_int_value(jwt, "iat", now);
-    r_jwt_set_claim_int_value(jwt, "expires_in", config->access_token_duration);
-    r_jwt_set_claim_int_value(jwt, "exp", (((json_int_t)now)+config->access_token_duration));
-    r_jwt_set_claim_int_value(jwt, "nbf", now);
     if (json_object_get(config->j_params, "additional-parameters") != NULL && j_client != NULL) {
       json_array_foreach(json_object_get(config->j_params, "additional-parameters"), index, j_element) {
         if (!json_string_null_or_empty(json_object_get(j_element, "client-parameter"))) {
-          if (json_is_string(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter")))) && json_string_length(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter"))))) {
+          if (json_is_string(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter")))) && !json_string_null_or_empty(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter"))))) {
             r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), json_string_value(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter")))));
           } else if (json_is_array(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter"))))) {
             json_array_foreach(json_object_get(j_client, json_string_value(json_object_get(j_element, "client-parameter"))), index_p, j_value) {
               property = mstrcatf(property, ",%s", json_string_value(j_value));
             }
-            if (o_strlen(property)) {
+            if (!o_strnullempty(property)) {
               r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), property+1); // Skip first ','
             } else {
               r_jwt_set_claim_str_value(jwt, json_string_value(json_object_get(j_element, "token-parameter")), "");
@@ -473,6 +465,14 @@ static char * generate_client_access_token(struct _oauth2_config * config, const
         }
       }
     }
+    r_jwt_set_claim_str_value(jwt, "salt", salt);
+    r_jwt_set_claim_str_value(jwt, "client_id", client_id);
+    r_jwt_set_claim_str_value(jwt, "type", "client_token");
+    r_jwt_set_claim_str_value(jwt, "scope", scope_list);
+    r_jwt_set_claim_int_value(jwt, "iat", now);
+    r_jwt_set_claim_int_value(jwt, "expires_in", config->access_token_duration);
+    r_jwt_set_claim_int_value(jwt, "exp", (((json_int_t)now)+config->access_token_duration));
+    r_jwt_set_claim_int_value(jwt, "nbf", now);
     token = r_jwt_serialize_signed(jwt, NULL, 0);
     if (token == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "generate_client_access_token - oauth2 - Error generating token");
