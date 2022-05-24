@@ -271,6 +271,10 @@ int main (int argc, char ** argv) {
     fprintf(stderr, "Error initializing logs\n");
     return 0;
   }
+  
+  if (config->log_level == Y_LOG_LEVEL_DEBUG) {
+    y_set_split_message_newline(1, "Split logs with newlines");
+  }
 
   if (o_strnullempty(config->cookie_domain)) {
     y_log_message(Y_LOG_LEVEL_WARNING, "Config property 'cookie_domain' is not set - cookie session may not be saved on the browser");
