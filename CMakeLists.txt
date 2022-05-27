@@ -59,7 +59,7 @@ include(CheckSymbolExists)
 # cmake modules
 
 set(G_CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules)
-list(APPEND CMAKE_MODULE_PATH "${O_CMAKE_MODULE_PATH}")
+list(APPEND CMAKE_MODULE_PATH "${G_CMAKE_MODULE_PATH}")
 
 # check if _GNU_SOURCE is available
 
@@ -690,7 +690,7 @@ if (WITH_PLUGIN_OIDC)
   endif ()
 
   include_directories(${RESOURCES_SRC_PATH})
-  set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oidc.c ${RESOURCES_SRC_PATH}/oidc_resource.c ${RESOURCES_SRC_PATH}/oidc_resource.h)
+  set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/protocol_oidc.c)
 
   add_library(protocol_oidc MODULE ${LIB_SRC})
   set_target_properties(protocol_oidc PROPERTIES
