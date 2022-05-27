@@ -32,14 +32,8 @@ RUN apk add --no-cache \
     openldap-dev \
     bash \
     oath-toolkit-dev \
-    libtool && \
-    (cd /opt && wget https://github.com/PJK/libcbor/archive/v0.7.0.tar.gz -O libcbor.tar.gz && \
-    tar xf libcbor.tar.gz && cd libcbor-0.7.0 && mkdir build && cd build && \
-    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib .. && make && make install) && \
-    ls -l /opt/glewlwyd/ && \
-    mkdir /opt/glewlwyd/build && cd /opt/glewlwyd/build/ && \
-    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DWITH_JOURNALD=off .. && \
-    make && make install
+    libtool \
+    libcbor-dev
 
 FROM alpine:latest AS runner
 RUN apk add --no-cache \
@@ -55,9 +49,9 @@ RUN apk add --no-cache \
     libpq \
     oath-toolkit-liboath \
     mariadb-connector-c \
+    libcbor \
     bash
 
-COPY --from=builder /usr/lib/libcbor.* /usr/lib/
 COPY --from=builder /usr/lib/liborcania* /usr/lib/
 COPY --from=builder /usr/lib/libyder* /usr/lib/
 COPY --from=builder /usr/lib/libhoel* /usr/lib/
@@ -71,7 +65,7 @@ COPY --from=builder /usr/share/glewlwyd/webapp/config.json /etc/glewlwyd/
 COPY --from=builder /usr/etc/glewlwyd/ /etc/glewlwyd/
 
 RUN rm /usr/share/glewlwyd/webapp/config.json
-RUN ln -s /etc/glewlwyd/config.json /usr/share/glewlwyd/webapp/config.json
+RUN cp /etc/glewlwyd/config.json /usr/share/glewlwyd/webapp/config.json
 
 COPY ["docs/docker/entrypoint.sh", "/"]
 
