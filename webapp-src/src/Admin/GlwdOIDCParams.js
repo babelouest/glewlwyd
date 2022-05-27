@@ -102,7 +102,6 @@ let defaultParam = {
   "resource-scope":{},
   "resource-client-property":"",
   "resource-scope-and-client-property":false,
-  "resource-change-allowed":false,
   "oauth-rar-allowed":false,
   "rar-types-client-property":"authorization_details_types",
   "rar-allow-auth-unsigned":false,
@@ -3185,15 +3184,6 @@ class GlwdOIDCParams extends Component {
                          onChange={(e) => this.toggleParam(e, "resource-allowed")}
                          checked={this.state.mod.parameters["resource-allowed"]} />
                   <label className="form-check-label" htmlFor="mod-glwd-resource-allowed">{i18next.t("admin.mod-glwd-resource-allowed")}</label>
-                </div>
-                <div className="form-group form-check">
-                  <input type="checkbox"
-                         className="form-check-input"
-                         id="mod-glwd-resource-change-allowed"
-                         onChange={(e) => this.toggleParam(e, "resource-change-allowed")}
-                         checked={this.state.mod.parameters["resource-change-allowed"]}
-                         disabled={!this.state.mod.parameters["resource-allowed"]} />
-                  <label className="form-check-label" htmlFor="mod-glwd-resource-change-allowed">{i18next.t("admin.mod-glwd-resource-change-allowed")}</label>
                 </div>
                 <div className="form-group">
                   <div className="btn-group" role="group">
