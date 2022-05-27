@@ -1096,7 +1096,6 @@
     "mod-glwd-oauth-dpop-nonce-counter-error": "Maximum number of times is mandatory",
     "mod-glwd-resource-title": "Resource Indicators (RFC 8707)",
     "mod-glwd-resource-allowed": "Allow resource indicators",
-    "mod-glwd-resource-change-allowed": "Allow to change resource indicator on access token refresh",
     "mod-glwd-resource-scope": "Resource list by scope",
     "mod-glwd-resource-scope-add": "Add",
     "mod-glwd-resource-scope-urls-ph": "e.g. https://resource.tld/",

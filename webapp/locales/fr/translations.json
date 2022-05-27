@@ -1097,7 +1097,6 @@
     "mod-glwd-oauth-dpop-nonce-counter-error": "Le nombre de fois est obligatoire",
     "mod-glwd-resource-title": "Indicateurs de ressources (RFC 8707)",
     "mod-glwd-resource-allowed": "Autoriser les indicateurs de ressource",
-    "mod-glwd-resource-change-allowed": "Autoriser le changement d'indicateur de ressource lors d'un rafraîchissement d'access token",
     "mod-glwd-resource-scope": "Liste de ressource par scope",
     "mod-glwd-resource-scope-add": "Ajouter",
     "mod-glwd-resource-scope-urls-ph": "Ex: https://resource.tld/",
