@@ -304,6 +304,53 @@ START_TEST(test_oidc_registration_plugin_add_using_no_auth_scope_subject_type_pa
 }
 END_TEST
 
+START_TEST(test_oidc_registration_plugin_add_fapi_enc_alg_limitation)
+{
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisisososososososos[]s[s]sos[ssss]s{s{ss}s{s[ss]}s{s[s]}}}}",
+                                "module", PLUGIN_MODULE,
+                                "name", PLUGIN_NAME,
+                                "display_name", PLUGIN_DISPLAY_NAME,
+                                "enabled", json_true(),
+                                "parameters",
+                                  "iss", PLUGIN_ISS,
+                                  "jwt-type", PLUGIN_JWT_TYPE,
+                                  "jwt-key-size", PLUGIN_JWT_KEY_SIZE,
+                                  "key", PLUGIN_KEY,
+                                  "code-duration", PLUGIN_CODE_DURATION,
+                                  "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
+                                  "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
+                                  "allow-non-oidc", json_true(),
+                                  "auth-type-client-enabled", json_true(),
+                                  "auth-type-code-enabled", json_true(),
+                                  "auth-type-implicit-enabled", json_true(),
+                                  "auth-type-password-enabled", json_true(),
+                                  "auth-type-refresh-enabled", json_true(),
+                                  "register-client-allowed", json_true(),
+                                  "register-client-auth-scope",
+                                  "register-client-credentials-scope", PLUGIN_REGISTER_DEFAULT_SCOPE,
+                                  "oauth-fapi-allow-restrict-alg", json_true(),
+                                  "oauth-fapi-restrict-alg",
+                                    "RSA-OAEP-256",
+                                    "ECDH-ES+A128KW",
+                                    "ECDH-ES+A192KW",
+                                    "ECDH-ES+A256KW",
+                                  "register-default-properties",
+                                    CLIENT_DEFAULT_KEY_1, 
+                                      "value",
+                                      CLIENT_DEFAULT_VALUE_1,
+                                    CLIENT_DEFAULT_KEY_2,
+                                      "value",
+                                        CLIENT_DEFAULT_VALUE_2,
+                                        CLIENT_DEFAULT_VALUE_3,
+                                    CLIENT_DEFAULT_KEY_OVERWRITTEN,
+                                      "value",
+                                        CLIENT_DEFAULT_VALUE_OVERWRITTEN);
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
 START_TEST(test_oidc_revocation_plugin_remove)
 {
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/mod/plugin/" PLUGIN_NAME, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
@@ -1403,6 +1450,136 @@ START_TEST(test_oidc_registration_no_auth_register_client_with_sector_identifier
 }
 END_TEST
 
+START_TEST(test_oidc_registration_no_auth_register_client_with_invalid_alg)
+{
+  json_t * j_client;
+
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
+                       "response_types",
+                         CLIENT_RESPONSE_TYPE_CODE,
+                         CLIENT_RESPONSE_TYPE_TOKEN,
+                         CLIENT_RESPONSE_TYPE_ID_TOKEN,
+                       "application_type", CLIENT_APP_TYPE_WEB,
+                       "contacts",
+                         CLIENT_CONTACT,
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "request_object_signing_alg", "error",
+                       "request_object_encryption_alg", "RSA-OAEP-256",
+                       "request_object_encryption_enc", "A128CBC-HS256");
+  ck_assert_ptr_ne(j_client, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
+                       "response_types",
+                         CLIENT_RESPONSE_TYPE_CODE,
+                         CLIENT_RESPONSE_TYPE_TOKEN,
+                         CLIENT_RESPONSE_TYPE_ID_TOKEN,
+                       "application_type", CLIENT_APP_TYPE_WEB,
+                       "contacts",
+                         CLIENT_CONTACT,
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "request_object_signing_alg", "RS256",
+                       "request_object_encryption_alg", "error",
+                       "request_object_encryption_enc", "A128CBC-HS256");
+  ck_assert_ptr_ne(j_client, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
+                       "response_types",
+                         CLIENT_RESPONSE_TYPE_CODE,
+                         CLIENT_RESPONSE_TYPE_TOKEN,
+                         CLIENT_RESPONSE_TYPE_ID_TOKEN,
+                       "application_type", CLIENT_APP_TYPE_WEB,
+                       "contacts",
+                         CLIENT_CONTACT,
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "request_object_signing_alg", "RS256",
+                       "request_object_encryption_alg", "RSA-OAEP-256",
+                       "request_object_encryption_enc", "error");
+  ck_assert_ptr_ne(j_client, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+}
+END_TEST
+
+START_TEST(test_oidc_registration_no_auth_register_client_with_forbidden_alg)
+{
+  json_t * j_client;
+
+  j_client = json_pack("{sss[s]sss[ssssss]s[sss]sss[s]ssssssssssssss}",
+                       "client_name", CLIENT_NAME,
+                       "redirect_uris", CLIENT_REDIRECT_URI,
+                       "token_endpoint_auth_method", CLIENT_TOKEN_AUTH_NONE,
+                       "grant_types",
+                         CLIENT_GRANT_TYPE_AUTH_CODE,
+                         CLIENT_GRANT_TYPE_PASSWORD,
+                         CLIENT_GRANT_TYPE_CLIENT_CREDENTIALS,
+                         CLIENT_GRANT_TYPE_REFRESH_TOKEN,
+                         CLIENT_GRANT_TYPE_DELETE_TOKEN,
+                         CLIENT_GRANT_TYPE_DEVICE_AUTH,
+                       "response_types",
+                         CLIENT_RESPONSE_TYPE_CODE,
+                         CLIENT_RESPONSE_TYPE_TOKEN,
+                         CLIENT_RESPONSE_TYPE_ID_TOKEN,
+                       "application_type", CLIENT_APP_TYPE_WEB,
+                       "contacts",
+                         CLIENT_CONTACT,
+                       "logo_uri", CLIENT_LOGO_URI,
+                       "client_uri", CLIENT_URI,
+                       "policy_uri", CLIENT_POLICY_URI,
+                       "tos_uri", CLIENT_TOS_URI,
+                       "request_object_signing_alg", "RS256",
+                       "request_object_encryption_alg", "PBES2-HS256+A128KW",
+                       "request_object_encryption_enc", "A128CBC-HS256");
+  ck_assert_ptr_ne(j_client, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/register", NULL, NULL, j_client, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_client);
+
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -1417,6 +1594,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_registration_no_auth_register_public_client_properties_validated);
   tcase_add_test(tc_core, test_oidc_registration_no_auth_register_minimal_client_properties_validated);
   tcase_add_test(tc_core, test_oidc_registration_no_auth_register_then_code_flow);
+  tcase_add_test(tc_core, test_oidc_registration_no_auth_register_client_with_invalid_alg);
   tcase_add_test(tc_core, test_oidc_revocation_plugin_remove);
   tcase_add_test(tc_core, test_oidc_registration_plugin_add_using_auth_scope);
   tcase_add_test(tc_core, test_oidc_registration_auth_register_client_without_credentials);
@@ -1433,6 +1611,9 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_revocation_plugin_remove);
   tcase_add_test(tc_core, test_oidc_registration_plugin_add_using_no_auth_scope_subject_type_pairwise);
   tcase_add_test(tc_core, test_oidc_registration_no_auth_register_client_with_sector_identifier_uri);
+  tcase_add_test(tc_core, test_oidc_revocation_plugin_remove);
+  tcase_add_test(tc_core, test_oidc_registration_plugin_add_fapi_enc_alg_limitation);
+  tcase_add_test(tc_core, test_oidc_registration_no_auth_register_client_with_forbidden_alg);
   tcase_add_test(tc_core, test_oidc_revocation_plugin_remove);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
