@@ -7011,7 +7011,7 @@ static int is_redirect_uri_valid_without_credential(const char * redirect_uri) {
 }
 
 static json_t * is_client_registration_valid(struct _oidc_config * config, json_t * j_registration, const char * client_id) {
-  json_t * j_error = NULL, * j_return, * j_element = NULL, * j_authorization_details, * j_resp = NULL, * j_info = r_library_info_json_t(), * j_response_modes_supported = NULL;
+  json_t * j_error = NULL, * j_return, * j_element = NULL, * j_authorization_details, * j_resp = NULL, * j_info = r_library_info_json_t(), * j_response_modes_supported = NULL, * j_enc_list;
   size_t index = 0;
   jwks_t * jwks = NULL;
   const char * resource = NULL, * response_mode = NULL, * key = NULL;
@@ -7020,6 +7020,12 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
   int auth_detail_found;
   memset(&req, 0, sizeof(struct _u_request));
   memset(&resp, 0, sizeof(struct _u_response));
+
+  if (json_object_get(config->j_params, "oauth-fapi-allow-restrict-alg") == json_true()) {
+    j_enc_list = json_object_get(config->j_params, "oauth-fapi-restrict-alg");
+  } else {
+    j_enc_list = json_object_get(json_object_get(j_info, "jwe"), "alg");
+  }
 
   do {
     if (!json_is_object(j_registration)) {
@@ -7322,7 +7328,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "access_token_encryption_alg is invalid");
         break;
       }
-      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "alg"), json_string_value(json_object_get(j_registration, "access_token_encryption_alg")))) {
+      if (!json_array_has_string(j_enc_list, json_string_value(json_object_get(j_registration, "access_token_encryption_alg")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "access_token_encryption_alg not supported");
         break;
       }
@@ -7357,7 +7363,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "id_token_encryption_alg is invalid");
         break;
       }
-      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "alg"), json_string_value(json_object_get(j_registration, "id_token_encryption_alg")))) {
+      if (!json_array_has_string(j_enc_list, json_string_value(json_object_get(j_registration, "id_token_encryption_alg")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "id_token_encryption_alg not supported");
         break;
       }
@@ -7392,7 +7398,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "userinfo_encryption_alg is invalid");
         break;
       }
-      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "alg"), json_string_value(json_object_get(j_registration, "userinfo_encryption_alg")))) {
+      if (!json_array_has_string(j_enc_list, json_string_value(json_object_get(j_registration, "userinfo_encryption_alg")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "userinfo_encryption_alg not supported");
         break;
       }
@@ -7427,7 +7433,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "request_object_encryption_alg is invalid");
         break;
       }
-      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "alg"), json_string_value(json_object_get(j_registration, "request_object_encryption_alg")))) {
+      if (!json_array_has_string(j_enc_list, json_string_value(json_object_get(j_registration, "request_object_encryption_alg")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "request_object_encryption_alg not supported");
         break;
       }
@@ -7462,7 +7468,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "token_endpoint_encryption_alg is invalid");
         break;
       }
-      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "alg"), json_string_value(json_object_get(j_registration, "token_endpoint_encryption_alg")))) {
+      if (!json_array_has_string(j_enc_list, json_string_value(json_object_get(j_registration, "token_endpoint_encryption_alg")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "token_endpoint_encryption_alg not supported");
         break;
       }
@@ -7497,7 +7503,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "backchannel_authentication_request_encryption_alg is invalid");
         break;
       }
-      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "alg"), json_string_value(json_object_get(j_registration, "backchannel_authentication_request_encryption_alg")))) {
+      if (!json_array_has_string(j_enc_list, json_string_value(json_object_get(j_registration, "backchannel_authentication_request_encryption_alg")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "backchannel_authentication_request_encryption_alg not supported");
         break;
       }
@@ -7532,7 +7538,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "authorization_encrypted_response_alg is invalid");
         break;
       }
-      if (!json_array_has_string(json_object_get(json_object_get(j_info, "jwe"), "alg"), json_string_value(json_object_get(j_registration, "authorization_encrypted_response_alg")))) {
+      if (!json_array_has_string(j_enc_list, json_string_value(json_object_get(j_registration, "authorization_encrypted_response_alg")))) {
         j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "authorization_encrypted_response_alg not supported");
         break;
       }
@@ -8955,7 +8961,7 @@ static int generate_discovery_content(struct _oidc_config * config) {
     }
     r_jwks_free(jwks_res);
 
-    if (json_object_get(config->j_params, "oauth-fapi-allow-restrict-alg") == json_true() && json_array_size(json_object_get(config->j_params, "oauth-fapi-restrict-alg"))) {
+    if (json_object_get(config->j_params, "oauth-fapi-allow-restrict-alg") == json_true()) {
       j_enc_list = json_object_get(config->j_params, "oauth-fapi-restrict-alg");
     } else {
       j_enc_list = json_object_get(json_object_get(j_rhon_info, "jwe"), "alg");
