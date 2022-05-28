@@ -54,7 +54,8 @@ class MiscConfig extends Component {
         url: "",
         "output-properties": "city, country_name"
       },
-      errorGeolocationList: {}
+      errorGeolocationList: {},
+      importElement: false
     };
     
     this.addSmtp = this.addSmtp.bind(this);
@@ -62,6 +63,13 @@ class MiscConfig extends Component {
     this.changeSmtpValue = this.changeSmtpValue.bind(this);
     this.toggleSmtpValue = this.toggleSmtpValue.bind(this);
     this.addLang = this.addLang.bind(this);
+    this.getImportFile = this.getImportFile.bind(this);
+    this.exportSmtpRecord = this.exportSmtpRecord.bind(this);
+    this.importSmtpRecord = this.importSmtpRecord.bind(this);
+    this.exportMailRecord = this.exportMailRecord.bind(this);
+    this.importMailRecord = this.importMailRecord.bind(this);
+    this.exportGeolocRecord = this.exportGeolocRecord.bind(this);
+    this.importGeolocRecord = this.importGeolocRecord.bind(this);
   }
   
   componentWillReceiveProps(nextProps) {
@@ -232,6 +240,51 @@ class MiscConfig extends Component {
   toggleMailConnexionValue(param) {
     var mailOnConnexion = this.state.mailOnConnexion;
     mailOnConnexion[param] = !mailOnConnexion[param];
+    Object.keys(mailOnConnexion.templates).forEach(objKey => {
+      mailOnConnexion.templates[objKey].defaultLang = (objKey === this.state.currentLang);
+    });
+    if (mailOnConnexion.templatesUpdatePassword) {
+      console.log("grut 0");
+      if (mailOnConnexion.templatesUpdatePassword[this.state.currentLang] === undefined) {
+        console.log("grut 1");
+        mailOnConnexion.templatesUpdatePassword[this.state.currentLang] = {
+          subject: "",
+          "body-pattern": "",
+          defaultLang: true
+        }
+      }
+      Object.keys(mailOnConnexion.templatesUpdatePassword).forEach(objKey => {
+        console.log("grut 2");
+        mailOnConnexion.templatesUpdatePassword[objKey].defaultLang = (objKey === this.state.currentLang);
+      });
+    } else {
+      mailOnConnexion.templatesUpdatePassword = {};
+      mailOnConnexion.templatesUpdatePassword[this.state.currentLang] = {
+        subject: "",
+        "body-pattern": "",
+        defaultLang: true
+      }
+    }
+    if (mailOnConnexion.templatesRegisterScheme) {
+      if (mailOnConnexion.templatesRegisterScheme[this.state.currentLang] === undefined) {
+        mailOnConnexion.templatesRegisterScheme[this.state.currentLang] = {
+          subject: "",
+          "body-pattern": "",
+          defaultLang: true
+        }
+      }
+      Object.keys(mailOnConnexion.templatesRegisterScheme).forEach(objKey => {
+        mailOnConnexion.templatesRegisterScheme[objKey].defaultLang = (objKey === this.state.currentLang);
+      });
+    } else {
+      mailOnConnexion.templatesRegisterScheme = {};
+      mailOnConnexion.templatesRegisterScheme[this.state.currentLang] = {
+        subject: "",
+        "body-pattern": "",
+        defaultLang: true
+      }
+    }
+    console.log(mailOnConnexion);
     this.setState({mailOnConnexion: mailOnConnexion});
   }
   
@@ -239,6 +292,12 @@ class MiscConfig extends Component {
     var mailOnConnexion = this.state.mailOnConnexion;
     Object.keys(mailOnConnexion.templates).forEach(objKey => {
       mailOnConnexion.templates[objKey].defaultLang = (objKey === this.state.currentLang);
+    });
+    Object.keys(mailOnConnexion.templatesUpdatePassword).forEach(objKey => {
+      mailOnConnexion.templatesUpdatePassword[objKey].defaultLang = (objKey === this.state.currentLang);
+    });
+    Object.keys(mailOnConnexion.templatesRegisterScheme).forEach(objKey => {
+      mailOnConnexion.templatesRegisterScheme[objKey].defaultLang = (objKey === this.state.currentLang);
     });
     this.setState({mailOnConnexion: mailOnConnexion});
   }
@@ -366,7 +425,7 @@ class MiscConfig extends Component {
           }
         });
       }
-      if (!this.state.mailOnConnexion.templatesUpdatePasswordDisabled) {
+      if (!this.state.mailOnConnexion.templatesUpdatePasswordDisabled && this.state.mailOnConnexion.templatesUpdatePassword) {
         Object.keys(this.state.mailOnConnexion.templatesUpdatePassword).forEach(lang => {
           if (!this.state.mailOnConnexion.templatesUpdatePassword[lang]["subject"]) {
             hasError = true;
@@ -374,7 +433,7 @@ class MiscConfig extends Component {
           }
         });
       }
-      if (!this.state.mailOnConnexion.templatesRegisterSchemeDisabled) {
+      if (!this.state.mailOnConnexion.templatesRegisterSchemeDisabled && this.state.mailOnConnexion.templatesRegisterScheme) {
         Object.keys(this.state.mailOnConnexion.templatesRegisterScheme).forEach(lang => {
           if (!this.state.mailOnConnexion.templatesRegisterScheme[lang]["subject"]) {
             hasError = true;
@@ -489,6 +548,68 @@ class MiscConfig extends Component {
     }
   }
   
+  exportSmtpRecord() {
+    var exported = Object.assign({}, this.state.smtp);
+    var $anchor = $("#record-download");
+    $anchor.attr("href", "data:application/octet-stream;base64,"+btoa(JSON.stringify(exported)));
+    $anchor.attr("download", (this.state.smtp.host)+".json");
+    $anchor[0].click();
+  }
+  
+  importSmtpRecord() {
+    this.setState({importElement: "smtp"}, () => {
+      $("#record-upload").click();
+    });
+  }
+  
+  exportMailRecord() {
+    var exported = Object.assign({}, this.state.mailOnConnexion);
+    var $anchor = $("#record-download");
+    $anchor.attr("href", "data:application/octet-stream;base64,"+btoa(JSON.stringify(exported)));
+    $anchor.attr("download", "mailOnConnexion.json");
+    $anchor[0].click();
+  }
+  
+  importMailRecord() {
+    this.setState({importElement: "mail"}, () => {
+      $("#record-upload").click();
+    });
+  }
+  
+  exportGeolocRecord() {
+    var exported = Object.assign({}, this.state.geolocation);
+    var $anchor = $("#record-download");
+    $anchor.attr("href", "data:application/octet-stream;base64,"+btoa(JSON.stringify(exported)));
+    $anchor.attr("download", "geolocation.json");
+    $anchor[0].click();
+  }
+  
+  importGeolocRecord() {
+    this.setState({importElement: "geolocation"}, () => {
+      $("#record-upload").click();
+    });
+  }
+  
+  getImportFile(e) {
+    var file = e.target.files[0];
+    var fr = new FileReader();
+    fr.onload = (ev2) => {
+      try {
+        let imported = JSON.parse(ev2.target.result);
+        if (this.state.importElement === "smtp") {
+          this.setState({smtp: imported});
+        } else if (this.state.importElement === "mail") {
+          this.setState({mailOnConnexion: imported});
+        } else if (this.state.importElement === "geolocation") {
+          this.setState({geolocation: imported});
+        }
+      } catch (err) {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.import-error")});
+      }
+    };
+    fr.readAsText(file);
+  }
+  
   render() {
     let smtpList = [], switchMailConnexionButton, mailConnexionEditDisabled = true, smtpConfigList = [], switchGeolocationButton, geolocationDisabled = true;
     switchMailConnexionButton =
@@ -569,11 +690,27 @@ class MiscConfig extends Component {
     if (this.state.mailOnConnexion.templates) {
       templateMailOnConnexion = this.state.mailOnConnexion.templates[this.state.currentLang]||{};
     }
+    let defaultLang = false;
+    if (this.state.mailOnConnexion.templates[this.state.currentLang]) {
+      defaultLang = this.state.mailOnConnexion.templates[this.state.currentLang].defaultLang;
+    }
     if (this.state.mailOnConnexion.templatesUpdatePassword) {
-      templateMailOnUpdatePassword = this.state.mailOnConnexion.templatesUpdatePassword[this.state.currentLang]||{};
+      templateMailOnUpdatePassword = this.state.mailOnConnexion.templatesUpdatePassword[this.state.currentLang]||{defaultLang: defaultLang};
+    } else {
+      templateMailOnUpdatePassword = {
+        subject: "",
+        "body-pattern": "",
+        defaultLang: defaultLang
+      }
     }
     if (this.state.mailOnConnexion.templatesRegisterScheme) {
-      templateMailOnRegisterScheme = this.state.mailOnConnexion.templatesRegisterScheme[this.state.currentLang]||{};
+      templateMailOnRegisterScheme = this.state.mailOnConnexion.templatesRegisterScheme[this.state.currentLang]||{defaultLang: defaultLang};
+    } else {
+      templateMailOnRegisterScheme = {
+        subject: "",
+        "body-pattern": "",
+        defaultLang: defaultLang
+      }
     }
 		return (
       <div>
@@ -628,6 +765,14 @@ class MiscConfig extends Component {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title" id="smtpModalLabel">{i18next.t("admin.modal-misc-smtp-title")}</h5>
+                <div className="btn-group btn-icon-right" role="group">
+                  <button disabled={!this.state.smtpName} type="button" className="btn btn-secondary" onClick={this.exportSmtpRecord} title={i18next.t("admin.export")}>
+                    <i className="fas fa-download"></i>
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={this.importSmtpRecord} title={i18next.t("admin.import")}>
+                    <i className="fas fa-upload"></i>
+                  </button>
+                </div>
                 <button type="button" className="close" aria-label={i18next.t("modal.close")} onClick={(e) => this.closeSmtpModal(e, false)}>
                   <span aria-hidden="true">&times;</span>
                 </button>
@@ -712,6 +857,14 @@ class MiscConfig extends Component {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title" id="mailOnConnexionModalLabel">{i18next.t("admin.modal-misc-mail-on-connexion-title")}</h5>
+                <div className="btn-group btn-icon-right" role="group">
+                  <button type="button" className="btn btn-secondary" onClick={this.exportMailRecord} title={i18next.t("admin.export")}>
+                    <i className="fas fa-download"></i>
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={this.importMailRecord} title={i18next.t("admin.import")}>
+                    <i className="fas fa-upload"></i>
+                  </button>
+                </div>
                 <button type="button" className="close" aria-label={i18next.t("modal.close")} onClick={(e) => this.closeMailOnConnexionModal(e, false)}>
                   <span aria-hidden="true">&times;</span>
                 </button>
@@ -950,6 +1103,14 @@ class MiscConfig extends Component {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title" id="geolocationModalLabel">{i18next.t("admin.modal-misc-geolocation-title")}</h5>
+                <div className="btn-group btn-icon-right" role="group">
+                  <button type="button" className="btn btn-secondary" onClick={this.exportGeolocRecord} title={i18next.t("admin.export")}>
+                    <i className="fas fa-download"></i>
+                  </button>
+                  <button type="button" className="btn btn-secondary" onClick={this.importGeolocRecord} title={i18next.t("admin.import")}>
+                    <i className="fas fa-upload"></i>
+                  </button>
+                </div>
                 <button type="button" className="close" aria-label={i18next.t("modal.close")} onClick={(e) => this.closeGeolocationModal(e, false)}>
                   <span aria-hidden="true">&times;</span>
                 </button>
@@ -1002,6 +1163,11 @@ class MiscConfig extends Component {
             </div>
           </div>
         </div>
+        <input type="file"
+               className="upload"
+               id="record-upload"
+               onChange={this.getImportFile} />
+        <a className="upload" id="record-download" />
       </div>
 		);
   }
