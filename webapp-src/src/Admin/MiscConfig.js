@@ -244,9 +244,7 @@ class MiscConfig extends Component {
       mailOnConnexion.templates[objKey].defaultLang = (objKey === this.state.currentLang);
     });
     if (mailOnConnexion.templatesUpdatePassword) {
-      console.log("grut 0");
       if (mailOnConnexion.templatesUpdatePassword[this.state.currentLang] === undefined) {
-        console.log("grut 1");
         mailOnConnexion.templatesUpdatePassword[this.state.currentLang] = {
           subject: "",
           "body-pattern": "",
@@ -254,7 +252,6 @@ class MiscConfig extends Component {
         }
       }
       Object.keys(mailOnConnexion.templatesUpdatePassword).forEach(objKey => {
-        console.log("grut 2");
         mailOnConnexion.templatesUpdatePassword[objKey].defaultLang = (objKey === this.state.currentLang);
       });
     } else {
@@ -284,7 +281,6 @@ class MiscConfig extends Component {
         defaultLang: true
       }
     }
-    console.log(mailOnConnexion);
     this.setState({mailOnConnexion: mailOnConnexion});
   }
   
