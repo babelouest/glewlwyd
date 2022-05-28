@@ -8,7 +8,7 @@
 - Add config value cookie_same_site
 - Add additional-parameters to access tokens for client authorization
 - Improve resource parameter in OIDC plugin, remove resource change allowed option
-- If enc algorithms is restricted, show only allowed algorithms in discovery endpoint
+- If enc algorithms is restricted, show only allowed algorithms in discovery endpoint, and forbd to use these algorithms in client registration
 
 ## 2.7.0
 
