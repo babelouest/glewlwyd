@@ -8,7 +8,7 @@
 
 CC=gcc
 CFLAGS=-Wall -D_REENTRANT -DDEBUG -g -O0
-LDFLAGS=-lc $(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs libulfius) $(shell pkg-config --libs libhoel) $(shell pkg-config --libs librhonabwy) $(shell pkg-config --libs libiddawc) $(shell pkg-config --libs jansson) $(shell pkg-config --libs check) $(shell pkg-config --libs gnutls) $(shell pkg-config --libs liboath) $(shell pkg-config --libs libcbor)
+LDFLAGS=-lc $(shell pkg-config --libs liborcania) $(shell pkg-config --libs libyder) $(shell pkg-config --libs libulfius) $(shell pkg-config --libs libhoel) $(shell pkg-config --libs librhonabwy) $(shell pkg-config --libs libiddawc) $(shell pkg-config --libs jansson) $(shell pkg-config --libs check) $(shell pkg-config --libs gnutls) $(shell pkg-config --libs liboath) $(shell pkg-config --libs libcbor) -lpthread -lcbor
 TARGET_ADMIN=glewlwyd_admin_mod_type glewlwyd_admin_mod_user glewlwyd_admin_mod_user_auth_scheme glewlwyd_admin_mod_client glewlwyd_admin_mod_plugin glewlwyd_admin_check_scope glewlwyd_admin_api_key glewlwyd_admin_mod_user_middleware
 TARGET_AUTH=glewlwyd_auth_password glewlwyd_auth_scheme glewlwyd_auth_grant glewlwyd_auth_check_scheme glewlwyd_auth_scheme_trigger glewlwyd_auth_scheme_register glewlwyd_auth_profile glewlwyd_auth_session_manage glewlwyd_auth_profile_get_scheme_available glewlwyd_auth_profile_impersonate glewlwyd_scheme_forbidden glewlwyd_mail_on_connection glewlwyd_mail_on_scheme_register glewlwyd_mail_on_update_password
 TARGET_CRUD=glewlwyd_crud_user glewlwyd_crud_client glewlwyd_crud_scope glewlwyd_crud_user_middleware glewlwyd_crud_misc_config
