@@ -726,10 +726,6 @@ Maximum duration authorized for a DPoP iat property.
 
 If this is set to true, clients will be allowed to use the resource parameter during `/auth` or `/token` requests. If this is set to false, the resource parameter will be ignored, and the `aud` claim will be set to the scope list. If there's no resource parameter, the `aud` claim will be set to the scope list as well.
 
-### Allow to change resource indicator on access token refresh
-
-If this is set to true, client will be allowed to change the resource parameter while refreshing an access token.
-
 ### Resource list by scope
 
 For all scopes, you can specify a list of allowed resources available.
