@@ -590,7 +590,11 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
   }
 
   if (j_return == NULL) {
-    return json_pack("{si}", "result", set_otp(config, (json_t *)cls, username, j_scheme_data)==G_OK?G_OK:G_ERROR);
+    if (set_otp(config, (json_t *)cls, username, j_scheme_data) == G_OK) {
+      return json_pack("{siso}", "result", G_OK, "updated", json_true());
+    } else {
+      return json_pack("{si}", "result", G_ERROR);
+    }
   }
   return j_return;
 }
