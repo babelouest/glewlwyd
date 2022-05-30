@@ -35,7 +35,11 @@ RUN apk add --no-cache \
     bash \
     oath-toolkit-dev \
     libtool \
-    libcbor-dev
+    libcbor-dev && \
+    mkdir /opt/glewlwyd/build && cd /opt/glewlwyd/build/ && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DWITH_JOURNALD=off -DWITH_MOCK=on .. && \
+    make && make install
+
 
 RUN sqlite3 /tmp/glewlwyd.db < /opt/glewlwyd/docs/database/init.sqlite3.sql
 RUN sqlite3 /tmp/glewlwyd.db < /opt/glewlwyd/test/glewlwyd-test.sql
