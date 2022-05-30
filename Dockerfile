@@ -33,7 +33,10 @@ RUN apk add --no-cache \
     bash \
     oath-toolkit-dev \
     libtool \
-    libcbor-dev
+    libcbor-dev && \
+    mkdir /opt/glewlwyd/build && cd /opt/glewlwyd/build/ && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DWITH_JOURNALD=off .. && \
+    make && make install
 
 FROM alpine:latest AS runner
 RUN apk add --no-cache \
