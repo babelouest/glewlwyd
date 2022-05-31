@@ -5,7 +5,7 @@
 - Allow to disable static files server
 - Allow to send an e-mail on password change or scheme registration
 - Add additional CORS related header configuration
-- Add config value cookie_same_site
+- Add config values `cookie_same_site` and `max_post_size`
 - Add additional-parameters to access tokens for client authorization
 - Improve resource parameter in OIDC plugin, remove resource change allowed option
 - If enc algorithms is restricted, show only allowed algorithms in discovery endpoint, and forbd to use these algorithms in client registration

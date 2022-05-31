@@ -774,6 +774,13 @@ OAuth 2 specifies that a secured connection is mandatory, via SSL or TLS, to avo
 
 These configuration variables are optional. Default is no secure connection.
 
+### Maximum request POST size
+
+- Config file variable: `max_post_size`
+- Environment variable: `GLWD_MAX_POST_SIZE`
+
+Optional, The maximum length of a request POST parameter or the POST body, default size is 16778240 (16M+1024)
+
 ### Database back-end initialisation
 
 Configure your database backend according to the database you will use.

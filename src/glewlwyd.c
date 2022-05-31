@@ -131,6 +131,7 @@ int main (int argc, char ** argv) {
   config->config_m->glewlwyd_module_callback_update_issued_for = &glewlwyd_module_callback_update_issued_for;
   config->config_file = NULL;
   config->port = 0;
+  config->max_post_size = GLEWLWYD_DEFAULT_MAX_POST_SIZE;
   config->bind_address = NULL;
   config->bind_address_metrics = NULL;
   config->instance = NULL;
@@ -300,6 +301,8 @@ int main (int argc, char ** argv) {
       exit_server(&config, GLEWLWYD_ERROR);
     }
   }
+  config->instance->max_post_body_size = config->max_post_size;
+  config->instance->max_post_param_size = config->max_post_size;
   config->instance_initialized = 1;
 
   if (config->metrics_endpoint) {
@@ -909,6 +912,10 @@ int build_config_from_file(struct config_elements * config) {
       config->port = (uint)int_value;
     }
 
+    if (config_lookup_int(&cfg, "max_post_size", &int_value) == CONFIG_TRUE) {
+      config->max_post_size = (size_t)int_value;
+    }
+
     if (config_lookup_string(&cfg, "bind_address", &str_value) == CONFIG_TRUE) {
       config->bind_address = o_strdup(str_value);
       if (config->bind_address == NULL) {
@@ -1314,6 +1321,17 @@ int build_config_from_env(struct config_elements * config) {
       config->port = (uint)lvalue;
     } else {
       fprintf(stderr, "Error invalid port number (env), exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_MAX_POST_SIZE)) != NULL && !o_strnullempty(value)) {
+    endptr = NULL;
+    lvalue = strtol(value, &endptr, 10);
+    if (!(*endptr) && lvalue > 0) {
+      config->max_post_size = (size_t)lvalue;
+    } else {
+      fprintf(stderr, "Error invalid max_post_size number (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }

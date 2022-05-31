@@ -332,6 +332,7 @@ struct _glwd_metric {
 struct config_elements {
   char *                                         config_file;
   unsigned int                                   port;
+  size_t                                         max_post_size;
   char *                                         bind_address;
   char *                                         bind_address_metrics;
   char *                                         external_url;
