@@ -38,6 +38,7 @@
 #define GLEWLWYD_SESSION_ID_LENGTH 32
 #define GLEWLWYD_TOKEN_LENGTH 32
 #define GLEWLWYD_RESET_CREDENTIALS_CODE_LENGTH 16
+#define GLEWLWYD_MAX_USERNAME_LENGTH 128
 
 #define GLEWLWYD_PLUGIN_REGISTER_TABLE_SESSION "gpr_session"
 #define GLEWLWYD_PLUGIN_REGISTER_TABLE_UPDATE_EMAIL "gpr_update_email"
@@ -1680,7 +1681,7 @@ static int callback_register_check_username(const struct _u_request * request, s
   struct _register_config * config = (struct _register_config *)user_data;
   json_t * j_params = ulfius_get_json_body_request(request, NULL), * j_user, * j_user_reg, * j_return;
 
-  if (j_params != NULL && !json_string_null_or_empty(json_object_get(j_params, "username"))) {
+  if (j_params != NULL && !json_string_null_or_empty(json_object_get(j_params, "username")) && json_string_length(json_object_get(j_params, "username")) <= GLEWLWYD_MAX_USERNAME_LENGTH) {
     j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, json_string_value(json_object_get(j_params, "username")));
     if (check_result_value(j_user, G_OK)) {
       j_return = json_pack("{ss}", "error", "username already taken");
@@ -1724,7 +1725,7 @@ static int callback_register_register_user(const struct _u_request * request, st
   strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
   
   if (json_object_get(config->j_parameters, "verify-email") != json_true()) {
-    if (!json_string_null_or_empty(json_object_get(j_parameters, "username"))) {
+    if (!json_string_null_or_empty(json_object_get(j_parameters, "username")) && json_string_length(json_object_get(j_parameters, "username")) <= GLEWLWYD_MAX_USERNAME_LENGTH) {
       issued_for = get_client_hostname(request);
       if (issued_for != NULL) {
         j_result = register_new_user(config, json_string_value(json_object_get(j_parameters, "username")), issued_for, u_map_get_case(request->map_header, "user-agent"));

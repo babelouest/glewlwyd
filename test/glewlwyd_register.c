@@ -803,6 +803,11 @@ START_TEST(test_glwd_register_noverify_check_username)
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/username", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
+  j_body = json_pack("{ss}", "username", "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890");
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/username", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
   j_body = json_pack("{ss}", "username", NEW_USERNAME);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/username", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
@@ -823,6 +828,11 @@ START_TEST(test_glwd_register_noverify_username_exists)
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/profile", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
 
   j_body = json_pack("{ss}", "username", USERNAME_ADMIN);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/username", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+
+  j_body = json_pack("{ss}", "username", "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890");
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/username", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_body);
