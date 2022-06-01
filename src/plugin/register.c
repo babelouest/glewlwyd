@@ -120,6 +120,11 @@ static int is_email_valid(const char * email) {
   return ret;
 }
 
+static int is_username_valid(const char * username) {
+  static const char login_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.%_+-@";
+  return (!o_strnullempty(username) && o_strlen(username) <= 128 && text_match_pattern(username, login_chars, o_strlen(login_chars)));
+}
+
 static const char * get_template_property(json_t * j_params, const char * user_lang, const char * property_field) {
   json_t * j_template = NULL;
   const char * property = NULL, * property_default = NULL, * lang = NULL;
@@ -1751,7 +1756,7 @@ static int callback_register_check_username(const struct _u_request * request, s
   struct _register_config * config = (struct _register_config *)user_data;
   json_t * j_params = ulfius_get_json_body_request(request, NULL), * j_user, * j_user_reg, * j_return;
 
-  if (j_params != NULL && !json_string_null_or_empty(json_object_get(j_params, "username")) && json_string_length(json_object_get(j_params, "username")) <= GLEWLWYD_MAX_USERNAME_LENGTH && (json_object_get(config->j_parameters, "email-is-username") != json_true() || is_email_valid(json_string_value(json_object_get(j_params, "username"))))) {
+  if (j_params != NULL && !json_string_null_or_empty(json_object_get(j_params, "username")) && is_username_valid(json_string_value(json_object_get(j_params, "username"))) && (json_object_get(config->j_parameters, "email-is-username") != json_true() || is_email_valid(json_string_value(json_object_get(j_params, "username"))))) {
     j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, json_string_value(json_object_get(j_params, "username")));
     if (check_result_value(j_user, G_OK)) {
       j_return = json_pack("{ss}", "error", "username already taken");
@@ -1795,7 +1800,7 @@ static int callback_register_register_user(const struct _u_request * request, st
   strftime(expires, GLEWLWYD_DATE_BUFFER, "%a, %d %b %Y %T %Z", &ts);
   
   if (json_object_get(config->j_parameters, "verify-email") != json_true()) {
-    if (!json_string_null_or_empty(json_object_get(j_parameters, "username"))) {
+    if (is_username_valid(json_string_value(json_object_get(j_parameters, "username")))) {
       issued_for = get_client_hostname(request);
       if (issued_for != NULL) {
         j_result = register_new_user(config, json_string_value(json_object_get(j_parameters, "username")), issued_for, u_map_get_case(request->map_header, "user-agent"));
@@ -1847,7 +1852,7 @@ static int callback_register_send_email_verification(const struct _u_request * r
     } else {
       username = json_string_value(json_object_get(j_parameters, "username"));
     }
-    if (!o_strnullempty(email) && !o_strnullempty(username) && is_email_valid(email)) {
+    if (!o_strnullempty(email) && is_username_valid(username) && is_email_valid(email)) {
       issued_for = get_client_hostname(request);
       if (issued_for != NULL) {
         j_result = register_generate_email_verification_code(config, username, email, json_string_value(json_object_get(j_parameters, "lang")), json_string_value(json_object_get(j_parameters, "callback_url")), issued_for, u_map_get_case(request->map_header, "user-agent"), get_ip_source(request));

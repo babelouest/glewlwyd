@@ -39,6 +39,8 @@
 #define SCHEME_DISPLAY_NAME "Mock 95"
 
 #define NEW_USERNAME "semias"
+#define NEW_USERNAME_INVALID "sem;ias"
+#define NEW_USERNAME_LONG "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
 #define NEW_USERNAME_CANCELLED "esras"
 #define NEW_USERNAME_INVALID_SESSION "morfessa"
 #define NEW_NAME "Semias from somewhere"
@@ -808,7 +810,12 @@ START_TEST(test_glwd_register_noverify_check_username)
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/username", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
-  j_body = json_pack("{ss}", "username", "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890");
+  j_body = json_pack("{ss}", "username", NEW_USERNAME_LONG);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/username", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  
+  j_body = json_pack("{ss}", "username", NEW_USERNAME_INVALID);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" MOD_NAME "/username", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_body);
@@ -1017,6 +1024,14 @@ START_TEST(test_glwd_register_noverify_full_registration)
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" MOD_NAME "/register", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_body);
   j_body = json_pack("{ss}", "usernameError", NEW_USERNAME);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" MOD_NAME "/register", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  j_body = json_pack("{ss}", "username", NEW_USERNAME_INVALID);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" MOD_NAME "/register", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  j_body = json_pack("{ss}", "username", NEW_USERNAME_LONG);
   ck_assert_ptr_ne(j_body, NULL);
   ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" MOD_NAME "/register", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
   json_decref(j_body);
