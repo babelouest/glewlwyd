@@ -60,6 +60,18 @@ The backend API server is fully written in C and uses a small amount of resource
 
 Its plugin architecture makes it easy to add new modules or plugins, or modify existing ones with less risks to have unmaintainable code.
 
+## Disclaimer
+
+Glewlwyd is mostly developped by myself on my free time, with gracious help from users.
+
+Nevertheless, it hasn't been audited or fully tested by external developpers.
+
+Glewlwyd can take a central place in a system where applications and environments need authentication and authorization, be aware of the risks: bugs, non discovered vulnerabilities, etc.
+
+I recommend not to use Glewlwyd in production, more likely to test OAuth2/OpenID behavior, MFA connections, or IdP in general. You can also explore its functionalities and help yourself with its source code for other implementations.
+
+If you intent to use it in production, it's highly recommended to follow the documentation and enable only the features you will use.
+
 # Installation
 
 The full installation documentation is available in the [Install documentation](docs/INSTALL.md).
@@ -109,13 +121,3 @@ Go to the [Screenshots](docs/screenshots) folder to get a visual idea of Glewlwy
 You can open an [issue](https://github.com/babelouest/glewlwyd/issues), a [pull request](https://github.com/babelouest/ulfius/pulls) or send me an [e-mail](mailto:mail@babelouest.io). Any help is much appreciated!
 
 You can visit the IRC channel #glewlwyd on the [Libera.​Chat](https://libera.chat/) network.
-
-## Disclaimer
-
-Glewlwyd is mostly developped by myself on my free time, with gracious help from users.
-
-Nevertheless, it hasn't been audited or fully tested by external developpers.
-
-Glewlwyd can take a central place in a system where applications and environments need authentication and authorization, be aware of the risks: bugs, non discovered vulnerabilities, etc.
-
-It's highly recommended to follow the documentation and enable only the features you intend to use.
