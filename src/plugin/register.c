@@ -1994,6 +1994,7 @@ static int callback_register_update_data(const struct _u_request * request, stru
   if (json_is_string(json_object_get(j_parameters, "name")) || json_object_get(j_parameters, "name") == json_null()) {
     j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")));
     if (check_result_value(j_user, G_OK)) {
+      json_object_del(json_object_get(j_user, "user"), "password");
       json_object_set_new(json_object_get(j_user, "user"), "name", json_is_string(json_object_get(j_parameters, "name"))?json_incref(json_object_get(j_parameters, "name")):json_string(""));
       j_result = config->glewlwyd_config->glewlwyd_plugin_callback_is_user_valid(config->glewlwyd_config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), json_object_get(j_user, "user"), 0);
       if (check_result_value(j_result, G_OK)) {
