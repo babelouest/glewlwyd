@@ -81,7 +81,7 @@ static int text_match_pattern(const char * text, const char * pattern, size_t pa
 static int is_email_valid(const char * email) {
   int ret;
   char ** mail_splitted = NULL, ** domain_splitted = NULL;
-  static const char login_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.%_+-",
+  static const char login_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-",
                     domain_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-",
                     extension_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   size_t domain_elts, i;
@@ -121,7 +121,7 @@ static int is_email_valid(const char * email) {
 }
 
 static int is_username_valid(const char * username) {
-  static const char login_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.%_+-@";
+  static const char login_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-@";
   return (!o_strnullempty(username) && o_strlen(username) <= 128 && text_match_pattern(username, login_chars, o_strlen(login_chars)));
 }
 
@@ -2007,8 +2007,6 @@ static int callback_register_update_data(const struct _u_request * request, stru
           response->status = 500;
         }
       } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "j_result %s", json_dumps(j_result, JSON_INDENT(2)));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "j_user %s", json_dumps(j_user, JSON_INDENT(2)));
         response->status = 400;
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_update_data - Error glewlwyd_plugin_callback_is_user_valid");
