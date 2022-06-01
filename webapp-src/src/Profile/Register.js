@@ -261,6 +261,8 @@ class Register extends Component {
     .fail((err) => {
       if (err.status !== 400) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
+      } else {
+        messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("profile.register-profile-email-invalid")});
       }
     });
   }

@@ -475,7 +475,22 @@ json_t * glewlwyd_plugin_callback_get_user_profile(struct config_plugin * config
 }
 
 json_t * glewlwyd_plugin_callback_is_user_valid(struct config_plugin * config, const char * username, json_t * j_user, int add) {
-  return is_user_valid(config->glewlwyd_config, username, j_user, add, NULL);
+  json_t * j_cur_user, * j_return;
+  
+  if (add) {
+    j_return = is_user_valid(config->glewlwyd_config, username, j_user, add, NULL);
+  } else {
+    j_cur_user = get_user(config->glewlwyd_config, username, NULL);
+    if (check_result_value(j_cur_user, G_OK)) {
+      j_return = is_user_valid(config->glewlwyd_config, username, j_user, add, json_string_value(json_object_get(json_object_get(j_cur_user, "user"), "source")));
+    } else if (check_result_value(j_cur_user, G_ERROR_NOT_FOUND)) {
+      j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "invalid user");
+    } else {
+      j_return = json_pack("{si}", "result", G_ERROR);
+    }
+    json_decref(j_cur_user);
+  }
+  return j_return;
 }
 
 int glewlwyd_plugin_callback_add_user(struct config_plugin * config, json_t * j_user) {

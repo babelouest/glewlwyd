@@ -44,6 +44,11 @@
 #define NEW_NAME "Semias from somewhere"
 #define NEW_PASSWORD "newpassword"
 #define NEW_EMAIL "esras@glewlwyd.tld"
+#define NEW_EMAIL_INVALID_1 "esras@glewlwyd.tld,bob@example.com"
+#define NEW_EMAIL_INVALID_2 "esras@glewlwyd"
+#define NEW_EMAIL_INVALID_3 "`;error@glewlwyd.tld"
+#define NEW_EMAIL_INVALID_4 "esras@glewlwyd;^.tld"
+#define NEW_EMAIL_INVALID_5 "esras@glewlwyd.tld-"
 
 #define MAIL_CODE_DURATION 600
 #define MAIL_CODE_LEGTH 6
@@ -1164,6 +1169,37 @@ START_TEST(test_glwd_register_noverify_full_registration)
 }
 END_TEST
 
+START_TEST(test_glwd_register_verify_with_username_invalid_email)
+{
+  json_t * j_body;
+
+  j_body = json_pack("{ssss}", "username", NEW_EMAIL_INVALID_1, "email", NEW_EMAIL_INVALID_1);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "PUT", SERVER_URI "/" MOD_NAME "/verify", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+
+  j_body = json_pack("{ssss}", "username", NEW_EMAIL_INVALID_2, "email", NEW_EMAIL_INVALID_2);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "PUT", SERVER_URI "/" MOD_NAME "/verify", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+
+  j_body = json_pack("{ssss}", "username", NEW_EMAIL_INVALID_3, "email", NEW_EMAIL_INVALID_3);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "PUT", SERVER_URI "/" MOD_NAME "/verify", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+
+  j_body = json_pack("{ssss}", "username", NEW_EMAIL_INVALID_4, "email", NEW_EMAIL_INVALID_4);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "PUT", SERVER_URI "/" MOD_NAME "/verify", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+
+  j_body = json_pack("{ssss}", "username", NEW_EMAIL_INVALID_5, "email", NEW_EMAIL_INVALID_5);
+  ck_assert_ptr_ne(j_body, NULL);
+  ck_assert_int_eq(run_simple_test(NULL, "PUT", SERVER_URI "/" MOD_NAME "/verify", NULL, NULL, j_body, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+}
+END_TEST
+
 START_TEST(test_glwd_register_verify_with_username_cancel_registration)
 {
   struct smtp_manager manager;
@@ -2224,15 +2260,18 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_register_delete_new_user_with_scheme);
   tcase_add_test(tc_core, test_glwd_register_delete_mod);
   tcase_add_test(tc_core, test_glwd_register_add_mod_verify_with_username);
+  tcase_add_test(tc_core, test_glwd_register_verify_with_username_invalid_email);
   tcase_add_test(tc_core, test_glwd_register_verify_with_username_cancel_registration);
   tcase_add_test(tc_core, test_glwd_register_delete_mod);
   tcase_add_test(tc_core, test_glwd_register_add_mod_verify_without_username);
+  tcase_add_test(tc_core, test_glwd_register_verify_with_username_invalid_email);
   tcase_add_test(tc_core, test_glwd_register_verify_without_username_cancel_registration);
   tcase_add_test(tc_core, test_glwd_register_delete_mod);
   tcase_add_test(tc_core, test_glwd_register_add_mod_noverify_session_expired);
   tcase_add_test(tc_core, test_glwd_register_noverify_session_expired);
   tcase_add_test(tc_core, test_glwd_register_delete_mod);
   tcase_add_test(tc_core, test_glwd_register_add_mod_verify_without_username_code_expired);
+  tcase_add_test(tc_core, test_glwd_register_verify_with_username_invalid_email);
   tcase_add_test(tc_core, test_glwd_register_verify_without_username_code_expired);
   tcase_add_test(tc_core, test_glwd_register_delete_mod);
   tcase_add_test(tc_core, test_glwd_register_add_mod_verify_with_username_token);

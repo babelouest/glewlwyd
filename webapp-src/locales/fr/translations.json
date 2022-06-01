@@ -1339,6 +1339,7 @@
     "register-profile-verify-email": "Vérifier l'adresse courriel",
     "register-profile-reverify-email": "Envoyer à nouveau le courriel",
     "register-profile-email-sent": "E-mail envoyé à l'adresse {{email}}",
+    "register-profile-email-invalid": "E-mail invalide",
     "register-email-error": "L'addresse courriel est obligatoire",
     "register-profile-verify-code": "Vérifier le code",
     "register-code-label": "Entrer le code reçu",

@@ -1337,6 +1337,7 @@
     "register-profile-cancelled": "Registration cancelled",
     "register-profile-verify-email": "Verify e-mail address",
     "register-profile-reverify-email": "Resend the e-mail",
+    "register-profile-email-invalid": "Invalid e-mail",
     "register-profile-email-sent": "E-mail sent to the address {{email}}",
     "register-email-error": "E-mail address is mandatory",
     "register-profile-verify-code": "Verify code",

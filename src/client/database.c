@@ -894,13 +894,14 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
   UNUSED(config);
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_result = json_array(), * j_element, * j_format, * j_value, * j_return = NULL, * j_cur_client;
-  char * message;
+  char * message, * escaped;
   size_t index = 0;
   const char * property;
   
   if (j_result != NULL) {
     if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
-      if (!json_is_string(json_object_get(j_client, "client_id")) || json_string_length(json_object_get(j_client, "client_id")) > 128) {
+      escaped = h_escape_string(param->conn, json_string_value(json_object_get(j_client, "client_id")));
+      if (!json_is_string(json_object_get(j_client, "client_id")) || o_strlen(escaped) > 128) {
         json_array_append_new(j_result, json_string("client_id is mandatory and must be a string (maximum 128 characters)"));
       } else {
         j_cur_client = client_module_get(config, json_string_value(json_object_get(j_client, "client_id")), cls);
@@ -911,6 +912,7 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
         }
         json_decref(j_cur_client);
       }
+      o_free(escaped);
     } else if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && client_id == NULL) {
       json_array_append_new(j_result, json_string("client_id is mandatory on update mode"));
     }
@@ -930,12 +932,16 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
     if (mode != GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE && json_object_get(j_client, "password") != NULL && !json_is_string(json_object_get(j_client, "password"))) {
       json_array_append_new(j_result, json_string("password must be a string"));
     }
-    if (json_object_get(j_client, "name") != NULL && json_object_get(j_client, "name") != json_null() && (!json_is_string(json_object_get(j_client, "name")) || json_string_length(json_object_get(j_client, "name")) > 256)) {
+    escaped = h_escape_string(param->conn, json_string_value(json_object_get(j_client, "name")));
+    if (json_object_get(j_client, "name") != NULL && json_object_get(j_client, "name") != json_null() && (!json_is_string(json_object_get(j_client, "name")) || o_strlen(escaped) > 256)) {
       json_array_append_new(j_result, json_string("name must be a string (maximum 256 characters)"));
     }
-    if (json_object_get(j_client, "description") != NULL && json_object_get(j_client, "description") != json_null() && (!json_is_string(json_object_get(j_client, "description")) || json_string_length(json_object_get(j_client, "description")) > 512)) {
+    o_free(escaped);
+    escaped = h_escape_string(param->conn, json_string_value(json_object_get(j_client, "description")));
+    if (json_object_get(j_client, "description") != NULL && json_object_get(j_client, "description") != json_null() && (!json_is_string(json_object_get(j_client, "description")) || o_strlen(escaped) > 512)) {
       json_array_append_new(j_result, json_string("description must be a string (maximum 512 characters)"));
     }
+    o_free(escaped);
     if (json_object_get(j_client, "enabled") != NULL && !json_is_boolean(json_object_get(j_client, "enabled"))) {
       json_array_append_new(j_result, json_string("enabled must be a boolean"));
     }
@@ -952,19 +958,23 @@ json_t * client_module_is_valid(struct config_module * config, const char * clie
             o_free(message);
           } else {
             json_array_foreach(j_element, index, j_value) {
-              if ((!json_is_string(j_value) || json_string_length(j_value) > 16*1024*1024) && 0 != o_strcmp("jwks", json_string_value(json_object_get(j_format, "convert")))) {
+              escaped = h_escape_string(param->conn, json_string_value(j_value));
+              if ((!json_is_string(j_value) || o_strlen(escaped) > 16*1024*1024) && 0 != o_strcmp("jwks", json_string_value(json_object_get(j_format, "convert")))) {
                 message = msprintf("property '%s' must contain a string value (maximum 16M characters)", property);
                 json_array_append_new(j_result, json_string(message));
                 o_free(message);
               }
+              o_free(escaped);
             }
           }
         } else {
-          if ((((!json_is_string(j_element) && json_object_get(j_client, "description") != json_null()) || json_string_length(j_element) > 16*1024*1024)) && 0 != o_strcmp("jwks", json_string_value(json_object_get(j_format, "convert")))) {
+          escaped = h_escape_string(param->conn, json_string_value(j_element));
+          if ((((!json_is_string(j_element) && json_object_get(j_client, "description") != json_null()) || o_strlen(escaped) > 16*1024*1024)) && 0 != o_strcmp("jwks", json_string_value(json_object_get(j_format, "convert")))) {
             message = msprintf("property '%s' must be a string value (maximum 16M characters)", property);
             json_array_append_new(j_result, json_string(message));
             o_free(message);
           }
+          o_free(escaped);
         }
       }
     }

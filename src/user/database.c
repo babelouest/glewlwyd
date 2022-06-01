@@ -1005,13 +1005,14 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
 json_t * user_module_is_valid(struct config_module * config, const char * username, json_t * j_user, int mode, void * cls) {
   struct mod_parameters * param = (struct mod_parameters *)cls;
   json_t * j_result = json_array(), * j_element, * j_format, * j_value, * j_return = NULL, * j_cur_user;
-  char * message;
+  char * message, * escaped;
   size_t index = 0;
   const char * property;
   
   if (j_result != NULL) {
     if (mode == GLEWLWYD_IS_VALID_MODE_ADD) {
-      if (!json_is_string(json_object_get(j_user, "username")) || json_string_length(json_object_get(j_user, "username")) > 128) {
+      escaped = h_escape_string(param->conn, json_string_value(json_object_get(j_user, "username")));
+      if (!json_is_string(json_object_get(j_user, "username")) || o_strlen(escaped) > 128) {
         json_array_append_new(j_result, json_string("username is mandatory and must be a string (maximum 128 characters)"));
       } else {
         j_cur_user = user_module_get(config, json_string_value(json_object_get(j_user, "username")), cls);
@@ -1022,6 +1023,7 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
         }
         json_decref(j_cur_user);
       }
+      o_free(escaped);
     } else if ((mode == GLEWLWYD_IS_VALID_MODE_UPDATE || mode == GLEWLWYD_IS_VALID_MODE_UPDATE_PROFILE) && username == NULL) {
       json_array_append_new(j_result, json_string("username is mandatory on update mode"));
     }
@@ -1047,12 +1049,16 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
         json_array_append_new(j_result, json_string("password must be a string"));
       }
     }
-    if (json_object_get(j_user, "name") != NULL && (!json_is_string(json_object_get(j_user, "name")) || json_string_length(json_object_get(j_user, "name")) > 256)) {
+    escaped = h_escape_string(param->conn, json_string_value(json_object_get(j_user, "name")));
+    if (json_object_get(j_user, "name") != NULL && (!json_is_string(json_object_get(j_user, "name")) || o_strlen(escaped) > 256)) {
       json_array_append_new(j_result, json_string("name must be a string (maximum 256 characters)"));
     }
-    if (json_object_get(j_user, "email") != NULL && (!json_is_string(json_object_get(j_user, "email")) || json_string_length(json_object_get(j_user, "email")) > 512)) {
+    o_free(escaped);
+    escaped = h_escape_string(param->conn, json_string_value(json_object_get(j_user, "email")));
+    if (json_object_get(j_user, "email") != NULL && (!json_is_string(json_object_get(j_user, "email")) || o_strlen(escaped) > 512)) {
       json_array_append_new(j_result, json_string("email must be a string (maximum 512 characters)"));
     }
+    o_free(escaped);
     if (json_object_get(j_user, "enabled") != NULL && !json_is_boolean(json_object_get(j_user, "enabled"))) {
       json_array_append_new(j_result, json_string("enabled must be a boolean"));
     }
@@ -1066,19 +1072,23 @@ json_t * user_module_is_valid(struct config_module * config, const char * userna
             o_free(message);
           } else {
             json_array_foreach(j_element, index, j_value) {
-              if (!json_is_string(j_value) || json_string_length(j_value) > 16*1024*1024) {
+              escaped = h_escape_string(param->conn, json_string_value(j_value));
+              if (!json_is_string(j_value) || o_strlen(escaped) > 16*1024*1024) {
                 message = msprintf("property '%s' must contain a string value (maximum 16M characters)", property);
                 json_array_append_new(j_result, json_string(message));
                 o_free(message);
               }
+              o_free(escaped);
             }
           }
         } else {
-          if (!json_is_string(j_element) || json_string_length(j_element) > 16*1024*1024) {
+          escaped = h_escape_string(param->conn, json_string_value(j_element));
+          if (!json_is_string(j_element) || o_strlen(escaped) > 16*1024*1024) {
             message = msprintf("property '%s' must be a string value (maximum 16M characters)", property);
             json_array_append_new(j_result, json_string(message));
             o_free(message);
           }
+          o_free(escaped);
         }
       }
     }
