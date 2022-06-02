@@ -70,7 +70,7 @@ Glewlwyd can take a central place in a system where applications and environment
 
 I recommend not to use Glewlwyd in production, more likely to test OAuth2/OpenID behavior, MFA connections, or IdP in general. You can also explore its functionalities and help yourself with its source code for other implementations.
 
-If you intent to use it in production, it's highly recommended to follow the documentation and enable only the features you will use.
+If you intend to use it in production, it's highly recommended to follow the documentation and enable only the features you will use.
 
 # Installation
 
