@@ -14621,9 +14621,9 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           break;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - nonce required, origin: %s", ip_source);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - max_age invalid, origin: %s", ip_source);
         u_map_put(&map_redirect, "error", "invalid_request");
-        u_map_put(&map_redirect, "error_description", "nonce required");
+        u_map_put(&map_redirect, "error_description", "max_age invalid");
         build_auth_response(config, response, response_mode, json_object_get(j_client, "client"), redirect_uri, &map_redirect);
         break;
       }
