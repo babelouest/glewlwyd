@@ -1110,12 +1110,17 @@ int build_config_from_file(struct config_elements * config) {
     if (config_lookup_string(&cfg, "static_files_path", &str_value) == CONFIG_TRUE) {
       o_free(config->static_file_config->files_path);
       real_path = realpath(str_value, NULL);
-      config->static_file_config->files_path = o_strdup(real_path);
-      free(real_path);
-      if (config->static_file_config->files_path == NULL) {
-        fprintf(stderr, "Error allocating config->files_path, exiting\n");
+      if (real_path != NULL) {
+        config->static_file_config->files_path = o_strdup(real_path);
+        free(real_path);
+        if (config->static_file_config->files_path == NULL) {
+          fprintf(stderr, "Error allocating config->files_path, exiting\n");
+          ret = G_ERROR_PARAM;
+          break;
+        }
+      } else {
+        fprintf(stderr, "Invalid static_files_path, exiting\n");
         ret = G_ERROR_PARAM;
-        break;
       }
     }
 
