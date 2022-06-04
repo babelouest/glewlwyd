@@ -947,7 +947,7 @@ if (BUILD_GLEWLWYD_TESTING)
             MATH(EXPR COUNTER "${COUNTER}+1")
         endforeach ()
       elseif (${t} MATCHES "_oidc_irl$")
-        FILE(GLOB JsonIrl ${TST_DIR}/plugin_iodc_*.json)
+        FILE(GLOB JsonIrl ${TST_DIR}/plugin_oidc_*.json)
         foreach (j ${JsonIrl})
             add_test(NAME "${t}_${COUNTER}"
                     WORKING_DIRECTORY ${TST_DIR}
