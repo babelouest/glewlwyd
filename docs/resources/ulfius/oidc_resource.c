@@ -308,7 +308,7 @@ json_t * verify_dpop_proof(const char * dpop_header, const char * access_token, 
   
   if (dpop_header != NULL && access_token != NULL && htm != NULL && htu != NULL && max_iat && !o_strnullempty(jkt)) {
     if (r_jwt_init(&dpop_jwt) == RHN_OK) {
-      if (r_jwt_parse(dpop_jwt, dpop_header, R_FLAG_IGNORE_REMOTE) == RHN_OK) {
+      if (r_jwt_advanced_parse(dpop_jwt, dpop_header, R_PARSE_HEADER_JWK, R_FLAG_IGNORE_REMOTE) == RHN_OK) {
         if (r_jwt_verify_signature(dpop_jwt, NULL, R_FLAG_IGNORE_REMOTE) == RHN_OK) {
           do {
             if (NULL != o_strstr(r_jwt_get_header_str_value(dpop_jwt, "typ"), "dpop+jwt")) {
