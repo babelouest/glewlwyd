@@ -91,9 +91,6 @@ int jwt_profile_access_token_check_scope(struct _iddawc_resource_config * config
   return ret;
 }
 
-/**
- * check if bearer token has some of the specified scope
- */
 int callback_check_jwt_profile_access_token (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _iddawc_resource_config * config = (struct _iddawc_resource_config *)user_data;
   json_t * j_access_token = NULL;

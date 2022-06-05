@@ -62,8 +62,6 @@ struct _iddawc_resource_config {
   pthread_mutex_t     session_lock;
 };
 
-int jwt_profile_access_token_check_scope(struct _iddawc_resource_config * config, json_t * j_access_token);
-
 /**
  * 
  * check if bearer token has some of the specified scope
@@ -71,6 +69,8 @@ int jwt_profile_access_token_check_scope(struct _iddawc_resource_config * config
  * or I_TOKEN_ERROR* on any other case
  * 
  */
+int jwt_profile_access_token_check_scope(struct _iddawc_resource_config * config, json_t * j_access_token);
+
 int callback_check_jwt_profile_access_token (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 int i_jwt_profile_access_token_init_config(struct _iddawc_resource_config * config, unsigned short method, const char * realm, const char * aud, const char * oauth_scope, const char * resource_url_root, time_t dpop_max_iat);
