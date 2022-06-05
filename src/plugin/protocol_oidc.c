@@ -14641,7 +14641,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       count_resource = split_string(resource, ",", &resource_list);
       if (count_resource) {
         if (has_token && count_resource > 1) {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "Using multiple resource paramters with the response_type token is forbidden");
+          y_log_message(Y_LOG_LEVEL_DEBUG, "Using multiple resource parameters with the response_type token is forbidden");
           u_map_put(&map_redirect, "error", "invalid_target");
           u_map_put(&map_redirect, "error_description", "Invalid Resource");
           build_auth_response(config, response, response_mode, json_object_get(j_client, "client"), redirect_uri, &map_redirect);
