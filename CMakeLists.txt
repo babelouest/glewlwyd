@@ -770,6 +770,7 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_mail_on_connection
               glewlwyd_geolocation
               glewlwyd_mail_on_scheme_register
+              glewlwyd_mail_on_update_password
               )
 
     if (WITH_PLUGIN_OAUTH2)
