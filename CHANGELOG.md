@@ -8,7 +8,8 @@
 - Add config values `cookie_same_site` and `max_post_size`
 - Add additional-parameters to access tokens for client authorization
 - Improve resource parameter in OIDC plugin, remove resource change allowed option
-- If enc algorithms is restricted, show only allowed algorithms in discovery endpoint, and forbd to use these algorithms in client registration
+- If enc algorithms is restricted, show only allowed algorithms in discovery endpoint, and forbid to use these algorithms in client registration
+- Security: Fix deprecated `glewlwyd_resource.c` bug with token verification
 
 ## 2.7.0
 
