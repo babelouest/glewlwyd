@@ -527,6 +527,8 @@ In the last step, you will have to update your `webapp/config.json` file to adap
 
 ### Use case: Connect Webmail RainLoop with OpenID Connect plugin using Dovecot configured with a master password
 
+**Deprecated - Rainloop seems unmaintained and has unfixed bugs (june 2022) - I keep this documentation for curious people, but rainloop shouldn't be recommended.**
+
 To connect to a RainLoop Webmail instance with Glewlwyd's OpenID Connect plugin, here is a validated setup.
 
 - **Add additional claim `email` in the ID Token**
