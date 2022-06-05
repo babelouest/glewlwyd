@@ -6,7 +6,7 @@ This plugin is based on the [OAuth 2 RFC document](https://tools.ietf.org/html/r
 
 **Note**
 
-This plugin will be deprecated sooner or later. Until then, bugs will still be fixed but no new functionalities will be added.
+This plugin is deprecated. If bugs are found they will be fixed, but you should use the OpenID Connect plugin instead.
 
 It's recommened to use the [OIDC plugin](OIDC.md) instead.
 

@@ -1,6 +1,7 @@
 /**
  *
  * Glewlwyd SSO Access Token token check
+ * This code is deprecated and should not be used anymore
  *
  * Copyright 2016-2022 Nicolas Mora <mail@babelouest.org>
  *
