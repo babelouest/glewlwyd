@@ -1653,7 +1653,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
 
       if (r_jwt_advanced_parse(j_response, response_token, R_PARSE_HEADER_X5C, 0) != RHN_OK) {
         json_array_append_new(j_error, json_string("response invalid"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwt_parse");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error r_jwt_advanced_parse");
         break;
       }
 
