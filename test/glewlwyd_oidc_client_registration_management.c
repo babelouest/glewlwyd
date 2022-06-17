@@ -245,7 +245,8 @@ START_TEST(test_oidc_registration_auth_register_client_management_get_invalid_ac
   struct _u_request req, req_reg;
   struct _u_response resp;
   json_t * j_body, * j_client, * j_result;
-  const char * token, * registration_access_token, * registration_client_uri;
+  const char * token, * registration_client_uri;
+  char * registration_access_token;
   char * tmp;
   
   ulfius_init_request(&req);
@@ -280,7 +281,7 @@ START_TEST(test_oidc_registration_auth_register_client_management_get_invalid_ac
   ck_assert_ptr_ne(j_result, NULL);
   ck_assert_ptr_ne(json_object_get(j_result, "client_id"), NULL);
   ck_assert_ptr_ne(json_object_get(j_result, "client_secret"), NULL);
-  ck_assert_ptr_ne(registration_access_token = json_string_value(json_object_get(j_result, "registration_access_token")), NULL);
+  ck_assert_ptr_ne(registration_access_token = o_strdup(json_string_value(json_object_get(j_result, "registration_access_token"))), NULL);
   ck_assert_ptr_ne(registration_client_uri = json_string_value(json_object_get(j_result, "registration_client_uri")), NULL);
   json_decref(j_client);
   json_decref(j_body);
@@ -298,7 +299,35 @@ START_TEST(test_oidc_registration_auth_register_client_management_get_invalid_ac
   ulfius_clean_request(&req_reg);
   ulfius_clean_response(&resp);
 
+  ulfius_init_request(&req_reg);
+  ulfius_init_response(&resp);
+  req_reg.http_url = o_strdup(registration_client_uri);
+  registration_access_token[0] = 'e';
+  registration_access_token[1] = 'r';
+  registration_access_token[2] = 'r';
+  registration_access_token[3] = 'o';
+  registration_access_token[4] = 'r';
+  tmp = msprintf("Bearer %s", registration_access_token);
+  u_map_put(req_reg.map_header, "Authorization", tmp);
+  o_free(tmp);
+  ck_assert_int_eq(ulfius_send_http_request(&req_reg, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ulfius_clean_request(&req_reg);
+  ulfius_clean_response(&resp);
+
+  ulfius_init_request(&req_reg);
+  ulfius_init_response(&resp);
+  req_reg.http_url = o_strdup(registration_client_uri);
+  tmp = o_strdup("Bearer ");
+  u_map_put(req_reg.map_header, "Authorization", tmp);
+  o_free(tmp);
+  ck_assert_int_eq(ulfius_send_http_request(&req_reg, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ulfius_clean_request(&req_reg);
+  ulfius_clean_response(&resp);
+
   json_decref(j_result);
+  o_free(registration_access_token);
 }
 END_TEST
 
