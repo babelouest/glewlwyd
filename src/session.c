@@ -223,8 +223,7 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
     } else { // HOEL_DB_TYPE_SQLITE
       expire_clause = o_strdup("> (strftime('%s','now'))");
     }
-    session_uid_hash = generate_hash(config->hash_algorithm, session_uid);
-    if (session_uid_hash != NULL) {
+    if ((session_uid_hash = generate_hash(config->hash_algorithm, session_uid)) != NULL) {
       j_query = json_pack("{sss[ss]s{sssis{ssss}}ss}",
                           "table",
                           GLEWLWYD_TABLE_USER_SESSION,
@@ -341,8 +340,6 @@ json_t * get_current_user_for_session(struct config_elements * config, const cha
         glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
         j_return = json_pack("{si}", "result", G_ERROR_DB);
       }
-    } else if (session_uid == NULL) {
-      j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "get_current_user_for_session - Error generate_hash");
       j_return = json_pack("{si}", "result", G_ERROR);

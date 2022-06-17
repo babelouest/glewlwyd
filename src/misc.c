@@ -125,7 +125,7 @@ char * get_client_hostname(const struct _u_request * request) {
  * Generates a random long integer between 0 and max
  *
  */
-unsigned char random_at_most(unsigned char max, int nonce) {
+unsigned char random_at_most(unsigned char max, int nonce, int * is_error) {
   unsigned char
   num_bins = (unsigned char) max + 1,
   num_rand = (unsigned char) 0xff,
@@ -134,13 +134,20 @@ unsigned char random_at_most(unsigned char max, int nonce) {
 
   unsigned char x[1];
   do {
-    gnutls_rnd(nonce?GNUTLS_RND_NONCE:GNUTLS_RND_KEY, x, sizeof(x));
+    if (gnutls_rnd(nonce?GNUTLS_RND_NONCE:GNUTLS_RND_KEY, x, sizeof(x)) < 0) {
+      *is_error = 1;
+      break;
+    }
   }
   // This is carefully written not to overflow
   while (num_rand - defect <= (unsigned char)x[0]);
 
-  // Truncated division is intentional
-  return x[0]/bin_size;
+  if (!(*is_error)) {
+    // Truncated division is intentional
+    return x[0]/bin_size;
+  } else {
+    return 0;
+  }
 }
 
 /**
@@ -155,10 +162,16 @@ char * rand_string(char * str, size_t str_size) {
  */
 char * rand_string_from_charset(char * str, size_t str_size, const char * charset) {
   size_t n;
+  unsigned char rnd = 0;
+  int is_error = 0;
   
   if (str_size && str != NULL) {
     for (n = 0; n < str_size; n++) {
-      str[n] = charset[random_at_most((o_strlen(charset)) - 2, 0)];
+      rnd = random_at_most((o_strlen(charset)) - 2, 0, &is_error);
+      if (is_error) {
+        return NULL;
+      }
+      str[n] = charset[rnd];
     }
     str[str_size] = '\0';
     return str;
@@ -173,10 +186,16 @@ char * rand_string_from_charset(char * str, size_t str_size, const char * charse
 char * rand_string_nonce(char * str, size_t str_size) {
   const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   size_t n;
+  unsigned char rnd = 0;
+  int is_error = 0;
   
   if (str_size && str != NULL) {
     for (n = 0; n < str_size; n++) {
-      str[n] = charset[random_at_most((sizeof(charset)) - 2, 1)];
+      rnd = random_at_most((o_strlen(charset)) - 2, 1, &is_error);
+      if (is_error) {
+        return NULL;
+      }
+      str[n] = charset[rnd];
     }
     str[str_size] = '\0';
     return str;
@@ -188,10 +207,14 @@ char * rand_string_nonce(char * str, size_t str_size) {
 int rand_code(char * str, size_t str_size) {
   const char charset[] = "0123456789";
   size_t n;
+  int is_error = 0;
   
   if (str_size && str != NULL) {
     for (n = 0; n < str_size; n++) {
-      unsigned char key = random_at_most((sizeof(charset)) - 2, 0);
+      unsigned char key = random_at_most((sizeof(charset)) - 2, 0, &is_error);
+      if (is_error) {
+        return 0;
+      }
       str[n] = charset[key];
     }
     str[str_size] = '\0';
@@ -234,7 +257,7 @@ char to_hex(char code) {
  * Generates a digest using the digest_algorithm specified from data and add a salt if specified, stores it in out_digest
  */
 int generate_digest(digest_algorithm digest, const char * data, int use_salt, char * out_digest) {
-  unsigned int res = 0;
+  unsigned int res = 1;
   int alg, dig_res;
   gnutls_datum_t key_data;
   char * intermediate = NULL, salt[GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0};
@@ -269,25 +292,28 @@ int generate_digest(digest_algorithm digest, const char * data, int use_salt, ch
     if(alg != GNUTLS_DIG_UNKNOWN) {
       if (o_strlen(data) > 0) {
         if (use_salt) {
-          rand_string_nonce(salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
-          intermediate = msprintf("%s%s", data, salt);
-        } else {
-          intermediate = o_strdup(data);
-        }
-        key_data.data = (unsigned char*)intermediate;
-        key_data.size = o_strlen(intermediate);
-        if (key_data.data != NULL && (dig_res = gnutls_fingerprint(alg, &key_data, encoded_key, &encoded_key_size)) == GNUTLS_E_SUCCESS) {
-          if (use_salt) {
-            memcpy(encoded_key+encoded_key_size, salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
-            encoded_key_size += GLEWLWYD_DEFAULT_SALT_LENGTH;
-          }
-          if (o_base64_encode(encoded_key, encoded_key_size, (unsigned char *)out_digest, &encoded_key_size_base64)) {
-            res = 1;
-          } else{
+          if (rand_string_nonce(salt, GLEWLWYD_DEFAULT_SALT_LENGTH) != NULL) {
+            intermediate = msprintf("%s%s", data, salt);
+          } else {
             res = 0;
           }
         } else {
-          res = 0;
+          intermediate = o_strdup(data);
+        }
+        if (res) {
+          key_data.data = (unsigned char*)intermediate;
+          key_data.size = o_strlen(intermediate);
+          if (key_data.data != NULL && (dig_res = gnutls_fingerprint(alg, &key_data, encoded_key, &encoded_key_size)) == GNUTLS_E_SUCCESS) {
+            if (use_salt) {
+              memcpy(encoded_key+encoded_key_size, salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+              encoded_key_size += GLEWLWYD_DEFAULT_SALT_LENGTH;
+            }
+            if (!o_base64_encode(encoded_key, encoded_key_size, (unsigned char *)out_digest, &encoded_key_size_base64)) {
+              res = 0;
+            }
+          } else {
+            res = 0;
+          }
         }
         o_free(intermediate);
       } else {
@@ -374,21 +400,24 @@ int generate_digest_raw(digest_algorithm digest, const unsigned char * data, siz
 int generate_digest_pbkdf2(const char * data, unsigned int iterations, const char * salt, char * out_digest) {
   char my_salt[GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0};
   uint8_t cur_salt[GLEWLWYD_DEFAULT_SALT_LENGTH], dst[32 + GLEWLWYD_DEFAULT_SALT_LENGTH] = {0};
-  int res;
+  int res = 1;
   size_t encoded_key_size_base64;
   
   if (salt != NULL) {
     memcpy(cur_salt, salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
   } else {
-    rand_string_nonce(my_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
-    memcpy(cur_salt, my_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+    if (rand_string_nonce(my_salt, GLEWLWYD_DEFAULT_SALT_LENGTH) != NULL) {
+      memcpy(cur_salt, my_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+    } else {
+      res = 0;
+    }
   }
-  pbkdf2_hmac_sha256(o_strlen(data), (const uint8_t *)data, iterations, GLEWLWYD_DEFAULT_SALT_LENGTH, cur_salt, 32, dst);
-  memcpy(dst+32, cur_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
-  if (o_base64_encode(dst, 32 + GLEWLWYD_DEFAULT_SALT_LENGTH, (unsigned char *)out_digest, &encoded_key_size_base64)) {
-    res = 1;
-  } else{
-    res = 0;
+  if (res) {
+    pbkdf2_hmac_sha256(o_strlen(data), (const uint8_t *)data, iterations, GLEWLWYD_DEFAULT_SALT_LENGTH, cur_salt, 32, dst);
+    memcpy(dst+32, cur_salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
+    if (!o_base64_encode(dst, 32 + GLEWLWYD_DEFAULT_SALT_LENGTH, (unsigned char *)out_digest, &encoded_key_size_base64)) {
+      res = 0;
+    }
   }
   return res;
 }
@@ -404,10 +433,13 @@ int generate_digest_crypt(const char * data, const char * method, char * out_dig
   if (method != NULL) {
     o_strcpy(salt, method);
   }
-  rand_string_nonce(salt+o_strlen(method), GLEWLWYD_DEFAULT_SALT_LENGTH);
-  if ((out_crypt = crypt(data, salt)) != NULL) {
-    o_strcpy(out_digest, out_crypt);
-    res = 1;
+  if (rand_string_nonce(salt+o_strlen(method), GLEWLWYD_DEFAULT_SALT_LENGTH) != NULL) {
+    if ((out_crypt = crypt(data, salt)) != NULL) {
+      o_strcpy(out_digest, out_crypt);
+      res = 1;
+    } else {
+      res = 0;
+    }
   } else {
     res = 0;
   }

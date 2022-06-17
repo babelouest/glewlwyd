@@ -364,8 +364,7 @@ time_t glewlwyd_callback_get_session_age(struct config_plugin * config, const st
   json_t * j_result;
   
   if (session_uid != NULL) {
-    session_uid_hash = generate_hash(config->glewlwyd_config->hash_algorithm, session_uid);
-    if (session_uid_hash != NULL) {
+    if ((session_uid_hash = generate_hash(config->glewlwyd_config->hash_algorithm, session_uid)) != NULL) {
       if (split_string(scope_list, " ", &scope_array)) {
         for (int i=0; scope_array[i] != NULL; i++) {
           scope_escaped = h_escape_string_with_quotes(config->glewlwyd_config->conn, scope_array[i]);

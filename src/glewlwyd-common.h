@@ -476,7 +476,7 @@ struct config_module {
  */
 const char * get_ip_source(const struct _u_request * request);
 char * get_client_hostname(const struct _u_request * request);
-unsigned char random_at_most(unsigned char max, int nonce);
+unsigned char random_at_most(unsigned char max, int nonce, int * is_error);
 char * rand_string(char * str, size_t str_size);
 char * rand_string_nonce(char * str, size_t str_size);
 char * rand_string_from_charset(char * str, size_t str_size, const char * charset);

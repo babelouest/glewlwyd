@@ -82,7 +82,7 @@ static json_t * get_current_user_from_session(struct config_elements * config, c
   char * session_hash;
   json_t * j_session, * j_return, * j_user;
 
-  if (session_uid != NULL && !o_strnullempty(session_uid)) {
+  if (!o_strnullempty(session_uid)) {
     if ((session_hash = generate_hash(config->hash_algorithm, session_uid)) != NULL) {
       j_session = get_current_session(config, session_hash);
       if (check_result_value(j_session, G_OK)) {
@@ -417,98 +417,106 @@ int is_scope_list_valid_for_session(struct config_elements * config, const char 
 }
 
 json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements * config, const char * scope_list, const char * session_uid) {
-  char * session_hash = generate_hash(config->hash_algorithm, session_uid);
-  json_t * j_scheme_list = get_auth_scheme_list_from_scope_list(config, scope_list), * j_cur_scope, * j_scope, * j_scheme, * j_group, * j_user = get_current_user_from_session(config, session_uid), * j_scheme_remove, * j_scheme_password_valid, * j_scheme_valid;
+  char * session_hash = NULL;
+  json_t * j_scheme_list = NULL, * j_cur_scope, * j_scope, * j_scheme, * j_group, * j_user = NULL, * j_scheme_remove, * j_scheme_password_valid, * j_scheme_valid;
   const char * key_scope, * key_group;
   size_t index_scheme;
   struct _user_auth_scheme_module_instance * scheme;
   int can_use_scheme;
   
+  j_scheme_list = get_auth_scheme_list_from_scope_list(config, scope_list);
   if (check_result_value(j_scheme_list, G_OK)) {
     json_object_foreach(json_object_get(j_scheme_list, "scheme"), key_scope, j_cur_scope) {
       j_scope = get_scope(config, key_scope);
       if (check_result_value(j_scope, G_OK)) {
+        j_user = get_current_user_from_session(config, session_uid);
         if (check_result_value(j_user, G_OK)) {
-          j_scheme_password_valid = is_scheme_valid_for_session(config, 0, 0, json_object_get(j_cur_scope, "password_required")==json_true()?json_integer_value(json_object_get(j_cur_scope, "password_max_age")):0, session_hash);
-          if (check_result_value(j_scheme_password_valid, G_OK)) {
-            json_object_set(j_cur_scope, "display_name", json_object_get(json_object_get(j_scope, "scope"), "display_name"));
-            json_object_set(j_cur_scope, "description", json_object_get(json_object_get(j_scope, "scope"), "description"));
-            json_object_set(j_cur_scope, "password_authenticated", json_object_get(j_scheme_password_valid, "valid"));
-            json_object_set(j_cur_scope, "password_last_login", json_object_get(j_scheme_password_valid, "last_login"));
-            if (user_has_scope(json_object_get(j_user, "user"), key_scope)) {
-              json_object_set(j_cur_scope, "available", json_true());
-              json_object_foreach(json_object_get(j_cur_scope, "schemes"), key_group, j_group) {
-                j_scheme_remove = json_array();
-                if (j_scheme_remove != NULL) {
-                  json_array_foreach(j_group, index_scheme, j_scheme) {
-                    scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_name")));
-                    if (scheme != NULL) {
-                      if (scheme->enabled && (can_use_scheme = scheme->module->user_auth_scheme_module_can_use(config->config_m, json_string_value(json_object_get(json_object_get(j_user, "user"), "username")), scheme->cls)) != GLEWLWYD_IS_NOT_AVAILABLE) {
-                        if (can_use_scheme == GLEWLWYD_IS_REGISTERED) {
-                          j_scheme_valid = is_scheme_valid_for_session(config, scheme->guasmi_id, scheme->guasmi_max_use, 0, session_hash);
-                          if (check_result_value(j_scheme_valid, G_OK)) {
-                            json_object_set(j_scheme, "scheme_authenticated", json_object_get(j_scheme_valid, "valid"));
-                            json_object_set(j_scheme, "scheme_last_login", json_object_get(j_scheme_valid, "last_login"));
+          session_hash = generate_hash(config->hash_algorithm, session_uid);
+          if (session_hash != NULL) {
+            j_scheme_password_valid = is_scheme_valid_for_session(config, 0, 0, json_object_get(j_cur_scope, "password_required")==json_true()?json_integer_value(json_object_get(j_cur_scope, "password_max_age")):0, session_hash);
+            if (check_result_value(j_scheme_password_valid, G_OK)) {
+              json_object_set(j_cur_scope, "display_name", json_object_get(json_object_get(j_scope, "scope"), "display_name"));
+              json_object_set(j_cur_scope, "description", json_object_get(json_object_get(j_scope, "scope"), "description"));
+              json_object_set(j_cur_scope, "password_authenticated", json_object_get(j_scheme_password_valid, "valid"));
+              json_object_set(j_cur_scope, "password_last_login", json_object_get(j_scheme_password_valid, "last_login"));
+              if (user_has_scope(json_object_get(j_user, "user"), key_scope)) {
+                json_object_set(j_cur_scope, "available", json_true());
+                json_object_foreach(json_object_get(j_cur_scope, "schemes"), key_group, j_group) {
+                  j_scheme_remove = json_array();
+                  if (j_scheme_remove != NULL) {
+                    json_array_foreach(j_group, index_scheme, j_scheme) {
+                      scheme = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_scheme, "scheme_name")));
+                      if (scheme != NULL) {
+                        if (scheme->enabled && (can_use_scheme = scheme->module->user_auth_scheme_module_can_use(config->config_m, json_string_value(json_object_get(json_object_get(j_user, "user"), "username")), scheme->cls)) != GLEWLWYD_IS_NOT_AVAILABLE) {
+                          if (can_use_scheme == GLEWLWYD_IS_REGISTERED) {
+                            j_scheme_valid = is_scheme_valid_for_session(config, scheme->guasmi_id, scheme->guasmi_max_use, 0, session_hash);
+                            if (check_result_value(j_scheme_valid, G_OK)) {
+                              json_object_set(j_scheme, "scheme_authenticated", json_object_get(j_scheme_valid, "valid"));
+                              json_object_set(j_scheme, "scheme_last_login", json_object_get(j_scheme_valid, "last_login"));
+                            } else {
+                              y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error is_scheme_valid_for_session for scheme '%s'", json_string_value(json_object_get(j_scheme, "scheme_name")));
+                            }
+                            json_decref(j_scheme_valid);
+                            json_object_set(j_scheme, "scheme_registered", json_true());
                           } else {
-                            y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error is_scheme_valid_for_session for scheme '%s'", json_string_value(json_object_get(j_scheme, "scheme_name")));
+                            json_object_set(j_scheme, "scheme_authenticated", json_false());
+                            json_object_set(j_scheme, "scheme_registered", json_false());
                           }
-                          json_decref(j_scheme_valid);
-                          json_object_set(j_scheme, "scheme_registered", json_true());
                         } else {
-                          json_object_set(j_scheme, "scheme_authenticated", json_false());
-                          json_object_set(j_scheme, "scheme_registered", json_false());
+                          json_array_append_new(j_scheme_remove, json_integer(index_scheme));
                         }
                       } else {
                         json_array_append_new(j_scheme_remove, json_integer(index_scheme));
+                        y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error get_user_auth_scheme_module_instance");
                       }
-                    } else {
-                      json_array_append_new(j_scheme_remove, json_integer(index_scheme));
-                      y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error get_user_auth_scheme_module_instance");
                     }
+                    if (json_array_size(j_scheme_remove) > 0) {
+                      index_scheme = json_array_size(j_scheme_remove);
+                      do {
+                        index_scheme--;
+                        json_array_remove(j_group, json_integer_value(json_array_get(j_scheme_remove, index_scheme)));
+                      } while (index_scheme != 0);
+                    }
+                    json_decref(j_scheme_remove);
+                    if (!json_array_size(j_group)) {
+                      json_object_set(j_cur_scope, "available", json_false());
+                      json_object_del(j_cur_scope, "password_required");
+                      json_object_del(j_cur_scope, "password_authenticated");
+                      json_object_clear(json_object_get(j_cur_scope, "schemes"));
+                      break;
+                    }
+                  } else {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error allocating resources for j_scheme_remove");
                   }
-                  if (json_array_size(j_scheme_remove) > 0) {
-                    index_scheme = json_array_size(j_scheme_remove);
-                    do {
-                      index_scheme--;
-                      json_array_remove(j_group, json_integer_value(json_array_get(j_scheme_remove, index_scheme)));
-                    } while (index_scheme != 0);
-                  }
-                  json_decref(j_scheme_remove);
-                  if (!json_array_size(j_group)) {
-                    json_object_set(j_cur_scope, "available", json_false());
-                    json_object_del(j_cur_scope, "password_required");
-                    json_object_del(j_cur_scope, "password_authenticated");
-                    json_object_clear(json_object_get(j_cur_scope, "schemes"));
-                    break;
-                  }
-                } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error allocating resources for j_scheme_remove");
                 }
+              } else {
+                json_object_set(j_cur_scope, "available", json_false());
+                json_object_del(j_cur_scope, "password_required");
+                json_object_del(j_cur_scope, "password_authenticated");
+                json_object_clear(json_object_get(j_cur_scope, "schemes"));
               }
             } else {
-              json_object_set(j_cur_scope, "available", json_false());
-              json_object_del(j_cur_scope, "password_required");
-              json_object_del(j_cur_scope, "password_authenticated");
-              json_object_clear(json_object_get(j_cur_scope, "schemes"));
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error is_scheme_valid_for_session for scheme 'password'");
             }
+            json_decref(j_scheme_password_valid);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error is_scheme_valid_for_session for scheme 'password'");
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error generate_hash");
+            j_scheme_list = json_pack("{si}", "result", G_ERROR);
           }
-          json_decref(j_scheme_password_valid);
+          o_free(session_hash);
         } else {
           json_object_del(j_cur_scope, "schemes");
           json_object_del(j_cur_scope, "scheme_required");
           json_object_del(j_cur_scope, "password_required");
         }
         json_object_del(j_cur_scope, "password_max_age");
+        json_decref(j_user);
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error get_scope");
       }
       json_decref(j_scope);
     }
   }
-  json_decref(j_user);
-  o_free(session_hash);
   return j_scheme_list;
 }
 
