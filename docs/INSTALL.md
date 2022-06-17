@@ -23,6 +23,7 @@
     * [Dependencies](#dependencies)
     * [Build Glewlwyd and its dependencies](#build-glewlwyd-and-its-dependencies)
 6.  [Configure Glewlwyd](#configure-glewlwyd)
+    * [Note on static files server](#note-on-static-files-server)
     * [Port number](#port-number)
     * [Bind address](#bind-address)
     * [External URL](#external-url)
@@ -533,6 +534,10 @@ You can use environment variable configuration, configuration file and command-l
 
 When you change the configuration file or the environment variables values, you must restart Glewlwyd to use the new configuration.
 
+### Note on static files server
+
+Glewlwyd's static file server isn't meant to be the most performant nor reliable, if possible you should use a dedicated web server like Apache or NGINX. See [reverse proxy configuration](#reverse-proxy-configuration) for examples.
+
 ### Port number
 
 - Config file variable: `port`
@@ -916,6 +921,8 @@ To install Glewlwyd behind a reverse proxy, you must check the following rules:
 
 You can have glewlwyd available at the root of the domain/subdomain, e.g. `https://glewlwyd.tld/` or host Glewlwyd in a sub-folder of the domain/subdomain, e.g. `https://auth.tld/glewlwyd/`.
 
+The following examples directly provide Glewlwyd's static front-end files, without using internal Glewlwyd static file service. You should disable the `static_files_path` property in the config file.
+
 ### Apache mod_proxy example
 
 To use Apache as reverse proxy, you must enable the mods `proxy` and `proxy_http`. If you want to use user or client certificate authentication behind a reverse proxy, you must enable the mods `ssl` and `headers`.
@@ -926,7 +933,9 @@ The following example is a simple Apache reverse proxy configuration on a virtua
 <VirtualHost *:443>
   ServerName glewlwyd.tld
 
-  ProxyPass / http://localhost:4593/
+  ProxyPass /config http://localhost:4593/config
+  ProxyPass /api http://localhost:4593/api
+  DocumentRoot /usr/share/glewlwyd/webapp/
 </VirtualHost>
 ```
 
@@ -944,7 +953,9 @@ The following example is an Apache reverse proxy configuration on a virtual host
 
   RequestHeader set SSL_CLIENT_CERT ""
 
-  ProxyPass / http://localhost:4593/
+  ProxyPass /config http://localhost:4593/config
+  ProxyPass /api http://localhost:4593/api
+  DocumentRoot /usr/share/glewlwyd/webapp/
 
   <Location /api/>
     RequestHeader set SSL_CLIENT_CERT "%{SSL_CLIENT_CERT}s"
@@ -960,7 +971,9 @@ The following example is an Nginx reverse proxy configuration in which the glewl
 # Glewlwyd
 location / {
   proxy_set_header Host $host;
-  proxy_pass http://127.0.0.1:4593;
+  proxy_pass http://127.0.0.1:4593/config;
+  proxy_pass http://127.0.0.1:4593/api;
+  root /usr/share/glewlwyd/webapp/;
 }
 ```
 
