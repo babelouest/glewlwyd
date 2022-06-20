@@ -538,7 +538,16 @@ int main (int argc, char ** argv) {
   // Other configuration
   ulfius_add_endpoint_by_val(config->instance, "GET", "/config", NULL, GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_server_configuration, (void*)config);
   if (http_comression_config.allow_deflate || http_comression_config.allow_gzip) {
-    ulfius_add_endpoint_by_val(config->instance, "*", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
+    ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/profile_list/", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
+    ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
+    ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/auth/grant/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
+    ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/delegate/:username/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
+    ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/mod/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
+    ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/user/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
+    ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/client/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
+    ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/scope/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
+    ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/key/*", GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
+    ulfius_add_endpoint_by_val(config->instance, "GET", "/config", NULL, GLEWLWYD_CALLBACK_PRIORITY_COMPRESSION, &callback_http_compression, &http_comression_config);
   }
   ulfius_add_endpoint_by_val(config->instance, "OPTIONS", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_ZERO, &callback_glewlwyd_options, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", NULL, "*", GLEWLWYD_CALLBACK_PRIORITY_POST_FILE, &callback_404_if_necessary, NULL);
