@@ -131,6 +131,9 @@ database =
 #metrics_endpoint_port = 4594
 #metrics_endpoint_admin_session = false
 
+# allowed compression algorithms for response, values available are 'deflate', 'gzip', multiple values allowed, if no value is set, default value is 'deflate,gzip'
+response_allowed_compression="deflate,gzip"
+
 # mime types for webapp files
 static_files_mime_types =
 (
