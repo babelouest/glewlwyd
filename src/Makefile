@@ -64,7 +64,7 @@ memcheck: debug
 	valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes ./glewlwyd --config-file $(CONFIG_FILE) 2>valgrind.txt
 
 test-debug: debug
-	./glewlwyd --config-file $(CONFIG_FILE)
+	./glewlwyd --config-file $(CONFIG_FILE) -e
 
 install: glewlwyd
 	install glewlwyd $(DESTDIR)/bin
