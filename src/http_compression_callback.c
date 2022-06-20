@@ -71,7 +71,7 @@ int callback_http_compression (const struct _u_request * request, struct _u_resp
   char * data_zip = NULL;
   size_t data_zip_len = 0;
 
-  if (response->binary_body_length && u_map_has_key_case(request->map_header, U_ACCEPT_HEADER)) {
+  if (response->binary_body_length && u_map_has_key_case(request->map_header, U_ACCEPT_HEADER) && !u_map_has_key_case(response->map_header, U_CONTENT_HEADER)) {
     if (split_string(u_map_get_case(request->map_header, U_ACCEPT_HEADER), ",", &accept_list)) {
       if ((config == NULL || config->allow_gzip) && string_array_has_trimmed_value((const char **)accept_list, U_ACCEPT_GZIP)) {
         compress_mode = U_COMPRESS_GZIP;
