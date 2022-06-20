@@ -730,6 +730,7 @@ if (BUILD_GLEWLWYD_TESTING)
     set(CMAKE_CTEST_COMMAND ctest -V)
 
     set(TST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
+    set(U_RESOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/docs/resources/ulfius/)
     find_package(Threads REQUIRED)
     
     set(TST_LIBS ${TST_LIBS} ${JANSSON_LIBRARIES})
@@ -906,7 +907,16 @@ if (BUILD_GLEWLWYD_TESTING)
         "${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake"
         @ONLY)
 
-        set(COUNTER 0)
+    set(COUNTER 0)
+    
+    set(IDDAWC_RESOURCE_TEST "iddawc_resource_tester")
+    add_executable(${IDDAWC_RESOURCE_TEST} ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h ${U_RESOURCE_DIR}/iddawc_resource.c ${U_RESOURCE_DIR}/iddawc_resource.h ${TST_DIR}/iddawc_resource_tester.c)
+    target_include_directories(${IDDAWC_RESOURCE_TEST} PUBLIC ${TST_DIR})
+    target_link_libraries(${IDDAWC_RESOURCE_TEST} PUBLIC ${TST_LIBS})
+    add_test(NAME ${IDDAWC_RESOURCE_TEST}
+            WORKING_DIRECTORY ${TST_DIR}
+            COMMAND ${IDDAWC_RESOURCE_TEST})
+    
     foreach (t ${TESTS})
       add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
       target_include_directories(${t} PUBLIC ${TST_DIR})

@@ -124,6 +124,7 @@ glewlwyd_scheme_http
 glewlwyd_scheme_oauth2
 glewlwyd_scheme_forbidden
 glewlwyd_geolocation
+iddawc_resource_tester
 
 glewlwyd_prometheus
 
