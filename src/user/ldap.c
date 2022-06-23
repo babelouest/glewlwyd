@@ -488,6 +488,7 @@ static int set_update_password_mod(json_t * j_params, LDAP * ldap, const char * 
   int ldap_result, nb_values, ret = G_OK, i;
   struct berval ** result_values = NULL;
   size_t counter;
+  char * escaped = escape_ldap(username);
 
   int  scope = LDAP_SCOPE_ONELEVEL;
   char * filter = NULL;
@@ -501,7 +502,7 @@ static int set_update_password_mod(json_t * j_params, LDAP * ldap, const char * 
   }
   if (!add) {
     // Connection successful, doing ldap search
-    filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "username-property"), username);
+    filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "username-property"), escaped);
     if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "set_update_password_mod - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
       ret = G_ERROR;
@@ -555,6 +556,7 @@ static int set_update_password_mod(json_t * j_params, LDAP * ldap, const char * 
       ret = G_ERROR_MEMORY;
     }
   }
+  o_free(escaped);
   return ret;
 }
 
@@ -1150,7 +1152,7 @@ static json_t * get_user_from_result(json_t * j_params, json_t * j_properties_us
 }
 
 static char * get_user_dn_from_username(json_t * j_params, LDAP * ldap, const char * username) {
-  char * user_dn, * filter;
+  char * user_dn, * filter, * escaped = escape_ldap(username);
   int  result;
   char * attrs[] = {NULL};
   int  attrsonly = 0;
@@ -1163,7 +1165,7 @@ static char * get_user_dn_from_username(json_t * j_params, LDAP * ldap, const ch
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "search-scope")), "subtree")) {
     scope = LDAP_SCOPE_CHILDREN;
   }
-  filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "username-property"), username);
+  filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "username-property"), escaped);
   if ((result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_user_dn_from_username - Error ldap search, base search: %s, filter, error message: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(result));
   } else {
@@ -1178,6 +1180,7 @@ static char * get_user_dn_from_username(json_t * j_params, LDAP * ldap, const ch
     ldap_msgfree(answer);
   }
   o_free(filter);
+  o_free(escaped);
   return str_result;
 }
 
@@ -1393,6 +1396,7 @@ json_t * user_module_get(struct config_module * config, const char * username, v
   LDAPMessage * entry, * answer;
   int ldap_result;
   struct berval ** result_values = NULL;
+  char * escaped = escape_ldap(username);
 
   int  scope = LDAP_SCOPE_ONELEVEL;
   char * filter = NULL;
@@ -1406,7 +1410,7 @@ json_t * user_module_get(struct config_module * config, const char * username, v
   }
   if (ldap != NULL) {
     // Connection successful, doing ldap search
-    filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "username-property"), username);
+    filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "username-property"), escaped);
     attrs = get_ldap_read_attributes(j_params, 0, (j_properties_user = json_object()));
     if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get user - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
@@ -1442,6 +1446,7 @@ json_t * user_module_get(struct config_module * config, const char * username, v
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get ldap user - Error connect_ldap_server");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
+  o_free(escaped);
   return j_return;
 }
 
@@ -1452,6 +1457,7 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
   LDAPMessage * entry, * answer;
   int ldap_result;
   struct berval ** result_values = NULL;
+  char * escaped = escape_ldap(username);
 
   int  scope = LDAP_SCOPE_ONELEVEL;
   char * filter = NULL;
@@ -1465,7 +1471,7 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
   }
   if (ldap != NULL) {
     // Connection successful, doing ldap search
-    filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "username-property"), username);
+    filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "username-property"), escaped);
     attrs = get_ldap_read_attributes(j_params, 1, (j_properties_user = json_object()));
     if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_profile ldap user - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
@@ -1500,6 +1506,7 @@ json_t * user_module_get_profile(struct config_module * config, const char * use
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_profile ldap user - Error connect_ldap_server");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
+  o_free(escaped);
   return j_return;
 }
 
@@ -1790,9 +1797,9 @@ int user_module_check_password(struct config_module * config, const char * usern
   char * filter = NULL;
   char * attrs[] = {"memberOf", NULL, NULL};
   int attrsonly = 0;
-  char * ldap_mech = LDAP_SASL_SIMPLE;
+  char * ldap_mech = LDAP_SASL_SIMPLE, * escaped = escape_ldap(username);
   struct berval cred;
-  struct berval *servcred;
+  struct berval * servcred;
 
   if (0 == o_strcmp(json_string_value(json_object_get(j_params, "search-scope")), "subtree")) {
     scope = LDAP_SCOPE_SUBTREE;
@@ -1801,7 +1808,7 @@ int user_module_check_password(struct config_module * config, const char * usern
   }
   if (ldap != NULL) {
     // Connection successful, doing ldap search
-    filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "username-property"), username);
+    filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "username-property"), escaped);
     if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_check_password ldap - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
       result = G_ERROR;
@@ -1831,6 +1838,7 @@ int user_module_check_password(struct config_module * config, const char * usern
     y_log_message(Y_LOG_LEVEL_ERROR, "user_module_check_password ldap - Error connect_ldap_server");
     result = G_ERROR;
   }
+  o_free(escaped);
   return result;
 }
 

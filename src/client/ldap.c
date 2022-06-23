@@ -1007,7 +1007,7 @@ static char * get_client_dn_from_client_id(json_t * j_params, LDAP * ldap, const
   char * attrs[]      = {NULL};
   int  attrsonly      = 0;
   LDAPMessage * answer = NULL, * entry;
-  char * str_result = NULL;
+  char * str_result = NULL, * escaped = escape_ldap(client_id);
   int  scope = LDAP_SCOPE_ONELEVEL;
   
   if (0 == o_strcmp(json_string_value(json_object_get(j_params, "search-scope")), "subtree")) {
@@ -1015,7 +1015,7 @@ static char * get_client_dn_from_client_id(json_t * j_params, LDAP * ldap, const
   } else if (0 == o_strcmp(json_string_value(json_object_get(j_params, "search-scope")), "subtree")) {
     scope = LDAP_SCOPE_CHILDREN;
   }
-  filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "client_id-property"), client_id);
+  filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "client_id-property"), escaped);
   if ((result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_client_dn_from_client_id - Error ldap search, base search: %s, filter, error message: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(result));
   } else {
@@ -1030,6 +1030,7 @@ static char * get_client_dn_from_client_id(json_t * j_params, LDAP * ldap, const
     ldap_msgfree(answer);
   }
   o_free(filter);
+  o_free(escaped);
   return str_result;
 }
 
@@ -1236,6 +1237,7 @@ json_t * client_module_get(struct config_module * config, const char * client_id
   LDAP * ldap = connect_ldap_server(j_params);
   LDAPMessage * entry, * answer;
   int ldap_result;
+  char * escaped = escape_ldap(client_id);
   
   int  scope = LDAP_SCOPE_ONELEVEL;
   char * filter = NULL;
@@ -1249,7 +1251,7 @@ json_t * client_module_get(struct config_module * config, const char * client_id
   }
   if (ldap != NULL) {
     // Connection successful, doing ldap search
-    filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "client_id-property"), client_id);
+    filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "client_id-property"), escaped);
     attrs = get_ldap_read_attributes(j_params, 0, (j_properties_client = json_object()));
     if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get ldap - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
@@ -1280,6 +1282,7 @@ json_t * client_module_get(struct config_module * config, const char * client_id
     y_log_message(Y_LOG_LEVEL_ERROR, "client_module_get_list ldap - Error connect_ldap_server");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
+  o_free(escaped);
   return j_return;
 }
 
@@ -1523,7 +1526,7 @@ int client_module_check_password(struct config_module * config, const char * cli
   LDAP * ldap = connect_ldap_server(j_params);
   LDAPMessage * entry, * answer;
   int ldap_result, result_login, result;
-  char * client_dn = NULL;
+  char * client_dn = NULL, * escaped = escape_ldap(client_id);
   
   int  scope = LDAP_SCOPE_ONELEVEL;
   char * filter = NULL;
@@ -1540,7 +1543,7 @@ int client_module_check_password(struct config_module * config, const char * cli
   }
   if (ldap != NULL) {
     // Connection successful, doing ldap search
-    filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "client_id-property"), client_id);
+    filter = msprintf("(&(%s)(%s=%s))", json_string_value(json_object_get(j_params, "filter")), get_read_property(j_params, "client_id-property"), escaped);
     if ((ldap_result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "client_module_check_password ldap - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
       result = G_ERROR;
@@ -1570,5 +1573,6 @@ int client_module_check_password(struct config_module * config, const char * cli
     y_log_message(Y_LOG_LEVEL_ERROR, "client_module_check_password ldap - Error connect_ldap_server");
     result = G_ERROR;
   }
+  o_free(escaped);
   return result;
 }
