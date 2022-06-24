@@ -733,6 +733,7 @@ static int is_user_certificate_valid_user_property(struct config_module * config
             0 == o_strncasecmp(json_string_value(json_object_get(j_user_list, "dn")), (const char *)cert_dn.data, cert_dn.size)) {
           ret = G_OK;
         } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "dn invalid: %s - %.*s", json_string_value(json_object_get(j_user_list, "dn")), cert_dn.size, (const char *)cert_dn.data);
           ret = G_ERROR_UNAUTHORIZED;
         }
         gnutls_free(cert_dn.data);
@@ -1443,6 +1444,8 @@ json_t * user_auth_scheme_module_register_get(struct config_module * config, con
       json_object_del(j_result, "result");
       json_object_set(j_result, "add-certificate", (json_object_get(((struct _cert_param *)cls)->j_parameters, "use-scheme-storage")==json_true()?json_true():json_false()));
       j_return = json_pack("{sisO}", "result", G_OK, "response", j_result);
+    } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register_get certificate - Error get_user_certificate_list_user_property");
       j_return = json_pack("{si}", "result", G_ERROR);
