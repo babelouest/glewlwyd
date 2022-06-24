@@ -733,7 +733,6 @@ static int is_user_certificate_valid_user_property(struct config_module * config
             0 == o_strncasecmp(json_string_value(json_object_get(j_user_list, "dn")), (const char *)cert_dn.data, cert_dn.size)) {
           ret = G_OK;
         } else {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "dn invalid: %s - %.*s", json_string_value(json_object_get(j_user_list, "dn")), cert_dn.size, (const char *)cert_dn.data);
           ret = G_ERROR_UNAUTHORIZED;
         }
         gnutls_free(cert_dn.data);
