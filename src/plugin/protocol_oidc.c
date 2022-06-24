@@ -3880,64 +3880,68 @@ static json_t * check_client_valid_without_secret(struct _oidc_config * config,
 static int is_client_auth_method_allowed(json_t * j_client, int client_auth_method) {
   int ret = 0;
 
-  if (!json_string_null_or_empty(json_object_get(j_client, "token_endpoint_auth_method")) || json_array_size(json_object_get(j_client, "token_endpoint_auth_method"))) {
-    switch (client_auth_method) {
-      case GLEWLWYD_CLIENT_AUTH_METHOD_NONE:
-        ret = 1;
-        break;
-      case GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_POST:
-        if (json_is_array(json_object_get(j_client, "token_endpoint_auth_method")) && json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "client_secret_post")) {
+  if (json_object_get(j_client, "confidential") == json_true() && client_auth_method != GLEWLWYD_CLIENT_AUTH_METHOD_NONE) {
+    if (!json_string_null_or_empty(json_object_get(j_client, "token_endpoint_auth_method")) || json_array_size(json_object_get(j_client, "token_endpoint_auth_method"))) {
+      switch (client_auth_method) {
+        case GLEWLWYD_CLIENT_AUTH_METHOD_NONE:
           ret = 1;
-        }
-        if (json_is_string(json_object_get(j_client, "token_endpoint_auth_method")) && 0 == o_strcmp("client_secret_post", json_string_value(json_object_get(j_client, "token_endpoint_auth_method")))) {
-          ret = 1;
-        }
-        break;
-      case GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_BASIC:
-        if (json_is_array(json_object_get(j_client, "token_endpoint_auth_method")) && json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "client_secret_basic")) {
-          ret = 1;
-        }
-        if (json_is_string(json_object_get(j_client, "token_endpoint_auth_method")) && 0 == o_strcmp("client_secret_basic", json_string_value(json_object_get(j_client, "token_endpoint_auth_method")))) {
-          ret = 1;
-        }
-        break;
-      case GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_JWT:
-        if (json_is_array(json_object_get(j_client, "token_endpoint_auth_method")) && json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "client_secret_jwt")) {
-          ret = 1;
-        }
-        if (json_is_string(json_object_get(j_client, "token_endpoint_auth_method")) && 0 == o_strcmp("client_secret_jwt", json_string_value(json_object_get(j_client, "token_endpoint_auth_method")))) {
-          ret = 1;
-        }
-        break;
-      case GLEWLWYD_CLIENT_AUTH_METHOD_PRIVATE_KEY_JWT:
-        if (json_is_array(json_object_get(j_client, "token_endpoint_auth_method")) && json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "private_key_jwt")) {
-          ret = 1;
-        }
-        if (json_is_string(json_object_get(j_client, "token_endpoint_auth_method")) && 0 == o_strcmp("private_key_jwt", json_string_value(json_object_get(j_client, "token_endpoint_auth_method")))) {
-          ret = 1;
-        }
-        break;
-      case GLEWLWYD_CLIENT_AUTH_METHOD_TLS:
-        if (json_is_array(json_object_get(j_client, "token_endpoint_auth_method")) && json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "tls_client_auth")) {
-          ret = 1;
-        }
-        if (json_is_string(json_object_get(j_client, "token_endpoint_auth_method")) && 0 == o_strcmp("tls_client_auth", json_string_value(json_object_get(j_client, "token_endpoint_auth_method")))) {
-          ret = 1;
-        }
-        break;
-      case GLEWLWYD_CLIENT_AUTH_METHOD_SELF_SIGNED_TLS:
-        if (json_is_array(json_object_get(j_client, "token_endpoint_auth_method")) && json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "self_signed_tls_client_auth")) {
-          ret = 1;
-        }
-        if (json_is_string(json_object_get(j_client, "token_endpoint_auth_method")) && 0 == o_strcmp("self_signed_tls_client_auth", json_string_value(json_object_get(j_client, "token_endpoint_auth_method")))) {
-          ret = 1;
-        }
-        break;
-      default:
-        ret = 0;
-        break;
+          break;
+        case GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_POST:
+          if (json_is_array(json_object_get(j_client, "token_endpoint_auth_method")) && json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "client_secret_post")) {
+            ret = 1;
+          }
+          if (json_is_string(json_object_get(j_client, "token_endpoint_auth_method")) && 0 == o_strcmp("client_secret_post", json_string_value(json_object_get(j_client, "token_endpoint_auth_method")))) {
+            ret = 1;
+          }
+          break;
+        case GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_BASIC:
+          if (json_is_array(json_object_get(j_client, "token_endpoint_auth_method")) && json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "client_secret_basic")) {
+            ret = 1;
+          }
+          if (json_is_string(json_object_get(j_client, "token_endpoint_auth_method")) && 0 == o_strcmp("client_secret_basic", json_string_value(json_object_get(j_client, "token_endpoint_auth_method")))) {
+            ret = 1;
+          }
+          break;
+        case GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_JWT:
+          if (json_is_array(json_object_get(j_client, "token_endpoint_auth_method")) && json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "client_secret_jwt")) {
+            ret = 1;
+          }
+          if (json_is_string(json_object_get(j_client, "token_endpoint_auth_method")) && 0 == o_strcmp("client_secret_jwt", json_string_value(json_object_get(j_client, "token_endpoint_auth_method")))) {
+            ret = 1;
+          }
+          break;
+        case GLEWLWYD_CLIENT_AUTH_METHOD_PRIVATE_KEY_JWT:
+          if (json_is_array(json_object_get(j_client, "token_endpoint_auth_method")) && json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "private_key_jwt")) {
+            ret = 1;
+          }
+          if (json_is_string(json_object_get(j_client, "token_endpoint_auth_method")) && 0 == o_strcmp("private_key_jwt", json_string_value(json_object_get(j_client, "token_endpoint_auth_method")))) {
+            ret = 1;
+          }
+          break;
+        case GLEWLWYD_CLIENT_AUTH_METHOD_TLS:
+          if (json_is_array(json_object_get(j_client, "token_endpoint_auth_method")) && json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "tls_client_auth")) {
+            ret = 1;
+          }
+          if (json_is_string(json_object_get(j_client, "token_endpoint_auth_method")) && 0 == o_strcmp("tls_client_auth", json_string_value(json_object_get(j_client, "token_endpoint_auth_method")))) {
+            ret = 1;
+          }
+          break;
+        case GLEWLWYD_CLIENT_AUTH_METHOD_SELF_SIGNED_TLS:
+          if (json_is_array(json_object_get(j_client, "token_endpoint_auth_method")) && json_array_has_string(json_object_get(j_client, "token_endpoint_auth_method"), "self_signed_tls_client_auth")) {
+            ret = 1;
+          }
+          if (json_is_string(json_object_get(j_client, "token_endpoint_auth_method")) && 0 == o_strcmp("self_signed_tls_client_auth", json_string_value(json_object_get(j_client, "token_endpoint_auth_method")))) {
+            ret = 1;
+          }
+          break;
+        default:
+          ret = 0;
+          break;
+      }
+    } else {
+      ret = 0;
     }
-  } else {
+  } else if (json_object_get(j_client, "confidential") != json_true() && client_auth_method == GLEWLWYD_CLIENT_AUTH_METHOD_NONE) {
     ret = 1;
   }
   return ret;
@@ -13406,7 +13410,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
             j_client = check_client_valid(config, client_id, client_secret, NULL, GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN_FLAG, 0, ip_source);
           }
         }
-        if (!check_result_value(j_client, G_OK) && is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
+        if (!check_result_value(j_client, G_OK) || !is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
           has_issues = 1;
         } else if (client_id == NULL && client_secret == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "get_access_token_from_refresh oidc - client '%s' is invalid or is not confidential, origin: %s", client_id, ip_source);
@@ -13767,7 +13771,7 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
             j_client = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
           }
         }
-        if (!check_result_value(j_client, G_OK) && is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
+        if (!check_result_value(j_client, G_OK) || !is_client_auth_method_allowed(json_object_get(j_client, "client"), client_auth_method)) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "oidc delete_refresh_token - client '%s' is invalid, origin: %s", request->auth_basic_user, ip_source);
           has_issues = 1;
           config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
