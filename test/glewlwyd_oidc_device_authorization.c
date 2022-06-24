@@ -73,13 +73,14 @@ END_TEST
 
 START_TEST(test_oidc_device_authorization_add_client_confidential_ok)
 {
-  json_t * j_parameters = json_pack("{sssssssos[s]so}",
+  json_t * j_parameters = json_pack("{sssssssos[s]sos[s]}",
                                 "client_id", CLIENT_ID,
                                 "client_name", CLIENT_NAME,
                                 "client_secret", CLIENT_SECRET,
                                 "confidential", json_true(),
                                 "authorization_type", "device_authorization",
-                                "enabled", json_true());
+                                "enabled", json_true(),
+                                "token_endpoint_auth_method", "client_secret_basic");
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -137,8 +138,8 @@ START_TEST(test_oidc_device_authorization_client_cred_post_valid)
   ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "POST",
                                                        U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/device_authorization/",
                                                        U_OPT_POST_BODY_PARAMETER, "grant_type", "device_authorization",
-                                                       U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT_ID,
-                                                       U_OPT_POST_BODY_PARAMETER, "client_secret", CLIENT_SECRET,
+                                                       U_OPT_AUTH_BASIC_USER, CLIENT_ID,
+                                                       U_OPT_AUTH_BASIC_PASSWORD, CLIENT_SECRET,
                                                        U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
                                                        U_OPT_NONE), U_OK);
   

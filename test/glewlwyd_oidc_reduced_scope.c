@@ -75,7 +75,7 @@ END_TEST
 
 START_TEST(test_oidc_reduced_scope_add_client)
 {
-  json_t * j_param = json_pack("{sssososss[s]s[sss]s[ssss]}", "client_id", CLIENT_ID, "enabled", json_true(), "confidential", json_true(), "secret", CLIENT_SECRET, "redirect_uri", CLIENT_REDIRECT, "scope", SCOPE_OPENID, SCOPE_1, SCOPE_2, "authorization_type", "code", "token", "id_token", "device_authorization");
+  json_t * j_param = json_pack("{sssososss[s]s[sss]s[ssss]s[s]}", "client_id", CLIENT_ID, "enabled", json_true(), "confidential", json_true(), "secret", CLIENT_SECRET, "redirect_uri", CLIENT_REDIRECT, "scope", SCOPE_OPENID, SCOPE_1, SCOPE_2, "authorization_type", "code", "token", "id_token", "device_authorization", "token_endpoint_auth_method", "client_secret_basic");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
 }

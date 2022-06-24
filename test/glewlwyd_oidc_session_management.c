@@ -208,7 +208,7 @@ END_TEST
 
 START_TEST(test_oidc_session_management_add_client_channel_ok)
 {
-  json_t * j_parameters = json_pack("{sssss[s]s[s]s[sss]sssssssoso}",
+  json_t * j_parameters = json_pack("{sssss[s]s[s]s[sss]sssssssosos[ss]}",
                                     "client_id", CLIENT_ID_1,
                                     "clint_name", CLIENT_NAME,
                                     "redirect_uri", CLIENT_REDIRECT,
@@ -218,11 +218,12 @@ START_TEST(test_oidc_session_management_add_client_channel_ok)
                                     "frontchannel_logout_session_required", "true",
                                     "client_secret", CLIENT_SECRET,
                                     "enabled", json_true(),
-                                    "confidential", json_true());
+                                    "confidential", json_true(),
+                                    "token_endpoint_auth_method", "client_secret_post", "client_secret_basic");
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
-  j_parameters = json_pack("{sssss[s]s[s]s[sss]sssssssoso}",
+  j_parameters = json_pack("{sssss[s]s[s]s[sss]sssssssosos[ss]}",
                             "client_id", CLIENT_ID_2,
                             "clint_name", CLIENT_NAME,
                             "redirect_uri", CLIENT_REDIRECT,
@@ -232,11 +233,12 @@ START_TEST(test_oidc_session_management_add_client_channel_ok)
                             "frontchannel_logout_session_required", "false",
                             "client_secret", CLIENT_SECRET,
                             "enabled", json_true(),
-                            "confidential", json_true());
+                            "confidential", json_true(),
+                            "token_endpoint_auth_method", "client_secret_post", "client_secret_basic");
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
-  j_parameters = json_pack("{sssss[s]s[s]s[sss]sssssssoso}",
+  j_parameters = json_pack("{sssss[s]s[s]s[sss]sssssssosos[ss]}",
                             "client_id", CLIENT_ID_3,
                             "clint_name", CLIENT_NAME,
                             "redirect_uri", CLIENT_REDIRECT,
@@ -246,11 +248,12 @@ START_TEST(test_oidc_session_management_add_client_channel_ok)
                             "backchannel_logout_session_required", "true",
                             "client_secret", CLIENT_SECRET,
                             "enabled", json_true(),
-                            "confidential", json_true());
+                            "confidential", json_true(),
+                            "token_endpoint_auth_method", "client_secret_post", "client_secret_basic");
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
-  j_parameters = json_pack("{sssss[s]s[s]s[sss]sssssssoso}",
+  j_parameters = json_pack("{sssss[s]s[s]s[sss]sssssssosos[ss]}",
                             "client_id", CLIENT_ID_4,
                             "clint_name", CLIENT_NAME,
                             "redirect_uri", CLIENT_REDIRECT,
@@ -260,7 +263,8 @@ START_TEST(test_oidc_session_management_add_client_channel_ok)
                             "backchannel_logout_session_required", "false",
                             "client_secret", CLIENT_SECRET,
                             "enabled", json_true(),
-                            "confidential", json_true());
+                            "confidential", json_true(),
+                            "token_endpoint_auth_method", "client_secret_post", "client_secret_basic");
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);

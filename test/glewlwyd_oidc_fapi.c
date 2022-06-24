@@ -267,7 +267,7 @@ END_TEST
 
 START_TEST(test_oidc_fapi_add_client_pubkey)
 {
-  json_t * j_client = json_pack("{ss ss so s[s] s[ssss] s[s] ss ss ss ss so}",
+  json_t * j_client = json_pack("{ss ss so s[s] s[ssss] s[s] ss ss ss ss so s[s]}",
                                 "client_id", CLIENT_PUBKEY_ID,
                                 "name", CLIENT_PUBKEY_NAME,
                                 "confidential", json_true(),
@@ -281,7 +281,8 @@ START_TEST(test_oidc_fapi_add_client_pubkey)
                                 "authorization_signed_response_alg", CLIENT_SIGN_ALG,
                                 "authorization_encrypted_response_alg", CLIENT_ENC_ALG,
                                 "authorization_encrypted_response_enc", CLIENT_ENC,
-                                "enabled", json_true());
+                                "enabled", json_true(),
+                                "token_endpoint_auth_method", "private_key_jwt");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -294,7 +295,7 @@ END_TEST
 START_TEST(test_oidc_fapi_add_client_jwks)
 {
   jwks_t * jwks = r_jwks_quick_import(R_IMPORT_JSON_STR, jwk_pubkey_ecdsa_str, R_IMPORT_JSON_STR, jwk_pubkey_ecdsa_str_2, R_IMPORT_JSON_STR, jwk_pubkey_rsa_str, R_IMPORT_NONE);
-  json_t * j_client = json_pack("{ss ss so s[s] s[ssss] s[s] so ss ss ss so}",
+  json_t * j_client = json_pack("{ss ss so s[s] s[ssss] s[s] so ss ss ss so s[s]}",
                                 "client_id", CLIENT_PUBKEY_ID,
                                 "name", CLIENT_PUBKEY_NAME,
                                 "confidential", json_true(),
@@ -308,7 +309,8 @@ START_TEST(test_oidc_fapi_add_client_jwks)
                                 "authorization_signed_response_alg", CLIENT_SIGN_ALG,
                                 "authorization_encrypted_response_alg", CLIENT_ENC_ALG,
                                 "authorization_encrypted_response_enc", CLIENT_ENC,
-                                "enabled", json_true());
+                                "enabled", json_true(),
+                                "token_endpoint_auth_method", "private_key_jwt");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -321,7 +323,7 @@ END_TEST
 
 START_TEST(test_oidc_fapi_add_client_ciba_poll)
 {
-  json_t * j_client = json_pack("{ss ss so s[s] s[sssss] s[s] ss ss ss ss ss so}",
+  json_t * j_client = json_pack("{ss ss so s[s] s[sssss] s[s] ss ss ss ss ss so s[s]}",
                                 "client_id", CLIENT_PUBKEY_ID,
                                 "name", CLIENT_PUBKEY_NAME,
                                 "confidential", json_true(),
@@ -340,7 +342,8 @@ START_TEST(test_oidc_fapi_add_client_ciba_poll)
                                 "authorization_encrypted_response_alg", CLIENT_ENC_ALG,
                                 "authorization_encrypted_response_enc", CLIENT_ENC,
                                 "backchannel_token_delivery_mode", "poll",
-                                "enabled", json_true());
+                                "enabled", json_true(),
+                                "token_endpoint_auth_method", "client_secret_basic");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -352,7 +355,7 @@ END_TEST
 
 START_TEST(test_oidc_fapi_add_client_ciba_push)
 {
-  json_t * j_client = json_pack("{ss ss so s[s] s[sssss] s[s] ss ss ss ss ss so}",
+  json_t * j_client = json_pack("{ss ss so s[s] s[sssss] s[s] ss ss ss ss ss so s[s]}",
                                 "client_id", CLIENT_PUBKEY_ID,
                                 "name", CLIENT_PUBKEY_NAME,
                                 "confidential", json_true(),
@@ -371,7 +374,8 @@ START_TEST(test_oidc_fapi_add_client_ciba_push)
                                 "authorization_encrypted_response_alg", CLIENT_ENC_ALG,
                                 "authorization_encrypted_response_enc", CLIENT_ENC,
                                 "backchannel_token_delivery_mode", "push",
-                                "enabled", json_true());
+                                "enabled", json_true(),
+                                "token_endpoint_auth_method", "client_secret_basic");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -414,7 +418,7 @@ END_TEST
 START_TEST(test_oidc_fapi_add_client_jwks_invalid_alg)
 {
   jwks_t * jwks = r_jwks_quick_import(R_IMPORT_JSON_STR, jwk_pubkey_ecdsa_str_invalid_alg, R_IMPORT_JSON_STR, jwk_pubkey_ecdsa_str_2, R_IMPORT_JSON_STR, jwk_pubkey_rsa_str, R_IMPORT_NONE);
-  json_t * j_client = json_pack("{ss ss so s[s] s[ssss] s[s] so ss ss ss so}",
+  json_t * j_client = json_pack("{ss ss so s[s] s[ssss] s[s] so ss ss ss so s[s]}",
                                 "client_id", CLIENT_PUBKEY_ID,
                                 "name", CLIENT_PUBKEY_NAME,
                                 "confidential", json_true(),
@@ -428,7 +432,8 @@ START_TEST(test_oidc_fapi_add_client_jwks_invalid_alg)
                                 "authorization_signed_response_alg", CLIENT_SIGN_ALG,
                                 "authorization_encrypted_response_alg", CLIENT_ENC_ALG,
                                 "authorization_encrypted_response_enc", CLIENT_ENC,
-                                "enabled", json_true());
+                                "enabled", json_true(),
+                                "token_endpoint_auth_method", "client_secret_basic");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -442,7 +447,7 @@ END_TEST
 START_TEST(test_oidc_fapi_add_client_jwks_enc_alg_invalid)
 {
   jwks_t * jwks = r_jwks_quick_import(R_IMPORT_JSON_STR, jwk_pubkey_ecdsa_str, R_IMPORT_JSON_STR, jwk_pubkey_ecdsa_str_2, R_IMPORT_JSON_STR, jwk_pubkey_rsa_str, R_IMPORT_NONE);
-  json_t * j_client = json_pack("{ss ss so s[s] s[ssss] s[s] so ss ss ss so}",
+  json_t * j_client = json_pack("{ss ss so s[s] s[ssss] s[s] so ss ss ss so s[s]}",
                                 "client_id", CLIENT_PUBKEY_ID,
                                 "name", CLIENT_PUBKEY_NAME,
                                 "confidential", json_true(),
@@ -456,7 +461,8 @@ START_TEST(test_oidc_fapi_add_client_jwks_enc_alg_invalid)
                                 "authorization_signed_response_alg", CLIENT_SIGN_ALG,
                                 "authorization_encrypted_response_alg", CLIENT_ENC_ALG_INVALID,
                                 "authorization_encrypted_response_enc", CLIENT_ENC,
-                                "enabled", json_true());
+                                "enabled", json_true(),
+                                "token_endpoint_auth_method", "client_secret_basic");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 

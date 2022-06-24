@@ -167,7 +167,7 @@ END_TEST
 
 START_TEST(test_oidc_resource_add_client_confidential_ok)
 {
-  json_t * j_parameters = json_pack("{sssssssos[ssssss]sos[s]s[s]}",
+  json_t * j_parameters = json_pack("{sssssssos[ssssss]sos[s]s[s]s[s]}",
                                 "client_id", CLIENT_ID,
                                 "client_name", CLIENT_NAME,
                                 "client_secret", CLIENT_SECRET,
@@ -175,7 +175,8 @@ START_TEST(test_oidc_resource_add_client_confidential_ok)
                                 "authorization_type", "device_authorization", "code", "id_token", "token", "refresh_token", "client_credentials",
                                 "enabled", json_true(),
                                 CLIENT_RESOURCE_PROPERTY, RESOURCE3,
-                                "redirect_uri", CLIENT_REDIRECT_URI);
+                                "redirect_uri", CLIENT_REDIRECT_URI,
+                                "token_endpoint_auth_method", "client_secret_basic");
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);

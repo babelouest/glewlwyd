@@ -181,7 +181,7 @@ END_TEST
 
 START_TEST(test_oidc_dpop_add_client_confidential_ok)
 {
-  json_t * j_parameters = json_pack("{sssssssos[sssss]s[s]s[ss]ssso}",
+  json_t * j_parameters = json_pack("{sssssssos[sssss]s[s]s[ss]sssos[s]}",
                                     "client_id", CLIENT_ID,
                                     "client_name", CLIENT_NAME,
                                     "client_secret", CLIENT_SECRET,
@@ -198,7 +198,8 @@ START_TEST(test_oidc_dpop_add_client_confidential_ok)
                                       SCOPE_1,
                                       SCOPE_2,
                                     "backchannel_token_delivery_mode", "poll",
-                                    "enabled", json_true());
+                                    "enabled", json_true(),
+                                    "token_endpoint_auth_method", "client_secret_basic");
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -207,7 +208,7 @@ END_TEST
 
 START_TEST(test_oidc_dpop_add_client_confidential_dpop_mandatory_ok)
 {
-  json_t * j_parameters = json_pack("{sssssssos[ssss]s[s]s[ss]ssso}",
+  json_t * j_parameters = json_pack("{sssssssos[ssss]s[s]s[ss]sssos[s]}",
                                 "client_id", CLIENT_ID,
                                 "client_name", CLIENT_NAME,
                                 "client_secret", CLIENT_SECRET,
@@ -223,7 +224,8 @@ START_TEST(test_oidc_dpop_add_client_confidential_dpop_mandatory_ok)
                                   SCOPE_1,
                                   SCOPE_2,
                                 "dpop_client_bound", "1",
-                                "enabled", json_true());
+                                "enabled", json_true(),
+                                "token_endpoint_auth_method", "client_secret_basic");
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);

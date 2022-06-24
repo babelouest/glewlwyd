@@ -106,7 +106,7 @@ START_TEST(test_oidc_additional_parameters_add_plugin)
   ck_assert_int_eq(run_simple_test(&admin_req, "PUT", SERVER_URI "/user/" USER_USERNAME, NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
   
-  j_param = json_pack("{sssssosos[s]s[s]ssssssssss}", "client_id", CLIENT_CONFIDENTIAL, "client_secret", CLIENT_SECRET, "confidential", json_true(), "enabled", json_true(), "scope", CLIENT_SCOPE, "authorization_type", "client_credentials", "claim-str", "the-str", "claim-number", "42", "claim-bool", "1", "claim-mandatory", "I'M aliiiiiive!", "claim-client", "the-claim-client");
+  j_param = json_pack("{sssssosos[s]s[s]sssssssssss[s]}", "client_id", CLIENT_CONFIDENTIAL, "client_secret", CLIENT_SECRET, "confidential", json_true(), "enabled", json_true(), "scope", CLIENT_SCOPE, "authorization_type", "client_credentials", "claim-str", "the-str", "claim-number", "42", "claim-bool", "1", "claim-mandatory", "I'M aliiiiiive!", "claim-client", "the-claim-client", "token_endpoint_auth_method", "client_secret_basic");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_param, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_param);
 }

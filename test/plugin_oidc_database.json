@@ -9,7 +9,8 @@
       "pbkdf2-iterations": 1,
       "data-format":{
         "redirect_uri":{"multiple":true},
-        "authorization_type":{"multiple":true}
+        "authorization_type":{"multiple":true},
+        "token_endpoint_auth_method":{"multiple":true}
       }
     },
     "readonly":false,
@@ -37,6 +38,7 @@
     "client_id": "irl_client1",
     "confidential": true,
     "password": "password",
+    "token_endpoint_auth_method": ["client_secret_basic"],
     "redirect_uri":["https://glewlwyd.local/"],
     "authorization_type":["code","token","id_token","refresh_token","delete_token"]
   },

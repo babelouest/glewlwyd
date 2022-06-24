@@ -839,7 +839,7 @@ END_TEST
 
 START_TEST(test_oidc_request_jwt_add_client_pubkey)
 {
-  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] ss so}", "client_id", CLIENT_PUBKEY_ID, "client_secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "pubkey", pubkey_1_pem, "enabled", json_true());
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] ss so s[ss]}", "client_id", CLIENT_PUBKEY_ID, "client_secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "pubkey", pubkey_1_pem, "enabled", json_true(), "token_endpoint_auth_method", "private_key_jwt", "client_secret_jwt");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -851,7 +851,7 @@ END_TEST
 
 START_TEST(test_oidc_request_jwt_add_client_pubkey_ietf)
 {
-  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] ss so ss ss ss}", "client_id", CLIENT_PUBKEY_ID, "client_secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "pubkey", pubkey_1_pem, "enabled", json_true(), "request_object_signing_alg", "RS256", "request_object_encryption_alg", "RSA-OAEP-256", "request_object_encryption_enc", "A256CBC-HS512");
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] ss so ss ss ss s[s]}", "client_id", CLIENT_PUBKEY_ID, "client_secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "pubkey", pubkey_1_pem, "enabled", json_true(), "request_object_signing_alg", "RS256", "request_object_encryption_alg", "RSA-OAEP-256", "request_object_encryption_enc", "A256CBC-HS512", "token_endpoint_auth_method", "private_key_jwt");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -863,7 +863,7 @@ END_TEST
 
 START_TEST(test_oidc_request_jwt_add_client_jwks)
 {
-  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] so so}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "jwks", json_loads(pubkey_1_jwk, JSON_DECODE_ANY, NULL), "enabled", json_true());
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] so so s[s]}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "jwks", json_loads(pubkey_1_jwk, JSON_DECODE_ANY, NULL), "enabled", json_true(), "token_endpoint_auth_method", "private_key_jwt");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -875,7 +875,7 @@ END_TEST
 
 START_TEST(test_oidc_request_jwt_add_client_jwks_uri)
 {
-  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] ss so}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "jwks_uri", "http://localhost:7462/jwks", "enabled", json_true());
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] ss so s[s]}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "jwks_uri", "http://localhost:7462/jwks", "enabled", json_true(), "token_endpoint_auth_method", "private_key_jwt");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
@@ -887,7 +887,7 @@ END_TEST
 
 START_TEST(test_oidc_request_jwt_add_client_multiple)
 {
-  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] so ss so ss}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "enabled", json_true(), "pubkey", pubkey_2_pem, "jwks", json_pack("{s[o]}", "keys", json_loads(pubkey_2_jwk, JSON_DECODE_ANY, NULL)), "jwks_uri", "http://localhost:7462/jwks");
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] so ss so ss s[s]}", "client_id", CLIENT_PUBKEY_ID, "secret", CLIENT_SECRET, "name", CLIENT_PUBKEY_NAME, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, "enabled", json_true(), "pubkey", pubkey_2_pem, "jwks", json_pack("{s[o]}", "keys", json_loads(pubkey_2_jwk, JSON_DECODE_ANY, NULL)), "jwks_uri", "http://localhost:7462/jwks", "token_endpoint_auth_method", "private_key_jwt");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 

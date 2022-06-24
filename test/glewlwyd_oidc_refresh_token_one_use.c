@@ -136,13 +136,14 @@ END_TEST
 
 START_TEST(test_oidc_refresh_token_one_use_add_client_ok)
 {
-  json_t * j_parameters = json_pack("{sssssssos[ss]so}",
+  json_t * j_parameters = json_pack("{sssssssos[ss]sos[s]}",
                                 "client_id", CLIENT_ID,
                                 "client_name", CLIENT_NAME,
                                 "client_secret", CLIENT_SECRET,
                                 "confidential", json_true(),
                                 "authorization_type", "password", "refresh_token",
-                                "enabled", json_true());
+                                "enabled", json_true(),
+                                "token_endpoint_auth_method", "client_secret_post");
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -151,14 +152,15 @@ END_TEST
 
 START_TEST(test_oidc_refresh_token_one_use_add_client_driven_one_use_ok)
 {
-  json_t * j_parameters = json_pack("{sssssssssos[ss]so}",
+  json_t * j_parameters = json_pack("{sssssssssos[ss]sos[s]}",
                                 "client_id", CLIENT_ID,
                                 "client_name", CLIENT_NAME,
                                 "client_secret", CLIENT_SECRET,
                                 "refresh-token-one-use", "1",
                                 "confidential", json_true(),
                                 "authorization_type", "password", "refresh_token",
-                                "enabled", json_true());
+                                "enabled", json_true(),
+                                "token_endpoint_auth_method", "client_secret_post");
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);
@@ -167,14 +169,15 @@ END_TEST
 
 START_TEST(test_oidc_refresh_token_one_use_add_client_driven_multiple_use_ok)
 {
-  json_t * j_parameters = json_pack("{sssssssssos[ss]so}",
+  json_t * j_parameters = json_pack("{sssssssssos[ss]sos[s]}",
                                 "client_id", CLIENT_ID,
                                 "client_name", CLIENT_NAME,
                                 "client_secret", CLIENT_SECRET,
                                 "refresh-token-one-use", "0",
                                 "confidential", json_true(),
                                 "authorization_type", "password", "refresh_token",
-                                "enabled", json_true());
+                                "enabled", json_true(),
+                                "token_endpoint_auth_method", "client_secret_post");
 
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_parameters);

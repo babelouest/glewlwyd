@@ -320,7 +320,7 @@ END_TEST
 
 START_TEST(test_oidc_par_add_client_pubkey)
 {
-  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] ss so s[s]}", "client_id", CLIENT_PUBKEY_ID, "name", CLIENT_PUBKEY_NAME, "client_secret", CLIENT_PUBKEY_SECRET, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, CLIENT_PUBKEY_PARAM, pubkey_1_pem, "enabled", json_true(), "authorization_data_types", RAR1);
+  json_t * j_client = json_pack("{ss ss ss so s[s] s[ssss] s[s] ss so s[s] s[ssss]}", "client_id", CLIENT_PUBKEY_ID, "name", CLIENT_PUBKEY_NAME, "client_secret", CLIENT_PUBKEY_SECRET, "confidential", json_true(), "redirect_uri", CLIENT_PUBKEY_REDIRECT, "authorization_type", "code", "token", "id_token", "client_credentials", "scope", CLIENT_SCOPE, CLIENT_PUBKEY_PARAM, pubkey_1_pem, "enabled", json_true(), "authorization_data_types", RAR1, "token_endpoint_auth_method", "client_secret_basic", "client_secret_post", "client_secret_jwt", "private_key_jwt");
   ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_client, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_client);
 
