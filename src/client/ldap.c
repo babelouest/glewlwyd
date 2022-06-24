@@ -1019,7 +1019,7 @@ static char * get_client_dn_from_client_id(json_t * j_params, LDAP * ldap, const
   if ((result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_client_dn_from_client_id - Error ldap search, base search: %s, filter, error message: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(result));
   } else {
-    if (ldap_count_entries(ldap, answer) > 0) {
+    if (ldap_count_entries(ldap, answer) == 1) {
       entry = ldap_first_entry(ldap, answer);
       client_dn = ldap_get_dn(ldap, entry);
       str_result = o_strdup(client_dn);
@@ -1258,7 +1258,7 @@ json_t * client_module_get(struct config_module * config, const char * client_id
       j_return = json_pack("{si}", "result", G_ERROR);
     } else {
       // Looping in results, staring at offset, until the end of the list
-      if (ldap_count_entries(ldap, answer) > 0) {
+      if (ldap_count_entries(ldap, answer) == 1) {
         entry = ldap_first_entry(ldap, answer);
         j_client = get_client_from_result(j_params, j_properties_client, ldap, entry);
         if (j_client != NULL) {
@@ -1548,7 +1548,7 @@ int client_module_check_password(struct config_module * config, const char * cli
       y_log_message(Y_LOG_LEVEL_ERROR, "client_module_check_password ldap - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(ldap_result));
       result = G_ERROR;
     } else {
-      if (ldap_count_entries(ldap, answer) > 0) {
+      if (ldap_count_entries(ldap, answer) == 1) {
         // Testing the first result to client_id with the given password
         entry = ldap_first_entry(ldap, answer);
         client_dn = ldap_get_dn(ldap, entry);

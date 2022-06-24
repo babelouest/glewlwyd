@@ -205,7 +205,7 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
     if (!json_string_null_or_empty(json_object_get(j_parameters, "client-id-prefix"))) {
       prefix = json_string_value(json_object_get(j_parameters, "client-id-prefix"));
     }
-    *cls = (void*)json_pack("[{ss+ ss ss so s[ssssss] s[sss] ss s[] so}{ss+ ss ss so s[s] s[s] s[] so}{ss+ ss ss so ss s[ssssssss] s[ss] ss s[ss] so}{ss+ ss ss so ss s[ssss] s[s] ss so ss}]",
+    *cls = (void*)json_pack("[{ss+ ss ss so s[ssssss] s[sss] ss s[] so}{ss+ ss ss so s[s] s[s] s[] so}{ss+ ss ss so ss s[s] s[ssssssss] s[ss] ss s[ss] so}{ss+ ss ss so ss s[s] s[ssss] s[s] ss so ss}]",
                               "client_id",
                               prefix,
                               "client1_id",
@@ -258,6 +258,8 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
                               json_true(),
                               "password",
                               "password",
+                              "token_endpoint_auth_method",
+                                "client_secret_basic",
                               "authorization_type",
                                 "code",
                                 "token",
@@ -288,6 +290,8 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
                               json_true(),
                               "client_secret",
                               "secret",
+                              "token_endpoint_auth_method",
+                                "client_secret_basic",
                               "authorization_type",
                                 "code",
                                 "token",

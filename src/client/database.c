@@ -367,7 +367,7 @@ static json_t * database_client_get(const char * client_id, void * cls, int prof
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    if (json_array_size(j_result)) {
+    if (json_array_size(j_result) == 1) {
       j_scope = database_client_scope_get(param, json_integer_value(json_object_get(json_array_get(j_result, 0), "gc_id")));
       if (check_result_value(j_scope, G_OK)) {
         json_object_set(json_array_get(j_result, 0), "scope", json_object_get(j_scope, "scope"));
@@ -553,9 +553,15 @@ static int save_client_properties(struct mod_parameters * param, json_t * j_clie
   
   if (j_array != NULL) {
     json_object_foreach(j_client, name, j_property) {
-      if (0 != o_strcmp(name, "client_id") && 0 != o_strcmp(name, "name") && 0 != o_strcmp(name, "password") && 0 != o_strcmp(name, "description") && 0 != o_strcmp(name, "enabled") && 0 != o_strcmp(name, "confidential") && 0 != o_strcmp(name, "scope")) {
+      if (0 != o_strcmp(name, "client_id") &&
+          0 != o_strcmp(name, "name") &&
+          0 != o_strcmp(name, "password") &&
+          0 != o_strcmp(name, "description") &&
+          0 != o_strcmp(name, "enabled") &&
+          0 != o_strcmp(name, "confidential") &&
+          0 != o_strcmp(name, "scope")) {
         j_format = json_object_get(json_object_get(param->j_params, "data-format"), name);
-        if (json_object_get(j_format, "write") != json_false()) {
+        if (j_format != NULL && json_object_get(j_format, "write") != json_false()) {
           if (!json_is_array(j_property)) {
             json_array_append_new(j_array, get_property_value_db(param, name, j_property, gc_id));
           } else {
@@ -1181,7 +1187,7 @@ int client_module_check_password(struct config_module * config, const char * cli
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    if (json_array_size(j_result)) {
+    if (json_array_size(j_result) == 1) {
       ret = G_OK;
     } else {
       ret = G_ERROR_UNAUTHORIZED;

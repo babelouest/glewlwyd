@@ -358,7 +358,7 @@ static json_t * database_user_get(const char * username, void * cls, int profile
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    if (json_array_size(j_result)) {
+    if (json_array_size(j_result) == 1) {
       j_scope = database_user_scope_get(param, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")));
       if (check_result_value(j_scope, G_OK)) {
         json_object_set(json_array_get(j_result, 0), "scope", json_object_get(j_scope, "scope"));
@@ -660,7 +660,7 @@ static int save_user_properties(struct mod_parameters * param, json_t * j_user, 
     json_object_foreach(j_user, name, j_property) {
       if (0 != o_strcmp(name, "username") && 0 != o_strcmp(name, "name") && 0 != o_strcmp(name, "password") && 0 != o_strcmp(name, "email") && 0 != o_strcmp(name, "enabled") && 0 != o_strcmp(name, "scope")) {
         j_format = json_object_get(json_object_get(param->j_params, "data-format"), name);
-        if ((!profile && json_object_get(j_format, "write") != json_false()) || (profile && json_object_get(j_format, "profile-write") == json_true())) {
+        if (j_format != NULL && ((!profile && json_object_get(j_format, "write") != json_false()) || (profile && json_object_get(j_format, "profile-write") == json_true()))) {
           if (!json_is_array(j_property)) {
             json_array_append_new(j_array, get_property_value_db(param, name, j_property, gu_id));
           } else {
@@ -1391,7 +1391,7 @@ int user_module_check_password(struct config_module * config, const char * usern
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    if (json_array_size(j_result)) {
+    if (json_array_size(j_result) == 1) {
       ret = G_OK;
     } else {
       ret = G_ERROR_UNAUTHORIZED;
@@ -1430,7 +1430,7 @@ int user_module_update_password(struct config_module * config, const char * user
   res = h_select(param->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    if (json_array_size(j_result)) {
+    if (json_array_size(j_result) == 1) {
       ret = update_password_list(param, json_integer_value(json_object_get(json_array_get(j_result, 0), "gu_id")), new_passwords, new_passwords_len, 0);
     } else {
       ret = G_ERROR_UNAUTHORIZED;
