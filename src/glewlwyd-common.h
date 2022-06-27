@@ -350,6 +350,7 @@ struct config_elements {
   char *                                         log_file;
   struct _u_compressed_inmemory_website_config * static_file_config;
   char *                                         admin_scope;
+  unsigned int                                   admin_session_authentication;
   char *                                         profile_scope;
   char *                                         allow_origin;
   char *                                         allow_methods;

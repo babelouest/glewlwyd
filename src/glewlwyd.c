@@ -181,6 +181,7 @@ int main (int argc, char ** argv) {
   config->plugin_module_instance_list = NULL;
   config->admin_scope = o_strdup(GLEWLWYD_DEFAULT_ADMIN_SCOPE);
   config->profile_scope = o_strdup(GLEWLWYD_DEFAULT_PROFILE_SCOPE);
+  config->admin_session_authentication = GLEWLWYD_ADMIN_SESSION_AUTH_COOKIE;
   config->metrics_endpoint = 0;
   config->metrics_endpoint_port = GLEWLWYD_DEFAULT_METRICS_PORT;
   config->metrics_endpoint_admin_session = 0;
@@ -336,7 +337,7 @@ int main (int argc, char ** argv) {
     }
     config->instance_metrics_initialized = 1;
   }
-
+  
   glewlwyd_metrics_add_metric(config, GLWD_METRICS_AUTH_USER_VALID, "Total number of successful authentication");
   glewlwyd_metrics_add_metric(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, "Total number of successful authentication by scheme");
   glewlwyd_metrics_add_metric(config, GLWD_METRICS_AUTH_USER_INVALID, "Total number of invalid authentication");
@@ -529,7 +530,7 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "POST", config->api_prefix, "/key/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_add_api_key, (void*)config);
 
   // Misc configuration CRUD
-  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/misc/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/misc/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_admin_session_or_api_key, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/misc/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_misc_config_list, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "GET", config->api_prefix, "/misc/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_get_misc_config, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/misc/:name", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_set_misc_config, (void*)config);
@@ -902,7 +903,7 @@ int build_config_from_file(struct config_elements * config) {
       int_value_3 = 0,
       i,
       ret = G_OK;
-  char * one_log_mode, * real_path, ** allowed_compression = NULL;
+  char * one_log_mode, * real_path, ** splitted = NULL;
 
   config_init(&cfg);
 
@@ -1311,14 +1312,31 @@ int build_config_from_file(struct config_elements * config) {
     }
 
     if (config_lookup_string(&cfg, "response_allowed_compression", &str_value) == CONFIG_TRUE && !o_strnullempty(str_value)) {
-      if (split_string(str_value, ",", &allowed_compression)) {
-        if (!string_array_has_value((const char **)allowed_compression, "deflate")) {
+      if (split_string(str_value, ",", &splitted)) {
+        if (!string_array_has_value((const char **)splitted, "deflate")) {
           config->allow_deflate = 0;
         }
-        if (!string_array_has_value((const char **)allowed_compression, "gzip")) {
+        if (!string_array_has_value((const char **)splitted, "gzip")) {
           config->allow_gzip = 0;
         }
-        free_string_array(allowed_compression);
+        free_string_array(splitted);
+      } else {
+        fprintf(stderr, "Error split_string, exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+    }
+
+    if (config_lookup_string(&cfg, "admin_session_authentication", &str_value) == CONFIG_TRUE && !o_strnullempty(str_value)) {
+      config->admin_session_authentication = GLEWLWYD_ADMIN_SESSION_AUTH_NONE;
+      if (split_string(str_value, ",", &splitted)) {
+        if (string_array_has_value((const char **)splitted, "cookie")) {
+          config->admin_session_authentication |= GLEWLWYD_ADMIN_SESSION_AUTH_COOKIE;
+        }
+        if (string_array_has_value((const char **)splitted, "api_key")) {
+          config->admin_session_authentication |= GLEWLWYD_ADMIN_SESSION_AUTH_API_KEY;
+        }
+        free_string_array(splitted);
       } else {
         fprintf(stderr, "Error split_string, exiting\n");
         ret = G_ERROR_PARAM;
@@ -1335,7 +1353,7 @@ int build_config_from_file(struct config_elements * config) {
  * Initialize the application configuration based on the environment variables
  */
 int build_config_from_env(struct config_elements * config) {
-  char * value = NULL, * value2 = NULL, * endptr = NULL, * one_log_mode = NULL, ** allowed_compression = NULL;
+  char * value = NULL, * value2 = NULL, * endptr = NULL, * one_log_mode = NULL, ** splitted = NULL;
   long int lvalue;
   int ret = G_OK;
   json_t * j_mime_types, * j_element;
@@ -1750,15 +1768,31 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_RESPONSE_ALLOWED_COMPRESSION)) != NULL && !o_strnullempty(value)) {
-    if (split_string(value, ",", &allowed_compression)) {
-      if (!string_array_has_value((const char **)allowed_compression, "deflate")) {
+  if ((value = getenv(GLEWLWYD_ENV_RESPONSE_ALLOWED_COMPRESSION)) != NULL && !o_strnullempty(value)) {
+    if (split_string(value, ",", &splitted)) {
+      if (!string_array_has_value((const char **)splitted, "deflate")) {
         config->allow_deflate = 0;
       }
-      if (!string_array_has_value((const char **)allowed_compression, "gzip")) {
+      if (!string_array_has_value((const char **)splitted, "gzip")) {
         config->allow_gzip = 0;
       }
-      free_string_array(allowed_compression);
+      free_string_array(splitted);
+    } else {
+      fprintf(stderr, "Error split_string, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_ADMIN_SESSION_AUTH)) != NULL && !o_strnullempty(value)) {
+    config->admin_session_authentication = GLEWLWYD_ADMIN_SESSION_AUTH_NONE;
+    if (split_string(value, ",", &splitted)) {
+      if (string_array_has_value((const char **)splitted, "cookie")) {
+        config->admin_session_authentication |= GLEWLWYD_ADMIN_SESSION_AUTH_COOKIE;
+      }
+      if (string_array_has_value((const char **)splitted, "api_key")) {
+        config->admin_session_authentication |= GLEWLWYD_ADMIN_SESSION_AUTH_API_KEY;
+      }
+      free_string_array(splitted);
     } else {
       fprintf(stderr, "Error split_string, exiting\n");
       ret = G_ERROR_PARAM;
