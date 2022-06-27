@@ -91,6 +91,13 @@
 #define GLEWLWYD_PROFILE_DELETE_AUTHORIZED      0x0001
 #define GLEWLWYD_PROFILE_DELETE_DISABLE_PROFILE 0x0010
 
+/**
+ * Authentication methods available
+ */
+#define GLEWLWYD_SESSION_AUTH_NONE                   0x0000
+#define GLEWLWYD_SESSION_AUTH_COOKIE                 0x0001
+#define GLEWLWYD_SESSION_AUTH_API_KEY                0x0010
+
 #define GLEWLWYD_DEFAULT_LIMIT_SIZE 100
 
 #define GLEWLWYD_DEFAULT_SALT_LENGTH 16
@@ -352,6 +359,7 @@ struct config_elements {
   char *                                         admin_scope;
   unsigned int                                   admin_session_authentication;
   char *                                         profile_scope;
+  unsigned int                                   profile_session_authentication;
   char *                                         allow_origin;
   char *                                         allow_methods;
   char *                                         allow_headers;

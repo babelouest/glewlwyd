@@ -13903,19 +13903,21 @@ static int callback_check_glewlwyd_session(const struct _u_request * request, st
   int ret = U_CALLBACK_UNAUTHORIZED;
 
   if (!o_strnullempty(u_map_get(request->map_url, "impersonate"))) {
-    j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, config->glewlwyd_config->glewlwyd_config->admin_scope);
-    if (check_result_value(j_session, G_OK)) {
-      j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, u_map_get(request->map_url, "impersonate"));
-      if (check_result_value(j_user, G_OK)) {
-        if (ulfius_set_response_shared_data(response, json_pack("{ss}", "username", u_map_get(request->map_url, "impersonate")), (void (*)(void *))&json_decref) != U_OK) {
-          ret = U_CALLBACK_ERROR;
-        } else {
-          ret = U_CALLBACK_CONTINUE;
+    if (config->glewlwyd_config->glewlwyd_config->admin_session_authentication & GLEWLWYD_SESSION_AUTH_COOKIE) {
+      j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, config->glewlwyd_config->glewlwyd_config->admin_scope);
+      if (check_result_value(j_session, G_OK)) {
+        j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, u_map_get(request->map_url, "impersonate"));
+        if (check_result_value(j_user, G_OK)) {
+          if (ulfius_set_response_shared_data(response, json_pack("{ss}", "username", u_map_get(request->map_url, "impersonate")), (void (*)(void *))&json_decref) != U_OK) {
+            ret = U_CALLBACK_ERROR;
+          } else {
+            ret = U_CALLBACK_CONTINUE;
+          }
         }
+        json_decref(j_user);
       }
-      json_decref(j_user);
+      json_decref(j_session);
     }
-    json_decref(j_session);
   } else {
     j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, NULL);
     if (check_result_value(j_session, G_OK)) {

@@ -80,7 +80,7 @@ int callback_glewlwyd_check_user_profile_valid (const struct _u_request * reques
   json_t * j_user;
   int ret, res;
   
-  if ((session_uid = get_session_id(config, request)) != NULL) {
+  if (config->profile_session_authentication & GLEWLWYD_SESSION_AUTH_COOKIE && (session_uid = get_session_id(config, request)) != NULL) {
     j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if ((res = is_scope_list_valid_for_session(config, config->profile_scope, session_uid)) == G_OK) {
@@ -137,7 +137,7 @@ int callback_glewlwyd_check_admin_session (const struct _u_request * request, st
   json_t * j_user;
   int ret, res;
   
-  if (config->admin_session_authentication & GLEWLWYD_ADMIN_SESSION_AUTH_COOKIE && (session_uid = get_session_id(config, request)) != NULL) {
+  if (config->admin_session_authentication & GLEWLWYD_SESSION_AUTH_COOKIE && (session_uid = get_session_id(config, request)) != NULL) {
     j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if ((res = is_scope_list_valid_for_session(config, config->admin_scope, session_uid)) == G_OK) {
@@ -170,7 +170,7 @@ int callback_glewlwyd_check_admin_session_or_api_key (const struct _u_request * 
   int ret, res;
   const char * api_key = u_map_get_case(request->map_header, GLEWLWYD_API_KEY_HEADER_KEY), * ip_source = get_ip_source(request);
   
-  if (config->admin_session_authentication & GLEWLWYD_ADMIN_SESSION_AUTH_API_KEY && NULL != api_key && 0 == o_strncmp(GLEWLWYD_API_KEY_HEADER_PREFIX, api_key, o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) {
+  if (config->admin_session_authentication & GLEWLWYD_SESSION_AUTH_API_KEY && NULL != api_key && 0 == o_strncmp(GLEWLWYD_API_KEY_HEADER_PREFIX, api_key, o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) {
     if ((res = verify_api_key(config, api_key + o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) == G_OK) {
       if (ulfius_set_response_shared_data(response, json_pack("{so}", "username", json_null()), (void (*)(void *))&json_decref) != U_OK) {
         ret = U_CALLBACK_ERROR;
@@ -184,7 +184,7 @@ int callback_glewlwyd_check_admin_session_or_api_key (const struct _u_request * 
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_check_admin_session_or_api_key - Error verify_api_key");
       ret = U_CALLBACK_ERROR;
     }
-  } else if (config->admin_session_authentication & GLEWLWYD_ADMIN_SESSION_AUTH_COOKIE && (session_uid = get_session_id(config, request)) != NULL) {
+  } else if (config->admin_session_authentication & GLEWLWYD_SESSION_AUTH_COOKIE && (session_uid = get_session_id(config, request)) != NULL) {
     j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if ((res = is_scope_list_valid_for_session(config, config->admin_scope, session_uid)) == G_OK) {
@@ -216,7 +216,7 @@ int callback_glewlwyd_check_admin_session_delegate (const struct _u_request * re
   json_t * j_user, * j_delegate;
   int ret;
   
-  if (config->admin_session_authentication & GLEWLWYD_ADMIN_SESSION_AUTH_COOKIE && (session_uid = get_session_id(config, request)) != NULL) {
+  if (config->admin_session_authentication & GLEWLWYD_SESSION_AUTH_COOKIE && (session_uid = get_session_id(config, request)) != NULL) {
     j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if (is_scope_list_valid_for_session(config, config->admin_scope, session_uid) == G_OK) {
@@ -2645,7 +2645,7 @@ int callback_glewlwyd_get_api_key_list (const struct _u_request * request, struc
   long int l_converted = 0;
   char * endptr = NULL;
   
-  if (config->admin_session_authentication & GLEWLWYD_ADMIN_SESSION_AUTH_API_KEY) {
+  if (config->admin_session_authentication & GLEWLWYD_SESSION_AUTH_API_KEY) {
     if (u_map_get(request->map_url, "offset") != NULL) {
       l_converted = strtol(u_map_get(request->map_url, "offset"), &endptr, 10);
       if (!(*endptr) && l_converted > 0) {
@@ -2677,7 +2677,7 @@ int callback_glewlwyd_add_api_key (const struct _u_request * request, struct _u_
   const char * issued_for = get_ip_source(request), * username = json_string_value(json_object_get((json_t *)response->shared_data, "username")), * user_agent = u_map_get_case(request->map_header, "user-agent");
   json_t * j_api_key = NULL;
   
-  if (config->admin_session_authentication & GLEWLWYD_ADMIN_SESSION_AUTH_API_KEY) {
+  if (config->admin_session_authentication & GLEWLWYD_SESSION_AUTH_API_KEY) {
     j_api_key = generate_api_key(config, username, issued_for, user_agent);
     if (check_result_value(j_api_key, G_OK)) {
       ulfius_set_json_body_response(response, 200, json_object_get(j_api_key, "api_key"));
@@ -2696,7 +2696,7 @@ int callback_glewlwyd_add_api_key (const struct _u_request * request, struct _u_
 int callback_glewlwyd_delete_api_key (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   
-  if (config->admin_session_authentication & GLEWLWYD_ADMIN_SESSION_AUTH_API_KEY) {
+  if (config->admin_session_authentication & GLEWLWYD_SESSION_AUTH_API_KEY) {
     if (disable_api_key(config, u_map_get(request->map_url, "key_hash")) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_delete_api_key - Error disable_api_key");
       response->status = 500;

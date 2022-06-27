@@ -181,7 +181,8 @@ int main (int argc, char ** argv) {
   config->plugin_module_instance_list = NULL;
   config->admin_scope = o_strdup(GLEWLWYD_DEFAULT_ADMIN_SCOPE);
   config->profile_scope = o_strdup(GLEWLWYD_DEFAULT_PROFILE_SCOPE);
-  config->admin_session_authentication = GLEWLWYD_ADMIN_SESSION_AUTH_COOKIE;
+  config->admin_session_authentication = GLEWLWYD_SESSION_AUTH_COOKIE;
+  config->profile_session_authentication = GLEWLWYD_SESSION_AUTH_COOKIE;
   config->metrics_endpoint = 0;
   config->metrics_endpoint_port = GLEWLWYD_DEFAULT_METRICS_PORT;
   config->metrics_endpoint_admin_session = 0;
@@ -421,7 +422,7 @@ int main (int argc, char ** argv) {
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/plugin", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/grant", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_profile_valid, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/scheme/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_profile_valid, (void*)config);
-  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/session/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_session, (void*)config);
+  ulfius_add_endpoint_by_val(config->instance, "*", config->api_prefix, "/profile/session/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_glewlwyd_check_user_profile_valid, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "DELETE", config->api_prefix, "/profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_delete_profile, (void*)config);
   ulfius_add_endpoint_by_val(config->instance, "PUT", config->api_prefix, "/profile/password", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_glewlwyd_user_update_password, (void*)config);
@@ -1328,13 +1329,27 @@ int build_config_from_file(struct config_elements * config) {
     }
 
     if (config_lookup_string(&cfg, "admin_session_authentication", &str_value) == CONFIG_TRUE && !o_strnullempty(str_value)) {
-      config->admin_session_authentication = GLEWLWYD_ADMIN_SESSION_AUTH_NONE;
+      config->admin_session_authentication = GLEWLWYD_SESSION_AUTH_NONE;
       if (split_string(str_value, ",", &splitted)) {
         if (string_array_has_value((const char **)splitted, "cookie")) {
-          config->admin_session_authentication |= GLEWLWYD_ADMIN_SESSION_AUTH_COOKIE;
+          config->admin_session_authentication |= GLEWLWYD_SESSION_AUTH_COOKIE;
         }
         if (string_array_has_value((const char **)splitted, "api_key")) {
-          config->admin_session_authentication |= GLEWLWYD_ADMIN_SESSION_AUTH_API_KEY;
+          config->admin_session_authentication |= GLEWLWYD_SESSION_AUTH_API_KEY;
+        }
+        free_string_array(splitted);
+      } else {
+        fprintf(stderr, "Error split_string, exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+    }
+
+    if (config_lookup_string(&cfg, "profile_session_authentication", &str_value) == CONFIG_TRUE && !o_strnullempty(str_value)) {
+      config->profile_session_authentication = GLEWLWYD_SESSION_AUTH_NONE;
+      if (split_string(str_value, ",", &splitted)) {
+        if (string_array_has_value((const char **)splitted, "cookie")) {
+          config->profile_session_authentication |= GLEWLWYD_SESSION_AUTH_COOKIE;
         }
         free_string_array(splitted);
       } else {
@@ -1784,13 +1799,26 @@ int build_config_from_env(struct config_elements * config) {
   }
 
   if ((value = getenv(GLEWLWYD_ENV_ADMIN_SESSION_AUTH)) != NULL && !o_strnullempty(value)) {
-    config->admin_session_authentication = GLEWLWYD_ADMIN_SESSION_AUTH_NONE;
+    config->admin_session_authentication = GLEWLWYD_SESSION_AUTH_NONE;
     if (split_string(value, ",", &splitted)) {
       if (string_array_has_value((const char **)splitted, "cookie")) {
-        config->admin_session_authentication |= GLEWLWYD_ADMIN_SESSION_AUTH_COOKIE;
+        config->admin_session_authentication |= GLEWLWYD_SESSION_AUTH_COOKIE;
       }
       if (string_array_has_value((const char **)splitted, "api_key")) {
-        config->admin_session_authentication |= GLEWLWYD_ADMIN_SESSION_AUTH_API_KEY;
+        config->admin_session_authentication |= GLEWLWYD_SESSION_AUTH_API_KEY;
+      }
+      free_string_array(splitted);
+    } else {
+      fprintf(stderr, "Error split_string, exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_PROFILE_SESSION_AUTH)) != NULL && !o_strnullempty(value)) {
+    config->profile_session_authentication = GLEWLWYD_SESSION_AUTH_NONE;
+    if (split_string(value, ",", &splitted)) {
+      if (string_array_has_value((const char **)splitted, "cookie")) {
+        config->profile_session_authentication |= GLEWLWYD_SESSION_AUTH_COOKIE;
       }
       free_string_array(splitted);
     } else {
