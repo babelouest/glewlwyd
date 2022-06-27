@@ -44,6 +44,8 @@ END_TEST
 
 START_TEST(test_oauth2_get_token_error)
 {
+  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/glwd/profile?impersonate=" USERNAME_IMPERSONATE, NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/glwd/profile/token?impersonate=" USERNAME_IMPERSONATE, NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
   ck_assert_int_eq(run_simple_test(&admin_req, "GET", SERVER_URI "/glwd/profile/token?impersonate=error", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
 }
 END_TEST

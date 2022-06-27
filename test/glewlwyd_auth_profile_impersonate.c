@@ -25,6 +25,12 @@
 
 struct _u_request admin_req;
 
+START_TEST(test_glwd_auth_profile_impersonate_get_scheme_available_error_auth)
+{
+  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/delegate/" USERNAME_IMPERSONATE "/profile/scheme/", NULL, NULL, NULL, NULL, 401, NULL, NULL, NULL), 1);
+}
+END_TEST
+
 START_TEST(test_glwd_auth_profile_impersonate_update_ok)
 {
   json_t * j_profile = json_pack("{ssss}", "name", NAME "-new", "email", EMAIL "-new");
@@ -54,11 +60,11 @@ START_TEST(test_glwd_auth_profile_admin_profile_get_scheme_available_empty_succe
   ulfius_init_response(&resp);
   
   ck_assert_int_eq(ulfius_copy_request(&req, &admin_req), U_OK);
-  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET", U_OPT_HTTP_URL, SERVER_URI "/profile/scheme", U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET", U_OPT_HTTP_URL, SERVER_URI "/delegate/" USERNAME_IMPERSONATE "/profile/scheme", U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(200, resp.status);
   ck_assert_ptr_ne(j_response = ulfius_get_json_body_response(&resp, NULL), NULL);
-  ck_assert_int_eq(0, json_array_size(j_response));
+  ck_assert_int_eq(3, json_array_size(j_response));
   
   json_decref(j_response);
   ulfius_clean_request(&req);
@@ -79,6 +85,7 @@ static Suite *glewlwyd_suite(void)
 
   s = suite_create("Glewlwyd auth profile impersonate");
   tc_core = tcase_create("test_glwd_auth_profile_impersonate");
+  tcase_add_test(tc_core, test_glwd_auth_profile_impersonate_get_scheme_available_error_auth);
   tcase_add_test(tc_core, test_glwd_auth_profile_impersonate_update_ok);
   tcase_add_test(tc_core, test_glwd_auth_profile_impersonate_profile_get_scheme_available_success);
   tcase_add_test(tc_core, test_glwd_auth_profile_admin_profile_get_scheme_available_empty_success);
