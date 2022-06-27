@@ -42,6 +42,7 @@ class App extends Component {
       curScope: false,
       apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
       curApiKey: false,
+      apiKeysAvailable: true,
       confirmModal: {title: "", message: ""},
       messageModal: {title: "", label: "", message: []},
       editModal: {title: "", pattern: [], source: [], data: {}, callback: false, validateCallback: false, add: false},
@@ -965,7 +966,12 @@ class App extends Component {
       curApiKeys.pattern = this.state.config.pattern.user;
       this.setState({apiKeys: curApiKeys, loggedIn: true});
     }).fail((err) => {
-      if (err.status !== 401) {
+      if (err.status === 403) {
+        this.setState({
+          apiKeys: {list: [], offset: 0, limit: 20, searchPattern: "", pattern: false},
+          apiKeysAvailable: false
+        });
+      } else if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
       } else {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.requires-admin-scope")});
@@ -2397,7 +2403,7 @@ class App extends Component {
                     <Plugin mods={this.state.plugins} types={this.state.modTypes.plugin} loggedIn={this.state.loggedIn} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="api-key"?" active":"")}>
-                    <APIKey config={this.state.config} apiKeys={this.state.apiKeys} loggedIn={this.state.loggedIn} />
+                    <APIKey config={this.state.config} apiKeys={this.state.apiKeys} apiKeysAvailable={this.state.apiKeysAvailable} loggedIn={this.state.loggedIn} />
                   </div>
                   <div className={"carousel-item" + (this.state.curNav==="misc-config"?" active":"")}>
                     <MiscConfig config={this.state.config} miscConfig={this.state.miscConfig} loggedIn={this.state.loggedIn} />

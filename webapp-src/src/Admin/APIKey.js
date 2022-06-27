@@ -10,6 +10,7 @@ class APIKey extends Component {
     this.state = {
       config: props.config,
       apiKeys: props.apiKeys,
+      apiKeysAvailable: props.apiKeysAvailable,
       loggedIn: props.loggedIn,
       disableObject: false
     };
@@ -19,6 +20,7 @@ class APIKey extends Component {
     this.setState({
       config: nextProps.config,
       apiKeys: nextProps.apiKeys,
+      apiKeysAvailable: nextProps.apiKeysAvailable,
       loggedIn: nextProps.loggedIn
     });
   }
@@ -59,7 +61,7 @@ class APIKey extends Component {
   }
   
   render() {
-    var apiKeyList = [];
+    var apiKeyList = [], descriptionJsx, exampleDescriptionJsx;
     this.state.apiKeys.list.forEach((apiKey, index) => {
       var issued_at = new Date(apiKey.issued_at * 1000);
       apiKeyList.push(
@@ -87,97 +89,107 @@ class APIKey extends Component {
       </tr>
       );
     });
+    if (this.state.apiKeysAvailable) {
+      descriptionJsx = i18next.t("admin.api-key-description");
+      exampleDescriptionJsx = 
+      <div>
+        <p>{i18next.t("admin.api-key-example-description")}</p>
+        <code>{i18next.t("admin.api-key-example")}</code>
+      </div>
+    } else {
+      descriptionJsx = i18next.t("admin.api-key-disabled");
+      exampleDescriptionJsx = i18next.t("admin.api-key-disabled");
+    }
 		return (
-    <div className="table-responsive">
-      <p>{i18next.t("admin.api-key-description")}</p>
-      <table className="table table-striped">
-        <thead>
-          <tr>
-            <th colSpan="2">
-              <h4>{i18next.t("admin.api-key-title")}</h4>
-            </th>
-            <th colSpan="4">
-              <form className="form-inline d-none d-lg-block" onSubmit={(e) => this.searchApiKey(e)}>
-                <div className="btn-group" role="group">
-                  <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.navigate(e, -1)} title={i18next.t("admin.nav-previous")} disabled={!this.state.apiKeys.offset}>
-                    <i className="fas fa-backward"></i>
-                  </button>
+      <div className="table-responsive">
+        <p>{descriptionJsx}</p>
+        <table className="table table-striped">
+          <thead>
+            <tr>
+              <th colSpan="2">
+                <h4>{i18next.t("admin.api-key-title")}</h4>
+              </th>
+              <th colSpan="4">
+                <form className="form-inline d-none d-lg-block" onSubmit={(e) => this.searchApiKey(e)}>
                   <div className="btn-group" role="group">
-                    <button disabled={!this.state.loggedIn} id="btnGroupNavPerPage" type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                      {i18next.t("admin.nav-per-page")}
+                    <button disabled={!this.state.loggedIn || !this.state.apiKeysAvailable} type="button" className="btn btn-secondary" onClick={(e) => this.navigate(e, -1)} title={i18next.t("admin.nav-previous")} disabled={!this.state.apiKeys.offset}>
+                      <i className="fas fa-backward"></i>
                     </button>
-                    <div className="dropdown-menu" aria-labelledby="btnGroupNavperPage">
-                      <a className={"dropdown-item" + (this.state.apiKeys.limit===10?" active":"")} href="#" onClick={(e) => this.navigatePerPage(e, 10)}>10</a>
-                      <a className={"dropdown-item" + (this.state.apiKeys.limit===20?" active":"")} href="#" onClick={(e) => this.navigatePerPage(e, 20)}>20</a>
-                      <a className={"dropdown-item" + (this.state.apiKeys.limit===50?" active":"")} href="#" onClick={(e) => this.navigatePerPage(e, 50)}>50</a>
-                      <a className={"dropdown-item" + (this.state.apiKeys.limit===100?" active":"")} href="#" onClick={(e) => this.navigatePerPage(e, 100)}>100</a>
+                    <div className="btn-group" role="group">
+                      <button disabled={!this.state.loggedIn || !this.state.apiKeysAvailable} id="btnGroupNavPerPage" type="button" className="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        {i18next.t("admin.nav-per-page")}
+                      </button>
+                      <div className="dropdown-menu" aria-labelledby="btnGroupNavperPage">
+                        <a className={"dropdown-item" + (this.state.apiKeys.limit===10?" active":"")} href="#" onClick={(e) => this.navigatePerPage(e, 10)}>10</a>
+                        <a className={"dropdown-item" + (this.state.apiKeys.limit===20?" active":"")} href="#" onClick={(e) => this.navigatePerPage(e, 20)}>20</a>
+                        <a className={"dropdown-item" + (this.state.apiKeys.limit===50?" active":"")} href="#" onClick={(e) => this.navigatePerPage(e, 50)}>50</a>
+                        <a className={"dropdown-item" + (this.state.apiKeys.limit===100?" active":"")} href="#" onClick={(e) => this.navigatePerPage(e, 100)}>100</a>
+                      </div>
                     </div>
+                    <button disabled={!this.state.loggedIn || !this.state.apiKeysAvailable} type="button" className="btn btn-secondary" onClick={(e) => this.navigate(e, 1)} title={i18next.t("admin.nav-next")} disabled={this.state.apiKeys.limit>this.state.apiKeys.list.length}>
+                      <i className="fas fa-forward"></i>
+                    </button>
+                    <button disabled={!this.state.loggedIn || !this.state.apiKeysAvailable} type="button" className="btn btn-secondary" onClick={(e) => this.addApiKey(e)} title={i18next.t("admin.api-key-add")}>
+                      <i className="fas fa-plus"></i>
+                    </button>
                   </div>
-                  <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.navigate(e, 1)} title={i18next.t("admin.nav-next")} disabled={this.state.apiKeys.limit>this.state.apiKeys.list.length}>
-                    <i className="fas fa-forward"></i>
+                  <div className="btn-group btn-icon-right" role="group">
+                    <input disabled={!this.state.loggedIn || !this.state.apiKeysAvailable} className="form-control" type="search" placeholder={i18next.t("admin.nav-search-placeholder")} aria-label="Search" onChange={this.handleChangeSearchPattern} value={this.state.apiKeys.searchPattern||""}/>
+                    <button disabled={!this.state.loggedIn || !this.state.apiKeysAvailable} className="btn btn-secondary my-sm-0" type="submit" title={i18next.t("admin.nav-search-title")} onClick={(e) => this.searchUsers(e)}>{i18next.t("admin.nav-search")}</button>
+                  </div>
+                </form>
+                <div className="dropdown d-block d-lg-none">
+                  <button disabled={!this.state.loggedIn || !this.state.apiKeysAvailable} className="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuNav" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i className="fas fa-chevron-circle-down"></i>
                   </button>
-                  <button disabled={!this.state.loggedIn} type="button" className="btn btn-secondary" onClick={(e) => this.addApiKey(e)} title={i18next.t("admin.api-key-add")}>
-                    <i className="fas fa-plus"></i>
-                  </button>
+                  <div className="dropdown-menu" aria-labelledby="dropdownMenuNav">
+                    <a className="dropdown-item" href="#" onClick={(e) => this.navigate(e, -1)} alt={i18next.t("admin.nav-previous")}>
+                      <i className="fas fa-backward btn-icon"></i>
+                      {i18next.t("admin.nav-previous")}
+                    </a>
+                    <a className="dropdown-item" href="#" onClick={(e) => this.navigate(e, 1)} alt={i18next.t("admin.nav-next")}>
+                      <i className="fas fa-forward btn-icon"></i>
+                      {i18next.t("admin.nav-next")}
+                    </a>
+                    <a className="dropdown-item" href="#" onClick={(e) => this.addUser(e)} alt={i18next.t("admin.api-key-add")}>
+                      <i className="fas fa-plus btn-icon"></i>
+                      {i18next.t("admin.api-key-add")}
+                    </a>
+                  </div>
                 </div>
-                <div className="btn-group btn-icon-right" role="group">
-                  <input disabled={!this.state.loggedIn} className="form-control" type="search" placeholder={i18next.t("admin.nav-search-placeholder")} aria-label="Search" onChange={this.handleChangeSearchPattern} value={this.state.apiKeys.searchPattern||""}/>
-                  <button disabled={!this.state.loggedIn} className="btn btn-secondary my-sm-0" type="submit" title={i18next.t("admin.nav-search-title")} onClick={(e) => this.searchUsers(e)}>{i18next.t("admin.nav-search")}</button>
-                </div>
-              </form>
-              <div className="dropdown d-block d-lg-none">
-                <button disabled={!this.state.loggedIn} className="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuNav" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i className="fas fa-chevron-circle-down"></i>
-                </button>
-                <div className="dropdown-menu" aria-labelledby="dropdownMenuNav">
-                  <a className="dropdown-item" href="#" onClick={(e) => this.navigate(e, -1)} alt={i18next.t("admin.nav-previous")}>
-                    <i className="fas fa-backward btn-icon"></i>
-                    {i18next.t("admin.nav-previous")}
-                  </a>
-                  <a className="dropdown-item" href="#" onClick={(e) => this.navigate(e, 1)} alt={i18next.t("admin.nav-next")}>
-                    <i className="fas fa-forward btn-icon"></i>
-                    {i18next.t("admin.nav-next")}
-                  </a>
-                  <a className="dropdown-item" href="#" onClick={(e) => this.addUser(e)} alt={i18next.t("admin.api-key-add")}>
-                    <i className="fas fa-plus btn-icon"></i>
-                    {i18next.t("admin.api-key-add")}
-                  </a>
-                </div>
-              </div>
-            </th>
-          </tr>
-          <tr>
-            <th>
-              {i18next.t("admin.api-key-counter")}
-            </th>
-            <th>
-              {i18next.t("admin.api-key-username")}
-            </th>
-            <th>
-              {i18next.t("admin.api-key-issued-at")}
-            </th>
-            <th className="d-none d-lg-table-cell">
-              {i18next.t("admin.api-key-issued-for")}
-            </th>
-            <th className="d-none d-lg-table-cell">
-              {i18next.t("admin.api-key-user-agent")}
-            </th>
-            <th>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {apiKeyList}
-          <tr>
-            <td colSpan="6">
-              {i18next.t("admin.nav-footer", {offset: this.state.apiKeys.offset, limit: this.state.apiKeys.limit})}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <p>{i18next.t("admin.api-key-example-description")}</p>
-      <code>{i18next.t("admin.api-key-example")}</code>
-    </div>
+              </th>
+            </tr>
+            <tr>
+              <th>
+                {i18next.t("admin.api-key-counter")}
+              </th>
+              <th>
+                {i18next.t("admin.api-key-username")}
+              </th>
+              <th>
+                {i18next.t("admin.api-key-issued-at")}
+              </th>
+              <th className="d-none d-lg-table-cell">
+                {i18next.t("admin.api-key-issued-for")}
+              </th>
+              <th className="d-none d-lg-table-cell">
+                {i18next.t("admin.api-key-user-agent")}
+              </th>
+              <th>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {apiKeyList}
+            <tr>
+              <td colSpan="6">
+                {i18next.t("admin.nav-footer", {offset: this.state.apiKeys.offset, limit: this.state.apiKeys.limit})}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        {exampleDescriptionJsx}
+      </div>
 		);
   }
 }
