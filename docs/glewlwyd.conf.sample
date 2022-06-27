@@ -61,6 +61,12 @@ session_expiration=2419200
 # session key
 session_key="GLEWLWYD2_SESSION_ID"
 
+# what methods should be used to access admin APIs, available methods are 'cookie' and/or 'api_key', or 'cookie,api_key', default 'cookie'
+admin_session_authentication="cookie"
+
+# what methods should be used to access user profile APIs, available methods is 'cookie' , default 'cookie'
+profile_session_authentication="cookie"
+
 # add http header X-Frame-Options: deny, default true
 add_x_frame_option_header_deny=true
 
