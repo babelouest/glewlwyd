@@ -698,6 +698,15 @@ Optional, set the authentication method to access admin APIs, values available a
 
 Default value is `cookie`.
 
+#### Profile session authentication
+
+- Config file variable: `profile_session_authentication`
+- Environment variable: `GLEWLWYD_ENV_PROFILE_SESSION_AUTH`
+
+Optional, set the authentication method to access user profile APIs, values available is `cookie` for session cookie authentication. To disable user profile API access, set a wrong value, like `none`.
+
+Default value is `cookie`.
+
 ### Default scope names
 
 #### Admin scope
