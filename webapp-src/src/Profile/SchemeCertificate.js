@@ -74,7 +74,7 @@ class SchemeCertificate extends Component {
       })
       .fail((err) => {
         this.setState({certificateList: [], dn: false, canAddCert: false, canRequestCert: false, certFile: false, fileName: false, downloadCert: false, forbidden: err.status === 403}, () => {
-          if (err.status !== 403) {
+          if (err.status !== 403 && err.status !== 401) {
             messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("error-api-connect")});
           }
         });
