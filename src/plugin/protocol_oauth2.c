@@ -3232,6 +3232,39 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
   return U_CALLBACK_CONTINUE;
 }
 
+static int callback_check_glewlwyd_session(const struct _u_request * request, struct _u_response * response, void * user_data) {
+  struct _oauth2_config * config = (struct _oauth2_config *)user_data;
+  json_t * j_session, * j_user;
+  int ret = U_CALLBACK_UNAUTHORIZED;
+  
+  if (!o_strnullempty(u_map_get(request->map_url, "impersonate"))) {
+    j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, config->glewlwyd_config->glewlwyd_config->admin_scope);
+    if (check_result_value(j_session, G_OK)) {
+      j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, u_map_get(request->map_url, "impersonate"));
+      if (check_result_value(j_user, G_OK)) {
+        if (ulfius_set_response_shared_data(response, json_pack("{ss}", "username", u_map_get(request->map_url, "impersonate")), (void (*)(void *))&json_decref) != U_OK) {
+          ret = U_CALLBACK_ERROR;
+        } else {
+          ret = U_CALLBACK_CONTINUE;
+        }
+      }
+      json_decref(j_user);
+    }
+    json_decref(j_session);
+  } else {
+    j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, NULL);
+    if (check_result_value(j_session, G_OK)) {
+      if (ulfius_set_response_shared_data(response, json_pack("{ss}", "username", json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username"))), (void (*)(void *))&json_decref) != U_OK) {
+        ret = U_CALLBACK_ERROR;
+      } else {
+        ret = U_CALLBACK_CONTINUE;
+      }
+    }
+    json_decref(j_session);
+  }
+  return ret;
+}
+
 static int callback_check_glewlwyd_session_or_token(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oauth2_config * config = (struct _oauth2_config *)user_data;
   json_t * j_session, * j_user, * j_introspect;
@@ -3931,6 +3964,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       if (config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "auth/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_authorization, (void*)*cls) != G_OK || 
          config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_token, (void*)*cls) != G_OK || 
          config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "profile/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) != G_OK || 
+         config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "profile/token/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session, (void*)*cls) != G_OK || 
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "profile/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_get_profile, (void*)*cls) != G_OK || 
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "profile/token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_refresh_token_list_get, (void*)*cls) != G_OK || 
          config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "profile/token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oauth2_disable_refresh_token, (void*)*cls) != G_OK ||
@@ -4077,6 +4111,7 @@ int plugin_module_close(struct config_plugin * config, const char * name, void *
     config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "profile/token/");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "DELETE", name, "profile/token/:token_hash");
     config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "profile/*");
+    config->glewlwyd_callback_remove_plugin_endpoint(config, "*", name, "profile/token/*");
 
     if (((struct _oauth2_config *)cls)->introspect_revoke_resource_config != NULL) {
       config->glewlwyd_callback_remove_plugin_endpoint(config, "POST", name, "introspect/");
