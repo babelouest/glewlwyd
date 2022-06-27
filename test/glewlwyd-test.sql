@@ -9,6 +9,7 @@ DELETE FROM g_user_auth_scheme_module_instance;
 DELETE FROM g_client_module_instance;
 DELETE FROM g_client_module_instance;
 DELETE FROM g_plugin_module_instance;
+DELETE FROM g_api_key;
 DELETE FROM gpr_session;
 DELETE FROM gs_webauthn_assertion;
 DELETE FROM gs_webauthn_credential;
