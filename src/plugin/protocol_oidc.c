@@ -13897,110 +13897,35 @@ static int callback_check_userinfo(const struct _u_request * request, struct _u_
 /**
  * verify that the http request is authorized based on the session or the access token
  */
-static int callback_check_glewlwyd_session_or_token(const struct _u_request * request, struct _u_response * response, void * user_data) {
+static int callback_check_glewlwyd_session(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  json_t * j_session, * j_user, * j_introspect, * j_dpop, * json_body;
-  int ret = U_CALLBACK_UNAUTHORIZED, is_header_dpop = 0, res;
-  const char * access_token = get_auth_header_token(u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION), &is_header_dpop),
-             * dpop = u_map_get_case(request->map_header, GLEWLWYD_HEADER_DPOP),
-             * ip_source = get_ip_source(request);
-  char * dpop_nonce;
+  json_t * j_session, * j_user;
+  int ret = U_CALLBACK_UNAUTHORIZED;
 
-  if (access_token != NULL) {
-    j_introspect = get_token_metadata(config, access_token, "access_token", NULL);
-    if (check_result_value(j_introspect, G_OK) && json_object_get(json_object_get(j_introspect, "token"), "active") == json_true() && check_scope_list(NULL, json_string_value(json_object_get(json_object_get(j_introspect, "token"), "scope")))) {
-      if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
-        j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, (request->url_path + 2 + o_strlen(config->glewlwyd_config->glewlwyd_config->api_prefix) + o_strlen(config->name)), json_object_get(j_introspect, "client"), access_token, NULL);
-        if (check_result_value(j_dpop, G_OK)) {
-          if (json_object_get(j_dpop, "jkt") == NULL ||
-              (res = check_dpop_jti(config,
-                                    json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "jti")),
-                                    json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "htm")),
-                                    json_string_value(json_object_get(json_object_get(j_dpop, "claims"), "htu")),
-                                    json_integer_value(json_object_get(json_object_get(j_dpop, "claims"), "iat")),
-                                    json_string_value(json_object_get(json_object_get(j_introspect, "token"), "client_id")),
-                                    json_string_value(json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt")),
-                                    ip_source)) == G_OK) {
-            if (json_object_get(j_dpop, "jkt") != NULL && json_object_get(config->j_params, "oauth-dpop-nonce-mandatory") == json_true()) {
-              if ((dpop_nonce = refresh_client_dpop_nonce(config, json_string_value(json_object_get(json_object_get(j_introspect, "token"), "client_id")))) != NULL) {
-                ulfius_set_response_properties(response, U_OPT_HEADER_PARAMETER, "DPoP-Nonce", dpop_nonce, U_OPT_NONE);
-                o_free(dpop_nonce);
-              }
-            }
-            if (ulfius_set_response_shared_data(response, json_incref(json_object_get(j_introspect, "token")), (void (*)(void *))&json_decref) == U_OK) {
-              json_object_set((json_t *)response->shared_data, "username", json_object_get(j_introspect, "username"));
-              json_object_set((json_t *)response->shared_data, "client", json_object_get(j_introspect, "client"));
-              ret = U_CALLBACK_CONTINUE;
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_userinfo - Error ulfius_set_response_shared_data");
-              ret = U_CALLBACK_ERROR;
-            }
-          } else if (res == G_ERROR_UNAUTHORIZED) {
-            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_ACCESS_TOKEN, 1, "plugin", config->name, "endpoint", "userinfo", NULL);
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_userinfo - Error check_dpop_jti");
-            ret = U_CALLBACK_ERROR;
-          }
-        } else if (check_result_value(j_dpop, G_ERROR_PARAM) || check_result_value(j_dpop, G_ERROR_UNAUTHORIZED)) {
-          if (json_object_get(j_dpop, "nonce") != NULL) {
-            ulfius_set_response_properties(response, U_OPT_STATUS, 401,
-                                                     U_OPT_HEADER_PARAMETER, "DPoP-Nonce", json_string_value(json_object_get(j_dpop, "nonce")),
-                                                     U_OPT_HEADER_PARAMETER, "WWW-Authenticate", "DPoP error=\"use_dpop_nonce\", error_description=\"Resource server requires nonce in DPoP proof\"",
-                                                     U_OPT_NONE);
-          } else {
-            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
-            json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
-            ulfius_set_json_body_response(response, 401, json_body);
-            json_decref(json_body);
-            config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
-          }
-        } else if (check_result_value(j_dpop, G_ERROR)) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_userinfo - Error oidc_verify_dpop_proof");
+  if (!o_strnullempty(u_map_get(request->map_url, "impersonate"))) {
+    j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, config->glewlwyd_config->glewlwyd_config->admin_scope);
+    if (check_result_value(j_session, G_OK)) {
+      j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, u_map_get(request->map_url, "impersonate"));
+      if (check_result_value(j_user, G_OK)) {
+        if (ulfius_set_response_shared_data(response, json_pack("{ss}", "username", u_map_get(request->map_url, "impersonate")), (void (*)(void *))&json_decref) != U_OK) {
           ret = U_CALLBACK_ERROR;
-        }
-        json_decref(j_dpop);
-      } else if (!is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") == NULL && dpop == NULL) {
-        if (ulfius_set_response_shared_data(response, json_incref(json_object_get(j_introspect, "token")), (void (*)(void *))&json_decref) == U_OK) {
-          json_object_set((json_t *)response->shared_data, "username", json_object_get(j_introspect, "username"));
-          json_object_set((json_t *)response->shared_data, "client", json_object_get(j_introspect, "client"));
-          ret = U_CALLBACK_CONTINUE;
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "callback_check_userinfo - Error ulfius_set_response_shared_data");
-          ret = U_CALLBACK_ERROR;
+          ret = U_CALLBACK_CONTINUE;
         }
-      } else {
-        config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_ACCESS_TOKEN, 1, "plugin", config->name, "endpoint", "userinfo", NULL);
       }
-    } else {
-      config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_ACCESS_TOKEN, 1, "plugin", config->name, "endpoint", "userinfo", NULL);
+      json_decref(j_user);
     }
-    json_decref(j_introspect);
+    json_decref(j_session);
   } else {
-    if (!o_strnullempty(u_map_get(request->map_url, "impersonate"))) {
-      j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, config->glewlwyd_config->glewlwyd_config->admin_scope);
-      if (check_result_value(j_session, G_OK)) {
-        j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, u_map_get(request->map_url, "impersonate"));
-        if (check_result_value(j_user, G_OK)) {
-          if (ulfius_set_response_shared_data(response, json_pack("{ss}", "username", u_map_get(request->map_url, "impersonate")), (void (*)(void *))&json_decref) != U_OK) {
-            ret = U_CALLBACK_ERROR;
-          } else {
-            ret = U_CALLBACK_CONTINUE;
-          }
-        }
-        json_decref(j_user);
+    j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, NULL);
+    if (check_result_value(j_session, G_OK)) {
+      if (ulfius_set_response_shared_data(response, json_pack("{sssO}", "username", json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), "scope", json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "scope")), (void (*)(void *))&json_decref) != U_OK) {
+        ret = U_CALLBACK_ERROR;
+      } else {
+        ret = U_CALLBACK_CONTINUE;
       }
-      json_decref(j_session);
-    } else {
-      j_session = config->glewlwyd_config->glewlwyd_callback_check_session_valid(config->glewlwyd_config, request, NULL);
-      if (check_result_value(j_session, G_OK)) {
-        if (ulfius_set_response_shared_data(response, json_pack("{sssO}", "username", json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")), "scope", json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "scope")), (void (*)(void *))&json_decref) != U_OK) {
-          ret = U_CALLBACK_ERROR;
-        } else {
-          ret = U_CALLBACK_CONTINUE;
-        }
-      }
-      json_decref(j_session);
     }
+    json_decref(j_session);
   }
   return ret;
 }
@@ -16845,9 +16770,9 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
          config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_userinfo, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "POST", name, "userinfo/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_userinfo, (void*)*cls) != G_OK ||
-         config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) != G_OK ||
+         config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_refresh_token_list_get, (void*)*cls) != G_OK ||
-         config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) != G_OK ||
+         config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_disable_refresh_token, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "token/:token_hash", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_disable_refresh_token, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, ".well-known/openid-configuration", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_discovery, (void*)*cls) != G_OK ||
@@ -16910,9 +16835,9 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       if (json_object_get(p_config->j_params, "session-management-allowed") == json_true()) {
         if (
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "end_session/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_end_session, (void*)*cls) != G_OK ||
-         config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "session/:sid/:client_id", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) != G_OK ||
+         config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "session/:sid/:client_id", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "session/:sid/:client_id", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_get_session_list, (void*)*cls) != G_OK ||
-         config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "session/:sid", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) != G_OK ||
+         config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "session/:sid", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "session/:sid", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_end_session_list, (void*)*cls) != G_OK ||
          config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "check_session_iframe/", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_oidc_check_session_iframe, (void*)*cls) != G_OK
         ) {
@@ -16987,7 +16912,7 @@ json_t * plugin_module_init(struct config_plugin * config, const char * name, js
       }
       if (json_object_get(p_config->j_params, "oauth-rar-allowed") == json_true()) {
         if (
-          config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "rar/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session_or_token, (void*)*cls) != G_OK ||
+          config->glewlwyd_callback_add_plugin_endpoint(config, "*", name, "rar/*", GLEWLWYD_CALLBACK_PRIORITY_AUTHENTICATION, &callback_check_glewlwyd_session, (void*)*cls) != G_OK ||
           config->glewlwyd_callback_add_plugin_endpoint(config, "GET", name, "rar/:client_id/:type", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_rar_get_consent, (void*)*cls) != G_OK ||
           config->glewlwyd_callback_add_plugin_endpoint(config, "PUT", name, "rar/:client_id/:type/:consent", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_rar_set_consent, (void*)*cls) != G_OK ||
           config->glewlwyd_callback_add_plugin_endpoint(config, "DELETE", name, "rar/:client_id/:type", GLEWLWYD_CALLBACK_PRIORITY_APPLICATION, &callback_rar_delete_consent, (void*)*cls) != G_OK
