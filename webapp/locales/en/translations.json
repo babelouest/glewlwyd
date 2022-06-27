@@ -1066,6 +1066,7 @@
     "mod-oauth2-add-param-value-ph": "Value",
     "mod-oauth2-additional_parameters-value-error": "Value is mandatory",
     "api-key-description": "Warning! API keys allows to access all administration APIs without an administrator session cookie and has no expiration date. Please use and save them safely.",
+    "api-key-disabled": "API keys is disabled in the server configuration",
     "api-key-title": "Created API keys",
     "api-key-add": "Create a key",
     "api-key-counter": "Used counter",
