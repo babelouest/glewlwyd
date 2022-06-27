@@ -821,6 +821,7 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_oidc_irl
               glewlwyd_oidc_only_no_refresh
               glewlwyd_oidc_optional_request_parameters
+              glewlwyd_oidc_profile_impersonate
               glewlwyd_oidc_refresh_manage_session
               glewlwyd_oidc_refresh_token
               glewlwyd_oidc_refresh_token_client_confidential
