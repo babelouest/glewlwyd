@@ -689,6 +689,15 @@ session_expiration = 2419200
 session_key = GLEWLWYD2_SESSION_ID
 ```
 
+#### Admin session authentication
+
+- Config file variable: `admin_session_authentication`
+- Environment variable: `GLEWLWYD_ENV_ADMIN_SESSION_AUTH`
+
+Optional, set the authentication method to access admin APIs, values available are `cookie` for session cookie authentication, `api_key` for API key authentication, can be combined. To disable admin API access, set a wrong value, like `none`.
+
+Default value is `cookie`.
+
 ### Default scope names
 
 #### Admin scope
