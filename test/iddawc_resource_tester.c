@@ -171,6 +171,7 @@ START_TEST(test_iddawc_resource_no_auth)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -182,6 +183,7 @@ START_TEST(test_iddawc_resource_no_auth)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -193,6 +195,7 @@ START_TEST(test_iddawc_resource_no_auth)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -204,6 +207,7 @@ START_TEST(test_iddawc_resource_no_auth)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -215,6 +219,7 @@ START_TEST(test_iddawc_resource_no_auth)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -226,6 +231,7 @@ START_TEST(test_iddawc_resource_no_auth)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -237,6 +243,7 @@ START_TEST(test_iddawc_resource_no_auth)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -248,6 +255,7 @@ START_TEST(test_iddawc_resource_no_auth)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -259,6 +267,7 @@ START_TEST(test_iddawc_resource_no_auth)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -270,6 +279,7 @@ START_TEST(test_iddawc_resource_no_auth)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -325,6 +335,7 @@ START_TEST(test_iddawc_resource_valid_token_body)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -336,6 +347,7 @@ START_TEST(test_iddawc_resource_valid_token_body)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -347,6 +359,7 @@ START_TEST(test_iddawc_resource_valid_token_body)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -357,6 +370,7 @@ START_TEST(test_iddawc_resource_valid_token_body)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token);
@@ -381,6 +395,7 @@ START_TEST(test_iddawc_resource_valid_token_body)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   *(o_strrchr(token, '.')+1) = '\0';
@@ -404,6 +419,7 @@ START_TEST(test_iddawc_resource_valid_token_body)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token);
@@ -460,6 +476,7 @@ START_TEST(test_iddawc_resource_valid_token_query)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -471,6 +488,7 @@ START_TEST(test_iddawc_resource_valid_token_query)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -482,6 +500,7 @@ START_TEST(test_iddawc_resource_valid_token_query)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -492,6 +511,7 @@ START_TEST(test_iddawc_resource_valid_token_query)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   *(o_strrchr(token, '.')+1) = '\0';
@@ -503,6 +523,7 @@ START_TEST(test_iddawc_resource_valid_token_query)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -528,6 +549,7 @@ START_TEST(test_iddawc_resource_valid_token_query)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -551,6 +573,7 @@ START_TEST(test_iddawc_resource_valid_token_query)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token);
@@ -605,6 +628,7 @@ START_TEST(test_iddawc_resource_valid_token)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -632,6 +656,7 @@ START_TEST(test_iddawc_resource_valid_token)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -660,6 +685,7 @@ START_TEST(test_iddawc_resource_valid_token)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -688,6 +714,7 @@ START_TEST(test_iddawc_resource_valid_token)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -716,6 +743,7 @@ START_TEST(test_iddawc_resource_valid_token)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -743,6 +771,7 @@ START_TEST(test_iddawc_resource_valid_token)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -770,6 +799,7 @@ START_TEST(test_iddawc_resource_valid_token)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -797,6 +827,7 @@ START_TEST(test_iddawc_resource_valid_token)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -824,6 +855,7 @@ START_TEST(test_iddawc_resource_valid_token)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -883,6 +915,7 @@ START_TEST(test_iddawc_resource_valid_token_one_key)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -942,6 +975,7 @@ START_TEST(test_iddawc_resource_valid_token_no_aud)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -970,6 +1004,7 @@ START_TEST(test_iddawc_resource_valid_token_no_aud)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1031,6 +1066,7 @@ START_TEST(test_iddawc_resource_invalid_signature)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1060,6 +1096,7 @@ START_TEST(test_iddawc_resource_invalid_signature)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1093,6 +1130,7 @@ START_TEST(test_iddawc_resource_invalid_signature)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1122,6 +1160,7 @@ START_TEST(test_iddawc_resource_invalid_signature)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1148,6 +1187,7 @@ START_TEST(test_iddawc_resource_invalid_signature)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1206,6 +1246,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1234,6 +1275,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1262,6 +1304,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1290,6 +1333,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1318,6 +1362,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1346,6 +1391,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1374,6 +1420,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1402,6 +1449,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1430,6 +1478,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1458,6 +1507,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1486,6 +1536,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1515,6 +1566,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1543,6 +1595,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1571,6 +1624,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1599,6 +1653,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1627,6 +1682,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1655,6 +1711,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1683,6 +1740,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1711,6 +1769,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1739,6 +1798,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1767,6 +1827,7 @@ START_TEST(test_iddawc_resource_invalid_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -1858,6 +1919,7 @@ START_TEST(test_iddawc_resource_valid_dpop)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(bearer);
@@ -1946,6 +2008,7 @@ START_TEST(test_iddawc_resource_valid_dpop_invalid_auth_header)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -1975,6 +2038,7 @@ START_TEST(test_iddawc_resource_valid_dpop_invalid_auth_header)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2004,6 +2068,7 @@ START_TEST(test_iddawc_resource_valid_dpop_invalid_auth_header)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2033,6 +2098,7 @@ START_TEST(test_iddawc_resource_valid_dpop_invalid_auth_header)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2096,6 +2162,7 @@ START_TEST(test_iddawc_resource_valid_dpop_missing_dpop_header)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(bearer);
@@ -2183,6 +2250,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_key)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2212,6 +2280,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_key)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2239,6 +2308,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_key)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2328,6 +2398,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2358,6 +2429,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2388,6 +2460,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2417,6 +2490,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2447,6 +2521,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2476,6 +2551,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2506,6 +2582,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2536,6 +2613,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2566,6 +2644,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2595,6 +2674,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2625,6 +2705,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2655,6 +2736,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2684,6 +2766,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2719,6 +2802,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2749,6 +2833,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2778,6 +2863,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -2817,6 +2903,7 @@ START_TEST(test_iddawc_resource_no_auth_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -2828,6 +2915,7 @@ START_TEST(test_iddawc_resource_no_auth_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -2839,6 +2927,7 @@ START_TEST(test_iddawc_resource_no_auth_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -2850,6 +2939,7 @@ START_TEST(test_iddawc_resource_no_auth_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -2861,6 +2951,7 @@ START_TEST(test_iddawc_resource_no_auth_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -2872,6 +2963,7 @@ START_TEST(test_iddawc_resource_no_auth_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -2883,6 +2975,7 @@ START_TEST(test_iddawc_resource_no_auth_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -2894,6 +2987,7 @@ START_TEST(test_iddawc_resource_no_auth_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -2905,6 +2999,7 @@ START_TEST(test_iddawc_resource_no_auth_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
 
@@ -2957,6 +3052,7 @@ START_TEST(test_iddawc_resource_valid_token_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -2984,6 +3080,7 @@ START_TEST(test_iddawc_resource_valid_token_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3012,6 +3109,7 @@ START_TEST(test_iddawc_resource_valid_token_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3040,6 +3138,7 @@ START_TEST(test_iddawc_resource_valid_token_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3068,6 +3167,7 @@ START_TEST(test_iddawc_resource_valid_token_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3096,6 +3196,7 @@ START_TEST(test_iddawc_resource_valid_token_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3123,6 +3224,7 @@ START_TEST(test_iddawc_resource_valid_token_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3150,6 +3252,7 @@ START_TEST(test_iddawc_resource_valid_token_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3177,6 +3280,7 @@ START_TEST(test_iddawc_resource_valid_token_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3235,6 +3339,7 @@ START_TEST(test_iddawc_resource_valid_token_one_key_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3293,6 +3398,7 @@ START_TEST(test_iddawc_resource_valid_token_no_aud_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3321,6 +3427,7 @@ START_TEST(test_iddawc_resource_valid_token_no_aud_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3381,6 +3488,7 @@ START_TEST(test_iddawc_resource_invalid_signature_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3410,6 +3518,7 @@ START_TEST(test_iddawc_resource_invalid_signature_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3443,6 +3552,7 @@ START_TEST(test_iddawc_resource_invalid_signature_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3472,6 +3582,7 @@ START_TEST(test_iddawc_resource_invalid_signature_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3498,6 +3609,7 @@ START_TEST(test_iddawc_resource_invalid_signature_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3555,6 +3667,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3583,6 +3696,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3611,6 +3725,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3639,6 +3754,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3667,6 +3783,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3695,6 +3812,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3723,6 +3841,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3751,6 +3870,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3779,6 +3899,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3807,6 +3928,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3835,6 +3957,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3864,6 +3987,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3892,6 +4016,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3920,6 +4045,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3948,6 +4074,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -3976,6 +4103,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -4004,6 +4132,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -4032,6 +4161,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -4060,6 +4190,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -4088,6 +4219,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -4116,6 +4248,7 @@ START_TEST(test_iddawc_resource_invalid_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(grants);
@@ -4206,6 +4339,7 @@ START_TEST(test_iddawc_resource_valid_dpop_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(bearer);
@@ -4293,6 +4427,7 @@ START_TEST(test_iddawc_resource_valid_dpop_invalid_auth_header_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4322,6 +4457,7 @@ START_TEST(test_iddawc_resource_valid_dpop_invalid_auth_header_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4351,6 +4487,7 @@ START_TEST(test_iddawc_resource_valid_dpop_invalid_auth_header_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4380,6 +4517,7 @@ START_TEST(test_iddawc_resource_valid_dpop_invalid_auth_header_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4442,6 +4580,7 @@ START_TEST(test_iddawc_resource_valid_dpop_missing_dpop_header_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(bearer);
@@ -4528,6 +4667,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_key_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4557,6 +4697,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_key_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4584,6 +4725,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_key_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4672,6 +4814,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4702,6 +4845,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4732,6 +4876,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4761,6 +4906,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4791,6 +4937,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4820,6 +4967,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4850,6 +4998,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4880,6 +5029,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4910,6 +5060,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4939,6 +5090,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4969,6 +5121,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -4999,6 +5152,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -5028,6 +5182,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -5063,6 +5218,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -5093,6 +5249,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
@@ -5122,6 +5279,7 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims_remote_config)
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
   o_free(token_dpop);
