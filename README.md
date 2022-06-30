@@ -8,8 +8,6 @@
 
 **[Glewlwyd 2.7.1 is available](https://github.com/babelouest/glewlwyd/releases/latest). Feel free to [install](docs/INSTALL.md) it, test it, use it ([with precautions!](#disclaimer)), and [send feedback](https://github.com/babelouest/glewlwyd/issues) if you feel like it!**
 
-**Go to the [online demo](https://babelouest.io/glewlwyd) to test Glewlwyd's features**
-
 ![logged in](docs/screenshots/login-nopassword.png)
 
 ## Process supported:
