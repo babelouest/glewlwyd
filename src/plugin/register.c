@@ -596,7 +596,7 @@ static json_t * register_check_session(struct _register_config * config, const c
   char * session_hash = NULL, * expires_at_clause = NULL;
   time_t now;
   
-  if (!o_strnullempty(session)) {
+  if (o_strlen(session) == GLEWLWYD_SESSION_ID_LENGTH) {
     session_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, session);
     if (session_hash != NULL) {
       time(&now);
@@ -1198,7 +1198,7 @@ static json_t * reset_credentials_check_session(struct _register_config * config
   char * session_hash = NULL, * expires_at_clause = NULL;
   time_t now;
   
-  if (!o_strnullempty(session)) {
+  if (o_strlen(session) == GLEWLWYD_SESSION_ID_LENGTH) {
     session_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, session);
     if (session_hash != NULL) {
       time(&now);
