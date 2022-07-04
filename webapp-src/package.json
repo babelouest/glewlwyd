@@ -1,6 +1,6 @@
 {
 	"name": "glewlwyd",
-	"version": "2.7.1",
+	"version": "2.7.2",
 	"description": "Glewlwyd SSO Server Front-end Application",
 	"main": "index.js",
 	"scripts": {
@@ -10,17 +10,17 @@
 	"author": "",
 	"license": "MIT",
 	"dependencies": {
-		"i18next": "^21.8.4",
+		"i18next": "^21.8.12",
 		"i18next-browser-languagedetector": "^6.1.4",
-		"i18next-http-backend": "^1.4.0",
+		"i18next-http-backend": "^1.4.1",
 		"qrcode-generator": "^1.4.4",
 		"react": "^17.0.2",
 		"react-dom": "^17.0.2"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.17.12",
-		"@babel/preset-env": "^7.17.12",
-		"@babel/preset-react": "^7.17.12",
+		"@babel/core": "^7.18.6",
+		"@babel/preset-env": "^7.18.6",
+		"@babel/preset-react": "^7.18.6",
 		"babel-loader": "^8.2.5",
 		"qrcode-generator": "^1.4.4",
 		"react-hot-loader": "^4.13.0",

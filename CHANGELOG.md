@@ -1,5 +1,12 @@
 # Glewlwyd Changelog
 
+## 2.7.2
+
+- Improve security verification
+- Add config value `response_allowed_compression` to enable/disable API response compression
+- Breaking: Add config value `admin_session_authentication` to enable/disable admin API authentication methods, API key is disabled by default
+- Add config value `profile_session_authentication` to enable/disable user profile API authentication methods
+
 ## 2.7.1
 
 - Allow to disable static files server
