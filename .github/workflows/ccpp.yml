@@ -103,3 +103,9 @@ jobs:
         export G_PID=$!
         ./glewlwyd_prometheus || (cat /tmp/glewlwyd-prometheus.log && false)
         kill $G_PID
+        make glewlwyd_auth_single_user_session
+        glewlwyd --config-file=test/glewlwyd-single-user-session.conf &
+        sleep 1
+        export G_PID=$!
+        ./glewlwyd_auth_single_user_session || (cat /tmp/glewlwyd-single-user-session.log && false)
+        kill $G_PID
