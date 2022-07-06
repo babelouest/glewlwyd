@@ -704,11 +704,30 @@ int user_session_delete(struct config_elements * config, const char * session_ui
 }
 
 char * get_session_id(struct config_elements * config, const struct _u_request * request) {
+  char * session_uid = NULL;
+
   if (o_strlen(u_map_get(request->map_cookie, config->session_key)) == GLEWLWYD_SESSION_ID_LENGTH) {
-    return o_strdup(u_map_get(request->map_cookie, config->session_key));
-  } else {
-    return NULL;
+    session_uid = o_strdup(u_map_get(request->map_cookie, config->session_key));
   }
+  return session_uid;
+}
+
+char * get_valid_session_id(struct config_elements * config, const struct _u_request * request, const char * username) {
+  json_t * j_user;
+  char * session_uid = NULL;
+
+  if (o_strlen(u_map_get(request->map_cookie, config->session_key)) == GLEWLWYD_SESSION_ID_LENGTH) {
+    j_user = get_current_user_for_session(config, u_map_get(request->map_cookie, config->session_key));
+    if (check_result_value(j_user, G_OK)) {
+      if (0 == o_strcmp(username, json_string_value(json_object_get(json_object_get(j_user, "user"), "username"))) || config->allow_multiple_user_per_session) {
+        session_uid = o_strdup(u_map_get(request->map_cookie, config->session_key));
+      } else if (user_session_delete(config, u_map_get(request->map_cookie, config->session_key), NULL) != G_OK) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_valid_session_id - Error user_session_delete");
+      }
+    }
+    json_decref(j_user);
+  }
+  return session_uid;
 }
 
 char * generate_session_id() {

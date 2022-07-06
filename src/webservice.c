@@ -264,7 +264,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
         if (!json_string_null_or_empty(json_object_get(j_param, "password"))) {
           j_result = auth_check_user_credentials(config, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "password")));
           if (check_result_value(j_result, G_OK)) {
-            if ((session_uid = get_session_id(config, request)) == NULL) {
+            if ((session_uid = get_valid_session_id(config, request, json_string_value(json_object_get(j_param, "username")))) == NULL) {
               session_uid = generate_session_id();
             }
             if (user_session_update(config, session_uid, ip_source, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), NULL, 1) != G_OK) {
@@ -289,7 +289,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
         } else if (json_object_get(j_param, "password") != NULL && !json_is_string(json_object_get(j_param, "password"))) {
           ulfius_set_string_body_response(response, 400, "password must be a string");
         } else {
-          session_uid = get_session_id(config, request);
+          session_uid = get_valid_session_id(config, request, json_string_value(json_object_get(j_param, "username")));
           j_result = get_users_for_session(config, session_uid);
           if (check_result_value(j_result, G_OK)) {
             // Refresh username to set as default
@@ -321,7 +321,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
           } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
             response->status = 404;
           } else if (check_result_value(j_result, G_OK)) {
-            if ((session_uid = get_session_id(config, request)) == NULL) {
+            if ((session_uid = get_valid_session_id(config, request, json_string_value(json_object_get(j_param, "username")))) == NULL) {
               session_uid = generate_session_id();
             }
             if (user_session_update(config, session_uid, ip_source, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_name")), 1) != G_OK) {
@@ -354,7 +354,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
         } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
           response->status = 404;
         } else if (check_result_value(j_result, G_OK)) {
-          if ((session_uid = get_session_id(config, request)) == NULL) {
+          if ((session_uid = get_valid_session_id(config, request, json_string_value(json_object_get(j_result, "username")))) == NULL) {
             session_uid = generate_session_id();
           }
           if (user_session_update(config, session_uid, ip_source, u_map_get_case(request->map_header, "user-agent"), issued_for, json_string_value(json_object_get(j_result, "username")), json_string_value(json_object_get(j_param, "scheme_name")), 1) != G_OK) {

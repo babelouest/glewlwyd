@@ -360,6 +360,7 @@ struct config_elements {
   unsigned int                                   admin_session_authentication;
   char *                                         profile_scope;
   unsigned int                                   profile_session_authentication;
+  unsigned int                                   allow_multiple_user_per_session;
   char *                                         allow_origin;
   char *                                         allow_methods;
   char *                                         allow_headers;

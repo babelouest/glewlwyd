@@ -183,6 +183,7 @@ int main (int argc, char ** argv) {
   config->profile_scope = o_strdup(GLEWLWYD_DEFAULT_PROFILE_SCOPE);
   config->admin_session_authentication = GLEWLWYD_SESSION_AUTH_COOKIE;
   config->profile_session_authentication = GLEWLWYD_SESSION_AUTH_COOKIE;
+  config->allow_multiple_user_per_session = 1;
   config->metrics_endpoint = 0;
   config->metrics_endpoint_port = GLEWLWYD_DEFAULT_METRICS_PORT;
   config->metrics_endpoint_admin_session = 0;
@@ -1359,6 +1360,10 @@ int build_config_from_file(struct config_elements * config) {
       }
     }
 
+    if (config_lookup_bool(&cfg, "allow_multiple_user_per_session", &int_value) == CONFIG_TRUE) {
+      config->allow_multiple_user_per_session = (uint)int_value;
+    }
+
   } while (0);
   config_destroy(&cfg);
   return ret;
@@ -1584,6 +1589,10 @@ int build_config_from_env(struct config_elements * config) {
 
   if ((value = getenv(GLEWLWYD_ENV_COOKIE_SECURE)) != NULL) {
     config->cookie_secure = (uint)(o_strcmp(value, "1")==0);
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_MULTIPLE_USER_SESSION)) != NULL) {
+    config->allow_multiple_user_per_session = (uint)(o_strcmp(value, "1")==0);
   }
 
   if ((value = getenv(GLEWLWYD_ENV_ADD_X_FRAME_DENY)) != NULL) {

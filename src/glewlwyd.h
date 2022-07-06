@@ -155,6 +155,7 @@
 #define GLEWLWYD_ENV_RESPONSE_ALLOWED_COMPRESSION "GLWD_RESPONSE_ALLOWED_COMPRESSION"
 #define GLEWLWYD_ENV_ADMIN_SESSION_AUTH           "GLWD_ADMIN_SESSION_AUTH"
 #define GLEWLWYD_ENV_PROFILE_SESSION_AUTH         "GLWD_PROFILE_SESSION_AUTH"
+#define GLEWLWYD_ENV_MULTIPLE_USER_SESSION        "GLWD_MULTIPLE_USER_SESSION"
 
 struct send_mail_content_struct {
   char                   * host;
@@ -223,6 +224,7 @@ json_t * get_session_for_username(struct config_elements * config, const char * 
 json_t * get_current_user_for_session(struct config_elements * config, const char * session_uid);
 json_t * get_users_for_session(struct config_elements * config, const char * session_uid);
 int user_session_delete(struct config_elements * config, const char * session_uid, const char * username);
+char * get_valid_session_id(struct config_elements * config, const struct _u_request * request, const char * username);
 char * get_session_id(struct config_elements * config, const struct _u_request * request);
 char * generate_session_id();
 json_t * get_user_session_list(struct config_elements * config, const char * username, const char * pattern, size_t offset, size_t limit, const char * sort);
