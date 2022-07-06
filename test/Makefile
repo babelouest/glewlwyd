@@ -19,6 +19,7 @@ TARGET_IRL=glewlwyd_mod_user_irl glewlwyd_mod_client_irl glewlwyd_mod_user_multi
 TARGET_CERTIFICATE=glewlwyd_scheme_certificate glewlwyd_oidc_client_certificate
 TARGET_PROFILE_DELETE=glewlwyd_profile_delete
 TARGET_PROMETHEUS=glewlwyd_prometheus
+TARGET_SINGLE_USER_SESSION=glewlwyd_auth_single_user_session
 VERBOSE=0
 MEMCHECK=0
 RUN=1
@@ -30,13 +31,13 @@ RESOURCES_ULFIUS=../docs/resources/ulfius/
 all: test $(CERT)/server.key
 
 clean:
-	rm -f *.o *.log valgrind.txt valgrind-*.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER) $(TARGET_PROFILE_DELETE) $(TARGET_PROMETHEUS)
+	rm -f *.o *.log valgrind.txt valgrind-*.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER) $(TARGET_PROFILE_DELETE) $(TARGET_PROMETHEUS) $(TARGET_SINGLE_USER_SESSION)
 	rm -f $(CERT)/server.* $(CERT)/root* $(CERT)/client* $(CERT)/user* $(CERT)/packed* $(CERT)/apple* $(CERT)/certtool.log
 
 $(CERT)/server.key:
 	./$(CERT)/create-cert.sh
 
-build: $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER) $(TARGET_PROFILE_DELETE) $(TARGET_PROMETHEUS) $(CERT)/server.key
+build: $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER) $(TARGET_PROFILE_DELETE) $(TARGET_PROMETHEUS) $(TARGET_SINGLE_USER_SESSION) $(CERT)/server.key
 
 iddawc_resource.o: $(RESOURCES_ULFIUS)/iddawc_resource.c $(RESOURCES_ULFIUS)/iddawc_resource.h
 	$(CC) -c $(CFLAGS) -I$(RESOURCES_ULFIUS) $(CPPFLAGS) $(RESOURCES_ULFIUS)/iddawc_resource.c
@@ -69,6 +70,8 @@ test-register: $(TARGET_REGISTER) $(CERT)/server.key test_glewlwyd_register
 test-profile-delete: $(TARGET_PROFILE_DELETE) test_glewlwyd_profile_delete
 
 test-prometheus: $(TARGET_PROMETHEUS) test_glewlwyd_prometheus
+
+test-single-user-session: $(TARGET_SINGLE_USER_SESSION) test_glewlwyd_auth_single_user_session
 
 test-irl: $(TARGET_IRL) $(CERT)/server.key test_glewlwyd_mod_user_http test_glewlwyd_scheme_http test_glewlwyd_scheme_mail test_glewlwyd_scheme_otp test_glewlwyd_scheme_webauthn test_glewlwyd_scheme_retype_password test_glewlwyd_scheme_oauth2 test_glewlwyd_geolocation test_iddawc_resource_tester
 	@for JSON_FILE in mod_user_*.json; \

@@ -858,12 +858,15 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_oidc_auth_iss_is
               glewlwyd_oidc_jarm
               glewlwyd_oidc_fapi
+              iddawc_resource_tester
               )
       set(TESTS_SSL ${TESTS_SSL} glewlwyd_oidc_client_certificate)
     endif ()
 
     set(TESTS_PROMETHEUS glewlwyd_prometheus)
-
+    
+    set(TESTS_SINGLE_USER_SESSION glewlwyd_auth_single_user_session)
+    
     if (WITH_PLUGIN_REGISTER)
       set (TESTS ${TESTS}
               glewlwyd_register
@@ -908,16 +911,12 @@ if (BUILD_GLEWLWYD_TESTING)
 
     set(COUNTER 0)
     
-    set(IDDAWC_RESOURCE_TEST "iddawc_resource_tester")
-    add_executable(${IDDAWC_RESOURCE_TEST} ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h ${U_RESOURCE_DIR}/iddawc_resource.c ${U_RESOURCE_DIR}/iddawc_resource.h ${TST_DIR}/iddawc_resource_tester.c)
-    target_include_directories(${IDDAWC_RESOURCE_TEST} PUBLIC ${TST_DIR})
-    target_link_libraries(${IDDAWC_RESOURCE_TEST} PUBLIC ${TST_LIBS})
-    add_test(NAME ${IDDAWC_RESOURCE_TEST}
-            WORKING_DIRECTORY ${TST_DIR}
-            COMMAND ${IDDAWC_RESOURCE_TEST})
-    
     foreach (t ${TESTS})
-      add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
+      if (NOT ${t} MATCHES "iddawc_resource_tester$")
+        add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
+      else ()
+        add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h ${U_RESOURCE_DIR}/iddawc_resource.c ${U_RESOURCE_DIR}/iddawc_resource.h)
+      endif ()
       target_include_directories(${t} PUBLIC ${TST_DIR})
       target_link_libraries(${t} PUBLIC ${TST_LIBS})
       if (NOT ${t} MATCHES "_irl$")
@@ -974,6 +973,12 @@ if (BUILD_GLEWLWYD_TESTING)
     endforeach ()
 
     foreach (t ${TESTS_PROMETHEUS})
+      add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
+      target_include_directories(${t} PUBLIC ${TST_DIR})
+      target_link_libraries(${t} PUBLIC ${TST_LIBS})
+    endforeach ()
+
+    foreach (t ${TESTS_SINGLE_USER_SESSION})
       add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
       target_include_directories(${t} PUBLIC ${TST_DIR})
       target_link_libraries(${t} PUBLIC ${TST_LIBS})
