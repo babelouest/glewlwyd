@@ -6,6 +6,7 @@
 - Add config value `response_allowed_compression` to enable/disable API response compression
 - Breaking: Add config value `admin_session_authentication` to enable/disable admin API authentication methods, API key is disabled by default
 - Add config value `profile_session_authentication` to enable/disable user profile API authentication methods
+- Add config value `allow_multiple_user_per_session` to enable/disable multiple users per session
 
 ## 2.7.1
 
