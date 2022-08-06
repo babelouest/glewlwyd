@@ -733,6 +733,7 @@ static int is_user_certificate_valid_user_property(struct config_module * config
             0 == o_strncasecmp(json_string_value(json_object_get(j_user_list, "dn")), (const char *)cert_dn.data, cert_dn.size)) {
           ret = G_OK;
         } else {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "is_user_certificate_valid_user_property - Invalid DN, expected '%s', got '%s'", json_string_value(json_object_get(j_user_list, "dn")), (int)cert_dn.size, (const char *)cert_dn.data);
           ret = G_ERROR_UNAUTHORIZED;
         }
         gnutls_free(cert_dn.data);
@@ -747,6 +748,9 @@ static int is_user_certificate_valid_user_property(struct config_module * config
           if (0 == o_strcmp((const char *)key_id_enc, json_string_value(json_object_get(j_element, "certificate_id")))) {
             ret = G_OK;
           }
+        }
+        if (ret != G_OK) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "is_user_certificate_valid_user_property - Invalid cert ID");
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "is_user_certificate_valid_user_property - Error gnutls_x509_crt_get_key_id");
