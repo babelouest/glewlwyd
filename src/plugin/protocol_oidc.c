@@ -5392,6 +5392,33 @@ static json_t * get_jwk_search_pattern(jwt_t * jwt, jwks_t * jwks) {
   return j_search;
 }
 
+static int is_client_jwks_valid(struct _oidc_config * config, jwks_t * jwks) {
+  size_t index = 0;
+  jwk_t * jwk;
+  int ret, type;
+  
+  if (r_jwks_size(jwks)) {
+    ret = G_OK;
+    for (index=0; index<r_jwks_size(jwks); index++) {
+      jwk = r_jwks_get_at(jwks, index);
+      if (jwk != NULL) {
+        type = r_jwk_key_type(jwk, NULL, config->x5u_flags);
+        if (!(type & R_KEY_TYPE_PUBLIC) || (!(type & R_KEY_TYPE_RSA) && !(type & R_KEY_TYPE_EC) && !(type & R_KEY_TYPE_EDDSA))) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "is_client_jwks_valid - Error invalid key at index %zu", index);
+          ret = G_ERROR_PARAM;
+        }
+        r_jwk_free(jwk);
+      } else {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "is_client_jwks_valid - Error getting jwk at index %zu", index);
+        ret = G_ERROR;
+      }
+    }
+  } else {
+    ret = G_ERROR_PARAM;
+  }
+  return ret;
+}
+
 static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * jwt, const char * client_id, int auth_type, const char * ip_source) {
   json_t * j_client, * j_return, * j_search;
   jwks_t * jwks = NULL, * jwks_kid = NULL, * jwks_multiple_kids;
@@ -5428,7 +5455,7 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
             }
           } else if (alg == R_JWA_ALG_ES256 || alg == R_JWA_ALG_ES384 || alg == R_JWA_ALG_ES512 || alg == R_JWA_ALG_RS256 || alg == R_JWA_ALG_RS384 || alg == R_JWA_ALG_RS512 || alg == R_JWA_ALG_PS256 || alg == R_JWA_ALG_PS384 || alg == R_JWA_ALG_PS512 || alg == R_JWA_ALG_EDDSA) {
             if (!json_string_null_or_empty(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))) && o_strlen(kid)) {
-              if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_uri(jwks, json_string_value(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))), config->x5u_flags) == RHN_OK) {
+              if (r_jwks_init(&jwks) == RHN_OK && r_jwks_import_from_uri(jwks, json_string_value(json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "client-jwks_uri-parameter")))), config->x5u_flags) == RHN_OK && is_client_jwks_valid(config, jwks) == G_OK) {
                 if (json_object_get(config->j_params, "oauth-fapi-allow-multiple-kid") == json_true()) {
                   j_search = json_pack("{ss*}", "kid", kid);
                   jwks_kid = r_jwks_search_json_t(jwks, j_search);
@@ -7232,6 +7259,12 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         r_jwks_init(&jwks);
         if (r_jwks_import_from_uri(jwks, json_string_value(json_object_get(j_registration, "jwks_uri")), config->x5u_flags) != RHN_OK) {
           j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid JWKS pointed by jwks_uri");
+        } else {
+          if (is_client_jwks_valid(config, jwks) != G_OK) {
+            if (j_error == NULL) {
+              j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid JWKS");
+            }
+          }
         }
         r_jwks_free(jwks);
         if (j_error != NULL) {
@@ -7243,6 +7276,12 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
         if (r_jwks_import_from_json_t(jwks, json_object_get(j_registration, "jwks")) != RHN_OK) {
           if (j_error == NULL) {
             j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid JWKS");
+          }
+        } else {
+          if (is_client_jwks_valid(config, jwks) != G_OK) {
+            if (j_error == NULL) {
+              j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid JWKS");
+            }
           }
         }
         r_jwks_free(jwks);
@@ -10028,12 +10067,14 @@ static int callback_introspection(const struct _u_request * request, struct _u_r
         }
       } else {
         // token introspection forbidden if token_type isn't access_token
+        y_log_message(Y_LOG_LEVEL_DEBUG, "callback_introspection - token introspection forbidden if token_type isn't access_token");
         response->status = 400;
       }
     } else {
       ulfius_set_json_body_response(response, 200, json_object_get(j_result, "token"));
     }
   } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "callback_introspection - Error parameter in getting metadata for token");
     response->status = 400;
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_introspection - Error get_token_metadata");
