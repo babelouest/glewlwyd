@@ -719,6 +719,24 @@ Optional, if set to true, a user can log in using multiple accounts for the same
 
 Default is false.
 
+#### Enable login APIs
+
+- Config file variable: `login_api_enabled`
+- Environment variable: `GLWD_LOGIN_API_ENABLED`
+
+Optional, if set to false, no login API is accessible. Useful to restrict an instance only for admin access via API key, or to allow only client authentication for example. Of course if this is set to false, no user can log in, therefore, no administration tasks can be executed via the Web UI, nor any profile access, nor any token request.
+
+Default is true.
+
+#### Plugins enabled
+
+- Config file variable: `plugin_api_run_enabled`
+- Environment variable: `GLWD_PLUGIN_API_RUN_ENABLED`
+
+Optional, specify the list of plugins allowed to be executed on an instance by its name. Multiple values must be separated by a comma ','. If the list is missing or empty, all plugings are allowed.
+
+Default is all plugins allowed.
+
 ### Default scope names
 
 #### Admin scope
