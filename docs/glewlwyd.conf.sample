@@ -70,6 +70,12 @@ profile_session_authentication="cookie"
 # are multiple user per session allowed, default true
 allow_multiple_user_per_session=true
 
+# Enable login APIs, default true
+login_api_enabled=true
+
+# Enable plugins APIs, list enabled plugins by name, separated by a comma, or empty string to enable all plugins, default empty string
+plugin_api_run_enabled=""
+
 # add http header X-Frame-Options: deny, default true
 add_x_frame_option_header_deny=true
 
