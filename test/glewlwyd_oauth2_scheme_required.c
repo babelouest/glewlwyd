@@ -92,27 +92,27 @@ START_TEST(test_oauth2_scheme_required_auth_flow)
   ck_assert_int_eq(run_simple_test(&auth_req, "PUT", SERVER_URI "/auth/grant/" CLIENT, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_body);
   
-  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE_CODE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/glwd/auth?response_type=" RESPONSE_TYPE_CODE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
 
-  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE_TOKEN "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/glwd/auth?response_type=" RESPONSE_TYPE_TOKEN "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
 
   // Authenticate scheme mock 42
   j_body = json_pack("{sssssss{ss}}", "username", USER_USERNAME, "scheme_type", "mock", "scheme_name", SCHEME1, "value", "code", SCHEME1_VALUE);
   ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_body);
 
-  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE_CODE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/glwd/auth?response_type=" RESPONSE_TYPE_CODE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
 
-  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE_TOKEN "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/glwd/auth?response_type=" RESPONSE_TYPE_TOKEN "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
 
   // Authenticate scheme mock 95
   j_body = json_pack("{sssssss{ss}}", "username", USER_USERNAME, "scheme_type", "mock", "scheme_name", SCHEME3, "value", "code", SCHEME3_VALUE);
   ck_assert_int_eq(run_simple_test(&auth_req, "POST", SERVER_URI "/auth/", NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_body);
 
-  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE_CODE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/glwd/auth?response_type=" RESPONSE_TYPE_CODE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
 
-  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE_TOKEN "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "access_token="), 1);
+  ck_assert_int_eq(run_simple_test(&auth_req, "GET", SERVER_URI "/glwd/auth?response_type=" RESPONSE_TYPE_TOKEN "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&nonce=abcdxyz&scope=" SCOPE " openid&g_continue", NULL, NULL, NULL, NULL, 302, NULL, NULL, "access_token="), 1);
 
   j_body = json_pack("{ss}", "scope", "");
   ck_assert_int_eq(run_simple_test(&auth_req, "PUT", SERVER_URI "/auth/grant/" CLIENT, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);

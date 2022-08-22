@@ -22,7 +22,7 @@
 #define USER_USERNAME "user1"
 #define USER_PASSWORD "password"
 #define PLUGIN_MODULE "oauth2-glewlwyd"
-#define PLUGIN_NAME "oidc_code_replay"
+#define PLUGIN_NAME "oauth2_code_replay"
 #define SCOPE_LIST "scope1"
 #define CLIENT_ID "client3_id"
 #define CLIENT_SECRET "password"
@@ -480,7 +480,7 @@ static Suite *glewlwyd_suite(void)
   Suite *s;
   TCase *tc_core;
 
-  s = suite_create("Glewlwyd oidc code replay");
+  s = suite_create("Glewlwyd oauth2 code replay");
   tc_core = tcase_create("test_oauth2_code_replay");
   tcase_add_test(tc_core, test_oauth2_code_replay_add_plugin_with_revoke_replay);
   tcase_add_test(tc_core, test_oauth2_code_replay_test_revoked_tokens);
