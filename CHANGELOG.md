@@ -1,5 +1,11 @@
 # Glewlwyd Changelog
 
+## 2.7.3
+
+This release contains a security fix in the library [rhonabwy](https://github.com/babelouest/rhonabwy). If you allow encrypted tokens using RSA-OAEP algorithms, please upgrade your Glewlwyd version.
+
+- Enforce client public key verification on registration
+
 ## 2.7.2
 
 - Improve security verification
