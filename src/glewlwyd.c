@@ -1877,7 +1877,7 @@ int build_config_from_env(struct config_elements * config) {
     }
   }
 
-  if ((value = getenv(GLEWLWYD_ENV_MULTIPLE_USER_SESSION)) != NULL) {
+  if ((value = getenv(GLEWLWYD_ENV_LOGIN_API_ENABLED)) != NULL) {
     config->login_api_enabled = (uint)(o_strcmp(value, "1")==0);
   }
 
