@@ -5,6 +5,9 @@
 This release contains a security fix in the library [rhonabwy](https://github.com/babelouest/rhonabwy). If you allow encrypted tokens using RSA-OAEP algorithms, please upgrade your Glewlwyd version.
 
 - Enforce client public key verification on registration
+- Add config value `login_api_enabled` to enable/disable authentication APIs
+- Add config value `plugin_api_run_enabled` to list authorized plugins for a Glewlwyd instance
+- Minor bugfixes
 
 ## 2.7.2
 
