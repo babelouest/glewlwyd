@@ -156,6 +156,7 @@
 #define GLEWLWYD_ENV_ADMIN_SESSION_AUTH           "GLWD_ADMIN_SESSION_AUTH"
 #define GLEWLWYD_ENV_PROFILE_SESSION_AUTH         "GLWD_PROFILE_SESSION_AUTH"
 #define GLEWLWYD_ENV_MULTIPLE_USER_SESSION        "GLWD_MULTIPLE_USER_SESSION"
+#define GLEWLWYD_ENV_PLUGIN_API_RUN_ENABLED       "GLWD_PLUGIN_API_RUN_ENABLED"
 
 struct send_mail_content_struct {
   char                   * host;
@@ -204,6 +205,7 @@ char * get_ip_data(struct config_elements * config, const char * ip_address);
 const char * get_template_property(json_t * j_params, const char * template_property, const char * user_lang, const char * property_field);
 char * complete_template(const char * template, ...);
 void * thread_send_mail(void * args);
+int is_plugin_api_run_enabled (struct config_elements * config, const char * name);
 
 // Modules generic functions
 int module_parameters_check(const char * module_parameters);
@@ -511,5 +513,6 @@ int callback_metrics (const struct _u_request * request, struct _u_response * re
 
 int callback_default (const struct _u_request * request, struct _u_response * response, void * user_data);
 int callback_404_if_necessary (const struct _u_request * request, struct _u_response * response, void * user_data);
+int callback_403_whatever_the_means (const struct _u_request * request, struct _u_response * response, void * user_data);
 
 #endif

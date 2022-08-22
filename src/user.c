@@ -922,13 +922,12 @@ int set_user(struct config_elements * config, const char * username, json_t * j_
 }
 
 int delete_user(struct config_elements * config, const char * username, const char * source) {
-  int ret;
+  int ret, result, res;
   struct _user_module_instance * user_module;
   struct _user_middleware_module_instance * user_middleware_module;
   struct _user_auth_scheme_module_instance * scheme_module;
   struct _plugin_module_instance * plugin_module;
   json_t * j_cur_user;
-  int result;
   size_t i;
   
   if (source != NULL) {
@@ -975,9 +974,13 @@ int delete_user(struct config_elements * config, const char * username, const ch
         for (i = 0; i < pointer_list_size(config->plugin_module_instance_list); i++) {
           plugin_module = pointer_list_get_at(config->plugin_module_instance_list, i);
           if (plugin_module != NULL && plugin_module->enabled) {
-            if ((ret = plugin_module->module->plugin_user_revoke(config->config_p, username, plugin_module->cls)) != G_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error plugin_user_revoke for plugin %s", plugin_module->name);
-              break;
+            if ((res = is_plugin_api_run_enabled(config, plugin_module->name)) == G_OK) {
+              if ((ret = plugin_module->module->plugin_user_revoke(config->config_p, username, plugin_module->cls)) != G_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error plugin_user_revoke for plugin %s", plugin_module->name);
+                break;
+              }
+            } else if (res != G_ERROR_NOT_FOUND) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "delete_user - Error is_plugin_api_run_enabled");
             }
           }
         }
@@ -1053,7 +1056,7 @@ int user_delete_profile(struct config_elements * config, const char * username) 
   struct _user_module_instance * user_module;
   struct _user_auth_scheme_module_instance * scheme_module;
   struct _plugin_module_instance * plugin_module;
-  int ret;
+  int ret, res;
   size_t i;
 
   if (check_result_value(j_user, G_OK)) {
@@ -1087,9 +1090,13 @@ int user_delete_profile(struct config_elements * config, const char * username) 
         for (i = 0; i < pointer_list_size(config->plugin_module_instance_list); i++) {
           plugin_module = pointer_list_get_at(config->plugin_module_instance_list, i);
           if (plugin_module != NULL && plugin_module->enabled) {
-            if ((ret = plugin_module->module->plugin_user_revoke(config->config_p, username, plugin_module->cls)) != G_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "user_delete_profile - Error plugin_user_revoke for plugin %s", plugin_module->name);
-              break;
+            if ((res = is_plugin_api_run_enabled(config, plugin_module->name)) == G_OK) {
+              if ((ret = plugin_module->module->plugin_user_revoke(config->config_p, username, plugin_module->cls)) != G_OK) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "user_delete_profile - Error plugin_user_revoke for plugin %s", plugin_module->name);
+                break;
+              }
+            } else if (res != G_ERROR_NOT_FOUND) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_delete_profile - Error is_plugin_api_run_enabled");
             }
           }
         }

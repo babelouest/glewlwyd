@@ -361,6 +361,8 @@ struct config_elements {
   char *                                         profile_scope;
   unsigned int                                   profile_session_authentication;
   unsigned int                                   allow_multiple_user_per_session;
+  unsigned int                                   login_api_enabled;
+  char *                                         plugin_api_run_enabled;
   char *                                         allow_origin;
   char *                                         allow_methods;
   char *                                         allow_headers;

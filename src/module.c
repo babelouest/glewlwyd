@@ -2038,17 +2038,24 @@ json_t * add_plugin_module(struct config_elements * config, json_t * j_module) {
           cur_instance->module = module;
           cur_instance->enabled = 0;
           if (pointer_list_append(config->plugin_module_instance_list, cur_instance)) {
-            j_result = module->plugin_module_init(config->config_p, cur_instance->name, json_object_get(j_module, "parameters"), &cur_instance->cls);
-            if (check_result_value(j_result, G_OK)) {
-              cur_instance->enabled = 1;
-              j_return = json_pack("{si}", "result", G_OK);
-            } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-              j_return = json_pack("{sisO*}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
-            } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "add_plugin_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
+            if ((res = is_plugin_api_run_enabled(config, cur_instance->name)) == G_OK) {
+              j_result = module->plugin_module_init(config->config_p, cur_instance->name, json_object_get(j_module, "parameters"), &cur_instance->cls);
+              if (check_result_value(j_result, G_OK)) {
+                cur_instance->enabled = 1;
+                j_return = json_pack("{si}", "result", G_OK);
+              } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+                j_return = json_pack("{sisO*}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "add_plugin_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
+              json_decref(j_result);
+            } else if (res != G_ERROR_NOT_FOUND) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error is_plugin_api_run_enabled");
               j_return = json_pack("{si}", "result", G_ERROR);
+            } else {
+              j_return = json_pack("{si}", "result", G_OK);
             }
-            json_decref(j_result);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "add_plugin_module - Error reallocating resources for plugin_module_instance_list");
             o_free(cur_instance->name);
@@ -2153,28 +2160,36 @@ int delete_plugin_module(struct config_elements * config, const char * name) {
 json_t * manage_plugin_module(struct config_elements * config, const char * name, int action) {
   struct _plugin_module_instance * instance = get_plugin_module_instance(config, name);
   json_t * j_module = get_plugin_module(config, name), * j_return, * j_result;
+  int res;
   
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
         if (!pthread_mutex_lock(&config->module_lock)) {
-          j_result = instance->module->plugin_module_init(config->config_p, instance->name, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
-          if (check_result_value(j_result, G_OK)) {
-            instance->enabled = 1;
-            json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
-            if (set_plugin_module(config, name, json_object_get(j_module, "module")) == G_OK) {
-              j_return = json_pack("{si}", "result", G_OK);
+          if ((res = is_plugin_api_run_enabled(config, instance->name)) == G_OK) {
+            j_result = instance->module->plugin_module_init(config->config_p, instance->name, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
+            if (check_result_value(j_result, G_OK)) {
+              instance->enabled = 1;
+              json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
+              if (set_plugin_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+                j_return = json_pack("{si}", "result", G_OK);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error set_client_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
+            } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+              j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error set_client_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+              y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
               j_return = json_pack("{si}", "result", G_ERROR);
             }
-          } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-            j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            json_decref(j_result);
+          } else if (res != G_ERROR_NOT_FOUND) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error is_plugin_api_run_enabled");
             j_return = json_pack("{si}", "result", G_ERROR);
+          } else {
+            j_return = json_pack("{si}", "result", G_OK);
           }
-          json_decref(j_result);
           pthread_mutex_unlock(&config->module_lock);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error pthread_mutex_lock (1)");
@@ -2186,19 +2201,26 @@ json_t * manage_plugin_module(struct config_elements * config, const char * name
     } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
       if (instance->enabled) {
         if (!pthread_mutex_lock(&config->module_lock)) {
-          if (instance->module->plugin_module_close(config->config_p, instance->name, instance->cls) == G_OK) {
-            instance->enabled = 0;
-            instance->cls = NULL;
-            json_object_set(json_object_get(j_module, "module"), "enabled", json_false());
-            if (set_plugin_module(config, name, json_object_get(j_module, "module")) == G_OK) {
-              j_return = json_pack("{si}", "result", G_OK);
+          if ((res = is_plugin_api_run_enabled(config, instance->name)) == G_OK) {
+            if (instance->module->plugin_module_close(config->config_p, instance->name, instance->cls) == G_OK) {
+              instance->enabled = 0;
+              instance->cls = NULL;
+              json_object_set(json_object_get(j_module, "module"), "enabled", json_false());
+              if (set_plugin_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+                j_return = json_pack("{si}", "result", G_OK);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error set_client_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error set_client_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+              y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
               j_return = json_pack("{si}", "result", G_ERROR);
             }
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+          } else if (res != G_ERROR_NOT_FOUND) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error is_plugin_api_run_enabled");
             j_return = json_pack("{si}", "result", G_ERROR);
+          } else {
+            j_return = json_pack("{si}", "result", G_OK);
           }
           pthread_mutex_unlock(&config->module_lock);
         } else {

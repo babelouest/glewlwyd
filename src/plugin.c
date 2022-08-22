@@ -125,7 +125,7 @@ json_t * glewlwyd_callback_check_user_valid(struct config_plugin * config, const
   char ** scope_array = NULL, * scope_list = NULL, * tmp;
   size_t index;
 
-  if (config != NULL && username != NULL) {
+  if (config != NULL && username != NULL && config->glewlwyd_config->login_api_enabled) {
     j_user = get_user(config->glewlwyd_config, username, NULL);
     if (check_result_value(j_user, G_OK)) {
       check_password = 1;
@@ -194,7 +194,7 @@ json_t * glewlwyd_callback_check_client_valid(struct config_plugin * config, con
   json_t * j_return, * j_client, * j_client_credentials;
   int password_checked = 1;
 
-  if (config != NULL && client_id != NULL) {
+  if (config != NULL && client_id != NULL && config->glewlwyd_config->login_api_enabled) {
     j_client = get_client(config->glewlwyd_config, client_id, NULL);
     if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
       if (password != NULL) {
@@ -503,7 +503,7 @@ int glewlwyd_plugin_callback_set_user(struct config_plugin * config, const char 
   if (check_result_value(j_cur_user, G_OK)) {
     ret = set_user(config->glewlwyd_config, username, j_user, json_string_value(json_object_get(json_object_get(j_cur_user, "user"), "source")));
   } else if (check_result_value(j_cur_user, G_ERROR_NOT_FOUND)) {
-    ret = U_ERROR_NOT_FOUND;
+    ret = G_ERROR_NOT_FOUND;
   } else {
     y_log_message(Y_LOG_LEVEL_DEBUG, "glewlwyd_plugin_callback_set_user - Error get_user");
     ret = G_ERROR;
@@ -513,20 +513,25 @@ int glewlwyd_plugin_callback_set_user(struct config_plugin * config, const char 
 }
 
 int glewlwyd_plugin_callback_user_update_password(struct config_plugin * config, const char * username, const char * password) {
-  json_t * j_user = get_user(config->glewlwyd_config, username, NULL);
+  json_t * j_user;
   int ret;
   const char *passwords[1];
   
-  passwords[0] = password;
-  if (check_result_value(j_user, G_OK)) {
-    ret = user_set_password(config->glewlwyd_config, username, passwords, 1);
-  } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
-    ret = U_ERROR_NOT_FOUND;
+  if (config->glewlwyd_config->login_api_enabled) {
+    j_user = get_user(config->glewlwyd_config, username, NULL);
+    passwords[0] = password;
+    if (check_result_value(j_user, G_OK)) {
+      ret = user_set_password(config->glewlwyd_config, username, passwords, 1);
+    } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
+      ret = G_ERROR_NOT_FOUND;
+    } else {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "glewlwyd_plugin_callback_user_update_password - Error get_user");
+      ret = G_ERROR;
+    }
+    json_decref(j_user);
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "glewlwyd_plugin_callback_user_update_password - Error get_user");
-    ret = G_ERROR;
+    ret = G_ERROR_PARAM;
   }
-  json_decref(j_user);
   return ret;
 }
 
@@ -537,7 +542,7 @@ int glewlwyd_plugin_callback_delete_user(struct config_plugin * config, const ch
   if (check_result_value(j_user, G_OK)) {
     ret = delete_user(config->glewlwyd_config, username, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
   } else if (check_result_value(j_user, G_ERROR_NOT_FOUND)) {
-    ret = U_ERROR_NOT_FOUND;
+    ret = G_ERROR_NOT_FOUND;
   } else {
     y_log_message(Y_LOG_LEVEL_DEBUG, "glewlwyd_plugin_callback_set_user - Error get_user");
     ret = G_ERROR;

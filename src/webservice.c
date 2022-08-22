@@ -74,13 +74,20 @@ int callback_404_if_necessary (const struct _u_request * request, struct _u_resp
   return U_CALLBACK_COMPLETE;
 }
 
+int callback_403_whatever_the_means (const struct _u_request * request, struct _u_response * response, void * user_data) {
+  UNUSED(user_data);
+  UNUSED(request);
+  response->status = 403;
+  return U_CALLBACK_COMPLETE;
+}
+
 int callback_glewlwyd_check_user_profile_valid (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   char * session_uid = NULL;
   json_t * j_user;
   int ret, res;
   
-  if (config->profile_session_authentication & GLEWLWYD_SESSION_AUTH_COOKIE && (session_uid = get_session_id(config, request)) != NULL) {
+  if ((session_uid = get_session_id(config, request)) != NULL) {
     j_user = get_current_user_for_session(config, session_uid);
     if (check_result_value(j_user, G_OK) && json_object_get(json_object_get(j_user, "user"), "enabled") == json_true()) {
       if ((res = is_scope_list_valid_for_session(config, config->profile_scope, session_uid)) == G_OK) {
