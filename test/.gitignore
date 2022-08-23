@@ -130,3 +130,4 @@ glewlwyd_prometheus
 
 valgrind-*.txt
 *.json
+*.disabled
