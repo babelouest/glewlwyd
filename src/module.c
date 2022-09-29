@@ -1318,13 +1318,13 @@ json_t * manage_user_auth_scheme_module(struct config_elements * config, const c
             if (set_user_auth_scheme_module(config, name, json_object_get(j_module, "module")) == G_OK) {
               j_return = json_pack("{si}", "result", G_OK);
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error set_user_auth_scheme_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error set_user_auth_scheme_module module %s/%s (1)", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
               j_return = json_pack("{si}", "result", G_ERROR);
             }
           } else if (check_result_value(j_result, G_ERROR_PARAM)) {
             j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error init module %s/%s (1)", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
             j_return = json_pack("{si}", "result", G_ERROR);
           }
           json_decref(j_result);
@@ -1345,11 +1345,11 @@ json_t * manage_user_auth_scheme_module(struct config_elements * config, const c
             if (set_user_auth_scheme_module(config, name, json_object_get(j_module, "module")) == G_OK) {
               j_return = json_pack("{si}", "result", G_OK);
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error set_user_auth_scheme_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error set_user_auth_scheme_module module %s/%s (2)", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
               j_return = json_pack("{si}", "result", G_ERROR);
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error close module %s/%s (2)", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
             j_return = json_pack("{si}", "result", G_ERROR);
           }
           pthread_mutex_unlock(&config->module_lock);
