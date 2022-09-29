@@ -866,7 +866,7 @@ json_t * get_scheme_list_for_user(struct config_elements * config, const char * 
     if (j_module_array != NULL) {
       json_array_foreach(json_object_get(j_scheme_modules, "module"), index, j_element) {
         instance = get_user_auth_scheme_module_instance(config, json_string_value(json_object_get(j_element, "name")));
-        if (instance != NULL) {
+        if (instance != NULL && instance->enabled) {
           can_use = instance->module->user_auth_scheme_module_can_use(config->config_m, username, instance->cls);
           if (can_use != GLEWLWYD_IS_NOT_AVAILABLE) {
             if ((has_scheme = user_has_scheme(config, username, json_string_value(json_object_get(j_element, "name")))) == G_OK) {
