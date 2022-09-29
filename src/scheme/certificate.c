@@ -379,7 +379,7 @@ static json_t * get_user_certificate_list_user_property(struct config_module * c
             json_object_del(json_object_get(j_parsed_certificate, "certificate"), "x509");
             json_array_append(j_certificate_array, json_object_get(j_parsed_certificate, "certificate"));
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use certificate - Error parse_certificate (1)");
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_user_certificate_list_user_property certificate - Error parse_certificate (1)");
           }
           json_decref(j_parsed_certificate);
         } else if (json_is_array(j_user_certificate)) {
@@ -389,13 +389,13 @@ static json_t * get_user_certificate_list_user_property(struct config_module * c
               json_object_del(json_object_get(j_parsed_certificate, "certificate"), "x509");
               json_array_append(j_certificate_array, json_object_get(j_parsed_certificate, "certificate"));
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use certificate - Error parse_certificate (2)");
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_user_certificate_list_user_property certificate - Error parse_certificate (2)");
             }
             json_decref(j_parsed_certificate);
           }
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use certificate - Error allocating resources for j_certificate_array");
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_certificate_list_user_property certificate - Error allocating resources for j_certificate_array");
       }
     }
     if (!json_string_null_or_empty(json_object_get(j_parameters, "user-dn-property"))) {
@@ -417,7 +417,7 @@ static json_t * get_user_certificate_list_user_property(struct config_module * c
     }
     json_decref(j_certificate_array);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_can_use certificate - Error glewlwyd_module_callback_get_user");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_user_certificate_list_user_property certificate - Error glewlwyd_module_callback_get_user");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
   json_decref(j_user);
