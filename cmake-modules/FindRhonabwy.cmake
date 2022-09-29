@@ -15,6 +15,7 @@
 
 #=============================================================================
 # Copyright 2018 Nicolas Mora <mail@babelouest.org>
+# Copyright 2018 Silvio Clecio <silvioprog@gmail.com>
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public License
@@ -56,13 +57,17 @@ elseif (RHONABWY_INCLUDE_DIR AND EXISTS "${RHONABWY_INCLUDE_DIR}/rhonabwy.h")
         string(REGEX REPLACE "${regex_rhonabwy_version}" "\\1" RHONABWY_VERSION_STRING "${rhonabwy_version}")
         unset(regex_rhonabwy_version)
         unset(rhonabwy_version)
-    endif()
+    endif ()
 endif ()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Rhonabwy
         REQUIRED_VARS RHONABWY_LIBRARY RHONABWY_INCLUDE_DIR
         VERSION_VAR RHONABWY_VERSION_STRING)
+
+if (PC_RHONABWY_FOUND)
+    set(RHONABWY_FOUND 1)
+endif ()
 
 if (RHONABWY_FOUND)
     set(RHONABWY_LIBRARIES ${RHONABWY_LIBRARY})
