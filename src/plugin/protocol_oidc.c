@@ -4116,7 +4116,7 @@ static json_t * generate_authorization_code(struct _oidc_config * config,
                                           const char * s_hash,
                                           const char * sid,
                                           const char * dpop_jkt) {
-  char code[OIDC_CODE_LENGTH] = {0}, * code_hash = NULL, * expiration_clause, ** scope_array = NULL, * str_claims = NULL, * str_authorization_details = NULL;
+  char code[OIDC_CODE_LENGTH+1] = {0}, * code_hash = NULL, * expiration_clause, ** scope_array = NULL, * str_claims = NULL, * str_authorization_details = NULL;
   json_t * j_query, * j_code_id, * j_return;
   int res, i;
   time_t now;
