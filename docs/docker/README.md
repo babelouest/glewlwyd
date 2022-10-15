@@ -1,6 +1,6 @@
 # Docker image builder for Glewlwyd
 
-This docker image is based on Alpine Linux 3.15.2 and Glewlwyd latest alpine package available on https://github.com/babelouest/glewlwyd/releases/ .
+This docker image is based on Alpine Linux 3.16.2 and Glewlwyd latest alpine package available on https://github.com/babelouest/glewlwyd/releases/ .
 
 ## Build the docker image
 
