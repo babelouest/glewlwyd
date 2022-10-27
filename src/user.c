@@ -1199,7 +1199,7 @@ int glewlwyd_module_callback_check_user_password(struct config_module * config, 
   
   j_result = auth_check_user_credentials(config->glewlwyd_config, username, password);
   if (json_is_integer(json_object_get(j_result, "result"))) {
-    ret = json_integer_value(json_object_get(j_result, "result"));
+    ret = (int)json_integer_value(json_object_get(j_result, "result"));
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_module_callback_check_user_password - Error auth_check_user_credentials");
     ret = G_ERROR;

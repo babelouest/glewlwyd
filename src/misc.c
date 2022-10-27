@@ -57,7 +57,7 @@ char * get_file_content(const char * file_path) {
   f = fopen (file_path, "rb");
   if (f) {
     fseek (f, 0, SEEK_END);
-    length = ftell (f);
+    length = (size_t)ftell (f);
     fseek (f, 0, SEEK_SET);
     buffer = o_malloc((length+1));
     if (buffer) {
@@ -127,7 +127,7 @@ char * get_client_hostname(const struct _u_request * request) {
  */
 unsigned char random_at_most(unsigned char max, int nonce, int * is_error) {
   unsigned char
-  num_bins = (unsigned char) max + 1,
+  num_bins = (unsigned char) (max + 1),
   num_rand = (unsigned char) 0xff,
   bin_size = num_rand / num_bins,
   defect   = num_rand % num_bins;
@@ -167,7 +167,7 @@ char * rand_string_from_charset(char * str, size_t str_size, const char * charse
   
   if (str_size && str != NULL) {
     for (n = 0; n < str_size; n++) {
-      rnd = random_at_most((o_strlen(charset)) - 2, 0, &is_error);
+      rnd = random_at_most((unsigned char)(o_strlen(charset) - 2), 0, &is_error);
       if (is_error) {
         return NULL;
       }
@@ -191,7 +191,7 @@ char * rand_string_nonce(char * str, size_t str_size) {
   
   if (str_size && str != NULL) {
     for (n = 0; n < str_size; n++) {
-      rnd = random_at_most((o_strlen(charset)) - 2, 1, &is_error);
+      rnd = random_at_most((unsigned char)(o_strlen(charset) - 2), 1, &is_error);
       if (is_error) {
         return NULL;
       }
@@ -257,7 +257,7 @@ char to_hex(char code) {
  * Generates a digest using the digest_algorithm specified from data and add a salt if specified, stores it in out_digest
  */
 int generate_digest(digest_algorithm digest, const char * data, int use_salt, char * out_digest) {
-  unsigned int res = 1;
+  int res = 1;
   int alg, dig_res;
   gnutls_datum_t key_data;
   char * intermediate = NULL, salt[GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0};
@@ -302,7 +302,7 @@ int generate_digest(digest_algorithm digest, const char * data, int use_salt, ch
         }
         if (res) {
           key_data.data = (unsigned char*)intermediate;
-          key_data.size = o_strlen(intermediate);
+          key_data.size = (unsigned int)o_strlen(intermediate);
           if (key_data.data != NULL && (dig_res = gnutls_fingerprint(alg, &key_data, encoded_key, &encoded_key_size)) == GNUTLS_E_SUCCESS) {
             if (use_salt) {
               memcpy(encoded_key+encoded_key_size, salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
@@ -334,7 +334,7 @@ int generate_digest(digest_algorithm digest, const char * data, int use_salt, ch
  * Generates a digest using the digest_algorithm specified from data and add a salt if specified, stores it in out_digest as raw output
  */
 int generate_digest_raw(digest_algorithm digest, const unsigned char * data, size_t data_len, unsigned char * out_digest, size_t * out_digest_len) {
-  unsigned int res = 0;
+  int res = 0;
   int alg, dig_res;
   gnutls_datum_t key_data;
 
@@ -366,7 +366,7 @@ int generate_digest_raw(digest_algorithm digest, const unsigned char * data, siz
     if(alg != GNUTLS_DIG_UNKNOWN) {
       if (data_len > 0) {
         key_data.data = (unsigned char *)data;
-        key_data.size = data_len;
+        key_data.size = (unsigned int)data_len;
         if (key_data.data != NULL) {
           if ((dig_res = gnutls_fingerprint(alg, &key_data, out_digest, out_digest_len)) == GNUTLS_E_SUCCESS) {
             res = 1;

@@ -134,7 +134,7 @@ json_t * get_scope_list(struct config_elements * config, const char * pattern, s
                       "order_by",
                       "gs_name");
   if (limit) {
-    json_object_set_new(j_query, "limit", json_integer(limit));
+    json_object_set_new(j_query, "limit", json_integer((json_int_t)limit));
   }
   if (!o_strnullempty(pattern)) {
     pattern_escaped = h_escape_string_with_quotes(config->conn, pattern);
@@ -463,10 +463,10 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
                             json_object_set(j_scheme, "scheme_registered", json_false());
                           }
                         } else {
-                          json_array_append_new(j_scheme_remove, json_integer(index_scheme));
+                          json_array_append_new(j_scheme_remove, json_integer((json_int_t)index_scheme));
                         }
                       } else {
-                        json_array_append_new(j_scheme_remove, json_integer(index_scheme));
+                        json_array_append_new(j_scheme_remove, json_integer((json_int_t)index_scheme));
                         y_log_message(Y_LOG_LEVEL_ERROR, "get_validated_auth_scheme_list_from_scope_list - Error get_user_auth_scheme_module_instance");
                       }
                     }
@@ -474,7 +474,7 @@ json_t * get_validated_auth_scheme_list_from_scope_list(struct config_elements *
                       index_scheme = json_array_size(j_scheme_remove);
                       do {
                         index_scheme--;
-                        json_array_remove(j_group, json_integer_value(json_array_get(j_scheme_remove, index_scheme)));
+                        json_array_remove(j_group, (size_t)json_integer_value(json_array_get(j_scheme_remove, index_scheme)));
                       } while (index_scheme != 0);
                     }
                     json_decref(j_scheme_remove);
@@ -668,7 +668,7 @@ json_t * get_client_grant_list(struct config_elements * config, const char * use
                       "offset", offset,
                       "order_by", "client_id");
   if (limit) {
-    json_object_set_new(j_query, "limit", json_integer(limit));
+    json_object_set_new(j_query, "limit", json_integer((json_int_t)limit));
   }
   res = h_select(config->conn, j_query, &j_result, NULL);
   json_decref(j_query);

@@ -391,11 +391,11 @@ int user_session_update(struct config_elements * config, const char * session_ui
                                 "gus_current", 1);
           if (update_login) {
             if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-              expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + config->session_expiration));
+              expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)config->session_expiration));
             } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-              expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + config->session_expiration));
+              expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)config->session_expiration));
             } else { // HOEL_DB_TYPE_SQLITE
-              expiration_clause = msprintf("%u", (now + config->session_expiration));
+              expiration_clause = msprintf("%u", (now + (time_t)config->session_expiration));
             }
             if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
               last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
@@ -464,11 +464,11 @@ int user_session_update(struct config_elements * config, const char * session_ui
         if (update_login) {
           // Refresh session for user
           if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-            expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + config->session_expiration));
+            expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)config->session_expiration));
           } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-            expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + config->session_expiration));
+            expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)config->session_expiration));
           } else { // HOEL_DB_TYPE_SQLITE
-            expiration_clause = msprintf("%u", (now + config->session_expiration));
+            expiration_clause = msprintf("%u", (now + (time_t)config->session_expiration));
           }
           if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
             last_login_clause = msprintf("FROM_UNIXTIME(%u)", (now));
@@ -520,11 +520,11 @@ int user_session_update(struct config_elements * config, const char * session_ui
             if (res == H_OK) {
               // Set session scheme for this scheme with the timeout
               if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-                expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)scheme_instance->guasmi_expiration));
+                expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)scheme_instance->guasmi_expiration));
               } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-                expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)scheme_instance->guasmi_expiration));
+                expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)scheme_instance->guasmi_expiration));
               } else { // HOEL_DB_TYPE_SQLITE
-                expiration_clause = msprintf("%u", (now + (unsigned int)scheme_instance->guasmi_expiration));
+                expiration_clause = msprintf("%u", (now + (time_t)scheme_instance->guasmi_expiration));
               }
               j_query = json_pack("{sss{sOsIs{ss}}}",
                                   "table",

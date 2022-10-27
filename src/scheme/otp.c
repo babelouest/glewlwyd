@@ -532,7 +532,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
 
   if (json_is_object(j_scheme_data)) {
     if (json_object_get(j_scheme_data, "generate-secret") == json_true()) {
-      secret_len = json_integer_value(json_object_get((json_t *)cls, "secret-minimum-size"))*sizeof(unsigned char);
+      secret_len = (size_t)json_integer_value(json_object_get((json_t *)cls, "secret-minimum-size"))*sizeof(unsigned char);
       if ((secret = o_malloc(secret_len)) != NULL) {
         if (!gnutls_rnd(GNUTLS_RND_KEY, secret, secret_len)) {
           if (oath_base32_encode(secret, secret_len, &secret_b32, &secret_b32_len) == OATH_OK) {
@@ -743,8 +743,8 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
         if (0 == o_strcmp(json_string_value(json_object_get(json_object_get(j_otp, "otp"), "type")), "HOTP")) {
           if ((ret = oath_hotp_validate(secret_decoded,
                                         secret_decoded_len,
-                                        json_integer_value(json_object_get(json_object_get(j_otp, "otp"), "moving_factor")),
-                                        json_integer_value(json_object_get((json_t *)cls, "window")),
+                                        (uint64_t)json_integer_value(json_object_get(json_object_get(j_otp, "otp"), "moving_factor")),
+                                        (size_t)json_integer_value(json_object_get((json_t *)cls, "window")),
                                         json_string_value(json_object_get(j_scheme_data, "value")))) >= 0) {
             if (update_otp(config, (json_t *)cls, username, 1) == G_OK) {
               ret = G_OK;
@@ -763,9 +763,9 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
             if ((ret = oath_totp_validate(secret_decoded,
                                           secret_decoded_len,
                                           time(NULL),
-                                          json_integer_value(json_object_get(json_object_get(j_otp, "otp"), "time_step_size")),
-                                          json_integer_value(json_object_get((json_t *)cls, "totp-start-offset")),
-                                          json_integer_value(json_object_get((json_t *)cls, "window")),
+                                          (unsigned int)json_integer_value(json_object_get(json_object_get(j_otp, "otp"), "time_step_size")),
+                                          (time_t)json_integer_value(json_object_get((json_t *)cls, "totp-start-offset")),
+                                          (size_t)json_integer_value(json_object_get((json_t *)cls, "window")),
                                           json_string_value(json_object_get(j_scheme_data, "value")))) >= 0) {
               if (update_otp(config, (json_t *)cls, username, 0) == G_OK) {
                 ret = G_OK;

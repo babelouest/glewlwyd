@@ -5,7 +5,7 @@
  *
  * Copyright 2016-2022 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20220604
+ * Version 20221024
  *
  * The MIT License (MIT)
  * 

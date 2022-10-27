@@ -85,7 +85,7 @@ static json_t * get_cert_from_file_path(const char * path) {
   fl = fopen(path, "r");
   if (fl != NULL) {
     fseek(fl, 0, SEEK_END);
-    len = ftell(fl);
+    len = (size_t)ftell(fl);
     if (len) {
       cert_content = o_malloc(len);
       if (cert_content != NULL) {
@@ -97,7 +97,7 @@ static json_t * get_cert_from_file_path(const char * path) {
           j_return = json_pack("{si}", "result", G_ERROR);
         } else {
           cert_dat.data = (unsigned char *)cert_content;
-          cert_dat.size = len;
+          cert_dat.size = (unsigned int)len;
           if (!gnutls_x509_crt_init(&cert)) {
             if (gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER) >= 0 || gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_PEM) >= 0) {
               if (!gnutls_x509_crt_get_dn(cert, issued_for, &issued_for_len)) {
@@ -586,11 +586,11 @@ static json_t * get_credential_from_session(struct config_module * config, json_
       mod_name_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
       username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER(%s) AND gswu_mod_name = %s)", username_escaped, mod_name_escaped);
       if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
+        expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-expiration"))));
       } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        expiration_clause = msprintf("> TO_TIMESTAMP(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
+        expiration_clause = msprintf("> TO_TIMESTAMP(%u)", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-expiration"))));
       } else { // HOEL_DB_TYPE_SQLITE
-        expiration_clause = msprintf("> %u", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-expiration"))));
+        expiration_clause = msprintf("> %u", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-expiration"))));
       }
       j_query = json_pack("{sss[ssssss]s{sss{ssss}sis{ssss}}}",
                           "table",
@@ -782,11 +782,11 @@ static json_t * get_assertion_from_session(struct config_module * config, json_t
       mod_name_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
       username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER(%s) AND gswu_mod_name = %s)", username_escaped, mod_name_escaped);
       if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
+        expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-assertion"))));
       } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        expiration_clause = msprintf("> TO_TIMESTAMP(%u)", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
+        expiration_clause = msprintf("> TO_TIMESTAMP(%u)", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-assertion"))));
       } else { // HOEL_DB_TYPE_SQLITE
-        expiration_clause = msprintf("> %u", (now - (unsigned int)json_integer_value(json_object_get(j_params, "credential-assertion"))));
+        expiration_clause = msprintf("> %u", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-assertion"))));
       }
       j_query = json_pack("{sss[ssss]s{sss{ssss}sis{ssss}si}}",
                           "table",
@@ -900,7 +900,7 @@ static int validate_apple_certificate_chain(json_t * j_params, gnutls_x509_crt_t
   for (i=1; i<x5c_array_size; i++) {
     cbor_cert = cbor_array_get(x5c_array, i);
     cert_dat.data = cbor_bytestring_handle(cbor_cert);
-    cert_dat.size = cbor_bytestring_length(cbor_cert);
+    cert_dat.size = (unsigned int)cbor_bytestring_length(cbor_cert);
     if (gnutls_x509_crt_init(&cert_x509[i]) < 0 || gnutls_x509_crt_import(cert_x509[i], &cert_dat, GNUTLS_X509_FMT_DER) < 0) {
       y_log_message(Y_LOG_LEVEL_ERROR, "validate_apple_certificate_chain - Error import chain cert at index %zu", i);
       ret = G_ERROR;
@@ -910,7 +910,7 @@ static int validate_apple_certificate_chain(json_t * j_params, gnutls_x509_crt_t
 
   if (ret == G_OK) {
     cert_dat.data = (unsigned char *)json_string_value(json_object_get(json_object_get(j_params, "apple-root-ca-content"), "x509"));
-    cert_dat.size = json_string_length(json_object_get(json_object_get(j_params, "apple-root-ca-content"), "x509"));
+    cert_dat.size = (unsigned int)json_string_length(json_object_get(json_object_get(j_params, "apple-root-ca-content"), "x509"));
     if (gnutls_x509_crt_init(&root_x509) || gnutls_x509_crt_import(root_x509, &cert_dat, GNUTLS_X509_FMT_PEM)) {
       y_log_message(Y_LOG_LEVEL_ERROR, "validate_apple_certificate_chain - Error import root cert");
       ret = G_ERROR;
@@ -920,7 +920,7 @@ static int validate_apple_certificate_chain(json_t * j_params, gnutls_x509_crt_t
   if (ret == G_OK) {
     if (!gnutls_x509_trust_list_init(&tlist, 0)) {
       if (gnutls_x509_trust_list_add_cas(tlist, &root_x509, 1, 0) >= 0) {
-        if (gnutls_x509_trust_list_verify_crt(tlist, cert_x509, x5c_array_size, 0, &result, NULL) >= 0) {
+        if (gnutls_x509_trust_list_verify_crt(tlist, cert_x509, (unsigned int)x5c_array_size, 0, &result, NULL) >= 0) {
           if (result) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "validate_apple_certificate_chain - certificate chain invalid");
             ret = G_ERROR_UNAUTHORIZED;
@@ -965,13 +965,13 @@ static int validate_certificate_from_root(json_t * j_params, gnutls_x509_crt_t c
     json_array_foreach(json_object_get(j_params, "root-ca-array"), index, j_cert) {
       if (0 == o_strcmp(issuer, json_string_value(json_object_get(j_cert, "dn")))) {
         cert_dat.data = (unsigned char *)json_string_value(json_object_get(j_cert, "x509"));
-        cert_dat.size = json_string_length(json_object_get(j_cert, "x509"));
+        cert_dat.size = (unsigned int)json_string_length(json_object_get(j_cert, "x509"));
         if (!gnutls_x509_crt_init(&root_x509) && !gnutls_x509_crt_import(root_x509, &cert_dat, GNUTLS_X509_FMT_PEM)) {
           cert_x509[0] = cert_leaf;
           for (i=1; i<x5c_array_size; i++) {
             cbor_cert = cbor_array_get(x5c_array, i);
             cert_dat.data = cbor_bytestring_handle(cbor_cert);
-            cert_dat.size = cbor_bytestring_length(cbor_cert);
+            cert_dat.size = (unsigned int)cbor_bytestring_length(cbor_cert);
             if (gnutls_x509_crt_init(&cert_x509[i]) < 0 || gnutls_x509_crt_import(cert_x509[i], &cert_dat, GNUTLS_X509_FMT_DER) < 0) {
               y_log_message(Y_LOG_LEVEL_ERROR, "validate_certificate_from_root - Error import chain cert at index %zu", i);
               ret = G_ERROR;
@@ -996,7 +996,7 @@ static int validate_certificate_from_root(json_t * j_params, gnutls_x509_crt_t c
   if (ret == G_OK) {
     if (!gnutls_x509_trust_list_init(&tlist, 0)) {
       if (gnutls_x509_trust_list_add_cas(tlist, &root_x509, 1, 0) >= 0) {
-        if (gnutls_x509_trust_list_verify_crt(tlist, cert_x509, x5c_array_size+1, 0, &result, NULL) >= 0) {
+        if (gnutls_x509_trust_list_verify_crt(tlist, cert_x509, (unsigned int)x5c_array_size+1, 0, &result, NULL) >= 0) {
           if (result) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "validate_certificate_from_root - certificate chain invalid");
             ret = G_ERROR;
@@ -1041,7 +1041,7 @@ static int validate_safetynet_ca_root(json_t * j_params, gnutls_x509_crt_t cert_
         if (o_base64_decode((const unsigned char *)json_string_value(j_cert), json_string_length(j_cert), header_cert_decoded, &header_cert_decoded_len)) {
           if (!gnutls_x509_crt_init(&cert_x509[i])) {
             cert_dat.data = header_cert_decoded;
-            cert_dat.size = header_cert_decoded_len;
+            cert_dat.size = (unsigned int)header_cert_decoded_len;
             if ((ret = gnutls_x509_crt_import(cert_x509[i], &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
               y_log_message(Y_LOG_LEVEL_ERROR, "validate_safetynet_ca_root - Error gnutls_x509_crt_import: %d", ret);
               ret = G_ERROR;
@@ -1067,14 +1067,14 @@ static int validate_safetynet_ca_root(json_t * j_params, gnutls_x509_crt_t cert_
 
   if (ret == G_OK) {
     cert_dat.data = (unsigned char *)json_string_value(json_object_get(json_object_get(j_params, "google-root-ca-r2-content"), "x509"));
-    cert_dat.size = json_string_length(json_object_get(json_object_get(j_params, "google-root-ca-r2-content"), "x509"));
+    cert_dat.size = (unsigned int)json_string_length(json_object_get(json_object_get(j_params, "google-root-ca-r2-content"), "x509"));
     if (!gnutls_x509_crt_init(&cert_x509[json_array_size(j_header_x5c)]) &&
         !gnutls_x509_crt_import(cert_x509[json_array_size(j_header_x5c)], &cert_dat, GNUTLS_X509_FMT_PEM)) {
       if (!gnutls_x509_crt_init(&root_x509) &&
           !gnutls_x509_crt_import(root_x509, &cert_dat, GNUTLS_X509_FMT_PEM)) {
         if (!gnutls_x509_trust_list_init(&tlist, 0)) {
           if (gnutls_x509_trust_list_add_cas(tlist, &root_x509, 1, 0) >= 0) {
-            if (gnutls_x509_trust_list_verify_crt(tlist, cert_x509, (json_array_size(j_header_x5c)+1), 0, &result, NULL) >= 0) {
+            if (gnutls_x509_trust_list_verify_crt(tlist, cert_x509, ((unsigned int)json_array_size(j_header_x5c)+1), 0, &result, NULL) >= 0) {
               if (!result) {
                 ret = G_OK;
               } else {
@@ -1263,7 +1263,7 @@ static json_t * check_attestation_apple(json_t * j_params, cbor_item_t * auth_da
 
       cert_leaf = cbor_array_get(x5c_array, 0);
       cert_dat.data = cbor_bytestring_handle(cert_leaf);
-      cert_dat.size = cbor_bytestring_length(cert_leaf);
+      cert_dat.size = (unsigned int)cbor_bytestring_length(cert_leaf);
 
       if ((ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
         json_array_append_new(j_error, json_string("Error importing x509 certificate"));
@@ -1459,11 +1459,11 @@ static json_t * check_attestation_packed(json_t * j_params, cbor_item_t * auth_d
       }
 
       signature.data = cbor_bytestring_handle(sig);
-      signature.size = cbor_bytestring_length(sig);
+      signature.size = (unsigned int)cbor_bytestring_length(sig);
 
       memcpy(data.data, cbor_bytestring_handle(auth_data), cbor_bytestring_length(auth_data));
       memcpy(data.data + cbor_bytestring_length(auth_data), client_data_hash, client_data_hash_len);
-      data.size = cbor_bytestring_length(auth_data) + client_data_hash_len;
+      data.size = (unsigned int)(cbor_bytestring_length(auth_data) + client_data_hash_len);
 
       // packed disable SELF attestation for now
       if (x5c_array == NULL) {
@@ -1486,7 +1486,7 @@ static json_t * check_attestation_packed(json_t * j_params, cbor_item_t * auth_d
 
         cert_leaf = cbor_array_get(x5c_array, 0);
         cert_dat.data = cbor_bytestring_handle(cert_leaf);
-        cert_dat.size = cbor_bytestring_length(cert_leaf);
+        cert_dat.size = (unsigned int)cbor_bytestring_length(cert_leaf);
 
         if ((ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
           json_array_append_new(j_error, json_string("Error importing x509 certificate"));
@@ -1727,7 +1727,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
         break;
       }
       cert_dat.data = header_cert_decoded;
-      cert_dat.size = header_cert_decoded_len;
+      cert_dat.size = (unsigned int)header_cert_decoded_len;
       if ((ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
         json_array_append_new(j_error, json_string("Error importing x509 certificate"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - Error gnutls_pcert_import_x509_raw: %d", ret);
@@ -1866,7 +1866,7 @@ static json_t * check_attestation_fido_u2f(json_t * j_params, unsigned char * cr
       }
       att_cert = cbor_array_get(x5c, 0);
       cert_dat.data = cbor_bytestring_handle(att_cert);
-      cert_dat.size = cbor_bytestring_length(att_cert);
+      cert_dat.size = (unsigned int)cbor_bytestring_length(att_cert);
       if ((ret = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_DER)) < 0) {
         json_array_append_new(j_error, json_string("Error importing x509 certificate"));
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_fido_u2f - Error gnutls_pcert_import_x509_raw: %d", ret);
@@ -1940,10 +1940,10 @@ static json_t * check_attestation_fido_u2f(json_t * j_params, unsigned char * cr
 
       // Let's verify sig over data_signed
       data.data = data_signed;
-      data.size = data_signed_offset;
+      data.size = (unsigned int)data_signed_offset;
 
       signature.data = cbor_bytestring_handle(sig);
-      signature.size = cbor_bytestring_length(sig);
+      signature.size = (unsigned int)cbor_bytestring_length(sig);
 
       if (gnutls_pubkey_verify_data2(pubkey, GNUTLS_SIGN_ECDSA_SHA256, 0, &data, &signature)) {
         json_array_append_new(j_error, json_string("Invalid signature"));
@@ -2169,7 +2169,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           rpid = json_string_value(json_object_get(j_params, "rp-origin"));
         }
         if (o_strchr(rpid, ':') != NULL) {
-          rpid_len = o_strchr(rpid, ':') - rpid;
+          rpid_len = (size_t)(o_strchr(rpid, ':') - rpid);
         } else {
           rpid_len = o_strlen(rpid);
         }
@@ -2205,7 +2205,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         // Step 12 ignored for now (no extension)
         //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension: %d", !!(cbor_bs_handle[FLAGS_OFFSET] & FLAG_ED));
 
-        credential_id_len = cbor_bs_handle[CRED_ID_L_OFFSET+1] | (cbor_bs_handle[CRED_ID_L_OFFSET] << 8);
+        credential_id_len = (size_t)(cbor_bs_handle[CRED_ID_L_OFFSET+1] | (cbor_bs_handle[CRED_ID_L_OFFSET] << 8));
         if (cbor_bs_handle_len < CRED_ID_L_OFFSET+2+credential_id_len) {
           json_array_append_new(j_error, json_string("auth_data invalid size"));
           ret = G_ERROR_PARAM;
@@ -2265,13 +2265,13 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
             memcpy(cert_x, cbor_bytestring_handle(cbor_value), cbor_bytestring_length(cbor_value));
             cert_x_len = cbor_bytestring_length(cbor_value);
             g_x.data = cert_x;
-            g_x.size = cbor_bytestring_length(cbor_value);
+            g_x.size = (unsigned int)cbor_bytestring_length(cbor_value);
           } else if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 2 && cbor_isa_bytestring(cbor_value)) {
             has_y = 1;
             memcpy(cert_y, cbor_bytestring_handle(cbor_value), cbor_bytestring_length(cbor_value));
             cert_y_len = cbor_bytestring_length(cbor_value);
             g_y.data = cert_y;
-            g_y.size = cbor_bytestring_length(cbor_value);
+            g_y.size = (unsigned int)cbor_bytestring_length(cbor_value);
           } else if (cbor_isa_uint(cbor_key) && cbor_get_int(cbor_key) == 1 && cbor_isa_uint(cbor_value) && cbor_get_int(cbor_value) == 2) {
             key_type_valid = 1;
           } else if (cbor_isa_uint(cbor_key) && cbor_get_int(cbor_key) == 3 && cbor_isa_negint(cbor_value)) {
@@ -2414,7 +2414,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           j_return = json_pack("{si}", "result", G_OK);
           status = 1;
         }
-        counter = cbor_bs_handle[COUNTER_OFFSET+3] | (cbor_bs_handle[COUNTER_OFFSET+2] << 8) | (cbor_bs_handle[COUNTER_OFFSET+1] << 16) | (cbor_bs_handle[COUNTER_OFFSET] << 24);
+        counter = (uint32_t)(cbor_bs_handle[COUNTER_OFFSET+3] | (cbor_bs_handle[COUNTER_OFFSET+2] << 8) | (cbor_bs_handle[COUNTER_OFFSET+1] << 16) | (cbor_bs_handle[COUNTER_OFFSET] << 24));
         // Store credential in the database
         j_query = json_pack("{sss{siss%sOss%sOsi}s{sO}}",
                             "table",
@@ -2595,7 +2595,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         rpid = json_string_value(json_object_get(j_params, "rp-origin"));
       }
       if (o_strchr(rpid, ':') != NULL) {
-        rpid_len = o_strchr(rpid, ':') - rpid;
+        rpid_len = (size_t)(o_strchr(rpid, ':') - rpid);
       } else {
         rpid_len = o_strlen(rpid);
       }
@@ -2633,7 +2633,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         break;
       }
       counter = auth_data + COUNTER_OFFSET;
-      counter_value = counter[3] | (counter[2] << 8) | (counter[1] << 16) | (counter[0] << 24);
+      counter_value = (size_t)(counter[3] | (counter[2] << 8) | (counter[1] << 16) | (counter[0] << 24));
 
       if (gnutls_pubkey_init(&pubkey) < 0) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error gnutls_pubkey_init");
@@ -2641,7 +2641,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         break;
       }
       pubkey_dat.data = (unsigned char *)json_string_value(json_object_get(json_object_get(j_credential, "credential"), "public_key"));
-      pubkey_dat.size = json_string_length(json_object_get(json_object_get(j_credential, "credential"), "public_key"));
+      pubkey_dat.size = (unsigned int)json_string_length(json_object_get(json_object_get(j_credential, "credential"), "public_key"));
       if ((ret = gnutls_pubkey_import(pubkey, &pubkey_dat, GNUTLS_X509_FMT_PEM)) < 0) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error gnutls_pubkey_import: %d", ret);
         ret = G_ERROR;
@@ -2665,10 +2665,10 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
 
       // Let's verify sig over data_signed
       data.data = data_signed;
-      data.size = (auth_data_len+cdata_hash_len);
+      data.size = (unsigned int)(auth_data_len+cdata_hash_len);
 
       signature.data = dat.data;
-      signature.size = dat.size;
+      signature.size = (unsigned int)dat.size;
 
       if ((res = gnutls_pubkey_verify_data2(pubkey, GNUTLS_SIGN_ECDSA_SHA256, 0, &data, &signature)) < 0) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Invalid signature: %d", res);

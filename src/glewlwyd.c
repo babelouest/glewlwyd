@@ -294,7 +294,7 @@ int main (int argc, char ** argv) {
 
   if (config->bind_address != NULL) {
     bind_address.sin_family = AF_INET;
-    bind_address.sin_port = htons(config->port);
+    bind_address.sin_port = htons((uint16_t)config->port);
     inet_aton(config->bind_address, (struct in_addr *)&bind_address.sin_addr.s_addr);
     if (ulfius_init_instance(config->instance, config->port, &bind_address, NULL) != U_OK) {
       fprintf(stderr, "Error initializing webservice instance with bind address %s\n", config->bind_address);
@@ -323,7 +323,7 @@ int main (int argc, char ** argv) {
     }
     if (config->bind_address_metrics != NULL) {
       bind_address_metrics.sin_family = AF_INET;
-      bind_address_metrics.sin_port = htons(config->metrics_endpoint_port);
+      bind_address_metrics.sin_port = htons((uint16_t)config->metrics_endpoint_port);
       inet_aton(config->bind_address_metrics, (struct in_addr *)&bind_address_metrics.sin_addr.s_addr);
       if (ulfius_init_instance(config->instance_metrics, config->metrics_endpoint_port, &bind_address_metrics, NULL) != U_OK) {
         fprintf(stderr, "Error initializing metrics instance_metrics with bind address %s\n", config->bind_address_metrics);
@@ -828,7 +828,7 @@ int build_config_from_args(int argc, char ** argv, struct config_elements * conf
           break;
         case 'p':
           if (optarg != NULL) {
-            config->port = strtol(optarg, NULL, 10);
+            config->port = (unsigned int)strtol(optarg, NULL, 10);
             if (config->port <= 0 || config->port > 65535) {
               fprintf(stderr, "Error!\nInvalid TCP Port number\n\tPlease specify an integer value between 1 and 65535");
               ret = G_ERROR_PARAM;
@@ -935,8 +935,8 @@ int build_config_from_file(struct config_elements * config) {
   int int_value = 0,
       int_value_2 = 0,
       int_value_3 = 0,
-      i,
       ret = G_OK;
+  unsigned int i;
   char * one_log_mode, * real_path, ** splitted = NULL;
 
   config_init(&cfg);
@@ -1168,7 +1168,7 @@ int build_config_from_file(struct config_elements * config) {
     // Populate mime types u_map
     mime_type_list = config_lookup(&cfg, "static_files_mime_types");
     if (mime_type_list != NULL) {
-      int len = config_setting_length(mime_type_list);
+      unsigned int len = (unsigned int)config_setting_length(mime_type_list);
       for (i=0; i<len; i++) {
         mime_type = config_setting_get_elem(mime_type_list, i);
         if (mime_type != NULL) {
@@ -1190,7 +1190,7 @@ int build_config_from_file(struct config_elements * config) {
     if (config_lookup_bool(&cfg, "use_secure_connection", &int_value) == CONFIG_TRUE) {
       if (config_lookup_string(&cfg, "secure_connection_key_file", &str_value) == CONFIG_TRUE &&
           config_lookup_string(&cfg, "secure_connection_pem_file", &str_value_2) == CONFIG_TRUE) {
-        config->use_secure_connection = int_value;
+        config->use_secure_connection = (unsigned int)int_value;
         config->secure_connection_key_file = o_strdup(str_value);
         config->secure_connection_pem_file = o_strdup(str_value_2);
         if (config_lookup_string(&cfg, "secure_connection_ca_file", &str_value) == CONFIG_TRUE) {
@@ -1253,7 +1253,7 @@ int build_config_from_file(struct config_elements * config) {
           config_setting_lookup_string(database, "password", &str_value_4);
           config_setting_lookup_string(database, "dbname", &str_value_5);
           config_setting_lookup_int(database, "port", &int_value);
-          config->conn = h_connect_mariadb(str_value_2, str_value_3, str_value_4, str_value_5, int_value, NULL);
+          config->conn = h_connect_mariadb(str_value_2, str_value_3, str_value_4, str_value_5, (unsigned int)int_value, NULL);
           if (config->conn == NULL) {
             fprintf(stderr, "Error opening mariadb database %s\n", str_value_5);
             ret = G_ERROR_PARAM;
@@ -1791,7 +1791,7 @@ int build_config_from_env(struct config_elements * config) {
     } else if (0 == o_strcmp(value, "mariadb")) {
       lvalue = strtol(getenv(GLEWLWYD_ENV_DATABASE_MARIADB_PORT), &endptr, 10);
       if (!(*endptr) && lvalue > 0 && lvalue < 65535) {
-        if ((config->conn = h_connect_mariadb(getenv(GLEWLWYD_ENV_DATABASE_MARIADB_HOST), getenv(GLEWLWYD_ENV_DATABASE_MARIADB_USER), getenv(GLEWLWYD_ENV_DATABASE_MARIADB_PASSWORD), getenv(GLEWLWYD_ENV_DATABASE_MARIADB_DBNAME), lvalue, NULL)) == NULL) {
+        if ((config->conn = h_connect_mariadb(getenv(GLEWLWYD_ENV_DATABASE_MARIADB_HOST), getenv(GLEWLWYD_ENV_DATABASE_MARIADB_USER), getenv(GLEWLWYD_ENV_DATABASE_MARIADB_PASSWORD), getenv(GLEWLWYD_ENV_DATABASE_MARIADB_DBNAME), (unsigned int)lvalue, NULL)) == NULL) {
           fprintf(stderr, "Error opening mariadb database '%s'\n", getenv(GLEWLWYD_ENV_DATABASE_MARIADB_DBNAME));
           ret = G_ERROR_PARAM;
         } else {
@@ -2269,8 +2269,8 @@ int load_user_module_instance_list(struct config_elements * config) {
               cur_instance->cls = NULL;
               cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
               cur_instance->module = module;
-              cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
-              cur_instance->multiple_passwords = json_integer_value(json_object_get(j_instance, "multiple_passwords"));
+              cur_instance->readonly = (short int)json_integer_value(json_object_get(j_instance, "readonly"));
+              cur_instance->multiple_passwords = (short int)json_integer_value(json_object_get(j_instance, "multiple_passwords"));
               if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
                 if (json_integer_value(json_object_get(j_instance, "enabled"))) {
                   j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
@@ -2966,7 +2966,7 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
               cur_instance->guasmi_id = json_integer_value(json_object_get(j_instance, "guasmi_id"));
               cur_instance->guasmi_expiration = json_integer_value(json_object_get(j_instance, "guasmi_expiration"));
               cur_instance->guasmi_max_use = json_integer_value(json_object_get(j_instance, "guasmi_max_use"));
-              cur_instance->guasmi_allow_user_register = json_integer_value(json_object_get(j_instance, "guasmi_allow_user_register"));
+              cur_instance->guasmi_allow_user_register = (short int)json_integer_value(json_object_get(j_instance, "guasmi_allow_user_register"));
               if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
                 if (json_integer_value(json_object_get(j_instance, "enabled"))) {
                   j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
@@ -3306,7 +3306,7 @@ int load_client_module_instance_list(struct config_elements * config) {
             if (cur_instance != NULL) {
               cur_instance->cls = NULL;
               cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
-              cur_instance->readonly = json_integer_value(json_object_get(j_instance, "readonly"));
+              cur_instance->readonly = (short int)json_integer_value(json_object_get(j_instance, "readonly"));
               cur_instance->module = module;
               if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
                 if (json_integer_value(json_object_get(j_instance, "enabled"))) {

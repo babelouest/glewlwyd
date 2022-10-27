@@ -1383,9 +1383,9 @@ static json_t * check_parameters (json_t * j_params) {
 }
 
 static int check_scope_list(const char * scope_expected, const char * scope_token) {
-  int ret = 1, scope_expected_count, scope_token_count;
+  int ret = 1;
+  size_t scope_expected_count, scope_token_count, i;
   char ** scope_expected_list = NULL, ** scope_token_list = NULL;
-  size_t i;
 
   if (scope_expected == NULL) {
     return 1;
@@ -1706,7 +1706,7 @@ static json_t * oidc_verify_dpop_proof(struct _oidc_config * config, const struc
             }
             if (access_token != NULL) {
               hash_data.data = (unsigned char*)access_token;
-              hash_data.size = o_strlen(access_token);
+              hash_data.size = (unsigned int)o_strlen(access_token);
               if (gnutls_fingerprint(GNUTLS_DIG_SHA256, &hash_data, ath, &ath_len) != GNUTLS_E_SUCCESS) {
                 y_log_message(Y_LOG_LEVEL_ERROR, "oidc_verify_dpop_proof - Error gnutls_fingerprint");
                 j_return = json_pack("{si}", "result", G_ERROR);
@@ -2455,7 +2455,7 @@ static int get_session_token(struct _oidc_config * config, const struct _u_reque
         y_log_message(Y_LOG_LEVEL_ERROR, "get_session_token - Error o_strncpy");
         ret = G_ERROR;
       } else {
-        if (ulfius_add_same_site_cookie_to_response(response, json_string_value(json_object_get(config->j_params, "session-cookie-name")), sid, expires, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", config->glewlwyd_config->glewlwyd_config->cookie_secure, 0, config->glewlwyd_config->glewlwyd_config->cookie_same_site) != U_OK) {
+        if (ulfius_add_same_site_cookie_to_response(response, json_string_value(json_object_get(config->j_params, "session-cookie-name")), sid, expires, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", (int)config->glewlwyd_config->glewlwyd_config->cookie_secure, 0, (int)config->glewlwyd_config->glewlwyd_config->cookie_same_site) != U_OK) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "get_session_token - Error ulfius_add_same_site_cookie_to_response (1)");
           ret = G_ERROR;
         }
@@ -2464,7 +2464,7 @@ static int get_session_token(struct _oidc_config * config, const struct _u_reque
       if (rand_string_nonce(sid, OIDC_SID_LENGTH) == NULL) {
         ret = G_ERROR;
       } else {
-        if (ulfius_add_same_site_cookie_to_response(response, json_string_value(json_object_get(config->j_params, "session-cookie-name")), sid, expires, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", config->glewlwyd_config->glewlwyd_config->cookie_secure, 0, config->glewlwyd_config->glewlwyd_config->cookie_same_site) != U_OK) {
+        if (ulfius_add_same_site_cookie_to_response(response, json_string_value(json_object_get(config->j_params, "session-cookie-name")), sid, expires, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", (int)config->glewlwyd_config->glewlwyd_config->cookie_secure, 0, (int)config->glewlwyd_config->glewlwyd_config->cookie_same_site) != U_OK) {
           y_log_message(Y_LOG_LEVEL_DEBUG, "get_session_token - Error ulfius_add_same_site_cookie_to_response (2)");
           ret = G_ERROR;
         }
@@ -2489,7 +2489,7 @@ static char * generate_x_hash(struct _oidc_config * config, json_t * j_client, c
     else if (key_size == 512) dig_alg = GNUTLS_DIG_SHA512;
     if (dig_alg != GNUTLS_DIG_UNKNOWN) {
       hash_data.data = (unsigned char*)value;
-      hash_data.size = o_strlen(value);
+      hash_data.size = (unsigned int)o_strlen(value);
       if (gnutls_fingerprint(dig_alg, &hash_data, x_hash, &x_hash_len) == GNUTLS_E_SUCCESS) {
         if (o_base64url_encode(x_hash, x_hash_len/2, (unsigned char *)x_hash_encoded, &x_hash_encoded_len)) {
           to_return = o_strndup(x_hash_encoded, x_hash_encoded_len);
@@ -3034,11 +3034,11 @@ static int serialize_pushed_request_uri(struct _oidc_config * config,
           str_authorization_details = json_dumps(j_authorization_details, JSON_COMPACT);
         }
         if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-          expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)config->request_uri_duration));
+          expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)config->request_uri_duration));
         } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-          expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)config->request_uri_duration ));
+          expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)config->request_uri_duration ));
         } else { // HOEL_DB_TYPE_SQLITE
-          expires_at_clause = msprintf("%u", (now + (unsigned int)config->request_uri_duration));
+          expires_at_clause = msprintf("%u", (now + (time_t)config->request_uri_duration));
         }
         if (u_map_count(additional_parameters)) {
           if ((j_additional_parameters = json_object()) != NULL) {
@@ -3278,7 +3278,7 @@ static char * generate_id_token(struct _oidc_config * config,
               // take the half left of the has, then encode in base64-url it
               if (dig_alg != GNUTLS_DIG_UNKNOWN) {
                 hash_data.data = (unsigned char*)access_token;
-                hash_data.size = o_strlen(access_token);
+                hash_data.size = (unsigned int)o_strlen(access_token);
                 if (gnutls_fingerprint(dig_alg, &hash_data, at_hash, &at_hash_len) == GNUTLS_E_SUCCESS) {
                   if (o_base64url_encode(at_hash, at_hash_len/2, (unsigned char *)at_hash_encoded, &at_hash_encoded_len)) {
                     json_object_set_new(j_user_info, "at_hash", json_stringn(at_hash_encoded, at_hash_encoded_len));
@@ -3297,7 +3297,7 @@ static char * generate_id_token(struct _oidc_config * config,
               // take the half left of the has, then encode in base64-url it
               if (dig_alg != GNUTLS_DIG_UNKNOWN) {
                 hash_data.data = (unsigned char*)code;
-                hash_data.size = o_strlen(code);
+                hash_data.size = (unsigned int)o_strlen(code);
                 if (gnutls_fingerprint(dig_alg, &hash_data, c_hash, &c_hash_len) == GNUTLS_E_SUCCESS) {
                   if (o_base64url_encode(c_hash, c_hash_len/2, (unsigned char *)c_hash_encoded, &c_hash_encoded_len)) {
                     json_object_set_new(j_user_info, "c_hash", json_stringn(c_hash_encoded, c_hash_encoded_len));
@@ -3322,7 +3322,7 @@ static char * generate_id_token(struct _oidc_config * config,
               // take the half left of the hash, then encode in base64-url it
               if (dig_alg != GNUTLS_DIG_UNKNOWN) {
                 hash_data.data = (unsigned char*)refresh_token;
-                hash_data.size = o_strlen(refresh_token);
+                hash_data.size = (unsigned int)o_strlen(refresh_token);
                 if (gnutls_fingerprint(dig_alg, &hash_data, rt_hash, &rt_hash_len) == GNUTLS_E_SUCCESS) {
                   if (o_base64url_encode(rt_hash, rt_hash_len/2, (unsigned char *)rt_hash_encoded, &rt_hash_encoded_len)) {
                     json_object_set_new(j_user_info, "urn:openid:params:jwt:claim:rt_hash", json_stringn(rt_hash_encoded, rt_hash_encoded_len));
@@ -3655,11 +3655,11 @@ static json_t * serialize_refresh_token(struct _oidc_config * config,
         last_seen_clause = msprintf("%u", (now));
       }
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)duration));
+        expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)duration));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)duration ));
+        expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)duration ));
       } else { // HOEL_DB_TYPE_SQLITE
-        expires_at_clause = msprintf("%u", (now + (unsigned int)duration));
+        expires_at_clause = msprintf("%u", (now + (time_t)duration));
       }
       if (j_claims_request != NULL) {
         if ((str_claims_request = json_dumps(j_claims_request, JSON_COMPACT)) == NULL) {
@@ -4135,11 +4135,11 @@ static json_t * generate_authorization_code(struct _oidc_config * config,
         }
         time(&now);
         if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-          expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)config->code_duration ));
+          expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)config->code_duration ));
         } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-          expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)config->code_duration ));
+          expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)config->code_duration ));
         } else { // HOEL_DB_TYPE_SQLITE
-          expiration_clause = msprintf("%u", (now + (unsigned int)config->code_duration ));
+          expiration_clause = msprintf("%u", (now + (time_t)config->code_duration ));
         }
         if (j_authorization_details != NULL) {
           str_authorization_details = json_dumps(j_authorization_details, JSON_COMPACT);
@@ -4406,7 +4406,7 @@ static int validate_code_challenge(json_t * j_result_code, const char * code_ver
     if (is_pkce_char_valid(code_verifier)) {
       if (0 == o_strncmp(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX, json_string_value(json_object_get(j_result_code, "code_challenge")), o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX))) {
         key_data.data = (unsigned char *)code_verifier;
-        key_data.size = o_strlen(code_verifier);
+        key_data.size = (unsigned int)o_strlen(code_verifier);
         if (gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, code_verifier_hash, &code_verifier_hash_len) == GNUTLS_E_SUCCESS) {
           if (o_base64url_encode(code_verifier_hash, code_verifier_hash_len, code_verifier_hash_b64, &code_verifier_hash_b64_len)) {
             code_verifier_hash_b64[code_verifier_hash_b64_len] = '\0';
@@ -4929,7 +4929,7 @@ static json_t * validate_refresh_token(struct _oidc_config * config, const char 
       json_decref(j_query);
       if (res == H_OK) {
         if (json_array_size(j_result) > 0) {
-          enabled = json_integer_value(json_object_get(json_array_get(j_result, 0), "gpor_enabled"));
+          enabled = (int)json_integer_value(json_object_get(json_array_get(j_result, 0), "gpor_enabled"));
           json_object_set(json_array_get(j_result, 0), "rolling_expiration", json_integer_value(json_object_get(json_array_get(j_result, 0), "gpor_rolling_expiration"))?json_true():json_false());
           json_object_del(json_array_get(j_result, 0), "gpor_rolling_expiration");
           json_object_del(json_array_get(j_result, 0), "gpor_enabled");
@@ -5198,11 +5198,11 @@ static int update_refresh_token(struct _oidc_config * config, json_int_t gpor_id
   o_free(last_seen_clause);
   if (refresh_token_duration) {
     if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-      expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)refresh_token_duration));
+      expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)refresh_token_duration));
     } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-      expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)refresh_token_duration));
+      expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)refresh_token_duration));
     } else { // HOEL_DB_TYPE_SQLITE
-      expires_at_clause = msprintf("%u", (now + (unsigned int)refresh_token_duration));
+      expires_at_clause = msprintf("%u", (now + (time_t)refresh_token_duration));
     }
     json_object_set_new(json_object_get(j_query, "set"), "gpor_expires_at", json_pack("{ss}", "raw", expires_at_clause));
     o_free(expires_at_clause);
@@ -7101,7 +7101,7 @@ static int is_redirect_uri_valid_without_credential(const char * redirect_uri) {
     after_slash = o_strstr(redirect_uri, "://")+o_strlen("://");
     // Detect redirect_uri has no user[:pwd]@url
     if (o_strchr(after_slash, '/') != NULL) {
-      len = o_strchr(after_slash, '/') - after_slash;
+      len = (size_t)(o_strchr(after_slash, '/') - after_slash);
     } else {
       len = o_strlen(after_slash);
     }
@@ -8183,7 +8183,7 @@ static json_t * validate_device_auth_user_code(struct _oidc_config * config, con
 
   if (o_strlen(user_code) == GLEWLWYD_DEVICE_AUTH_USER_CODE_LENGTH+1 && user_code[4] == '-') {
     for (index=0; index<(GLEWLWYD_DEVICE_AUTH_USER_CODE_LENGTH+1); index++) {
-      user_code_ucase[index] = toupper(user_code[index]);
+      user_code_ucase[index] = (char)toupper(user_code[index]);
     }
     user_code_ucase[GLEWLWYD_DEVICE_AUTH_USER_CODE_LENGTH+1] = '\0';
     time(&now);
@@ -8858,7 +8858,7 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
         if (!gnutls_x509_crt_init(&cert)) {
           clean_cert = 1;
           cert_dat.data = (unsigned char *)header_cert;
-          cert_dat.size = o_strlen(header_cert);
+          cert_dat.size = (unsigned int)o_strlen(header_cert);
           if (gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_PEM) < 0) {
             y_log_message(Y_LOG_LEVEL_ERROR, "check_client_certificate_valid - Error gnutls_x509_crt_import");
           }
@@ -11441,7 +11441,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
     } else if (j_request != NULL) {
       j_client = json_pack("{sisO}", "result", G_OK, "client", json_object_get(j_request, "client"));
     } else {
-      j_client = check_client_valid(config, client_id, client_secret, redirect_uri, auth_type, 0, ip_source);
+      j_client = check_client_valid(config, client_id, client_secret, redirect_uri, (short unsigned int)auth_type, 0, ip_source);
     }
 
     if (!check_result_value(j_client, G_OK)) {
@@ -11663,7 +11663,7 @@ static int send_ciba_email(struct _oidc_config * config, json_t * j_user, json_t
     j_email_template = get_ciba_email_content_from_template(config, j_user, j_client, user_req_id, binding_message);
     if (check_result_value(j_email_template, G_OK)) {
       if (ulfius_send_smtp_rich_email(json_string_value(json_object_get(config->j_params, "oauth-ciba-email-host")),
-                                     json_integer_value(json_object_get(config->j_params, "oauth-ciba-email-port")),
+                                     (int)json_integer_value(json_object_get(config->j_params, "oauth-ciba-email-port")),
                                      json_object_get(config->j_params, "oauth-ciba-email-use-tls")==json_true()?1:0,
                                      json_object_get(config->j_params, "oauth-ciba-email-verify-certificate")==json_false()?0:1,
                                      !json_string_null_or_empty(json_object_get(config->j_params, "oauth-ciba-email-user"))?json_string_value(json_object_get(config->j_params, "oauth-ciba-email-user")):NULL,
@@ -11730,11 +11730,11 @@ static int serialize_ciba_request(struct _oidc_config * config,
     if (res == H_OK) {
       time(&now);
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)requested_expiry));
+        expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)requested_expiry));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)requested_expiry ));
+        expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)requested_expiry ));
       } else { // HOEL_DB_TYPE_SQLITE
-        expires_at_clause = msprintf("%u", (now + (unsigned int)requested_expiry));
+        expires_at_clause = msprintf("%u", (now + (time_t)requested_expiry));
       }
       j_query = json_pack("{sss{ss ss ss* sO ss* ss* ss ss ss* s{ss} ss ss* ss*}}",
                           "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
@@ -14394,7 +14394,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       }
     }
 
-    j_client_checked = check_client_valid_without_secret(config, client_id, redirect_uri, auth_type, ip_source);
+    j_client_checked = check_client_valid_without_secret(config, client_id, redirect_uri, (short unsigned int)auth_type, ip_source);
     if (!check_result_value(j_client_checked, G_OK)) {
       u_map_put(&map_redirect, "error", "unauthorized_client");
       u_map_put(&map_redirect, "error_description", json_string_value(json_object_get(j_client, "error_description")));
@@ -14828,7 +14828,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                                                   j_authorization_details_processed,
                                                   get_ip_source(request))) != NULL) {
           if (serialize_access_token(config,
-                                     auth_type,
+                                     (unsigned int)auth_type,
                                      0,
                                      json_string_value(json_object_get(json_object_get(json_object_get(j_session, "session"), "user"), "username")),
                                      client_id,
@@ -15311,7 +15311,7 @@ static int callback_oidc_end_session_list(const struct _u_request * request, str
   if (o_strlen(u_map_get(request->map_url, "sid")) == OIDC_SID_LENGTH) {
     if (run_backchannel_logout(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "sid")) == G_OK &&
         disable_tokens_from_session(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "sid")) == G_OK) {
-      if (ulfius_add_same_site_cookie_to_response(response, json_string_value(json_object_get(config->j_params, "session-cookie-name")), "", expires, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", config->glewlwyd_config->glewlwyd_config->cookie_secure, 0, config->glewlwyd_config->glewlwyd_config->cookie_same_site) != U_OK) {
+      if (ulfius_add_same_site_cookie_to_response(response, json_string_value(json_object_get(config->j_params, "session-cookie-name")), "", expires, 0, config->glewlwyd_config->glewlwyd_config->cookie_domain, "/", (int)config->glewlwyd_config->glewlwyd_config->cookie_secure, 0, (int)config->glewlwyd_config->glewlwyd_config->cookie_same_site) != U_OK) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_end_session_list - Error ulfius_add_same_site_cookie_to_response");
         response->status = 500;
       }

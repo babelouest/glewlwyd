@@ -565,11 +565,11 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
         last_seen_clause = msprintf("%u", (now));
       }
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)duration));
+        expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)duration));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)duration ));
+        expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)duration ));
       } else { // HOEL_DB_TYPE_SQLITE
-        expires_at_clause = msprintf("%u", (now + (unsigned int)duration));
+        expires_at_clause = msprintf("%u", (now + (time_t)duration));
       }
       j_query = json_pack_ex(&error, 0, "{sss{ss si so ss so s{ss} s{ss} s{ss} sI si ss ss ss}}",
                           "table",
@@ -779,11 +779,11 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
         if (code_hash != NULL) {
           time(&now);
           if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-            expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)config->code_duration ));
+            expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)config->code_duration ));
           } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-            expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)config->code_duration ));
+            expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)config->code_duration ));
           } else { // HOEL_DB_TYPE_SQLITE
-            expiration_clause = msprintf("%u", (now + (unsigned int)config->code_duration ));
+            expiration_clause = msprintf("%u", (now + (time_t)config->code_duration ));
           }
           j_query = json_pack("{sss{sssssssssssssss{ss}ss}}",
                               "table",
@@ -948,7 +948,7 @@ static int validate_code_challenge(json_t * j_result_code, const char * code_ver
     if (is_pkce_char_valid(code_verifier)) {
       if (0 == o_strncmp(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX, json_string_value(json_object_get(j_result_code, "code_challenge")), o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX))) {
         key_data.data = (unsigned char *)code_verifier;
-        key_data.size = o_strlen(code_verifier);
+        key_data.size = (unsigned int)o_strlen(code_verifier);
         if (gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, code_verifier_hash, &code_verifier_hash_len) == GNUTLS_E_SUCCESS) {
           if (o_base64url_encode(code_verifier_hash, code_verifier_hash_len, code_verifier_hash_b64, &code_verifier_hash_b64_len)) {
             code_verifier_hash_b64[code_verifier_hash_b64_len] = '\0';
@@ -1537,11 +1537,11 @@ static int update_refresh_token(struct _oauth2_config * config, json_int_t gpgr_
   o_free(last_seen_clause);
   if (refresh_token_duration) {
     if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-      expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (unsigned int)refresh_token_duration));
+      expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)refresh_token_duration));
     } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-      expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (unsigned int)refresh_token_duration));
+      expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)refresh_token_duration));
     } else { // HOEL_DB_TYPE_SQLITE
-      expires_at_clause = msprintf("%u", (now + (unsigned int)refresh_token_duration));
+      expires_at_clause = msprintf("%u", (now + (time_t)refresh_token_duration));
     }
     json_object_set_new(json_object_get(j_query, "set"), "gpgr_expires_at", json_pack("{ss}", "raw", expires_at_clause));
     o_free(expires_at_clause);
@@ -2031,7 +2031,7 @@ static json_t * validate_device_auth_user_code(struct _oauth2_config * config, c
   
   if (o_strlen(user_code) == GLEWLWYD_DEVICE_AUTH_USER_CODE_LENGTH+1 && user_code[4] == '-') {
     for (index=0; index<(GLEWLWYD_DEVICE_AUTH_USER_CODE_LENGTH+1); index++) {
-      user_code_ucase[index] = toupper(user_code[index]);
+      user_code_ucase[index] = (char)toupper(user_code[index]);
     }
     user_code_ucase[GLEWLWYD_DEVICE_AUTH_USER_CODE_LENGTH+1] = '\0';
     time(&now);
@@ -3013,7 +3013,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
               if (scope_allowed == NULL) {
                 scope_allowed = o_malloc(2 * sizeof(char*));
               } else {
-                scope_allowed = o_realloc(scope_allowed, (2 + i_scope_allowed) * sizeof(char*));
+                scope_allowed = o_realloc(scope_allowed, (2 + (size_t)i_scope_allowed) * sizeof(char*));
               }
               scope_allowed[i_scope_allowed] = scope_array[i];
               scope_allowed[i_scope_allowed+1] = NULL;

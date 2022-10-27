@@ -5,7 +5,7 @@
  *
  * Copyright 2016-2022 Nicolas Mora <mail@babelouest.org>
  *
- * Version 20220604
+ * Version 20221024
  *
  * The MIT License (MIT)
  * 
@@ -52,7 +52,8 @@ static int check_result_value(json_t * result, const int value) {
  * return the final scope list on success
  */
 static json_t * access_token_check_scope(struct _glewlwyd_resource_config * config, json_t * j_access_token) {
-  int i, scope_count_token, scope_count_expected;
+  int i;
+  size_t scope_count_token, scope_count_expected;
   char ** scope_list_token, ** scope_list_expected;
   json_t * j_res = NULL, * j_scope_final_list = json_array();
   

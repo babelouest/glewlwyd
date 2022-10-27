@@ -142,13 +142,13 @@ static json_t * parse_certificate(const char * x509_data, int der_format) {
         cert_dat.size = 0;
         if (o_base64_decode_alloc((const unsigned char *)x509_data, o_strlen(x509_data), &dat)) {
           cert_dat.data = dat.data;
-          cert_dat.size = dat.size;
+          cert_dat.size = (unsigned int)dat.size;
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "parse_certificate - Error o_base64_decode_alloc");
         }
       } else {
         cert_dat.data = (unsigned char *)x509_data;
-        cert_dat.size = o_strlen(x509_data);
+        cert_dat.size = (unsigned int)o_strlen(x509_data);
       }
       if (gnutls_x509_crt_import(cert, &cert_dat, der_format?GNUTLS_X509_FMT_DER:GNUTLS_X509_FMT_PEM) >= 0) {
         ret = gnutls_x509_crt_get_issuer_dn(cert, NULL, &issuer_dn_len);
@@ -669,7 +669,7 @@ static int is_certificate_valid_from_ca_chain(struct _cert_param * cert_params, 
           }
           if (!gnutls_x509_trust_list_init(&tlist, 0)) {
             if (gnutls_x509_trust_list_add_cas(tlist, &root_x509, 1, 0) >= 0) {
-              if (gnutls_x509_trust_list_verify_crt(tlist, cert_chain, cert_chain_len, 0, &result, NULL) >= 0) {
+              if (gnutls_x509_trust_list_verify_crt(tlist, cert_chain, (unsigned int)cert_chain_len, 0, &result, NULL) >= 0) {
                 if (!result) {
                   ret = G_OK;
                 } else {
@@ -909,7 +909,7 @@ static int parse_ca_chain(json_t * j_ca_chain, struct _cert_chain_element *** ca
       cur_status = G_OK;
       if (!gnutls_x509_crt_init(&cert)) {
         cert_dat.data = (unsigned char *)json_string_value(json_object_get(j_element, "cert-file"));
-        cert_dat.size = json_string_length(json_object_get(j_element, "cert-file"));
+        cert_dat.size = (unsigned int)json_string_length(json_object_get(j_element, "cert-file"));
         if ((res = gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_PEM)) < 0) {
           y_log_message(Y_LOG_LEVEL_ERROR, "parse_ca_chain - Error gnutls_x509_crt_import: %d", res);
           cur_status = G_ERROR;
@@ -1274,7 +1274,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
         if (!gnutls_x509_crt_init(&cert)) {
           clean_cert = 1;
           cert_dat.data = (unsigned char *)header_cert;
-          cert_dat.size = o_strlen(header_cert);
+          cert_dat.size = (unsigned int)o_strlen(header_cert);
           if (gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_PEM) < 0) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_validate certificate - Error gnutls_x509_crt_import");
             ret = G_ERROR_UNAUTHORIZED;
@@ -1571,7 +1571,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
     if (!gnutls_x509_crt_init(&cert)) {
       clean_cert = 1;
       cert_dat.data = (unsigned char *)header_cert;
-      cert_dat.size = o_strlen(header_cert);
+      cert_dat.size = (unsigned int)o_strlen(header_cert);
       if (gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_PEM) < 0) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_validate certificate - Error gnutls_x509_crt_import");
         ret = G_ERROR_UNAUTHORIZED;
@@ -1676,7 +1676,7 @@ json_t * user_auth_scheme_module_identify(struct config_module * config, const s
     if (!gnutls_x509_crt_init(&cert)) {
       clean_cert = 1;
       cert_dat.data = (unsigned char *)header_cert;
-      cert_dat.size = o_strlen(header_cert);
+      cert_dat.size = (unsigned int)o_strlen(header_cert);
       if (gnutls_x509_crt_import(cert, &cert_dat, GNUTLS_X509_FMT_PEM) < 0) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "user_auth_scheme_module_identify certificate - Error gnutls_x509_crt_import");
       }

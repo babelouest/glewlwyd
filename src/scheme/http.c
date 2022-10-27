@@ -76,7 +76,7 @@ static char * format_auth_basic_user(const char * format, json_t * j_user) {
       result = mstrcatf(result, "%.*s", (o_strchr(format_offset, '{') - format_offset), format_offset);
     }
     // extract string between '{' and '}'
-    sub = o_strndup(o_strchr(format_offset, '{')+1, (o_strchr(format_offset, '}')-o_strchr(format_offset, '{')-1));
+    sub = o_strndup(o_strchr(format_offset, '{')+1, (size_t)(o_strchr(format_offset, '}')-o_strchr(format_offset, '{')-1));
     // Get value from user
     if (json_is_string(json_object_get(j_user, sub))) {
       result = mstrcatf(result, "%s", json_string_value(json_object_get(j_user, sub)));

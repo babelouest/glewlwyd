@@ -50,7 +50,7 @@ static char * escape_ldap(const char * input) {
     to_return = strdup("");
     len = o_strlen(input);
     for (i=0; i < len && to_return != NULL; i++) {
-      unsigned char c = input[i];
+      unsigned char c = (unsigned char)input[i];
       if (c == '*') {
         // escape asterisk
         tmp = msprintf("%s\\2a", to_return);
@@ -1249,7 +1249,7 @@ size_t user_module_count_total(struct config_module * config, const char * patte
     if ((result = ldap_search_ext_s(ldap, json_string_value(json_object_get(j_params, "base-search")), scope, filter, attrs, attrsonly, NULL, NULL, NULL, LDAP_NO_LIMIT, &answer)) != LDAP_SUCCESS) {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_module_count_total ldap - Error ldap search, base search: %s, filter: %s: %s", json_string_value(json_object_get(j_params, "base-search")), filter, ldap_err2string(result));
     } else {
-      counter = ldap_count_entries(ldap, answer);
+      counter = (size_t)ldap_count_entries(ldap, answer);
     }
     ldap_msgfree(answer);
     ldap_unbind_ext(ldap, NULL, NULL);
@@ -1291,7 +1291,7 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
     attrs = get_ldap_read_attributes(j_params, 0, (j_properties_user = json_object()));
     j_user_list = json_array();
     do {
-      ldap_result = ldap_create_page_control(ldap, json_integer_value(json_object_get(j_params, "page-size")), cookie, 0, &page_control);
+      ldap_result = ldap_create_page_control(ldap, (ber_int_t)json_integer_value(json_object_get(j_params, "page-size")), cookie, 0, &page_control);
       if (ldap_result != LDAP_SUCCESS) {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error ldap_create_page_control, message: %s", ldap_err2string(ldap_result));
         break;

@@ -415,7 +415,7 @@ json_t * user_module_get(struct config_module * config, const char * username, v
       if (0 == o_strcmp(username, json_string_value(json_object_get(j_user, "username")))) {
         j_new_user = json_deep_copy(j_user);
         if (json_is_array(json_object_get((json_t *)cls, "password"))) {
-          json_object_set_new(j_new_user, "password", json_integer(json_array_size(json_object_get((json_t *)cls, "password"))));
+          json_object_set_new(j_new_user, "password", json_integer((json_int_t)json_array_size(json_object_get((json_t *)cls, "password"))));
         }
         return json_pack("{siso}", "result", G_OK, "user", j_new_user);
         break;

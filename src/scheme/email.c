@@ -560,12 +560,12 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
   if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
     j_user = config->glewlwyd_module_callback_get_user(config, username);
     if (check_result_value(j_user, G_OK)) {
-      if ((code = o_malloc((json_integer_value(json_object_get(j_param, "code-length")) + 1)*sizeof(char))) != NULL) {
-        memset(code, 0, (json_integer_value(json_object_get(j_param, "code-length")) + 1));
-        if (generate_new_code(config, j_param, username, code, json_integer_value(json_object_get(j_param, "code-length"))) == G_OK) {
+      if ((code = o_malloc(((size_t)json_integer_value(json_object_get(j_param, "code-length")) + 1)*sizeof(char))) != NULL) {
+        memset(code, 0, ((size_t)json_integer_value(json_object_get(j_param, "code-length")) + 1));
+        if (generate_new_code(config, j_param, username, code, (size_t)json_integer_value(json_object_get(j_param, "code-length"))) == G_OK) {
           if ((body = str_replace(get_template_property(j_param, json_object_get(j_user, "user"), "body-pattern"), "{CODE}", code)) != NULL) {
             if (ulfius_send_smtp_rich_email(json_string_value(json_object_get(j_param, "host")),
-                                           json_integer_value(json_object_get(j_param, "port")),
+                                           (int)json_integer_value(json_object_get(j_param, "port")),
                                            json_object_get(j_param, "use-tls")==json_true()?1:0,
                                            json_object_get(j_param, "verify-certificate")==json_false()?0:1,
                                            !json_string_null_or_empty(json_object_get(j_param, "user"))?json_string_value(json_object_get(j_param, "user")):NULL,

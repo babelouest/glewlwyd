@@ -318,7 +318,7 @@ json_t * add_user_module(struct config_elements * config, json_t * j_module) {
   if (json_object_get(j_module, "order_rank") != NULL) {
     json_object_set(json_object_get(j_query, "values"), "gumi_order", json_object_get(j_module, "order_rank"));
   } else {
-    json_object_set_new(json_object_get(j_query, "values"), "gumi_order", json_integer(pointer_list_size(config->user_module_list)));
+    json_object_set_new(json_object_get(j_query, "values"), "gumi_order", json_integer((json_int_t)pointer_list_size(config->user_module_list)));
   }
   res = h_insert(config->conn, j_query, NULL);
   json_decref(j_query);
@@ -407,7 +407,7 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
   if (json_object_get(j_module, "order_rank") != NULL) {
     json_object_set(json_object_get(j_query, "set"), "gumi_order", json_object_get(j_module, "order_rank"));
   } else {
-    json_object_set_new(json_object_get(j_query, "set"), "gumi_order", json_integer(pointer_list_size(config->user_module_list)));
+    json_object_set_new(json_object_get(j_query, "set"), "gumi_order", json_integer((json_int_t)pointer_list_size(config->user_module_list)));
   }
   if (json_object_get(j_module, "readonly") != NULL) {
     json_object_set_new(json_object_get(j_query, "set"), "gumi_readonly", json_object_get(j_module, "readonly")==json_true()?json_integer(1):json_integer(0));
@@ -745,7 +745,7 @@ json_t * add_user_middleware_module(struct config_elements * config, json_t * j_
   if (json_object_get(j_module, "order_rank") != NULL) {
     json_object_set(json_object_get(j_query, "values"), "gummi_order", json_object_get(j_module, "order_rank"));
   } else {
-    json_object_set_new(json_object_get(j_query, "values"), "gummi_order", json_integer(pointer_list_size(config->user_middleware_module_list)));
+    json_object_set_new(json_object_get(j_query, "values"), "gummi_order", json_integer((json_int_t)pointer_list_size(config->user_middleware_module_list)));
   }
   res = h_insert(config->conn, j_query, NULL);
   json_decref(j_query);
@@ -782,7 +782,7 @@ int set_user_middleware_module(struct config_elements * config, const char * nam
   if (json_object_get(j_module, "order_rank") != NULL) {
     json_object_set(json_object_get(j_query, "set"), "gummi_order", json_object_get(j_module, "order_rank"));
   } else {
-    json_object_set_new(json_object_get(j_query, "set"), "gummi_order", json_integer(pointer_list_size(config->user_middleware_module_list)));
+    json_object_set_new(json_object_get(j_query, "set"), "gummi_order", json_integer((json_int_t)pointer_list_size(config->user_middleware_module_list)));
   }
   res = h_update(config->conn, j_query, NULL);
   json_decref(j_query);
@@ -1573,7 +1573,7 @@ json_t * add_client_module(struct config_elements * config, json_t * j_module) {
   if (json_object_get(j_module, "order_rank") != NULL) {
     json_object_set(json_object_get(j_query, "values"), "gcmi_order", json_object_get(j_module, "order_rank"));
   } else {
-    json_object_set_new(json_object_get(j_query, "values"), "gcmi_order", json_integer(pointer_list_size(config->client_module_list)));
+    json_object_set_new(json_object_get(j_query, "values"), "gcmi_order", json_integer((json_int_t)pointer_list_size(config->client_module_list)));
   }
   res = h_insert(config->conn, j_query, NULL);
   json_decref(j_query);
@@ -1637,7 +1637,7 @@ json_t * add_client_module(struct config_elements * config, json_t * j_module) {
 
 int set_client_module(struct config_elements * config, const char * name, json_t * j_module) {
   json_t * j_query;
-  size_t res;
+  int res;
   int ret;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _client_module_instance * cur_instance;
@@ -1660,7 +1660,7 @@ int set_client_module(struct config_elements * config, const char * name, json_t
   if (json_object_get(j_module, "order_rank") != NULL) {
     json_object_set(json_object_get(j_query, "set"), "gcmi_order", json_object_get(j_module, "order_rank"));
   } else {
-    json_object_set_new(json_object_get(j_query, "set"), "gcmi_order", json_integer(pointer_list_size(config->client_module_list)));
+    json_object_set_new(json_object_get(j_query, "set"), "gcmi_order", json_integer((json_int_t)pointer_list_size(config->client_module_list)));
   }
   if (json_object_get(j_module, "readonly") != NULL) {
     json_object_set_new(json_object_get(j_query, "set"), "gcmi_readonly", json_object_get(j_module, "readonly")==json_true()?json_integer(1):json_integer(0));

@@ -112,7 +112,7 @@ json_t * get_api_key_list(struct config_elements * config, const char * pattern,
                       "order_by",
                       "gak_issued_at");
   if (limit) {
-    json_object_set_new(j_query, "limit", json_integer(limit));
+    json_object_set_new(j_query, "limit", json_integer((json_int_t)limit));
   }
   if (!o_strnullempty(pattern)) {
     pattern_escaped = h_escape_string_with_quotes(config->conn, pattern);

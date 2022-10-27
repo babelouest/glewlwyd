@@ -455,7 +455,7 @@ static char * get_salt_from_password_hash(struct mod_parameters * param, const c
   if (res == H_OK) {
     if (json_array_size(j_result) && !json_string_null_or_empty(json_object_get(json_array_get(j_result, 0), "gc_password"))) {
       if ((str_iterator = o_strchr(json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password")), G_PBKDF2_ITERATOR_SEP)) != NULL) {
-        gc_password_len = o_strchr(json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password")), G_PBKDF2_ITERATOR_SEP) - json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password"));
+        gc_password_len = (size_t)(o_strchr(json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password")), G_PBKDF2_ITERATOR_SEP) - json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password")));
         *iterations = (unsigned int)strtol(str_iterator+1, NULL, 10);
       } else {
         gc_password_len = json_string_length(json_object_get(json_array_get(j_result, 0), "gc_password"));
@@ -744,7 +744,7 @@ json_t * client_module_init(struct config_module * config, int readonly, json_t 
         if (0 == o_strcmp(json_string_value(json_object_get(j_parameters, "connection-type")), "sqlite")) {
           ((struct mod_parameters *)*cls)->conn = h_connect_sqlite(json_string_value(json_object_get(j_parameters, "sqlite-dbpath")));
         } else if (0 == o_strcmp(json_string_value(json_object_get(j_parameters, "connection-type")), "mariadb")) {
-          ((struct mod_parameters *)*cls)->conn = h_connect_mariadb(json_string_value(json_object_get(j_parameters, "mariadb-host")), json_string_value(json_object_get(j_parameters, "mariadb-user")), json_string_value(json_object_get(j_parameters, "mariadb-password")), json_string_value(json_object_get(j_parameters, "mariadb-dbname")), json_integer_value(json_object_get(j_parameters, "mariadb-port")), NULL);
+          ((struct mod_parameters *)*cls)->conn = h_connect_mariadb(json_string_value(json_object_get(j_parameters, "mariadb-host")), json_string_value(json_object_get(j_parameters, "mariadb-user")), json_string_value(json_object_get(j_parameters, "mariadb-password")), json_string_value(json_object_get(j_parameters, "mariadb-dbname")), (unsigned int)json_integer_value(json_object_get(j_parameters, "mariadb-port")), NULL);
         } else if (0 == o_strcmp(json_string_value(json_object_get(j_parameters, "connection-type")), "postgre")) {
           ((struct mod_parameters *)*cls)->conn = h_connect_pgsql(json_string_value(json_object_get(j_parameters, "postgre-conninfo")));
         }
