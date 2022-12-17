@@ -1,5 +1,9 @@
 # Glewlwyd Changelog
 
+## 2.7.5
+
+- Build with flag `-Wconversion`
+
 ## 2.7.4
 
 - Minor bugfixes
