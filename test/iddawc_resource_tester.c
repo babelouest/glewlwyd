@@ -1032,6 +1032,7 @@ START_TEST(test_iddawc_resource_invalid_signature)
   char * token, * token_sig, * bearer, * grants;
   time_t now;
   json_t * j_jwk;
+  size_t token_sig_dec_len = 0;
   
   ck_assert_ptr_ne(NULL, j_jwks = r_jwks_quick_import(R_IMPORT_JSON_STR, jwk_pubkey_rsa_str_1, R_IMPORT_JSON_STR, jwk_pubkey_ecdsa_str, R_IMPORT_NONE));
   ck_assert_int_eq(i_jwt_profile_access_token_init_config(&iddawc_resource_config, I_METHOD_HEADER, NULL, AUD, SCOPE, NULL, MAX_IAT), I_TOKEN_OK);
@@ -1114,12 +1115,17 @@ START_TEST(test_iddawc_resource_invalid_signature)
   ck_assert_int_eq(r_jwt_set_header_str_value(jwt, "typ", "at+jwt"), RHN_OK);
   ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
   ck_assert_ptr_ne((token = r_jwt_serialize_signed(jwt, jwk, 0)), NULL);
-  ck_assert_ptr_ne(token_sig = o_strrchr(token, '.'), NULL);
+  ck_assert_ptr_ne(token_sig = o_strrchr(token, '.')+1, NULL);
   token_sig[1] = 'e';
-  token_sig[1] = 'r';
-  token_sig[1] = 'r';
-  token_sig[1] = 'o';
-  token_sig[1] = 'r';
+  token_sig[2] = 'r';
+  token_sig[3] = 'r';
+  token_sig[4] = 'o';
+  if (token_sig[5] != 'r') {
+    token_sig[5] = 'r';
+  } else {
+    token_sig[5] = 'e';
+  }
+  ck_assert_int_eq(1, o_base64url_decode((const unsigned char *)token_sig, o_strlen(token_sig), NULL, &token_sig_dec_len));
   ck_assert_ptr_ne((bearer = msprintf("Bearer %s", token)), NULL);
   
   ck_assert_int_eq(ulfius_init_request(&req), U_OK);
