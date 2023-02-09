@@ -1082,14 +1082,14 @@ The `filter.d/glewlwyd-log.conf` config file has the following content if you lo
 
 [Definition]
 
-failregex = ^.* - Glewlwyd WARNING: Security - Authorization invalid for username .* at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Authorization invalid for client_id .* at IP Address <HOST>
+failregex = ^.* - Glewlwyd WARNING: Security - Authorization invalid at IP Address <HOST> for username .*
+            ^.* - Glewlwyd WARNING: Security - Authorization invalid at IP Address <HOST> for client_id .*
             ^.* - Glewlwyd WARNING: Security - Code invalid at IP Address <HOST>
             ^.* - Glewlwyd WARNING: Security - Token invalid at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Scheme email - code sent for username .* at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Register new user - code sent to email .* at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Scheme email - code sent at IP Address <HOST> for username .*
+            ^.* - Glewlwyd WARNING: Security - Register new user - code sent at IP Address <HOST> to email .*
             ^.* - Glewlwyd WARNING: Security - Verify e-mail - code invalid at IP Address <HOST>
-            ^.* - Glewlwyd WARNING: Security - Update e-mail - token sent to email .* at IP Address <HOST>
+            ^.* - Glewlwyd WARNING: Security - Update e-mail - token sent at IP Address <HOST> to email .*
             ^.* - Glewlwyd WARNING: Security - Update e-mail - token invalid at IP Address <HOST>
             ^.* - Glewlwyd WARNING: Security - Reset credentials - token invalid at IP Address <HOST>
             ^.* - Glewlwyd WARNING: Security - Reset credentials - code invalid at IP Address <HOST>
@@ -1118,14 +1118,14 @@ before = common.conf
 #
 _daemon = Glewlwyd
 
-failregex = ^.* %(__prefix_line)sSecurity - Authorization invalid for username .* at IP Address <HOST>
-            ^.* %(__prefix_line)sSecurity - Authorization invalid for client_id .* at IP Address <HOST>
+failregex = ^.* %(__prefix_line)sSecurity - Authorization invalid at IP Address <HOST> for username .*
+            ^.* %(__prefix_line)sSecurity - Authorization invalid at IP Address <HOST> for client_id .*
             ^.* %(__prefix_line)sSecurity - Code invalid at IP Address <HOST>
             ^.* %(__prefix_line)sSecurity - Token invalid at IP Address <HOST>
-            ^.* %(__prefix_line)sSecurity - Scheme email - code sent for username .* at IP Address <HOST>
-            ^.* %(__prefix_line)sSecurity - Register new user - code sent to email .* at IP Address <HOST>
+            ^.* %(__prefix_line)sSecurity - Scheme email - code sent at IP Address <HOST> for username .*
+            ^.* %(__prefix_line)sSecurity - Register new user - code sent at IP Address <HOST> to email .*
             ^.* %(__prefix_line)sSecurity - Verify e-mail - code invalid at IP Address <HOST>
-            ^.* %(__prefix_line)sSecurity - Update e-mail - token sent to email .* at IP Address <HOST>
+            ^.* %(__prefix_line)sSecurity - Update e-mail - token sent at IP Address <HOST> to email .*
             ^.* %(__prefix_line)sSecurity - Update e-mail - token invalid at IP Address <HOST>
             ^.* %(__prefix_line)sSecurity - Reset credentials - token invalid at IP Address <HOST>
             ^.* %(__prefix_line)sSecurity - Reset credentials - code invalid at IP Address <HOST>
