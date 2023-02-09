@@ -2967,7 +2967,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
       json_decref(j_refresh);
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND) || check_result_value(j_user, G_ERROR_UNAUTHORIZED)) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "check_auth_type_resource_owner_pwd_cred - oauth2 - Error user '%s'", username);
-      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", username, ip_source);
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for username %s", ip_source, username);
       response->status = 403;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_resource_owner_pwd_cred - oauth2 - glewlwyd_callback_check_user_valid");
@@ -3061,7 +3061,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
       free_string_array(scope_array);
     } else {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_auth_type_client_credentials_grant - Error client_id '%s' invalid", request->auth_basic_user);
-      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", request->auth_basic_user, ip_source);
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, request->auth_basic_user);
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
       response->status = 403;
     }

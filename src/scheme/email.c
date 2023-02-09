@@ -577,7 +577,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
                                            !json_string_null_or_empty(json_object_get(j_param, "content-type"))?json_string_value(json_object_get(j_param, "content-type")):"text/plain; charset=utf-8",
                                            get_template_property(j_param, json_object_get(j_user, "user"), "subject"),
                                            body) == G_OK) {
-              y_log_message(Y_LOG_LEVEL_WARNING, "Security - Scheme email - code sent for username %s at IP Address %s", username, ip_source);
+              y_log_message(Y_LOG_LEVEL_WARNING, "Security - Scheme email - code sent at IP Address %s for username %s", ip_source, username);
               ret = G_OK;
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error ulfius_send_smtp_email");

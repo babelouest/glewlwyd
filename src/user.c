@@ -65,7 +65,7 @@ static void send_mail_on_registration(struct config_elements * config, const cha
         send_mail->email = o_strdup(json_string_value(json_object_get(json_object_get(j_user, "user"), "email")));
         send_mail->subject = o_strdup(get_template_property(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "templatesRegisterScheme", lang, "subject"));
         send_mail->body = o_strdup(body);
-        y_log_message(Y_LOG_LEVEL_WARNING, "Security - New connexion - Notification sent to username %s, e-mail %s at IP Address %s", username, send_mail->email, ip_address);
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - New connexion - Notification sent at IP Address %s to username %s, e-mail %s", ip_address, username, send_mail->email);
         pthread_attr_init (&attr);
         pthread_attr_getschedparam (&attr, &param);
         param.sched_priority = 0;
@@ -134,7 +134,7 @@ static void send_mail_on_update_password(struct config_elements * config, const 
         send_mail->email = o_strdup(json_string_value(json_object_get(json_object_get(j_user, "user"), "email")));
         send_mail->subject = o_strdup(get_template_property(json_object_get(json_object_get(j_misc_config, "misc_config"), "value"), "templatesUpdatePassword", lang, "subject"));
         send_mail->body = o_strdup(body);
-        y_log_message(Y_LOG_LEVEL_WARNING, "Security - New connexion - Notification sent to username %s, e-mail %s at IP Address %s", username, send_mail->email, ip_address);
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - New connexion - Notification sent at IP Address %s to username %s, e-mail %s", ip_address, username, send_mail->email);
         pthread_attr_init (&attr);
         pthread_attr_getschedparam (&attr, &param);
         param.sched_priority = 0;

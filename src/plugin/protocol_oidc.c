@@ -5441,7 +5441,7 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
                 j_return = json_pack("{sisOsi}", "result", G_OK, "client", json_object_get(j_client, "client"), "client_auth_method", GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_JWT);
               } else {
                 y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt has an invalid signature (client_secret), origin: %s", ip_source);
-                y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+                y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
                 j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
                 config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
                 config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
@@ -5449,7 +5449,7 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
               r_jwk_free(jwk);
             } else {
               y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - client has no attribute 'client_secret', origin: %s", ip_source);
-              y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+              y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
               j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
               config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
             }
@@ -5524,20 +5524,20 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
                 j_return = json_pack("{sisOsi}", "result", G_OK, "client", json_object_get(j_client, "client"), "client_auth_method", GLEWLWYD_CLIENT_AUTH_METHOD_PRIVATE_KEY_JWT);
               } else {
                 y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt has an invalid signature (pubkey)", ip_source);
-                y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+                y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
                 j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
                 config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
               }
               r_jwk_free(jwk);
             } else {
               y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - invalid pubkey, origin: %s", ip_source);
-              y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+              y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
               j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
               config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
             }
           } else {
             y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt has unsupported algorithm: %s, origin: %s", r_jwa_alg_to_str(alg), ip_source);
-            y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+            y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
             j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
             config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
           }
@@ -5547,21 +5547,21 @@ static json_t * verify_request_signature(struct _oidc_config * config, jwt_t * j
             j_return = json_pack("{sisOsi}", "result", G_OK, "client", json_object_get(j_client, "client"), "client_auth_method", GLEWLWYD_CLIENT_AUTH_METHOD_NONE);
           } else {
             y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - jwt alg is not none although the client is not confidential, origin: %s", ip_source);
-            y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+            y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
             j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
             config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
           }
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
         j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
   } else if (check_result_value(j_client, G_ERROR_NOT_FOUND) || check_result_value(j_client, G_ERROR_PARAM)) {
-    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   } else {
     y_log_message(Y_LOG_LEVEL_DEBUG, "verify_request_signature - Error getting header or payload, origin: %s", ip_source);
@@ -8786,7 +8786,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
         json_decref(j_body);
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
       j_body = json_pack("{ss}", "error", "unauthorized_client");
       ulfius_set_json_body_response(response, 403, j_body);
       json_decref(j_body);
@@ -8882,7 +8882,7 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
                     j_return = json_pack("{sisOss#si}", "result", G_OK, "client", json_object_get(j_client, "client"), "x5t#S256", (const char *)cert_id, cert_id_len, "client_auth_method", GLEWLWYD_CLIENT_AUTH_METHOD_TLS);
                   } else {
                     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
-                    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", u_map_get(http_request->map_post_body, "client_id"), ip_source);
+                    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, u_map_get(http_request->map_post_body, "client_id"));
                     config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
                   }
                   gnutls_free(cert_dn.data);
@@ -8941,7 +8941,7 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
                 if (san_found) {
                   j_return = json_pack("{sisOss#si}", "result", G_OK, "client", json_object_get(j_client, "client"), "x5t#S256", (const char *)cert_id, cert_id_len, "client_auth_method", GLEWLWYD_CLIENT_AUTH_METHOD_TLS);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", u_map_get(http_request->map_post_body, "client_id"), ip_source);
+                  y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, u_map_get(http_request->map_post_body, "client_id"));
                   j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
                   config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
                 }
@@ -8998,7 +8998,7 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
                 if (crt_found) {
                   j_return = json_pack("{sisOss#si}", "result", G_OK, "client", json_object_get(j_client, "client"), "x5t#S256", (const char *)cert_id, cert_id_len, "client_auth_method", GLEWLWYD_CLIENT_AUTH_METHOD_SELF_SIGNED_TLS);
                 } else {
-                  y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", u_map_get(http_request->map_post_body, "client_id"), ip_source);
+                  y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, u_map_get(http_request->map_post_body, "client_id"));
                   j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
                   config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
                 }
@@ -11003,7 +11003,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
       json_decref(j_client_for_sub);
     } else if (check_result_value(j_user, G_ERROR_NOT_FOUND) || check_result_value(j_user, G_ERROR_UNAUTHORIZED)) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_auth_type_resource_owner_pwd_cred - Error user '%s'", username);
-      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for username %s at IP Address %s", username, ip_source);
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for username %s", ip_source, username);
       response->status = 403;
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
     } else {
@@ -11232,13 +11232,13 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
       free_string_array(scope_array);
     } else {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc check_auth_type_client_credentials_grant - Error client_id '%s' invalid", client_id);
-      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
       response->status = 403;
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
     }
     json_decref(j_client);
   } else {
-    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
     response->status = 403;
     config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
   }
@@ -11503,7 +11503,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
         scope_reduced = o_strdup(json_string_value(json_object_get(j_result, "scope")));
       } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_pushed_authorization_request - error client %s is not allowed to claim scopes '%s'", client_id, scope);
-        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
         response->status = 403;
         config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
       } else {
@@ -12056,7 +12056,7 @@ static int process_ciba_request (const struct _u_request * request,
         scope_reduced = o_strdup(json_string_value(json_object_get(j_result, "scope")));
       } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "process_ciba_request oidc - error client %s is not allowed to claim scopes '%s'", client_id, scope);
-        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
         j_return = json_pack("{ss}", "error", "invalid_request");
         ulfius_set_json_body_response(response, 400, j_return);
         json_decref(j_return);
@@ -13013,7 +13013,7 @@ static json_t * verify_pushed_authorization_request(struct _oidc_config * config
             }
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+          y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
           j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
           config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
         }
@@ -14487,7 +14487,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         scope_reduced = o_strdup(json_string_value(json_object_get(j_reduced_scope, "scope")));
       } else if (check_result_value(j_reduced_scope, G_ERROR_UNAUTHORIZED)) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - error client %s is not allowed to claim scopes '%s'", client_id, scope);
-        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
         config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
         u_map_put(&map_redirect, "error", "invalid_scope");
         build_auth_response(config, response, response_mode, json_object_get(j_client, "client"), redirect_uri, &map_redirect);
@@ -15489,7 +15489,7 @@ static int callback_oidc_device_authorization(const struct _u_request * request,
             scope_reduced = o_strdup(json_string_value(json_object_get(j_result, "scope")));
           } else if (check_result_value(j_result, G_ERROR_UNAUTHORIZED)) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_device_authorization - error client %s is not allowed to claim scopes '%s'", client_id, u_map_get(request->map_post_body, "scope"));
-            y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid for client_id %s at IP Address %s", client_id, ip_source);
+            y_log_message(Y_LOG_LEVEL_WARNING, "Security - Authorization invalid at IP Address %s for client_id %s", ip_source, client_id);
             j_body = json_pack("{ss}", "error", "invalid_scope");
             ulfius_set_json_body_response(response, 403, j_body);
             json_decref(j_body);
