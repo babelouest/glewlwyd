@@ -1046,6 +1046,35 @@ START_TEST(test_iddawc_resource_invalid_signature)
   ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "*", NULL, "/asset/*", 0, &callback_check_jwt_profile_access_token, (void*)&iddawc_resource_config), U_OK);
   ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
 
+  // Test to make sure a valid token still works
+  ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
+  time(&now);
+  grants = msprintf(access_token_pattern, (long long)now, (long long)(now + EXPIRES_IN), ISSUER);
+  ck_assert_ptr_ne(grants, NULL);
+  ck_assert_ptr_ne(jwk = r_jwk_quick_import(R_IMPORT_JSON_STR, jwk_privkey_rsa_str_1), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt, "typ", "at+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_ptr_ne((token = r_jwt_serialize_signed(jwt, jwk, 0)), NULL);
+  ck_assert_ptr_ne((bearer = msprintf("Bearer %s", token)), NULL);
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET",
+                                                       U_OPT_HTTP_URL, "http://localhost:8080/asset",
+                                                       U_OPT_HEADER_PARAMETER, "Authorization", bearer,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  o_free(grants);
+  o_free(bearer);
+  o_free(token);
+  r_jwt_free(jwt);
+  r_jwk_free(jwk);
+
   ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
   time(&now);
   grants = msprintf(access_token_pattern, (long long)now, (long long)(now + EXPIRES_IN), ISSUER);
@@ -1200,6 +1229,116 @@ START_TEST(test_iddawc_resource_invalid_signature)
   o_free(bearer);
   o_free(token);
   r_jwt_free(jwt);
+
+  ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
+  time(&now);
+  grants = msprintf(access_token_pattern, (long long)now, (long long)(now + EXPIRES_IN), ISSUER);
+  ck_assert_ptr_ne(grants, NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt, "typ", "at+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_NONE), RHN_OK);
+  ck_assert_ptr_ne((token = r_jwt_serialize_signed_unsecure(jwt, NULL, 0)), NULL);
+  ck_assert_ptr_ne((bearer = msprintf("Bearer %s", token)), NULL);
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET",
+                                                       U_OPT_HTTP_URL, "http://localhost:8080/asset",
+                                                       U_OPT_HEADER_PARAMETER, "Authorization", bearer,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  o_free(grants);
+  o_free(bearer);
+  o_free(token);
+  r_jwt_free(jwt);
+
+  ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
+  time(&now);
+  grants = msprintf(access_token_pattern, (long long)now, (long long)(now + EXPIRES_IN), ISSUER);
+  ck_assert_ptr_ne(grants, NULL);
+  ck_assert_ptr_ne(jwk = r_jwk_quick_import(R_IMPORT_JSON_STR, jwk_privkey_rsa_str_1), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt, "typ", "at+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_ptr_ne((token = r_jwt_serialize_signed(jwt, jwk, 0)), NULL);
+  ck_assert_ptr_ne((bearer = msprintf("Bearer %s,Bearer %s", token, token)), NULL);
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET",
+                                                       U_OPT_HTTP_URL, "http://localhost:8080/asset",
+                                                       U_OPT_HEADER_PARAMETER, "Authorization", bearer,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  o_free(grants);
+  o_free(bearer);
+  o_free(token);
+  r_jwt_free(jwt);
+  r_jwk_free(jwk);
+
+  ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
+  time(&now);
+  grants = msprintf(access_token_pattern, (long long)now, (long long)(now + EXPIRES_IN), ISSUER);
+  ck_assert_ptr_ne(grants, NULL);
+  ck_assert_ptr_ne(jwk = r_jwk_quick_import(R_IMPORT_JSON_STR, jwk_privkey_rsa_str_1), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt, "typ", "at+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_ptr_ne((token = r_jwt_serialize_signed(jwt, jwk, 0)), NULL);
+  ck_assert_ptr_ne((bearer = msprintf("Bearer plop,Bearer %s", token)), NULL);
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET",
+                                                       U_OPT_HTTP_URL, "http://localhost:8080/asset",
+                                                       U_OPT_HEADER_PARAMETER, "Authorization", bearer,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  o_free(grants);
+  o_free(bearer);
+  o_free(token);
+  r_jwt_free(jwt);
+  r_jwk_free(jwk);
+
+  ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
+  time(&now);
+  grants = msprintf(access_token_pattern, (long long)now, (long long)(now + EXPIRES_IN), ISSUER);
+  ck_assert_ptr_ne(grants, NULL);
+  ck_assert_ptr_ne(jwk = r_jwk_quick_import(R_IMPORT_JSON_STR, jwk_privkey_rsa_str_1), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt, "typ", "at+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_ptr_ne((token = r_jwt_serialize_signed(jwt, jwk, 0)), NULL);
+  ck_assert_ptr_ne((bearer = msprintf("Bearer %s , Bearer plop", token)), NULL);
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET",
+                                                       U_OPT_HTTP_URL, "http://localhost:8080/asset",
+                                                       U_OPT_HEADER_PARAMETER, "Authorization", bearer,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+  o_free(grants);
+  o_free(bearer);
+  o_free(token);
+  r_jwt_free(jwt);
+  r_jwk_free(jwk);
 
   r_jwks_free(j_jwks);
   i_jwt_profile_access_token_close_config(&iddawc_resource_config);
