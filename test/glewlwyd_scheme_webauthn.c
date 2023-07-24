@@ -704,7 +704,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -963,7 +963,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -1222,7 +1222,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_client_data_json
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -1482,7 +1482,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_rpid)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -1741,7 +1741,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_a
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -2000,7 +2000,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_flag_u
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -2260,7 +2260,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -2520,7 +2520,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_creden
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -2780,7 +2780,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -3039,7 +3039,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -3298,7 +3298,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -3557,7 +3557,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -3816,7 +3816,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_data_cose_key_ke
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -4076,7 +4076,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_invalid_auth_data_cose_k
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -4335,7 +4335,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_map
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -4600,7 +4600,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_cer
   cose_pair.key = cbor_build_string("error");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -4859,7 +4859,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_x5c
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(2);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
@@ -5119,7 +5119,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_pre
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -5378,7 +5378,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_rpi
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -5638,7 +5638,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -5898,7 +5898,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_cli
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -6158,7 +6158,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -6417,7 +6417,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -6678,7 +6678,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_key
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -6939,7 +6939,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_siz
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -7199,7 +7199,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_base_con
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -7460,7 +7460,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_sig_key)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -7720,7 +7720,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_obj_size
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -7981,7 +7981,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_auth_data_ke
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -8241,7 +8241,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_error_u2f_invalid_att_stmt_key
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -8501,7 +8501,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -8758,7 +8758,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_success_already_registered
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_stmt = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_stmt);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_stmt));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -9017,7 +9017,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_success)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_cbor = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_cbor);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_cbor));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -9274,7 +9274,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_collision_error)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -9531,7 +9531,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_u2f_2_in_2_success)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -14494,7 +14494,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_success)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -14741,7 +14741,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_signature)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -14989,7 +14989,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_algorithm)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -15237,7 +15237,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_cert)
   cose_pair.value = cbor_new_definite_array(1);
   cert_der[0]++;
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -15477,7 +15477,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_no_algorithm)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -15724,7 +15724,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_no_signature)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -16736,7 +16736,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_unregistered_ca)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -16983,7 +16983,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_ui)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -17230,7 +17230,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_c)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -17477,7 +17477,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_c)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -17724,7 +17724,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_o)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -17971,7 +17971,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_missing_cn)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -18220,7 +18220,7 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_packed_x5c_invalid_aaguid)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(1);
   bs_obj = cbor_build_bytestring(cert_der, cert_der_len);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
   cbor_decref(&cose_pair.value);
@@ -18500,10 +18500,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_success)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(2);
   bs_obj = cbor_build_bytestring(crt_dem.data, crt_dem.size);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   cbor_decref(&bs_obj);
   bs_obj = cbor_build_bytestring(int_dem.data, int_dem.size);
-  cbor_array_set(cose_pair.value, 1, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 1, bs_obj));
   cbor_decref(&bs_obj);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
@@ -18789,13 +18789,13 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_intermediate_2_success)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(3);
   bs_obj = cbor_build_bytestring(crt_dem.data, crt_dem.size);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   cbor_decref(&bs_obj);
   bs_obj = cbor_build_bytestring(int_dem.data, int_dem.size);
-  cbor_array_set(cose_pair.value, 1, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 1, bs_obj));
   cbor_decref(&bs_obj);
   bs_obj = cbor_build_bytestring(int2_dem.data, int2_dem.size);
-  cbor_array_set(cose_pair.value, 2, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 2, bs_obj));
   cbor_decref(&bs_obj);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
@@ -19076,10 +19076,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_invalid_aaguid)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(2);
   bs_obj = cbor_build_bytestring(crt_dem.data, crt_dem.size);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   cbor_decref(&bs_obj);
   bs_obj = cbor_build_bytestring(int_dem.data, int_dem.size);
-  cbor_array_set(cose_pair.value, 1, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 1, bs_obj));
   cbor_decref(&bs_obj);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
@@ -19359,10 +19359,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_x5c_invalid_nonce)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(2);
   bs_obj = cbor_build_bytestring(crt_dem.data, crt_dem.size);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   cbor_decref(&bs_obj);
   bs_obj = cbor_build_bytestring(int_dem.data, int_dem.size);
-  cbor_array_set(cose_pair.value, 1, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 1, bs_obj));
   cbor_decref(&bs_obj);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
@@ -19647,10 +19647,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_x5c_invalid_pubkey)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(2);
   bs_obj = cbor_build_bytestring(crt_dem.data, crt_dem.size);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   cbor_decref(&bs_obj);
   bs_obj = cbor_build_bytestring(int_dem.data, int_dem.size);
-  cbor_array_set(cose_pair.value, 1, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 1, bs_obj));
   cbor_decref(&bs_obj);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
@@ -19929,10 +19929,10 @@ START_TEST(test_glwd_scheme_webauthn_irl_register_apple_x5c_invalid_root_ca)
   cose_pair.key = cbor_build_string("x5c");
   cose_pair.value = cbor_new_definite_array(2);
   bs_obj = cbor_build_bytestring(crt_dem.data, crt_dem.size);
-  cbor_array_set(cose_pair.value, 0, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 0, bs_obj));
   cbor_decref(&bs_obj);
   bs_obj = cbor_build_bytestring(int_dem.data, int_dem.size);
-  cbor_array_set(cose_pair.value, 1, bs_obj);
+  ck_assert_int_eq(true, cbor_array_set(cose_pair.value, 1, bs_obj));
   cbor_decref(&bs_obj);
   ck_assert_int_eq(cbor_map_add(att_stmt, cose_pair), true);
   cbor_decref(&cose_pair.key);
