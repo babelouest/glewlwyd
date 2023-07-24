@@ -85,8 +85,8 @@ json_t * glewlwyd_callback_check_session_valid(struct config_plugin * config, co
   json_t * j_user, * j_return, * j_scope_allowed;
   char * session_uid = NULL;
   
-  if (config->glewlwyd_config->login_api_enabled) {
-    if (config != NULL && request != NULL) {
+  if (config != NULL && config->glewlwyd_config != NULL && request != NULL) {
+    if (config->glewlwyd_config->login_api_enabled) {
       session_uid = get_session_id(config->glewlwyd_config, request);
       if (!o_strnullempty(session_uid)) {
         j_user = get_current_user_for_session(config->glewlwyd_config, session_uid);
@@ -119,10 +119,10 @@ json_t * glewlwyd_callback_check_session_valid(struct config_plugin * config, co
       }
       o_free(session_uid);
     } else {
-      j_return = json_pack("{si}", "result", G_ERROR_PARAM);
+      j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     }
   } else {
-    j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
+    j_return = json_pack("{si}", "result", G_ERROR_PARAM);
   }
   return j_return;
 }
