@@ -506,7 +506,7 @@ class Register extends Component {
             {i18next.t("save")}
           </button>
         </form>
-    } else if (!this.state.registerProfile) {
+    } else if (!this.state.registerProfile && this.state.registerConfig) {
       if (this.state.registerConfig["verify-email"]) {
         var buttonVerifyJsx, codeInputJsx, langListJsx;
         if (this.state.registerDefaultLang && this.state.registerConfig.languages.length > 1) {
