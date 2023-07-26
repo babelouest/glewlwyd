@@ -390,7 +390,7 @@ class App extends Component {
         } else if (message.role === 'plugin') {
           var PluginModal = {
             title: i18next.t("admin.add-mod-title"),
-            data: {parameters: {}},
+            data: {name: "", display_name: "", parameters: {}},
             types: this.state.modTypes.plugin,
             callback: this.confirmAddPluginMod,
             add: true

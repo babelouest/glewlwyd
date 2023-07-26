@@ -9,11 +9,15 @@ class PluginEdit extends Component {
   constructor(props) {
     super(props);
 
+    let mod = props.mod;
+    if (!mod.display_name) {
+      mod.display_name = "";
+    }
     this.state = {
       config: props.config,
       modSchemes: props.modSchemes,
       title: props.title,
-      mod: props.mod,
+      mod: mod,
       role: props.role,
       modTypes: props.types,
       add: props.add,
@@ -67,11 +71,15 @@ class PluginEdit extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
+    let mod = nextProps.mod;
+    if (!mod.display_name) {
+      mod.display_name = "";
+    }
     this.setState({
       config: nextProps.config,
       modSchemes: nextProps.modSchemes,
       title: nextProps.title,
-      mod: nextProps.mod,
+      mod: mod,
       role: nextProps.role,
       modTypes: nextProps.types,
       add: nextProps.add,

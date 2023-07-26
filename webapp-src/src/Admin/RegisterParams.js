@@ -533,7 +533,7 @@ class RegisterParams extends Component {
   
   checkParameters() {
     var errorList = {}, hasError = false, hasMandatory = false;
-    if (this.state.mod.parameters["register"]) {
+    if (this.state.mod.parameters["registration"]) {
       if (!this.state.mod.parameters["session-key"]) {
         hasError = true;
         errorList["session-key"] = i18next.t("admin.mod-register-session-key-error");
@@ -578,7 +578,7 @@ class RegisterParams extends Component {
         if (!this.state.mod.parameters["from"]) {
           hasError = true;
           errorList["from"] = i18next.t("admin.mod-email-from-error");
-          errorList["smtp"] = true;
+          errorList["registration"] = true;
         }
         errorList["subject"] = "";
         errorList["body-pattern"] = "";
