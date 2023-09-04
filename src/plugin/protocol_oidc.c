@@ -2333,7 +2333,7 @@ static jwk_t * get_jwk_enc(struct _oidc_config * config, json_t * j_client, jwa_
         r_jwk_free(jwk_import);
       }
     }
-    if (json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-jwks-parameter"))) != NULL) {
+    if (!json_string_null_or_empty(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-jwks-parameter"))))) {
       if (r_jwks_import_from_json_t(jwks_pub, json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-jwks-parameter")))) != RHN_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_jwk_enc - Error r_jwks_import_from_json_t");
       }
@@ -2476,7 +2476,7 @@ static int get_session_token(struct _oidc_config * config, const struct _u_reque
 
 static char * generate_x_hash(struct _oidc_config * config, json_t * j_client, const char * value) {
   int key_size;
-  int dig_alg = GNUTLS_DIG_UNKNOWN;
+  gnutls_digest_algorithm_t dig_alg = GNUTLS_DIG_UNKNOWN;
   gnutls_datum_t hash_data;
   unsigned char x_hash[128] = {0};
   size_t x_hash_len = 128, x_hash_encoded_len = 0;
@@ -3249,7 +3249,7 @@ static char * generate_id_token(struct _oidc_config * config,
   unsigned char at_hash[128] = {0}, c_hash[128] = {0}, rt_hash[128] = {0};
   json_t * j_user_info;
   size_t at_hash_len = 128, at_hash_encoded_len = 0, c_hash_len = 128, c_hash_encoded_len = 0, rt_hash_len = 128, rt_hash_encoded_len = 0;
-  int dig_alg = GNUTLS_DIG_UNKNOWN;
+  gnutls_digest_algorithm_t dig_alg = GNUTLS_DIG_UNKNOWN;
   gnutls_datum_t hash_data;
 
   if (jwk != NULL && alg != R_JWA_ALG_UNKNOWN) {

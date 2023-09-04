@@ -258,7 +258,7 @@ char to_hex(char code) {
  */
 int generate_digest(digest_algorithm digest, const char * data, int use_salt, char * out_digest) {
   int res = 1;
-  int alg, dig_res;
+  gnutls_digest_algorithm_t alg;
   gnutls_datum_t key_data;
   char * intermediate = NULL, salt[GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0};
   unsigned char encoded_key[128 + GLEWLWYD_DEFAULT_SALT_LENGTH + 1] = {0};
@@ -303,7 +303,7 @@ int generate_digest(digest_algorithm digest, const char * data, int use_salt, ch
         if (res) {
           key_data.data = (unsigned char*)intermediate;
           key_data.size = (unsigned int)o_strlen(intermediate);
-          if (key_data.data != NULL && (dig_res = gnutls_fingerprint(alg, &key_data, encoded_key, &encoded_key_size)) == GNUTLS_E_SUCCESS) {
+          if (key_data.data != NULL && gnutls_fingerprint(alg, &key_data, encoded_key, &encoded_key_size) == GNUTLS_E_SUCCESS) {
             if (use_salt) {
               memcpy(encoded_key+encoded_key_size, salt, GLEWLWYD_DEFAULT_SALT_LENGTH);
               encoded_key_size += GLEWLWYD_DEFAULT_SALT_LENGTH;
@@ -334,8 +334,8 @@ int generate_digest(digest_algorithm digest, const char * data, int use_salt, ch
  * Generates a digest using the digest_algorithm specified from data and add a salt if specified, stores it in out_digest as raw output
  */
 int generate_digest_raw(digest_algorithm digest, const unsigned char * data, size_t data_len, unsigned char * out_digest, size_t * out_digest_len) {
-  int res = 0;
-  int alg, dig_res;
+  int res = 0, dig_res;
+  gnutls_digest_algorithm_t alg;
   gnutls_datum_t key_data;
 
   if (data != NULL && out_digest != NULL) {

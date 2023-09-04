@@ -1034,6 +1034,8 @@ json_t * user_set_profile(struct config_elements * config, const char * username
   if (check_result_value(j_user, G_OK)) {
     user_module = get_user_module_instance(config, json_string_value(json_object_get(json_object_get(j_user, "user"), "source")));
     if (user_module != NULL && user_module->enabled && !user_module->readonly) {
+      json_object_del(j_profile, "scope");
+      json_object_del(j_profile, "username");
       j_return = json_pack("{si}", "result", user_module->module->user_module_update_profile(config->config_m, username, j_profile, user_module->cls));
     } else if (user_module != NULL && (user_module->readonly || !user_module->enabled)) {
       j_return = json_pack("{sis[s]}", "result", G_ERROR_PARAM, "error", "profile update is not allowed");

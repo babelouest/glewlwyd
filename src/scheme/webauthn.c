@@ -1395,8 +1395,9 @@ static json_t * check_attestation_packed(json_t * j_params, cbor_item_t * auth_d
   char * message;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_x509_crt_t cert = NULL;
+  gnutls_sign_algorithm_t sig_alg = GNUTLS_SIGN_UNKNOWN;
   gnutls_datum_t cert_dat, data, signature, cert_issued_by;
-  int ret, sig_alg = GNUTLS_SIGN_UNKNOWN;
+  int ret;
   unsigned char client_data_hash[32], cert_export[128], cert_export_b64[256];
 
   data.data = NULL;
