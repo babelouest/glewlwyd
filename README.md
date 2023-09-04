@@ -12,7 +12,7 @@
 
 ## Process supported:
 - [OpenID Connect/OAuth2](docs/OIDC.md)
-- [OAuth2](docs/OAUTH2.md): Legacy plugin, it's recommended to use the OpenID Connect/OAuth2 for new installations
+- [OAuth2](docs/OAUTH2.md): Deprecated legacy plugin, it's recommended to use the OpenID Connect/OAuth2 process for new installations
 
 ## User authentication via multiple factors:
 - [Password](https://xkcd.com/936/)
@@ -23,7 +23,7 @@
 - [External OAuth2/OIDC providers](docs/OAUTH2_SCHEME.md)
 - [HTTP Backend service providing Basic Authentication](docs/HTTP.md)
 
-## Users and clients can be storage backends:
+## Users and clients storage backends:
 - [Database](docs/USER_DATABASE.md)
 - [LDAP service](docs/USER_LDAP.md)
 - [HTTP Backend service providing Basic Authentication](docs/USER_HTTP.md) (Users only)
