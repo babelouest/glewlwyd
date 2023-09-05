@@ -47,6 +47,12 @@ find_package_handle_standard_args(LibOath
 if (LIBOATH_FOUND)
     set(LIBOATH_LIBRARIES ${LIBOATH_LIBRARY})
     set(LIBOATH_INCLUDE_DIRS ${LIBOATH_INCLUDE_DIR})
+    if (NOT TARGET OATH::OATH)
+        add_library(OATH::OATH UNKNOWN IMPORTED)
+        set_target_properties(OATH::OATH PROPERTIES
+                IMPORTED_LOCATION "${JANSSON_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${JANSSON_INCLUDE_DIR}")
+    endif ()
 endif ()
 
 mark_as_advanced(LIBOATH_INCLUDE_DIR LIBOATH_LIBRARY)

@@ -47,6 +47,12 @@ find_package_handle_standard_args(LibCBOR
 if (LIBCBOR_FOUND)
     set(LIBCBOR_LIBRARIES ${LIBCBOR_LIBRARY})
     set(LIBCBOR_INCLUDE_DIRS ${LIBCBOR_INCLUDE_DIR})
+    if (NOT TARGET CBOR::CBOR)
+        add_library(CBOR::CBOR UNKNOWN IMPORTED)
+        set_target_properties(CBOR::CBOR PROPERTIES
+                IMPORTED_LOCATION "${JANSSON_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${JANSSON_INCLUDE_DIR}")
+    endif ()
 endif ()
 
 mark_as_advanced(LIBCBOR_INCLUDE_DIR LIBCBOR_LIBRARY)

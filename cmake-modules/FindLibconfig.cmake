@@ -47,6 +47,12 @@ find_package_handle_standard_args(Libconfig
 if (LIBCONFIG_FOUND)
     set(LIBCONFIG_LIBRARIES ${LIBCONFIG_LIBRARY})
     set(LIBCONFIG_INCLUDE_DIRS ${LIBCONFIG_INCLUDE_DIR})
+    if (NOT TARGET LibConfig::LibConfig)
+        add_library(LibConfig::LibConfig UNKNOWN IMPORTED)
+        set_target_properties(LibConfig::LibConfig PROPERTIES
+                IMPORTED_LOCATION "${LIBCONFIG_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${LIBCONFIG_INCLUDE_DIR}")
+    endif ()
 endif ()
 
 mark_as_advanced(LIBCONFIG_INCLUDE_DIR LIBCONFIG_LIBRARY)

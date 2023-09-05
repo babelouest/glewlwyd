@@ -47,6 +47,12 @@ find_package_handle_standard_args(Nettle
 if (NETTLE_FOUND)
     set(NETTLE_LIBRARIES ${NETTLE_LIBRARY})
     set(NETTLE_INCLUDE_DIRS ${NETTLE_INCLUDE_DIR})
+    if (NOT TARGET Nettle::Nettle)
+        add_library(Nettle::Nettle UNKNOWN IMPORTED)
+        set_target_properties(Nettle::Nettle PROPERTIES
+                IMPORTED_LOCATION "${NETTLE_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${NETTLE_INCLUDE_DIR}")
+    endif ()
 endif ()
 
 mark_as_advanced(NETTLE_INCLUDE_DIR NETTLE_LIBRARY)

@@ -22,34 +22,37 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
 # library info
 
+set(GLWD_LIBS )
+set(SCHEME_MODULES )
+
 set(PROGRAM_VERSION_MAJOR "2")
 set(PROGRAM_VERSION_MINOR "7")
 set(PROGRAM_VERSION_PATCH "5")
 set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, Openid Connect, multiple factor authentication with, HOTP/TOTP, FIDO2, TLS Certificates, etc. extensible via plugins ")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
-set(ORCANIA_VERSION_REQUIRED "2.3.2")
-set(YDER_VERSION_REQUIRED "1.4.19")
-set(ULFIUS_VERSION_REQUIRED "2.7.12")
-set(HOEL_VERSION_REQUIRED "1.4.27")
-set(RHONABWY_VERSION_REQUIRED "1.1.10")
-set(IDDAWC_VERSION_REQUIRED "1.1.8")
 set(LIBCBOR_VERSION_REQUIRED "0.5.0")
 set(JANSSON_VERSION_REQUIRED "2.11")
+set(ORCANIA_VERSION_REQUIRED "2.3.3")
+set(YDER_VERSION_REQUIRED "1.4.19")
+set(ULFIUS_VERSION_REQUIRED "2.7.14")
+set(HOEL_VERSION_REQUIRED "1.4.27")
+set(RHONABWY_VERSION_REQUIRED "1.1.12")
+set(IDDAWC_VERSION_REQUIRED "1.1.9")
 
 set(USER_MODULES_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/user/")
-set(USER_MODULES "")
+set(USER_MODULES )
 
 set(USER_MIDDLEWARE_MODULES_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/user_middleware/")
-set(USER_MIDDLEWARE_MODULES "")
+set(USER_MIDDLEWARE_MODULES )
 
 set(CLIENT_MODULES_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/client/")
-set(CLIENT_MODULES "")
+set(CLIENT_MODULES )
 
 set(SCHEME_MODULES_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/scheme/")
-set(SCHEME_MODULES "")
+set(SCHEME_MODULES )
 
 set(PLUGIN_MODULES_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/plugin/")
-set(PLUGIN_MODULES "")
+set(PLUGIN_MODULES )
 
 set(RESOURCES_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/docs/resources/ulfius/")
 
@@ -76,52 +79,34 @@ if (_GNU_SOURCE)
   add_definitions(-D_GNU_SOURCE)
 endif ()
 
-set(GLWD_LIBS "-ldl -lcrypt")
+list(APPEND GLWD_LIBS "-ldl -lcrypt")
 
 find_package(Threads REQUIRED)
-set(GLWD_LIBS ${GLWD_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+list(APPEND GLWD_LIBS ${CMAKE_THREAD_LIBS_INIT})
 
 include(FindJansson)
-find_package(Jansson ${JANSSON_VERSION_REQUIRED} REQUIRED)
-if (JANSSON_FOUND)
-  set(GLWD_LIBS ${GLWD_LIBS} ${JANSSON_LIBRARIES})
-  include_directories(${JANSSON_INCLUDE_DIRS})
-endif ()
-
-include(FindGnuTLS)
-find_package(GnuTLS REQUIRED)
-if (GNUTLS_FOUND)
-  set(GLWD_LIBS ${GLWD_LIBS} ${GNUTLS_LIBRARIES})
-  include_directories(${GNUTLS_INCLUDE_DIRS})
-endif ()
+set(JANSSON_MIN_VERSION 2.4)
+find_package(Jansson ${JANSSON_MIN_VERSION} REQUIRED)
+list(APPEND GLWD_LIBS Jansson::Jansson)
 
 include(FindNettle)
 find_package(Nettle REQUIRED)
-if (NETTLE_FOUND)
-  set(GLWD_LIBS ${GLWD_LIBS} ${NETTLE_LIBRARIES})
-  include_directories(${NETTLE_INCLUDE_DIRS})
-endif ()
+list(APPEND GLWD_LIBS Nettle::Nettle)
 
-include(FindLibconfig)
-find_package(Libconfig REQUIRED)
-if (LIBCONFIG_FOUND)
-  set(GLWD_LIBS ${GLWD_LIBS} ${LIBCONFIG_LIBRARIES})
-  include_directories(${LIBCONFIG_INCLUDE_DIRS})
-endif ()
+include(FindGnuTLS)
+find_package(GnuTLS REQUIRED)
+list(APPEND GLWD_LIBS GnuTLS::GnuTLS)
 
 include(FindMHD)
 find_package(MHD REQUIRED)
-if (MHD_FOUND)
-  set(GLWD_LIBS ${GLWD_LIBS} ${MHD_LIBRARIES})
-  include_directories(${MHD_INCLUDE_DIRS})
-endif ()
+list(APPEND GLWD_LIBS MHD::MHD)
 
-include(FindZLIB)
+include(FindLibconfig)
+find_package(Libconfig REQUIRED)
+list(APPEND GLWD_LIBS LibConfig::LibConfig)
+
 find_package(ZLIB REQUIRED)
-if (ZLIB_FOUND)
-  set(GLWD_LIBS ${GLWD_LIBS} ${ZLIB_LIBRARIES})
-  include_directories(${ZLIB_INCLUDE_DIRS})
-endif ()
+list(APPEND GLWD_LIBS ZLIB::ZLIB)
 
 # build
 
@@ -146,142 +131,37 @@ add_executable(glewlwyd ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.h
                         ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.c )
 set_target_properties(glewlwyd PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
 
-set(SEARCH_ORCANIA OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during orcania search and download
-set(SEARCH_YDER OFF CACHE BOOL "Force to false") # Avoid to search and download yder during ulfius and hoel search and download
-
-set(SEARCH_ORCANIA_U OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during ulfius search and download
-set(BUILD_UWSC OFF CACHE BOOL "Force to false") # Avoid to build uwsc during ulfius search and download
-
-set(SEARCH_ORCANIA_H OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during hoel search and download
-
-set(SEARCH_ORCANIA_R OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during hoel search and download
-set(SEARCH_YDER_R OFF CACHE BOOL "Force to false") # Avoid to search and download yder during ulfius and hoel search and download
-set(SEARCH_ULFIUS_R OFF CACHE BOOL "Force to false") # Avoid to search and download ulfius during rhonabwy search and download
-
-set(SEARCH_ORCANIA_I OFF CACHE BOOL "Force to false") # Avoid to search and download orcania during iddawc search and download
-set(SEARCH_YDER_I OFF CACHE BOOL "Force to false") # Avoid to search and download yder during iddawc search and download
-set(SEARCH_ULFIUS_I OFF CACHE BOOL "Force to false") # Avoid to search and download ulfius during iddawc search and download
-set(SEARCH_RHONABWY_I OFF CACHE BOOL "Force to false") # Avoid to search and download rhonabwy during iddawc search and download
-
-option(DOWNLOAD_DEPENDENCIES "Download required dependencies" ON)
-
-set(Orcania_FIND_QUIETLY ON) # force to find Orcania quietly
-include(FindOrcania)
-find_package(Orcania ${ORCANIA_VERSION_REQUIRED} QUIET) # try to find orcania
-if (ORCANIA_FOUND)
-    if ("${ORCANIA_VERSION_STRING}" VERSION_GREATER_EQUAL "${ORCANIA_VERSION_REQUIRED}")
-        message(STATUS "Orcania found: ${ORCANIA_VERSION_STRING}")
-        include_directories(${orcania_SOURCE_DIR}/include)
-    else ()
-        message( FATAL_ERROR "Orcania version required: ${ORCANIA_VERSION_REQUIRED} - version installed: ${ORCANIA_VERSION_STRING}")
-    endif ()
-elseif (NOT ORCANIA_FOUND AND DOWNLOAD_DEPENDENCIES)
-    include(DownloadProject)
-    message(STATUS "Download Orcania ${ORCANIA_VERSION_REQUIRED}")
-    download_project(PROJ orcania # ... otherwise, download archive
-                     URL "https://github.com/babelouest/orcania/archive/v${ORCANIA_VERSION_REQUIRED}.tar.gz"
-                     QUIET)
-    add_subdirectory(${orcania_SOURCE_DIR} ${orcania_BINARY_DIR})
-    include_directories(${orcania_SOURCE_DIR}/include)
-    add_dependencies(glewlwyd orcania)
-    set(ORCANIA_LIBRARIES orcania)
-    include_directories(${orcania_BINARY_DIR})
+find_package(Orcania ${ORCANIA_VERSION_REQUIRED} REQUIRED)
+if ("${ORCANIA_VERSION_STRING}" VERSION_GREATER_EQUAL "${ORCANIA_VERSION_REQUIRED}")
+    message(STATUS "Orcania found: ${ORCANIA_VERSION_STRING}")
 else ()
-  message( FATAL_ERROR "Orcania not found")
+    message( FATAL_ERROR "Orcania version required: ${ORCANIA_VERSION_REQUIRED} - version installed: ${ORCANIA_VERSION_STRING}")
 endif ()
-set(GLWD_LIBS ${GLWD_LIBS} ${ORCANIA_LIBRARIES})
+list(APPEND GLWD_LIBS Orcania::Orcania)
 
-set(Yder_FIND_QUIETLY ON) # force to find Yder quietly
-include(FindYder)
-find_package(Yder ${YDER_VERSION_REQUIRED} QUIET) # try to find Yder
-if (YDER_FOUND)
-    if ("${YDER_VERSION_STRING}" VERSION_GREATER_EQUAL "${YDER_VERSION_REQUIRED}")
-        message(STATUS "Yder found: ${YDER_VERSION_STRING}")
-        include_directories(${yder_SOURCE_DIR}/include)
-    else ()
-        message( FATAL_ERROR "Yder version required: ${YDER_VERSION_REQUIRED} - version installed: ${YDER_VERSION_STRING}")
-    endif ()
-elseif (NOT YDER_FOUND AND DOWNLOAD_DEPENDENCIES)
-  include(DownloadProject)
-  message(STATUS "Download Yder ${YDER_VERSION_REQUIRED}")
-  option(CHECK_ORCANIA "specific param" off)
-  download_project(PROJ yder # ... otherwise, download archive
-                   URL "https://github.com/babelouest/yder/archive/v${YDER_VERSION_REQUIRED}.tar.gz"
-                   QUIET)
-  add_subdirectory(${yder_SOURCE_DIR} ${yder_BINARY_DIR})
-  include_directories(${yder_SOURCE_DIR}/include)
-  include_directories(${orcania_SOURCE_DIR}/include)
-  add_dependencies(glewlwyd yder)
-  add_dependencies(yder orcania)
-  set(YDER_LIBRARIES yder)
-  include_directories(${yder_BINARY_DIR})
+find_package(Yder ${YDER_VERSION_REQUIRED} REQUIRED)
+if ("${YDER_VERSION_STRING}" VERSION_GREATER_EQUAL "${YDER_VERSION_REQUIRED}")
+    message(STATUS "Yder found: ${YDER_VERSION_STRING}")
 else ()
-  message( FATAL_ERROR "Yder not found")
+    message( FATAL_ERROR "Yder version required: ${YDER_VERSION_REQUIRED} - version installed: ${YDER_VERSION_STRING}")
 endif ()
-set(GLWD_LIBS ${GLWD_LIBS} ${YDER_LIBRARIES})
+list(APPEND GLWD_LIBS Yder::Yder)
 
-set(Ulfius_FIND_QUIETLY ON)
-include(FindUlfius)
-find_package(Ulfius ${ULFIUS_VERSION_REQUIRED} QUIET)
-if (ULFIUS_FOUND)
-    if ("${ULFIUS_VERSION_STRING}" VERSION_GREATER_EQUAL "${ULFIUS_VERSION_REQUIRED}")
-        message(STATUS "Ulfius found: ${ULFIUS_VERSION_STRING}")
-        include_directories(${ulfius_SOURCE_DIR}/include)
-    else ()
-        message( FATAL_ERROR "Ulfius version required: ${ULFIUS_VERSION_REQUIRED} - version installed: ${ULFIUS_VERSION_STRING}")
-    endif ()
-elseif (NOT ULFIUS_FOUND AND DOWNLOAD_DEPENDENCIES)
-    include(DownloadProject)
-    option(WITH_WEBSOCKET "specific param" off)
-    option(INSTALL_HEADER "specific param" off)
-    option(CHECK_YDER "specific param" off)
-    message(STATUS "Download Ulfius ${ULFIUS_VERSION_REQUIRED}")
-    download_project(PROJ ulfius
-                     URL "https://github.com/babelouest/ulfius/archive/v${ULFIUS_VERSION_REQUIRED}.tar.gz"
-                     QUIET)
-    add_subdirectory(${ulfius_SOURCE_DIR} ${ulfius_BINARY_DIR})
-    include_directories(${yder_SOURCE_DIR}/include)
-    include_directories(${orcania_SOURCE_DIR}/include)
-    include_directories(${ulfius_SOURCE_DIR}/include)
-    add_dependencies(glewlwyd ulfius)
-    add_dependencies(ulfius yder)
-    add_dependencies(ulfius orcania)
-    set(ULFIUS_LIBRARIES ulfius)
-    include_directories(${ulfius_BINARY_DIR})
+find_package(Ulfius ${ULFIUS_VERSION_REQUIRED} REQUIRED)
+if ("${ULFIUS_VERSION_STRING}" VERSION_GREATER_EQUAL "${ULFIUS_VERSION_REQUIRED}")
+    message(STATUS "Ulfius found: ${ULFIUS_VERSION_STRING}")
 else ()
-  message( FATAL_ERROR "Ulfius not found")
+    message( FATAL_ERROR "Ulfius version required: ${ULFIUS_VERSION_REQUIRED} - version installed: ${ULFIUS_VERSION_STRING}")
 endif ()
-set(GLWD_LIBS ${GLWD_LIBS} ${ULFIUS_LIBRARIES})
+list(APPEND GLWD_LIBS Ulfius::Ulfius)
 
-set(Hoel_FIND_QUIETLY ON)
-include(FindHoel)
-find_package(Hoel ${HOEL_VERSION_REQUIRED} QUIET)
-if (HOEL_FOUND)
-    if ("${HOEL_VERSION_STRING}" VERSION_GREATER_EQUAL "${HOEL_VERSION_REQUIRED}")
-        message(STATUS "Hoel found: ${HOEL_VERSION_STRING}")
-        include_directories(${hoel_SOURCE_DIR}/include)
-    else ()
-        message( FATAL_ERROR "Hoel version required: ${HOEL_VERSION_REQUIRED} - version installed: ${HOEL_VERSION_STRING}")
-    endif ()
-elseif (NOT HOEL_FOUND AND DOWNLOAD_DEPENDENCIES)
-    include(DownloadProject)
-    option(INSTALL_HEADER "specific param" off)
-    option(CHECK_YDER "specific param" off)
-    message(STATUS "Download Hoel ${HOEL_VERSION_REQUIRED}")
-    download_project(PROJ hoel
-                     URL "https://github.com/babelouest/hoel/archive/v${HOEL_VERSION_REQUIRED}.tar.gz"
-                     QUIET)
-    add_subdirectory(${hoel_SOURCE_DIR} ${hoel_BINARY_DIR})
-    include_directories(${hoel_SOURCE_DIR}/include)
-    add_dependencies(glewlwyd hoel)
-    add_dependencies(hoel yder)
-    add_dependencies(hoel orcania)
-    set(HOEL_LIBRARIES hoel)
-    include_directories(${hoel_BINARY_DIR})
+find_package(Hoel ${HOEL_VERSION_REQUIRED} REQUIRED)
+if ("${HOEL_VERSION_STRING}" VERSION_GREATER_EQUAL "${HOEL_VERSION_REQUIRED}")
+    message(STATUS "Hoel found: ${HOEL_VERSION_STRING}")
 else ()
-    message( FATAL_ERROR "Hoel not found")
+    message( FATAL_ERROR "Hoel version required: ${HOEL_VERSION_REQUIRED} - version installed: ${HOEL_VERSION_STRING}")
 endif ()
-set(GLWD_LIBS ${GLWD_LIBS} ${HOEL_LIBRARIES})
+list(APPEND GLWD_LIBS Hoel::Hoel)
 
 target_link_libraries(glewlwyd ${GLWD_LIBS})
 
@@ -311,7 +191,7 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user")
   target_link_libraries(usermodmock ${GLWD_LIBS})
-  set(USER_MODULES ${USER_MODULES} usermodmock)
+  list(APPEND USER_MODULES usermodmock)
 endif ()
 
 option(WITH_USER_DATABASE "Build Database backend user module" on)
@@ -323,7 +203,7 @@ if (WITH_USER_DATABASE)
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user")
   target_link_libraries(usermoddatabase ${GLWD_LIBS})
-  set(USER_MODULES ${USER_MODULES} usermoddatabase)
+  list(APPEND USER_MODULES usermoddatabase)
 endif ()
 
 option(WITH_USER_LDAP "Build LDAP backend user module" on)
@@ -350,8 +230,8 @@ if (WITH_USER_LDAP)
   set_target_properties(usermodldap PROPERTIES
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user")
-  target_link_libraries(usermodldap ${GLWD_LIBS} ${LDAP_LIBRARIES} "-llber")
-  set(USER_MODULES ${USER_MODULES} usermodldap)
+  target_link_libraries(usermodldap ${GLWD_LIBS} OpenLDAP::OpenLDAP "-llber")
+  list(APPEND USER_MODULES usermodldap)
 endif ()
 
 option(WITH_USER_HTTP "Build HTTP backend user module" on)
@@ -363,7 +243,7 @@ if (WITH_USER_HTTP)
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user")
   target_link_libraries(usermodhttp ${GLWD_LIBS})
-  set(USER_MODULES ${USER_MODULES} usermodhttp)
+  list(APPEND USER_MODULES usermodhttp)
 endif ()
 
 # user middleware modules
@@ -401,7 +281,7 @@ if (WITH_CLIENT_DATABASE)
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/client")
   target_link_libraries(clientmoddatabase ${GLWD_LIBS})
-  set(CLIENT_MODULES ${CLIENT_MODULES} clientmoddatabase)
+  list(APPEND CLIENT_MODULES clientmoddatabase)
 endif ()
 
 option(WITH_CLIENT_LDAP "Build LDAP backend client module" on)
@@ -428,8 +308,8 @@ if (WITH_CLIENT_LDAP)
   set_target_properties(clientmodldap PROPERTIES
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/client")
-  target_link_libraries(clientmodldap ${GLWD_LIBS} ${LDAP_LIBRARIES} "-llber")
-  set(CLIENT_MODULES ${CLIENT_MODULES} clientmodldap)
+  target_link_libraries(clientmodldap ${GLWD_LIBS} OpenLDAP::OpenLDAP "-llber")
+  list(APPEND CLIENT_MODULES clientmodldap)
 endif ()
 
 # schemes modules
@@ -444,7 +324,7 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
   target_link_libraries(schememodmock ${GLWD_LIBS})
-  set(SCHEME_MODULES ${SCHEME_MODULES} schememodmock)
+  list(APPEND SCHEME_MODULES schememodmock)
 endif ()
 
 option(WITH_SCHEME_RETYPE_PASSWORD "Build retype password scheme module" on)
@@ -456,7 +336,7 @@ if (WITH_SCHEME_RETYPE_PASSWORD)
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
   target_link_libraries(schememodpassword ${GLWD_LIBS})
-  set(SCHEME_MODULES ${SCHEME_MODULES} schememodpassword)
+  list(APPEND SCHEME_MODULES schememodpassword)
 endif ()
 
 option(WITH_SCHEME_EMAIL "Build e-mail scheme module" on)
@@ -468,7 +348,7 @@ if (WITH_SCHEME_EMAIL)
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
   target_link_libraries(schememodemail ${GLWD_LIBS})
-  set(SCHEME_MODULES ${SCHEME_MODULES} schememodemail)
+  list(APPEND SCHEME_MODULES schememodemail)
 endif ()
 
 option(WITH_SCHEME_OTP "Build OTP scheme module" on)
@@ -478,7 +358,7 @@ if (WITH_SCHEME_OTP)
   if (LIBOATH_FOUND)
       include_directories(${LIBOATH_INCLUDE_DIR})
   endif ()
-  
+
   set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/otp.c)
   set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, liboath0 (>= 2.6.0)")
 
@@ -486,8 +366,8 @@ if (WITH_SCHEME_OTP)
   set_target_properties(schememodotp PROPERTIES
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
-  target_link_libraries(schememodotp ${GLWD_LIBS} ${LIBOATH_LIBRARIES})
-  set(SCHEME_MODULES ${SCHEME_MODULES} schememodotp)
+  target_link_libraries(schememodotp ${GLWD_LIBS} OATH::OATH)
+  list(APPEND SCHEME_MODULES schememodotp)
 endif ()
 
 option(WITH_SCHEME_WEBAUTHN "Build WebAuthn scheme module" on)
@@ -503,7 +383,7 @@ if (WITH_SCHEME_WEBAUTHN)
   if (LDAP_FOUND)
     include_directories(${LDAP_INCLUDE_DIRS})
   endif ()
-  
+
   set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/webauthn.c)
 
   if ("${DISTRIB_CODENAME}" STREQUAL "ubuntu")
@@ -513,40 +393,21 @@ if (WITH_SCHEME_WEBAUTHN)
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libcbor0|libcbor0.8")
   endif ()
 
-  set(Rhonabwy_FIND_QUIETLY ON) # force to find Rhonabwy quietly
-  include(FindRhonabwy)
-  find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} QUIET) # try to find rhonabwy
-  if (RHONABWY_FOUND)
-      if ("${RHONABWY_VERSION_STRING}" VERSION_GREATER_EQUAL "${RHONABWY_VERSION_REQUIRED}")
-          message(STATUS "Rhonabwy found: ${RHONABWY_VERSION_STRING}")
-          include_directories(${rhonabwy_SOURCE_DIR}/include)
-      else ()
-          message( FATAL_ERROR "Rhonabwy version required: ${RHONABWY_VERSION_REQUIRED} - version installed: ${RHONABWY_VERSION_STRING}")
-      endif ()
-  elseif (NOT RHONABWY_FOUND AND DOWNLOAD_DEPENDENCIES)
-      include(DownloadProject)
-      message(STATUS "Download Rhonabwy ${RHONABWY_VERSION_REQUIRED}")
-      download_project(PROJ rhonabwy # ... otherwise, download archive
-                       URL "https://github.com/babelouest/rhonabwy/archive/v${RHONABWY_VERSION_REQUIRED}.tar.gz"
-                       QUIET)
-      add_subdirectory(${rhonabwy_SOURCE_DIR} ${rhonabwy_BINARY_DIR})
-      include_directories(${rhonabwy_SOURCE_DIR}/include)
-      set(RHONABWY_LIBRARIES rhonabwy)
-      include_directories(${rhonabwy_BINARY_DIR})
-      add_dependencies(rhonabwy orcania)
-      add_dependencies(rhonabwy yder)
-      add_dependencies(rhonabwy ulfius)
-      set (RHONABWY_FOUND ON)
-  else ()
-    message( FATAL_ERROR "Rhonabwy not found")
+  if (NOT Rhonabwy_FOUND)
+    find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} REQUIRED)
+    if ("${RHONABWY_VERSION_STRING}" VERSION_GREATER_EQUAL "${RHONABWY_VERSION_REQUIRED}")
+        message(STATUS "Rhonabwy found: ${RHONABWY_VERSION_STRING}")
+    else ()
+        message( FATAL_ERROR "Rhonabwy version required: ${RHONABWY_VERSION_REQUIRED} - version installed: ${RHONABWY_VERSION_STRING}")
+    endif ()
   endif ()
 
   add_library(schememodwebauthn MODULE ${LIB_SRC})
   set_target_properties(schememodwebauthn PROPERTIES
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
-  target_link_libraries(schememodwebauthn ${GLWD_LIBS} ${LIBCBOR_LIBRARIES} ${LDAP_LIBRARIES} ${RHONABWY_LIBRARIES})
-  set(SCHEME_MODULES ${SCHEME_MODULES} schememodwebauthn)
+  target_link_libraries(schememodwebauthn ${GLWD_LIBS} CBOR::CBOR OpenLDAP::OpenLDAP Rhonabwy::Rhonabwy)
+  list(APPEND SCHEME_MODULES schememodwebauthn)
 endif ()
 
 option(WITH_SCHEME_CERTIFICATE "Build certificate scheme module" on)
@@ -558,7 +419,7 @@ if (WITH_SCHEME_CERTIFICATE)
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
   target_link_libraries(schememodcertificate ${GLWD_LIBS})
-  set(SCHEME_MODULES ${SCHEME_MODULES} schememodcertificate)
+  list(APPEND SCHEME_MODULES schememodcertificate)
 endif ()
 
 option(WITH_SCHEME_HTTP "Build HTTP Basic Auth scheme module" on)
@@ -570,7 +431,7 @@ if (WITH_SCHEME_HTTP)
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
   target_link_libraries(schememodhttp ${GLWD_LIBS})
-  set(SCHEME_MODULES ${SCHEME_MODULES} schememodhttp)
+  list(APPEND SCHEME_MODULES schememodhttp)
 endif ()
 
 option(WITH_SCHEME_OAUTH2 "Build Oauth2/OIDC scheme module" on)
@@ -581,72 +442,32 @@ if (WITH_SCHEME_OAUTH2)
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}")
   endif ()
 
-  if (NOT RHONABWY_FOUND)
-    set(Rhonabwy_FIND_QUIETLY ON) # force to find Rhonabwy quietly
-    include(FindRhonabwy)
-    find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} QUIET) # try to find rhonabwy
-    if (RHONABWY_FOUND)
-        if ("${RHONABWY_VERSION_STRING}" VERSION_GREATER_EQUAL "${RHONABWY_VERSION_REQUIRED}")
-            message(STATUS "Rhonabwy found: ${RHONABWY_VERSION_STRING}")
-            include_directories(${rhonabwy_SOURCE_DIR}/include)
-        else ()
-            message( FATAL_ERROR "Rhonabwy version required: ${RHONABWY_VERSION_REQUIRED} - version installed: ${RHONABWY_VERSION_STRING}")
-        endif ()
-    elseif (NOT RHONABWY_FOUND AND DOWNLOAD_DEPENDENCIES)
-        include(DownloadProject)
-        message(STATUS "Download Rhonabwy ${RHONABWY_VERSION_REQUIRED}")
-        download_project(PROJ rhonabwy # ... otherwise, download archive
-                         URL "https://github.com/babelouest/rhonabwy/archive/v${RHONABWY_VERSION_REQUIRED}.tar.gz"
-                         QUIET)
-        add_subdirectory(${rhonabwy_SOURCE_DIR} ${rhonabwy_BINARY_DIR})
-        include_directories(${rhonabwy_SOURCE_DIR}/include)
-        set(RHONABWY_LIBRARIES rhonabwy)
-        include_directories(${rhonabwy_BINARY_DIR})
-        add_dependencies(rhonabwy orcania)
-        add_dependencies(rhonabwy yder)
-        add_dependencies(rhonabwy ulfius)
-        set (RHONABWY_FOUND ON)
+  set(SCHEME_OAUTH2_LIBS )
+
+  if (NOT Rhonabwy_FOUND)
+    find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} REQUIRED)
+    if ("${RHONABWY_VERSION_STRING}" VERSION_GREATER_EQUAL "${RHONABWY_VERSION_REQUIRED}")
+        message(STATUS "Rhonabwy found: ${RHONABWY_VERSION_STRING}")
     else ()
-        message( FATAL_ERROR "Rhonabwy not found")
+        message( FATAL_ERROR "Rhonabwy version required: ${RHONABWY_VERSION_REQUIRED} - version installed: ${RHONABWY_VERSION_STRING}")
     endif ()
   endif ()
+  list(APPEND SCHEME_OAUTH2_LIBS Rhonabwy::Rhonabwy)
 
-  set(Iddawc_FIND_QUIETLY ON) # force to find Iddawc quietly
-  include(FindIddawc)
-  find_package(Iddawc ${IDDAWC_VERSION_REQUIRED} QUIET) # try to find iddawc
-  if (IDDAWC_FOUND)
-      if ("${IDDAWC_VERSION_STRING}" VERSION_GREATER_EQUAL "${IDDAWC_VERSION_REQUIRED}")
-          message(STATUS "Iddawc found: ${IDDAWC_VERSION_STRING}")
-          include_directories(${iddawc_SOURCE_DIR}/include)
-      else ()
-          message( FATAL_ERROR "Iddawc version required: ${IDDAWC_VERSION_REQUIRED} - version installed: ${IDDAWC_VERSION_STRING}")
-      endif ()
-  elseif (NOT IDDAWC_FOUND AND DOWNLOAD_DEPENDENCIES)
-      include(DownloadProject)
-      message(STATUS "Download Iddawc ${IDDAWC_VERSION_REQUIRED}")
-      set(BUILD_IDWCC OFF)
-      download_project(PROJ iddawc # ... otherwise, download archive
-                       URL "https://github.com/babelouest/iddawc/archive/v${IDDAWC_VERSION_REQUIRED}.tar.gz"
-                       QUIET)
-      add_subdirectory(${iddawc_SOURCE_DIR} ${iddawc_BINARY_DIR})
-      include_directories(${iddawc_SOURCE_DIR}/include)
-      set(IDDAWC_LIBRARIES iddawc)
-      include_directories(${iddawc_BINARY_DIR})
-      set (IDDAWC_FOUND ON)
-      add_dependencies(iddawc orcania)
-      add_dependencies(iddawc yder)
-      add_dependencies(iddawc ulfius)
-      add_dependencies(iddawc rhonabwy)
+  find_package(Iddawc ${IDDAWC_VERSION_REQUIRED} REQUIRED)
+  if ("${IDDAWC_VERSION_STRING}" VERSION_GREATER_EQUAL "${IDDAWC_VERSION_REQUIRED}")
+      message(STATUS "Iddawc found: ${IDDAWC_VERSION_STRING}")
   else ()
-      message( FATAL_ERROR "Iddawc not found")
+      message( FATAL_ERROR "Iddawc version required: ${IDDAWC_VERSION_REQUIRED} - version installed: ${IDDAWC_VERSION_STRING}")
   endif ()
+  list(APPEND SCHEME_OAUTH2_LIBS Iddawc::Iddawc)
 
   add_library(schememodoauth2 MODULE ${LIB_SRC})
   set_target_properties(schememodoauth2 PROPERTIES
                         COMPILE_OPTIONS "-Wextra;-Wconversion"
                         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
-  target_link_libraries(schememodoauth2 ${GLWD_LIBS} ${RHONABWY_LIBRARIES} ${IDDAWC_LIBRARIES})
-  set(SCHEME_MODULES ${SCHEME_MODULES} schememodoauth2)
+  target_link_libraries(schememodoauth2 ${GLWD_LIBS} ${SCHEME_OAUTH2_LIBS})
+  list(APPEND SCHEME_MODULES schememodoauth2)
 endif ()
 
 # plugins modules
@@ -661,38 +482,18 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
   target_link_libraries(pluginmodmock ${MOCK_LIBS})
-  set(PLUGIN_MODULES ${PLUGIN_MODULES} pluginmodmock)
+  list(APPEND PLUGIN_MODULES pluginmodmock)
 endif ()
 
 option(WITH_PLUGIN_OAUTH2 "Build legacy oauth2 plugin module" on)
 if (WITH_PLUGIN_OAUTH2)
-  if (NOT RHONABWY_FOUND)
-    set(Rhonabwy_FIND_QUIETLY ON) # force to find Rhonabwy quietly
-    include(FindRhonabwy)
-    find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} QUIET) # try to find rhonabwy
-    if (RHONABWY_FOUND)
-        if ("${RHONABWY_VERSION_STRING}" VERSION_GREATER_EQUAL "${RHONABWY_VERSION_REQUIRED}")
-            message(STATUS "Rhonabwy found: ${RHONABWY_VERSION_STRING}")
-            include_directories(${rhonabwy_SOURCE_DIR}/include)
-        else ()
-            message( FATAL_ERROR "Rhonabwy version required: ${RHONABWY_VERSION_REQUIRED} - version installed: ${RHONABWY_VERSION_STRING}")
-        endif ()
-    elseif (NOT RHONABWY_FOUND AND DOWNLOAD_DEPENDENCIES)
-        include(DownloadProject)
-        message(STATUS "Download Rhonabwy ${RHONABWY_VERSION_REQUIRED}")
-        download_project(PROJ rhonabwy # ... otherwise, download archive
-                         URL "https://github.com/babelouest/rhonabwy/archive/v${RHONABWY_VERSION_REQUIRED}.tar.gz"
-                         QUIET)
-        add_subdirectory(${rhonabwy_SOURCE_DIR} ${rhonabwy_BINARY_DIR})
-        include_directories(${rhonabwy_SOURCE_DIR}/include)
-        set(RHONABWY_LIBRARIES rhonabwy)
-        include_directories(${rhonabwy_BINARY_DIR})
-        add_dependencies(rhonabwy orcania)
-        add_dependencies(rhonabwy yder)
-        add_dependencies(rhonabwy ulfius)
-        set (RHONABWY_FOUND ON)
+
+  if (NOT Rhonabwy_FOUND)
+    find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} REQUIRED)
+    if ("${RHONABWY_VERSION_STRING}" VERSION_GREATER_EQUAL "${RHONABWY_VERSION_REQUIRED}")
+        message(STATUS "Rhonabwy found: ${RHONABWY_VERSION_STRING}")
     else ()
-        message( FATAL_ERROR "Rhonabwy not found")
+        message( FATAL_ERROR "Rhonabwy version required: ${RHONABWY_VERSION_REQUIRED} - version installed: ${RHONABWY_VERSION_STRING}")
     endif ()
   endif ()
 
@@ -703,39 +504,19 @@ if (WITH_PLUGIN_OAUTH2)
   set_target_properties(protocol_oauth2 PROPERTIES
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
-  target_link_libraries(protocol_oauth2 ${GLWD_LIBS} ${RHONABWY_LIBRARIES})
-  set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_oauth2)
+  target_link_libraries(protocol_oauth2 ${GLWD_LIBS} Rhonabwy::Rhonabwy)
+  list(APPEND PLUGIN_MODULES protocol_oauth2)
 endif ()
 
 option(WITH_PLUGIN_OIDC "Build OpenID Connect plugin module" on)
 if (WITH_PLUGIN_OIDC)
-  if (NOT RHONABWY_FOUND)
-    set(Rhonabwy_FIND_QUIETLY ON) # force to find Rhonabwy quietly
-    include(FindRhonabwy)
-    find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} QUIET) # try to find rhonabwy
-    if (RHONABWY_FOUND)
-        if ("${RHONABWY_VERSION_STRING}" VERSION_GREATER_EQUAL "${RHONABWY_VERSION_REQUIRED}")
-            message(STATUS "Rhonabwy found: ${RHONABWY_VERSION_STRING}")
-            include_directories(${rhonabwy_SOURCE_DIR}/include)
-        else ()
-            message( FATAL_ERROR "Rhonabwy version required: ${RHONABWY_VERSION_REQUIRED} - version installed: ${RHONABWY_VERSION_STRING}")
-        endif ()
-    elseif (NOT RHONABWY_FOUND AND DOWNLOAD_DEPENDENCIES)
-        include(DownloadProject)
-        message(STATUS "Download Rhonabwy ${RHONABWY_VERSION_REQUIRED}")
-        download_project(PROJ rhonabwy # ... otherwise, download archive
-                         URL "https://github.com/babelouest/rhonabwy/archive/v${RHONABWY_VERSION_REQUIRED}.tar.gz"
-                         QUIET)
-        add_subdirectory(${rhonabwy_SOURCE_DIR} ${rhonabwy_BINARY_DIR})
-        include_directories(${rhonabwy_SOURCE_DIR}/include)
-        set(RHONABWY_LIBRARIES rhonabwy)
-        include_directories(${rhonabwy_BINARY_DIR})
-        add_dependencies(rhonabwy orcania)
-        add_dependencies(rhonabwy yder)
-        add_dependencies(rhonabwy ulfius)
-        set (RHONABWY_FOUND ON)
+
+  if (NOT Rhonabwy_FOUND)
+    find_package(Rhonabwy ${RHONABWY_VERSION_REQUIRED} REQUIRED)
+    if ("${RHONABWY_VERSION_STRING}" VERSION_GREATER_EQUAL "${RHONABWY_VERSION_REQUIRED}")
+        message(STATUS "Rhonabwy found: ${RHONABWY_VERSION_STRING}")
     else ()
-        message( FATAL_ERROR "Rhonabwy not found")
+        message( FATAL_ERROR "Rhonabwy version required: ${RHONABWY_VERSION_REQUIRED} - version installed: ${RHONABWY_VERSION_STRING}")
     endif ()
   endif ()
 
@@ -746,13 +527,13 @@ if (WITH_PLUGIN_OIDC)
   set_target_properties(protocol_oidc PROPERTIES
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
-  target_link_libraries(protocol_oidc ${GLWD_LIBS} ${RHONABWY_LIBRARIES})
-  set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_oidc)
+  target_link_libraries(protocol_oidc ${GLWD_LIBS} Rhonabwy::Rhonabwy)
+  list(APPEND PLUGIN_MODULES protocol_oidc)
 endif ()
 
 option(WITH_PLUGIN_REGISTER "Build register plugin module" on)
 if (WITH_PLUGIN_REGISTER)
-    
+
   set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${PLUGIN_MODULES_SRC_PATH}/register.c)
 
   add_library(protocol_register MODULE ${LIB_SRC})
@@ -760,7 +541,7 @@ if (WITH_PLUGIN_REGISTER)
       COMPILE_OPTIONS "-Wextra;-Wconversion"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
   target_link_libraries(protocol_register ${GLWD_LIBS})
-  set(PLUGIN_MODULES ${PLUGIN_MODULES} protocol_register)
+  list(APPEND PLUGIN_MODULES protocol_register)
 endif ()
 
 # tests
@@ -782,7 +563,7 @@ if (BUILD_GLEWLWYD_TESTING)
     set(TST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
     set(U_RESOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/docs/resources/ulfius/)
     find_package(Threads REQUIRED)
-    
+
     set(TST_LIBS ${TST_LIBS} ${JANSSON_LIBRARIES})
     set(TST_LIBS ${TST_LIBS} ${ORCANIA_LIBRARIES})
     set(TST_LIBS ${TST_LIBS} ${YDER_LIBRARIES})
@@ -828,18 +609,18 @@ if (BUILD_GLEWLWYD_TESTING)
       set (TST_LIBS ${TST_LIBS} ${GNUTLS_LIBRARIES})
       set (TESTS ${TESTS}
               glewlwyd_oauth2_additional_parameters
-              glewlwyd_oauth2_auth_code 
-              glewlwyd_oauth2_code 
-              glewlwyd_oauth2_code_client_confidential 
-              glewlwyd_oauth2_implicit 
-              glewlwyd_oauth2_resource_owner_pwd_cred 
-              glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential 
-              glewlwyd_oauth2_client_cred 
-              glewlwyd_oauth2_refresh_token 
-              glewlwyd_oauth2_refresh_token_client_confidential 
-              glewlwyd_oauth2_delete_token 
-              glewlwyd_oauth2_delete_token_client_confidential 
-              glewlwyd_oauth2_profile 
+              glewlwyd_oauth2_auth_code
+              glewlwyd_oauth2_code
+              glewlwyd_oauth2_code_client_confidential
+              glewlwyd_oauth2_implicit
+              glewlwyd_oauth2_resource_owner_pwd_cred
+              glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential
+              glewlwyd_oauth2_client_cred
+              glewlwyd_oauth2_refresh_token
+              glewlwyd_oauth2_refresh_token_client_confidential
+              glewlwyd_oauth2_delete_token
+              glewlwyd_oauth2_delete_token_client_confidential
+              glewlwyd_oauth2_profile
               glewlwyd_oauth2_profile_impersonate
               glewlwyd_oauth2_refresh_manage_session
               glewlwyd_oauth2_irl
@@ -851,7 +632,7 @@ if (BUILD_GLEWLWYD_TESTING)
               glewlwyd_oauth2_scheme_required
               )
     endif ()
-    
+
     if (WITH_PLUGIN_OIDC)
       set (TST_LIBS ${TST_LIBS} ${GNUTLS_LIBRARIES})
       set (TESTS ${TESTS}
@@ -914,15 +695,15 @@ if (BUILD_GLEWLWYD_TESTING)
     endif ()
 
     set(TESTS_PROMETHEUS glewlwyd_prometheus)
-    
+
     set(TESTS_SINGLE_USER_SESSION glewlwyd_auth_single_user_session)
-    
+
     if (WITH_PLUGIN_REGISTER)
       set (TESTS ${TESTS}
               glewlwyd_register
               )
     endif ()
-    
+
     if (WITH_SCHEME_OTP)
       set (TST_LIBS ${TST_LIBS} ${LIBOATH_LIBRARIES})
       set (TESTS ${TESTS} glewlwyd_scheme_otp)
@@ -953,14 +734,14 @@ if (BUILD_GLEWLWYD_TESTING)
     if (WITH_SCHEME_CERTIFICATE)
       set(TESTS_SSL ${TESTS_SSL} glewlwyd_scheme_certificate)
     endif ()
-    
+
     configure_file(
         "${G_CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
         "${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake"
         @ONLY)
 
     set(COUNTER 0)
-    
+
     foreach (t ${TESTS})
       if (NOT ${t} MATCHES "iddawc_resource_tester$")
         add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)

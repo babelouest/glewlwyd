@@ -47,6 +47,12 @@ find_package_handle_standard_args(Ldap
 if (LDAP_FOUND)
     set(LDAP_LIBRARIES ${LDAP_LIBRARY})
     set(LDAP_INCLUDE_DIRS ${LDAP_INCLUDE_DIR})
+    if (NOT TARGET OpenLDAP::OpenLDAP)
+        add_library(OpenLDAP::OpenLDAP UNKNOWN IMPORTED)
+        set_target_properties(OpenLDAP::OpenLDAP PROPERTIES
+                IMPORTED_LOCATION "${LDAP_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${LDAP_INCLUDE_DIR}")
+    endif ()
 endif ()
 
 mark_as_advanced(LDAP_INCLUDE_DIR LDAP_LIBRARY)
