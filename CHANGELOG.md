@@ -1,5 +1,10 @@
 # Glewlwyd Changelog
 
+## 2.7.6
+
+- Minor bugfixes
+- Update cmake script for a cleaner build
+
 ## 2.7.5
 
 - Build with flag `-Wconversion`
@@ -16,6 +21,7 @@ This release contains a security fix in the library [rhonabwy](https://github.co
 - Add config value `login_api_enabled` to enable/disable authentication APIs
 - Add config value `plugin_api_run_enabled` to list authorized plugins for a Glewlwyd instance
 - Minor bugfixes
+- cmake: remove `DownloadProject` feature, now dependencies must be previously installed
 
 ## 2.7.2
 
