@@ -50,8 +50,8 @@ if (LIBOATH_FOUND)
     if (NOT TARGET OATH::OATH)
         add_library(OATH::OATH UNKNOWN IMPORTED)
         set_target_properties(OATH::OATH PROPERTIES
-                IMPORTED_LOCATION "${JANSSON_LIBRARY}"
-                INTERFACE_INCLUDE_DIRECTORIES "${JANSSON_INCLUDE_DIR}")
+                IMPORTED_LOCATION "${LIBOATH_LIBRARIES}"
+                INTERFACE_INCLUDE_DIRECTORIES "${LIBOATH_INCLUDE_DIR}")
     endif ()
 endif ()
 

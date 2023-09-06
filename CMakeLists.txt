@@ -27,7 +27,7 @@ set(SCHEME_MODULES )
 
 set(PROGRAM_VERSION_MAJOR "2")
 set(PROGRAM_VERSION_MINOR "7")
-set(PROGRAM_VERSION_PATCH "5")
+set(PROGRAM_VERSION_PATCH "6")
 set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, Openid Connect, multiple factor authentication with, HOTP/TOTP, FIDO2, TLS Certificates, etc. extensible via plugins ")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(LIBCBOR_VERSION_REQUIRED "0.5.0")
@@ -35,7 +35,7 @@ set(JANSSON_VERSION_REQUIRED "2.11")
 set(ORCANIA_VERSION_REQUIRED "2.3.3")
 set(YDER_VERSION_REQUIRED "1.4.19")
 set(ULFIUS_VERSION_REQUIRED "2.7.14")
-set(HOEL_VERSION_REQUIRED "1.4.27")
+set(HOEL_VERSION_REQUIRED "1.4.28")
 set(RHONABWY_VERSION_REQUIRED "1.1.12")
 set(IDDAWC_VERSION_REQUIRED "1.1.9")
 
@@ -549,273 +549,277 @@ endif ()
 option(BUILD_GLEWLWYD_TESTING "Build the testing tree" OFF)
 
 if (BUILD_GLEWLWYD_TESTING)
-  set(WITH_MOCK ON)
-  include(FindCheck)
-  find_package(Check REQUIRED)
-  if (CHECK_FOUND)
-    include(FindSubunit)
-    find_package(Subunit REQUIRED)
+    set(WITH_MOCK ON)
+    find_package(Check REQUIRED)
+    if (CHECK_FOUND)
+        if (NOT WIN32 AND NOT APPLE)
+            include(FindSubunit)
+            find_package(Subunit REQUIRED)
+        endif ()
 
-    enable_testing()
+        enable_testing()
 
-    set(CMAKE_CTEST_COMMAND ctest -V)
+        set(CMAKE_CTEST_COMMAND ctest -V)
 
-    set(TST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
-    set(U_RESOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/docs/resources/ulfius/)
-    find_package(Threads REQUIRED)
+        set(TST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/test)
+        set(U_RESOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/docs/resources/ulfius/)
+        set(TST_LIBS Check::Check)
+        if (NOT WIN32)
+            find_package(Threads REQUIRED)
+            list(APPEND TST_LIBS ${CMAKE_THREAD_LIBS_INIT} m)
+        endif ()
+        if (NOT APPLE AND NOT WIN32)
+            list(APPEND TST_LIBS rt)
+        endif ()
+        if (NOT WIN32 AND NOT APPLE)
+            list(APPEND TST_LIBS Subunit::Subunit)
+        endif ()
 
-    set(TST_LIBS ${TST_LIBS} ${JANSSON_LIBRARIES})
-    set(TST_LIBS ${TST_LIBS} ${ORCANIA_LIBRARIES})
-    set(TST_LIBS ${TST_LIBS} ${YDER_LIBRARIES})
-    set(TST_LIBS ${TST_LIBS} ${ULFIUS_LIBRARIES})
-    set(TST_LIBS ${TST_LIBS} ${RHONABWY_LIBRARIES})
-    set(TST_LIBS ${TST_LIBS} ${GNUTLS_LIBRARIES})
-    set(TST_LIBS ${TST_LIBS} ${CHECK_LIBRARIES} ${SUBUNIT_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} m rt)
+        list(APPEND TST_LIBS ${GLWD_LIBS})
 
-    set(TESTS glewlwyd_admin_mod_type
-              glewlwyd_admin_mod_user
-              glewlwyd_admin_mod_user_middleware
-              glewlwyd_admin_mod_user_auth_scheme
-              glewlwyd_admin_mod_client
-              glewlwyd_admin_mod_plugin
-              glewlwyd_admin_api_key
-              glewlwyd_auth_password
-              glewlwyd_auth_scheme
-              glewlwyd_auth_grant
-              glewlwyd_auth_check_scheme
-              glewlwyd_auth_scheme_trigger
-              glewlwyd_auth_scheme_register
-              glewlwyd_auth_profile
-              glewlwyd_auth_session_manage
-              glewlwyd_auth_profile_get_scheme_available
-              glewlwyd_crud_user
-              glewlwyd_crud_user_middleware
-              glewlwyd_crud_client
-              glewlwyd_crud_scope
-              glewlwyd_crud_misc_config
-              glewlwyd_mod_user_http
-              glewlwyd_mod_user_irl
-              glewlwyd_mod_user_multiple_password_irl
-              glewlwyd_mod_client_irl
-              glewlwyd_profile_delete
-              glewlwyd_scheme_forbidden
-              glewlwyd_mail_on_connection
-              glewlwyd_geolocation
-              glewlwyd_mail_on_scheme_register
-              glewlwyd_mail_on_update_password
-              )
+        set(TESTS )
+        list(APPEND TESTS glewlwyd_admin_mod_type
+                  glewlwyd_admin_mod_user
+                  glewlwyd_admin_mod_user_middleware
+                  glewlwyd_admin_mod_user_auth_scheme
+                  glewlwyd_admin_mod_client
+                  glewlwyd_admin_mod_plugin
+                  glewlwyd_admin_api_key
+                  glewlwyd_auth_password
+                  glewlwyd_auth_scheme
+                  glewlwyd_auth_grant
+                  glewlwyd_auth_check_scheme
+                  glewlwyd_auth_scheme_trigger
+                  glewlwyd_auth_scheme_register
+                  glewlwyd_auth_profile
+                  glewlwyd_auth_session_manage
+                  glewlwyd_auth_profile_get_scheme_available
+                  glewlwyd_crud_user
+                  glewlwyd_crud_user_middleware
+                  glewlwyd_crud_client
+                  glewlwyd_crud_scope
+                  glewlwyd_crud_misc_config
+                  glewlwyd_mod_user_http
+                  glewlwyd_mod_user_irl
+                  glewlwyd_mod_user_multiple_password_irl
+                  glewlwyd_mod_client_irl
+                  glewlwyd_profile_delete
+                  glewlwyd_scheme_forbidden
+                  glewlwyd_mail_on_connection
+                  glewlwyd_geolocation
+                  glewlwyd_mail_on_scheme_register
+                  glewlwyd_mail_on_update_password
+                  )
 
-    if (WITH_PLUGIN_OAUTH2)
-      set (TST_LIBS ${TST_LIBS} ${GNUTLS_LIBRARIES})
-      set (TESTS ${TESTS}
-              glewlwyd_oauth2_additional_parameters
-              glewlwyd_oauth2_auth_code
-              glewlwyd_oauth2_code
-              glewlwyd_oauth2_code_client_confidential
-              glewlwyd_oauth2_implicit
-              glewlwyd_oauth2_resource_owner_pwd_cred
-              glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential
-              glewlwyd_oauth2_client_cred
-              glewlwyd_oauth2_refresh_token
-              glewlwyd_oauth2_refresh_token_client_confidential
-              glewlwyd_oauth2_delete_token
-              glewlwyd_oauth2_delete_token_client_confidential
-              glewlwyd_oauth2_profile
-              glewlwyd_oauth2_profile_impersonate
-              glewlwyd_oauth2_refresh_manage_session
-              glewlwyd_oauth2_irl
-              glewlwyd_oauth2_code_challenge
-              glewlwyd_oauth2_token_introspection
-              glewlwyd_oauth2_token_revocation
-              glewlwyd_oauth2_device_authorization
-              glewlwyd_oauth2_code_replay
-              glewlwyd_oauth2_scheme_required
-              )
-    endif ()
+        if (WITH_PLUGIN_OAUTH2)
+          list(APPEND TST_LIBS ${GNUTLS_LIBRARIES} Rhonabwy::Rhonabwy)
+          list(APPEND TESTS
+                  glewlwyd_oauth2_additional_parameters
+                  glewlwyd_oauth2_auth_code
+                  glewlwyd_oauth2_code
+                  glewlwyd_oauth2_code_client_confidential
+                  glewlwyd_oauth2_implicit
+                  glewlwyd_oauth2_resource_owner_pwd_cred
+                  glewlwyd_oauth2_resource_owner_pwd_cred_client_confidential
+                  glewlwyd_oauth2_client_cred
+                  glewlwyd_oauth2_refresh_token
+                  glewlwyd_oauth2_refresh_token_client_confidential
+                  glewlwyd_oauth2_delete_token
+                  glewlwyd_oauth2_delete_token_client_confidential
+                  glewlwyd_oauth2_profile
+                  glewlwyd_oauth2_profile_impersonate
+                  glewlwyd_oauth2_refresh_manage_session
+                  glewlwyd_oauth2_irl
+                  glewlwyd_oauth2_code_challenge
+                  glewlwyd_oauth2_token_introspection
+                  glewlwyd_oauth2_token_revocation
+                  glewlwyd_oauth2_device_authorization
+                  glewlwyd_oauth2_code_replay
+                  glewlwyd_oauth2_scheme_required
+                  )
+        endif ()
 
-    if (WITH_PLUGIN_OIDC)
-      set (TST_LIBS ${TST_LIBS} ${GNUTLS_LIBRARIES})
-      set (TESTS ${TESTS}
-              glewlwyd_oidc_additional_parameters
-              glewlwyd_oidc_auth_code
-              glewlwyd_oidc_client_cred
-              glewlwyd_oidc_code
-              glewlwyd_oidc_code_client_confidential
-              glewlwyd_oidc_code_idtoken
-              glewlwyd_oidc_delete_token
-              glewlwyd_oidc_delete_token_client_confidential
-              glewlwyd_oidc_hybrid_id_token_code
-              glewlwyd_oidc_hybrid_id_token_token_code
-              glewlwyd_oidc_hybrid_token_code
-              glewlwyd_oidc_implicit_id_token
-              glewlwyd_oidc_implicit_id_token_token
-              glewlwyd_oidc_irl
-              glewlwyd_oidc_only_no_refresh
-              glewlwyd_oidc_optional_request_parameters
-              glewlwyd_oidc_profile_impersonate
-              glewlwyd_oidc_refresh_manage_session
-              glewlwyd_oidc_refresh_token
-              glewlwyd_oidc_refresh_token_client_confidential
-              glewlwyd_oidc_resource_owner_pwd_cred
-              glewlwyd_oidc_resource_owner_pwd_cred_client_confidential
-              glewlwyd_oidc_token
-              glewlwyd_oidc_userinfo
-              glewlwyd_oidc_discovery
-              glewlwyd_oidc_client_secret
-              glewlwyd_oidc_request_jwt
-              glewlwyd_oidc_subject_type
-              glewlwyd_oidc_address_claim
-              glewlwyd_oidc_claims_scopes
-              glewlwyd_oidc_claim_request
-              glewlwyd_oidc_code_challenge
-              glewlwyd_oidc_token_introspection
-              glewlwyd_oidc_token_revocation
-              glewlwyd_oidc_client_registration
-              glewlwyd_oidc_jwt_encrypted
-              glewlwyd_oidc_jwks_config
-              glewlwyd_oidc_session_management
-              glewlwyd_oidc_device_authorization
-              glewlwyd_oidc_refresh_token_one_use
-              glewlwyd_oidc_client_registration_management
-              glewlwyd_oidc_code_replay
-              glewlwyd_oidc_scheme_required
-              glewlwyd_oidc_dpop
-              glewlwyd_oidc_resource
-              glewlwyd_oidc_rich_auth_requests
-              glewlwyd_oidc_pushed_auth_requests
-              glewlwyd_oidc_reduced_scope
-              glewlwyd_oidc_all_algs
-              glewlwyd_oidc_ciba
-              glewlwyd_oidc_auth_iss_is
-              glewlwyd_oidc_jarm
-              glewlwyd_oidc_fapi
-              iddawc_resource_tester
-              )
-      set(TESTS_SSL ${TESTS_SSL} glewlwyd_oidc_client_certificate)
-    endif ()
+        if (WITH_PLUGIN_OIDC)
+          list(APPEND TST_LIBS ${GNUTLS_LIBRARIES} Rhonabwy::Rhonabwy)
+          list(APPEND TESTS
+                  glewlwyd_oidc_additional_parameters
+                  glewlwyd_oidc_auth_code
+                  glewlwyd_oidc_client_cred
+                  glewlwyd_oidc_code
+                  glewlwyd_oidc_code_client_confidential
+                  glewlwyd_oidc_code_idtoken
+                  glewlwyd_oidc_delete_token
+                  glewlwyd_oidc_delete_token_client_confidential
+                  glewlwyd_oidc_hybrid_id_token_code
+                  glewlwyd_oidc_hybrid_id_token_token_code
+                  glewlwyd_oidc_hybrid_token_code
+                  glewlwyd_oidc_implicit_id_token
+                  glewlwyd_oidc_implicit_id_token_token
+                  glewlwyd_oidc_irl
+                  glewlwyd_oidc_only_no_refresh
+                  glewlwyd_oidc_optional_request_parameters
+                  glewlwyd_oidc_profile_impersonate
+                  glewlwyd_oidc_refresh_manage_session
+                  glewlwyd_oidc_refresh_token
+                  glewlwyd_oidc_refresh_token_client_confidential
+                  glewlwyd_oidc_resource_owner_pwd_cred
+                  glewlwyd_oidc_resource_owner_pwd_cred_client_confidential
+                  glewlwyd_oidc_token
+                  glewlwyd_oidc_userinfo
+                  glewlwyd_oidc_discovery
+                  glewlwyd_oidc_client_secret
+                  glewlwyd_oidc_request_jwt
+                  glewlwyd_oidc_subject_type
+                  glewlwyd_oidc_address_claim
+                  glewlwyd_oidc_claims_scopes
+                  glewlwyd_oidc_claim_request
+                  glewlwyd_oidc_code_challenge
+                  glewlwyd_oidc_token_introspection
+                  glewlwyd_oidc_token_revocation
+                  glewlwyd_oidc_client_registration
+                  glewlwyd_oidc_jwt_encrypted
+                  glewlwyd_oidc_jwks_config
+                  glewlwyd_oidc_session_management
+                  glewlwyd_oidc_device_authorization
+                  glewlwyd_oidc_refresh_token_one_use
+                  glewlwyd_oidc_client_registration_management
+                  glewlwyd_oidc_code_replay
+                  glewlwyd_oidc_scheme_required
+                  glewlwyd_oidc_dpop
+                  glewlwyd_oidc_resource
+                  glewlwyd_oidc_rich_auth_requests
+                  glewlwyd_oidc_pushed_auth_requests
+                  glewlwyd_oidc_reduced_scope
+                  glewlwyd_oidc_all_algs
+                  glewlwyd_oidc_ciba
+                  glewlwyd_oidc_auth_iss_is
+                  glewlwyd_oidc_jarm
+                  glewlwyd_oidc_fapi
+                  iddawc_resource_tester
+                  )
+          set(TESTS_SSL ${TESTS_SSL} glewlwyd_oidc_client_certificate)
+        endif ()
 
-    set(TESTS_PROMETHEUS glewlwyd_prometheus)
+        set(TESTS_PROMETHEUS glewlwyd_prometheus)
 
-    set(TESTS_SINGLE_USER_SESSION glewlwyd_auth_single_user_session)
+        set(TESTS_SINGLE_USER_SESSION glewlwyd_auth_single_user_session)
 
-    if (WITH_PLUGIN_REGISTER)
-      set (TESTS ${TESTS}
-              glewlwyd_register
-              )
-    endif ()
+        if (WITH_PLUGIN_REGISTER)
+          list(APPEND TESTS glewlwyd_register)
+        endif ()
 
-    if (WITH_SCHEME_OTP)
-      set (TST_LIBS ${TST_LIBS} ${LIBOATH_LIBRARIES})
-      set (TESTS ${TESTS} glewlwyd_scheme_otp)
-    endif ()
+        if (WITH_SCHEME_OTP)
+          list(APPEND TST_LIBS OATH::OATH)
+          list(APPEND TESTS glewlwyd_scheme_otp)
+        endif ()
 
-    if (WITH_SCHEME_WEBAUTHN)
-      set(TST_LIBS ${TST_LIBS} ${LIBCBOR_LIBRARIES})
-      set (TESTS ${TESTS} glewlwyd_scheme_webauthn)
-    endif ()
+        if (WITH_SCHEME_WEBAUTHN)
+          list(APPEND TST_LIBS CBOR::CBOR)
+          list(APPEND TESTS glewlwyd_scheme_webauthn)
+        endif ()
 
-    if (WITH_SCHEME_EMAIL)
-      set (TESTS ${TESTS} glewlwyd_scheme_mail)
-    endif ()
+        if (WITH_SCHEME_EMAIL)
+          list(APPEND TESTS glewlwyd_scheme_mail)
+        endif ()
 
-    if (WITH_SCHEME_RETYPE_PASSWORD)
-      set (TESTS ${TESTS} glewlwyd_scheme_retype_password)
-    endif ()
+        if (WITH_SCHEME_RETYPE_PASSWORD)
+          list(APPEND TESTS glewlwyd_scheme_retype_password)
+        endif ()
 
-    if (WITH_SCHEME_HTTP)
-      set(TESTS ${TESTS} glewlwyd_scheme_http)
-    endif ()
+        if (WITH_SCHEME_HTTP)
+          list(APPEND TESTS glewlwyd_scheme_http)
+        endif ()
 
-    if (WITH_SCHEME_OAUTH2)
-      set(TST_LIBS ${TST_LIBS} ${IDDAWC_LIBRARIES})
-      set(TESTS ${TESTS} glewlwyd_scheme_oauth2)
-    endif ()
+        if (WITH_SCHEME_OAUTH2)
+          list(APPEND TST_LIBS Iddawc::Iddawc)
+          list(APPEND TESTS glewlwyd_scheme_oauth2)
+        endif ()
 
-    if (WITH_SCHEME_CERTIFICATE)
-      set(TESTS_SSL ${TESTS_SSL} glewlwyd_scheme_certificate)
-    endif ()
+        if (WITH_SCHEME_CERTIFICATE)
+          set(TESTS_SSL ${TESTS_SSL} glewlwyd_scheme_certificate)
+        endif ()
 
-    configure_file(
-        "${G_CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake"
-        @ONLY)
+        configure_file(
+            "${G_CMAKE_MODULE_PATH}/CTestCustom.cmake.in"
+            "${CMAKE_CURRENT_BINARY_DIR}/CTestCustom.cmake"
+            @ONLY)
 
-    set(COUNTER 0)
+        set(COUNTER 0)
 
-    foreach (t ${TESTS})
-      if (NOT ${t} MATCHES "iddawc_resource_tester$")
-        add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
-      else ()
-        add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h ${U_RESOURCE_DIR}/iddawc_resource.c ${U_RESOURCE_DIR}/iddawc_resource.h)
-      endif ()
-      target_include_directories(${t} PUBLIC ${TST_DIR})
-      target_link_libraries(${t} PUBLIC ${TST_LIBS})
-      if (NOT ${t} MATCHES "_irl$")
-        add_test(NAME ${t}
-                WORKING_DIRECTORY ${TST_DIR}
-                COMMAND ${t})
-      elseif (${t} MATCHES "_user_irl$")
-        FILE(GLOB JsonIrl ${TST_DIR}/mod_user_*.json)
-        foreach (j ${JsonIrl})
-            add_test(NAME "${t}_${COUNTER}"
+        foreach (t ${TESTS})
+          if (NOT ${t} MATCHES "iddawc_resource_tester$")
+            add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
+          else ()
+            add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h ${U_RESOURCE_DIR}/iddawc_resource.c ${U_RESOURCE_DIR}/iddawc_resource.h)
+          endif ()
+          target_include_directories(${t} PUBLIC ${TST_DIR})
+          target_link_libraries(${t} PUBLIC ${TST_LIBS})
+          if (NOT ${t} MATCHES "_irl$")
+            add_test(NAME ${t}
                     WORKING_DIRECTORY ${TST_DIR}
-                    COMMAND ${t} ${j})
-            MATH(EXPR COUNTER "${COUNTER}+1")
+                    COMMAND ${t})
+          elseif (${t} MATCHES "_user_irl$")
+            FILE(GLOB JsonIrl ${TST_DIR}/mod_user_*.json)
+            foreach (j ${JsonIrl})
+                add_test(NAME "${t}_${COUNTER}"
+                        WORKING_DIRECTORY ${TST_DIR}
+                        COMMAND ${t} ${j})
+                MATH(EXPR COUNTER "${COUNTER}+1")
+            endforeach ()
+          elseif (${t} MATCHES "_user_multiple_password_irl$")
+            FILE(GLOB JsonIrl ${TST_DIR}/mod_multiple_password_*.json)
+            foreach (j ${JsonIrl})
+                add_test(NAME "${t}_${COUNTER}"
+                        WORKING_DIRECTORY ${TST_DIR}
+                        COMMAND ${t} ${j})
+                MATH(EXPR COUNTER "${COUNTER}+1")
+            endforeach ()
+          elseif (${t} MATCHES "_client_irl$")
+            FILE(GLOB JsonIrl ${TST_DIR}/mod_client_*.json)
+            foreach (j ${JsonIrl})
+                add_test(NAME "${t}_${COUNTER}"
+                        WORKING_DIRECTORY ${TST_DIR}
+                        COMMAND ${t} ${j})
+                MATH(EXPR COUNTER "${COUNTER}+1")
+            endforeach ()
+          elseif (${t} MATCHES "_oauth2_irl$")
+            FILE(GLOB JsonIrl ${TST_DIR}/plugin_oauth2_*.json)
+            foreach (j ${JsonIrl})
+                add_test(NAME "${t}_${COUNTER}"
+                        WORKING_DIRECTORY ${TST_DIR}
+                        COMMAND ${t} ${j})
+                MATH(EXPR COUNTER "${COUNTER}+1")
+            endforeach ()
+          elseif (${t} MATCHES "_oidc_irl$")
+            FILE(GLOB JsonIrl ${TST_DIR}/plugin_oidc_*.json)
+            foreach (j ${JsonIrl})
+                add_test(NAME "${t}_${COUNTER}"
+                        WORKING_DIRECTORY ${TST_DIR}
+                        COMMAND ${t} ${j})
+                MATH(EXPR COUNTER "${COUNTER}+1")
+            endforeach ()
+          endif ()
         endforeach ()
-      elseif (${t} MATCHES "_user_multiple_password_irl$")
-        FILE(GLOB JsonIrl ${TST_DIR}/mod_multiple_password_*.json)
-        foreach (j ${JsonIrl})
-            add_test(NAME "${t}_${COUNTER}"
-                    WORKING_DIRECTORY ${TST_DIR}
-                    COMMAND ${t} ${j})
-            MATH(EXPR COUNTER "${COUNTER}+1")
-        endforeach ()
-      elseif (${t} MATCHES "_client_irl$")
-        FILE(GLOB JsonIrl ${TST_DIR}/mod_client_*.json)
-        foreach (j ${JsonIrl})
-            add_test(NAME "${t}_${COUNTER}"
-                    WORKING_DIRECTORY ${TST_DIR}
-                    COMMAND ${t} ${j})
-            MATH(EXPR COUNTER "${COUNTER}+1")
-        endforeach ()
-      elseif (${t} MATCHES "_oauth2_irl$")
-        FILE(GLOB JsonIrl ${TST_DIR}/plugin_oauth2_*.json)
-        foreach (j ${JsonIrl})
-            add_test(NAME "${t}_${COUNTER}"
-                    WORKING_DIRECTORY ${TST_DIR}
-                    COMMAND ${t} ${j})
-            MATH(EXPR COUNTER "${COUNTER}+1")
-        endforeach ()
-      elseif (${t} MATCHES "_oidc_irl$")
-        FILE(GLOB JsonIrl ${TST_DIR}/plugin_oidc_*.json)
-        foreach (j ${JsonIrl})
-            add_test(NAME "${t}_${COUNTER}"
-                    WORKING_DIRECTORY ${TST_DIR}
-                    COMMAND ${t} ${j})
-            MATH(EXPR COUNTER "${COUNTER}+1")
-        endforeach ()
-      endif ()
-    endforeach ()
 
-    foreach (t ${TESTS_SSL})
-      add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
-      target_include_directories(${t} PUBLIC ${TST_DIR})
-      target_link_libraries(${t} PUBLIC ${TST_LIBS})
-    endforeach ()
+        foreach (t ${TESTS_SSL})
+          add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
+          target_include_directories(${t} PUBLIC ${TST_DIR})
+          target_link_libraries(${t} PUBLIC ${TST_LIBS})
+        endforeach ()
 
-    foreach (t ${TESTS_PROMETHEUS})
-      add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
-      target_include_directories(${t} PUBLIC ${TST_DIR})
-      target_link_libraries(${t} PUBLIC ${TST_LIBS})
-    endforeach ()
+        foreach (t ${TESTS_PROMETHEUS})
+          add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
+          target_include_directories(${t} PUBLIC ${TST_DIR})
+          target_link_libraries(${t} PUBLIC ${TST_LIBS})
+        endforeach ()
 
-    foreach (t ${TESTS_SINGLE_USER_SESSION})
-      add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
-      target_include_directories(${t} PUBLIC ${TST_DIR})
-      target_link_libraries(${t} PUBLIC ${TST_LIBS})
-    endforeach ()
+        foreach (t ${TESTS_SINGLE_USER_SESSION})
+          add_executable(${t} EXCLUDE_FROM_ALL ${TST_DIR}/${t}.c ${TST_DIR}/unit-tests.c ${TST_DIR}/unit-tests.h)
+          target_include_directories(${t} PUBLIC ${TST_DIR})
+          target_link_libraries(${t} PUBLIC ${TST_LIBS})
+        endforeach ()
 
-  endif ()
+    endif ()
 endif ()
 
 # install target
