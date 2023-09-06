@@ -2333,7 +2333,7 @@ static jwk_t * get_jwk_enc(struct _oidc_config * config, json_t * j_client, jwa_
         r_jwk_free(jwk_import);
       }
     }
-    if (!json_string_null_or_empty(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-jwks-parameter"))))) {
+    if (json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-jwks-parameter"))) != NULL) {
       if (r_jwks_import_from_json_t(jwks_pub, json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-jwks-parameter")))) != RHN_OK) {
         y_log_message(Y_LOG_LEVEL_ERROR, "get_jwk_enc - Error r_jwks_import_from_json_t");
       }
