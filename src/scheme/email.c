@@ -37,6 +37,11 @@
 #define GLEWLWYD_SCHEME_CODE_DEFAULT_LENGTH 6
 #define GLEWLWYD_SCHEME_CODE_DURATION 900
 
+struct _email_config {
+  pthread_mutex_t insert_lock;
+  json_t * j_parameters;
+};
+
 static int generate_new_code(struct config_module * config, json_t * j_param, const char * username, char * code, size_t len) {
   json_t * j_query;
   int res, ret;
@@ -379,12 +384,27 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
   UNUSED(config);
   json_t * j_result, * j_return;
   char * str_error;
+  pthread_mutexattr_t mutexattr;
 
   j_result = is_scheme_parameters_valid(j_parameters);
   if (check_result_value(j_result, G_OK)) {
+    
     json_object_set_new(j_parameters, "mod_name", json_string(mod_name));
-    *cls = json_incref(j_parameters);
-    j_return = json_pack("{si}", "result", G_OK);
+    *cls = o_malloc(sizeof(struct _email_config));
+    if (*cls != NULL) {
+      ((struct _email_config *)*cls)->j_parameters = json_incref(j_parameters);
+      pthread_mutexattr_init ( &mutexattr );
+      pthread_mutexattr_settype( &mutexattr, PTHREAD_MUTEX_RECURSIVE );
+      if (!pthread_mutex_init(&((struct _email_config *)*cls)->insert_lock, &mutexattr)) {
+        j_return = json_pack("{si}", "result", G_OK);
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init email - Error pthread_mutex_init");
+        j_return = json_pack("{siss}", "result", G_ERROR, "error", "Internal error");
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init email - Error allocating cls");
+      j_return = json_pack("{siss}", "result", G_ERROR, "error", "Internal error");
+    }
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_init email - Error in parameters");
     str_error = json_dumps(json_object_get(j_result, "error"), JSON_ENCODE_ANY);
@@ -413,7 +433,9 @@ json_t * user_auth_scheme_module_init(struct config_module * config, json_t * j_
  */
 int user_auth_scheme_module_close(struct config_module * config, void * cls) {
   UNUSED(config);
-  json_decref((json_t *)cls);
+  json_decref(((struct _email_config *)cls)->j_parameters);
+  pthread_mutex_destroy(&((struct _email_config *)cls)->insert_lock);
+  o_free(cls);
   return G_OK;
 }
 
@@ -552,7 +574,8 @@ int user_auth_scheme_module_deregister(struct config_module * config, const char
  */
 json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls) {
   UNUSED(j_scheme_trigger);
-  json_t * j_user, * j_param = (json_t *)cls;
+  json_t * j_user;
+  struct _email_config * email_config = (struct _email_config *)cls;
   int ret;
   char * code = NULL, * body;
   const char * ip_source = get_ip_source(http_request);
@@ -560,42 +583,48 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
   if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
     j_user = config->glewlwyd_module_callback_get_user(config, username);
     if (check_result_value(j_user, G_OK)) {
-      if ((code = o_malloc(((size_t)json_integer_value(json_object_get(j_param, "code-length")) + 1)*sizeof(char))) != NULL) {
-        memset(code, 0, ((size_t)json_integer_value(json_object_get(j_param, "code-length")) + 1));
-        if (generate_new_code(config, j_param, username, code, (size_t)json_integer_value(json_object_get(j_param, "code-length"))) == G_OK) {
-          if ((body = str_replace(get_template_property(j_param, json_object_get(j_user, "user"), "body-pattern"), "{CODE}", code)) != NULL) {
-            if (ulfius_send_smtp_rich_email(json_string_value(json_object_get(j_param, "host")),
-                                           (int)json_integer_value(json_object_get(j_param, "port")),
-                                           json_object_get(j_param, "use-tls")==json_true()?1:0,
-                                           json_object_get(j_param, "verify-certificate")==json_false()?0:1,
-                                           !json_string_null_or_empty(json_object_get(j_param, "user"))?json_string_value(json_object_get(j_param, "user")):NULL,
-                                           !json_string_null_or_empty(json_object_get(j_param, "password"))?json_string_value(json_object_get(j_param, "password")):NULL,
-                                           json_string_value(json_object_get(j_param, "from")),
-                                           json_string_value(json_object_get(json_object_get(j_user, "user"), "email")),
-                                           NULL,
-                                           NULL,
-                                           !json_string_null_or_empty(json_object_get(j_param, "content-type"))?json_string_value(json_object_get(j_param, "content-type")):"text/plain; charset=utf-8",
-                                           get_template_property(j_param, json_object_get(j_user, "user"), "subject"),
-                                           body) == G_OK) {
-              y_log_message(Y_LOG_LEVEL_WARNING, "Security - Scheme email - code sent at IP Address %s for username %s", ip_source, username);
-              ret = G_OK;
+      if (!pthread_mutex_lock(&email_config->insert_lock)) {
+        if ((code = o_malloc(((size_t)json_integer_value(json_object_get(email_config->j_parameters, "code-length")) + 1)*sizeof(char))) != NULL) {
+          memset(code, 0, ((size_t)json_integer_value(json_object_get(email_config->j_parameters, "code-length")) + 1));
+          if (generate_new_code(config, email_config->j_parameters, username, code, (size_t)json_integer_value(json_object_get(email_config->j_parameters, "code-length"))) == G_OK) {
+            if ((body = str_replace(get_template_property(email_config->j_parameters, json_object_get(j_user, "user"), "body-pattern"), "{CODE}", code)) != NULL) {
+              if (ulfius_send_smtp_rich_email(json_string_value(json_object_get(email_config->j_parameters, "host")),
+                                             (int)json_integer_value(json_object_get(email_config->j_parameters, "port")),
+                                             json_object_get(email_config->j_parameters, "use-tls")==json_true()?1:0,
+                                             json_object_get(email_config->j_parameters, "verify-certificate")==json_false()?0:1,
+                                             !json_string_null_or_empty(json_object_get(email_config->j_parameters, "user"))?json_string_value(json_object_get(email_config->j_parameters, "user")):NULL,
+                                             !json_string_null_or_empty(json_object_get(email_config->j_parameters, "password"))?json_string_value(json_object_get(email_config->j_parameters, "password")):NULL,
+                                             json_string_value(json_object_get(email_config->j_parameters, "from")),
+                                             json_string_value(json_object_get(json_object_get(j_user, "user"), "email")),
+                                             NULL,
+                                             NULL,
+                                             !json_string_null_or_empty(json_object_get(email_config->j_parameters, "content-type"))?json_string_value(json_object_get(email_config->j_parameters, "content-type")):"text/plain; charset=utf-8",
+                                             get_template_property(email_config->j_parameters, json_object_get(j_user, "user"), "subject"),
+                                             body) == G_OK) {
+                y_log_message(Y_LOG_LEVEL_WARNING, "Security - Scheme email - code sent at IP Address %s for username %s", ip_source, username);
+                ret = G_OK;
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error ulfius_send_smtp_email");
+                ret = G_ERROR_MEMORY;
+              }
+              o_free(body);
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error ulfius_send_smtp_email");
+              y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error str_replace");
               ret = G_ERROR_MEMORY;
             }
-            o_free(body);
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error str_replace");
+            y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error generate_new_code");
             ret = G_ERROR_MEMORY;
           }
+          o_free(code);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error generate_new_code");
+          y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error allocating resources for code");
           ret = G_ERROR_MEMORY;
         }
-        o_free(code);
+        pthread_mutex_unlock(&email_config->insert_lock);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error allocating resources for code");
-        ret = G_ERROR_MEMORY;
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error pthread_mutex_lock");
+        ret = G_ERROR;
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error glewlwyd_module_callback_get_user");
@@ -633,12 +662,12 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
   UNUSED(config);
   UNUSED(http_request);
   int ret, res;
-  json_t * j_param = (json_t *)cls;
+  struct _email_config * email_config = (struct _email_config *)cls;
 
   if (user_auth_scheme_module_can_use(config, username, cls) != GLEWLWYD_IS_REGISTERED) {
     ret = G_ERROR_UNAUTHORIZED;
-  } else if (json_object_get(j_scheme_data, "code") != NULL && json_is_string(json_object_get(j_scheme_data, "code")) && (unsigned int)json_integer_value(json_object_get(j_param, "code-length")) == json_string_length(json_object_get(j_scheme_data, "code"))) {
-    if ((res = check_code(config, j_param, username, json_string_value(json_object_get(j_scheme_data, "code")))) == G_OK) {
+  } else if (json_object_get(j_scheme_data, "code") != NULL && json_is_string(json_object_get(j_scheme_data, "code")) && (unsigned int)json_integer_value(json_object_get(email_config->j_parameters, "code-length")) == json_string_length(json_object_get(j_scheme_data, "code"))) {
+    if ((res = check_code(config, email_config->j_parameters, username, json_string_value(json_object_get(j_scheme_data, "code")))) == G_OK) {
       ret = G_OK;
     } else if (res == G_ERROR_UNAUTHORIZED) {
       ret = G_ERROR_UNAUTHORIZED;
