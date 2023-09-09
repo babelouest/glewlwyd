@@ -49,7 +49,7 @@ class EditRecord extends Component {
     this.getImportFile = this.getImportFile.bind(this);
 
     if (this.state.add) {
-      this.createData();
+      this.createData(this.state.data);
     }
   }
 
@@ -72,7 +72,7 @@ class EditRecord extends Component {
       multiplePasswords: this.hasMultiplePasswords(nextProps.source, nextProps.data)
     }, () => {
       if (nextProps.add) {
-        this.createData();
+        this.createData(this.state.data);
       }
     });
   }
@@ -497,21 +497,25 @@ class EditRecord extends Component {
     this.setState({data: data});
   }
 
-  createData() {
+  createData(curData) {
     var data = {
       source: this.state.defaultSource
     };
     this.state.pattern.forEach((pat, index) => {
-      if (pat.list) {
-        if (pat.defaultValue !== undefined) {
+      if (curData[pat.name] === undefined) {
+        if (pat.list) {
+          if (pat.defaultValue !== undefined) {
+            data[pat.name] = pat.defaultValue;
+          } else {
+            data[pat.name] = [];
+          }
+        } else if (pat.defaultValue !== undefined) {
           data[pat.name] = pat.defaultValue;
-        } else {
-          data[pat.name] = [];
+        } else if (pat.type !== "boolean") {
+          data[pat.name] = "";
         }
-      } else if (pat.defaultValue !== undefined) {
-        data[pat.name] = pat.defaultValue;
-      } else if (pat.type !== "boolean") {
-        data[pat.name] = "";
+      } else {
+        data[pat.name] = curData[pat.name];
       }
     });
     this.setState({data: data});
@@ -770,6 +774,7 @@ class EditRecord extends Component {
   
 	render() {
     var editLines = [], sourceLine = [], curSource = false, hasError;
+    console.log("data", this.state.data);
     this.state.pattern.forEach((pat, index) => {
       var line = this.editElt(pat, this.state.data[pat.name], index);
       if (line) {

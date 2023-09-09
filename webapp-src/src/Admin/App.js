@@ -50,6 +50,7 @@ class App extends Component {
       curMod: false,
       modUsers: [],
       defaultModUsers: false,
+      defaultModUsersMultiplePassword: false,
       modUsersMiddleware: [],
       ModModal: {title: "", role: false, data: {}, types: [], add: false, callback: false},
       modClients: [],
@@ -307,7 +308,7 @@ class App extends Component {
             pattern: this.state.config.pattern.user,
             source: this.state.modUsers,
             defaultSource: this.state.defaultModUsers,
-            data: {username: "", name: "", password: "", email: "", enabled: true, scope: []},
+            data: {source: this.state.defaultModUsers, username: "", name: "", password: (this.state.defaultModUsersMultiplePassword?[""]:""), email: "", enabled: true, scope: []},
             callback: this.confirmAddUser,
             validateCallback: this.validateUser,
             add: true
@@ -321,7 +322,7 @@ class App extends Component {
             pattern: this.state.config.pattern.client,
             source: this.state.modClients,
             defaultSource: this.state.defaultModClients,
-            data: {client_id: "", confidential: false, client_secret: "", enabled: true, name: "", password: "", redirect_uri: [], scope: [], token_endpoint_auth_method: ["client_secret_basic"], authorization_type: ["code", "refresh_token"]},
+            data: {source: this.state.defaultModClients, client_id: "", confidential: false, client_secret: "", enabled: true, name: "", password: "", redirect_uri: [], scope: [], token_endpoint_auth_method: ["client_secret_basic"], authorization_type: ["code", "refresh_token"]},
             callback: this.confirmAddClient,
             validateCallback: this.validateClient,
             add: true
@@ -795,12 +796,14 @@ class App extends Component {
     return apiManager.glewlwydRequest("/mod/user")
     .then((modUsers) => {
       let defaultModUsers = false;
+      let defaultModUsersMultiplePassword = false;
       modUsers.forEach((mod) => {
         if (!mod.readonly && !defaultModUsers) {
           defaultModUsers = mod.name;
+          defaultModUsersMultiplePassword = !!mod.multiple_passwords;
         }
       });
-      this.setState({modUsers: modUsers, defaultModUsers: defaultModUsers});
+      this.setState({modUsers: modUsers, defaultModUsers: defaultModUsers, defaultModUsersMultiplePassword: defaultModUsersMultiplePassword});
     }).fail((err) => {
       if (err.status !== 401) {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("admin.error-api-fetch")});
