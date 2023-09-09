@@ -774,7 +774,6 @@ class EditRecord extends Component {
   
 	render() {
     var editLines = [], sourceLine = [], curSource = false, hasError;
-    console.log("data", this.state.data);
     this.state.pattern.forEach((pat, index) => {
       var line = this.editElt(pat, this.state.data[pat.name], index);
       if (line) {
