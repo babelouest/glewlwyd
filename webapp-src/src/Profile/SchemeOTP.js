@@ -102,7 +102,7 @@ class SchemeOTP extends Component {
       var qr = qrcode(0, 'L');
       qr.addData(url);
       qr.make();
-      this.setState({otpUrl: url, qrcode: qr.createSvgTag(4)});
+      this.setState({otpUrl: url, qrcode: qr.createDataURL(4)});
     } else {
       this.setState({otpUrl: false, qrcode: ""});
     }
@@ -276,7 +276,7 @@ class SchemeOTP extends Component {
         <div className="row">
           <div className="col-md-4">
             <a href={this.state.otpUrl} title={this.state.otpUrl}>
-              <div dangerouslySetInnerHTML={{__html: this.state.qrcode}} />
+              <img src={this.state.qrcode} alt="otp" />
             </a>
           </div>
           <div className="col-md-8 v-center">
