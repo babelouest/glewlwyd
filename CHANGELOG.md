@@ -2,8 +2,10 @@
 
 ## 2.7.6
 
-- Minor bugfixes
+- Update warnings log messages format
+- Minor bugfixes and improvements
 - Update cmake script for a cleaner build
+- Add config values `user_backend_api_run_enabled`, `user_middleware_backend_api_run_enabled`, `client_backend_api_run_enabled`, `scheme_api_run_enabled` to list authorized backend or schemes for a Glewlwyd instance
 
 ## 2.7.5
 
