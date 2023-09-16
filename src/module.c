@@ -5,9 +5,9 @@
  * Authentiation server
  * Users are authenticated via various backend available: database, ldap
  * Using various authentication methods available: password, OTP, send code, etc.
- * 
+ *
  * Modules management functions definitions
- * 
+ *
  * Copyright 2016-2021 Nicolas Mora <mail@babelouest.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ json_t * get_module_type_list(struct config_elements * config) {
   struct _plugin_module * plugin_module;
   size_t i;
   json_t * j_return;
-  
+
   if ((j_return = json_pack("{sis{s[]s[]s[]s[]s[]}}", "result", G_OK, "module", "user", "user_middleware", "client", "scheme", "plugin")) != NULL) {
     // Gathering user modules
     for (i=0; i<pointer_list_size(config->user_module_list); i++) {
@@ -107,7 +107,7 @@ json_t * get_user_module_list(struct config_elements * config) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters, * j_element;
   size_t index;
-  
+
   j_query = json_pack("{sss[ssssssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
@@ -134,14 +134,21 @@ json_t * get_user_module_list(struct config_elements * config) {
         json_object_set_new(j_element, "parameters", json_null());
       }
       json_object_del(j_element, "gumi_parameters");
-      
+
       json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "gumi_enabled"))?json_true():json_false());
       json_object_del(j_element, "gumi_enabled");
-      
+
       json_object_set_new(j_element, "readonly", json_integer_value(json_object_get(j_element, "gumi_readonly"))?json_true():json_false());
       json_object_del(j_element, "gumi_readonly");
-      
-      json_object_set_new(j_element, "multiple_passwords", json_integer_value(json_object_get(j_element, "gumi_multiple_passwords"))?json_true():json_false());
+
+      if ((res = is_user_backend_api_run_enabled(config, json_string_value(json_object_get(j_element, "name")))) == G_OK) {
+        json_object_set_new(j_element, "multiple_passwords", json_integer_value(json_object_get(j_element, "gumi_multiple_passwords"))?json_true():json_false());
+      } else if (res != G_ERROR_NOT_FOUND) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_module_list - Error is_user_backend_api_run_enabled");
+        json_object_set_new(j_element, "enabled", json_false());
+      } else {
+        json_object_set_new(j_element, "enabled", json_false());
+      }
       json_object_del(j_element, "gumi_multiple_passwords");
     }
     j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
@@ -157,7 +164,7 @@ json_t * get_user_module_list(struct config_elements * config) {
 json_t * get_user_module(struct config_elements * config, const char * name) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
-  
+
   j_query = json_pack("{sss[ssssssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
@@ -185,14 +192,21 @@ json_t * get_user_module(struct config_elements * config, const char * name) {
         json_object_set_new(json_array_get(j_result, 0), "parameters", json_null());
       }
       json_object_del(json_array_get(j_result, 0), "gumi_parameters");
-      
+
       json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "gumi_enabled"))?json_true():json_false());
       json_object_del(json_array_get(j_result, 0), "gumi_enabled");
-      
+
       json_object_set_new(json_array_get(j_result, 0), "readonly", json_integer_value(json_object_get(json_array_get(j_result, 0), "gumi_readonly"))?json_true():json_false());
       json_object_del(json_array_get(j_result, 0), "gumi_readonly");
-      
-      json_object_set_new(json_array_get(j_result, 0), "multiple_passwords", json_integer_value(json_object_get(json_array_get(j_result, 0), "gumi_multiple_passwords"))?json_true():json_false());
+
+      if ((res = is_user_backend_api_run_enabled(config, json_string_value(json_object_get(json_array_get(j_result, 0), "name")))) == G_OK) {
+        json_object_set_new(json_array_get(j_result, 0), "multiple_passwords", json_integer_value(json_object_get(json_array_get(j_result, 0), "gumi_multiple_passwords"))?json_true():json_false());
+      } else if (res != G_ERROR_NOT_FOUND) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_module_list - Error is_user_backend_api_run_enabled");
+        json_object_set_new(json_array_get(j_result, 0), "enabled", json_false());
+      } else {
+        json_object_set_new(json_array_get(j_result, 0), "enabled", json_false());
+      }
       json_object_del(json_array_get(j_result, 0), "gumi_multiple_passwords");
 
       j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
@@ -214,7 +228,7 @@ json_t * is_user_module_valid(struct config_elements * config, json_t * j_module
   int found;
   struct _user_module * module;
   char * parameters;
-  
+
   if (j_module != NULL && json_is_object(j_module)) {
     if ((j_error_list = json_array()) != NULL) {
       if (add) {
@@ -296,7 +310,7 @@ json_t * add_user_module(struct config_elements * config, json_t * j_module) {
   size_t i;
   json_t * j_return, * j_result;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
-  
+
   j_query = json_pack("{sss{sOsOsOsisisiss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
@@ -343,17 +357,24 @@ json_t * add_user_module(struct config_elements * config, json_t * j_module) {
           cur_instance->readonly = json_object_get(j_module, "readonly")==json_true()?1:0;
           cur_instance->multiple_passwords = json_object_get(j_module, "multiple_passwords")==json_true()?1:0;
           if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
-            j_result = module->user_module_init(config->config_m, cur_instance->readonly, cur_instance->multiple_passwords, json_object_get(j_module, "parameters"), &cur_instance->cls);
-            if (check_result_value(j_result, G_OK)) {
-              cur_instance->enabled = 1;
-              j_return = json_pack("{si}", "result", G_OK);
-            } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-              j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
+            if ((res = is_user_backend_api_run_enabled(config, cur_instance->name)) == G_OK) {
+              j_result = module->user_module_init(config->config_m, cur_instance->readonly, cur_instance->multiple_passwords, json_object_get(j_module, "parameters"), &cur_instance->cls);
+              if (check_result_value(j_result, G_OK)) {
+                cur_instance->enabled = 1;
+                j_return = json_pack("{si}", "result", G_OK);
+              } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+                j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
+                j_return = json_pack("{sis[s]}", "result", G_ERROR, "error", "internal error");
+              }
+              json_decref(j_result);
+            } else if (res != G_ERROR_NOT_FOUND) {
+              y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error is_user_backend_api_run_enabled");
+              j_return = json_pack("{si}", "result", G_ERROR);
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
-              j_return = json_pack("{sis[s]}", "result", G_ERROR, "error", "internal error");
+              j_return = json_pack("{si}", "result", G_OK);
             }
-            json_decref(j_result);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "add_user_module - Error reallocating resources for user_module_instance_list");
             o_free(cur_instance->name);
@@ -386,7 +407,7 @@ int set_user_module(struct config_elements * config, const char * name, json_t *
   int res, ret;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _user_module_instance * cur_instance;
-  
+
   j_query = json_pack("{sss{sOsisisiss}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MODULE_INSTANCE,
@@ -442,7 +463,7 @@ int delete_user_module(struct config_elements * config, const char * name) {
   int ret, res, error = 0;
   json_t * j_query, * j_result;
   struct _user_module_instance * instance;
-  
+
   if (!pthread_mutex_lock(&config->module_lock)) {
     instance = get_user_module_instance(config, name);
     if (instance != NULL) {
@@ -493,28 +514,36 @@ int delete_user_module(struct config_elements * config, const char * name) {
 json_t * manage_user_module(struct config_elements * config, const char * name, int action) {
   struct _user_module_instance * instance = get_user_module_instance(config, name);
   json_t * j_module = get_user_module(config, name), * j_return, * j_result;
-  
+  int res;
+
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
         if (!pthread_mutex_lock(&config->module_lock)) {
-          j_result = instance->module->user_module_init(config->config_m, instance->readonly, instance->multiple_passwords, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
-          if (check_result_value(j_result, G_OK)) {
-            instance->enabled = 1;
-            json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
-            if (set_user_module(config, name, json_object_get(j_module, "module")) == G_OK) {
-              j_return = json_pack("{si}", "result", G_OK);
+          if ((res = is_user_backend_api_run_enabled(config, instance->name)) == G_OK) {
+            j_result = instance->module->user_module_init(config->config_m, instance->readonly, instance->multiple_passwords, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
+            if (check_result_value(j_result, G_OK)) {
+              instance->enabled = 1;
+              json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
+              if (set_user_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+                j_return = json_pack("{si}", "result", G_OK);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error set_user_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
+            } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+              j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error set_user_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
               j_return = json_pack("{si}", "result", G_ERROR);
             }
-          } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-            j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            json_decref(j_result);
+          } else if (res != G_ERROR_NOT_FOUND) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error is_user_backend_api_run_enabled (1)");
             j_return = json_pack("{si}", "result", G_ERROR);
+          } else {
+            j_return = json_pack("{si}", "result", G_ERROR_PARAM);
           }
-          json_decref(j_result);
           pthread_mutex_unlock(&config->module_lock);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error pthread_mutex_lock (1)");
@@ -526,18 +555,25 @@ json_t * manage_user_module(struct config_elements * config, const char * name, 
     } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
       if (instance->enabled) {
         if (!pthread_mutex_lock(&config->module_lock)) {
-          if (instance->module->user_module_close(config->config_m, instance->cls) == G_OK) {
-            instance->enabled = 0;
-            json_object_set(json_object_get(j_module, "module"), "enabled", json_false());
-            if (set_user_module(config, name, json_object_get(j_module, "module")) == G_OK) {
-              j_return = json_pack("{si}", "result", G_OK);
+          if ((res = is_user_backend_api_run_enabled(config, instance->name)) == G_OK) {
+            if (instance->module->user_module_close(config->config_m, instance->cls) == G_OK) {
+              instance->enabled = 0;
+              json_object_set(json_object_get(j_module, "module"), "enabled", json_false());
+              if (set_user_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+                j_return = json_pack("{si}", "result", G_OK);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error set_user_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error set_user_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
               j_return = json_pack("{si}", "result", G_ERROR);
             }
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+          } else if (res != G_ERROR_NOT_FOUND) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_module - Error is_user_backend_api_run_enabled (2)");
             j_return = json_pack("{si}", "result", G_ERROR);
+          } else {
+            j_return = json_pack("{si}", "result", G_ERROR_PARAM);
           }
           pthread_mutex_unlock(&config->module_lock);
         } else {
@@ -563,7 +599,7 @@ json_t * get_user_middleware_module_list(struct config_elements * config) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters, * j_element;
   size_t index;
-  
+
   j_query = json_pack("{sss[ssssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_USER_MIDDLEWARE_MODULE_INSTANCE,
@@ -588,8 +624,15 @@ json_t * get_user_middleware_module_list(struct config_elements * config) {
         json_object_set_new(j_element, "parameters", json_null());
       }
       json_object_del(j_element, "gummi_parameters");
-      
-      json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "gummi_enabled"))?json_true():json_false());
+
+      if ((res = is_user_middleware_backend_api_run_enabled(config, json_string_value(json_object_get(j_element, "name")))) == G_OK) {
+        json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "gummi_enabled"))?json_true():json_false());
+      } else if (res != G_ERROR_NOT_FOUND) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_middleware_module - Error is_user_middleware_backend_api_run_enabled");
+        json_object_set_new(j_element, "enabled", json_false());
+      } else {
+        json_object_set_new(j_element, "enabled", json_false());
+      }
       json_object_del(j_element, "gummi_enabled");
     }
     j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
@@ -605,7 +648,7 @@ json_t * get_user_middleware_module_list(struct config_elements * config) {
 json_t * get_user_middleware_module(struct config_elements * config, const char * name) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
-  
+
   j_query = json_pack("{sss[ssssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MIDDLEWARE_MODULE_INSTANCE,
@@ -631,8 +674,15 @@ json_t * get_user_middleware_module(struct config_elements * config, const char 
         json_object_set_new(json_array_get(j_result, 0), "parameters", json_null());
       }
       json_object_del(json_array_get(j_result, 0), "gummi_parameters");
-      
-      json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "gummi_enabled"))?json_true():json_false());
+
+      if ((res = is_user_middleware_backend_api_run_enabled(config, json_string_value(json_object_get(json_array_get(j_result, 0), "name")))) == G_OK) {
+        json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "gummi_enabled"))?json_true():json_false());
+      } else if (res != G_ERROR_NOT_FOUND) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_middleware_module - Error is_user_middleware_backend_api_run_enabled");
+        json_object_set_new(json_array_get(j_result, 0), "enabled", json_false());
+      } else {
+        json_object_set_new(json_array_get(j_result, 0), "enabled", json_false());
+      }
       json_object_del(json_array_get(j_result, 0), "gummi_enabled");
 
       j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
@@ -654,7 +704,7 @@ json_t * is_user_middleware_module_valid(struct config_elements * config, json_t
   int found;
   struct _user_middleware_module * module;
   char * parameters;
-  
+
   if (j_module != NULL && json_is_object(j_module)) {
     if ((j_error_list = json_array()) != NULL) {
       if (add) {
@@ -727,7 +777,7 @@ json_t * add_user_middleware_module(struct config_elements * config, json_t * j_
   int res;
   json_t * j_return;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
-  
+
   j_query = json_pack("{sss{sOsOsOsiss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MIDDLEWARE_MODULE_INSTANCE,
@@ -765,7 +815,7 @@ int set_user_middleware_module(struct config_elements * config, const char * nam
   json_t * j_query;
   int res, ret;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
-  
+
   j_query = json_pack("{sss{sOsiss}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_MIDDLEWARE_MODULE_INSTANCE,
@@ -803,7 +853,7 @@ int delete_user_middleware_module(struct config_elements * config, const char * 
   int ret, res;
   json_t * j_query;
   struct _user_middleware_module_instance * instance;
-  
+
   instance = get_user_middleware_module_instance(config, name);
   if (instance != NULL) {
     j_query = json_pack("{sss{ss}}",
@@ -833,28 +883,36 @@ int delete_user_middleware_module(struct config_elements * config, const char * 
 json_t * manage_user_middleware_module(struct config_elements * config, const char * name, int action) {
   struct _user_middleware_module_instance * instance = get_user_middleware_module_instance(config, name);
   json_t * j_module = get_user_middleware_module(config, name), * j_return, * j_result;
-  
+  int res;
+
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
         if (!pthread_mutex_lock(&config->module_lock)) {
-          j_result = instance->module->user_middleware_module_init(config->config_m, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
-          if (check_result_value(j_result, G_OK)) {
-            instance->enabled = 1;
-            json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
-            if (set_user_middleware_module(config, name, json_object_get(j_module, "module")) == G_OK) {
-              j_return = json_pack("{si}", "result", G_OK);
+          if ((res = is_user_middleware_backend_api_run_enabled(config, instance->name)) == G_OK) {
+            j_result = instance->module->user_middleware_module_init(config->config_m, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
+            if (check_result_value(j_result, G_OK)) {
+              instance->enabled = 1;
+              json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
+              if (set_user_middleware_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+                j_return = json_pack("{si}", "result", G_OK);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_middleware_module - Error set_user_middleware_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
+            } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+              j_return = json_pack("{sisO*}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_middleware_module - Error set_user_middleware_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_middleware_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
               j_return = json_pack("{si}", "result", G_ERROR);
             }
-          } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-            j_return = json_pack("{sisO*}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_middleware_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            json_decref(j_result);
+          } else if (res != G_ERROR_NOT_FOUND) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_middleware_module - Error is_user_middleware_backend_api_run_enabled (1)");
             j_return = json_pack("{si}", "result", G_ERROR);
+          } else {
+            j_return = json_pack("{si}", "result", G_ERROR_PARAM);
           }
-          json_decref(j_result);
           pthread_mutex_unlock(&config->module_lock);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_middleware_module - Error pthread_mutex_lock (1)");
@@ -866,18 +924,25 @@ json_t * manage_user_middleware_module(struct config_elements * config, const ch
     } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
       if (instance->enabled) {
         if (!pthread_mutex_lock(&config->module_lock)) {
-          if (instance->module->user_middleware_module_close(config->config_m, instance->cls) == G_OK) {
-            instance->enabled = 0;
-            json_object_set(json_object_get(j_module, "module"), "enabled", json_false());
-            if (set_user_middleware_module(config, name, json_object_get(j_module, "module")) == G_OK) {
-              j_return = json_pack("{si}", "result", G_OK);
+          if ((res = is_user_middleware_backend_api_run_enabled(config, instance->name)) == G_OK) {
+            if (instance->module->user_middleware_module_close(config->config_m, instance->cls) == G_OK) {
+              instance->enabled = 0;
+              json_object_set(json_object_get(j_module, "module"), "enabled", json_false());
+              if (set_user_middleware_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+                j_return = json_pack("{si}", "result", G_OK);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_middleware_module - Error set_user_middleware_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_middleware_module - Error set_user_middleware_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_middleware_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
               j_return = json_pack("{si}", "result", G_ERROR);
             }
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_middleware_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+          } else if (res != G_ERROR_NOT_FOUND) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_middleware_module - Error is_user_middleware_backend_api_run_enabled (2)");
             j_return = json_pack("{si}", "result", G_ERROR);
+          } else {
+            j_return = json_pack("{si}", "result", G_ERROR_PARAM);
           }
           pthread_mutex_unlock(&config->module_lock);
         } else {
@@ -903,7 +968,7 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters, * j_element;
   size_t index;
-  
+
   j_query = json_pack("{sss[ssssssssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
@@ -938,8 +1003,15 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
       json_object_del(j_element, "guasmi_allow_user_register");
       json_object_del(j_element, "guasmi_forbid_user_profile");
       json_object_del(j_element, "guasmi_forbid_user_reset_credential");
-      
-      json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "guasmi_enabled"))?json_true():json_false());
+
+      if ((res = is_scheme_backend_api_run_enabled(config, json_string_value(json_object_get(j_element, "name")))) == G_OK) {
+        json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "guasmi_enabled"))?json_true():json_false());
+      } else if (res != G_ERROR_NOT_FOUND) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module_list - Error is_scheme_backend_api_run_enabled");
+        json_object_set_new(j_element, "enabled", json_false());
+      } else {
+        json_object_set_new(j_element, "enabled", json_false());
+      }
       json_object_del(j_element, "guasmi_enabled");
     }
     j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
@@ -955,7 +1027,7 @@ json_t * get_user_auth_scheme_module_list(struct config_elements * config) {
 json_t * get_user_auth_scheme_module(struct config_elements * config, const char * name) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
-  
+
   if (!o_strnullempty(name)) {
     j_query = json_pack("{sss[ssssssssss]s{ss}}",
                         "table",
@@ -982,7 +1054,7 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
         if (j_parameters != NULL) {
           json_object_set_new(json_array_get(j_result, 0), "parameters", j_parameters);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module_list - Error parsing parameters for module %s", json_string_value(json_object_get(json_array_get(j_result, 0), "name")));
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module - Error parsing parameters for module %s", json_string_value(json_object_get(json_array_get(j_result, 0), "name")));
           json_object_set_new(json_array_get(j_result, 0), "parameters", json_null());
         }
         json_object_set(json_array_get(j_result, 0), "allow_user_register", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_allow_user_register"))?json_true():json_false());
@@ -992,8 +1064,15 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
         json_object_del(json_array_get(j_result, 0), "guasmi_allow_user_register");
         json_object_del(json_array_get(j_result, 0), "guasmi_forbid_user_profile");
         json_object_del(json_array_get(j_result, 0), "guasmi_forbid_user_reset_credential");
-        
-        json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_enabled"))?json_true():json_false());
+
+        if ((res = is_scheme_backend_api_run_enabled(config, json_string_value(json_object_get(json_array_get(j_result, 0), "name")))) == G_OK) {
+          json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "guasmi_enabled"))?json_true():json_false());
+        } else if (res != G_ERROR_NOT_FOUND) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module - Error is_scheme_backend_api_run_enabled");
+          json_object_set_new(json_array_get(j_result, 0), "enabled", json_false());
+        } else {
+          json_object_set_new(json_array_get(j_result, 0), "enabled", json_false());
+        }
         json_object_del(json_array_get(j_result, 0), "guasmi_enabled");
 
         j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
@@ -1002,7 +1081,7 @@ json_t * get_user_auth_scheme_module(struct config_elements * config, const char
       }
       json_decref(j_result);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module_list - Error executing j_query");
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module - Error executing j_query");
       glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
       j_return = json_pack("{si}", "result", G_ERROR_DB);
     }
@@ -1018,7 +1097,7 @@ json_t * is_user_auth_scheme_module_valid(struct config_elements * config, json_
   int found;
   struct _user_auth_scheme_module * module;
   char * parameters;
-  
+
   if (j_module != NULL && json_is_object(j_module)) {
     if ((j_error_list = json_array()) != NULL) {
       if (add) {
@@ -1099,7 +1178,7 @@ json_t * add_user_auth_scheme_module(struct config_elements * config, json_t * j
   int res;
   size_t i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
-  
+
   j_query = json_pack("{sss{sOsOsOsssOsOsisisisi}}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
@@ -1153,22 +1232,28 @@ json_t * add_user_auth_scheme_module(struct config_elements * config, json_t * j
             cur_instance->guasmi_forbid_user_reset_credential = json_object_get(j_module, "forbid_user_reset_credential")==json_true();
             cur_instance->enabled = 0;
             if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
-              j_result = module->user_auth_scheme_module_init(config->config_m, json_object_get(j_module, "parameters"), cur_instance->name, &cur_instance->cls);
-              if (check_result_value(j_result, G_OK)) {
-                glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
-                glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
-                cur_instance->enabled = 1;
-                j_return = json_pack("{si}", "result", G_OK);
-              } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-                j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
-              } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
+              if ((res = is_scheme_backend_api_run_enabled(config, cur_instance->name)) == G_OK) {
+                j_result = module->user_auth_scheme_module_init(config->config_m, json_object_get(j_module, "parameters"), cur_instance->name, &cur_instance->cls);
+                if (check_result_value(j_result, G_OK)) {
+                  glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
+                  glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
+                  cur_instance->enabled = 1;
+                  j_return = json_pack("{si}", "result", G_OK);
+                } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+                  j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
+                } else {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
+                  j_return = json_pack("{si}", "result", G_ERROR);
+                }
+                json_decref(j_result);
+              } else if (res != G_ERROR_NOT_FOUND) {
+                y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Error is_scheme_backend_api_run_enabled");
                 j_return = json_pack("{si}", "result", G_ERROR);
+              } else {
+                j_return = json_pack("{si}", "result", G_OK);
               }
-              json_decref(j_result);
             } else {
               y_log_message(Y_LOG_LEVEL_ERROR, "add_user_auth_scheme_module - Error reallocating resources for user_auth_scheme_module_instance_list");
-              o_free(cur_instance->name);
               j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
             }
           } else {
@@ -1204,7 +1289,7 @@ int set_user_auth_scheme_module(struct config_elements * config, const char * na
   int res, ret;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _user_auth_scheme_module_instance * scheme_instance = NULL;
-  
+
   j_query = json_pack("{sss{sOsssOsOsisisisi}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_USER_AUTH_SCHEME_MODULE_INSTANCE,
@@ -1262,7 +1347,7 @@ int delete_user_auth_scheme_module(struct config_elements * config, const char *
   int ret, res;
   json_t * j_query, * j_result = manage_user_auth_scheme_module(config, name, GLEWLWYD_MODULE_ACTION_STOP);
   struct _user_auth_scheme_module_instance * instance;
-  
+
   if (check_result_value(j_result, G_OK)) {
     if (!pthread_mutex_lock(&config->module_lock)) {
       instance = get_user_auth_scheme_module_instance(config, name);
@@ -1304,30 +1389,38 @@ int delete_user_auth_scheme_module(struct config_elements * config, const char *
 json_t * manage_user_auth_scheme_module(struct config_elements * config, const char * name, int action) {
   struct _user_auth_scheme_module_instance * instance = get_user_auth_scheme_module_instance(config, name);
   json_t * j_module = get_user_auth_scheme_module(config, name), * j_result, * j_return;
-  
+  int res;
+
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
         if (!pthread_mutex_lock(&config->module_lock)) {
-          j_result = instance->module->user_auth_scheme_module_init(config->config_m, json_object_get(json_object_get(j_module, "module"), "parameters"), instance->name, &instance->cls);
-          if (check_result_value(j_result, G_OK)) {
-            glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", instance->module->name, "scheme_name", instance->name, NULL);
-            glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", instance->module->name, "scheme_name", instance->name, NULL);
-            instance->enabled = 1;
-            json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
-            if (set_user_auth_scheme_module(config, name, json_object_get(j_module, "module")) == G_OK) {
-              j_return = json_pack("{si}", "result", G_OK);
+          if ((res = is_scheme_backend_api_run_enabled(config, instance->name)) == G_OK) {
+            j_result = instance->module->user_auth_scheme_module_init(config->config_m, json_object_get(json_object_get(j_module, "module"), "parameters"), instance->name, &instance->cls);
+            if (check_result_value(j_result, G_OK)) {
+              glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", instance->module->name, "scheme_name", instance->name, NULL);
+              glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", instance->module->name, "scheme_name", instance->name, NULL);
+              instance->enabled = 1;
+              json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
+              if (set_user_auth_scheme_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+                j_return = json_pack("{si}", "result", G_OK);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error set_user_auth_scheme_module module %s/%s (1)", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
+            } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+              j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error set_user_auth_scheme_module module %s/%s (1)", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error init module %s/%s (1)", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
               j_return = json_pack("{si}", "result", G_ERROR);
             }
-          } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-            j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error init module %s/%s (1)", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            json_decref(j_result);
+          } else if (res != G_ERROR_NOT_FOUND) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error is_scheme_backend_api_run_enabled (1)");
             j_return = json_pack("{si}", "result", G_ERROR);
+          } else {
+            j_return = json_pack("{si}", "result", G_ERROR_PARAM);
           }
-          json_decref(j_result);
           pthread_mutex_unlock(&config->module_lock);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error pthread_mutex_lock (1)");
@@ -1339,18 +1432,25 @@ json_t * manage_user_auth_scheme_module(struct config_elements * config, const c
     } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
       if (instance->enabled) {
         if (!pthread_mutex_lock(&config->module_lock)) {
-          if (instance->module->user_auth_scheme_module_close(config->config_m, instance->cls) == G_OK) {
-            instance->enabled = 0;
-            json_object_set(json_object_get(j_module, "module"), "enabled", json_false());
-            if (set_user_auth_scheme_module(config, name, json_object_get(j_module, "module")) == G_OK) {
-              j_return = json_pack("{si}", "result", G_OK);
+          if ((res = is_scheme_backend_api_run_enabled(config, instance->name)) == G_OK) {
+            if (instance->module->user_auth_scheme_module_close(config->config_m, instance->cls) == G_OK) {
+              instance->enabled = 0;
+              json_object_set(json_object_get(j_module, "module"), "enabled", json_false());
+              if (set_user_auth_scheme_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+                j_return = json_pack("{si}", "result", G_OK);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error set_user_auth_scheme_module module %s/%s (2)", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error set_user_auth_scheme_module module %s/%s (2)", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+              y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error close module %s/%s (2)", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
               j_return = json_pack("{si}", "result", G_ERROR);
             }
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error close module %s/%s (2)", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+          } else if (res != G_ERROR_NOT_FOUND) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_user_auth_scheme_module - Error is_scheme_backend_api_run_enabled (2)");
             j_return = json_pack("{si}", "result", G_ERROR);
+          } else {
+            j_return = json_pack("{si}", "result", G_ERROR_PARAM);
           }
           pthread_mutex_unlock(&config->module_lock);
         } else {
@@ -1376,7 +1476,7 @@ json_t * get_client_module_list(struct config_elements * config) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters, * j_element;
   size_t index;
-  
+
   j_query = json_pack("{sss[sssssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
@@ -1402,11 +1502,18 @@ json_t * get_client_module_list(struct config_elements * config) {
         json_object_set_new(j_element, "parameters", json_null());
       }
       json_object_del(j_element, "gcmi_parameters");
-      
+
       json_object_set_new(j_element, "readonly", json_integer_value(json_object_get(j_element, "gcmi_readonly"))?json_true():json_false());
       json_object_del(j_element, "gcmi_readonly");
-      
-      json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "gcmi_enabled"))?json_true():json_false());
+
+      if ((res = is_client_backend_api_run_enabled(config, json_string_value(json_object_get(j_element, "name")))) == G_OK) {
+        json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "gcmi_enabled"))?json_true():json_false());
+      } else if (res != G_ERROR_NOT_FOUND) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_client_module_list - Error is_client_backend_api_run_enabled");
+        json_object_set_new(j_element, "enabled", json_false());
+      } else {
+        json_object_set_new(j_element, "enabled", json_false());
+      }
       json_object_del(j_element, "gcmi_enabled");
     }
     j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
@@ -1422,7 +1529,7 @@ json_t * get_client_module_list(struct config_elements * config) {
 json_t * get_client_module(struct config_elements * config, const char * name) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
-  
+
   j_query = json_pack("{sss[sssssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
@@ -1445,23 +1552,30 @@ json_t * get_client_module(struct config_elements * config, const char * name) {
       if (j_parameters != NULL) {
         json_object_set_new(json_array_get(j_result, 0), "parameters", j_parameters);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_client_module_list - Error parsing parameters for module %s", json_string_value(json_object_get(json_array_get(j_result, 0), "name")));
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_client_module - Error parsing parameters for module %s", json_string_value(json_object_get(json_array_get(j_result, 0), "name")));
         json_object_set_new(json_array_get(j_result, 0), "parameters", json_null());
       }
       json_object_del(json_array_get(j_result, 0), "gcmi_parameters");
-      
+
       json_object_set_new(json_array_get(j_result, 0), "readonly", json_integer_value(json_object_get(json_array_get(j_result, 0), "gcmi_readonly"))?json_true():json_false());
       json_object_del(json_array_get(j_result, 0), "gcmi_readonly");
-      
-      json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "gcmi_enabled"))?json_true():json_false());
+
+      if ((res = is_client_backend_api_run_enabled(config, json_string_value(json_object_get(json_array_get(j_result, 0), "name")))) == G_OK) {
+        json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "gcmi_enabled"))?json_true():json_false());
+      } else if (res != G_ERROR_NOT_FOUND) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_client_module - Error is_client_backend_api_run_enabled");
+        json_object_set_new(json_array_get(j_result, 0), "enabled", json_false());
+      } else {
+        json_object_set_new(json_array_get(j_result, 0), "enabled", json_false());
+      }
       json_object_del(json_array_get(j_result, 0), "gcmi_enabled");
-      
+
       j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
     } else {
       j_return = json_pack("{si}", "result", G_ERROR_NOT_FOUND);
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_client_module_list - Error executing j_query");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_client_module - Error executing j_query");
     glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_DATABSE_ERROR, 1, NULL);
     j_return = json_pack("{si}", "result", G_ERROR_DB);
   }
@@ -1475,7 +1589,7 @@ json_t * is_client_module_valid(struct config_elements * config, json_t * j_modu
   int found;
   struct _client_module * module;
   char * parameters;
-  
+
   if (j_module != NULL && json_is_object(j_module)) {
     if ((j_error_list = json_array()) != NULL) {
       if (add) {
@@ -1553,7 +1667,7 @@ json_t * add_client_module(struct config_elements * config, json_t * j_module) {
   int res;
   size_t i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
-  
+
   j_query = json_pack("{sss{sOsOsOsisiss}}",
                       "table",
                       GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
@@ -1597,20 +1711,24 @@ json_t * add_client_module(struct config_elements * config, json_t * j_module) {
           cur_instance->enabled = 0;
           cur_instance->readonly = json_object_get(j_module, "readonly")==json_true()?1:0;
           if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
-            j_result = module->client_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls);
-            if (check_result_value(j_result, G_OK)) {
-              cur_instance->enabled = 1;
-              j_return = json_pack("{si}", "result", G_OK);
-            } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-              j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
+            if ((res = is_client_backend_api_run_enabled(config, cur_instance->name)) == G_OK) {
+              j_result = module->client_module_init(config->config_m, cur_instance->readonly, json_object_get(j_module, "parameters"), &cur_instance->cls);
+              if (check_result_value(j_result, G_OK)) {
+                cur_instance->enabled = 1;
+                j_return = json_pack("{si}", "result", G_OK);
+              } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+                j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "add_client_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
+              json_decref(j_result);
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "add_client_module - Error init module %s/%s", module->name, json_string_value(json_object_get(j_module, "name")));
+              y_log_message(Y_LOG_LEVEL_ERROR, "add_client_module - Error is_client_backend_api_run_enabled");
               j_return = json_pack("{si}", "result", G_ERROR);
             }
-            json_decref(j_result);
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "add_client_module - Error reallocating resources for client_module_instance_list");
-            o_free(cur_instance->name);
             j_return = json_pack("{si}", "result", G_ERROR_MEMORY);
           }
         } else {
@@ -1641,7 +1759,7 @@ int set_client_module(struct config_elements * config, const char * name, json_t
   int ret;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
   struct _client_module_instance * cur_instance;
-  
+
   j_query = json_pack("{sss{sOsisiss}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_CLIENT_MODULE_INSTANCE,
@@ -1694,7 +1812,7 @@ int delete_client_module(struct config_elements * config, const char * name) {
   int ret, res, error = 0;
   json_t * j_query, * j_result;
   struct _client_module_instance * instance;
-  
+
   instance = get_client_module_instance(config, name);
   if (instance != NULL) {
     if (instance->enabled) {
@@ -1745,28 +1863,36 @@ int delete_client_module(struct config_elements * config, const char * name) {
 json_t * manage_client_module(struct config_elements * config, const char * name, int action) {
   struct _client_module_instance * instance = get_client_module_instance(config, name);
   json_t * j_module = get_client_module(config, name), * j_return, * j_result;
-  
+  int res;
+
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
         if (!pthread_mutex_lock(&config->module_lock)) {
-          j_result = instance->module->client_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
-          if (check_result_value(j_result, G_OK)) {
-            instance->enabled = 1;
-            json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
-            if (set_client_module(config, name, json_object_get(j_module, "module")) == G_OK) {
-              j_return = json_pack("{si}", "result", G_OK);
+          if ((res = is_client_backend_api_run_enabled(config, instance->name)) == G_OK) {
+            j_result = instance->module->client_module_init(config->config_m, instance->readonly, json_object_get(json_object_get(j_module, "module"), "parameters"), &instance->cls);
+            if (check_result_value(j_result, G_OK)) {
+              instance->enabled = 1;
+              json_object_set(json_object_get(j_module, "module"), "enabled", json_true());
+              if (set_client_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+                j_return = json_pack("{si}", "result", G_OK);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error set_client_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
+            } else if (check_result_value(j_result, G_ERROR_PARAM)) {
+              j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error set_client_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+              y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
               j_return = json_pack("{si}", "result", G_ERROR);
             }
-          } else if (check_result_value(j_result, G_ERROR_PARAM)) {
-            j_return = json_pack("{sisO}", "result", G_ERROR_PARAM, "error", json_object_get(j_result, "error"));
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error init module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+            json_decref(j_result);
+          } else if (res != G_ERROR_NOT_FOUND) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error is_client_backend_api_run_enabled (1)");
             j_return = json_pack("{si}", "result", G_ERROR);
+          } else {
+            j_return = json_pack("{si}", "result", G_ERROR_PARAM);
           }
-          json_decref(j_result);
           pthread_mutex_unlock(&config->module_lock);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error pthread_mutex_lock (1)");
@@ -1778,18 +1904,25 @@ json_t * manage_client_module(struct config_elements * config, const char * name
     } else if (action == GLEWLWYD_MODULE_ACTION_STOP) {
       if (instance->enabled) {
         if (!pthread_mutex_lock(&config->module_lock)) {
-          if (instance->module->client_module_close(config->config_m, instance->cls) == G_OK) {
-            instance->enabled = 0;
-            json_object_set(json_object_get(j_module, "module"), "enabled", json_false());
-            if (set_client_module(config, name, json_object_get(j_module, "module")) == G_OK) {
-              j_return = json_pack("{si}", "result", G_OK);
+          if ((res = is_client_backend_api_run_enabled(config, instance->name)) == G_OK) {
+            if (instance->module->client_module_close(config->config_m, instance->cls) == G_OK) {
+              instance->enabled = 0;
+              json_object_set(json_object_get(j_module, "module"), "enabled", json_false());
+              if (set_client_module(config, name, json_object_get(j_module, "module")) == G_OK) {
+                j_return = json_pack("{si}", "result", G_OK);
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error set_client_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+                j_return = json_pack("{si}", "result", G_ERROR);
+              }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error set_client_module module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+              y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
               j_return = json_pack("{si}", "result", G_ERROR);
             }
-          } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error close module %s/%s", instance->module->name, json_string_value(json_object_get(json_object_get(j_module, "module"), "name")));
+          } else if (res != G_ERROR_NOT_FOUND) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "manage_client_module - Error is_client_backend_api_run_enabled (2)");
             j_return = json_pack("{si}", "result", G_ERROR);
+          } else {
+            j_return = json_pack("{si}", "result", G_ERROR_PARAM);
           }
           pthread_mutex_unlock(&config->module_lock);
         } else {
@@ -1815,7 +1948,7 @@ json_t * get_plugin_module_list(struct config_elements * config) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters, * j_element;
   size_t index;
-  
+
   j_query = json_pack("{sss[sssss]ss}",
                       "table",
                       GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
@@ -1839,8 +1972,15 @@ json_t * get_plugin_module_list(struct config_elements * config) {
         json_object_set_new(j_element, "parameters", json_null());
       }
       json_object_del(j_element, "gpmi_parameters");
-      
-      json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "gpmi_enabled"))?json_true():json_false());
+
+      if ((res = is_plugin_api_run_enabled(config, json_string_value(json_object_get(j_element, "name")))) == G_OK) {
+        json_object_set_new(j_element, "enabled", json_integer_value(json_object_get(j_element, "gpmi_enabled"))?json_true():json_false());
+      } else if (res != G_ERROR_NOT_FOUND) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_plugin_module_list - Error is_plugin_api_run_enabled");
+        json_object_set_new(j_element, "enabled", json_false());
+      } else {
+        json_object_set_new(j_element, "enabled", json_false());
+      }
       json_object_del(j_element, "gpmi_enabled");
     }
     j_return = json_pack("{sisO}", "result", G_OK, "module", j_result);
@@ -1856,15 +1996,20 @@ json_t * get_plugin_module_list(struct config_elements * config) {
 json_t * get_plugin_module_list_for_user(struct config_elements * config) {
   json_t * j_module_list = get_plugin_module_list(config), * j_element, * j_return;
   size_t index;
-  
+  int res;
+
   if (check_result_value(j_module_list, G_OK)) {
     j_return = json_pack("{sis[]}", "result", G_OK, "module");
     if (j_return != NULL) {
       json_array_foreach(json_object_get(j_module_list, "module"), index, j_element) {
-        if (json_object_get(j_element, "enabled") == json_true()) {
-          json_object_del(j_element, "parameters");
-          json_object_del(j_element, "enabled");
-          json_array_append(json_object_get(j_return, "module"), j_element);
+        if ((res = is_plugin_api_run_enabled(config, json_string_value(json_object_get(j_element, "name")))) == G_OK) {
+          if (json_object_get(j_element, "enabled") == json_true()) {
+            json_object_del(j_element, "parameters");
+            json_object_del(j_element, "enabled");
+            json_array_append(json_object_get(j_return, "module"), j_element);
+          }
+        } else if (res != G_ERROR_NOT_FOUND) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "get_plugin_module_list_for_user - Error is_plugin_api_run_enabled");
         }
       }
     } else {
@@ -1882,7 +2027,7 @@ json_t * get_plugin_module_list_for_user(struct config_elements * config) {
 json_t * get_plugin_module(struct config_elements * config, const char * name) {
   int res;
   json_t * j_query, * j_result = NULL, * j_return, * j_parameters;
-  
+
   j_query = json_pack("{sss[sssss]s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
@@ -1907,8 +2052,15 @@ json_t * get_plugin_module(struct config_elements * config, const char * name) {
         json_object_set_new(json_array_get(j_result, 0), "parameters", json_null());
       }
       json_object_del(json_array_get(j_result, 0), "gpmi_parameters");
-      
-      json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "gpmi_enabled"))?json_true():json_false());
+
+      if ((res = is_plugin_api_run_enabled(config, json_string_value(json_object_get(json_array_get(j_result, 0), "name")))) == G_OK) {
+        json_object_set_new(json_array_get(j_result, 0), "enabled", json_integer_value(json_object_get(json_array_get(j_result, 0), "gpmi_enabled"))?json_true():json_false());
+      } else if (res != G_ERROR_NOT_FOUND) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_plugin_module - Error is_plugin_api_run_enabled");
+        json_object_set_new(json_array_get(j_result, 0), "enabled", json_false());
+      } else {
+        json_object_set_new(json_array_get(j_result, 0), "enabled", json_false());
+      }
       json_object_del(json_array_get(j_result, 0), "gpmi_enabled");
 
       j_return = json_pack("{sisO}", "result", G_OK, "module", json_array_get(j_result, 0));
@@ -1930,7 +2082,7 @@ json_t * is_plugin_module_valid(struct config_elements * config, json_t * j_modu
   int found;
   struct _plugin_module * module;
   char * parameters;
-  
+
   if (j_module != NULL && json_is_object(j_module)) {
     if ((j_error_list = json_array()) != NULL) {
       if (add) {
@@ -2002,7 +2154,7 @@ json_t * add_plugin_module(struct config_elements * config, json_t * j_module) {
   int res;
   size_t i;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
-  
+
   j_query = json_pack("{sss{sOsOsOsiss}}",
                       "table",
                       GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
@@ -2051,7 +2203,7 @@ json_t * add_plugin_module(struct config_elements * config, json_t * j_module) {
               }
               json_decref(j_result);
             } else if (res != G_ERROR_NOT_FOUND) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error is_plugin_api_run_enabled");
+              y_log_message(Y_LOG_LEVEL_ERROR, "add_plugin_module - Error is_plugin_api_run_enabled");
               j_return = json_pack("{si}", "result", G_ERROR);
             } else {
               j_return = json_pack("{si}", "result", G_OK);
@@ -2087,7 +2239,7 @@ int set_plugin_module(struct config_elements * config, const char * name, json_t
   json_t * j_query;
   int res, ret;
   char * parameters = json_dumps(json_object_get(j_module, "parameters"), JSON_COMPACT);
-  
+
   j_query = json_pack("{sss{sOsiss}s{ss}}",
                       "table",
                       GLEWLWYD_TABLE_PLUGIN_MODULE_INSTANCE,
@@ -2118,7 +2270,7 @@ int delete_plugin_module(struct config_elements * config, const char * name) {
   int ret, res;
   json_t * j_query, * j_result = manage_plugin_module(config, name, GLEWLWYD_MODULE_ACTION_STOP);
   struct _plugin_module_instance * instance;
-  
+
   if (check_result_value(j_result, G_OK)) {
     if (!pthread_mutex_lock(&config->module_lock)) {
       instance = get_plugin_module_instance(config, name);
@@ -2161,7 +2313,7 @@ json_t * manage_plugin_module(struct config_elements * config, const char * name
   struct _plugin_module_instance * instance = get_plugin_module_instance(config, name);
   json_t * j_module = get_plugin_module(config, name), * j_return, * j_result;
   int res;
-  
+
   if (check_result_value(j_module, G_OK) && instance != NULL) {
     if (action == GLEWLWYD_MODULE_ACTION_START) {
       if (!instance->enabled) {
@@ -2188,7 +2340,7 @@ json_t * manage_plugin_module(struct config_elements * config, const char * name
             y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error is_plugin_api_run_enabled");
             j_return = json_pack("{si}", "result", G_ERROR);
           } else {
-            j_return = json_pack("{si}", "result", G_OK);
+            j_return = json_pack("{si}", "result", G_ERROR_PARAM);
           }
           pthread_mutex_unlock(&config->module_lock);
         } else {
@@ -2220,7 +2372,7 @@ json_t * manage_plugin_module(struct config_elements * config, const char * name
             y_log_message(Y_LOG_LEVEL_ERROR, "manage_plugin_module - Error is_plugin_api_run_enabled");
             j_return = json_pack("{si}", "result", G_ERROR);
           } else {
-            j_return = json_pack("{si}", "result", G_OK);
+            j_return = json_pack("{si}", "result", G_ERROR_PARAM);
           }
           pthread_mutex_unlock(&config->module_lock);
         } else {

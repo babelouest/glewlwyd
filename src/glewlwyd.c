@@ -184,6 +184,10 @@ int main (int argc, char ** argv) {
   config->admin_session_authentication = GLEWLWYD_SESSION_AUTH_COOKIE;
   config->profile_session_authentication = GLEWLWYD_SESSION_AUTH_COOKIE;
   config->login_api_enabled = 1;
+  config->user_backend_api_run_enabled = NULL;
+  config->user_middleware_backend_api_run_enabled = NULL;
+  config->client_backend_api_run_enabled = NULL;
+  config->scheme_api_run_enabled = NULL;
   config->plugin_api_run_enabled = NULL;
   config->allow_multiple_user_per_session = 1;
   config->metrics_endpoint = 0;
@@ -764,6 +768,10 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free((*config)->user_auth_scheme_module_path);
     o_free((*config)->plugin_module_path);
     o_free((*config)->bind_address);
+    o_free((*config)->user_backend_api_run_enabled);
+    o_free((*config)->user_middleware_backend_api_run_enabled);
+    o_free((*config)->client_backend_api_run_enabled);
+    o_free((*config)->scheme_api_run_enabled);
     o_free((*config)->plugin_api_run_enabled);
 
     if ((*config)->static_file_config != NULL) {
@@ -1400,6 +1408,26 @@ int build_config_from_file(struct config_elements * config) {
       config->allow_multiple_user_per_session = (uint)int_value;
     }
 
+    if (config_lookup_string(&cfg, "user_backend_api_run_enabled", &str_value) == CONFIG_TRUE && !o_strnullempty(str_value)) {
+      o_free(config->user_backend_api_run_enabled);
+      config->user_backend_api_run_enabled = o_strdup(str_value);
+    }
+
+    if (config_lookup_string(&cfg, "user_middleware_backend_api_run_enabled", &str_value) == CONFIG_TRUE && !o_strnullempty(str_value)) {
+      o_free(config->user_middleware_backend_api_run_enabled);
+      config->user_middleware_backend_api_run_enabled = o_strdup(str_value);
+    }
+
+    if (config_lookup_string(&cfg, "client_backend_api_run_enabled", &str_value) == CONFIG_TRUE && !o_strnullempty(str_value)) {
+      o_free(config->client_backend_api_run_enabled);
+      config->client_backend_api_run_enabled = o_strdup(str_value);
+    }
+
+    if (config_lookup_string(&cfg, "scheme_api_run_enabled", &str_value) == CONFIG_TRUE && !o_strnullempty(str_value)) {
+      o_free(config->scheme_api_run_enabled);
+      config->scheme_api_run_enabled = o_strdup(str_value);
+    }
+
     if (config_lookup_string(&cfg, "plugin_api_run_enabled", &str_value) == CONFIG_TRUE && !o_strnullempty(str_value)) {
       o_free(config->plugin_api_run_enabled);
       config->plugin_api_run_enabled = o_strdup(str_value);
@@ -1881,6 +1909,26 @@ int build_config_from_env(struct config_elements * config) {
     config->login_api_enabled = (uint)(o_strcmp(value, "1")==0);
   }
 
+  if ((value = getenv(GLEWLWYD_ENV_USER_BACKEND_API_RUN_ENABLED)) != NULL && !o_strnullempty(value)) {
+    o_free(config->user_backend_api_run_enabled);
+    config->user_backend_api_run_enabled = o_strdup(value);
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_USER_MIDDLEWARE_BACKEND_API_RUN_ENABLED)) != NULL && !o_strnullempty(value)) {
+    o_free(config->user_middleware_backend_api_run_enabled);
+    config->user_middleware_backend_api_run_enabled = o_strdup(value);
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_CLIENT_BACKEND_API_RUN_ENABLED)) != NULL && !o_strnullempty(value)) {
+    o_free(config->client_backend_api_run_enabled);
+    config->client_backend_api_run_enabled = o_strdup(value);
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_SCHEME_API_RUN_ENABLED)) != NULL && !o_strnullempty(value)) {
+    o_free(config->scheme_api_run_enabled);
+    config->scheme_api_run_enabled = o_strdup(value);
+  }
+
   if ((value = getenv(GLEWLWYD_ENV_PLUGIN_API_RUN_ENABLED)) != NULL && !o_strnullempty(value)) {
     o_free(config->plugin_api_run_enabled);
     config->plugin_api_run_enabled = o_strdup(value);
@@ -2271,28 +2319,30 @@ int load_user_module_instance_list(struct config_elements * config) {
               cur_instance->module = module;
               cur_instance->readonly = (short int)json_integer_value(json_object_get(j_instance, "readonly"));
               cur_instance->multiple_passwords = (short int)json_integer_value(json_object_get(j_instance, "multiple_passwords"));
+              cur_instance->enabled = 0;
               if (pointer_list_append(config->user_module_instance_list, cur_instance)) {
-                if (json_integer_value(json_object_get(j_instance, "enabled"))) {
-                  j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
-                  if (j_parameters != NULL) {
-                    j_init = module->user_module_init(config->config_m, cur_instance->readonly, cur_instance->multiple_passwords, j_parameters, &cur_instance->cls);
-                    if (check_result_value(j_init, G_OK)) {
-                      cur_instance->enabled = 1;
+                if ((res = is_user_backend_api_run_enabled(config, cur_instance->name)) == G_OK) {
+                  if (json_integer_value(json_object_get(j_instance, "enabled"))) {
+                    j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+                    if (j_parameters != NULL) {
+                      j_init = module->user_module_init(config->config_m, cur_instance->readonly, cur_instance->multiple_passwords, j_parameters, &cur_instance->cls);
+                      if (check_result_value(j_init, G_OK)) {
+                        cur_instance->enabled = 1;
+                      } else {
+                        y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                        message = json_dumps(j_init, JSON_INDENT(2));
+                        y_log_message(Y_LOG_LEVEL_DEBUG, message);
+                        o_free(message);
+                      }
+                      json_decref(j_init);
                     } else {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
-                      message = json_dumps(j_init, JSON_INDENT(2));
-                      y_log_message(Y_LOG_LEVEL_DEBUG, message);
-                      o_free(message);
-                      cur_instance->enabled = 0;
+                      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error parsing module parameters %s/%s: %s", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                     }
-                    json_decref(j_init);
+                    json_decref(j_parameters);
                   } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error parsing module parameters %s/%s: %s", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
-                    cur_instance->enabled = 0;
                   }
-                  json_decref(j_parameters);
-                } else {
-                  cur_instance->enabled = 0;
+                } else if (res != G_ERROR_NOT_FOUND) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error is_user_backend_api_run_enabled");
                 }
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error reallocating resources for user_module_instance_list");
@@ -2350,13 +2400,18 @@ struct _user_module * get_user_module_lib(struct config_elements * config, const
 
 void close_user_module_instance_list(struct config_elements * config) {
   size_t i;
+  int res;
 
   if (!pthread_mutex_lock(&config->module_lock)) {
     for (i=0; i<pointer_list_size(config->user_module_instance_list); i++) {
       struct _user_module_instance * instance = (struct _user_module_instance *)pointer_list_get_at(config->user_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->enabled && instance->module->user_module_close(config->config_m, instance->cls) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_instance_list - Error user_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        if ((res = is_user_backend_api_run_enabled(config, instance->name)) == G_OK) {
+          if (instance->enabled && instance->module->user_module_close(config->config_m, instance->cls) != G_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_instance_list - Error user_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+          }
+        } else if (res != G_ERROR_NOT_FOUND) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_module_instance_list - Error is_user_backend_api_run_enabled");
         }
         o_free(instance->name);
         o_free(instance);
@@ -2617,29 +2672,32 @@ int load_user_middleware_module_instance_list(struct config_elements * config) {
                 cur_instance->cls = NULL;
                 cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
                 cur_instance->module = module;
+                cur_instance->enabled = 0;
                 if (pointer_list_append(config->user_middleware_module_instance_list, cur_instance)) {
-                  if (json_integer_value(json_object_get(j_instance, "enabled"))) {
-                    j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
-                    if (j_parameters != NULL) {
-                      j_init = module->user_middleware_module_init(config->config_m, j_parameters, &cur_instance->cls);
-                      if (check_result_value(j_init, G_OK)) {
-                        cur_instance->enabled = 1;
+                  if ((res = is_user_middleware_backend_api_run_enabled(config, cur_instance->name)) == G_OK) {
+                    if (json_integer_value(json_object_get(j_instance, "enabled"))) {
+                      j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+                      if (j_parameters != NULL) {
+                        j_init = module->user_middleware_module_init(config->config_m, j_parameters, &cur_instance->cls);
+                        if (check_result_value(j_init, G_OK)) {
+                          cur_instance->enabled = 1;
+                        } else {
+                          y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                          message = json_dumps(j_init, JSON_INDENT(2));
+                          y_log_message(Y_LOG_LEVEL_DEBUG, message);
+                          o_free(message);
+                          cur_instance->enabled = 0;
+                          ret = G_ERROR_PARAM;
+                        }
+                        json_decref(j_init);
                       } else {
-                        y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
-                        message = json_dumps(j_init, JSON_INDENT(2));
-                        y_log_message(Y_LOG_LEVEL_DEBUG, message);
-                        o_free(message);
+                        y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error parsing module parameters %s/%s: %s", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                         cur_instance->enabled = 0;
-                        ret = G_ERROR_PARAM;
                       }
-                      json_decref(j_init);
-                    } else {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error parsing module parameters %s/%s: %s", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
-                      cur_instance->enabled = 0;
+                      json_decref(j_parameters);
                     }
-                    json_decref(j_parameters);
-                  } else {
-                    cur_instance->enabled = 0;
+                  } else if (res != G_ERROR_NOT_FOUND) {
+                    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_module_instance_list - Error is_user_middleware_backend_api_run_enabled");
                   }
                 } else {
                   y_log_message(Y_LOG_LEVEL_ERROR, "load_user_middleware_module_instance_list - Error reallocating resources for user_middleware_module_instance_list");
@@ -2702,13 +2760,18 @@ struct _user_middleware_module * get_user_middleware_module_lib(struct config_el
 
 void close_user_middleware_module_instance_list(struct config_elements * config) {
   size_t i;
+  int res;
 
   if (!pthread_mutex_lock(&config->module_lock)) {
     for (i=0; i<pointer_list_size(config->user_middleware_module_instance_list); i++) {
       struct _user_middleware_module_instance * instance = (struct _user_middleware_module_instance *)pointer_list_get_at(config->user_middleware_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->enabled && instance->module->user_middleware_module_close(config->config_m, instance->cls) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_middleware_module_instance_list - Error user_middleware_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        if ((res = is_user_middleware_backend_api_run_enabled(config, instance->name)) == G_OK) {
+          if (instance->enabled && instance->module->user_middleware_module_close(config->config_m, instance->cls) != G_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "close_user_middleware_module_instance_list - Error user_middleware_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+          }
+        } else if (res != G_ERROR_NOT_FOUND) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_middleware_module_instance_list - Error is_user_middleware_backend_api_run_enabled");
         }
         o_free(instance->name);
         o_free(instance);
@@ -2967,32 +3030,34 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
               cur_instance->guasmi_expiration = json_integer_value(json_object_get(j_instance, "guasmi_expiration"));
               cur_instance->guasmi_max_use = json_integer_value(json_object_get(j_instance, "guasmi_max_use"));
               cur_instance->guasmi_allow_user_register = (short int)json_integer_value(json_object_get(j_instance, "guasmi_allow_user_register"));
+              cur_instance->enabled = 0;
               if (pointer_list_append(config->user_auth_scheme_module_instance_list, cur_instance)) {
-                if (json_integer_value(json_object_get(j_instance, "enabled"))) {
-                  j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
-                  if (j_parameters != NULL) {
-                    j_init = module->user_auth_scheme_module_init(config->config_m, j_parameters, cur_instance->name, &cur_instance->cls);
-                    if (check_result_value(j_init, G_OK)) {
-                      glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
-                      glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
-                      cur_instance->enabled = 1;
-                    } else {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
-                      if (check_result_value(j_init, G_ERROR_PARAM)) {
-                        message = json_dumps(json_object_get(j_init, "error"), JSON_INDENT(2));
-                        y_log_message(Y_LOG_LEVEL_DEBUG, message);
-                        o_free(message);
+                if ((res = is_scheme_backend_api_run_enabled(config, cur_instance->name)) == G_OK) {
+                  if (json_integer_value(json_object_get(j_instance, "enabled"))) {
+                    j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+                    if (j_parameters != NULL) {
+                      j_init = module->user_auth_scheme_module_init(config->config_m, j_parameters, cur_instance->name, &cur_instance->cls);
+                      if (check_result_value(j_init, G_OK)) {
+                        glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_VALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
+                        glewlwyd_metrics_increment_counter_va(config, GLWD_METRICS_AUTH_USER_INVALID_SCHEME, 0, "scheme_type", module->name, "scheme_name", cur_instance->name, NULL);
+                        cur_instance->enabled = 1;
+                      } else {
+                        y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                        if (check_result_value(j_init, G_ERROR_PARAM)) {
+                          message = json_dumps(json_object_get(j_init, "error"), JSON_INDENT(2));
+                          y_log_message(Y_LOG_LEVEL_DEBUG, message);
+                          o_free(message);
+                        }
                       }
-                      cur_instance->enabled = 0;
+                      json_decref(j_init);
+                    } else {
+                      y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error parsing parameters for module %s: '%s'", cur_instance->name, json_string_value(json_object_get(j_instance, "parameters")));
+                      o_free(cur_instance->name);
                     }
-                    json_decref(j_init);
-                  } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error parsing parameters for module %s: '%s'", cur_instance->name, json_string_value(json_object_get(j_instance, "parameters")));
-                    o_free(cur_instance->name);
+                    json_decref(j_parameters);
                   }
-                  json_decref(j_parameters);
-                } else {
-                  cur_instance->enabled = 0;
+                } else if (res != G_ERROR_NOT_FOUND) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error is_scheme_backend_api_run_enabled");
                 }
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "load_user_auth_scheme_module_instance_list - Error reallocating resources for user_auth_scheme_module_instance_list");
@@ -3025,11 +3090,16 @@ int load_user_auth_scheme_module_instance_list(struct config_elements * config) 
 struct _user_auth_scheme_module_instance * get_user_auth_scheme_module_instance(struct config_elements * config, const char * name) {
   size_t i;
   struct _user_auth_scheme_module_instance * cur_instance;
+  int res;
 
   for (i=0; i<pointer_list_size(config->user_auth_scheme_module_instance_list); i++) {
     cur_instance = pointer_list_get_at(config->user_auth_scheme_module_instance_list, i);
-    if (0 == o_strcmp(cur_instance->name, name)) {
-      return cur_instance;
+    if ((res = is_scheme_backend_api_run_enabled(config, cur_instance->name)) == G_OK) {
+      if (0 == o_strcmp(cur_instance->name, name)) {
+        return cur_instance;
+      }
+    } else if (res != G_ERROR_NOT_FOUND) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "get_user_auth_scheme_module_instance - Error is_scheme_backend_api_run_enabled");
     }
   }
   return NULL;
@@ -3050,13 +3120,18 @@ struct _user_auth_scheme_module * get_user_auth_scheme_module_lib(struct config_
 
 void close_user_auth_scheme_module_instance_list(struct config_elements * config) {
   size_t i;
+  int res;
 
   if (!pthread_mutex_lock(&config->module_lock)) {
     for (i=0; i<pointer_list_size(config->user_auth_scheme_module_instance_list); i++) {
       struct _user_auth_scheme_module_instance * instance = (struct _user_auth_scheme_module_instance *)pointer_list_get_at(config->user_auth_scheme_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->enabled && instance->module->user_auth_scheme_module_close(config->config_m, instance->cls) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_auth_scheme_module_instance_list - Error user_auth_scheme_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        if ((res = is_scheme_backend_api_run_enabled(config, instance->name)) == G_OK) {
+          if (instance->enabled && instance->module->user_auth_scheme_module_close(config->config_m, instance->cls) != G_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "close_user_auth_scheme_module_instance_list - Error user_auth_scheme_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+          }
+        } else if (res != G_ERROR_NOT_FOUND) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_user_auth_scheme_module_instance_list - Error is_scheme_backend_api_run_enabled");
         }
         o_free(instance->name);
         o_free(instance);
@@ -3308,25 +3383,26 @@ int load_client_module_instance_list(struct config_elements * config) {
               cur_instance->name = o_strdup(json_string_value(json_object_get(j_instance, "name")));
               cur_instance->readonly = (short int)json_integer_value(json_object_get(j_instance, "readonly"));
               cur_instance->module = module;
+              cur_instance->enabled = 0;
               if (pointer_list_append(config->client_module_instance_list, cur_instance)) {
-                if (json_integer_value(json_object_get(j_instance, "enabled"))) {
-                  j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
-                  if (j_parameters != NULL) {
-                    j_init = module->client_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls);
-                    if (check_result_value(j_init, G_OK)) {
-                      cur_instance->enabled = 1;
+                if ((res = is_client_backend_api_run_enabled(config, cur_instance->name)) == G_OK) {
+                  if (json_integer_value(json_object_get(j_instance, "enabled"))) {
+                    j_parameters = json_loads(json_string_value(json_object_get(j_instance, "parameters")), JSON_DECODE_ANY, NULL);
+                    if (j_parameters != NULL) {
+                      j_init = module->client_module_init(config->config_m, cur_instance->readonly, j_parameters, &cur_instance->cls);
+                      if (check_result_value(j_init, G_OK)) {
+                        cur_instance->enabled = 1;
+                      } else {
+                        y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
+                      }
+                      json_decref(j_init);
                     } else {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error init module %s/%s", module->name, json_string_value(json_object_get(j_instance, "name")));
-                      cur_instance->enabled = 0;
+                      y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error parsing module parameters %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
                     }
-                    json_decref(j_init);
-                  } else {
-                    y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error parsing module parameters %s/%s: '%s'", module->name, json_string_value(json_object_get(j_instance, "name")), json_string_value(json_object_get(j_instance, "parameters")));
-                    cur_instance->enabled = 0;
+                    json_decref(j_parameters);
                   }
-                  json_decref(j_parameters);
-                } else {
-                  cur_instance->enabled = 0;
+                } else if (res != G_ERROR_NOT_FOUND) {
+                  y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error is_client_backend_api_run_enabled");
                 }
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "load_client_module_instance_list - Error reallocating resources for client_module_instance_list");
@@ -3384,13 +3460,18 @@ struct _client_module * get_client_module_lib(struct config_elements * config, c
 
 void close_client_module_instance_list(struct config_elements * config) {
   size_t i;
+  int res;
 
   if (!pthread_mutex_lock(&config->module_lock)) {
     for (i=0; i<pointer_list_size(config->client_module_instance_list); i++) {
       struct _client_module_instance * instance = (struct _client_module_instance *)pointer_list_get_at(config->client_module_instance_list, i);
       if (instance != NULL) {
-        if (instance->enabled && instance->module->client_module_close(config->config_m, instance->cls) != G_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_instance_list - Error client_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+        if ((res = is_client_backend_api_run_enabled(config, instance->name)) == G_OK) {
+          if (instance->enabled && instance->module->client_module_close(config->config_m, instance->cls) != G_OK) {
+            y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_instance_list - Error client_module_close for instance '%s'/'%s'", instance->module->name, instance->name);
+          }
+        } else if (res != G_ERROR_NOT_FOUND) {
+          y_log_message(Y_LOG_LEVEL_ERROR, "close_client_module_instance_list - Error is_client_backend_api_run_enabled");
         }
         o_free(instance->name);
         o_free(instance);
@@ -3876,11 +3957,119 @@ void * thread_send_mail(void * args) {
   return NULL;
 }
 
+int is_user_backend_api_run_enabled (struct config_elements * config, const char * name) {
+  char ** plugin_list = NULL;
+  int ret;
+
+  if (!o_strnullempty(config->user_backend_api_run_enabled)) {
+    if (!o_strnullempty(name)) {
+      if (!split_string(config->user_backend_api_run_enabled, ",", &plugin_list)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error split_string for config->user_backend_api_run_enabled");
+        ret = G_ERROR;
+      } else {
+        if (string_array_has_value_case((const char **)plugin_list, name)) {
+          ret = G_OK;
+        } else {
+          ret = G_ERROR_NOT_FOUND;
+        }
+        free_string_array(plugin_list);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error name parameter empty");
+      ret = G_ERROR_PARAM;
+    }
+  } else {
+    ret = G_OK;
+  }
+  return ret;
+}
+
+int is_user_middleware_backend_api_run_enabled (struct config_elements * config, const char * name) {
+  char ** plugin_list = NULL;
+  int ret;
+
+  if (!o_strnullempty(config->user_middleware_backend_api_run_enabled)) {
+    if (!o_strnullempty(name)) {
+      if (!split_string(config->user_middleware_backend_api_run_enabled, ",", &plugin_list)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error split_string for config->user_middleware_backend_api_run_enabled");
+        ret = G_ERROR;
+      } else {
+        if (string_array_has_value_case((const char **)plugin_list, name)) {
+          ret = G_OK;
+        } else {
+          ret = G_ERROR_NOT_FOUND;
+        }
+        free_string_array(plugin_list);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error name parameter empty");
+      ret = G_ERROR_PARAM;
+    }
+  } else {
+    ret = G_OK;
+  }
+  return ret;
+}
+
+int is_client_backend_api_run_enabled (struct config_elements * config, const char * name) {
+  char ** plugin_list = NULL;
+  int ret;
+
+  if (!o_strnullempty(config->client_backend_api_run_enabled)) {
+    if (!o_strnullempty(name)) {
+      if (!split_string(config->client_backend_api_run_enabled, ",", &plugin_list)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error split_string for config->client_backend_api_run_enabled");
+        ret = G_ERROR;
+      } else {
+        if (string_array_has_value_case((const char **)plugin_list, name)) {
+          ret = G_OK;
+        } else {
+          ret = G_ERROR_NOT_FOUND;
+        }
+        free_string_array(plugin_list);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error name parameter empty");
+      ret = G_ERROR_PARAM;
+    }
+  } else {
+    ret = G_OK;
+  }
+  return ret;
+}
+
+int is_scheme_backend_api_run_enabled (struct config_elements * config, const char * name) {
+  char ** plugin_list = NULL;
+  int ret;
+
+  if (!o_strnullempty(config->scheme_api_run_enabled)) {
+    if (!o_strnullempty(name)) {
+      if (!split_string(config->scheme_api_run_enabled, ",", &plugin_list)) {
+        y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error split_string for config->scheme_api_run_enabled");
+        ret = G_ERROR;
+      } else {
+        if (string_array_has_value_case((const char **)plugin_list, name)) {
+          ret = G_OK;
+        } else {
+          ret = G_ERROR_NOT_FOUND;
+        }
+        free_string_array(plugin_list);
+      }
+    } else {
+      y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error name parameter empty");
+      ret = G_ERROR_PARAM;
+    }
+  } else {
+    ret = G_OK;
+  }
+  return ret;
+}
+
 int is_plugin_api_run_enabled (struct config_elements * config, const char * name) {
   char ** plugin_api_run_enabled_list = NULL;
   int ret;
 
-  if (config->plugin_api_run_enabled != NULL) {
+  if (!o_strnullempty(config->plugin_api_run_enabled)) {
     if (!o_strnullempty(name)) {
       if (!split_string(config->plugin_api_run_enabled, ",", &plugin_api_run_enabled_list)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "load_plugin_module_instance_list - Error split_string for config->plugin_api_run_enabled");
@@ -3900,6 +4089,5 @@ int is_plugin_api_run_enabled (struct config_elements * config, const char * nam
   } else {
     ret = G_OK;
   }
-  
   return ret;
 }

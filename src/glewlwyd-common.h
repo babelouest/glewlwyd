@@ -362,6 +362,10 @@ struct config_elements {
   unsigned int                                   profile_session_authentication;
   unsigned int                                   allow_multiple_user_per_session;
   unsigned int                                   login_api_enabled;
+  char *                                         user_backend_api_run_enabled;
+  char *                                         user_middleware_backend_api_run_enabled;
+  char *                                         client_backend_api_run_enabled;
+  char *                                         scheme_api_run_enabled;
   char *                                         plugin_api_run_enabled;
   char *                                         allow_origin;
   char *                                         allow_methods;
