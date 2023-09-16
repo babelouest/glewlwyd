@@ -3786,7 +3786,7 @@ static char * generate_refresh_token() {
  * Return true if the auth type is enabled in this plugin instance
  */
 static int is_authorization_type_enabled(struct _oidc_config * config, uint authorization_type) {
-  return (authorization_type <= 7)?config->auth_type_enabled[authorization_type]:0;
+  return (authorization_type < 7)?config->auth_type_enabled[authorization_type]:0;
 }
 
 /**
