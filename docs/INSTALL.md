@@ -728,12 +728,48 @@ Optional, if set to false, no login API is accessible. Useful to restrict an ins
 
 Default is true.
 
-#### Plugins enabled
+#### User backend instances enabled
+
+- Config file variable: `user_backend_api_run_enabled`
+- Environment variable: `GLWD_USER_BACKEND_API_RUN_ENABLED`
+
+Optional, specify the list of user backend instances allowed to be executed identified by their name. Multiple values must be separated by a comma ','. If the list is missing or empty, all instances are allowed.
+
+Default is all instances allowed.
+
+#### User middleware backend instances enabled
+
+- Config file variable: `user_middleware_backend_api_run_enabled`
+- Environment variable: `GLWD_USER_MIDDLEWARE_BACKEND_API_RUN_ENABLED`
+
+Optional, specify the list of user middleware backend instances allowed to be executed identified by their name. Multiple values must be separated by a comma ','. If the list is missing or empty, all instances are allowed.
+
+Default is all instances allowed.
+
+#### Client backend instances enabled
+
+- Config file variable: `client_backend_api_run_enabled`
+- Environment variable: `GLWD_CLIENT_BACKEND_API_RUN_ENABLED`
+
+Optional, specify the list of client backend instances allowed to be executed identified by their name. Multiple values must be separated by a comma ','. If the list is missing or empty, all instances are allowed.
+
+Default is all instances allowed.
+
+#### Authentication scheme backend instances enabled
+
+- Config file variable: `scheme_api_run_enabled`
+- Environment variable: `GLWD_SCHEME_API_RUN_ENABLED`
+
+Optional, specify the list of authentication scheme backend instances allowed to be executed identified by their name. Multiple values must be separated by a comma ','. If the list is missing or empty, all instances are allowed.
+
+Default is all instances allowed.
+
+#### Plugins instances enabled
 
 - Config file variable: `plugin_api_run_enabled`
 - Environment variable: `GLWD_PLUGIN_API_RUN_ENABLED`
 
-Optional, specify the list of plugins allowed to be executed on an instance by its name. Multiple values must be separated by a comma ','. If the list is missing or empty, all plugings are allowed.
+Optional, specify the list of plugins instances allowed to be executed identified by their name. Multiple values must be separated by a comma ','. If the list is missing or empty, all plugings are allowed.
 
 Default is all plugins allowed.
 
