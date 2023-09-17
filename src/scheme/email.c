@@ -578,7 +578,7 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
   struct _email_config * email_config = (struct _email_config *)cls;
   int ret;
   char * code = NULL, * body;
-  const char * ip_source = get_ip_source(http_request);
+  const char * ip_source = get_ip_source(http_request, config->glewlwyd_config->originating_ip_header);
 
   if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
     j_user = config->glewlwyd_module_callback_get_user(config, username);

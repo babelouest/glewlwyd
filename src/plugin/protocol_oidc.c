@@ -5396,7 +5396,7 @@ static int is_client_jwks_valid(struct _oidc_config * config, jwks_t * jwks) {
   size_t index = 0;
   jwk_t * jwk;
   int ret, type;
-  
+
   if (r_jwks_size(jwks)) {
     ret = G_OK;
     for (index=0; index<r_jwks_size(jwks); index++) {
@@ -6914,7 +6914,7 @@ static json_t * check_client_registration_management_at(struct _oidc_config * co
 static int serialize_client_register(struct _oidc_config * config, const struct _u_request * request, json_t * j_client, const char * client_management_at) {
   json_t * j_query, * j_result, * j_last_index;
   int res, ret = G_OK;
-  char * issued_for = get_client_hostname(request), * access_token_hash = NULL, * management_at_hash = NULL;
+  char * issued_for = get_client_hostname(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header), * access_token_hash = NULL, * management_at_hash = NULL;
   json_int_t gpoa_id = 0;
 
   if (pthread_mutex_lock(&config->insert_lock)) {
@@ -8287,7 +8287,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
   const char * device_code = u_map_get(request->map_post_body, "device_code"),
              * client_id = request->auth_basic_user,
              * client_secret = request->auth_basic_password,
-             * ip_source = get_ip_source(request),
+             * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header),
              * username = NULL,
              * resource = NULL,
              * resource_stored = NULL,
@@ -8303,12 +8303,12 @@ static int check_auth_type_device_code(const struct _u_request * request,
          jti[OIDC_JTI_LENGTH+1] = {0},
          jti_r[OIDC_JTI_LENGTH+1] = {0},
        * scope = NULL,
-       * issued_for = get_client_hostname(request),
+       * issued_for = get_client_hostname(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header),
        * dpop_nonce,
       ** resource_list = NULL;
   time_t now;
   size_t index = 0, i;
-  
+
   if (client_id == NULL && u_map_get(request->map_post_body, "client_id") != NULL) {
     client_id = u_map_get(request->map_post_body, "client_id");
   }
@@ -8434,7 +8434,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
                                 json_decref(j_body);
                               } else {
                                 if ((refresh_token = generate_refresh_token()) != NULL) {
-                                  y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s', origin: %s", config->name, client_id, username, scope, get_ip_source(request));
+                                  y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s', origin: %s", config->name, client_id, username, scope, get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
                                   if (json_object_get(config->j_params, "resource-allowed") == json_true()) {
                                     resource = u_map_get(request->map_post_body, "resource");
                                     resource_stored = json_string_value(json_object_get(json_array_get(j_result, 0), "resource"));
@@ -8519,7 +8519,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
                                                                                 x5t_s256,
                                                                                 json_string_value(json_object_get(j_jkt, "jkt")),
                                                                                 json_object_get(json_array_get(j_result, 0), "authorization_details"),
-                                                                                get_ip_source(request))) != NULL) {
+                                                                                get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header))) != NULL) {
                                         if (serialize_access_token(config,
                                                                    GLEWLWYD_AUTHORIZATION_TYPE_DEVICE_AUTHORIZATION,
                                                                    json_integer_value(json_object_get(j_refresh_token, "gpgr_id")),
@@ -8679,7 +8679,7 @@ static int check_auth_type_device_code(const struct _u_request * request,
                               json_decref(json_body);
 
                             } else {
-                              y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+                              y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
                               json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
                               ulfius_set_json_body_response(response, 403, json_body);
                               json_decref(json_body);
@@ -8835,7 +8835,7 @@ static int get_certificate_id(gnutls_x509_crt_t cert, unsigned char * cert_id, s
 
 static json_t * check_client_certificate_valid(struct _oidc_config * config, const struct _u_request * http_request) {
   json_t * j_return = NULL, * j_client;
-  const char * header_cert = NULL, * san_value = NULL, * ip_source = get_ip_source(http_request);
+  const char * header_cert = NULL, * san_value = NULL, * ip_source = get_ip_source(http_request, config->glewlwyd_config->glewlwyd_config->originating_ip_header);
   gnutls_x509_crt_t cert = NULL, self_cert = NULL;
   gnutls_datum_t cert_dat, cert_dn = {NULL, 0};
   int clean_cert = 0, san_found = 0, crt_found = 0, res;
@@ -9771,7 +9771,7 @@ static int callback_client_registration_management_update(const struct _u_reques
     if (check_result_value(j_result, G_OK)) {
       ulfius_set_json_body_response(response, 200, json_object_get(j_result, "client"));
       redirect_uri = json_dumps(json_object_get(json_object_get(j_result, "client"), "redirect_uris"), JSON_COMPACT);
-      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - client '%s' registration updated with redirect_uri %s, origin: %s", config->name, u_map_get(request->map_url, "client_id"), redirect_uri, get_ip_source(request));
+      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - client '%s' registration updated with redirect_uri %s, origin: %s", config->name, u_map_get(request->map_url, "client_id"), redirect_uri, get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
       o_free(redirect_uri);
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_client_registration_management_update - Error client_register");
@@ -9797,7 +9797,7 @@ static int callback_client_registration_management_delete(const struct _u_reques
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_client_registration_management_read - Error registration_management_delete");
     response->status = 500;
   } else {
-    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - client '%s' deleted, origin: %s", config->name, u_map_get(request->map_url, "client_id"), get_ip_source(request));
+    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - client '%s' deleted, origin: %s", config->name, u_map_get(request->map_url, "client_id"), get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
   }
   return U_CALLBACK_CONTINUE;
 }
@@ -9819,7 +9819,7 @@ static int callback_check_registration_management(const struct _u_request * requ
     json_decref(j_result);
   }
   if (ret == U_CALLBACK_UNAUTHORIZED) {
-    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request));
+    y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
     config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_ACCESS_TOKEN, 1, "plugin", config->name, NULL);
   }
   return ret;
@@ -9836,7 +9836,7 @@ static int callback_client_registration(const struct _u_request * request, struc
     if (check_result_value(j_result, G_OK)) {
       ulfius_set_json_body_response(response, 200, json_object_get(j_result, "client"));
       redirect_uri = json_dumps(json_object_get(json_object_get(j_result, "client"), "redirect_uris"), JSON_COMPACT);
-      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - client '%s' registered with redirect_uri %s, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "client"), "client_id")), redirect_uri, get_ip_source(request));
+      y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - client '%s' registered with redirect_uri %s, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "client"), "client_id")), redirect_uri, get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
       o_free(redirect_uri);
       if (config->client_register_scope != NULL && json_object_get(config->j_params, "register-client-token-one-use") == json_true()) {
         if (revoke_access_token(config, (u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION) + o_strlen(GLEWLWYD_HEADER_PREFIX_BEARER))) != G_OK) {
@@ -9866,7 +9866,7 @@ static int callback_check_registration(const struct _u_request * request, struct
   int ret = U_CALLBACK_UNAUTHORIZED, is_header_dpop = 0, res;
   const char * access_token = get_auth_header_token(u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION), &is_header_dpop),
              * dpop = u_map_get_case(request->map_header, GLEWLWYD_HEADER_DPOP),
-             * ip_source = get_ip_source(request);
+             * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header);
   char * dpop_nonce;
 
   if (config->client_register_scope == NULL) {
@@ -9912,7 +9912,7 @@ static int callback_check_registration(const struct _u_request * request, struct
                                                      U_OPT_HEADER_PARAMETER, "WWW-Authenticate", "DPoP error=\"use_dpop_nonce\", error_description=\"Resource server requires nonce in DPoP proof\"",
                                                      U_OPT_NONE);
           } else {
-            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
             json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
             ulfius_set_json_body_response(response, 401, json_body);
             json_decref(json_body);
@@ -9956,21 +9956,21 @@ static int callback_revocation(const struct _u_request * request, struct _u_resp
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_refresh_token");
           response->status = 500;
         } else {
-          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request));
+          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
         }
       } else if (0 == o_strcmp("id_token", json_string_value(json_object_get(j_result, "type")))) {
         if (revoke_id_token(config, u_map_get(request->map_post_body, "token")) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_id_token");
           response->status = 500;
         } else {
-          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - id_token revoked for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request));
+          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - id_token revoked for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
         }
       } else if (0 == o_strcmp("access_token", json_string_value(json_object_get(j_result, "type")))) {
         if (revoke_access_token(config, u_map_get(request->map_post_body, "token")) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error revoke_access_token");
           response->status = 500;
         } else {
-          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token jti '%s' generated for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "jti")), json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request));
+          y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Access token jti '%s' generated for client '%s' revoked, origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_result, "token"), "jti")), json_string_value(json_object_get(json_object_get(j_result, "token"), "client_id")), get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
         }
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "callback_revocation  - Error token type: '%s'", json_string_value(json_object_get(j_result, "type")));
@@ -10093,7 +10093,7 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
              * client_secret,
              * access_token = get_auth_header_token(u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION), &is_header_dpop),
              * dpop = u_map_get_case(request->map_header, GLEWLWYD_HEADER_DPOP),
-             * ip_source = get_ip_source(request),
+             * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header),
              * htu = o_strstr(request->url_path, "/introspect")!=NULL?"/introspect":"revoke";
   char * dpop_nonce;
 
@@ -10140,7 +10140,7 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
                                                      U_OPT_HEADER_PARAMETER, "WWW-Authenticate", "DPoP error=\"use_dpop_nonce\", error_description=\"Resource server requires nonce in DPoP proof\"",
                                                      U_OPT_NONE);
           } else {
-            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
             json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
             ulfius_set_json_body_response(response, 401, json_body);
             json_decref(json_body);
@@ -10189,7 +10189,7 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
     if (j_assertion == NULL) {
       if (o_strlen(u_map_get(request->map_post_body, "client_assertion")) && 0 == o_strcmp(GLEWLWYD_AUTH_TOKEN_ASSERTION_TYPE, u_map_get(request->map_post_body, "client_assertion_type"))) {
         if (json_object_get(config->j_params, "request-parameter-allow") == json_true()) {
-          j_assertion = validate_jwt_assertion_request(config, u_map_get(request->map_post_body, "client_assertion"), o_strstr(request->url_path, "/introspect")!=NULL?"introspect":"revoke", get_ip_source(request));
+          j_assertion = validate_jwt_assertion_request(config, u_map_get(request->map_post_body, "client_assertion"), o_strstr(request->url_path, "/introspect")!=NULL?"introspect":"revoke", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
           if (check_result_value(j_assertion, G_ERROR_UNAUTHORIZED) || check_result_value(j_assertion, G_ERROR_PARAM)) {
             y_log_message(Y_LOG_LEVEL_DEBUG, "callback_check_intropect_revoke - Error validating client_assertion");
             ret = U_CALLBACK_UNAUTHORIZED;
@@ -10244,9 +10244,9 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
              * code_verifier = u_map_get(request->map_post_body, "code_verifier"),
              * resource = NULL,
              * resource_stored = NULL,
-             * ip_source = get_ip_source(request),
+             * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header),
              * token_type = GLEWLWYD_TOKEN_TYPE_BEARER;
-  char * issued_for = get_client_hostname(request),
+  char * issued_for = get_client_hostname(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header),
        * id_token = NULL,
        * id_token_out = NULL,
        * refresh_token = NULL,
@@ -10379,7 +10379,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                 if (check_result_value(j_user, G_OK)) {
                   time(&now);
                   if ((refresh_token = generate_refresh_token()) != NULL) {
-                    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s', origin: %s", config->name, client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), get_ip_source(request));
+                    y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s', origin: %s", config->name, client_id, json_string_value(json_object_get(json_object_get(j_code, "code"), "username")), json_string_value(json_object_get(json_object_get(j_code, "code"), "scope_list")), get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
                     j_refresh_token = serialize_refresh_token(config,
                                                               GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE,
                                                               json_integer_value(json_object_get(json_object_get(j_code, "code"), "gpoc_id")),
@@ -10411,7 +10411,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
                                                                 x5t_s256,
                                                                 json_string_value(json_object_get(j_jkt, "jkt")),
                                                                 j_authorization_details_processed,
-                                                                get_ip_source(request))) != NULL) {
+                                                                get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header))) != NULL) {
                         if (serialize_access_token(config,
                                                    GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE,
                                                    json_integer_value(json_object_get(j_refresh_token, "gpor_id")),
@@ -10599,7 +10599,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
             json_decref(json_body);
 
           } else {
-            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
             json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
             ulfius_set_json_body_response(response, 403, json_body);
             json_decref(json_body);
@@ -10613,7 +10613,7 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
         }
         json_decref(j_jkt);
       } else {
-        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request));
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
         j_body = json_pack("{ss}", "error", "invalid_code");
         ulfius_set_json_body_response(response, 403, j_body);
         json_decref(j_body);
@@ -10662,9 +10662,9 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
              * scope = u_map_get(request->map_post_body, "scope"),
              * client_id = request->auth_basic_user,
              * client_secret = request->auth_basic_password,
-             * ip_source = get_ip_source(request),
+             * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header),
              * token_type = GLEWLWYD_TOKEN_TYPE_BEARER;
-  char * issued_for = get_client_hostname(request),
+  char * issued_for = get_client_hostname(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header),
        * refresh_token = NULL,
        * refresh_token_out = NULL,
        * access_token = NULL,
@@ -10765,7 +10765,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
               time(&now);
               if (check_result_value(j_refresh, G_OK)) {
                 if ((refresh_token = generate_refresh_token()) != NULL) {
-                  y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s', origin: %s", config->name, client_id, username, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), get_ip_source(request));
+                  y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s', origin: %s", config->name, client_id, username, json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
                   j_refresh_token = serialize_refresh_token(config,
                                                             GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS,
                                                             0,
@@ -10798,7 +10798,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
                                                                 x5t_s256,
                                                                 json_string_value(json_object_get(j_jkt, "jkt")),
                                                                 NULL,
-                                                                get_ip_source(request))) != NULL) {
+                                                                get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header))) != NULL) {
                         if (serialize_access_token(config,
                                                    GLEWLWYD_AUTHORIZATION_TYPE_RESOURCE_OWNER_PASSWORD_CREDENTIALS,
                                                    json_integer_value(json_object_get(j_refresh_token, "gpgr_id")),
@@ -10980,7 +10980,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
               json_decref(json_body);
 
             } else {
-              y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+              y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
               json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
               ulfius_set_json_body_response(response, 403, json_body);
               json_decref(json_body);
@@ -11041,13 +11041,13 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
         * scope_joined = NULL,
         * access_token = NULL,
         * access_token_out = NULL,
-        * issued_for = get_client_hostname(request),
+        * issued_for = get_client_hostname(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header),
           jti[OIDC_JTI_LENGTH+1] = {0},
         * dpop_nonce;
   size_t index = 0;
   int i, auth_type_allowed = 0, res, enc_res = G_OK;
   time_t now;
-  const char * ip_source = get_ip_source(request),
+  const char * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header),
              * client_id = request->auth_basic_user,
              * client_secret = request->auth_basic_password,
              * resource = NULL,
@@ -11210,7 +11210,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
               json_decref(json_body);
 
             } else {
-              y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+              y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
               json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
               ulfius_set_json_body_response(response, 403, json_body);
               json_decref(json_body);
@@ -11264,7 +11264,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
              * dpop_jkt = u_map_get(request->map_post_body, "dpop_jkt"),
              * user_agent = u_map_get_case(request->map_header, "user-agent"),
              * client_secret = request->auth_basic_password,
-             * ip_source = get_ip_source(request);
+             * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header);
   json_t * j_client = NULL,
          * j_claims = NULL,
          * j_request = NULL,
@@ -11452,7 +11452,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
 
     j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/par", json_object_get(j_client, "client"), NULL, NULL);
     if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
-      y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
       json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
       ulfius_set_json_body_response(response, 403, json_body);
       json_decref(json_body);
@@ -11901,7 +11901,7 @@ static int process_ciba_request (const struct _u_request * request,
              * client_secret = request->auth_basic_password,
              * user_agent = u_map_get_case(request->map_header, "user-agent"),
              * dpop_jkt = u_map_get_case(request->map_post_body, "dpop_jkt"),
-             * ip_source = get_ip_source(request),
+             * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header),
              * x5t_s256 = NULL;
   json_t * j_user_hint = NULL,
          * j_request = NULL,
@@ -12196,7 +12196,7 @@ static int process_ciba_request (const struct _u_request * request,
     // Validate DPoP
     j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/ciba", json_object_get(j_client, "client"), NULL, NULL);
     if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
-      y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
       j_return = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
       ulfius_set_json_body_response(response, 403, j_return);
       json_decref(j_return);
@@ -12258,7 +12258,7 @@ static int process_ciba_request (const struct _u_request * request,
       json_decref(j_return);
       break;
     }
-    
+
     if (serialize_ciba_request(config, client_id, json_object_get(j_user_hint, "user"), client_notification_token, auth_req_id, user_req_id, binding_message, l_requested_expiry, ip_source, user_agent, scope_reduced, x5t_s256, jti_hash, dpop_jkt) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "process_ciba_request oidc - Error serialize_ciba_request");
       j_return = json_pack("{ss}", "error", "server_error");
@@ -12683,7 +12683,7 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
   const char * auth_req_id = u_map_get(request->map_post_body, "auth_req_id"),
              * client_id = request->auth_basic_user,
              * client_secret = request->auth_basic_password,
-             * ip_source = get_ip_source(request);
+             * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header);
   json_t * j_ciba_request = get_ciba_request_from_auth_req_id(config, auth_req_id),
          * j_response,
          * j_client = NULL,
@@ -12775,7 +12775,7 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
       }
 
       j_jkt = oidc_verify_dpop_proof(config, request, "POST", "/token", json_object_get(j_client, "client"), NULL, json_string_value(json_object_get(json_object_get(j_ciba_request, "ciba"), "dpop_jkt")));
-      
+
       if (check_result_value(j_jkt, G_ERROR_PARAM) || check_result_value(j_jkt, G_ERROR_UNAUTHORIZED)) {
         if (json_object_get(j_jkt, "nonce") != NULL) {
           j_response = json_pack("{ssss}", "error", "use_dpop_nonce", "error_description", "Authorization server requires nonce in DPoP proof");
@@ -12786,7 +12786,7 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
           json_decref(j_response);
           break;
         } else {
-          y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+          y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
           j_response = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
           ulfius_set_json_body_response(response, 403, j_response);
           json_decref(j_response);
@@ -12794,7 +12794,7 @@ static int check_ciba_auth_req_id(struct _oidc_config * config,
           break;
         }
       }
-      
+
       if (!check_result_value(j_jkt, G_OK)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_ciba_auth_req_id - oidc - Error oidc_verify_dpop_proof");
         j_response = json_pack("{ss}", "error", "server_error");
@@ -13385,7 +13385,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
                                           int client_auth_method) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
   const char * refresh_token = u_map_get(request->map_post_body, "refresh_token"),
-             * ip_source = get_ip_source(request),
+             * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header),
              * client_id = request->auth_basic_user,
              * client_secret = request->auth_basic_password,
              * resource = NULL,
@@ -13536,7 +13536,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
           }
           if (!has_error) {
             time(&now);
-            issued_for = get_client_hostname(request);
+            issued_for = get_client_hostname(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header);
             if (is_refresh_token_one_use(config, json_object_get(j_client, "client"))) {
               if (update_refresh_token(config,
                                        json_integer_value(json_object_get(json_object_get(j_refresh, "token"), "gpor_id")),
@@ -13550,7 +13550,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_access_token_from_refresh oidc - Error generate_refresh_token");
                 has_error = 1;
               } else {
-                y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s', origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), json_string_value(json_object_get(json_object_get(j_refresh, "token"), "username")), scope_joined, get_ip_source(request));
+                y_log_message(Y_LOG_LEVEL_INFO, "Event oidc - Plugin '%s' - Refresh token generated for client '%s' granted by user '%s' with scope list '%s', origin: %s", config->name, json_string_value(json_object_get(json_object_get(j_refresh, "token"), "client_id")), json_string_value(json_object_get(json_object_get(j_refresh, "token"), "username")), scope_joined, get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
                 j_refresh_scope = get_refresh_token_duration_rolling(config, scope_joined);
                 if (check_result_value(j_refresh_scope, G_OK)) {
                   j_refresh_serialize = serialize_refresh_token(config,
@@ -13613,7 +13613,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
                                                           x5t_s256,
                                                           json_string_value(json_object_get(json_object_get(j_refresh, "token"), "dpop_jkt")),
                                                           j_authorization_details_processed,
-                                                          get_ip_source(request))) != NULL) {
+                                                          get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header))) != NULL) {
                   if (serialize_access_token(config,
                                             GLEWLWYD_AUTHORIZATION_TYPE_REFRESH_TOKEN,
                                             gpor_id,
@@ -13728,7 +13728,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
           json_decref(json_body);
 
         } else {
-          y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+          y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
           json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
           ulfius_set_json_body_response(response, 403, json_body);
           json_decref(json_body);
@@ -13743,7 +13743,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
       json_decref(j_jkt);
       json_decref(j_client);
     } else if (check_result_value(j_refresh, G_ERROR_UNAUTHORIZED)) {
-      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request));
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
       response->status = 400;
       if (j_assertion_client != NULL) {
         j_client = json_pack("{sisO}", "result", G_OK, "client", j_assertion_client);
@@ -13761,7 +13761,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
       json_decref(j_client);
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_REFRESH_TOKEN, 1, "plugin", config->name, NULL);
     } else if (check_result_value(j_refresh, G_ERROR_NOT_FOUND)) {
-      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request));
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
       response->status = 400;
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_REFRESH_TOKEN, 1, "plugin", config->name, NULL);
     } else {
@@ -13783,7 +13783,7 @@ static int get_access_token_from_refresh (const struct _u_request * request,
  */
 static int delete_refresh_token (const struct _u_request * request, struct _u_response * response, void * user_data, json_t * j_assertion_client, int client_auth_method) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  const char * refresh_token = u_map_get(request->map_post_body, "refresh_token"), * ip_source = get_ip_source(request), * client_id = request->auth_basic_user, * client_secret = request->auth_basic_password;
+  const char * refresh_token = u_map_get(request->map_post_body, "refresh_token"), * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header), * client_id = request->auth_basic_user, * client_secret = request->auth_basic_password;
   json_t * j_refresh, * j_client = NULL;
   time_t now;
   char * issued_for;
@@ -13825,7 +13825,7 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
       }
       if (!has_issues) {
         time(&now);
-        issued_for = get_client_hostname(request);
+        issued_for = get_client_hostname(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header);
         if (update_refresh_token(config, json_integer_value(json_object_get(json_object_get(j_refresh, "token"), "gpor_id")), 0, 1, now) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "oidc delete_refresh_token - Error update_refresh_token");
           response->status = 500;
@@ -13835,7 +13835,7 @@ static int delete_refresh_token (const struct _u_request * request, struct _u_re
         response->status = 400;
       }
     } else if (check_result_value(j_refresh, G_ERROR_NOT_FOUND) || check_result_value(j_refresh, G_ERROR_UNAUTHORIZED)) {
-      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request));
+      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Token invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
       response->status = 400;
       config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OIDC_INVALID_REFRESH_TOKEN, 1, "plugin", config->name, NULL);
     } else {
@@ -13859,7 +13859,7 @@ static int callback_check_userinfo(const struct _u_request * request, struct _u_
   int ret = U_CALLBACK_UNAUTHORIZED, is_header_dpop = 0, res;
   const char * access_token = get_auth_header_token(u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION), &is_header_dpop),
              * dpop = u_map_get_case(request->map_header, GLEWLWYD_HEADER_DPOP),
-             * ip_source = get_ip_source(request);
+             * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header);
   char * dpop_nonce;
 
   if (access_token != NULL) {
@@ -13904,7 +13904,7 @@ static int callback_check_userinfo(const struct _u_request * request, struct _u_
                                                      U_OPT_HEADER_PARAMETER, "WWW-Authenticate", "DPoP error=\"use_dpop_nonce\", error_description=\"Resource server requires nonce in DPoP proof\"",
                                                      U_OPT_NONE);
           } else {
-            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request));
+            y_log_message(Y_LOG_LEVEL_WARNING, "Security - DPoP invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
             json_body = json_pack("{ssss}", "error", "invalid_dpop_proof", "error_description", "Invalid DPoP");
             ulfius_set_json_body_response(response, 401, json_body);
             json_decref(json_body);
@@ -13992,7 +13992,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
              * login_hint = NULL,
              * prompt = NULL,
              * id_token_hint = NULL,
-             * ip_source = get_ip_source(request),
+             * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header),
              * key = NULL,
              * max_age = NULL,
              * str_response_mode = NULL,
@@ -14635,7 +14635,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
       break;
     }
 
-    issued_for = get_client_hostname(request);
+    issued_for = get_client_hostname(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header);
     if (issued_for == NULL) {
       y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - Error get_client_hostname");
       u_map_put(&map_redirect, "error", "interaction_required");
@@ -14826,7 +14826,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
                                                   NULL,
                                                   NULL,
                                                   j_authorization_details_processed,
-                                                  get_ip_source(request))) != NULL) {
+                                                  get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header))) != NULL) {
           if (serialize_access_token(config,
                                      (unsigned int)auth_type,
                                      0,
@@ -15001,7 +15001,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
  */
 static int callback_oidc_token(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  const char * grant_type = u_map_get(request->map_post_body, "grant_type"), * ip_source = get_ip_source(request);
+  const char * grant_type = u_map_get(request->map_post_body, "grant_type"), * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header);
   int result = U_CALLBACK_CONTINUE, client_auth_method = GLEWLWYD_CLIENT_AUTH_METHOD_NONE;
   json_t * j_assertion = NULL,
          * j_assertion_client = NULL;
@@ -15074,7 +15074,7 @@ static int callback_oidc_token(const struct _u_request * request, struct _u_resp
     } else if (0 == o_strcmp(GLEWLWYD_CIBA_GRANT_TYPE, grant_type)) {
       result = check_ciba_auth_req_id(config, request, response, j_assertion_client, x5t_s256, client_auth_method);
     } else {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc callback_oidc_token - Unknown grant_type '%s', origin: %s", grant_type, get_ip_source(request));
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc callback_oidc_token - Unknown grant_type '%s', origin: %s", grant_type, get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
       response->status = 400;
     }
   } else if (result == U_CALLBACK_UNAUTHORIZED) {
@@ -15238,7 +15238,7 @@ static int callback_oidc_disable_refresh_token(const struct _u_request * request
   u_map_put(response->map_header, "Referrer-Policy", "no-referrer");
 
   if (jkt_continue) {
-    if ((res = refresh_token_disable(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "token_hash"), get_ip_source(request))) == G_ERROR_NOT_FOUND) {
+    if ((res = refresh_token_disable(config, json_string_value(json_object_get((json_t *)response->shared_data, "username")), u_map_get(request->map_url, "token_hash"), get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header))) == G_ERROR_NOT_FOUND) {
       response->status = 404;
     } else if (res == G_ERROR_PARAM) {
       response->status = 400;
@@ -15407,7 +15407,7 @@ static int callback_oidc_end_session(const struct _u_request * request, struct _
  */
 static int callback_oidc_device_authorization(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  const char * ip_source = get_ip_source(request),
+  const char * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header),
              * client_id = request->auth_basic_user,
              * client_secret = request->auth_basic_password,
              * resource = NULL,
@@ -15629,7 +15629,7 @@ static int callback_oidc_device_verification(const struct _u_request * request, 
       }
     } else if (o_strlen(u_map_get(request->map_url, "code")) != (GLEWLWYD_DEVICE_AUTH_USER_CODE_LENGTH+1)) {
       if (u_map_init(&param) == U_OK) {
-        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request));
+        y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
         u_map_put(&param, "prompt", "deviceCodeError");
         response->status = 302;
         redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
@@ -15690,7 +15690,7 @@ static int callback_oidc_device_verification(const struct _u_request * request, 
             o_free(redirect_url);
           }
         } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
-          y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request));
+          y_log_message(Y_LOG_LEVEL_WARNING, "Security - Code invalid at IP Address %s", get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header));
           u_map_put(&param, "prompt", "deviceCodeError");
           response->status = 302;
           redirect_url = get_login_url(config, request, "device", NULL, NULL, &param);
@@ -15757,7 +15757,7 @@ static int callback_rar_get_consent(const struct _u_request * request, struct _u
                                                 u_map_get(request->map_url, "client_id"),
                                                 json_string_value(json_object_get((json_t *)response->shared_data, "username")),
                                                 0,
-                                                get_ip_source(request)) != G_OK) {
+                                                get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header)) != G_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_rar_get_consent - Error authorization_details_add_consent (1)");
             response->status = 500;
           }
@@ -15800,7 +15800,7 @@ static int callback_rar_set_consent(const struct _u_request * request, struct _u
                                           u_map_get(request->map_url, "client_id"),
                                           json_string_value(json_object_get((json_t *)response->shared_data, "username")),
                                           0==o_strcmp("1", u_map_get(request->map_url, "consent")),
-                                          get_ip_source(request)) != G_OK) {
+                                          get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header)) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_rar_get_consent - Error authorization_details_set_consent");
       response->status = 500;
     }
@@ -15818,7 +15818,7 @@ static int callback_rar_set_consent(const struct _u_request * request, struct _u
                                                 u_map_get(request->map_url, "client_id"),
                                                 json_string_value(json_object_get((json_t *)response->shared_data, "username")),
                                                 0==o_strcmp("1", u_map_get(request->map_url, "consent")),
-                                                get_ip_source(request)) != G_OK) {
+                                                get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header)) != G_OK) {
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_rar_get_consent - Error authorization_details_add_consent (1)");
             response->status = 500;
           }
@@ -15831,7 +15831,7 @@ static int callback_rar_set_consent(const struct _u_request * request, struct _u
                                               u_map_get(request->map_url, "client_id"),
                                               json_string_value(json_object_get((json_t *)response->shared_data, "username")),
                                               0==o_strcmp("1", u_map_get(request->map_url, "consent")),
-                                              get_ip_source(request)) != G_OK) {
+                                              get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header)) != G_OK) {
           y_log_message(Y_LOG_LEVEL_ERROR, "callback_rar_get_consent - Error authorization_details_add_consent (2)");
           response->status = 500;
         }
@@ -15859,7 +15859,7 @@ static int callback_rar_delete_consent(const struct _u_request * request, struct
                                           u_map_get(request->map_url, "type"),
                                           u_map_get(request->map_url, "client_id"),
                                           json_string_value(json_object_get((json_t *)response->shared_data, "username")),
-                                          get_ip_source(request)) != G_OK) {
+                                          get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header)) != G_OK) {
       y_log_message(Y_LOG_LEVEL_ERROR, "callback_rar_delete_consent - Error authorization_details_delete_consent");
       response->status = 500;
     }
@@ -15876,7 +15876,7 @@ static int callback_rar_delete_consent(const struct _u_request * request, struct
 
 static int callback_pushed_authorization_request(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  const char * ip_source = get_ip_source(request);
+  const char * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header);
   int result = U_CALLBACK_CONTINUE, client_auth_method = GLEWLWYD_CLIENT_AUTH_METHOD_NONE;
   json_t * j_assertion = NULL,
          * j_assertion_client = NULL;
@@ -15924,7 +15924,7 @@ static int callback_pushed_authorization_request(const struct _u_request * reque
 
 static int callback_ciba_request(const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct _oidc_config * config = (struct _oidc_config *)user_data;
-  const char * ip_source = get_ip_source(request);
+  const char * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header);
   int result = U_CALLBACK_CONTINUE, client_auth_method = GLEWLWYD_CLIENT_AUTH_METHOD_NONE;
   json_t * j_assertion = NULL,
          * j_assertion_client = NULL;

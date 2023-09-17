@@ -153,6 +153,7 @@ int main (int argc, char ** argv) {
   config->allow_methods = o_strdup(GLEWLWYD_DEFAULT_ALLOW_METHODS);
   config->allow_headers = o_strdup(GLEWLWYD_DEFAULT_ALLOW_HEADERS);
   config->expose_headers = o_strdup(GLEWLWYD_DEFAULT_EXPOSE_HEADERS);
+  config->originating_ip_header = o_strdup(GLEWLWYD_DEFAULT_ORIGINATING_IP_HEADER);
   config->use_secure_connection = 0;
   config->secure_connection_key_file = NULL;
   config->secure_connection_pem_file = NULL;
@@ -757,6 +758,7 @@ void exit_server(struct config_elements ** config, int exit_value) {
     o_free((*config)->allow_methods);
     o_free((*config)->allow_headers);
     o_free((*config)->expose_headers);
+    o_free((*config)->originating_ip_header);
     o_free((*config)->secure_connection_key_file);
     o_free((*config)->secure_connection_pem_file);
     o_free((*config)->secure_connection_ca_file);
@@ -1107,6 +1109,17 @@ int build_config_from_file(struct config_elements * config) {
       config->expose_headers = o_strdup(str_value);
       if (config->expose_headers == NULL) {
         fprintf(stderr, "Error allocating config->expose_headers, exiting\n");
+        ret = G_ERROR_PARAM;
+        break;
+      }
+    }
+
+    // Get originating_ip_header
+    if (config_lookup_string(&cfg, "originating_ip_header", &str_value) == CONFIG_TRUE) {
+      o_free(config->originating_ip_header);
+      config->originating_ip_header = o_strdup(str_value);
+      if (config->originating_ip_header == NULL) {
+        fprintf(stderr, "Error allocating config->originating_ip_header, exiting\n");
         ret = G_ERROR_PARAM;
         break;
       }
@@ -1586,6 +1599,15 @@ int build_config_from_env(struct config_elements * config) {
     config->expose_headers = o_strdup(value);
     if (config->expose_headers == NULL) {
       fprintf(stderr, "Error allocating config->expose_headers (env), exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_ORIGINATING_IP_HEADER)) != NULL && !o_strnullempty(value)) {
+    o_free(config->originating_ip_header);
+    config->originating_ip_header = o_strdup(value);
+    if (config->originating_ip_header == NULL) {
+      fprintf(stderr, "Error allocating config->originating_ip_header (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }

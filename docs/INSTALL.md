@@ -603,6 +603,13 @@ Optional, list of mime types for the webapp files.
 - Config file variable: `allow_origin`
 - Environment variable: `GLWD_ALLOW_ORIGIN`
 
+### Originating IP address header value
+
+- Config file variable: `originating_ip_header`
+- Environment variable: `GLWD_ORIGINATING_IP_HEADER`
+
+Optional, key for the HTTP header value that will contain the originating IP address of the client request. This config value is highly recommended if you expose glewlwyd behind a HTTP proxy. Usually when using a proxy, the originating IP address is replaced by the proxy address, therefore the proxy adds a header value (usually X-Forwarded-For) to specify the originating IP address.
+
 ### Logs
 
 #### Log Mode:

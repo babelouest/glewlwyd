@@ -369,6 +369,45 @@ START_TEST(test_glwd_auth_password_max_age_scope_reset_OK)
 }
 END_TEST
 
+START_TEST(test_glwd_auth_password_login_with_header_origin)
+{
+  struct _u_request req;
+  struct _u_response resp;
+  json_t * j_body = NULL;
+
+  ulfius_init_request(&req);
+  ulfius_init_response(&resp);
+
+  req.http_verb = strdup("POST");
+  req.http_url = msprintf("%s/auth/", SERVER_URI);
+  u_map_put(req.map_header, "X-Forwarded-For", "1.2.3.4");
+
+  j_body = json_pack("{ssss}", "username", USERNAME, "password", "error");
+  ulfius_set_json_body_request(&req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.nb_cookies, 0);
+
+  j_body = json_pack("{ssss}", "username", "error", "password", PASSWORD);
+  ulfius_set_json_body_request(&req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.nb_cookies, 0);
+
+  j_body = json_pack("{ssss}", "username", "error", "password", "error");
+  ulfius_set_json_body_request(&req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.nb_cookies, 0);
+
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+}
+END_TEST
+
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -384,6 +423,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_auth_password_max_age_scope_set_OK);
   tcase_add_test(tc_core, test_glwd_auth_password_max_age);
   tcase_add_test(tc_core, test_glwd_auth_password_max_age_scope_reset_OK);
+  tcase_add_test(tc_core, test_glwd_auth_password_login_with_header_origin);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 

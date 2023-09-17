@@ -175,7 +175,7 @@ int callback_glewlwyd_check_admin_session_or_api_key (const struct _u_request * 
   char * session_uid = NULL;
   json_t * j_user;
   int ret, res;
-  const char * api_key = u_map_get_case(request->map_header, GLEWLWYD_API_KEY_HEADER_KEY), * ip_source = get_ip_source(request);
+  const char * api_key = u_map_get_case(request->map_header, GLEWLWYD_API_KEY_HEADER_KEY), * ip_source = get_ip_source(request, config->originating_ip_header);
   
   if (config->admin_session_authentication & GLEWLWYD_SESSION_AUTH_API_KEY && NULL != api_key && 0 == o_strncmp(GLEWLWYD_API_KEY_HEADER_PREFIX, api_key, o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) {
     if ((res = verify_api_key(config, api_key + o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) == G_OK) {
@@ -255,8 +255,8 @@ int callback_glewlwyd_check_admin_session_delegate (const struct _u_request * re
 int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
   json_t * j_param = ulfius_get_json_body_request(request, NULL), * j_result = NULL;
-  const char * ip_source = get_ip_source(request);
-  char * issued_for = get_client_hostname(request);
+  const char * ip_source = get_ip_source(request, config->originating_ip_header);
+  char * issued_for = get_client_hostname(request, config->originating_ip_header);
   char * session_uid, expires[129];
   time_t now;
   struct tm ts;
@@ -2487,7 +2487,7 @@ int callback_glewlwyd_user_update_password (const struct _u_request * request, s
             json_array_foreach(json_object_get(j_password, "password"), index, j_element) {
               passwords[index] = json_string_value(j_element);
             }
-            if ((res = user_update_password(config, json_string_value(json_object_get(json_object_get(j_session, "user"), "username")), json_string_value(json_object_get(j_password, "old_password")), passwords, json_array_size(json_object_get(j_password, "password")), get_ip_source(request))) == G_ERROR_PARAM) {
+            if ((res = user_update_password(config, json_string_value(json_object_get(json_object_get(j_session, "user"), "username")), json_string_value(json_object_get(j_password, "old_password")), passwords, json_array_size(json_object_get(j_password, "password")), get_ip_source(request, config->originating_ip_header))) == G_ERROR_PARAM) {
               response->status = 400;
             } else if (res != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_update_password - Error user_update_password (1)");
@@ -2505,7 +2505,7 @@ int callback_glewlwyd_user_update_password (const struct _u_request * request, s
         if (!json_string_null_or_empty(json_object_get(j_password, "old_password")) && !json_string_null_or_empty(json_object_get(j_password, "password"))) {
           if ((passwords = o_malloc(sizeof(char *))) != NULL) {
             passwords[0] = json_string_value(json_object_get(j_password, "password"));
-            if ((res = user_update_password(config, json_string_value(json_object_get(json_object_get(j_session, "user"), "username")), json_string_value(json_object_get(j_password, "old_password")), passwords, 1, get_ip_source(request))) == G_ERROR_PARAM) {
+            if ((res = user_update_password(config, json_string_value(json_object_get(json_object_get(j_session, "user"), "username")), json_string_value(json_object_get(j_password, "old_password")), passwords, 1, get_ip_source(request, config->originating_ip_header))) == G_ERROR_PARAM) {
               response->status = 400;
             } else if (res != G_OK) {
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_update_password - Error user_update_password (2)");
@@ -2681,7 +2681,7 @@ int callback_glewlwyd_get_api_key_list (const struct _u_request * request, struc
 
 int callback_glewlwyd_add_api_key (const struct _u_request * request, struct _u_response * response, void * user_data) {
   struct config_elements * config = (struct config_elements *)user_data;
-  const char * issued_for = get_ip_source(request), * username = json_string_value(json_object_get((json_t *)response->shared_data, "username")), * user_agent = u_map_get_case(request->map_header, "user-agent");
+  const char * issued_for = get_ip_source(request, config->originating_ip_header), * username = json_string_value(json_object_get((json_t *)response->shared_data, "username")), * user_agent = u_map_get_case(request->map_header, "user-agent");
   json_t * j_api_key = NULL;
   
   if (config->admin_session_authentication & GLEWLWYD_SESSION_AUTH_API_KEY) {

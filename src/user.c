@@ -333,7 +333,7 @@ json_t * auth_register_user_scheme(struct config_elements * config, const char *
           j_response = scheme_instance->module->user_auth_scheme_module_register(config->config_m, request, username, j_register_parameters, scheme_instance->cls);
           if (check_result_value(j_response, G_OK)) {
             if (json_object_get(j_response, "updated") == json_true()) {
-              send_mail_on_registration(config, username, scheme_name, get_ip_source(request));
+              send_mail_on_registration(config, username, scheme_name, get_ip_source(request, config->originating_ip_header));
             }
             j_return = json_pack("{sisO*so*}", "result", G_OK, "register", json_object_get(j_response, "response"), "updated", json_object_get(j_response, "updated"));
           } else if (j_response != NULL && !check_result_value(j_response, G_ERROR)) {

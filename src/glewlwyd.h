@@ -65,6 +65,7 @@
 #define GLEWLWYD_DEFAULT_ALLOW_METHODS                     "GET, POST, PUT, DELETE, OPTIONS"
 #define GLEWLWYD_DEFAULT_ALLOW_HEADERS                     "Origin, X-Requested-With, Content-Type, Accept, Bearer, Authorization, DPoP"
 #define GLEWLWYD_DEFAULT_EXPOSE_HEADERS                    "Content-Encoding, Authorization"
+#define GLEWLWYD_DEFAULT_ORIGINATING_IP_HEADER             "X-Forwarded-For"
 #define GLEWLWYD_DEFAULT_ADMIN_SCOPE                       "g_admin"
 #define GLEWLWYD_DEFAULT_PROFILE_SCOPE                     "g_profile"
 #define GLEWLWYD_DEFAULT_HASH_ALGORITHM                    digest_SHA256
@@ -119,6 +120,7 @@
 #define GLEWLWYD_ENV_ALLOW_METHODS                           "GLWD_ALLOW_METHODS"
 #define GLEWLWYD_ENV_ALLOW_HEADERS                           "GLWD_ALLOW_HEADERS"
 #define GLEWLWYD_ENV_EXPOSE_HEADERS                          "GLWD_EXPOSE_HEADERS"
+#define GLEWLWYD_ENV_ORIGINATING_IP_HEADER                   "GLWD_ORIGINATING_IP_HEADER"
 #define GLEWLWYD_ENV_LOG_MODE                                "GLWD_LOG_MODE"
 #define GLEWLWYD_ENV_LOG_LEVEL                               "GLWD_LOG_LEVEL"
 #define GLEWLWYD_ENV_LOG_FILE                                "GLWD_LOG_FILE"

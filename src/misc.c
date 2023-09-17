@@ -78,12 +78,15 @@ char * get_file_content(const char * file_path) {
 
 /**
  * Return the source ip address of the request
- * Based on the header value "X-Forwarded-For" if set, which means the request is forwarded by a proxy
+ * If the header value specified by header_value if set, the request is forwarded by a proxy
  * otherwise the call is direct, return the client_address
  */
-const char * get_ip_source(const struct _u_request * request) {
-  const char * ip_source = u_map_get_case(request->map_header, "X-Forwarded-For");
+const char * get_ip_source(const struct _u_request * request, const char * header_value) {
+  const char * ip_source = NULL;
   
+  if (!o_strnullempty(header_value)) {
+    ip_source = u_map_get_case(request->map_header, header_value);
+  }
   if (ip_source == NULL) {
     struct sockaddr_in * in_source = (struct sockaddr_in *)request->client_address;
     if (in_source != NULL) {
@@ -96,8 +99,8 @@ const char * get_ip_source(const struct _u_request * request) {
   return ip_source;
 };
 
-char * get_client_hostname(const struct _u_request * request) {
-  const char * ip_source = get_ip_source(request);
+char * get_client_hostname(const struct _u_request * request, const char * header_value) {
+  const char * ip_source = get_ip_source(request, header_value);
   struct addrinfo hints;
   struct addrinfo * lookup = NULL;
   char * hostname = NULL;

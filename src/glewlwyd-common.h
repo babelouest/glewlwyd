@@ -371,6 +371,7 @@ struct config_elements {
   char *                                         allow_methods;
   char *                                         allow_headers;
   char *                                         expose_headers;
+  char *                                         originating_ip_header;
   unsigned int                                   use_secure_connection;
   char *                                         secure_connection_key_file;
   char *                                         secure_connection_pem_file;
@@ -492,8 +493,8 @@ struct config_module {
 /**
  * Misc functions available in src/misc.c
  */
-const char * get_ip_source(const struct _u_request * request);
-char * get_client_hostname(const struct _u_request * request);
+const char * get_ip_source(const struct _u_request * request, const char * header_value);
+char * get_client_hostname(const struct _u_request * request, const char * header_value);
 unsigned char random_at_most(unsigned char max, int nonce, int * is_error);
 char * rand_string(char * str, size_t str_size);
 char * rand_string_nonce(char * str, size_t str_size);
