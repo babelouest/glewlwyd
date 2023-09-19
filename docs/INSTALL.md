@@ -1009,6 +1009,7 @@ To install Glewlwyd behind a reverse proxy, you must check the following rules:
 - Forward the entire URL, including query parameters (I'm watching you NGINX!)
 - Forward the session cookies *-and optionally the registration cookies-*, cookies default keys are `GLEWLWYD2_SESSION_ID` for session cookie and `G_REGISTER_SESSION` for registration cookie
 - Forward HTTP headers, including `Authorization`
+- Optional, add to the request header the value `X-Forwarded-For` to specify the client IP address, recommended if you use the fail2ban scripts
 
 You can have glewlwyd available at the root of the domain/subdomain, e.g. `https://glewlwyd.tld/` or host Glewlwyd in a sub-folder of the domain/subdomain, e.g. `https://auth.tld/glewlwyd/`.
 
@@ -1054,7 +1055,7 @@ The following example is an Apache reverse proxy configuration on a virtual host
 </VirtualHost>
 ```
 
-## Nginx reverse proxy examples
+### Nginx reverse proxy examples
 
 The following example is an Nginx reverse proxy configuration in which the glewlwyd instance is at the root of the domain that Nginx listens to requests for.
 
