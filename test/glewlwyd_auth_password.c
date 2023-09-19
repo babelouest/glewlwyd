@@ -380,7 +380,7 @@ START_TEST(test_glwd_auth_password_login_with_header_origin)
 
   req.http_verb = strdup("POST");
   req.http_url = msprintf("%s/auth/", SERVER_URI);
-  u_map_put(req.map_header, "X-Forwarded-For", "1.2.3.4");
+  u_map_put(req.map_header, "X-Forwarded-For", "4.3.2.1");
 
   j_body = json_pack("{ssss}", "username", USERNAME, "password", "error");
   ulfius_set_json_body_request(&req, j_body);
@@ -389,6 +389,8 @@ START_TEST(test_glwd_auth_password_login_with_header_origin)
   ck_assert_int_eq(resp.status, 401);
   ck_assert_int_eq(resp.nb_cookies, 0);
 
+  ulfius_clean_response(&resp);
+  ulfius_init_response(&resp);
   j_body = json_pack("{ssss}", "username", "error", "password", PASSWORD);
   ulfius_set_json_body_request(&req, j_body);
   json_decref(j_body);
@@ -396,7 +398,29 @@ START_TEST(test_glwd_auth_password_login_with_header_origin)
   ck_assert_int_eq(resp.status, 401);
   ck_assert_int_eq(resp.nb_cookies, 0);
 
+  ulfius_clean_response(&resp);
+  ulfius_init_response(&resp);
   j_body = json_pack("{ssss}", "username", "error", "password", "error");
+  ulfius_set_json_body_request(&req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.nb_cookies, 0);
+
+  ulfius_clean_response(&resp);
+  ulfius_init_response(&resp);
+  u_map_put(req.map_header, "X-Forwarded-For", "yo mama");
+  j_body = json_pack("{ssss}", "username", USERNAME, "password", "error");
+  ulfius_set_json_body_request(&req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.nb_cookies, 0);
+
+  ulfius_clean_response(&resp);
+  ulfius_init_response(&resp);
+  u_map_put(req.map_header, "X-Forwarded-For", "");
+  j_body = json_pack("{ssss}", "username", USERNAME, "password", "error");
   ulfius_set_json_body_request(&req, j_body);
   json_decref(j_body);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
