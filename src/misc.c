@@ -87,7 +87,7 @@ const char * get_ip_source(const struct _u_request * request, const char * heade
   if (!o_strnullempty(header_value)) {
     ip_source = u_map_get_case(request->map_header, header_value);
   }
-  if (ip_source == NULL) {
+  if (o_strnullempty(ip_source)) {
     struct sockaddr_in * in_source = (struct sockaddr_in *)request->client_address;
     if (in_source != NULL) {
       ip_source = inet_ntoa(in_source->sin_addr);
@@ -109,7 +109,7 @@ char * get_client_hostname(const struct _u_request * request, const char * heade
   hints.ai_family = AF_UNSPEC;
   hints.ai_flags = AI_CANONNAME;
   hints.ai_canonname = NULL;
-  if (ip_source != NULL) {
+  if (!o_strnullempty(ip_source)) {
     hostname = o_strdup(ip_source);
     if (!getaddrinfo(ip_source, NULL, &hints, &lookup)) {
       if (!o_strnullempty(lookup->ai_canonname)) {
