@@ -272,7 +272,7 @@ static json_t * register_generate_email_verification_code(struct _register_confi
                                                    !json_string_null_or_empty(json_object_get(config->j_parameters, "content-type"))?json_string_value(json_object_get(config->j_parameters, "content-type")):"text/plain; charset=utf-8",
                                                    get_template_property(config->j_parameters, lang, "subject"),
                                                    body) == U_OK) {
-                      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Register new user - code sent at IP Address %s to email %s", ip_source, email);
+                      y_log_message(Y_LOG_LEVEL_WARNING, "Security - Register new user - code sent to email %s at IP Address %s", email, ip_source);
                       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
                         expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)json_integer_value(json_object_get(config->j_parameters, "verification-code-duration"))));
                       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
@@ -1025,7 +1025,7 @@ static int register_update_email_trigger(struct _register_config * config, const
                                            !json_string_null_or_empty(json_object_get(config->j_parameters, "update-email-content-type"))?json_string_value(json_object_get(config->j_parameters, "update-email-content-type")):"text/plain; charset=utf-8",
                                            get_template_email_update_property(config->j_parameters, lang, "subject"),
                                            body) == U_OK) {
-              y_log_message(Y_LOG_LEVEL_WARNING, "Security - Update e-mail - token sent at IP Address %s to email %s", ip_source, email);
+              y_log_message(Y_LOG_LEVEL_WARNING, "Security - Update e-mail - token sent to email %s at IP Address %s", email, ip_source);
               if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
                 expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)json_integer_value(json_object_get(config->j_parameters, "update-email-token-duration"))));
               } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
@@ -1352,7 +1352,7 @@ static int register_reset_credentials_trigger(struct _register_config * config, 
                                              !json_string_null_or_empty(json_object_get(config->j_parameters, "reset-credentials-content-type"))?json_string_value(json_object_get(config->j_parameters, "reset-credentials-content-type")):"text/plain; charset=utf-8",
                                              get_template_reset_credentials_property(config->j_parameters, lang, "subject"),
                                              body) == U_OK) {
-                y_log_message(Y_LOG_LEVEL_WARNING, "Security - Reset credentials - token sent at IP Address %s to email %s", ip_source, email);
+                y_log_message(Y_LOG_LEVEL_WARNING, "Security - Reset credentials - token sent to email %s at IP Address %s", email, ip_source);
                 if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
                   expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)json_integer_value(json_object_get(config->j_parameters, "reset-credentials-token-duration"))));
                 } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
