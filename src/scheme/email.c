@@ -574,20 +574,21 @@ int user_auth_scheme_module_deregister(struct config_module * config, const char
  */
 json_t * user_auth_scheme_module_trigger(struct config_module * config, const struct _u_request * http_request, const char * username, json_t * j_scheme_trigger, void * cls) {
   UNUSED(j_scheme_trigger);
-  json_t * j_user;
+  json_t * j_user, * j_return;
   struct _email_config * email_config = (struct _email_config *)cls;
   int ret;
   char * code = NULL, * body;
   const char * ip_source = get_ip_source(http_request, config->glewlwyd_config->originating_ip_header);
+  size_t code_length = (size_t)json_integer_value(json_object_get(email_config->j_parameters, "code-length"));
 
   if (user_auth_scheme_module_can_use(config, username, cls) == GLEWLWYD_IS_REGISTERED) {
     j_user = config->glewlwyd_module_callback_get_user(config, username);
     if (check_result_value(j_user, G_OK)) {
       if (!pthread_mutex_lock(&email_config->insert_lock)) {
-        if ((code = o_malloc(((size_t)json_integer_value(json_object_get(email_config->j_parameters, "code-length")) + 1)*sizeof(char))) != NULL) {
-          memset(code, 0, ((size_t)json_integer_value(json_object_get(email_config->j_parameters, "code-length")) + 1));
-          if (generate_new_code(config, email_config->j_parameters, username, code, (size_t)json_integer_value(json_object_get(email_config->j_parameters, "code-length"))) == G_OK) {
-            if ((body = str_replace(get_template_property(email_config->j_parameters, json_object_get(j_user, "user"), "body-pattern"), "{CODE}", code)) != NULL) {
+        if ((code = o_malloc(((code_length*2) + 1)*sizeof(char))) != NULL) {
+          memset(code, 0, ((code_length*2) + 1));
+          if (generate_new_code(config, email_config->j_parameters, username, code, (code_length*2)) == G_OK) {
+            if ((body = str_replace(get_template_property(email_config->j_parameters, json_object_get(j_user, "user"), "body-pattern"), "{CODE}", code+code_length)) != NULL) {
               if (ulfius_send_smtp_rich_email(json_string_value(json_object_get(email_config->j_parameters, "host")),
                                              (int)json_integer_value(json_object_get(email_config->j_parameters, "port")),
                                              json_object_get(email_config->j_parameters, "use-tls")==json_true()?1:0,
@@ -616,7 +617,6 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
             y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error generate_new_code");
             ret = G_ERROR_MEMORY;
           }
-          o_free(code);
         } else {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_trigger mail - Error allocating resources for code");
           ret = G_ERROR_MEMORY;
@@ -634,7 +634,13 @@ json_t * user_auth_scheme_module_trigger(struct config_module * config, const st
   } else {
     ret = G_ERROR_PARAM;
   }
-  return json_pack("{si}", "result", ret);
+  if (ret == G_OK) {
+    j_return = json_pack("{sis{ss%}}", "result", G_OK, "response", "prefix", code, code_length);
+  } else {
+    j_return = json_pack("{si}", "result", ret);
+  }
+  o_free(code);
+  return j_return;
 }
 
 /**
@@ -666,7 +672,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
 
   if (user_auth_scheme_module_can_use(config, username, cls) != GLEWLWYD_IS_REGISTERED) {
     ret = G_ERROR_UNAUTHORIZED;
-  } else if (json_object_get(j_scheme_data, "code") != NULL && json_is_string(json_object_get(j_scheme_data, "code")) && (unsigned int)json_integer_value(json_object_get(email_config->j_parameters, "code-length")) == json_string_length(json_object_get(j_scheme_data, "code"))) {
+  } else if (json_object_get(j_scheme_data, "code") != NULL && json_is_string(json_object_get(j_scheme_data, "code")) && (unsigned int)(json_integer_value(json_object_get(email_config->j_parameters, "code-length"))*2) == json_string_length(json_object_get(j_scheme_data, "code"))) {
     if ((res = check_code(config, email_config->j_parameters, username, json_string_value(json_object_get(j_scheme_data, "code")))) == G_OK) {
       ret = G_OK;
     } else if (res == G_ERROR_UNAUTHORIZED) {
