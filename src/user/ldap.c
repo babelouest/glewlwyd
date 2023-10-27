@@ -1319,6 +1319,8 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
 
       if (returned_controls != NULL) {
         ldap_result = ldap_parse_pageresponse_control(ldap, *returned_controls, &total_count, &new_cookie);
+        ldap_controls_free(returned_controls);
+        returned_controls = NULL;
         if (ldap_result != LDAP_SUCCESS) {
           y_log_message(Y_LOG_LEVEL_ERROR, "user_module_get_list ldap - Error ldap_parse_pageresponse_control, message: %s", ldap_err2string(ldap_result));
           break;
@@ -1341,10 +1343,6 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
         break;
       }
 
-      if (returned_controls != NULL) {
-        ldap_controls_free(returned_controls);
-        returned_controls = NULL;
-      }
       search_controls[0] = NULL;
       ldap_control_free(page_control);
       page_control = NULL;
