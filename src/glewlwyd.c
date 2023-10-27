@@ -132,6 +132,8 @@ int main (int argc, char ** argv) {
   config->config_file = NULL;
   config->port = 0;
   config->max_post_size = GLEWLWYD_DEFAULT_MAX_POST_SIZE;
+  config->response_body_limit = GLEWLWYD_DEFAULT_RESPONSE_MAX_BODY_SIZE;
+  config->max_header = GLEWLWYD_DEFAULT_RESPONSE_MAX_HEADER_COUNT;
   config->bind_address = NULL;
   config->bind_address_metrics = NULL;
   config->instance = NULL;
@@ -967,6 +969,14 @@ int build_config_from_file(struct config_elements * config) {
       config->max_post_size = (size_t)int_value;
     }
 
+    if (config_lookup_int(&cfg, "response_body_limit", &int_value) == CONFIG_TRUE) {
+      config->response_body_limit = (size_t)int_value;
+    }
+
+    if (config_lookup_int(&cfg, "max_header", &int_value) == CONFIG_TRUE) {
+      config->max_header = (size_t)int_value;
+    }
+
     if (config_lookup_string(&cfg, "bind_address", &str_value) == CONFIG_TRUE) {
       config->bind_address = o_strdup(str_value);
       if (config->bind_address == NULL) {
@@ -1479,6 +1489,28 @@ int build_config_from_env(struct config_elements * config) {
       config->max_post_size = (size_t)lvalue;
     } else {
       fprintf(stderr, "Error invalid max_post_size number (env), exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_RESPONSE_BODY_LIMIT)) != NULL && !o_strnullempty(value)) {
+    endptr = NULL;
+    lvalue = strtol(value, &endptr, 10);
+    if (!(*endptr) && lvalue >= 0) {
+      config->response_body_limit = (size_t)lvalue;
+    } else {
+      fprintf(stderr, "Error invalid response_body_limit number (env), exiting\n");
+      ret = G_ERROR_PARAM;
+    }
+  }
+
+  if ((value = getenv(GLEWLWYD_ENV_MAX_HEADER)) != NULL && !o_strnullempty(value)) {
+    endptr = NULL;
+    lvalue = strtol(value, &endptr, 10);
+    if (!(*endptr) && lvalue >= 0) {
+      config->max_header = (size_t)lvalue;
+    } else {
+      fprintf(stderr, "Error invalid max_header number (env), exiting\n");
       ret = G_ERROR_PARAM;
     }
   }
@@ -3877,7 +3909,7 @@ char * get_ip_data(struct config_elements * config, const char * ip_address) {
       ulfius_init_request(&req);
       ulfius_init_response(&resp);
       ulfius_set_request_properties(&req, U_OPT_HTTP_URL, url, U_OPT_NONE);
-      if (ulfius_send_http_request(&req, &resp) == U_OK && resp.status >= 200 && resp.status < 300) {
+      if (ulfius_send_http_request_with_limit(&req, &resp, config->response_body_limit, config->max_header) == U_OK && resp.status >= 200 && resp.status < 300) {
         if ((j_response = ulfius_get_json_body_response(&resp, NULL)) != NULL) {
           for (i=0; properties[i]!=NULL; i++) {
             if (data == NULL) {
@@ -3891,7 +3923,7 @@ char * get_ip_data(struct config_elements * config, const char * ip_address) {
         }
         json_decref(j_response);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_ip_data - Error ulfius_send_http_request - url %s", url);
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_ip_data - Error ulfius_send_http_request_with_limit - url %s", url);
       }
       ulfius_clean_request(&req);
       ulfius_clean_response(&resp);

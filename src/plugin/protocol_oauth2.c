@@ -380,7 +380,7 @@ static int serialize_access_token(struct _oauth2_config * config, uint auth_type
         if (res == H_OK) {
           j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
           if (j_last_id != NULL) {
-            if (split_string(scope_list, " ", &scope_array) > 0) {
+            if (split_string_remove_duplicates(scope_list, " ", &scope_array) > 0) {
               j_query = json_pack("{sss[]}",
                                   "table",
                                   GLEWLWYD_PLUGIN_OAUTH2_TABLE_ACCESS_TOKEN_SCOPE,
@@ -403,7 +403,7 @@ static int serialize_access_token(struct _oauth2_config * config, uint auth_type
                 ret = G_ERROR;
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - oauth2 - Error split_string");
+              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - oauth2 - Error split_string_remove_duplicates");
               ret = G_ERROR;
             }
             free_string_array(scope_array);
@@ -612,7 +612,7 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
       if (res == H_OK) {
         j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
         if (j_last_id != NULL) {
-          if (split_string(scope_list, " ", &scope_array) > 0) {
+          if (split_string_remove_duplicates(scope_list, " ", &scope_array) > 0) {
             j_query = json_pack("{sss[]}",
                                 "table",
                                 GLEWLWYD_PLUGIN_OAUTH2_TABLE_REFRESH_TOKEN_SCOPE,
@@ -635,7 +635,7 @@ static json_t * serialize_refresh_token(struct _oauth2_config * config, uint aut
               j_return = json_pack("{si}", "result", G_ERROR);
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - oauth2 - Error split_string");
+            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - oauth2 - Error split_string_remove_duplicates");
             j_return = json_pack("{si}", "result", G_ERROR);
           }
           free_string_array(scope_array);
@@ -823,7 +823,7 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
                                     "table",
                                     GLEWLWYD_PLUGIN_OAUTH2_TABLE_CODE_SCOPE,
                                     "values");
-                if (split_string(scope_list, " ", &scope_array) > 0) {
+                if (split_string_remove_duplicates(scope_list, " ", &scope_array) > 0) {
                   for (i=0; scope_array[i] != NULL; i++) {
                     json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpgc_id", j_code_id, "gpgcs_scope", scope_array[i]));
                   }
@@ -835,7 +835,7 @@ static char * generate_authorization_code(struct _oauth2_config * config, const 
                     code = NULL;
                   }
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oauth2 - Error split_string");
+                  y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oauth2 - Error split_string_remove_duplicates");
                   o_free(code);
                   code = NULL;
                 }
@@ -1568,7 +1568,7 @@ static json_t * get_refresh_token_duration_rolling(struct _oauth2_config * confi
   json_int_t maximum_duration = config->refresh_token_duration, maximum_duration_override = -1;
   int rolling_refresh = config->refresh_token_rolling, rolling_refresh_override = -1;
 
-  if (split_string(scope_list, " ", &scope_array)) {
+  if (split_string_remove_duplicates(scope_list, " ", &scope_array)) {
     json_array_foreach(json_object_get(config->j_params, "scope"), index, j_element) {
       for (i=0; scope_array[i]!=NULL; i++) {
         if (0 == o_strcmp(json_string_value(json_object_get(j_element, "name")), scope_array[i])) {
@@ -1590,7 +1590,7 @@ static json_t * get_refresh_token_duration_rolling(struct _oauth2_config * confi
     }
     j_return = json_pack("{sis{sosI}}", "result", G_OK, "refresh-token", "refresh-token-rolling", rolling_refresh?json_true():json_false(), "refresh-token-duration", maximum_duration);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_refresh_token_duration_rolling - Error split_string");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_refresh_token_duration_rolling - Error split_string_remove_duplicates");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
   return j_return;
@@ -1937,7 +1937,7 @@ static json_t * generate_device_authorization(struct _oauth2_config * config, co
       if (res == H_OK) {
         j_device_auth_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
         if (j_device_auth_id != NULL) {
-          if (split_string(scope_list, " ", &scope_array)) {
+          if (split_string_remove_duplicates(scope_list, " ", &scope_array)) {
             j_query = json_pack("{sss[]}", "table", GLEWLWYD_PLUGIN_OAUTH2_TABLE_DEVICE_AUTHORIZATION_SCOPE, "values");
             for (i=0; scope_array[i]!=NULL; i++) {
               json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpgda_id", j_device_auth_id, "gpgdas_scope", scope_array[i]));
@@ -1952,7 +1952,7 @@ static json_t * generate_device_authorization(struct _oauth2_config * config, co
               j_return = json_pack("{si}", "result", G_ERROR_DB);
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "generate_device_authorization - Error split_string scope");
+            y_log_message(Y_LOG_LEVEL_ERROR, "generate_device_authorization - Error split_string_remove_duplicates scope");
             j_return = json_pack("{si}", "result", G_ERROR);
           }
           free_string_array(scope_array);
@@ -1980,7 +1980,7 @@ static int validate_device_authorization_scope(struct _oauth2_config * config, j
   char * query, * scope_clause = NULL, * scope_escaped, ** scope_array = NULL, * username_escaped;
   int res, i, ret;
 
-  if (split_string(scope_list, " ", &scope_array)) {
+  if (split_string_remove_duplicates(scope_list, " ", &scope_array)) {
     for (i=0; scope_array[i]!=NULL; i++) {
       scope_escaped = h_escape_string_with_quotes(config->glewlwyd_config->glewlwyd_config->conn, scope_array[i]);
       if (scope_clause == NULL) {
@@ -3006,7 +3006,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
           auth_type_allowed = 1;
         }
       }
-      if (split_string(u_map_get(request->map_post_body, "scope"), " ", &scope_array) > 0) {
+      if (split_string_remove_duplicates(u_map_get(request->map_post_body, "scope"), " ", &scope_array) > 0) {
         for (i=0; scope_array[i]!=NULL; i++) {
           json_array_foreach(json_object_get(json_object_get(j_client, "client"), "scope"), index, j_element) {
             if (0 == o_strcmp(json_string_value(j_element), scope_array[i])) {
@@ -3055,7 +3055,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
           o_free(scope_allowed);
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant - oauth2 - Error split_string");
+        y_log_message(Y_LOG_LEVEL_ERROR, "check_auth_type_client_credentials_grant - oauth2 - Error split_string_remove_duplicates");
         response->status = 500;
       }
       free_string_array(scope_array);

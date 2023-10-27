@@ -914,29 +914,31 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, LDAP * ldap, const char 
       }
 
       if (json_object_get(j_params, "multiple_passwords") == json_true()) {
-        if ((passwords = o_malloc(json_array_size(json_object_get(j_user, "password"))*sizeof(char *))) != NULL) {
-          mods[i] = o_malloc(sizeof(LDAPMod));
-          if (mods[i] != NULL) {
-            json_array_foreach(json_object_get(j_user, "password"), index, j_property) {
-              passwords[index] = json_string_value(j_property);
-            }
-            if (set_update_password_mod(j_params, ldap, username, passwords, json_array_size(json_object_get(j_user, "password")), mods[i], add) == G_OK) {
-              mods[i]->mod_op = mod_op;
-              mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "password-property"));
+        if (json_array_size(json_object_get(j_user, "password"))) {
+          if ((passwords = o_malloc(json_array_size(json_object_get(j_user, "password"))*sizeof(char *))) != NULL) {
+            mods[i] = o_malloc(sizeof(LDAPMod));
+            if (mods[i] != NULL) {
+              json_array_foreach(json_object_get(j_user, "password"), index, j_property) {
+                passwords[index] = json_string_value(j_property);
+              }
+              if (set_update_password_mod(j_params, ldap, username, passwords, json_array_size(json_object_get(j_user, "password")), mods[i], add) == G_OK) {
+                mods[i]->mod_op = mod_op;
+                mods[i]->mod_type = (char *)json_string_value(json_object_get(j_params, "password-property"));
+              } else {
+                y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error set_update_password_mod for mods[%zu]", i);
+                has_error = 1;
+              }
+              i++;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error set_update_password_mod for mods[%zu]", i);
+              y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (password)", i);
               has_error = 1;
             }
-            i++;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (password)", i);
+            y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (passwords)", i);
             has_error = 1;
           }
-        } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "get_ldap_write_mod - Error allocating resources for mods[%zu] (passwords)", i);
-          has_error = 1;
+          o_free(passwords);
         }
-        o_free(passwords);
       } else {
         if (!json_string_null_or_empty(json_object_get(j_user, "password"))) {
           mods[i] = o_malloc(sizeof(LDAPMod));
@@ -1376,6 +1378,10 @@ json_t * user_module_get_list(struct config_module * config, const char * patter
     o_free(filter);
     ber_bvfree(cookie);
     cookie = NULL;
+    if (page_control != NULL) {
+      ldap_control_free(page_control);
+      page_control = NULL;
+    }
 
     ldap_unbind_ext(ldap, NULL, NULL);
     j_return = json_pack("{sisO}", "result", G_OK, "list", j_user_list);

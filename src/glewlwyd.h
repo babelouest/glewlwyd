@@ -73,6 +73,8 @@
 #define GLEWLWYD_DEFAULT_SESSION_KEY                       "GLEWLWYD2_SESSION_ID"
 #define GLEWLWYD_DEFAULT_SESSION_EXPIRATION_COOKIE         5256000 // 10 years
 #define GLEWLWYD_DEFAULT_MAX_POST_SIZE                     (16*1024*1024)+1024
+#define GLEWLWYD_DEFAULT_RESPONSE_MAX_BODY_SIZE            4194304
+#define GLEWLWYD_DEFAULT_RESPONSE_MAX_HEADER_COUNT         64
 
 #define GLEWLWYD_DEFAULT_SESSION_EXPIRATION_PASSWORD       40320   // 4 weeks
 #define GLEWLWYD_RESET_PASSWORD_DEFAULT_SESSION_EXPIRATION 2592000 // 30 days
@@ -109,6 +111,8 @@
 // Environment variables names
 #define GLEWLWYD_ENV_PORT                                    "GLWD_PORT"
 #define GLEWLWYD_ENV_MAX_POST_SIZE                           "GLWD_MAX_POST_SIZE"
+#define GLEWLWYD_ENV_RESPONSE_BODY_LIMIT                     "GLWD_RESPONSE_BODY_LIMIT"
+#define GLEWLWYD_ENV_MAX_HEADER                              "GLWD_MAX_HEADER"
 #define GLEWLWYD_ENV_BIND_ADDRESS                            "GLWD_BIND_ADDRESS"
 #define GLEWLWYD_ENV_API_PREFIX                              "GLWD_API_PREFIX"
 #define GLEWLWYD_ENV_EXTERNAL_URL                            "GLWD_EXTERNAL_URL"

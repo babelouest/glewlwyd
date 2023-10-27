@@ -1391,7 +1391,7 @@ static int check_scope_list(const char * scope_expected, const char * scope_toke
     return 1;
   }
   if (scope_token != NULL) {
-    if ((scope_expected_count = split_string(scope_expected, " ", &scope_expected_list)) && (scope_token_count = split_string(scope_token, " ", &scope_token_list))) {
+    if ((scope_expected_count = split_string_remove_duplicates(scope_expected, " ", &scope_expected_list)) && (scope_token_count = split_string_remove_duplicates(scope_token, " ", &scope_token_list))) {
       if (scope_token_count >= scope_expected_count) {
         for (i=0; scope_expected_list[i] != NULL; i++) {
           if (!string_array_has_value((const char **)scope_token_list, scope_expected_list[i])) {
@@ -1402,7 +1402,7 @@ static int check_scope_list(const char * scope_expected, const char * scope_toke
         ret = 0;
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "check_scope_list - Error split_string");
+      y_log_message(Y_LOG_LEVEL_ERROR, "check_scope_list - Error split_string_remove_duplicates");
       ret = 0;
     }
     free_string_array(scope_expected_list);
@@ -1441,7 +1441,7 @@ static int verify_resource(struct _oidc_config * config, const char * resource, 
        0 == o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_2, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_2)) ||
        0 == o_strncmp(GLEWLWYD_REDIRECT_URI_LOOPBACK_3, resource, o_strlen(GLEWLWYD_REDIRECT_URI_LOOPBACK_3))) &&
        o_strchr(resource, '#') == NULL) { // URL with fragment not allowed
-    if (split_string(scope_list, " ", &scope_array) > 0) {
+    if (split_string_remove_duplicates(scope_list, " ", &scope_array) > 0) {
       json_object_foreach(json_object_get(config->j_params, "resource-scope"), key, j_scope) {
         if (string_array_has_value((const char **)scope_array, key)) {
           json_array_foreach(j_scope, index, j_element) {
@@ -1480,7 +1480,7 @@ static int verify_resource(struct _oidc_config * config, const char * resource, 
       }
       free_string_array(scope_array);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "verify_resource oidc - Error split_string");
+      y_log_message(Y_LOG_LEVEL_ERROR, "verify_resource oidc - Error split_string_remove_duplicates");
       ret = G_ERROR;
     }
   } else {
@@ -2731,8 +2731,8 @@ static json_t * get_userinfo(struct _oidc_config * config, const char * sub, jso
   long int lvalue;
   size_t index = 0, index_scope = 0, index_value = 0;
 
-  if (scopes != NULL && !split_string(scopes, " ", &scopes_array)) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_userinfo - Error split_string scopes");
+  if (scopes != NULL && !split_string_remove_duplicates(scopes, " ", &scopes_array)) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_userinfo - Error split_string_remove_duplicates scopes");
   }
 
   // Append name if mandatory
@@ -3022,7 +3022,7 @@ static int serialize_pushed_request_uri(struct _oidc_config * config,
 
   time(&now);
   if (request_uri_hash != NULL) {
-    if (split_string(scope_list, " ", &scope_array)) {
+    if (split_string_remove_duplicates(scope_list, " ", &scope_array)) {
       if (pthread_mutex_lock(&config->insert_lock)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "serialize_pushed_request_uri oidc - Error pthread_mutex_lock");
         ret = G_ERROR;
@@ -3111,7 +3111,7 @@ static int serialize_pushed_request_uri(struct _oidc_config * config,
       }
       free_string_array(scope_array);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "serialize_pushed_request_uri oidc - Error split_string");
+      y_log_message(Y_LOG_LEVEL_ERROR, "serialize_pushed_request_uri oidc - Error split_string_remove_duplicates");
       ret = G_ERROR;
     }
     o_free(request_uri_hash);
@@ -3444,7 +3444,7 @@ static int serialize_access_token(struct _oidc_config * config,
           j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
           if (j_last_id != NULL) {
             config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN, "gpoa_issued_for", issued_for, "gpoa_id", json_integer_value(j_last_id));
-            if (split_string(scope_list, " ", &scope_array) > 0) {
+            if (split_string_remove_duplicates(scope_list, " ", &scope_array) > 0) {
               j_query = json_pack("{sss[]}",
                                   "table",
                                   GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN_SCOPE,
@@ -3467,7 +3467,7 @@ static int serialize_access_token(struct _oidc_config * config,
                 ret = G_ERROR;
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - oidc - Error split_string");
+              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_access_token - oidc - Error split_string_remove_duplicates");
               ret = G_ERROR;
             }
             free_string_array(scope_array);
@@ -3717,7 +3717,7 @@ static json_t * serialize_refresh_token(struct _oidc_config * config,
           j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
           if (j_last_id != NULL) {
             config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN, "gpor_issued_for", issued_for, "gpor_id", json_integer_value(j_last_id));
-            if (split_string(scope_list, " ", &scope_array) > 0) {
+            if (split_string_remove_duplicates(scope_list, " ", &scope_array) > 0) {
               j_query = json_pack("{sss[]}",
                                   "table",
                                   GLEWLWYD_PLUGIN_OIDC_TABLE_REFRESH_TOKEN_SCOPE,
@@ -3740,7 +3740,7 @@ static json_t * serialize_refresh_token(struct _oidc_config * config,
                 j_return = json_pack("{si}", "result", G_ERROR);
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - oidc - Error split_string");
+              y_log_message(Y_LOG_LEVEL_ERROR, "serialize_refresh_token - oidc - Error split_string_remove_duplicates");
               j_return = json_pack("{si}", "result", G_ERROR);
             }
             free_string_array(scope_array);
@@ -4184,7 +4184,7 @@ static json_t * generate_authorization_code(struct _oidc_config * config,
                                   "table",
                                   GLEWLWYD_PLUGIN_OIDC_TABLE_CODE_SCOPE,
                                   "values");
-              if (split_string(scope_list, " ", &scope_array) > 0) {
+              if (split_string_remove_duplicates(scope_list, " ", &scope_array) > 0) {
                 for (i=0; scope_array[i] != NULL; i++) {
                   json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpoc_id", j_code_id, "gpocs_scope", scope_array[i]));
                 }
@@ -4197,7 +4197,7 @@ static json_t * generate_authorization_code(struct _oidc_config * config,
                   j_return = json_pack("{si}", "result", G_ERROR_DB);
                 }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - Error split_string");
+                y_log_message(Y_LOG_LEVEL_ERROR, "generate_authorization_code - oidc - Error split_string_remove_duplicates");
                 j_return = json_pack("{si}", "result", G_ERROR);
               }
               free_string_array(scope_array);
@@ -4485,7 +4485,7 @@ static int is_code_challenge_valid(struct _oidc_config * config, const char * sc
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc is_code_challenge_valid - pkce required");
       ret = G_ERROR_PARAM;
     } else if (json_array_size(json_object_get(config->j_params, "pkce-scopes"))) {
-      if (split_string(scope, " ", &scope_list)) {
+      if (split_string_remove_duplicates(scope, " ", &scope_list)) {
         ret = G_OK;
         json_array_foreach(json_object_get(config->j_params, "pkce-scopes"), index, j_scope) {
           if (string_array_has_value((const char **)scope_list, json_string_value(j_scope))) {
@@ -4494,7 +4494,7 @@ static int is_code_challenge_valid(struct _oidc_config * config, const char * sc
           }
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc is_code_challenge_valid - Error split_string");
+        y_log_message(Y_LOG_LEVEL_DEBUG, "oidc is_code_challenge_valid - Error split_string_remove_duplicates");
         ret = G_ERROR;
       }
       free_string_array(scope_list);
@@ -4513,7 +4513,7 @@ static json_t * get_refresh_token_duration_rolling(struct _oidc_config * config,
   json_int_t maximum_duration = config->refresh_token_duration, maximum_duration_override = -1;
   int rolling_refresh = config->refresh_token_rolling, rolling_refresh_override = -1;
 
-  if (split_string(scope_list, " ", &scope_array) > 0) {
+  if (split_string_remove_duplicates(scope_list, " ", &scope_array) > 0) {
     json_array_foreach(json_object_get(config->j_params, "scope"), index, j_element) {
       for (i=0; scope_array[i]!=NULL; i++) {
         if (0 == o_strcmp(json_string_value(json_object_get(j_element, "name")), scope_array[i])) {
@@ -4535,7 +4535,7 @@ static json_t * get_refresh_token_duration_rolling(struct _oidc_config * config,
     }
     j_return = json_pack("{sis{sosI}}", "result", G_OK, "refresh-token", "refresh-token-rolling", rolling_refresh?json_true():json_false(), "refresh-token-duration", maximum_duration);
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_refresh_token_duration_rolling - Error split_string");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_refresh_token_duration_rolling - Error split_string_remove_duplicates");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
   return j_return;
@@ -5240,8 +5240,8 @@ static char * get_request_from_uri(struct _oidc_config * config, const char * re
     req.check_server_certificate = 0;
   }
 
-  if (ulfius_send_http_request(&req, &resp) != U_OK) {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error ulfius_send_http_request");
+  if (ulfius_send_http_request_with_limit(&req, &resp, config->glewlwyd_config->glewlwyd_config->response_body_limit, config->glewlwyd_config->glewlwyd_config->max_header) != U_OK) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error ulfius_send_http_request_with_limit");
   } else if (resp.status == 200) {
     if (json_object_get(config->j_params, "request-parameter-ietf-strict") == json_true()) {
       valid_ct = !o_strcmp(u_map_get(resp.map_header, ULFIUS_HTTP_HEADER_CONTENT), "application/oauth-authz-req+jwt") || !o_strcmp(u_map_get(resp.map_header, ULFIUS_HTTP_HEADER_CONTENT), "application/jwt");
@@ -5258,7 +5258,7 @@ static char * get_request_from_uri(struct _oidc_config * config, const char * re
       y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error invalid content type");
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error ulfius_send_http_request response status is %d", resp.status);
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error ulfius_send_http_request_with_limit response status is %d", resp.status);
   }
 
   ulfius_clean_request(&req);
@@ -6048,7 +6048,7 @@ static int send_ciba_client_notification(struct _oidc_config * config, json_t * 
                                             U_OPT_NONE);
         o_free(bearer_token);
         json_decref(j_body);
-        if (ulfius_send_http_request(&req, &resp) == U_OK) {
+        if (ulfius_send_http_request_with_limit(&req, &resp, 1, 8) == U_OK) {
           if (resp.status == 200 || resp.status == 204) {
             ret = G_OK;
           } else {
@@ -6056,7 +6056,7 @@ static int send_ciba_client_notification(struct _oidc_config * config, json_t * 
             ret = G_ERROR;
           }
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "send_ciba_client_notification ping - Error ulfius_send_http_request");
+          y_log_message(Y_LOG_LEVEL_ERROR, "send_ciba_client_notification ping - Error ulfius_send_http_request_with_limit");
           ret = G_ERROR;
         }
         ulfius_clean_response(&resp);
@@ -6085,7 +6085,7 @@ static int send_ciba_client_notification(struct _oidc_config * config, json_t * 
                                                   U_OPT_CHECK_PROXY_CERTIFICATE, json_object_get(config->j_params, "oauth-ciba-allow-https-non-secure")==json_true()?0:1,
                                                   U_OPT_NONE);
               o_free(bearer_token);
-              if (ulfius_send_http_request(&req, &resp) == U_OK) {
+              if (ulfius_send_http_request_with_limit(&req, &resp, 1, 8) == U_OK) {
                 if (resp.status == 200 || resp.status == 204) {
                   ret = G_OK;
                 } else {
@@ -6093,7 +6093,7 @@ static int send_ciba_client_notification(struct _oidc_config * config, json_t * 
                   ret = G_ERROR;
                 }
               } else {
-                y_log_message(Y_LOG_LEVEL_ERROR, "send_ciba_client_notification push - Error ulfius_send_http_request");
+                y_log_message(Y_LOG_LEVEL_ERROR, "send_ciba_client_notification push - Error ulfius_send_http_request_with_limit");
                 ret = G_ERROR;
               }
               ulfius_clean_response(&resp);
@@ -6131,7 +6131,7 @@ static int send_ciba_client_notification(struct _oidc_config * config, json_t * 
                                               U_OPT_NONE);
           o_free(bearer_token);
           json_decref(j_body);
-          if (ulfius_send_http_request(&req, &resp) == U_OK) {
+          if (ulfius_send_http_request_with_limit(&req, &resp, 1, 8) == U_OK) {
             if (resp.status == 200 || resp.status == 204) {
               ret = G_OK;
             } else {
@@ -6139,7 +6139,7 @@ static int send_ciba_client_notification(struct _oidc_config * config, json_t * 
               ret = G_ERROR;
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "send_ciba_client_notification push - Error ulfius_send_http_request");
+            y_log_message(Y_LOG_LEVEL_ERROR, "send_ciba_client_notification push - Error ulfius_send_http_request_with_limit");
             ret = G_ERROR;
           }
           ulfius_clean_response(&resp);
@@ -7303,7 +7303,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
                                                 U_OPT_CHECK_SERVER_CERTIFICATE, (json_object_get(config->j_params, "request-uri-allow-https-non-secure")==json_true())?0:1,
                                                 U_OPT_CHECK_PROXY_CERTIFICATE, (json_object_get(config->j_params, "request-uri-allow-https-non-secure")==json_true())?0:1,
                                                 U_OPT_NONE) == U_OK) {
-          if (ulfius_send_http_request(&req, &resp) == U_OK) {
+          if (ulfius_send_http_request_with_limit(&req, &resp, config->glewlwyd_config->glewlwyd_config->response_body_limit, config->glewlwyd_config->glewlwyd_config->max_header) == U_OK) {
             if (resp.status >= 200 && resp.status < 300) {
               if ((j_resp = ulfius_get_json_body_response(&resp, NULL)) != NULL && json_is_array(j_resp)) {
                 json_array_foreach(j_resp, index, j_element) {
@@ -7354,7 +7354,7 @@ static json_t * is_client_registration_valid(struct _oidc_config * config, json_
               break;
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "is_client_registration_valid - Error ulfius_send_http_request");
+            y_log_message(Y_LOG_LEVEL_ERROR, "is_client_registration_valid - Error ulfius_send_http_request_with_limit");
             j_error = json_pack("{ssss}", "error", "invalid_client_metadata", "error_description", "Invalid sector_identifier_uri");
             break;
           }
@@ -8063,7 +8063,7 @@ static json_t * generate_device_authorization(struct _oidc_config * config, cons
           j_device_auth_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn);
           if (j_device_auth_id != NULL) {
             config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_DEVICE_AUTHORIZATION, "gpoda_issued_for", ip_source, "gpoda_id", json_integer_value(j_device_auth_id));
-            if (split_string(scope_list, " ", &scope_array) > 0) {
+            if (split_string_remove_duplicates(scope_list, " ", &scope_array) > 0) {
               j_query = json_pack("{sss[]}", "table", GLEWLWYD_PLUGIN_OIDC_TABLE_DEVICE_AUTHORIZATION_SCOPE, "values");
               for (i=0; scope_array[i]!=NULL; i++) {
                 json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpoda_id", j_device_auth_id, "gpodas_scope", scope_array[i]));
@@ -8078,7 +8078,7 @@ static json_t * generate_device_authorization(struct _oidc_config * config, cons
                 j_return = json_pack("{si}", "result", G_ERROR_DB);
               }
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "generate_device_authorization - Error split_string scope");
+              y_log_message(Y_LOG_LEVEL_ERROR, "generate_device_authorization - Error split_string_remove_duplicates scope");
               j_return = json_pack("{si}", "result", G_ERROR);
             }
             free_string_array(scope_array);
@@ -8114,7 +8114,7 @@ static int validate_device_authorization_scope(struct _oidc_config * config, jso
   json_t * j_query, * j_element = NULL;
   size_t index = 0;
 
-  if (split_string(scope_list, " ", &scope_array) > 0) {
+  if (split_string_remove_duplicates(scope_list, " ", &scope_array) > 0) {
     for (i=0; scope_array[i]!=NULL; i++) {
       scope_escaped = h_escape_string_with_quotes(config->glewlwyd_config->glewlwyd_config->conn, scope_array[i]);
       if (scope_clause == NULL) {
@@ -9538,7 +9538,7 @@ static json_t * authorization_details_filter(struct _oidc_config * config,
   }
   if (j_return == NULL) {
     // Reduce the rar types list to the ones compatible with the filtered scopes
-    if (split_string(scope_filtered, " ", &scope_list)) {
+    if (split_string_remove_duplicates(scope_filtered, " ", &scope_list)) {
       if ((j_rar_allowed = json_array()) != NULL) {
         json_array_foreach(j_authorization_details, index, j_rar_element) {
           if ((j_rar_config = json_object_get(json_object_get(config->j_params, "rar-types"), json_string_value(json_object_get(j_rar_element, "type")))) != NULL) {
@@ -9584,7 +9584,7 @@ static json_t * authorization_details_filter(struct _oidc_config * config,
       }
       json_decref(j_rar_allowed);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "authorization_details_filter - Error split_string '%s'", scope_filtered);
+      y_log_message(Y_LOG_LEVEL_ERROR, "authorization_details_filter - Error split_string_remove_duplicates '%s'", scope_filtered);
       j_return = json_pack("{si}", "result", G_ERROR);
     }
     free_string_array(scope_list);
@@ -9603,7 +9603,7 @@ static int authorization_details_validate(struct _oidc_config * config, json_t *
     j_client_auth_types = json_object_get(json_object_get(j_client, "client"), json_string_value(json_object_get(config->j_params, "rar-types-client-property")));
     if (json_array_size(j_authorization_details)) {
       ret = G_OK;
-      if (split_string(scope, " ", &scope_list)) {
+      if (split_string_remove_duplicates(scope, " ", &scope_list)) {
         json_array_foreach(j_authorization_details, index, j_rar_element) {
           if (json_is_object(j_rar_element)) {
             if (!json_string_null_or_empty(json_object_get(j_rar_element, "type"))) {
@@ -9728,7 +9728,7 @@ static int authorization_details_validate(struct _oidc_config * config, json_t *
           }
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "authorization_details_validate - Error split_string scope");
+        y_log_message(Y_LOG_LEVEL_ERROR, "authorization_details_validate - Error split_string_remove_duplicates scope");
         ret = G_ERROR_PARAM;
       }
       free_string_array(scope_list);
@@ -10734,7 +10734,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
         }
       }
       if (ret == G_OK) {
-        if (split_string(json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), " ", &scope_array) > 0) {
+        if (split_string_remove_duplicates(json_string_value(json_object_get(json_object_get(j_user, "user"), "scope_list")), " ", &scope_array) > 0) {
           for (index=0; scope_array[index]!=NULL; index++) {
             if (0 == o_strcmp("openid", scope_array[index])) {
               has_openid = 1;
@@ -10994,7 +10994,7 @@ static int check_auth_type_resource_owner_pwd_cred (const struct _u_request * re
           }
           json_decref(j_jkt);
         } else {
-          y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error split_string");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_resource_owner_pwd_cred - Error split_string_remove_duplicates");
           j_body = json_pack("{ss}", "error", "server_error");
           ulfius_set_json_body_response(response, 500, j_body);
           json_decref(j_body);
@@ -11084,7 +11084,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
           auth_type_allowed = 1;
         }
       }
-      if (split_string(u_map_get(request->map_post_body, "scope"), " ", &scope_array) > 0) {
+      if (split_string_remove_duplicates(u_map_get(request->map_post_body, "scope"), " ", &scope_array) > 0) {
         for (i=0; scope_array[i]!=NULL; i++) {
           json_array_foreach(json_object_get(json_object_get(j_client, "client"), "scope"), index, j_element) {
             if (0 == o_strcmp(json_string_value(j_element), scope_array[i])) {
@@ -11226,7 +11226,7 @@ static int check_auth_type_client_credentials_grant (const struct _u_request * r
           o_free(scope_joined);
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_client_credentials_grant - Error split_string");
+        y_log_message(Y_LOG_LEVEL_ERROR, "oidc check_auth_type_client_credentials_grant - Error split_string_remove_duplicates");
         response->status = 500;
       }
       free_string_array(scope_array);
@@ -11281,7 +11281,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
       ** resource_list = NULL;
   int res, auth_type = GLEWLWYD_AUTHORIZATION_TYPE_NULL_FLAG, resource_error = 0;
   struct _u_map * additional_parameters = NULL;
-  size_t count_resource, index;
+  size_t index;
 
   if (j_assertion_client != NULL) {
     client_id = json_string_value(json_object_get(j_assertion_client, "client_id"));
@@ -11521,8 +11521,7 @@ static int check_pushed_authorization_request (const struct _u_request * request
     }
 
     if (!o_strnullempty(resource)) {
-      count_resource = split_string(resource, ",", &resource_list);
-      if (count_resource) {
+      if (split_string(resource, ",", &resource_list)) {
         for (index = 0; resource_list[index] != NULL && !resource_error; index++) {
           if ((res = verify_resource(config, resource_list[index], json_object_get(j_client, "client"), scope_reduced)) == G_ERROR_PARAM) {
             y_log_message(Y_LOG_LEVEL_ERROR, "check_pushed_authorization_request - invalid resource");
@@ -11760,7 +11759,7 @@ static int serialize_ciba_request(struct _oidc_config * config,
         if ((j_last_id = h_last_insert_id(config->glewlwyd_config->glewlwyd_config->conn)) != NULL) {
           config->glewlwyd_config->glewlwyd_callback_update_issued_for(config->glewlwyd_config, NULL, GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA, "gpob_issued_for", ip_source, "gpob_id", json_integer_value(j_last_id));
           j_query = json_pack("{sss[]}", "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA_SCOPE, "values");
-          if (split_string(scope, " ", &scope_array)) {
+          if (split_string_remove_duplicates(scope, " ", &scope_array)) {
             for (i=0; scope_array[i] != NULL; i++) {
               json_array_append_new(json_object_get(j_query, "values"), json_pack("{sOss}", "gpob_id", j_last_id, "gpops_scope", scope_array[i]));
             }
@@ -11772,7 +11771,7 @@ static int serialize_ciba_request(struct _oidc_config * config,
               ret = G_ERROR_DB;
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_ciba_request - Error split_string");
+            y_log_message(Y_LOG_LEVEL_ERROR, "serialize_ciba_request - Error split_string_remove_duplicates");
             ret = G_ERROR;
           }
           free_string_array(scope_array);
@@ -12388,7 +12387,7 @@ static int update_ciba_request(struct _oidc_config * config, json_int_t gpob_id,
   json_decref(j_query);
   if (res == H_OK) {
     if (scopes_granted != NULL) {
-      if (split_string(scopes_granted, " ", &scope_array)) {
+      if (split_string_remove_duplicates(scopes_granted, " ", &scope_array)) {
         j_query = json_pack("{sss{si}s{sI}}",
                             "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA_SCOPE,
                             "set",
@@ -12459,7 +12458,7 @@ static int update_ciba_request(struct _oidc_config * config, json_int_t gpob_id,
         }
         free_string_array(scope_array);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "update_ciba_request - Error split_string");
+        y_log_message(Y_LOG_LEVEL_ERROR, "update_ciba_request - Error split_string_remove_duplicates");
         ret = G_ERROR;
       }
     } else {
@@ -13153,7 +13152,7 @@ static void * run_backchannel_logout_thread(void * args) {
                                               U_OPT_CHECK_SERVER_CERTIFICATE, json_object_get(elt->config->j_params, "request-uri-allow-https-non-secure")==json_true()?0:1,
                                               U_OPT_CHECK_PROXY_CERTIFICATE, json_object_get(elt->config->j_params, "request-uri-allow-https-non-secure")==json_true()?0:1,
                                               U_OPT_NONE);
-          if (ulfius_send_http_request(&req, &resp) == U_OK) {
+          if (ulfius_send_http_request_with_limit(&req, &resp, elt->config->glewlwyd_config->glewlwyd_config->response_body_limit, elt->config->glewlwyd_config->glewlwyd_config->max_header) == U_OK) {
             if (resp.status == 200) {
               y_log_message(Y_LOG_LEVEL_DEBUG, "Send backchannel_logout successfully for client %s", json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id")));
             } else {
@@ -13161,7 +13160,7 @@ static void * run_backchannel_logout_thread(void * args) {
               y_log_message(Y_LOG_LEVEL_DEBUG, "  -  response body %.*s", resp.binary_body_length, resp.binary_body);
             }
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "run_backchannel_logout_thread - Error ulfius_send_http_request for client %s", json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id")));
+            y_log_message(Y_LOG_LEVEL_ERROR, "run_backchannel_logout_thread - Error ulfius_send_http_request_with_limit for client %s", json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id")));
           }
           ulfius_clean_request(&req);
           ulfius_clean_response(&resp);
@@ -14503,8 +14502,8 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
     }
 
     // Split scope list into scope array
-    if (!split_string(scope_reduced, " ", &scope_list)) {
-      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - Error split_string");
+    if (!split_string_remove_duplicates(scope_reduced, " ", &scope_list)) {
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_endpoint_auth - Error split_string_remove_duplicates");
       u_map_put(&map_redirect, "error", "server_error");
       build_auth_response(config, response, response_mode, json_object_get(j_client, "client"), redirect_uri, &map_redirect);
       break;

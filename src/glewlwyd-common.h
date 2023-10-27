@@ -340,6 +340,8 @@ struct config_elements {
   char *                                         config_file;
   unsigned int                                   port;
   size_t                                         max_post_size;
+  size_t                                         response_body_limit;
+  size_t                                         max_header;
   int                                            allow_gzip;
   int                                            allow_deflate;
   char *                                         bind_address;
@@ -505,6 +507,7 @@ int generate_digest(digest_algorithm digest, const char * data, int use_salt, ch
 int generate_digest_raw(digest_algorithm digest, const unsigned char * data, size_t data_len, unsigned char * out_digest, size_t * out_digest_len);
 char * generate_hash(digest_algorithm digest, const char * data);
 int generate_digest_pbkdf2(const char * data, unsigned int iterations, const char * salt, char * out_digest);
+size_t split_string_remove_duplicates(const char * string, const char * separator, char *** return_array);
 
 /**
  * Check if the result json object has a "result" element that is equal to value

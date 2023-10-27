@@ -146,7 +146,7 @@ json_t * glewlwyd_callback_check_user_valid(struct config_plugin * config, const
       }
       check_scope = 1;
       if (scope != NULL) {
-        if (split_string(scope, " ", &scope_array) > 0) {
+        if (split_string_remove_duplicates(scope, " ", &scope_array) > 0) {
           json_array_foreach(json_object_get(json_object_get(j_user, "user"), "scope"), index, j_element) {
             if (string_array_has_value((const char **)scope_array, json_string_value(j_element))) {
               // Check if scope has no scheme but password
@@ -174,7 +174,7 @@ json_t * glewlwyd_callback_check_user_valid(struct config_plugin * config, const
           }
           o_free(scope_list);
         } else  {
-          y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_user_valid - Error split_string");
+          y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_check_user_valid - Error split_string_remove_duplicates");
           check_scope = 0;
         }
         free_string_array(scope_array);
@@ -373,7 +373,7 @@ time_t glewlwyd_callback_get_session_age(struct config_plugin * config, const st
   
   if (session_uid != NULL) {
     if ((session_uid_hash = generate_hash(config->glewlwyd_config->hash_algorithm, session_uid)) != NULL) {
-      if (split_string(scope_list, " ", &scope_array)) {
+      if (split_string_remove_duplicates(scope_list, " ", &scope_array)) {
         for (int i=0; scope_array[i] != NULL; i++) {
           scope_escaped = h_escape_string_with_quotes(config->glewlwyd_config->conn, scope_array[i]);
           if (scope_list_clause == NULL) {
@@ -399,7 +399,7 @@ time_t glewlwyd_callback_get_session_age(struct config_plugin * config, const st
         o_free(scope_list_clause);
         free_string_array(scope_array);
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_get_session_age - Error split_string");
+        y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_get_session_age - Error split_string_remove_duplicates");
       }
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "glewlwyd_callback_get_session_age - Error generate_hash for session_uid");

@@ -1218,6 +1218,10 @@ json_t * client_module_get_list(struct config_module * config, const char * patt
     o_free(filter);
     ber_bvfree(cookie);
     cookie = NULL;
+    if (page_control != NULL) {
+      ldap_control_free(page_control);
+      page_control = NULL;
+    }
     
     ldap_unbind_ext(ldap, NULL, NULL);
     j_return = json_pack("{sisO}", "result", G_OK, "list", j_client_list);

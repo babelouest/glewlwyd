@@ -597,3 +597,22 @@ int check_result_value(json_t * result, const int value) {
 int json_string_null_or_empty(json_t * j_str) {
   return o_strnullempty(json_string_value(j_str));
 }
+
+size_t split_string_remove_duplicates(const char * string, const char * separator, char *** return_array) {
+  char ** splitted = NULL;
+  size_t i, offset = 0;
+
+  if (split_string(string, separator, &splitted)) {
+    *return_array = NULL;
+    for (i=0; splitted[i]!=NULL; i++) {
+      if (!string_array_has_value((const char **)*return_array, splitted[i])) {
+        *return_array = o_realloc(*return_array, (offset+2)*sizeof(char *));
+        (*return_array)[offset] = o_strdup(splitted[i]);
+        (*return_array)[offset+1] = NULL;
+        offset++;
+      }
+    }
+  }
+  free_string_array(splitted);
+  return offset;
+}

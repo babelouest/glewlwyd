@@ -192,7 +192,7 @@ int user_module_check_password(struct config_module * config, const char * usern
   }
   request.auth_basic_password = o_strdup(password);
   
-  res = ulfius_send_http_request(&request, &response);
+  res = ulfius_send_http_request_with_limit(&request, &response, 1, 8);
   if (res == H_OK) {
     if (response.status == 200) {
       ret = G_OK;
@@ -203,7 +203,7 @@ int user_module_check_password(struct config_module * config, const char * usern
       ret = G_ERROR_UNAUTHORIZED;
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_check_password http - Error ulfius_send_http_request");
+    y_log_message(Y_LOG_LEVEL_ERROR, "user_module_check_password http - Error ulfius_send_http_request_with_limit");
     ret = G_ERROR;
   }
   

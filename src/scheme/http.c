@@ -428,7 +428,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
     request.auth_basic_password = o_strdup(json_string_value(json_object_get(j_scheme_data, "password")));
 
     if (request.auth_basic_user != NULL && request.auth_basic_password != NULL) {
-      res = ulfius_send_http_request(&request, &response);
+      res = ulfius_send_http_request_with_limit(&request, &response, 1, 8);
       if (res == H_OK) {
         if (response.status == 200) {
           ret = G_OK;
@@ -439,7 +439,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
           ret = G_ERROR_UNAUTHORIZED;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate http - Error ulfius_send_http_request");
+        y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate http - Error ulfius_send_http_request_with_limit");
         ret = G_ERROR_UNAUTHORIZED;
       }
     } else {

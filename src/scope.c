@@ -290,7 +290,7 @@ json_t * get_auth_scheme_list_from_scope_list(struct config_elements * config, c
   int i;
   json_t * j_result, * j_scheme_list, * j_scope;
 
-  if (split_string(scope_list, " ", &scope_array) > 0) {
+  if (split_string_remove_duplicates(scope_list, " ", &scope_array) > 0) {
     j_result = json_pack("{sis{}}", "result", G_OK, "scheme");
     if (j_result != NULL) {
       for (i=0; scope_array[i] != NULL; i++) {
@@ -317,7 +317,7 @@ json_t * get_auth_scheme_list_from_scope_list(struct config_elements * config, c
       j_result = json_pack("{si}", "result", G_ERROR);
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_auth_scheme_list_from_scope_list - Error split_string");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_auth_scheme_list_from_scope_list - Error split_string_remove_duplicates");
     j_result = json_pack("{si}", "result", G_ERROR);
   }
   free_string_array(scope_array);
@@ -527,7 +527,7 @@ json_t * get_client_user_scope_grant(struct config_elements * config, const char
   char * scope_clause, * scope_name_list = NULL, * scope_escaped, * username_escaped, * client_id_escaped;
   size_t index;
   
-  if (split_string(scope_list, " ", &scope_array) > 0) {
+  if (split_string_remove_duplicates(scope_list, " ", &scope_array) > 0) {
     for (i=0; scope_array[i] != NULL; i++) {
       scope_escaped = h_escape_string_with_quotes(config->conn, scope_array[i]);
       if (scope_name_list == NULL) {
@@ -578,7 +578,7 @@ json_t * get_client_user_scope_grant(struct config_elements * config, const char
       j_return = json_pack("{si}", "result", G_ERROR);
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_client_user_scope_grant - Error split_string");
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_client_user_scope_grant - Error split_string_remove_duplicates");
     j_return = json_pack("{si}", "result", G_ERROR);
   }
   free_string_array(scope_array);
@@ -595,7 +595,7 @@ json_t * get_granted_scopes_for_client(struct config_elements * config, json_t *
   if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
     j_scope_list = get_client_user_scope_grant(config, client_id, json_string_value(json_object_get(j_user, "username")), scope_list);
     if (check_result_value(j_scope_list, G_OK)) {
-      if (split_string(scope_list, " ", &scope_array) > 0) {
+      if (split_string_remove_duplicates(scope_list, " ", &scope_array) > 0) {
         for (i=0; scope_array[i] != NULL; i++) {
           found = 0;
           json_array_foreach(json_object_get(j_scope_list, "scope"), index, j_element) {
@@ -631,7 +631,7 @@ json_t * get_granted_scopes_for_client(struct config_elements * config, json_t *
                                 "scope",
                                 json_object_get(j_scope_list, "scope"));
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_session_scope_grant - Error split_string");
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_session_scope_grant - Error split_string_remove_duplicates");
         j_return = json_pack("{si}", "result", G_ERROR);
       }
       free_string_array(scope_array);
@@ -738,7 +738,7 @@ int set_granted_scopes_for_client(struct config_elements * config, json_t * j_us
   json_decref(j_query);
   if (res == H_OK) {
     if (scope_list != NULL && !o_strnullempty(scope_list)) {
-      if (split_string(scope_list, " ", &scope_array) > 0) {
+      if (split_string_remove_duplicates(scope_list, " ", &scope_array) > 0) {
         has_granted = 0;
         for (i=0; scope_array[i] != NULL && ret != G_ERROR_DB; i++) {
           json_array_foreach(json_object_get(j_user, "scope"), index, j_element) {
@@ -773,7 +773,7 @@ int set_granted_scopes_for_client(struct config_elements * config, json_t * j_us
           ret = G_ERROR_UNAUTHORIZED;
         }
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "set_granted_scopes_for_client - Error split_string");
+        y_log_message(Y_LOG_LEVEL_ERROR, "set_granted_scopes_for_client - Error split_string_remove_duplicates");
       }
       free_string_array(scope_array);
     } else {
