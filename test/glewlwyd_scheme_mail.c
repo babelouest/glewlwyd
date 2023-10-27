@@ -398,19 +398,34 @@ START_TEST(test_glwd_scheme_mail_irl_trigger)
   json_t * j_params = json_pack("{sssssss{}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value");
   json_t * j_canuse = json_pack("{ssss}", "module", MODULE_MODULE, "name", MODULE_NAME);
   pthread_t thread;
+  json_t * j_response;
+  struct _u_request req;
+  struct _u_response resp;
 
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_URL, SERVER_URI "auth/scheme/trigger/",
+                                                       U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_JSON_BODY, j_params,
+                                                       U_OPT_NONE), U_OK);
   manager.mail_data = NULL;
   manager.port = MAIL_PORT;
   manager.sockfd = 0;
   manager.body_pattern = MAIL_BODY_PATTERN;
   pthread_create(&thread, NULL, simple_smtp, &manager);
   ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "profile/scheme/", NULL, NULL, NULL, NULL, 200, j_canuse, NULL, NULL), 1);
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(200, resp.status);
+  ck_assert_ptr_ne(NULL, (j_response = ulfius_get_json_body_response(&resp, NULL)));
+  ck_assert_int_eq(MAIL_CODE_LEGTH, json_string_length(json_object_get(j_response, "prefix")));
   pthread_join(thread, NULL);
   o_free(manager.mail_data);
   json_decref(j_params);
-  
   json_decref(j_canuse);
+  json_decref(j_response);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -441,21 +456,43 @@ START_TEST(test_glwd_scheme_mail_irl_validate_ok)
   struct smtp_manager manager;
   json_t * j_params = json_pack("{sssssss{}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value");
   pthread_t thread;
+  json_t * j_response;
+  struct _u_request req;
+  struct _u_response resp;
+
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_URL, SERVER_URI "auth/scheme/trigger/",
+                                                       U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_JSON_BODY, j_params,
+                                                       U_OPT_NONE), U_OK);
 
   manager.mail_data = NULL;
   manager.port = MAIL_PORT;
   manager.sockfd = 0;
   manager.body_pattern = MAIL_BODY_PATTERN;
   pthread_create(&thread, NULL, simple_smtp, &manager);
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(200, resp.status);
+  ck_assert_ptr_ne(NULL, (j_response = ulfius_get_json_body_response(&resp, NULL)));
+  ck_assert_int_eq(MAIL_CODE_LEGTH, json_string_length(json_object_get(j_response, "prefix")));
   pthread_join(thread, NULL);
   json_decref(j_params);
   
-  j_params = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "code", manager.mail_data);
+  j_params = json_pack("{sssssss{ss+}}", 
+                       "username", USERNAME,
+                       "scheme_type", MODULE_MODULE,
+                       "scheme_name", MODULE_NAME,
+                       "value",
+                         "code", json_string_value(json_object_get(j_response, "prefix")), manager.mail_data);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
   o_free(manager.mail_data);
+  json_decref(j_response);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -464,29 +501,69 @@ START_TEST(test_glwd_scheme_mail_irl_validate_not_valid)
   struct smtp_manager manager;
   json_t * j_params = json_pack("{sssssss{}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value");
   pthread_t thread;
+  json_t * j_response;
+  struct _u_request req;
+  struct _u_response resp;
+  char built_code[(MAIL_CODE_LEGTH*2)+1] = {0}, built_code_updated[(MAIL_CODE_LEGTH*2)+1] = {0};
+
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_URL, SERVER_URI "auth/scheme/trigger/",
+                                                       U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_JSON_BODY, j_params,
+                                                       U_OPT_NONE), U_OK);
 
   manager.mail_data = NULL;
   manager.port = MAIL_PORT;
   manager.sockfd = 0;
   manager.body_pattern = MAIL_BODY_PATTERN;
   pthread_create(&thread, NULL, simple_smtp, &manager);
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(200, resp.status);
+  ck_assert_ptr_ne(NULL, (j_response = ulfius_get_json_body_response(&resp, NULL)));
+  ck_assert_int_eq(MAIL_CODE_LEGTH, json_string_length(json_object_get(j_response, "prefix")));
   pthread_join(thread, NULL);
   json_decref(j_params);
+  ck_assert_int_eq(MAIL_CODE_LEGTH, o_strlen(manager.mail_data));
+  
+  o_strcpy(built_code, json_string_value(json_object_get(j_response, "prefix")));
+  strcat(built_code, manager.mail_data);
+  o_strcpy(built_code_updated, built_code);
+  if (built_code_updated[3] == '4') {
+    built_code_updated[3] = '5';
+  } else {
+    built_code_updated[3] = '4';
+  }
   
   j_params = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "code", "errorr");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  
+  j_params = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "code", manager.mail_data);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  
+  j_params = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "code", "prefixerrorr");
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
-  j_params = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "code", manager.mail_data);
+  j_params = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "code", built_code_updated);
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  
+  j_params = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "code", built_code);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
-  j_params = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "code", manager.mail_data);
+  j_params = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "code", built_code);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
   o_free(manager.mail_data);
+  json_decref(j_response);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -495,21 +572,38 @@ START_TEST(test_glwd_scheme_mail_irl_validate_lang_fr_ok)
   struct smtp_manager manager;
   json_t * j_params = json_pack("{sssssss{}}", "username", USERNAME_LANG, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_LANG_NAME, "value");
   pthread_t thread;
+  json_t * j_response;
+  struct _u_request req;
+  struct _u_response resp;
+
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_URL, SERVER_URI "auth/scheme/trigger/",
+                                                       U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_JSON_BODY, j_params,
+                                                       U_OPT_NONE), U_OK);
 
   manager.mail_data = NULL;
   manager.port = MAIL_PORT;
   manager.sockfd = 0;
   manager.body_pattern = MAIL_BODY_PATTERN_FR;
   pthread_create(&thread, NULL, simple_smtp, &manager);
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(200, resp.status);
+  ck_assert_ptr_ne(NULL, (j_response = ulfius_get_json_body_response(&resp, NULL)));
+  ck_assert_int_eq(MAIL_CODE_LEGTH, json_string_length(json_object_get(j_response, "prefix")));
   pthread_join(thread, NULL);
   json_decref(j_params);
   
-  j_params = json_pack("{sssssss{ss}}", "username", USERNAME_LANG, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_LANG_NAME, "value", "code", manager.mail_data);
+  j_params = json_pack("{sssssss{ss+}}", "username", USERNAME_LANG, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_LANG_NAME, "value", "code", json_string_value(json_object_get(j_response, "prefix")), manager.mail_data);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
   o_free(manager.mail_data);
+  json_decref(j_response);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -518,21 +612,38 @@ START_TEST(test_glwd_scheme_mail_irl_validate_lang_default_ok)
   struct smtp_manager manager;
   json_t * j_params = json_pack("{sssssss{}}", "username", USERNAME_LANG, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_LANG_NAME, "value");
   pthread_t thread;
+  json_t * j_response;
+  struct _u_request req;
+  struct _u_response resp;
+
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_URL, SERVER_URI "auth/scheme/trigger/",
+                                                       U_OPT_HTTP_VERB, "POST",
+                                                       U_OPT_JSON_BODY, j_params,
+                                                       U_OPT_NONE), U_OK);
 
   manager.mail_data = NULL;
   manager.port = MAIL_PORT;
   manager.sockfd = 0;
   manager.body_pattern = MAIL_BODY_PATTERN;
   pthread_create(&thread, NULL, simple_smtp, &manager);
-  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/scheme/trigger/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(200, resp.status);
+  ck_assert_ptr_ne(NULL, (j_response = ulfius_get_json_body_response(&resp, NULL)));
+  ck_assert_int_eq(MAIL_CODE_LEGTH, json_string_length(json_object_get(j_response, "prefix")));
   pthread_join(thread, NULL);
   json_decref(j_params);
   
-  j_params = json_pack("{sssssss{ss}}", "username", USERNAME_LANG, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_LANG_NAME, "value", "code", manager.mail_data);
+  j_params = json_pack("{sssssss{ss+}}", "username", USERNAME_LANG, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_LANG_NAME, "value", "code", json_string_value(json_object_get(j_response, "prefix")), manager.mail_data);
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 200, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
   o_free(manager.mail_data);
+  json_decref(j_response);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
