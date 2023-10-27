@@ -13,6 +13,7 @@ class EmailSchemeForm extends Component {
       scheme: props.scheme,
       currentUser: props.currentUser,
       code: "",
+      prefix: "",
       showValidate: false
     };
     
@@ -44,7 +45,7 @@ class EmailSchemeForm extends Component {
       apiManager.glewlwydRequest("/auth/scheme/trigger/", "POST", scheme)
       .then((res) => {
         messageDispatcher.sendMessage('Notification', {type: "info", message: i18next.t("login.mail-trigger-ok")});
-        this.setState({showValidate: true});
+        this.setState({showValidate: true, prefix: res.prefix});
       })
       .fail((err) => {
         messageDispatcher.sendMessage('Notification', {type: "danger", message: i18next.t("login.mail-trigger-error")});
@@ -63,7 +64,7 @@ class EmailSchemeForm extends Component {
       scheme_name: this.state.scheme.scheme_name,
       username: this.state.currentUser.username,
 			value: {
-				code: this.state.code
+				code: this.state.prefix + this.state.code
 			}
 		};
     
