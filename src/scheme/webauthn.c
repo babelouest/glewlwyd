@@ -2299,13 +2299,13 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
         for (i=0; i<cbor_map_size(cbor_cose); i++) {
           cbor_key = cbor_map_handle(cbor_cose)[i].key;
           cbor_value = cbor_map_handle(cbor_cose)[i].value;
-          if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 1 && cbor_isa_bytestring(cbor_value)) {
+          if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 1 && cbor_isa_bytestring(cbor_value) && cbor_bytestring_length(cbor_value) <= 256) {
             has_x = 1;
             memcpy(cert_x, cbor_bytestring_handle(cbor_value), cbor_bytestring_length(cbor_value));
             cert_x_len = cbor_bytestring_length(cbor_value);
             g_x.data = cert_x;
             g_x.size = (unsigned int)cbor_bytestring_length(cbor_value);
-          } else if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 2 && cbor_isa_bytestring(cbor_value)) {
+          } else if (cbor_isa_negint(cbor_key) && cbor_get_int(cbor_key) == 2 && cbor_isa_bytestring(cbor_value) && cbor_bytestring_length(cbor_value) <= 256) {
             has_y = 1;
             memcpy(cert_y, cbor_bytestring_handle(cbor_value), cbor_bytestring_length(cbor_value));
             cert_y_len = cbor_bytestring_length(cbor_value);
