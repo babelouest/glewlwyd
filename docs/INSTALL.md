@@ -14,15 +14,11 @@
     * [Upgrade to Glewlwyd 2.2.x](#upgrade-to-glewlwyd-22x)
     * [Upgrade to Glewlwyd 2.1.x](#upgrade-to-glewlwyd-21x)
 2.  [Distribution packages](#distribution-packages)
-3.  [Pre-compiled packages](#pre-compiled-packages)
-    * [Install Glewlwyd on Debian Bullseye](#install-glewlwyd-on-debian-bullseye)
-    * [Install Glewlwyd on Raspbian Bullseye for Raspberry Pi](#install-glewlwyd-on-raspbian-bullseye-for-raspberry-pi)
-    * [Install Glewlwyd on Ubuntu 20.04 LTS Focal](#install-glewlwyd-on-ubuntu-2004-lts-focal)
-4.  [Docker](#docker)
-5.  [Manual install from source](#manual-install-from-source)
+3.  [Docker](#docker)
+4.  [Manual install from source](#manual-install-from-source)
     * [Dependencies](#dependencies)
     * [Build Glewlwyd and its dependencies](#build-glewlwyd-and-its-dependencies)
-6.  [Configure Glewlwyd](#configure-glewlwyd)
+5.  [Configure Glewlwyd](#configure-glewlwyd)
     * [Note on static files server](#note-on-static-files-server)
     * [Port number](#port-number)
     * [Bind address](#bind-address)
@@ -41,20 +37,20 @@
     * [Digest algorithm](#digest-algorithm)
     * [SSL/TLS](#ssltls)
     * [Database back-end initialisation](#database-back-end-initialisation)
-7.  [Initialise database](#initialise-database)
-8.  [Install as a service](#install-as-a-service)
-9.  [Reverse proxy configuration](#reverse-proxy-configuration)
-10. [Fail2ban filter](#fail2ban-filter)
-11. [Front-end application](#front-end-application)
+6.  [Initialise database](#initialise-database)
+7.  [Install as a service](#install-as-a-service)
+8.  [Reverse proxy configuration](#reverse-proxy-configuration)
+9 . [Fail2ban filter](#fail2ban-filter)
+10. [Front-end application](#front-end-application)
     * [webapp/config.json](#webappconfigjson)
     * [Internationalization](#internationalization)
     * [Login, Admin and Profile pages](#login-admin-and-profile-pages)
     * [Customize CSS](#customize-css)
     * [Customize titles and logos](#customize-titles-and-logos)
-12. [Run Glewlwyd](#run-glewlwyd)
-13. [Event logs triggered](#event-logs-triggered)
-14. [Getting started with the application](#getting-started-with-the-application)
-15. [Running Glewlwyd in test mode for integration tests](#running-glewlwyd-in-test-mode-for-integration-tests)
+11. [Run Glewlwyd](#run-glewlwyd)
+12. [Event logs triggered](#event-logs-triggered)
+13. [Getting started with the application](#getting-started-with-the-application)
+14. [Running Glewlwyd in test mode for integration tests](#running-glewlwyd-in-test-mode-for-integration-tests)
 
 ## Upgrade Glewlwyd
 
@@ -280,72 +276,6 @@ $ # Example to install Glewlwyd 2.5.2 on Debian Buster
 $ apt install glewlwyd
 ```
 
-## Pre-compiled packages
-
-You can install Glewlwyd with a pre-compiled package available in the [release pages](https://github.com/babelouest/glewlwyd/releases/). The package files `glewlwyd-full_*` contain the package libraries of `orcania`, `yder`, `ulfius`, `hoel`, `rhonabwy`, `iddawc` pre-compiled for `glewlwyd`, plus `glewlwyd` package. To install a pre-compiled package, you need the following libraries installed:
-
-```
-libmicrohttpd
-libjansson
-libcurl
-libldap2
-libmariadbclient
-libsqlite3
-libpq
-libconfig
-libgnutls
-liboath
-libcbor
-libzlib
-```
-
-### Install Glewlwyd on Debian Bullseye
-
-```shell
-$ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.6.0/glewlwyd-full_2.6.0_debian_bullseye_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.6.0_debian_bullseye_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.2.1_debian_bullseye_x86_64.deb
-$ sudo dpkg -i libyder_1.4.14_debian_bullseye_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.18_debian_bullseye_x86_64.deb
-$ sudo dpkg -i libulfius_2.7.6_debian_bullseye_x86_64.deb
-$ sudo dpkg -i librhonabwy_1.1.2_debian_bullseye_x86_64.deb
-$ sudo dpkg -i libiddawc_1.1.1_debian_bullseye_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.6.0_debian_bullseye_x86_64.deb
-```
-
-### Install Glewlwyd on Raspbian Bullseye for Raspberry Pi
-
-```shell
-$ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.6.0/glewlwyd-full_2.6.0_raspbian_bullseye_armv7l.tar.gz
-$ tar xf glewlwyd-full_2.6.0_raspbian_bullseye_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.2.1_raspbian_bullseye_armv7l.deb
-$ sudo dpkg -i libyder_1.4.14_raspbian_bullseye_armv7l.deb
-$ sudo dpkg -i libhoel_1.4.18_raspbian_bullseye_armv7l.deb
-$ sudo dpkg -i libulfius_2.7.6_raspbian_bullseye_armv7l.deb
-$ sudo dpkg -i librhonabwy_1.1.2_raspbian_bullseye_armv7l.deb
-$ sudo dpkg -i libiddawc_1.1.1_raspbian_bullseye_armv7l.deb
-$ sudo dpkg -i glewlwyd_2.6.0_raspbian_bullseye_armv7l.deb
-```
-
-### Install Glewlwyd on Ubuntu 20.04 LTS Focal
-
-```shell
-$ sudo apt install -y sqlite3 liboath0 libconfig9 libjansson4 libcurl3-gnutls libldap-2.4-2 libmicrohttpd12 libsqlite3-0 libpq5 default-mysql-client zlib1g libcbor0.6 pkg-config
-$ wget https://github.com/babelouest/glewlwyd/releases/download/v2.6.0/glewlwyd-full_2.6.0_ubuntu_focal_x86_64.tar.gz
-$ tar xf glewlwyd-full_2.6.0_ubuntu_focal_x86_64.tar.gz
-$ sudo dpkg -i liborcania_2.2.1_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i libyder_1.4.14_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i libhoel_1.4.18_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i libulfius_2.7.6_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i librhonabwy_1.1.2_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i libiddawc_1.1.1_ubuntu_focal_x86_64.deb
-$ sudo dpkg -i glewlwyd_2.6.0_ubuntu_focal_x86_64.deb
-```
-
-If there's no package available for your distribution, you can compile it manually using `CMake` or `Makefile`.
-
 ## Docker
 
 The docker page is available at the following address: [https://hub.docker.com/r/babelouest/glewlwyd](https://hub.docker.com/r/babelouest/glewlwyd)
@@ -390,7 +320,9 @@ $ docker run -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd -e GLWD_EXTERNAL
 
 ### Docker image builder
 
-The root directory contains a Docker file to build the docker image from the source. To build your own docker image, go to Glewlwyd source root directory and run `make docker`. This will build a docker image called `babelouest/glewlwyd:src`.
+#### Build docker image with last source
+
+The root directory contains a Docker file to build the docker image from the current master branch on github. To build your own docker image, go to Glewlwyd source root directory and run `make docker`. This will build a docker image called `babelouest/glewlwyd:src`.
 
 ```shell
 $ make docker
@@ -398,6 +330,10 @@ $ docker run --rm -it -p 4593:4593 -v /path/to/your/config:/etc/glewlwyd babelou
 ```
 
 You can use the same options than in the official docker image, including customized configuration.
+
+#### Build docker image with last release
+
+The `docs/docker/` directory contains a Docker file to build the docker image from the last release. To build your own docker image, go to `docs/docker/` and run `make`. This will build a docker image called `babelouest/glewlwyd:latest`.
 
 ## Manual install from source
 
@@ -838,7 +774,7 @@ Optional, default value is `SHA256`.
 
 Specify in the config file the parameter `hash_algorithm` to store token and secret digests.
 
-Algorithms available are `SHA1`, `SHA256`, `SHA512` and `MD5`. Algorithms recommended are `SHA256` or `SHA512`.
+Algorithms available are `SHA1`, `SHA256` and `SHA512`. Algorithms recommended are `SHA256` or `SHA512`.
 
 ### SSL/TLS
 
