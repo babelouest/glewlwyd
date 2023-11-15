@@ -128,7 +128,7 @@ secure_connection_key_file="/etc/ssl/certs/cert.key"
 secure_connection_pem_file="/etc/ssl/certs/cert.pem"
 secure_connection_ca_file="/etc/ssl/certs/ca.crt"
 
-# Algorithms available are SHA1, SHA256, SHA512, MD5, default is SHA256
+# Algorithms available are SHA1, SHA256, SHA512, default is SHA256
 hash_algorithm = "SHA512"
 
 # MariaDB/Mysql database connection
