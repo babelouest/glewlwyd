@@ -8,6 +8,8 @@
 - Add config values `user_backend_api_run_enabled`, `user_middleware_backend_api_run_enabled`, `client_backend_api_run_enabled`, `scheme_api_run_enabled` to list authorized backend or schemes for a Glewlwyd instance
 - Add config value `originating_ip_header` to specify the header value containg the originating IP address, if any
 - Add config values `response_body_limit` and `max_header` to limit download sizes when relevant
+- Rework Docker files to build from source instead of downloading packages from github
+- cmake: split package build options in 3 (tar.gz, deb and rpm), and set all packages build to off by default
 
 ## 2.7.5
 
