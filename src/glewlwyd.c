@@ -1238,16 +1238,10 @@ int build_config_from_file(struct config_elements * config) {
     if (config_lookup_string(&cfg, "hash_algorithm", &str_value) == CONFIG_TRUE) {
       if (!o_strcmp("SHA1", str_value)) {
         config->hash_algorithm = digest_SHA1;
-      } else if (!o_strcmp("SHA224", str_value)) {
-        config->hash_algorithm = digest_SHA224;
       } else if (!o_strcmp("SHA256", str_value)) {
         config->hash_algorithm = digest_SHA256;
-      } else if (!o_strcmp("SHA384", str_value)) {
-        config->hash_algorithm = digest_SHA384;
       } else if (!o_strcmp("SHA512", str_value)) {
         config->hash_algorithm = digest_SHA512;
-      } else if (!o_strcmp("MD5", str_value)) {
-        config->hash_algorithm = digest_MD5;
       } else {
         fprintf(stderr, "Error token hash algorithm: %s, exiting\n", str_value);
         ret = G_ERROR_PARAM;
@@ -1268,7 +1262,7 @@ int build_config_from_file(struct config_elements * config) {
               break;
             } else {
               if (h_execute_query_sqlite(config->conn, "PRAGMA foreign_keys = ON;") != H_OK) {
-                y_log_message(Y_LOG_LEVEL_ERROR, "Error executing sqlite3 query 'PRAGMA foreign_keys = ON;, exiting'");
+                fprintf(stderr, "Error executing sqlite3 query 'PRAGMA foreign_keys = ON;, exiting'\n");
                 ret = G_ERROR_PARAM;
                 break;
               }
@@ -1291,7 +1285,7 @@ int build_config_from_file(struct config_elements * config) {
             break;
           } else {
             if (h_execute_query_mariadb(config->conn, "SET sql_mode='PIPES_AS_CONCAT';", NULL) != H_OK) {
-              y_log_message(Y_LOG_LEVEL_ERROR, "Error executing mariadb query 'SET sql_mode='PIPES_AS_CONCAT';', exiting");
+              fprintf(stderr, "Error executing mariadb query 'SET sql_mode='PIPES_AS_CONCAT';', exiting\n");
               ret = G_ERROR_PARAM;
               break;
             }
@@ -1839,16 +1833,10 @@ int build_config_from_env(struct config_elements * config) {
   if ((value = getenv(GLEWLWYD_ENV_HASH_ALGORITHM)) != NULL && !o_strnullempty(value)) {
     if (!o_strcmp("SHA1", value)) {
       config->hash_algorithm = digest_SHA1;
-    } else if (!o_strcmp("SHA224", value)) {
-      config->hash_algorithm = digest_SHA224;
     } else if (!o_strcmp("SHA256", value)) {
       config->hash_algorithm = digest_SHA256;
-    } else if (!o_strcmp("SHA384", value)) {
-      config->hash_algorithm = digest_SHA384;
     } else if (!o_strcmp("SHA512", value)) {
       config->hash_algorithm = digest_SHA512;
-    } else if (!o_strcmp("MD5", value)) {
-      config->hash_algorithm = digest_MD5;
     } else {
       fprintf(stderr, "Error token hash algorithm: %s (env), exiting\n", value);
       ret = G_ERROR_PARAM;
@@ -1866,7 +1854,7 @@ int build_config_from_env(struct config_elements * config) {
         ret = G_ERROR_PARAM;
       } else {
         if (h_execute_query_sqlite(config->conn, "PRAGMA foreign_keys = ON;") != H_OK) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "Error executing sqlite3 query 'PRAGMA foreign_keys = ON; (env), exiting'");
+          fprintf(stderr, "Error executing sqlite3 query 'PRAGMA foreign_keys = ON; (env), exiting'\n");
           ret = G_ERROR_PARAM;
         }
       }
@@ -1878,7 +1866,7 @@ int build_config_from_env(struct config_elements * config) {
           ret = G_ERROR_PARAM;
         } else {
           if (h_execute_query_mariadb(config->conn, "SET sql_mode='PIPES_AS_CONCAT';", NULL) != H_OK) {
-            y_log_message(Y_LOG_LEVEL_ERROR, "Error executing mariadb query 'SET sql_mode='PIPES_AS_CONCAT'; (env), exiting'");
+            fprintf(stderr, "Error executing mariadb query 'SET sql_mode='PIPES_AS_CONCAT'; (env), exiting'\n");
             ret = G_ERROR_PARAM;
           }
         }
