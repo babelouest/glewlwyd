@@ -48,11 +48,35 @@ clean:
 	docker rmi -f babelouest/glewlwyd:src babelouest/glewlwyd:ci
 	docker system prune -f
 
-docker:
-	docker build -t babelouest/glewlwyd:src .
+docs/docker/orcania.tar.gz:
+	wget https://github.com/babelouest/orcania/archive/refs/heads/master.tar.gz -O docs/docker/orcania.tar.gz
 
-docker-ci:
+docs/docker/yder.tar.gz:
+	wget https://github.com/babelouest/yder/archive/refs/heads/master.tar.gz -O docs/docker/yder.tar.gz
+
+docs/docker/ulfius.tar.gz:
+	wget https://github.com/babelouest/ulfius/archive/refs/heads/master.tar.gz -O docs/docker/ulfius.tar.gz
+
+docs/docker/hoel.tar.gz:
+	wget https://github.com/babelouest/hoel/archive/refs/heads/master.tar.gz -O docs/docker/hoel.tar.gz
+
+docs/docker/rhonabwy.tar.gz:
+	wget https://github.com/babelouest/rhonabwy/archive/refs/heads/master.tar.gz -O docs/docker/rhonabwy.tar.gz
+
+docs/docker/iddawc.tar.gz:
+	wget https://github.com/babelouest/iddawc/archive/refs/heads/master.tar.gz -O docs/docker/iddawc.tar.gz
+
+docker: docs/docker/orcania.tar.gz docs/docker/yder.tar.gz docs/docker/ulfius.tar.gz docs/docker/hoel.tar.gz docs/docker/rhonabwy.tar.gz docs/docker/iddawc.tar.gz
+	docker build --file=Dockerfile -t babelouest/glewlwyd:src .
+
+docker-run:
+	docker run --rm -it -p 4593:4593 babelouest/glewlwyd:src
+
+docker-ci: docs/docker/orcania.tar.gz docs/docker/yder.tar.gz docs/docker/ulfius.tar.gz docs/docker/hoel.tar.gz docs/docker/rhonabwy.tar.gz docs/docker/iddawc.tar.gz 
 	docker build --file=Dockerfile-ci -t babelouest/glewlwyd:ci .
+
+docker-ci-run:
+	docker run --rm -it -p 4593:4593 babelouest/glewlwyd:ci
 
 manpage:
 	cd $(GLEWLWYD_SOURCE) && $(MAKE) $*

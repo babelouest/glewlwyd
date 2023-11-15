@@ -27,7 +27,6 @@ RUN apk add --no-cache \
     libconfig-dev \
     libgcrypt-dev \
     sqlite-dev \
-    sqlite \
     mariadb-dev \
     postgresql-dev \
     util-linux-dev \
@@ -36,13 +35,39 @@ RUN apk add --no-cache \
     oath-toolkit-dev \
     libtool \
     libcbor-dev && \
-    mkdir /opt/glewlwyd/build && cd /opt/glewlwyd/build/ && \
-    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DWITH_JOURNALD=off -DWITH_MOCK=on .. && \
+    mkdir -p /opt/orcania/build && cd /opt/orcania/ && \
+    tar xvf /opt/glewlwyd/docs/docker/orcania.tar.gz --strip 1 && \
+    cd /opt/orcania/build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_BASE64URL=OFF .. && \
+    make && make install && \
+    mkdir -p /opt/yder/build && cd /opt/yder/ && \
+    tar xvf /opt/glewlwyd/docs/docker/yder.tar.gz --strip 1 && \
+    cd /opt/yder/build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DWITH_JOURNALD=OFF .. && \
+    make && make install && \
+    mkdir -p /opt/ulfius/build && cd /opt/ulfius/ && \
+    tar xvf /opt/glewlwyd/docs/docker/ulfius.tar.gz --strip 1 && \
+    cd /opt/ulfius/build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_UWSC=OFF .. && \
+    make && make install && \
+    mkdir -p /opt/hoel/build && cd /opt/hoel/ && \
+    tar xvf /opt/glewlwyd/docs/docker/hoel.tar.gz --strip 1 && \
+    cd /opt/hoel/build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib .. && \
+    make && make install && \
+    mkdir -p /opt/rhonabwy/build && cd /opt/rhonabwy/ && \
+    tar xvf /opt/glewlwyd/docs/docker/rhonabwy.tar.gz --strip 1 && \
+    cd /opt/rhonabwy/build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_RNBYC=OFF .. && \
+    make && make install && \
+    mkdir -p /opt/iddawc/build && cd /opt/iddawc/ && \
+    tar xvf /opt/glewlwyd/docs/docker/iddawc.tar.gz --strip 1 && \
+    cd /opt/iddawc/build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib .. && \
+    make && make install && \
+    mkdir -p /opt/glewlwyd/build && cd /opt/glewlwyd/build/ && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DWITH_MOCK=ON .. && \
     make && make install
-
-
-RUN sqlite3 /tmp/glewlwyd.db < /opt/glewlwyd/docs/database/init.sqlite3.sql
-RUN sqlite3 /tmp/glewlwyd.db < /opt/glewlwyd/test/glewlwyd-test.sql
 
 FROM alpine:latest AS runner
 RUN apk add --no-cache \
@@ -54,11 +79,11 @@ RUN apk add --no-cache \
     libcurl \
     libldap \
     libmicrohttpd \
-    libcbor \
     sqlite-libs \
     libpq \
     oath-toolkit-liboath \
     mariadb-connector-c \
+    libcbor \
     bash
 
 COPY --from=builder /usr/lib/liborcania* /usr/lib/
@@ -71,9 +96,8 @@ COPY --from=builder /usr/lib/glewlwyd/ /usr/lib/glewlwyd/
 COPY --from=builder /usr/bin/glewlwyd /usr/bin
 COPY --from=builder /usr/share/glewlwyd/ /usr/share/glewlwyd/
 COPY --from=builder /usr/share/glewlwyd/webapp/config.json /etc/glewlwyd/
-COPY --from=builder /usr/etc/glewlwyd/ /etc/glewlwyd/
 COPY --from=builder /opt/glewlwyd/test/glewlwyd-ci.conf /etc/glewlwyd/
-COPY --from=builder /tmp/glewlwyd.db /tmp/glewlwyd.db
+COPY --from=builder /usr/etc/glewlwyd/ /etc/glewlwyd/
 
 RUN rm /usr/share/glewlwyd/webapp/config.json
 RUN cp /etc/glewlwyd/config.json /usr/share/glewlwyd/webapp/config.json

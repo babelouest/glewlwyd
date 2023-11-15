@@ -34,8 +34,38 @@ RUN apk add --no-cache \
     oath-toolkit-dev \
     libtool \
     libcbor-dev && \
-    mkdir /opt/glewlwyd/build && cd /opt/glewlwyd/build/ && \
-    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DWITH_JOURNALD=off .. && \
+    mkdir -p /opt/orcania/build && cd /opt/orcania/ && \
+    tar xvf /opt/glewlwyd/docs/docker/orcania.tar.gz --strip 1 && \
+    cd /opt/orcania/build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_BASE64URL=OFF .. && \
+    make && make install && \
+    mkdir -p /opt/yder/build && cd /opt/yder/ && \
+    tar xvf /opt/glewlwyd/docs/docker/yder.tar.gz --strip 1 && \
+    cd /opt/yder/build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DWITH_JOURNALD=OFF .. && \
+    make && make install && \
+    mkdir -p /opt/ulfius/build && cd /opt/ulfius/ && \
+    tar xvf /opt/glewlwyd/docs/docker/ulfius.tar.gz --strip 1 && \
+    cd /opt/ulfius/build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_UWSC=OFF .. && \
+    make && make install && \
+    mkdir -p /opt/hoel/build && cd /opt/hoel/ && \
+    tar xvf /opt/glewlwyd/docs/docker/hoel.tar.gz --strip 1 && \
+    cd /opt/hoel/build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib .. && \
+    make && make install && \
+    mkdir -p /opt/rhonabwy/build && cd /opt/rhonabwy/ && \
+    tar xvf /opt/glewlwyd/docs/docker/rhonabwy.tar.gz --strip 1 && \
+    cd /opt/rhonabwy/build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_RNBYC=OFF .. && \
+    make && make install && \
+    mkdir -p /opt/iddawc/build && cd /opt/iddawc/ && \
+    tar xvf /opt/glewlwyd/docs/docker/iddawc.tar.gz --strip 1 && \
+    cd /opt/iddawc/build && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib .. && \
+    make && make install && \
+    mkdir -p /opt/glewlwyd/build && cd /opt/glewlwyd/build/ && \
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_INSTALL_LIBDIR=lib .. && \
     make && make install
 
 FROM alpine:latest AS runner
