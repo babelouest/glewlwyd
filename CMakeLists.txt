@@ -222,6 +222,8 @@ if (WITH_USER_LDAP)
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libldap-2.5-0")
   elseif ("${DISTRIB_CODENAME}" STREQUAL "ubuntu" AND "${RELEASE_CODENAME}" STREQUAL "lunar")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libldap2")
+  elseif ("${DISTRIB_CODENAME}" STREQUAL "ubuntu" AND "${RELEASE_CODENAME}" STREQUAL "mantic")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libldap2")
   elseif ("${DISTRIB_CODENAME}" STREQUAL "debian" AND "${RELEASE_CODENAME}" STREQUAL "bookworm")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libldap-2.5-0")
   elseif ("${DISTRIB_CODENAME}" STREQUAL "debian" AND "${RELEASE_CODENAME}" STREQUAL "trixie")
@@ -303,6 +305,8 @@ if (WITH_CLIENT_LDAP)
   elseif ("${DISTRIB_CODENAME}" STREQUAL "ubuntu" AND "${RELEASE_CODENAME}" STREQUAL "kinetic")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libldap-2.5-0")
   elseif ("${DISTRIB_CODENAME}" STREQUAL "ubuntu" AND "${RELEASE_CODENAME}" STREQUAL "lunar")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libldap2")
+  elseif ("${DISTRIB_CODENAME}" STREQUAL "ubuntu" AND "${RELEASE_CODENAME}" STREQUAL "mantic")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libldap2")
   elseif ("${DISTRIB_CODENAME}" STREQUAL "debian" AND "${RELEASE_CODENAME}" STREQUAL "bookworm")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libldap-2.5-0")
@@ -397,8 +401,8 @@ if (WITH_SCHEME_WEBAUTHN)
   if ("${DISTRIB_CODENAME}" STREQUAL "ubuntu")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libcbor0.6|libcbor0.8")
   endif ()
-  if ("${DISTRIB_CODENAME}" STREQUAL "debian" AND NOT ${RELEASE_CODENAME} STREQUAL "stretch")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libcbor0|libcbor0.8")
+  if ("${DISTRIB_CODENAME}" STREQUAL "debian")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libcbor0|libcbor0.8|libcbor0.10")
   endif ()
 
   if (NOT Rhonabwy_FOUND)
@@ -445,10 +449,6 @@ endif ()
 option(WITH_SCHEME_OAUTH2 "Build Oauth2/OIDC scheme module" on)
 if (WITH_SCHEME_OAUTH2)
   set(LIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd-common.h ${CMAKE_CURRENT_SOURCE_DIR}/src/misc.c ${SCHEME_MODULES_SRC_PATH}/oauth2.c)
-
-  if (NOT ${RELEASE_CODENAME} STREQUAL "stretch" AND NOT ${RELEASE_CODENAME} STREQUAL "bionic")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}")
-  endif ()
 
   set(SCHEME_OAUTH2_LIBS )
 
@@ -902,8 +902,8 @@ install(FILES docs/glewlwyd.service
     DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
 install(FILES docs/glewlwyd-init
     DESTINATION ${CMAKE_INSTALL_DATADIR}/glewlwyd/docs/ COMPONENT runtime)
-INSTALL(FILES docs/glewlwyd.8
-    DESTINATION ${CMAKE_INSTALL_MANDIR}/man8 COMPONENT runtime)
+#INSTALL(FILES docs/glewlwyd.8
+#    DESTINATION ${CMAKE_INSTALL_MANDIR}/man8 COMPONENT runtime)
 
 set(TARGETS glewlwyd)
 
@@ -924,6 +924,7 @@ endif ()
 
 # packaging
 
+set(CPACK_GENERATOR )
 set(CPACK_PACKAGE_VERSION_MAJOR ${PROGRAM_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${PROGRAM_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${PROGRAM_VERSION_PATCH})
@@ -934,29 +935,32 @@ set(PACKAGE_FILE_NAME
 set(PACKAGE_IGNORED_FILES
     "${CMAKE_CURRENT_BINARY_DIR}/;/.git/;.gitignore;~$;${CPACK_SOURCE_IGNORE_FILES}")
 
-set(CPACK_GENERATOR "TGZ;DEB")
-
-set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mail@babelouest.org")
-set(CPACK_DEBIAN_PACKAGE_DESCRIPTION ${PROJECT_DESCRIPTION})
-set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/babelouest/glewlwyd")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libconfig9, libgnutls30 (>= 3.5.0), liborcania|liborcania-dev (>= ${ORCANIA_VERSION_REQUIRED}), libyder|libyder-dev (>= ${YDER_VERSION_REQUIRED}), libulfius|libulfius-dev (>= ${ULFIUS_VERSION_REQUIRED}), libhoel|libhoel-dev (>= ${HOEL_VERSION_REQUIRED}), lsb-base (>= 3.0-6)")
 set(CPACK_PACKAGE_FILE_NAME ${PACKAGE_FILE_NAME})
 
-if (NOT ${RELEASE_CODENAME} STREQUAL "stretch" AND NOT ${RELEASE_CODENAME} STREQUAL "bionic")
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libjansson4 (>= ${JANSSON_VERSION_REQUIRED})")
+option(BUILD_TGZ "Build a TAR.GZ for your system" OFF)
+if (BUILD_TGZ)
+    list(APPEND CPACK_GENERATOR TGZ)
+    set(CPACK_SOURCE_GENERATOR "TGZ")
+    set(CPACK_SOURCE_PACKAGE_FILE_NAME ${PACKAGE_FILE_NAME})
+    set(CPACK_SOURCE_IGNORE_FILES ${PACKAGE_IGNORED_FILES})
+endif ()
+
+option(BUILD_DEB "Build a DEB for your system" OFF)
+if (BUILD_DEB)
+    list(APPEND CPACK_GENERATOR DEB)
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "mail@babelouest.org")
+    set(CPACK_DEBIAN_PACKAGE_DESCRIPTION ${PROJECT_DESCRIPTION})
+    set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/babelouest/glewlwyd")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libconfig9, libgnutls30 (>= 3.5.0), liborcania|liborcania-dev (>= ${ORCANIA_VERSION_REQUIRED}), libyder|libyder-dev (>= ${YDER_VERSION_REQUIRED}), libulfius|libulfius-dev (>= ${ULFIUS_VERSION_REQUIRED}), libhoel|libhoel-dev (>= ${HOEL_VERSION_REQUIRED}), lsb-base (>= 3.0-6)")
 endif ()
 
 option(BUILD_RPM "Build a RPM for your system" OFF)
 if (BUILD_RPM)
-  set(CPACK_GENERATOR "TGZ;DEB;RPM")
-  set(CPACK_RPM_PACKAGE_LICENSE "GPL")
-  set(CPACK_RPM_PACKAGE_URL "http://babelouest.github.io/glewlwyd/")
-  set(CPACK_RPM_PACKAGE_REQUIRES "openldap, liboath, libconfig, gnutls >= 3.5.0, jansson >= ${JANSSON_VERSION_REQUIRED}, liborcania >= ${ORCANIA_VERSION_REQUIRED}, libyder >= ${YDER_VERSION_REQUIRED}, libulfius >= ${ULFIUS_VERSION_REQUIRED}, libhoel >= ${HOEL_VERSION_REQUIRED}")
+    list(APPEND CPACK_GENERATOR RPM)
+    set(CPACK_RPM_PACKAGE_LICENSE "GPL")
+    set(CPACK_RPM_PACKAGE_URL "http://babelouest.github.io/glewlwyd/")
+    set(CPACK_RPM_PACKAGE_REQUIRES "openldap, liboath, libconfig, gnutls >= 3.5.0, jansson >= ${JANSSON_VERSION_REQUIRED}, liborcania >= ${ORCANIA_VERSION_REQUIRED}, libyder >= ${YDER_VERSION_REQUIRED}, libulfius >= ${ULFIUS_VERSION_REQUIRED}, libhoel >= ${HOEL_VERSION_REQUIRED}")
 endif ()
-
-set(CPACK_SOURCE_GENERATOR "TGZ")
-set(CPACK_SOURCE_PACKAGE_FILE_NAME ${PACKAGE_FILE_NAME})
-set(CPACK_SOURCE_IGNORE_FILES ${PACKAGE_IGNORED_FILES})
 
 include(CPack)
 
@@ -981,4 +985,6 @@ message(STATUS "Build plugin module legacy oauth2:    ${WITH_PLUGIN_OAUTH2}")
 message(STATUS "Build plugin module OpenID Connect:   ${WITH_PLUGIN_OIDC}")
 message(STATUS "Build plugin register new account:    ${WITH_PLUGIN_REGISTER}")
 message(STATUS "Build the testing tree:               ${BUILD_GLEWLWYD_TESTING}")
+message(STATUS "Build TAR.GZ package:                 ${BUILD_TGZ}")
+message(STATUS "Build DEB package:                    ${BUILD_DEB}")
 message(STATUS "Build RPM package:                    ${BUILD_RPM}")
