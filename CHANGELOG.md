@@ -10,7 +10,7 @@
 - Add config values `response_body_limit` and `max_header` to limit download sizes when relevant
 - Rework Docker files to build from source instead of downloading packages from github
 - cmake: split package build options in 3 (tar.gz, deb and rpm), and set all packages build to off by default
-- Security: Fix possible buffer overflow in webauthn attestation
+- Security: Fix possible buffer overflow in webauthn attestation (CVE-2023-49208)
 
 ## 2.7.5
 
