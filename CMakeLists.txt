@@ -129,7 +129,7 @@ add_executable(glewlwyd ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.h
                         ${CMAKE_CURRENT_SOURCE_DIR}/src/metrics.c
                         ${CMAKE_CURRENT_SOURCE_DIR}/src/webservice.c
                         ${CMAKE_CURRENT_SOURCE_DIR}/src/glewlwyd.c )
-set_target_properties(glewlwyd PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion")
+set_target_properties(glewlwyd PROPERTIES COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic")
 
 find_package(Orcania ${ORCANIA_VERSION_REQUIRED} REQUIRED)
 if ("${ORCANIA_VERSION_STRING}" VERSION_GREATER_EQUAL "${ORCANIA_VERSION_REQUIRED}")
@@ -188,7 +188,7 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
 
   add_library(usermodmock MODULE ${MOCK_LIB_SRC})
   set_target_properties(usermodmock PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user")
   target_link_libraries(usermodmock ${GLWD_LIBS})
   list(APPEND USER_MODULES usermodmock)
@@ -200,7 +200,7 @@ if (WITH_USER_DATABASE)
 
   add_library(usermoddatabase MODULE ${LIB_SRC})
   set_target_properties(usermoddatabase PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user")
   target_link_libraries(usermoddatabase ${GLWD_LIBS})
   list(APPEND USER_MODULES usermoddatabase)
@@ -234,7 +234,7 @@ if (WITH_USER_LDAP)
 
   add_library(usermodldap MODULE ${LIB_SRC})
   set_target_properties(usermodldap PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user")
   target_link_libraries(usermodldap ${GLWD_LIBS} OpenLDAP::OpenLDAP "-llber")
   list(APPEND USER_MODULES usermodldap)
@@ -246,7 +246,7 @@ if (WITH_USER_HTTP)
 
   add_library(usermodhttp MODULE ${LIB_SRC})
   set_target_properties(usermodhttp PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user")
   target_link_libraries(usermodhttp ${GLWD_LIBS})
   list(APPEND USER_MODULES usermodhttp)
@@ -259,7 +259,7 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
 
   add_library(usermidmodmock MODULE ${MOCK_LIB_SRC})
   set_target_properties(usermidmodmock PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/user_middleware")
   target_link_libraries(usermidmodmock ${GLWD_LIBS})
   set(USER_MIDDLEWARE_MODULES ${USER_MIDDLEWARE_MODULES} usermidmodmock)
@@ -272,7 +272,7 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
 
   add_library(clientmodmock MODULE ${MOCK_LIB_SRC})
   set_target_properties(clientmodmock PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/client")
   target_link_libraries(clientmodmock ${GLWD_LIBS})
   set(CLIENT_MODULES ${CLIENT_MODULES} clientmodmock)
@@ -284,7 +284,7 @@ if (WITH_CLIENT_DATABASE)
 
   add_library(clientmoddatabase MODULE ${LIB_SRC})
   set_target_properties(clientmoddatabase PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/client")
   target_link_libraries(clientmoddatabase ${GLWD_LIBS})
   list(APPEND CLIENT_MODULES clientmoddatabase)
@@ -318,7 +318,7 @@ if (WITH_CLIENT_LDAP)
 
   add_library(clientmodldap MODULE ${LIB_SRC})
   set_target_properties(clientmodldap PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/client")
   target_link_libraries(clientmodldap ${GLWD_LIBS} OpenLDAP::OpenLDAP "-llber")
   list(APPEND CLIENT_MODULES clientmodldap)
@@ -333,7 +333,7 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
 
   add_library(schememodmock MODULE ${MOCK_LIB_SRC})
   set_target_properties(schememodmock PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
   target_link_libraries(schememodmock ${GLWD_LIBS})
   list(APPEND SCHEME_MODULES schememodmock)
@@ -345,7 +345,7 @@ if (WITH_SCHEME_RETYPE_PASSWORD)
 
   add_library(schememodpassword MODULE ${LIB_SRC})
   set_target_properties(schememodpassword PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
   target_link_libraries(schememodpassword ${GLWD_LIBS})
   list(APPEND SCHEME_MODULES schememodpassword)
@@ -357,7 +357,7 @@ if (WITH_SCHEME_EMAIL)
 
   add_library(schememodemail MODULE ${LIB_SRC})
   set_target_properties(schememodemail PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
   target_link_libraries(schememodemail ${GLWD_LIBS})
   list(APPEND SCHEME_MODULES schememodemail)
@@ -376,7 +376,7 @@ if (WITH_SCHEME_OTP)
 
   add_library(schememodotp MODULE ${LIB_SRC})
   set_target_properties(schememodotp PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
   target_link_libraries(schememodotp ${GLWD_LIBS} OATH::OATH)
   list(APPEND SCHEME_MODULES schememodotp)
@@ -416,7 +416,7 @@ if (WITH_SCHEME_WEBAUTHN)
 
   add_library(schememodwebauthn MODULE ${LIB_SRC})
   set_target_properties(schememodwebauthn PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
   target_link_libraries(schememodwebauthn ${GLWD_LIBS} CBOR::CBOR OpenLDAP::OpenLDAP Rhonabwy::Rhonabwy)
   list(APPEND SCHEME_MODULES schememodwebauthn)
@@ -428,7 +428,7 @@ if (WITH_SCHEME_CERTIFICATE)
 
   add_library(schememodcertificate MODULE ${LIB_SRC})
   set_target_properties(schememodcertificate PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
   target_link_libraries(schememodcertificate ${GLWD_LIBS})
   list(APPEND SCHEME_MODULES schememodcertificate)
@@ -440,7 +440,7 @@ if (WITH_SCHEME_HTTP)
 
   add_library(schememodhttp MODULE ${LIB_SRC})
   set_target_properties(schememodhttp PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
   target_link_libraries(schememodhttp ${GLWD_LIBS})
   list(APPEND SCHEME_MODULES schememodhttp)
@@ -472,7 +472,7 @@ if (WITH_SCHEME_OAUTH2)
 
   add_library(schememodoauth2 MODULE ${LIB_SRC})
   set_target_properties(schememodoauth2 PROPERTIES
-                        COMPILE_OPTIONS "-Wextra;-Wconversion"
+                        COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
                         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/scheme")
   target_link_libraries(schememodoauth2 ${GLWD_LIBS} ${SCHEME_OAUTH2_LIBS})
   list(APPEND SCHEME_MODULES schememodoauth2)
@@ -487,7 +487,7 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
 
   add_library(pluginmodmock MODULE ${MOCK_LIB_SRC})
   set_target_properties(pluginmodmock PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
   target_link_libraries(pluginmodmock ${MOCK_LIBS})
   list(APPEND PLUGIN_MODULES pluginmodmock)
@@ -510,7 +510,7 @@ if (WITH_PLUGIN_OAUTH2)
 
   add_library(protocol_oauth2 MODULE ${LIB_SRC})
   set_target_properties(protocol_oauth2 PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
   target_link_libraries(protocol_oauth2 ${GLWD_LIBS} Rhonabwy::Rhonabwy)
   list(APPEND PLUGIN_MODULES protocol_oauth2)
@@ -533,7 +533,7 @@ if (WITH_PLUGIN_OIDC)
 
   add_library(protocol_oidc MODULE ${LIB_SRC})
   set_target_properties(protocol_oidc PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
   target_link_libraries(protocol_oidc ${GLWD_LIBS} Rhonabwy::Rhonabwy)
   list(APPEND PLUGIN_MODULES protocol_oidc)
@@ -546,7 +546,7 @@ if (WITH_PLUGIN_REGISTER)
 
   add_library(protocol_register MODULE ${LIB_SRC})
   set_target_properties(protocol_register PROPERTIES
-      COMPILE_OPTIONS "-Wextra;-Wconversion"
+      COMPILE_OPTIONS "-Wextra;-Wconversion;-Wpedantic"
       LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugin")
   target_link_libraries(protocol_register ${GLWD_LIBS})
   list(APPEND PLUGIN_MODULES protocol_register)
