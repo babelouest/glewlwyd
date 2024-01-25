@@ -88,7 +88,7 @@ else
   printf "user1.crt          \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-$CERTTOOL --certificate-info --infile $DEST/user1.crt --outder | base64 > $DEST/user1.crt.der 2>>$DEST/certtool.log
+$CERTTOOL --certificate-info --infile $DEST/user1.crt --outder | base64 -w0 > $DEST/user1.crt.der 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "user1.crt.der      \033[0;32mOK\033[0m\n"
@@ -114,7 +114,7 @@ else
   printf "user2.crt          \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-$CERTTOOL --certificate-info --infile $DEST/user2.crt --outder | base64 > $DEST/user2.crt.der 2>>$DEST/certtool.log
+$CERTTOOL --certificate-info --infile $DEST/user2.crt --outder | base64 -w0 > $DEST/user2.crt.der 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "user2.crt.der      \033[0;32mOK\033[0m\n"
@@ -158,7 +158,7 @@ else
   printf "user3.crt          \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-$CERTTOOL --certificate-info --infile $DEST/user3.crt --outder | base64 > $DEST/user3.crt.der 2>>$DEST/certtool.log
+$CERTTOOL --certificate-info --infile $DEST/user3.crt --outder | base64 -w0 > $DEST/user3.crt.der 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "user3.crt.der      \033[0;32mOK\033[0m\n"
@@ -346,7 +346,7 @@ else
   printf "client1.crt        \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-$CERTTOOL --certificate-info --infile $DEST/client1.crt --outder | base64 > $DEST/client1.crt.der 2>>$DEST/certtool.log
+$CERTTOOL --certificate-info --infile $DEST/client1.crt --outder | base64 -w0 > $DEST/client1.crt.der 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "client1.crt.der    \033[0;32mOK\033[0m\n"
@@ -372,7 +372,7 @@ else
   printf "client2.crt        \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-$CERTTOOL --certificate-info --infile $DEST/client2.crt --outder | base64 > $DEST/client2.crt.der 2>>$DEST/certtool.log
+$CERTTOOL --certificate-info --infile $DEST/client2.crt --outder | base64 -w0 > $DEST/client2.crt.der 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "client2.crt.der    \033[0;32mOK\033[0m\n"
@@ -398,7 +398,7 @@ else
   printf "client3.crt        \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-$CERTTOOL --certificate-info --infile $DEST/client3.crt --outder | base64 > $DEST/client3.crt.der 2>>$DEST/certtool.log
+$CERTTOOL --certificate-info --infile $DEST/client3.crt --outder | base64 -w0 > $DEST/client3.crt.der 2>>$DEST/certtool.log
 STATUS=$?
 if [ $STATUS -eq 0 ]; then
   printf "client3.crt.der    \033[0;32mOK\033[0m\n"
@@ -442,7 +442,7 @@ else
   printf "apple-int.crt      \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-$CERTTOOL --certificate-info --infile $DEST/apple-int.crt --outder | base64 > $DEST/apple-int.crt.der 2>>$DEST/certtool.log
+$CERTTOOL --certificate-info --infile $DEST/apple-int.crt --outder | base64 -w0 > $DEST/apple-int.crt.der 2>>$DEST/certtool.log
 
 # CA intermediate 2 apple
 $CERTTOOL --generate-privkey --outfile $DEST/apple-int2.key $ECDSA --sec-param High 2>>$DEST/certtool.log
@@ -461,7 +461,7 @@ else
   printf "apple-int2.crt     \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-$CERTTOOL --certificate-info --infile $DEST/apple-int.crt --outder | base64 > $DEST/apple-int.crt.der 2>>$DEST/certtool.log
+$CERTTOOL --certificate-info --infile $DEST/apple-int.crt --outder | base64 -w0 > $DEST/apple-int.crt.der 2>>$DEST/certtool.log
 
 # CA apple 2
 $CERTTOOL --generate-privkey --outfile $DEST/apple2.key $ECDSA --sec-param High 2>>$DEST/certtool.log
@@ -498,6 +498,6 @@ else
   printf "apple2-int.crt     \033[0;31mError\033[0m\n"
   RET=$STATUS
 fi
-$CERTTOOL --certificate-info --infile $DEST/apple-int.crt --outder | base64 > $DEST/apple-int.crt.der 2>>$DEST/certtool.log
+$CERTTOOL --certificate-info --infile $DEST/apple-int.crt --outder | base64 -w0 > $DEST/apple-int.crt.der 2>>$DEST/certtool.log
 
 exit $RET
