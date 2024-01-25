@@ -511,9 +511,9 @@ static int update_password_list(struct mod_parameters * param, json_int_t gu_id,
 static char ** get_salt_from_password_hash(struct mod_parameters * param, const char * username, json_t * j_iterations) {
   json_t * j_query, * j_result, * j_element = 0;
   int res;
-  unsigned char password_b64_decoded[1024] = {0};
+  struct _o_datum password_b64_decoded = {0, NULL};
   char * salt = NULL, * username_escaped, * username_clause, ** salt_list = NULL, * str_iterator;
-  size_t password_b64_decoded_len = 0, index = 0, gc_password_len;
+  size_t index = 0, gc_password_len;
   
   if (j_iterations != NULL) {
     username_escaped = h_escape_string_with_quotes(param->conn, username);
@@ -544,9 +544,8 @@ static char ** get_salt_from_password_hash(struct mod_parameters * param, const 
               gc_password_len = json_string_length(json_object_get(j_element, "guw_password"));
               json_array_append_new(j_iterations, json_integer(0));
             }
-            if (!json_string_null_or_empty(json_object_get(j_element, "guw_password")) && o_base64_decode((const unsigned char *)json_string_value(json_object_get(j_element, "guw_password")), gc_password_len, password_b64_decoded, &password_b64_decoded_len)) {
-              password_b64_decoded[password_b64_decoded_len] = '\0';
-              if ((salt = o_strdup((const char *)password_b64_decoded + password_b64_decoded_len - GLEWLWYD_DEFAULT_SALT_LENGTH)) != NULL) {
+            if (!json_string_null_or_empty(json_object_get(j_element, "guw_password")) && o_base64_decode_alloc((const unsigned char *)json_string_value(json_object_get(j_element, "guw_password")), gc_password_len, &password_b64_decoded)) {
+              if ((salt = o_strdup((const char *)password_b64_decoded.data + password_b64_decoded.size - GLEWLWYD_DEFAULT_SALT_LENGTH)) != NULL) {
                 salt_list[index] = salt;
               } else {
                 y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error extracting salt");
@@ -573,6 +572,7 @@ static char ** get_salt_from_password_hash(struct mod_parameters * param, const 
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error j_iterations is NULL");
   }
+  o_free(password_b64_decoded.data);
   return salt_list;
 }
 
