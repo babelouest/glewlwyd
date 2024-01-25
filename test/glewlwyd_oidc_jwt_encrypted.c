@@ -555,7 +555,7 @@ START_TEST(test_oidc_jwt_encrypted_userinfo_valid)
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   ck_assert_str_eq(u_map_get(resp.map_header, "Content-Type"), "application/jwt");
-  body = o_strndup(resp.binary_body, resp.binary_body_length);
+  body = o_strndup((const char *)resp.binary_body, resp.binary_body_length);
   r_jwt_init(&jwt_ui);
   
   ck_assert_int_eq(r_jwt_parse(jwt_ui, body, 0), RHN_OK);
@@ -791,7 +791,7 @@ START_TEST(test_oidc_jwt_encrypted_introspection_access_token_target_bearer_jwt)
   ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
   ck_assert_int_gt(resp.binary_body_length, 0);
   ck_assert_ptr_ne(NULL, resp.binary_body);
-  ck_assert_int_eq(r_jwt_parsen(jwt, resp.binary_body, resp.binary_body_length, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_parsen(jwt, (const char *)resp.binary_body, resp.binary_body_length, 0), RHN_OK);
   ck_assert_int_eq(r_jwt_add_enc_keys_pem_der(jwt, R_FORMAT_PEM, (unsigned char *)privkey_1_pem, o_strlen(privkey_1_pem), NULL, 0), RHN_OK);
   ck_assert_int_eq(r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, NULL, 0, (unsigned char *)pubkey_2_pem, o_strlen(pubkey_2_pem)), RHN_OK);
   ck_assert_int_eq(r_jwt_decrypt_verify_signature_nested(jwt, NULL, 0, NULL, 0), RHN_OK);

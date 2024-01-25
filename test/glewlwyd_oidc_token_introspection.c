@@ -583,7 +583,7 @@ START_TEST(test_oidc_introspection_access_token_target_bearer_jwt)
   ck_assert_int_eq(resp.status, 200);
   ck_assert_str_eq("application/jwt", u_map_get(resp.map_header, "Content-Type"));
   ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
-  ck_assert_int_eq(r_jwt_parsen(jwt, resp.binary_body, resp.binary_body_length, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_parsen(jwt, (const char *)resp.binary_body, resp.binary_body_length, 0), RHN_OK);
   ck_assert_ptr_ne(NULL, jwk = r_jwk_quick_import(R_IMPORT_SYMKEY, PLUGIN_KEY, o_strlen(PLUGIN_KEY)));
   ck_assert_int_eq(r_jwt_verify_signature(jwt, jwk, 0), RHN_OK);
   ck_assert_ptr_ne(NULL, j_response = r_jwt_get_full_claims_json_t(jwt));
@@ -660,7 +660,7 @@ START_TEST(test_oidc_introspection_access_token_target_bearer_jwt_response)
   ck_assert_int_eq(resp.status, 200);
   ck_assert_str_eq("application/token-introspection+jwt", u_map_get(resp.map_header, "Content-Type"));
   ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
-  ck_assert_int_eq(r_jwt_parsen(jwt, resp.binary_body, resp.binary_body_length, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_parsen(jwt, (const char *)resp.binary_body, resp.binary_body_length, 0), RHN_OK);
   ck_assert_ptr_ne(NULL, jwk = r_jwk_quick_import(R_IMPORT_SYMKEY, PLUGIN_KEY, o_strlen(PLUGIN_KEY)));
   ck_assert_int_eq(r_jwt_verify_signature(jwt, jwk, 0), RHN_OK);
   ck_assert_ptr_ne(NULL, j_response = r_jwt_get_full_claims_json_t(jwt));

@@ -320,6 +320,15 @@ START_TEST(test_glwd_scheme_otp_irl_authenticate_error)
   json_decref(j_params);
   
   j_params = json_pack("{sssssss{ss}}", 
+                       "username", USERNAME, 
+                       "scheme_type", MODULE_MODULE, 
+                       "scheme_name", MODULE_NAME,
+                       "value",
+                         "value", "");
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  
+  j_params = json_pack("{sssssss{ss}}", 
                                 "username", USERNAME, 
                                 "scheme_type", MODULE_MODULE, 
                                 "scheme_name", MODULE_NAME, 

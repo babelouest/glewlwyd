@@ -117,11 +117,25 @@ START_TEST(test_glwd_auth_password_error_login)
   ck_assert_int_eq(resp.status, 401);
   ck_assert_int_eq(resp.nb_cookies, 0);
 
+  j_body = json_pack("{ssss}", "username", USERNAME, "password", "");
+  ulfius_set_json_body_request(&req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.nb_cookies, 0);
+
   j_body = json_pack("{ssss}", "username", "error", "password", PASSWORD);
   ulfius_set_json_body_request(&req, j_body);
   json_decref(j_body);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.nb_cookies, 0);
+
+  j_body = json_pack("{ssss}", "", "error", "password", PASSWORD);
+  ulfius_set_json_body_request(&req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 400);
   ck_assert_int_eq(resp.nb_cookies, 0);
 
   j_body = json_pack("{ssss}", "username", "error", "password", "error");

@@ -560,6 +560,10 @@ START_TEST(test_glwd_scheme_mail_irl_validate_not_valid)
   ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 401, NULL, NULL, NULL), 1);
   json_decref(j_params);
   
+  j_params = json_pack("{sssssss{ss}}", "username", USERNAME, "scheme_type", MODULE_MODULE, "scheme_name", MODULE_NAME, "value", "code", "");
+  ck_assert_int_eq(run_simple_test(&user_req, "POST", SERVER_URI "auth/", NULL, NULL, j_params, NULL, 400, NULL, NULL, NULL), 1);
+  json_decref(j_params);
+  
   o_free(manager.mail_data);
   json_decref(j_response);
   ulfius_clean_request(&req);

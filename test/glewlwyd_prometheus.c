@@ -62,7 +62,7 @@ static int get_metrics(const char * metrics, json_t * labels) {
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
-  ck_assert_ptr_ne(NULL, str_result = o_strndup(resp.binary_body, resp.binary_body_length));
+  ck_assert_ptr_ne(NULL, str_result = o_strndup((const char *)resp.binary_body, resp.binary_body_length));
   ck_assert_int_gt(split_string(str_result, "\n", &lines), 0);
   
   for (i=0; lines[i] != NULL; i++) {

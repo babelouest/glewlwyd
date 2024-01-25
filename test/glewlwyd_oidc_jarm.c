@@ -575,8 +575,8 @@ START_TEST(test_oidc_jarm_code_form_post_jwt)
       U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
-  ck_assert_ptr_ne(o_strnstr(resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length), NULL);
-  response = o_strnstr(resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length) + o_strlen("name=\"response\" value=\"");
+  ck_assert_ptr_ne(o_strnstr((const char *)resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length), NULL);
+  response = o_strnstr((const char *)resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length) + o_strlen("name=\"response\" value=\"");
   if (o_strchr(response, '"') != NULL) {
     *o_strchr(response, '"') = '\0';
   }
@@ -613,8 +613,8 @@ START_TEST(test_oidc_jarm_code_id_token_form_post_jwt)
       U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
-  ck_assert_ptr_ne(o_strnstr(resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length), NULL);
-  response = o_strnstr(resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length) + o_strlen("name=\"response\" value=\"");
+  ck_assert_ptr_ne(o_strnstr((const char *)resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length), NULL);
+  response = o_strnstr((const char *)resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length) + o_strlen("name=\"response\" value=\"");
   if (o_strchr(response, '"') != NULL) {
     *o_strchr(response, '"') = '\0';
   }
@@ -652,8 +652,8 @@ START_TEST(test_oidc_jarm_response_type_error_form_post_jwt)
       U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
-  ck_assert_ptr_ne(o_strnstr(resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length), NULL);
-  response = o_strnstr(resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length) + o_strlen("name=\"response\" value=\"");
+  ck_assert_ptr_ne(o_strnstr((const char *)resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length), NULL);
+  response = o_strnstr((const char *)resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length) + o_strlen("name=\"response\" value=\"");
   if (o_strchr(response, '"') != NULL) {
     *o_strchr(response, '"') = '\0';
   }
@@ -690,8 +690,8 @@ START_TEST(test_oidc_jarm_client_invalid_form_post_jwt)
       U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
-  ck_assert_ptr_ne(o_strnstr(resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length), NULL);
-  response = o_strnstr(resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length) + o_strlen("name=\"response\" value=\"");
+  ck_assert_ptr_ne(o_strnstr((const char *)resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length), NULL);
+  response = o_strnstr((const char *)resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length) + o_strlen("name=\"response\" value=\"");
   if (o_strchr(response, '"') != NULL) {
     *o_strchr(response, '"') = '\0';
   }
@@ -897,8 +897,8 @@ START_TEST(test_oidc_jarm_client_pubkey_code_form_post_jwt)
       U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
-  ck_assert_ptr_ne(o_strnstr(resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length), NULL);
-  response = o_strnstr(resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length) + o_strlen("name=\"response\" value=\"");
+  ck_assert_ptr_ne(o_strnstr((const char *)resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length), NULL);
+  response = o_strnstr((const char *)resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length) + o_strlen("name=\"response\" value=\"");
   if (o_strchr(response, '"') != NULL) {
     *o_strchr(response, '"') = '\0';
   }
@@ -939,8 +939,8 @@ START_TEST(test_oidc_jarm_client_pubkey_code_id_token_form_post_jwt)
       U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
-  ck_assert_ptr_ne(o_strnstr(resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length), NULL);
-  response = o_strnstr(resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length) + o_strlen("name=\"response\" value=\"");
+  ck_assert_ptr_ne(o_strnstr((const char *)resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length), NULL);
+  response = o_strnstr((const char *)resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length) + o_strlen("name=\"response\" value=\"");
   if (o_strchr(response, '"') != NULL) {
     *o_strchr(response, '"') = '\0';
   }

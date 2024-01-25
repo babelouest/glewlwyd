@@ -1072,7 +1072,7 @@ START_TEST(test_oidc_jwks_userinfo_jwt_sign_kid)
   ck_assert_int_eq(resp.status, 200);
   ck_assert_str_eq(u_map_get(resp.map_header, "Content-Type"), "application/jwt");
   ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
-  ck_assert_int_eq(r_jwt_parsen(jwt, resp.binary_body, resp.binary_body_length, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_parsen(jwt, (const char *)resp.binary_body, resp.binary_body_length, 0), RHN_OK);
   ck_assert_str_eq(KID_2, r_jwt_get_header_str_value(jwt, "kid"));
   ck_assert_ptr_ne(jwk = r_jwks_get_by_kid(jwks_pub, KID_2), NULL);
   ck_assert_int_eq(r_jwt_add_sign_keys(jwt, NULL, jwk), RHN_OK);
@@ -1256,7 +1256,7 @@ START_TEST(test_oidc_jwks_userinfo_jwt_no_sign_kid)
   ck_assert_int_eq(resp.status, 200);
   ck_assert_str_eq(u_map_get(resp.map_header, "Content-Type"), "application/jwt");
   ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
-  ck_assert_int_eq(r_jwt_parsen(jwt, resp.binary_body, resp.binary_body_length, 0), RHN_OK);
+  ck_assert_int_eq(r_jwt_parsen(jwt, (const char *)resp.binary_body, resp.binary_body_length, 0), RHN_OK);
   ck_assert_str_eq(KID_1, r_jwt_get_header_str_value(jwt, "kid"));
   ck_assert_ptr_ne(jwk = r_jwks_get_by_kid(jwks_pub, KID_1), NULL);
   ck_assert_int_eq(r_jwt_add_sign_keys(jwt, NULL, jwk), RHN_OK);

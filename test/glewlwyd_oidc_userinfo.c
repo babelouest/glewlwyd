@@ -228,7 +228,7 @@ START_TEST(test_oidc_userinfo_jwt)
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   ck_assert_str_eq(u_map_get(resp.map_header, "Content-Type"), "application/jwt");
-  body = o_strndup(resp.binary_body, resp.binary_body_length);
+  body = o_strndup((const char *)resp.binary_body, resp.binary_body_length);
   r_jwt_init(&jwt);
   jwk = r_jwk_quick_import(R_IMPORT_SYMKEY, ("secret_" PLUGIN_NAME), o_strlen("secret_" PLUGIN_NAME));
   r_jwt_parse(jwt, body, 0);
@@ -248,7 +248,7 @@ START_TEST(test_oidc_userinfo_jwt)
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   ck_assert_str_eq(u_map_get(resp.map_header, "Content-Type"), "application/jwt");
-  body = o_strndup(resp.binary_body, resp.binary_body_length);
+  body = o_strndup((const char *)resp.binary_body, resp.binary_body_length);
   r_jwt_init(&jwt);
   r_jwt_parse(jwt, body, 0);
   ck_assert_int_eq(r_jwt_verify_signature(jwt, jwk, 0), RHN_OK);
@@ -265,7 +265,7 @@ START_TEST(test_oidc_userinfo_jwt)
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 200);
   ck_assert_str_eq(u_map_get(resp.map_header, "Content-Type"), "application/jwt");
-  body = o_strndup(resp.binary_body, resp.binary_body_length);
+  body = o_strndup((const char *)resp.binary_body, resp.binary_body_length);
   r_jwt_init(&jwt);
   r_jwt_parse(jwt, body, 0);
   ck_assert_int_eq(r_jwt_verify_signature(jwt, jwk, 0), RHN_OK);

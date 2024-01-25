@@ -170,6 +170,32 @@ START_TEST(test_glwd_mod_user_irl_user_auth)
   ulfius_init_response(&auth_resp);
   auth_req.http_verb = strdup("POST");
   auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{ssss}", "username", username, "password", "");
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 401);
+  ck_assert_int_eq(auth_resp.nb_cookies, 0);
+  ulfius_clean_response(&auth_resp);
+  ulfius_clean_request(&auth_req);
+
+  ulfius_init_request(&auth_req);
+  ulfius_init_response(&auth_resp);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{ssss}", "username", username, "password", "error");
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 401);
+  ck_assert_int_eq(auth_resp.nb_cookies, 0);
+  ulfius_clean_response(&auth_resp);
+  ulfius_clean_request(&auth_req);
+
+  ulfius_init_request(&auth_req);
+  ulfius_init_response(&auth_resp);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
   j_body = json_pack("{ssss}", "username", username, "password", PROFILE_PASSWORD);
   ulfius_set_json_body_request(&auth_req, j_body);
   json_decref(j_body);

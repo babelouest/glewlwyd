@@ -688,6 +688,30 @@ START_TEST(test_iddawc_resource_valid_token)
   ck_assert_int_eq(resp.binary_body_length, 12);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
+
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET",
+                                                       U_OPT_HTTP_URL, "http://localhost:8080/asset",
+                                                       U_OPT_HEADER_PARAMETER, "authorization", bearer,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET",
+                                                       U_OPT_HTTP_URL, "http://localhost:8080/asset",
+                                                       U_OPT_HEADER_PARAMETER, "AUTHORIZATION", bearer,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
   o_free(grants);
   o_free(bearer);
   o_free(token);
@@ -1988,6 +2012,81 @@ START_TEST(test_iddawc_resource_invalid_claims)
 }
 END_TEST
 
+START_TEST(test_iddawc_resource_invalid_token_multiple_keys)
+{
+  struct _u_instance instance;
+  struct _iddawc_resource_config iddawc_resource_config;
+  jwks_t * j_jwks;
+  struct _u_request req;
+  struct _u_response resp;
+  jwt_t * jwt;
+  jwk_t * jwk;
+  char * token, * bearer, * grants;
+  time_t now;
+  
+  ck_assert_ptr_ne(NULL, j_jwks = r_jwks_quick_import(R_IMPORT_JSON_STR, jwk_pubkey_rsa_str_1, R_IMPORT_NONE));
+  ck_assert_int_eq(i_jwt_profile_access_token_init_config(&iddawc_resource_config, I_METHOD_HEADER, NULL, AUD, SCOPE, NULL, MAX_IAT), I_TOKEN_OK);
+  ck_assert_int_ne(i_jwt_profile_access_token_load_jwks(&iddawc_resource_config, j_jwks, ISSUER), 0);
+  ck_assert_int_eq(ulfius_init_instance(&instance, PORT, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", NULL, "/asset", 1, &callback_asset, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", NULL, "/asset/:id", 1, &callback_asset, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "POST", NULL, "/asset", 1, &callback_asset, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "PUT", NULL, "/asset/:id", 1, &callback_asset, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "DELETE", NULL, "/asset/:id", 1, &callback_asset, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "*", NULL, "/asset/*", 0, &callback_check_jwt_profile_access_token, (void*)&iddawc_resource_config), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+
+  ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
+  time(&now);
+  grants = msprintf(access_token_pattern, (long long)now, (long long)(now + EXPIRES_IN), ISSUER);
+  ck_assert_ptr_ne(grants, NULL);
+  ck_assert_ptr_ne(jwk = r_jwk_quick_import(R_IMPORT_JSON_STR, jwk_privkey_rsa_str_1), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt, "typ", "at+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt, "kid", "none"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_ptr_ne((token = r_jwt_serialize_signed(jwt, jwk, 0)), NULL);
+  ck_assert_ptr_ne((bearer = msprintf("Bearer %s", token)), NULL);
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET",
+                                                       U_OPT_HTTP_URL, "http://localhost:8080/asset",
+                                                       U_OPT_HEADER_PARAMETER, "Authorization", bearer,
+                                                       U_OPT_HEADER_PARAMETER, "authorization", bearer,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET",
+                                                       U_OPT_HTTP_URL, "http://localhost:8080/asset",
+                                                       U_OPT_HEADER_PARAMETER, "Authorization", bearer,
+                                                       U_OPT_HEADER_PARAMETER, "authorization", "error",
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+
+  o_free(grants);
+  o_free(bearer);
+  o_free(token);
+  r_jwt_free(jwt);
+  r_jwk_free(jwk);
+
+  r_jwks_free(j_jwks);
+  i_jwt_profile_access_token_close_config(&iddawc_resource_config);
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+}
+END_TEST
+
 START_TEST(test_iddawc_resource_valid_dpop)
 {
   struct _u_instance instance;
@@ -2060,6 +2159,19 @@ START_TEST(test_iddawc_resource_valid_dpop)
   ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET",
                                                        U_OPT_HTTP_URL, "http://localhost:8080/asset",
                                                        U_OPT_HEADER_PARAMETER, "DPoP", token_dpop,
+                                                       U_OPT_HEADER_PARAMETER, "Authorization", bearer,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_int_eq(resp.binary_body_length, 12);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET",
+                                                       U_OPT_HTTP_URL, "http://localhost:8080/asset",
+                                                       U_OPT_HEADER_PARAMETER, "dpop", token_dpop,
                                                        U_OPT_HEADER_PARAMETER, "Authorization", bearer,
                                                        U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
@@ -3014,6 +3126,111 @@ START_TEST(test_iddawc_resource_invalid_dpop_claims)
   o_free(token_dpop);
 
   o_free(bearer);
+  r_jwks_free(j_jwks);
+  i_jwt_profile_access_token_close_config(&iddawc_resource_config);
+  ulfius_stop_framework(&instance);
+  ulfius_clean_instance(&instance);
+}
+END_TEST
+
+START_TEST(test_iddawc_resource_invalid_dpop_multiple)
+{
+  struct _u_instance instance;
+  struct _iddawc_resource_config iddawc_resource_config;
+  jwks_t * j_jwks;
+  struct _u_request req;
+  struct _u_response resp;
+  jwt_t * jwt, * jwt_dpop;
+  jwk_t * jwk, * jwk_dpop_priv;
+  json_t * j_dpop_pub, * j_cnf;
+  char * token, * bearer, * grants, * token_dpop;
+  time_t now;
+  unsigned char ath[32] = {0}, ath_enc[65] = {0};
+  size_t ath_len = 32, ath_enc_len = 64;
+  gnutls_datum_t hash_data;
+  
+  ck_assert_ptr_ne(NULL, j_jwks = r_jwks_quick_import(R_IMPORT_JSON_STR, jwk_pubkey_rsa_str_1, R_IMPORT_JSON_STR, jwk_pubkey_ecdsa_str, R_IMPORT_NONE));
+  ck_assert_int_eq(i_jwt_profile_access_token_init_config(&iddawc_resource_config, I_METHOD_HEADER, NULL, NULL, SCOPE, "http://localhost:8080/", MAX_IAT), I_TOKEN_OK);
+  ck_assert_int_ne(i_jwt_profile_access_token_load_jwks(&iddawc_resource_config, j_jwks, ISSUER), 0);
+  ck_assert_int_eq(ulfius_init_instance(&instance, PORT, NULL, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", NULL, "/asset", 1, &callback_asset, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "GET", NULL, "/asset/:id", 1, &callback_asset, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "POST", NULL, "/asset", 1, &callback_asset, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "PUT", NULL, "/asset/:id", 1, &callback_asset, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "DELETE", NULL, "/asset/:id", 1, &callback_asset, NULL), U_OK);
+  ck_assert_int_eq(ulfius_add_endpoint_by_val(&instance, "*", NULL, "/asset/*", 0, &callback_check_jwt_profile_access_token, (void*)&iddawc_resource_config), U_OK);
+  ck_assert_int_eq(ulfius_start_framework(&instance), U_OK);
+
+  ck_assert_int_eq(r_jwt_init(&jwt), RHN_OK);
+  time(&now);
+  grants = msprintf(access_token_pattern, (long long)now, (long long)(now + EXPIRES_IN), ISSUER);
+  ck_assert_ptr_ne(grants, NULL);
+  ck_assert_ptr_ne(j_cnf = json_pack("{ss}", "jkt", jwk_privkey_rsa_str_2_thumb), NULL);
+  ck_assert_ptr_ne(jwk = r_jwk_quick_import(R_IMPORT_JSON_STR, jwk_privkey_rsa_str_1), NULL);
+  ck_assert_int_eq(r_jwt_set_full_claims_json_str(jwt, grants), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt, "typ", "at+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_json_t_value(jwt, "cnf", j_cnf), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_ptr_ne((token = r_jwt_serialize_signed(jwt, jwk, 0)), NULL);
+  ck_assert_ptr_ne((bearer = msprintf("DPoP %s", token)), NULL);
+  o_free(grants);
+  r_jwt_free(jwt);
+  r_jwk_free(jwk);
+  json_decref(j_cnf);
+  hash_data.data = (unsigned char*)token;
+  hash_data.size = o_strlen(token);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &hash_data, ath, &ath_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(o_base64url_encode(ath, ath_len, ath_enc, &ath_enc_len), 1);
+  ath_enc[ath_enc_len] = '\0';
+  o_free(token);
+
+  ck_assert_int_eq(r_jwt_init(&jwt_dpop), RHN_OK);
+  ck_assert_ptr_ne(jwk_dpop_priv = r_jwk_quick_import(R_IMPORT_JSON_STR, jwk_privkey_rsa_str_2), NULL);
+  ck_assert_ptr_ne(j_dpop_pub = json_loads(jwk_pubkey_rsa_str_2, JSON_DECODE_ANY, NULL), NULL);
+  ck_assert_int_eq(r_jwt_set_header_str_value(jwt_dpop, "typ", "dpop+jwt"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_header_json_t_value(jwt_dpop, "jwk", j_dpop_pub), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "jti", DPOP_JTI), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htu", "http://localhost:8080/asset"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "htm", "GET"), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_int_value(jwt_dpop, "iat", (rhn_int_t)now), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_claim_str_value(jwt_dpop, "ath", (const char *)ath_enc), RHN_OK);
+  ck_assert_int_eq(r_jwt_set_sign_alg(jwt_dpop, R_JWA_ALG_RS256), RHN_OK);
+  ck_assert_ptr_ne(NULL, token_dpop = r_jwt_serialize_signed(jwt_dpop, jwk_dpop_priv, 0));
+  r_jwt_free(jwt_dpop);
+  r_jwk_free(jwk_dpop_priv);
+  json_decref(j_dpop_pub);
+
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET",
+                                                       U_OPT_HTTP_URL, "http://localhost:8080/asset",
+                                                       U_OPT_HEADER_PARAMETER, "DPoP", token_dpop,
+                                                       U_OPT_HEADER_PARAMETER, "dpop", token_dpop,
+                                                       U_OPT_HEADER_PARAMETER, "Authorization", bearer,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "GET",
+                                                       U_OPT_HTTP_URL, "http://localhost:8080/asset",
+                                                       U_OPT_HEADER_PARAMETER, "DPoP", token_dpop,
+                                                       U_OPT_HEADER_PARAMETER, "dpop", "error",
+                                                       U_OPT_HEADER_PARAMETER, "Authorization", bearer,
+                                                       U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 401);
+  ck_assert_int_eq(resp.binary_body_length, 0);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
+
+  o_free(bearer);
+  o_free(token_dpop);
+
   r_jwks_free(j_jwks);
   i_jwt_profile_access_token_close_config(&iddawc_resource_config);
   ulfius_stop_framework(&instance);
@@ -5451,11 +5668,13 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_iddawc_resource_valid_token_no_aud);
   tcase_add_test(tc_core, test_iddawc_resource_invalid_signature);
   tcase_add_test(tc_core, test_iddawc_resource_invalid_claims);
+  tcase_add_test(tc_core, test_iddawc_resource_invalid_token_multiple_keys);
   tcase_add_test(tc_core, test_iddawc_resource_valid_dpop);
   tcase_add_test(tc_core, test_iddawc_resource_valid_dpop_invalid_auth_header);
   tcase_add_test(tc_core, test_iddawc_resource_valid_dpop_missing_dpop_header);
   tcase_add_test(tc_core, test_iddawc_resource_invalid_dpop_key);
   tcase_add_test(tc_core, test_iddawc_resource_invalid_dpop_claims);
+  tcase_add_test(tc_core, test_iddawc_resource_invalid_dpop_multiple);
   tcase_add_test(tc_core, test_iddawc_resource_no_auth_remote_config);
   tcase_add_test(tc_core, test_iddawc_resource_valid_token_remote_config);
   tcase_add_test(tc_core, test_iddawc_resource_valid_token_one_key_remote_config);
