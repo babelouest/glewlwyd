@@ -1630,7 +1630,7 @@ static json_t * oidc_verify_dpop_proof(struct _oidc_config * config, const struc
   size_t ath_len = 32, ath_enc_len = 64;
   gnutls_datum_t hash_data;
 
-  if ((dpop_header = u_map_get_case(request->map_header, "DPoP")) != NULL) {
+  if ((dpop_header = u_map_get_case(request->map_header, "DPoP")) != NULL && u_map_count_keys_case(request->map_header, "DPoP") == 1) {
     if (r_jwt_init(&dpop_jwt) == RHN_OK) {
       if (r_jwt_advanced_parse(dpop_jwt, dpop_header, R_PARSE_HEADER_JWK, R_FLAG_IGNORE_REMOTE) == RHN_OK) {
         if (r_jwt_verify_signature(dpop_jwt, NULL, R_FLAG_IGNORE_REMOTE) == RHN_OK) {
@@ -3770,7 +3770,7 @@ static json_t * serialize_refresh_token(struct _oidc_config * config,
 /**
  * Builds an refresh token from the given parameters
  */
-static char * generate_refresh_token() {
+static char * generate_refresh_token(void) {
   char * token = o_malloc((OIDC_REFRESH_TOKEN_LENGTH+1));
 
   if (token != NULL) {
@@ -6714,7 +6714,7 @@ static json_t * get_token_metadata(struct _oidc_config * config, const char * to
 }
 
 static const char * get_client_id_for_introspection(struct _oidc_config * config, const struct _u_request * request) {
-  if (u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION) != NULL && config->introspect_revoke_scope != NULL) {
+  if (u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION) != NULL && 1 == u_map_count_keys_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION) && config->introspect_revoke_scope != NULL) {
     return NULL;
   } else if (json_object_get(config->j_params, "introspection-revocation-allow-target-client") == json_true()) {
     return request->auth_basic_user;
@@ -6922,7 +6922,7 @@ static int serialize_client_register(struct _oidc_config * config, const struct 
     ret = G_ERROR;
   } else {
     if (json_array_size(json_object_get(config->j_params, "register-client-auth-scope"))) {
-      if ((access_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, (u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION) + o_strlen(GLEWLWYD_HEADER_PREFIX_BEARER)))) != NULL) {
+      if (1 == u_map_count_keys_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION) && (access_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, (u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION) + o_strlen(GLEWLWYD_HEADER_PREFIX_BEARER)))) != NULL) {
         j_query = json_pack("{sss[s]s{ssss}}",
                             "table",
                             GLEWLWYD_PLUGIN_OIDC_TABLE_ACCESS_TOKEN,
@@ -7002,7 +7002,7 @@ static int serialize_client_register(struct _oidc_config * config, const struct 
 
 static json_t * client_register(struct _oidc_config * config, const struct _u_request * request, json_t * j_registration, int update) {
   json_t * j_client, * j_return = NULL, * j_element = NULL;
-  char client_id[GLEWLWYD_CLIENT_ID_LENGTH+1] = {}, client_secret[GLEWLWYD_CLIENT_SECRET_LENGTH+1] = {}, client_management_at[GLEWLWYD_CLIENT_MANAGEMENT_AT_LENGTH+1] = {};
+  char client_id[GLEWLWYD_CLIENT_ID_LENGTH+1] = {0}, client_secret[GLEWLWYD_CLIENT_SECRET_LENGTH+1] = {0}, client_management_at[GLEWLWYD_CLIENT_MANAGEMENT_AT_LENGTH+1] = {0};
   char * plugin_url = config->glewlwyd_config->glewlwyd_callback_get_plugin_external_url(config->glewlwyd_config, config->name);
   const char * token_endpoint_auth_method, * key = NULL;
 
@@ -8854,7 +8854,7 @@ static json_t * check_client_certificate_valid(struct _oidc_config * config, con
       if ((0 == o_strcmp("TLS", json_string_value(json_object_get(config->j_params, "client-cert-source"))) || 0 == o_strcmp("both", json_string_value(json_object_get(config->j_params, "client-cert-source"))))) {
         cert = http_request->client_cert;
       }
-      if (cert == NULL && (0 == o_strcmp("header", json_string_value(json_object_get(config->j_params, "client-cert-source"))) || 0 == o_strcmp("both", json_string_value(json_object_get(config->j_params, "client-cert-source")))) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(config->j_params, "client-cert-header-name")))) != NULL) {
+      if (cert == NULL && (0 == o_strcmp("header", json_string_value(json_object_get(config->j_params, "client-cert-source"))) || 0 == o_strcmp("both", json_string_value(json_object_get(config->j_params, "client-cert-source")))) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(config->j_params, "client-cert-header-name")))) != NULL && 1 == u_map_count_keys_case(http_request->map_header, json_string_value(json_object_get(config->j_params, "client-cert-header-name")))) {
         if (!gnutls_x509_crt_init(&cert)) {
           clean_cert = 1;
           cert_dat.data = (unsigned char *)header_cert;
@@ -9807,7 +9807,7 @@ static int callback_check_registration_management(const struct _u_request * requ
   int ret = U_CALLBACK_UNAUTHORIZED;
   json_t * j_result;
 
-  if (u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION)) {
+  if (1 == u_map_count_keys_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION) && u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION)) {
     j_result = check_client_registration_management_at(config, u_map_get(request->map_url, "client_id"), (u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION) + o_strlen(GLEWLWYD_HEADER_PREFIX_BEARER)));
     if (check_result_value(j_result, G_OK)) {
       if (ulfius_set_response_shared_data(response, json_incref(json_object_get(j_result, "registration")), (void (*)(void *))&json_decref) != U_OK) {
@@ -9871,10 +9871,10 @@ static int callback_check_registration(const struct _u_request * request, struct
 
   if (config->client_register_scope == NULL) {
     ret = U_CALLBACK_CONTINUE;
-  } else if (u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION)) {
+  } else if (u_map_get_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION) && 1 == u_map_count_keys_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION)) {
     j_introspect = get_token_metadata(config, access_token, "access_token", NULL);
     if (check_result_value(j_introspect, G_OK) && json_object_get(json_object_get(j_introspect, "token"), "active") == json_true() && check_scope_list(config->client_register_scope, json_string_value(json_object_get(json_object_get(j_introspect, "token"), "scope")))) {
-      if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
+      if (is_header_dpop && 1 == u_map_count_keys_case(request->map_header, GLEWLWYD_HEADER_DPOP) && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
         j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, "/register", json_object_get(j_introspect, "client"), access_token, NULL);
         if (check_result_value(j_dpop, G_OK)) {
           if ((res = check_dpop_jti(config,
@@ -10097,12 +10097,12 @@ static int callback_check_intropect_revoke(const struct _u_request * request, st
              * htu = o_strstr(request->url_path, "/introspect")!=NULL?"/introspect":"revoke";
   char * dpop_nonce;
 
-  if (access_token != NULL && config->introspect_revoke_scope != NULL) {
+  if (1 == u_map_count_keys_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION) && access_token != NULL && config->introspect_revoke_scope != NULL) {
     j_introspect = get_token_metadata(config, access_token, "access_token", NULL);
     if (check_result_value(j_introspect, G_OK) &&
         json_object_get(json_object_get(j_introspect, "token"), "active") == json_true() &&
         check_scope_list(config->introspect_revoke_scope, json_string_value(json_object_get(json_object_get(j_introspect, "token"), "scope")))) {
-      if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
+      if (is_header_dpop && 1 == u_map_count_keys_case(request->map_header, GLEWLWYD_HEADER_DPOP) && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
         j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, htu, json_object_get(j_introspect, "client"), access_token, NULL);
         if (check_result_value(j_dpop, G_OK)) {
           if ((res = check_dpop_jti(config,
@@ -13861,10 +13861,10 @@ static int callback_check_userinfo(const struct _u_request * request, struct _u_
              * ip_source = get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header);
   char * dpop_nonce;
 
-  if (access_token != NULL) {
+  if (access_token != NULL && 1 == u_map_count_keys_case(request->map_header, GLEWLWYD_HEADER_AUTHORIZATION)) {
     j_introspect = get_token_metadata(config, access_token, "access_token", NULL);
     if (check_result_value(j_introspect, G_OK) && json_object_get(json_object_get(j_introspect, "token"), "active") == json_true()) {
-      if (is_header_dpop && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
+      if (is_header_dpop && 1 == u_map_count_keys_case(request->map_header, GLEWLWYD_HEADER_DPOP) && json_object_get(json_object_get(json_object_get(j_introspect, "token"), "cnf"), "jkt") != NULL && dpop != NULL) {
         j_dpop = oidc_verify_dpop_proof(config, request, request->http_verb, "/userinfo", json_object_get(j_introspect, "client"), access_token, NULL);
         if (check_result_value(j_dpop, G_OK)) {
           if (json_object_get(j_dpop, "jkt") == NULL ||
@@ -15202,7 +15202,7 @@ static int callback_oidc_refresh_token_list_get(const struct _u_request * reques
     }
     if (u_map_get(request->map_url, "limit") != NULL) {
       l_converted = strtol(u_map_get(request->map_url, "limit"), &endptr, 10);
-      if (!(*endptr) && l_converted > 0) {
+      if (!(*endptr) && l_converted > 0 && l_converted <= 200) {
         limit = (size_t)l_converted;
       }
     }
