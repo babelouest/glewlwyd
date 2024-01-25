@@ -730,8 +730,8 @@ char * get_valid_session_id(struct config_elements * config, const struct _u_req
   return session_uid;
 }
 
-char * generate_session_id() {
-  char session_id_str_array[GLEWLWYD_SESSION_ID_LENGTH + 1] = {};
+char * generate_session_id(void) {
+  char session_id_str_array[GLEWLWYD_SESSION_ID_LENGTH + 1] = {0};
   
   return o_strdup(rand_string(session_id_str_array, GLEWLWYD_SESSION_ID_LENGTH));
 }

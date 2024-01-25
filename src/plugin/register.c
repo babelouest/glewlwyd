@@ -371,7 +371,7 @@ static json_t * register_generate_email_verification_code(struct _register_confi
 static json_t * register_verify_email_token(struct _register_config * config, const char * token, const char * ip_source) {
   json_t * j_query, * j_result = NULL, * j_return, * j_new_user;
   int res;
-  char * token_hash = NULL, * expires_at_clause = NULL, session[GLEWLWYD_SESSION_ID_LENGTH+1] = {}, * session_hash = NULL;
+  char * token_hash = NULL, * expires_at_clause = NULL, session[GLEWLWYD_SESSION_ID_LENGTH+1] = {0}, * session_hash = NULL;
   time_t now;
 
   if ((token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, token)) != NULL) {
@@ -481,7 +481,7 @@ static json_t * register_verify_email_token(struct _register_config * config, co
 static json_t * register_verify_email_code(struct _register_config * config, const char * username, const char * email, const char * code, const char * ip_source) {
   json_t * j_query, * j_result = NULL, * j_return, * j_new_user;
   int res;
-  char * code_hash = NULL, * expires_at_clause = NULL, session[GLEWLWYD_SESSION_ID_LENGTH+1] = {}, * session_hash = NULL;
+  char * code_hash = NULL, * expires_at_clause = NULL, session[GLEWLWYD_SESSION_ID_LENGTH+1] = {0}, * session_hash = NULL;
   time_t now;
 
   if ((code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, code)) != NULL) {
@@ -716,7 +716,7 @@ static json_t * register_check_username(struct _register_config * config, const 
 static json_t * register_new_user(struct _register_config * config, const char * username, const char * issued_for, const char * user_agent) {
   json_t * j_query, * j_return, * j_user, * j_new_user, * j_last_id, * j_result;
   int res;
-  char * expires_at_clause, session[GLEWLWYD_SESSION_ID_LENGTH+1] = {}, * session_hash = NULL;
+  char * expires_at_clause, session[GLEWLWYD_SESSION_ID_LENGTH+1] = {0}, * session_hash = NULL;
   time_t now;
 
   if (pthread_mutex_lock(&config->insert_lock)) {
@@ -1500,7 +1500,7 @@ static json_t * register_reset_credentials_check_token(struct _register_config *
 static json_t * reset_credentials_create_session(struct _register_config * config, const char * username, const char * callback_url, const char * issued_for, const char * user_agent) {
   json_t * j_return, * j_query, * j_last_id;
   int res;
-  char token[GLEWLWYD_TOKEN_LENGTH+1] = {}, * token_hash = NULL, * expires_at_clause;
+  char token[GLEWLWYD_TOKEN_LENGTH+1] = {0}, * token_hash = NULL, * expires_at_clause;
   time_t now;
 
   if (pthread_mutex_lock(&config->insert_lock)) {
@@ -1564,7 +1564,7 @@ static json_t * reset_credentials_create_session(struct _register_config * confi
 
 static json_t * reset_credentials_code_generate(struct _register_config * config, const char * username) {
   json_t * j_user = config->glewlwyd_config->glewlwyd_plugin_callback_get_user(config->glewlwyd_config, username), * j_return, * j_code_list;
-  char code[GLEWLWYD_RESET_CREDENTIALS_CODE_LENGTH+1] = {}, code_formatted[GLEWLWYD_RESET_CREDENTIALS_CODE_LENGTH+(GLEWLWYD_RESET_CREDENTIALS_CODE_LENGTH/4)+1] = {}, * code_hash = NULL, * code_formatted_offset;
+  char code[GLEWLWYD_RESET_CREDENTIALS_CODE_LENGTH+1] = {0}, code_formatted[GLEWLWYD_RESET_CREDENTIALS_CODE_LENGTH+(GLEWLWYD_RESET_CREDENTIALS_CODE_LENGTH/4)+1] = {0}, * code_hash = NULL, * code_formatted_offset;
   json_int_t i;
   int res, j;
 
@@ -2286,7 +2286,7 @@ static int callback_register_update_email_verify(const struct _u_request * reque
   struct _register_config * config = (struct _register_config *)user_data;
   int ret;
 
-  if ((ret = register_update_email_verify(config, u_map_get_case(request->map_url, "token"), get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header))) == G_ERROR_PARAM) {
+  if ((ret = register_update_email_verify(config, u_map_get(request->map_url, "token"), get_ip_source(request, config->glewlwyd_config->glewlwyd_config->originating_ip_header))) == G_ERROR_PARAM) {
     response->status = 400;
   } else if (ret != G_OK) {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_register_update_email_verify - Error register_update_email_verify");

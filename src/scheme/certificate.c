@@ -1270,7 +1270,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
     if (ret == G_OK) {
       if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_TLS) && http_request->client_cert != NULL) {
         cert = http_request->client_cert;
-      } else if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL) {
+      } else if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL && 1 == u_map_count_keys_case(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) {
         if (!gnutls_x509_crt_init(&cert)) {
           clean_cert = 1;
           cert_dat.data = (unsigned char *)header_cert;
@@ -1346,7 +1346,7 @@ json_t * user_auth_scheme_module_register(struct config_module * config, const s
           y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_register certificate - Error ulfius_export_client_certificate_pem");
           j_return = json_pack("{si}", "result", G_ERROR);
         }
-      } else if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL) {
+      } else if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL && 1 == u_map_count_keys_case(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) {
         if ((ret = add_user_certificate_scheme_storage(config, ((struct _cert_param *)cls)->j_parameters, header_cert, username, u_map_get_case(http_request->map_header, "user-agent"))) == G_OK) {
           j_return = json_pack("{siso}", "result", G_OK, "updated", json_true());
         } else if (ret == G_ERROR_PARAM) {
@@ -1561,13 +1561,13 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
   const char * header_cert = NULL;
   gnutls_x509_crt_t cert = NULL;
   gnutls_datum_t cert_dat;
-  unsigned char cert_id[257] = {};
+  unsigned char cert_id[257] = {0};
   size_t cert_id_len = 256;
 
   // Get or parse certificate
   if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_TLS) && http_request->client_cert != NULL) {
     cert = http_request->client_cert;
-  } else if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL) {
+  } else if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL && 1 == u_map_count_keys_case(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) {
     if (!gnutls_x509_crt_init(&cert)) {
       clean_cert = 1;
       cert_dat.data = (unsigned char *)header_cert;
@@ -1665,14 +1665,14 @@ json_t * user_auth_scheme_module_identify(struct config_module * config, const s
   const char * header_cert = NULL;
   gnutls_x509_crt_t cert = NULL;
   gnutls_datum_t cert_dat;
-  unsigned char cert_id[257] = {};
+  unsigned char cert_id[257] = {0};
   size_t cert_id_len = 256;
   json_t * j_result, * j_return;
 
   // Get or parse certificate
   if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_TLS) && http_request->client_cert != NULL) {
     cert = http_request->client_cert;
-  } else if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL) {
+  } else if ((((struct _cert_param *)cls)->cert_source & G_CERT_SOURCE_HEADER) && (header_cert = u_map_get(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) != NULL && 1 == u_map_count_keys_case(http_request->map_header, json_string_value(json_object_get(((struct _cert_param *)cls)->j_parameters, "header-name")))) {
     if (!gnutls_x509_crt_init(&cert)) {
       clean_cert = 1;
       cert_dat.data = (unsigned char *)header_cert;

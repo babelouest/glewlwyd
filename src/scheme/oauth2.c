@@ -34,7 +34,7 @@
 #include "glewlwyd-common.h"
 
 #define GLEWLWYD_SCHEME_OAUTH2_REGISTRATION_TABLE "gs_oauth2_registration"
-#define GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE "gs_oauth2_session"
+#define GLEWLWYD_SCHEME_OAUTH2_SESSION_TABLE      "gs_oauth2_session"
 
 #define GLEWLWYD_SCHEME_OAUTH2_STATE_ID_LENGTH              32
 #define GLEWLWYD_SCHEME_OAUTH2_NONCE_LENGTH                 16
@@ -700,7 +700,7 @@ static json_t * get_registration_for_user(struct config_module * config, struct 
   res = h_select(config->conn, j_query, &j_result, NULL);
   json_decref(j_query);
   if (res == H_OK) {
-    if (json_array_size(j_result)) {
+    if (json_array_size(j_result) == 1) {
       json_array_foreach(j_result, index, j_element) {
         j_session = get_last_session_for_registration(config, json_integer_value(json_object_get(j_element, "gsor_id")));
         if (check_result_value(j_session, G_OK)) {

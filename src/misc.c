@@ -85,7 +85,7 @@ const char * get_ip_source(const struct _u_request * request, const char * heade
   const char * ip_source = NULL;
   
   if (!o_strnullempty(header_value)) {
-    ip_source = u_map_get_case(request->map_header, header_value);
+    ip_source = u_map_get(request->map_header, header_value);
   }
   if (o_strnullempty(ip_source)) {
     struct sockaddr_in * in_source = (struct sockaddr_in *)request->client_address;
@@ -97,7 +97,7 @@ const char * get_ip_source(const struct _u_request * request, const char * heade
   }
   
   return ip_source;
-};
+}
 
 char * get_client_hostname(const struct _u_request * request, const char * header_value) {
   const char * ip_source = get_ip_source(request, header_value);

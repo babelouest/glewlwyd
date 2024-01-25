@@ -176,8 +176,9 @@ int callback_glewlwyd_check_admin_session_or_api_key (const struct _u_request * 
   json_t * j_user;
   int ret, res;
   const char * api_key = u_map_get_case(request->map_header, GLEWLWYD_API_KEY_HEADER_KEY), * ip_source = get_ip_source(request, config->originating_ip_header);
+  int api_key_count = u_map_count_keys_case(request->map_header, GLEWLWYD_API_KEY_HEADER_KEY);
   
-  if (config->admin_session_authentication & GLEWLWYD_SESSION_AUTH_API_KEY && NULL != api_key && 0 == o_strncmp(GLEWLWYD_API_KEY_HEADER_PREFIX, api_key, o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) {
+  if (config->admin_session_authentication & GLEWLWYD_SESSION_AUTH_API_KEY && 1 == api_key_count && NULL != api_key && 0 == o_strncmp(GLEWLWYD_API_KEY_HEADER_PREFIX, api_key, o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) {
     if ((res = verify_api_key(config, api_key + o_strlen(GLEWLWYD_API_KEY_HEADER_PREFIX))) == G_OK) {
       if (ulfius_set_response_shared_data(response, json_pack("{so}", "username", json_null()), (void (*)(void *))&json_decref) != U_OK) {
         ret = U_CALLBACK_ERROR;
@@ -278,7 +279,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (1)");
               response->status = 500;
             } else {
-              ulfius_add_same_site_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 0, (int)config->cookie_same_site);
+              ulfius_add_same_site_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 1, (int)config->cookie_same_site);
               y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' authenticated with password", json_string_value(json_object_get(j_param, "username")));
             }
             o_free(session_uid);
@@ -304,7 +305,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (2)");
               response->status = 500;
             } else {
-              ulfius_add_same_site_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 0, (int)config->cookie_same_site);
+              ulfius_add_same_site_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 1, (int)config->cookie_same_site);
             }
           } else if (check_result_value(j_result, G_ERROR_NOT_FOUND)) {
             response->status = 401;
@@ -335,7 +336,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
               y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (3)");
               response->status = 500;
             } else {
-              ulfius_add_same_site_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 0, (int)config->cookie_same_site);
+              ulfius_add_same_site_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 1, (int)config->cookie_same_site);
               y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' authenticated with scheme '%s/%s'", json_string_value(json_object_get(j_param, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")));
             }
             o_free(session_uid);
@@ -368,7 +369,7 @@ int callback_glewlwyd_user_auth (const struct _u_request * request, struct _u_re
             y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_user_auth - Error user_session_update (4)");
             response->status = 500;
           } else {
-            ulfius_add_same_site_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 0, (int)config->cookie_same_site);
+            ulfius_add_same_site_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 1, (int)config->cookie_same_site);
             y_log_message(Y_LOG_LEVEL_INFO, "Event - User '%s' authenticated with scheme '%s/%s'", json_string_value(json_object_get(j_result, "username")), json_string_value(json_object_get(j_param, "scheme_type")), json_string_value(json_object_get(j_param, "scheme_name")));
           }
           o_free(session_uid);
@@ -667,9 +668,9 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
         }
         if (json_array_size(json_object_get(j_session, "session")) == 1) {
           // Delete session cookie on the client browser
-          ulfius_add_same_site_cookie_to_response(response, config->session_key, "", expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 0, (int)config->cookie_same_site);
+          ulfius_add_same_site_cookie_to_response(response, config->session_key, "", expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 1, (int)config->cookie_same_site);
         } else {
-          ulfius_add_same_site_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 0, (int)config->cookie_same_site);
+          ulfius_add_same_site_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 1, (int)config->cookie_same_site);
         }
       } else {
         if (user_session_delete(config, session_uid, NULL) != G_OK) {
@@ -677,7 +678,7 @@ int callback_glewlwyd_user_delete_session (const struct _u_request * request, st
           response->status = 500;
         }
         // Delete session cookie on the client browser
-        ulfius_add_same_site_cookie_to_response(response, config->session_key, "", expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 0, (int)config->cookie_same_site);
+        ulfius_add_same_site_cookie_to_response(response, config->session_key, "", expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 1, (int)config->cookie_same_site);
       }
     }
     json_decref(j_session);
@@ -718,16 +719,21 @@ int callback_glewlwyd_get_user_session_scope_grant (const struct _u_request * re
   json_t * j_user = (json_t *)response->shared_data, * j_scope_list;
   
   if (config != NULL && j_user != NULL) {
-    j_scope_list = get_granted_scopes_for_client(config, j_user, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope_list"));
-    if (check_result_value(j_scope_list, G_OK)) {
-      ulfius_set_json_body_response(response, 200, json_object_get(j_scope_list, "grant"));
-    } else if (check_result_value(j_scope_list, G_ERROR_NOT_FOUND)) {
-      response->status = 404;
+    if (!o_strnullempty(u_map_get(request->map_url, "client_id")) && !o_strnullempty(u_map_get(request->map_url, "scope_list"))) {
+      j_scope_list = get_granted_scopes_for_client(config, j_user, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope_list"));
+      if (check_result_value(j_scope_list, G_OK)) {
+        ulfius_set_json_body_response(response, 200, json_object_get(j_scope_list, "grant"));
+      } else if (check_result_value(j_scope_list, G_ERROR_NOT_FOUND)) {
+        response->status = 404;
+      } else {
+        y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_session_scope_grant - Error get_granted_scopes_for_client");
+        response->status = 500;
+      }
+      json_decref(j_scope_list);
     } else {
-      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_session_scope_grant - Error get_granted_scopes_for_client");
-      response->status = 500;
+      y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_session_scope_grant - invalid input parameters");
+      response->status = 400;
     }
-    json_decref(j_scope_list);
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "callback_glewlwyd_get_user_session_scope_grant - Error config or j_user is NULL");
     response->status = 500;
@@ -741,7 +747,7 @@ int callback_glewlwyd_set_user_session_scope_grant (const struct _u_request * re
   int res;
   
   if (config != NULL && j_user != NULL) {
-    if (json_object_get(j_body, "scope") != NULL && json_is_string(json_object_get(j_body, "scope"))) {
+    if (json_object_get(j_body, "scope") != NULL && json_is_string(json_object_get(j_body, "scope")) && !o_strnullempty(u_map_get(request->map_url, "client_id"))) {
       j_client = get_client(config, u_map_get(request->map_url, "client_id"), NULL);
       if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
         res = set_granted_scopes_for_client(config, j_user, u_map_get(request->map_url, "client_id"), json_string_value(json_object_get(j_body, "scope")));
@@ -1918,7 +1924,7 @@ int callback_glewlwyd_get_user_list (const struct _u_request * request, struct _
   }
   if (u_map_get(request->map_url, "limit") != NULL) {
     l_converted = strtol(u_map_get(request->map_url, "limit"), &endptr, 10);
-    if (!(*endptr) && l_converted > 0) {
+    if (!(*endptr) && l_converted > 0 && l_converted <= 200) {
       limit = (size_t)l_converted;
     }
   }
@@ -2071,7 +2077,7 @@ int callback_glewlwyd_get_client_list (const struct _u_request * request, struct
   }
   if (u_map_get(request->map_url, "limit") != NULL) {
     l_converted = strtol(u_map_get(request->map_url, "limit"), &endptr, 10);
-    if (!(*endptr) && l_converted > 0) {
+    if (!(*endptr) && l_converted > 0 && l_converted <= 200) {
       limit = (size_t)l_converted;
     }
   }
@@ -2224,7 +2230,7 @@ int callback_glewlwyd_get_scope_list (const struct _u_request * request, struct 
   }
   if (u_map_get(request->map_url, "limit") != NULL) {
     l_converted = strtol(u_map_get(request->map_url, "limit"), &endptr, 10);
-    if (!(*endptr) && l_converted >= 0) {
+    if (!(*endptr) && l_converted >= 0 && l_converted <= 200) {
       limit = (size_t)l_converted;
     }
   }
@@ -2371,7 +2377,7 @@ int callback_glewlwyd_user_get_profile (const struct _u_request * request, struc
       j_session = get_users_for_session(config, session_uid);
       if (check_result_value(j_session, G_OK)) {
         ulfius_set_json_body_response(response, 200, json_object_get(j_session, "session"));
-        ulfius_add_same_site_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 0, (int)config->cookie_same_site);
+        ulfius_add_same_site_cookie_to_response(response, config->session_key, session_uid, expires, 0, config->cookie_domain, "/", (int)config->cookie_secure, 1, (int)config->cookie_same_site);
       } else if (check_result_value(j_session, G_ERROR_NOT_FOUND)) {
         response->status = 401;
       } else {
@@ -2551,7 +2557,7 @@ int callback_glewlwyd_user_get_client_grant_list (const struct _u_request * requ
   }
   if (u_map_get(request->map_url, "limit") != NULL) {
     l_converted = strtol(u_map_get(request->map_url, "limit"), &endptr, 10);
-    if (!(*endptr) && l_converted > 0) {
+    if (!(*endptr) && l_converted > 0 && l_converted <= 200) {
       limit = (size_t)l_converted;
     }
   }
@@ -2581,7 +2587,7 @@ int callback_glewlwyd_user_get_session_list (const struct _u_request * request, 
   }
   if (u_map_get(request->map_url, "limit") != NULL) {
     l_converted = strtol(u_map_get(request->map_url, "limit"), &endptr, 10);
-    if (!(*endptr) && l_converted > 0) {
+    if (!(*endptr) && l_converted > 0 && l_converted <= 200) {
       limit = (size_t)l_converted;
     }
   }
@@ -2661,7 +2667,7 @@ int callback_glewlwyd_get_api_key_list (const struct _u_request * request, struc
     }
     if (u_map_get(request->map_url, "limit") != NULL) {
       l_converted = strtol(u_map_get(request->map_url, "limit"), &endptr, 10);
-      if (!(*endptr) && l_converted >= 0) {
+      if (!(*endptr) && l_converted >= 0 && l_converted <= 200) {
         limit = (size_t)l_converted;
       }
     }

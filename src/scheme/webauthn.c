@@ -84,7 +84,7 @@ static json_t * get_cert_from_file_path(const char * path) {
   gnutls_datum_t cert_dat = {NULL, 0}, export_dat = {NULL, 0};
   FILE * fl;
   size_t len, issued_for_len = 128;
-  char * cert_content, issued_for[128] = {};
+  char * cert_content, issued_for[128] = {0};
   json_t * j_return = NULL;
 
   fl = fopen(path, "r");
@@ -1744,7 +1744,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
         break;
       }
 
-      if ((header_cert_decoded = o_malloc(json_string_length(j_cert))) == NULL) {
+      if ((header_cert_decoded = o_malloc(json_string_length(j_cert)+4)) == NULL) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_attestation_android_safetynet - Error allocating resources for header_cert_decoded");
         break;
       }
@@ -3681,7 +3681,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
       if ((res = check_assertion(config, webauthn_config->j_parameters, username, j_scheme_data, json_object_get(j_assertion, "assertion"))) == G_OK) {
         ret = G_OK;
       } else if (res == G_ERROR_UNAUTHORIZED || res == G_ERROR_PARAM) {
-        ret = res;
+        ret = G_ERROR_UNAUTHORIZED;
       } else {
         y_log_message(Y_LOG_LEVEL_ERROR, "user_auth_scheme_module_validate webauthn - Error check_assertion");
         ret = G_ERROR;

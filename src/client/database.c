@@ -431,9 +431,9 @@ static char * get_password_clause_write(struct mod_parameters * param, const cha
 static char * get_salt_from_password_hash(struct mod_parameters * param, const char * client_id, unsigned int * iterations) {
   json_t * j_query, * j_result;
   int res;
-  unsigned char password_b64_decoded[1024] = {0};
+  struct _o_datum password_b64_decoded = {0, NULL};
   char * salt = NULL, * client_id_escaped, * client_id_clause, * str_iterator;
-  size_t password_b64_decoded_len = 0, gc_password_len;
+  size_t gc_password_len;
   
   client_id_escaped = h_escape_string_with_quotes(param->conn, client_id);
   client_id_clause = msprintf(" = UPPER(%s)", client_id_escaped);
@@ -460,8 +460,8 @@ static char * get_salt_from_password_hash(struct mod_parameters * param, const c
       } else {
         gc_password_len = json_string_length(json_object_get(json_array_get(j_result, 0), "gc_password"));
       }
-      if (o_base64_decode((const unsigned char *)json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password")), gc_password_len, password_b64_decoded, &password_b64_decoded_len)) {
-        if ((salt = o_strdup((const char *)password_b64_decoded + password_b64_decoded_len - GLEWLWYD_DEFAULT_SALT_LENGTH)) == NULL) {
+      if (o_base64_decode_alloc((const unsigned char *)json_string_value(json_object_get(json_array_get(j_result, 0), "gc_password")), gc_password_len, &password_b64_decoded)) {
+        if ((salt = o_strdup((const char *)password_b64_decoded.data + password_b64_decoded.size - GLEWLWYD_DEFAULT_SALT_LENGTH)) == NULL) {
           y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error extracting salt");
         }
       } else {
@@ -474,6 +474,7 @@ static char * get_salt_from_password_hash(struct mod_parameters * param, const c
   } else {
     y_log_message(Y_LOG_LEVEL_ERROR, "get_salt_from_password_hash - Error executing j_query");
   }
+  o_free(password_b64_decoded.data);
   return salt;
 }
 

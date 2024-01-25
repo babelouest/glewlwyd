@@ -243,7 +243,7 @@ json_t * get_users_for_session(struct config_elements * config, const char * ses
 int user_session_delete(struct config_elements * config, const char * session_uid, const char * username);
 char * get_valid_session_id(struct config_elements * config, const struct _u_request * request, const char * username);
 char * get_session_id(struct config_elements * config, const struct _u_request * request);
-char * generate_session_id();
+char * generate_session_id(void);
 json_t * get_user_session_list(struct config_elements * config, const char * username, const char * pattern, size_t offset, size_t limit, const char * sort);
 int delete_user_session_from_hash(struct config_elements * config, const char * username, const char * session_hash);
 
