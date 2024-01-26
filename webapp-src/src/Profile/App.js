@@ -177,7 +177,7 @@ class App extends Component {
       } else if (this.state.config.params.resetCredentials) {
         if (this.state.config.register) {
           if (this.state.config.params.token) {
-            apiManager.glewlwydRequest("/" + this.state.config.params.resetCredentials + "/reset-credentials-email/" + encodeURI(this.state.config.params.token), "PUT")
+            apiManager.glewlwydRequest("/" + this.state.config.params.resetCredentials + "/reset-credentials-email/" + encodeURIComponent(this.state.config.params.token), "PUT")
             .then(() => {
               this.getResetCredentialsConfig();
             })
