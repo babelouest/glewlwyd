@@ -21,18 +21,44 @@
 
 struct _u_request user_req;
 
-START_TEST(test_oauth2_auth_invalid_response_type)
+START_TEST(test_oauth2_auth_invalid_parameters)
 {
-  char * url = msprintf("%s/glwd/auth?response_type=invalid&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oauth2.html&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
-  int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unsupported_response_type");
-  o_free(url);
-  ck_assert_int_eq(res, 1);
+  const char * url = SERVER_URI "/glwd/auth?response_type=code&client_id=client1_id&redirect_uri=..%2f..%2ftest-oauth2.html?param=client1_cb1&state=xyzabcd&scope=" SCOPE_LIST;
+  ck_assert_int_eq(run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
+
+  // response_type
+  url = SERVER_URI "/glwd/auth?response_type=invalid&client_id=client1_id&redirect_uri=..%2f..%2ftest-oauth2.html?param=client1_cb1&state=xyzabcd&scope=" SCOPE_LIST;
+  ck_assert_int_eq(run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  url = SERVER_URI "/glwd/auth";
+  ck_assert_int_eq(run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  url = SERVER_URI "/glwd/auth?client_id=client1_id&redirect_uri=..%2f..%2ftest-oauth2.html?param=client1_cb1&state=xyzabcd&scope=" SCOPE_LIST;
+  ck_assert_int_eq(run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  url = SERVER_URI "/glwd/auth?response_type=&client_id=client1_id&redirect_uri=..%2f..%2ftest-oauth2.html?param=client1_cb1&state=xyzabcd&scope=" SCOPE_LIST;
+  ck_assert_int_eq(run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+
+  // client_id
+  url = SERVER_URI "/glwd/auth?response_type=code&redirect_uri=..%2f..%2ftest-oauth2.html?param=client1_cb1&state=xyzabcd&scope=" SCOPE_LIST;
+  ck_assert_int_eq(run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  url = SERVER_URI "/glwd/auth?response_type=code&client_id=&redirect_uri=..%2f..%2ftest-oauth2.html?param=client1_cb1&state=xyzabcd&scope=" SCOPE_LIST;
+  ck_assert_int_eq(run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+
+  // redirect_uri
+  url = SERVER_URI "/glwd/auth?response_type=code&client_id=client1_id&state=xyzabcd&scope=" SCOPE_LIST;
+  ck_assert_int_eq(run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  url = SERVER_URI "/glwd/auth?response_type=code&client_id=client1_id&redirect_uri=&state=xyzabcd&scope=" SCOPE_LIST;
+  ck_assert_int_eq(run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+
+  // scope
+  url = SERVER_URI "/glwd/auth?response_type=code&client_id=&redirect_uri=..%2f..%2ftest-oauth2.html?param=client1_cb1&state=xyzabcd";
+  ck_assert_int_eq(run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  url = SERVER_URI "/glwd/auth?response_type=code&client_id=client1_id&redirect_uri=..%2f..%2ftest-oauth2.html?param=client1_cb1&state=xyzabcd&scope=";
+  ck_assert_int_eq(run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
 }
 END_TEST
 
 START_TEST(test_oauth2_auth_code_state_ok)
 {
-  char * url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oauth2.html&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
+  char * url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oauth2.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, SCOPE_LIST);
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "state=xyzabcd");
   o_free(url);
   ck_assert_int_eq(res, 1);
@@ -51,7 +77,7 @@ END_TEST
 START_TEST(test_oauth2_auth_code_client_invalid)
 {
   char * url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=client_error&redirect_uri=..%%2f..%%2ftest-oauth2.html?param=client1_cb1&state=xyz&scope=%s", SERVER_URI, SCOPE_LIST);
-  int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unauthorized_client");
+  int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL);
   o_free(url);
   ck_assert_int_eq(res, 1);
 }
@@ -60,7 +86,7 @@ END_TEST
 START_TEST(test_oauth2_auth_code_uri_invalid)
 {
   char * url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=client_error&redirect_uri=..%%2f..%%2ftest-oauth2.html?param=invalid&state=xyz&scope=%s", SERVER_URI, SCOPE_LIST);
-  int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unauthorized_client");
+  int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL);
   o_free(url);
   ck_assert_int_eq(res, 1);
 }
@@ -78,7 +104,7 @@ END_TEST
 START_TEST(test_oauth2_auth_code_scope_empty)
 {
   char * url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oauth2.html?param=client1_cb1&state=xyzabcd", SERVER_URI);
-  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "invalid_scope");
+  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL);
   o_free(url);
   ck_assert_int_eq(res, 1);
 }
@@ -100,7 +126,7 @@ static Suite *glewlwyd_suite(void)
 
   s = suite_create("Glewlwyd oauth2 auth_code");
   tc_core = tcase_create("test_oauth2_auth_code");
-  tcase_add_test(tc_core, test_oauth2_auth_invalid_response_type);
+  tcase_add_test(tc_core, test_oauth2_auth_invalid_parameters);
   tcase_add_test(tc_core, test_oauth2_auth_code_ok_redirect_login);
   tcase_add_test(tc_core, test_oauth2_auth_code_state_ok);
   tcase_add_test(tc_core, test_oauth2_auth_code_client_invalid);
