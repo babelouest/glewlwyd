@@ -684,7 +684,7 @@ START_TEST(test_oidc_request_jwt_error_redirect_uri)
   ck_assert_ptr_ne(request, NULL);
   
   url = msprintf("%s/oidc/auth?g_continue&request=%s", SERVER_URI, request);
-  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error="), 1);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
   
   o_free(url);
   o_free(request);

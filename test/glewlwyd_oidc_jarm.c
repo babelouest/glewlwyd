@@ -35,8 +35,8 @@
 #define CLIENT_PUBKEY_REDIRECT "https://glewlwyd.local/"
 #define CLIENT_PUBKEY_REDIRECT_ESCAPED "https%3A%2F%2Fglewlwyd.local%2F"
 #define CLIENT_SECRET "password"
-#define CLIENT_REDIRECT_URI "../../test-oauth2.html?param=client3"
-#define CLIENT_REDIRECT_URI_ENCODED "..%2F..%2Ftest-oauth2.html%3Fparam%3Dclient3"
+#define CLIENT_REDIRECT_URI "../../test-oidc.html?param=client3"
+#define CLIENT_REDIRECT_URI_ENCODED "..%2F..%2Ftest-oidc.html%3Fparam%3Dclient3"
 #define CLIENT_SIGN_ALG "PS256"
 #define CLIENT_ENC_ALG "RSA-OAEP-256"
 #define CLIENT_ENC "A128GCM"
@@ -373,36 +373,32 @@ START_TEST(test_oidc_jarm_client_invalid_query_jwt)
 {
   struct _u_request req;
   struct _u_response resp;
-  jwt_t * jwt;
-  char * response;
   
   ck_assert_int_eq(ulfius_init_request(&req), U_OK);
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
-  
   ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
   ck_assert_int_eq(ulfius_set_request_properties(&req, 
       U_OPT_HTTP_VERB, "GET", 
       U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=" RESPONSE_TYPE_CODE "&nonce=nonce1234&client_id=" "error" "&redirect_uri=" CLIENT_REDIRECT_URI_ENCODED "&scope=" SCOPE_LIST "&response_mode="RESPONSE_MODE_QUERY_JWT"&g_continue", 
       U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 302);
-  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "&response="), NULL);
-  response = o_strstr(u_map_get(resp.map_header, "Location"), "&response=") + o_strlen("&response=");
-  if (o_strchr(response, '&') != NULL) {
-    *o_strchr(response, '&') = '\0';
-  }
-  ck_assert_ptr_ne(NULL, jwt = r_jwt_quick_parse(response, R_PARSE_NONE, 0));
-  ck_assert_int_eq(R_JWT_TYPE_SIGN, r_jwt_get_type(jwt));
-  ck_assert_int_eq(R_JWA_ALG_RS256, r_jwt_get_sign_alg(jwt));
-  ck_assert_int_eq(RHN_OK, r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, NULL, 0, (const unsigned char *)pubkey_2_pem, sizeof(pubkey_2_pem)));
-  ck_assert_int_eq(RHN_OK, r_jwt_verify_signature(jwt, NULL, 0));
-  ck_assert_int_eq(RHN_OK, r_jwt_validate_claims(jwt, R_JWT_CLAIM_ISS, ISS,
-                                                      R_JWT_CLAIM_EXP, R_JWT_CLAIM_NOW,
-                                                      R_JWT_CLAIM_STR, "error", "unauthorized_client",
-                                                      R_JWT_CLAIM_NOP));
+  ck_assert_int_eq(resp.status, 403);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
-  r_jwt_free(jwt);
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, 
+      U_OPT_HTTP_VERB, "GET", 
+      U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=" RESPONSE_TYPE_CODE "&nonce=nonce1234&client_id=" CLIENT_ID "&redirect_uri=" "https%%3a%%2f%%2ferror.org" "&scope=" SCOPE_LIST "&response_mode="RESPONSE_MODE_QUERY_JWT"&g_continue", 
+      U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 403);
+  ck_assert_int_eq(resp.binary_body_length, 0);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -525,36 +521,32 @@ START_TEST(test_oidc_jarm_client_invalid_fragment_jwt)
 {
   struct _u_request req;
   struct _u_response resp;
-  jwt_t * jwt;
-  char * response;
   
   ck_assert_int_eq(ulfius_init_request(&req), U_OK);
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
-  
   ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
   ck_assert_int_eq(ulfius_set_request_properties(&req, 
       U_OPT_HTTP_VERB, "GET", 
       U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=" RESPONSE_TYPE_CODE "&nonce=nonce1234&client_id=" "error" "&redirect_uri=" CLIENT_REDIRECT_URI_ENCODED "&scope=" SCOPE_LIST "&response_mode="RESPONSE_MODE_FRAGMENT_JWT"&g_continue", 
       U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 302);
-  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "#response="), NULL);
-  response = o_strstr(u_map_get(resp.map_header, "Location"), "#response=") + o_strlen("#response=");
-  if (o_strchr(response, '&') != NULL) {
-    *o_strchr(response, '&') = '\0';
-  }
-  ck_assert_ptr_ne(NULL, jwt = r_jwt_quick_parse(response, R_PARSE_NONE, 0));
-  ck_assert_int_eq(R_JWT_TYPE_SIGN, r_jwt_get_type(jwt));
-  ck_assert_int_eq(R_JWA_ALG_RS256, r_jwt_get_sign_alg(jwt));
-  ck_assert_int_eq(RHN_OK, r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, NULL, 0, (const unsigned char *)pubkey_2_pem, sizeof(pubkey_2_pem)));
-  ck_assert_int_eq(RHN_OK, r_jwt_verify_signature(jwt, NULL, 0));
-  ck_assert_int_eq(RHN_OK, r_jwt_validate_claims(jwt, R_JWT_CLAIM_ISS, ISS,
-                                                      R_JWT_CLAIM_EXP, R_JWT_CLAIM_NOW,
-                                                      R_JWT_CLAIM_STR, "error", "unauthorized_client",
-                                                      R_JWT_CLAIM_NOP));
+  ck_assert_int_eq(resp.status, 403);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
-  r_jwt_free(jwt);
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, 
+      U_OPT_HTTP_VERB, "GET", 
+      U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=" RESPONSE_TYPE_CODE "&nonce=nonce1234&client_id=" CLIENT_ID "&redirect_uri=" "https%%3a%%2f%%2ferror.org" "&scope=" SCOPE_LIST "&response_mode="RESPONSE_MODE_FRAGMENT_JWT"&g_continue", 
+      U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 403);
+  ck_assert_int_eq(resp.binary_body_length, 0);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -677,36 +669,32 @@ START_TEST(test_oidc_jarm_client_invalid_form_post_jwt)
 {
   struct _u_request req;
   struct _u_response resp;
-  jwt_t * jwt;
-  char * response;
   
   ck_assert_int_eq(ulfius_init_request(&req), U_OK);
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
-  
   ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
   ck_assert_int_eq(ulfius_set_request_properties(&req, 
-      U_OPT_HTTP_VERB, "GET", 
-      U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=" RESPONSE_TYPE_CODE "&nonce=nonce1234&client_id=" "error" "&redirect_uri=" CLIENT_REDIRECT_URI_ENCODED "&scope=" SCOPE_LIST "&response_mode="RESPONSE_MODE_FORM_POST_JWT"&g_continue", 
-      U_OPT_NONE), U_OK);
+                  U_OPT_HTTP_VERB, "GET", 
+                  U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=" RESPONSE_TYPE_CODE "&nonce=nonce1234&client_id=" "error" "&redirect_uri=" CLIENT_REDIRECT_URI_ENCODED "&scope=" SCOPE_LIST "&response_mode="RESPONSE_MODE_FORM_POST_JWT"&g_continue", 
+                  U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 200);
-  ck_assert_ptr_ne(o_strnstr((const char *)resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length), NULL);
-  response = o_strnstr((const char *)resp.binary_body, "name=\"response\" value=\"", resp.binary_body_length) + o_strlen("name=\"response\" value=\"");
-  if (o_strchr(response, '"') != NULL) {
-    *o_strchr(response, '"') = '\0';
-  }
-  ck_assert_ptr_ne(NULL, jwt = r_jwt_quick_parse(response, R_PARSE_NONE, 0));
-  ck_assert_int_eq(R_JWT_TYPE_SIGN, r_jwt_get_type(jwt));
-  ck_assert_int_eq(R_JWA_ALG_RS256, r_jwt_get_sign_alg(jwt));
-  ck_assert_int_eq(RHN_OK, r_jwt_add_sign_keys_pem_der(jwt, R_FORMAT_PEM, NULL, 0, (const unsigned char *)pubkey_2_pem, sizeof(pubkey_2_pem)));
-  ck_assert_int_eq(RHN_OK, r_jwt_verify_signature(jwt, NULL, 0));
-  ck_assert_int_eq(RHN_OK, r_jwt_validate_claims(jwt, R_JWT_CLAIM_ISS, ISS,
-                                                      R_JWT_CLAIM_EXP, R_JWT_CLAIM_NOW,
-                                                      R_JWT_CLAIM_STR, "error", "unauthorized_client",
-                                                      R_JWT_CLAIM_NOP));
+  ck_assert_int_eq(resp.status, 403);
+  ck_assert_int_eq(resp.binary_body_length, 0);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
-  r_jwt_free(jwt);
+  
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, 
+                  U_OPT_HTTP_VERB, "GET", 
+                  U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=" RESPONSE_TYPE_CODE "&nonce=nonce1234&client_id=" CLIENT_ID "&redirect_uri=" "https%%3a%%2f%%2ferror.org" "&scope=" SCOPE_LIST "&response_mode="RESPONSE_MODE_FORM_POST_JWT"&g_continue", 
+                  U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 403);
+  ck_assert_int_eq(resp.binary_body_length, 0);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 

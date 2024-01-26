@@ -16,79 +16,76 @@
 #define SERVER_URI "http://localhost:4593/api"
 #define USERNAME "user1"
 #define PASSWORD "password"
-#define SCOPE_LIST "scope1 scope2 openid"
+#define SCOPE_LIST "scope1+scope2+openid"
+#define SCOPE_LIST_POST "scope1 scope2 openid"
 #define CLIENT "client1_id"
 #define RESPONSE_TYPE "code"
+#define REDIRECT_URI_ESCAPED "..%2f..%2ftest-oidc.html%3fparam%3dclient1_cb1"
+#define REDIRECT_URI "../../test-oidc.html?param=client1_cb1"
 
 struct _u_request user_req;
 
 START_TEST(test_oidc_auth_invalid_response_type)
 {
-  char * url = msprintf("%s/oidc/auth?response_type=invalid&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html&state=xyzabcd&scope=%s", SERVER_URI, RESPONSE_TYPE, SCOPE_LIST);
+  const char * url = SERVER_URI "/oidc/auth?response_type=" "invalid" "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI_ESCAPED "&state=xyzabcd&nonce=nonce1234&scope=" SCOPE_LIST;
   int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unsupported_response_type");
-  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
 
 START_TEST(test_oidc_auth_code_state_ok)
 {
-  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html&state=xyzabcd&scope=%s", SERVER_URI, RESPONSE_TYPE, SCOPE_LIST);
-  int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "state=xyzabcd");
-  o_free(url);
+  const char * url = SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI_ESCAPED "&state=xyzabcd&nonce=nonce1234&scope=" SCOPE_LIST;
+  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "state=xyzabcd");
   ck_assert_int_eq(res, 1);
 }
 END_TEST
 
 START_TEST(test_oidc_auth_code_ok_redirect_login)
 {
-  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&client_id=client1_id&redirect_uri=..%2f..%2ftest-oidc.html?param=client1_cb1&state=xyz&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
-  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&client_id=client1_id&redirect_uri=..%2f..%2ftest-oidc.html?param=client1_cb1&state=xyzabcd&g_continue&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&client_id=client1_id&redirect_uri="REDIRECT_URI_ESCAPED"&state=xyz&nonce=nonce1234&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&client_id=client1_id&redirect_uri="REDIRECT_URI_ESCAPED"&state=xyzabcd&nonce=nonce1234&g_continue&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
 }
 END_TEST
 
 START_TEST(test_oidc_auth_code_client_invalid)
 {
-  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=client_error&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client1_cb1&state=xyz&scope=%s", SERVER_URI, RESPONSE_TYPE, SCOPE_LIST);
-  int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unauthorized_client");
-  o_free(url);
+  const char * url = SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&g_continue&client_id=" "client_error" "&redirect_uri=" REDIRECT_URI_ESCAPED "&state=xyzabcd&nonce=nonce1234&scope=" SCOPE_LIST;
+  int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
 
 START_TEST(test_oidc_auth_code_uri_invalid)
 {
-  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=client_error&redirect_uri=..%%2f..%%2ftest-oidc.html?param=invalid&state=xyz&scope=%s", SERVER_URI, RESPONSE_TYPE, SCOPE_LIST);
-  int res = run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "unauthorized_client");
-  o_free(url);
-  ck_assert_int_eq(res, 1);
+  const char * url = SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&g_continue&client_id=" CLIENT "&redirect_uri=" "..%2f..%2ftest-oidc.html%3fparam%3derror" "&state=xyzabcd&nonce=nonce1234&scope=" SCOPE_LIST;
+  ck_assert_int_eq(run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  url = SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&g_continue&client_id=" CLIENT "&redirect_uri=" "https%3a%2f%2ferror.org" "&state=xyzabcd&nonce=nonce1234&scope=" SCOPE_LIST;
+  ck_assert_int_eq(run_simple_test(NULL, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
 }
 END_TEST
 
 START_TEST(test_oidc_auth_code_scope_invalid)
 {
-  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client1_cb1&state=xyzabcd&scope=scope4", SERVER_URI, RESPONSE_TYPE);
+  const char * url = SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI_ESCAPED "&state=xyzabcd&nonce=nonce1234&scope=" "scope4";
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "invalid_scope");
-  o_free(url);
   ck_assert_int_eq(res, 1);
 }
 END_TEST
 
 START_TEST(test_oidc_auth_code_scope_empty)
 {
-  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client1_cb1&state=xyzabcd", SERVER_URI, RESPONSE_TYPE);
-  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "invalid_scope");
-  o_free(url);
-  ck_assert_int_eq(res, 1);
+  const char * url = SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI_ESCAPED "&state=xyzabcd&nonce=nonce1234";
+  ck_assert_int_eq(1, run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "invalid_scope"));
+  url = SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI_ESCAPED "&state=xyzabcd&nonce=nonce1234&scope=";
+  ck_assert_int_eq(1, run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "invalid_scope"));
 }
 END_TEST
 
 START_TEST(test_oidc_auth_code_ok_redirect_cb_with_code)
 {
-  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=client1_id&redirect_uri=..%%2f..%%2ftest-oidc.html?param=client1_cb1&state=xyzabcd&nonce=noncexyzabcd1234&scope=%s", SERVER_URI, RESPONSE_TYPE, SCOPE_LIST);
-  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code=");
-  o_free(url);
-  ck_assert_int_eq(res, 1);
+  const char * url = SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI_ESCAPED "&state=xyzabcd&nonce=nonce1234&scope=" SCOPE_LIST;
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
 }
 END_TEST
 
@@ -103,11 +100,10 @@ START_TEST(test_oidc_auth_code_ok_redirect_cb_with_code_post)
   user_req.http_verb = o_strdup("POST");
   u_map_put(user_req.map_post_body, "response_type", RESPONSE_TYPE);
   u_map_put(user_req.map_post_body, "client_id", CLIENT);
-  u_map_put(user_req.map_post_body, "redirect_uri", "../../test-oauth2.html?param=client1_cb1");
-  u_map_put(user_req.map_post_body, "state", "xyzabcd");
+  u_map_put(user_req.map_post_body, "redirect_uri", REDIRECT_URI);
   u_map_put(user_req.map_post_body, "state", "xyzabcd");
   u_map_put(user_req.map_post_body, "nonce", "nonce1234");
-  u_map_put(user_req.map_post_body, "scope", SCOPE_LIST);
+  u_map_put(user_req.map_post_body, "scope", SCOPE_LIST_POST);
   u_map_put(user_req.map_post_body, "g_continue", "true");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 302);
@@ -127,8 +123,8 @@ static Suite *glewlwyd_suite(void)
   s = suite_create("Glewlwyd oidc auth_code");
   tc_core = tcase_create("test_oidc_auth_code");
   tcase_add_test(tc_core, test_oidc_auth_invalid_response_type);
-  tcase_add_test(tc_core, test_oidc_auth_code_ok_redirect_login);
   tcase_add_test(tc_core, test_oidc_auth_code_state_ok);
+  tcase_add_test(tc_core, test_oidc_auth_code_ok_redirect_login);
   tcase_add_test(tc_core, test_oidc_auth_code_client_invalid);
   tcase_add_test(tc_core, test_oidc_auth_code_uri_invalid);
   tcase_add_test(tc_core, test_oidc_auth_code_scope_invalid);

@@ -29,8 +29,8 @@ char * code;
 
 START_TEST(test_oidc_implicit_id_token_redirect_login)
 {
-  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&client_id=" CLIENT "&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
-  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&client_id=" CLIENT "&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&g_continue&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&client_id=" CLIENT "&redirect_uri=../../test-oidc.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
+  ck_assert_int_eq(run_simple_test(NULL, "GET", SERVER_URI "/oidc/auth?response_type=" RESPONSE_TYPE "&client_id=" CLIENT "&redirect_uri=../../test-oidc.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&g_continue&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "login.html"), 1);
 }
 END_TEST
 
@@ -41,7 +41,7 @@ START_TEST(test_oidc_implicit_id_token_redirect_login_post)
   
   u_map_init(&body);
   u_map_put(&body, "response_type", RESPONSE_TYPE);
-  u_map_put(&body, "redirect_uri", "../../test-oauth2.html?param=client1_cb1");
+  u_map_put(&body, "redirect_uri", "../../test-oidc.html?param=client1_cb1");
   u_map_put(&body, "client_id", CLIENT);
   u_map_put(&body, "state", "xyzabcd");
   u_map_put(&body, "nonce", "nonce1234");
@@ -57,7 +57,7 @@ START_TEST(test_oidc_implicit_id_token_valid)
   struct _u_response resp;
   ulfius_init_response(&resp);
   o_free(user_req.http_url);
-  user_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  user_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oidc.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
@@ -80,7 +80,7 @@ START_TEST(test_oidc_implicit_id_token_valid_post)
   user_req.http_verb = o_strdup("POST");
   u_map_put(user_req.map_post_body, "response_type", RESPONSE_TYPE);
   u_map_put(user_req.map_post_body, "client_id", CLIENT);
-  u_map_put(user_req.map_post_body, "redirect_uri", "../../test-oauth2.html?param=client1_cb1");
+  u_map_put(user_req.map_post_body, "redirect_uri", "../../test-oidc.html?param=client1_cb1");
   u_map_put(user_req.map_post_body, "state", "xyzabcd");
   u_map_put(user_req.map_post_body, "state", "xyzabcd");
   u_map_put(user_req.map_post_body, "nonce", "nonce1234");
@@ -98,8 +98,8 @@ END_TEST
 
 START_TEST(test_oidc_implicit_id_token_client_invalid)
 {
-  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, "invalid", SCOPE_LIST);
-  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=unauthorized_client");
+  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oidc.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, "invalid", SCOPE_LIST);
+  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL);
   o_free(url);
   ck_assert_int_eq(res, 1);
 }
@@ -107,8 +107,8 @@ END_TEST
 
 START_TEST(test_oidc_implicit_id_token_redirect_uri_invalid)
 {
-  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=invalid&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
-  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=unauthorized_client");
+  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=https%%3a%%2f%%2ferror.org&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL);
   o_free(url);
   ck_assert_int_eq(res, 1);
 }
@@ -116,7 +116,7 @@ END_TEST
 
 START_TEST(test_oidc_implicit_id_token_scope_invalid)
 {
-  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, "scope4");
+  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oidc.html?param=client1_cb1&state=xyzabcd&nonce=nonce1234&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, "scope4");
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_scope");
   o_free(url);
   ck_assert_int_eq(res, 1);
@@ -125,11 +125,11 @@ END_TEST
 
 START_TEST(test_oidc_implicit_id_token_nonce_invalid)
 {
-  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  char * url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oidc.html?param=client1_cb1&state=xyzabcd&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
   int res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request");
   o_free(url);
   ck_assert_int_eq(res, 1);
-  url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oauth2.html?param=client1_cb1&state=xyzabcd&nonce=&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=../../test-oidc.html?param=client1_cb1&state=xyzabcd&nonce=&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
   res = run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "error=invalid_request");
   o_free(url);
   ck_assert_int_eq(res, 1);
@@ -217,7 +217,7 @@ START_TEST(test_oidc_implicit_id_token_scope_grant_partial)
 
   // Get response_type=%s
   code_req.http_verb = strdup("GET");
-  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&state=xyzabcd&nonce=nonce1234&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&state=xyzabcd&nonce=nonce1234&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "id_token="), NULL);
@@ -300,7 +300,7 @@ START_TEST(test_oidc_implicit_id_token_scope_grant_none)
 
   // Try to get code
   code_req.http_verb = strdup("GET");
-  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&nonce=nonce1234&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&nonce=nonce1234&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "id_token="), NULL);
@@ -369,7 +369,7 @@ START_TEST(test_oidc_implicit_id_token_scope_grant_all_authorize_partial)
 
   // Try to get response_type=%s
   code_req.http_verb = strdup("GET");
-  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
+  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "login.html"), NULL);
@@ -479,7 +479,7 @@ START_TEST(test_oidc_implicit_id_token_retry_with_max_use)
 
   // Get response_type=%s
   code_req.http_verb = strdup("GET");
-  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&state=xyzabcd&nonce=nonce1234&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST_MAX_USE);
+  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&state=xyzabcd&nonce=nonce1234&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST_MAX_USE);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "id_token="), NULL);
@@ -490,7 +490,7 @@ START_TEST(test_oidc_implicit_id_token_retry_with_max_use)
   o_free(code_req.http_verb);
   o_free(code_req.http_url);
   code_req.http_verb = strdup("GET");
-  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&state=xyzabcd&nonce=nonce1234&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST_MAX_USE);
+  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&state=xyzabcd&nonce=nonce1234&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST_MAX_USE);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "login.html"), NULL);
@@ -515,7 +515,7 @@ START_TEST(test_oidc_implicit_id_token_retry_with_max_use)
   o_free(code_req.http_verb);
   o_free(code_req.http_url);
   code_req.http_verb = strdup("GET");
-  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&state=xyzabcd&nonce=nonce1234&client_id=%s&redirect_uri=..%%2f..%%2ftest-oauth2.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST_MAX_USE);
+  code_req.http_url = msprintf("%s/oidc/auth?response_type=%s&g_continue&state=xyzabcd&nonce=nonce1234&client_id=%s&redirect_uri=..%%2f..%%2ftest-oidc.html%%3fparam%%3dclient1_cb1&scope=%s", SERVER_URI, RESPONSE_TYPE, CLIENT, SCOPE_LIST_MAX_USE);
   ck_assert_int_eq(ulfius_send_http_request(&code_req, &code_resp), U_OK);
   ck_assert_int_eq(code_resp.status, 302);
   ck_assert_ptr_ne(o_strstr(u_map_get(code_resp.map_header, "Location"), "id_token="), NULL);

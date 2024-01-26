@@ -25,8 +25,8 @@
 #define SCOPE_LIST "openid"
 #define CLIENT_ID "client3_id"
 #define CLIENT_SECRET "password"
-#define CLIENT_REDIRECT_URI "../../test-oauth2.html?param=client3"
-#define CLIENT_REDIRECT_URI_ENCODED "..%2F..%2Ftest-oauth2.html%3Fparam%3Dclient3"
+#define CLIENT_REDIRECT_URI "../../test-oidc.html?param=client3"
+#define CLIENT_REDIRECT_URI_ENCODED "..%2F..%2Ftest-oidc.html%3Fparam%3Dclient3"
 #define RESPONSE_TYPE_CODE "code"
 #define RESPONSE_TYPE_CODE_ID_TOKEN "code+id_token"
 #define ISS "https://glewlwyd.tld"
@@ -183,12 +183,29 @@ START_TEST(test_oidc_auth_iss_id_client_invalid)
       U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=" RESPONSE_TYPE_CODE "&nonce=nonce1234&client_id=" "error" "&redirect_uri=" CLIENT_REDIRECT_URI_ENCODED "&scope=" SCOPE_LIST "&g_continue", 
       U_OPT_NONE), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 302);
-  ck_assert_ptr_eq(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
-  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "iss=" ISS_ESCAPED), NULL);
+  ck_assert_int_eq(resp.status, 403);
   ulfius_clean_request(&req);
   ulfius_clean_response(&resp);
+}
+END_TEST
+
+START_TEST(test_oidc_auth_iss_id_redirect_uri_invalid)
+{
+  struct _u_request req;
+  struct _u_response resp;
   
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  
+  ck_assert_int_eq(ulfius_copy_request(&req, &user_req), U_OK);
+  ck_assert_int_eq(ulfius_set_request_properties(&req, 
+      U_OPT_HTTP_VERB, "GET", 
+      U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=" RESPONSE_TYPE_CODE "&nonce=nonce1234&client_id=" CLIENT_ID "&redirect_uri=" "https%3a%2f%2ferror.org" "&scope=" SCOPE_LIST "&g_continue", 
+      U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&req, &resp), U_OK);
+  ck_assert_int_eq(resp.status, 403);
+  ulfius_clean_request(&req);
+  ulfius_clean_response(&resp);
 }
 END_TEST
 
@@ -227,6 +244,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_auth_iss_id_code_id_token);
   tcase_add_test(tc_core, test_oidc_auth_iss_id_response_type_error);
   tcase_add_test(tc_core, test_oidc_auth_iss_id_client_invalid);
+  tcase_add_test(tc_core, test_oidc_auth_iss_id_redirect_uri_invalid);
   tcase_add_test(tc_core, test_oidc_auth_iss_id_delete_plugin);
   tcase_add_test(tc_core, test_oidc_auth_iss_id_add_plugin_no);
   tcase_add_test(tc_core, test_oidc_auth_iss_id_code_iss_no);

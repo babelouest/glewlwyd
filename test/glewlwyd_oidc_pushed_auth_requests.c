@@ -414,6 +414,34 @@ START_TEST(test_oidc_par_invalid_parameters)
   ck_assert_int_eq(403, resp.status);
   ulfius_clean_response(&resp);
   
+  ulfius_init_response(&resp);
+  ulfius_set_request_properties(&req, 
+                                U_OPT_HTTP_VERB, "POST",
+                                U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/par"),
+                                U_OPT_POST_BODY_PARAMETER, "response_type", RESPONSE_TYPE,
+                                U_OPT_POST_BODY_PARAMETER, "client_id", "error",
+                                U_OPT_POST_BODY_PARAMETER, "nonce", NONCE,
+                                U_OPT_POST_BODY_PARAMETER, "redirect_uri", CLIENT_REDIRECT,
+                                U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                U_OPT_NONE);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(403, resp.status);
+  ulfius_clean_response(&resp);
+  
+  ulfius_init_response(&resp);
+  ulfius_set_request_properties(&req, 
+                                U_OPT_HTTP_VERB, "POST",
+                                U_OPT_HTTP_URL, (SERVER_URI "/" PLUGIN_NAME "/par"),
+                                U_OPT_POST_BODY_PARAMETER, "response_type", RESPONSE_TYPE,
+                                U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT,
+                                U_OPT_POST_BODY_PARAMETER, "nonce", NONCE,
+                                U_OPT_POST_BODY_PARAMETER, "redirect_uri", "https://error.org",
+                                U_OPT_POST_BODY_PARAMETER, "scope", SCOPE_LIST,
+                                U_OPT_NONE);
+  ck_assert_int_eq(U_OK, ulfius_send_http_request(&req, &resp));
+  ck_assert_int_eq(403, resp.status);
+  ulfius_clean_response(&resp);
+  
   ulfius_clean_request(&req);
 }
 END_TEST

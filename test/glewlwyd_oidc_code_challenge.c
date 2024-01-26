@@ -463,6 +463,40 @@ START_TEST(test_oidc_code_code_challenge_s256_verifier_ok)
 }
 END_TEST
 
+START_TEST(test_oidc_code_code_challenge_downgrade)
+{
+  struct _u_response resp;
+  char * code = NULL;
+  struct _u_map body;
+  
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  o_free(user_req.http_url);
+  user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE_LIST);
+  
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
+
+  code = o_strdup(strstr(u_map_get(resp.map_header, "Location"), "code=")+strlen("code="));
+  if (strchr(code, '&') != NULL) {
+    *strchr(code, '&') = '\0';
+  }
+
+  u_map_init(&body);
+  u_map_put(&body, "grant_type", "authorization_code");
+  u_map_put(&body, "code_verifier", CODE_VERIFIER_VALID);
+  u_map_put(&body, "client_id", CLIENT);
+  u_map_put(&body, "redirect_uri", REDIRECT_URI_DECODED);
+  u_map_put(&body, "code", code);
+  
+  ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
+  u_map_clean(&body);
+  ulfius_clean_response(&resp);
+  o_free(code);
+}
+END_TEST
+
 START_TEST(test_oidc_code_code_challenge_missing_ok)
 {
   ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
@@ -537,6 +571,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_verifier_invalid_value);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_method_set_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_verifier_ok);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_downgrade);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_remove_plugin);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_add_plugin_without_plain);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_ok);
@@ -548,6 +583,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_method_set_plain_invalid);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_method_set_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_verifier_ok);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_downgrade);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_remove_plugin);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_add_plugin_required);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_verifier_ok);
