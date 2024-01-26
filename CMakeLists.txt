@@ -493,7 +493,7 @@ if (WITH_MOCK OR BUILD_GLEWLWYD_TESTING)
   list(APPEND PLUGIN_MODULES pluginmodmock)
 endif ()
 
-option(WITH_PLUGIN_OAUTH2 "Build legacy oauth2 plugin module" on)
+option(WITH_PLUGIN_OAUTH2 "Build legacy oauth2 plugin module" off)
 if (WITH_PLUGIN_OAUTH2)
 
   if (NOT Rhonabwy_FOUND)
