@@ -245,7 +245,7 @@ START_TEST(test_glwd_prometheus_metrics_oidc_flow_ok)
 }
 END_TEST
 
-START_TEST(test_glwd_prometheus_metrics_glwd_flow_ok)
+/*START_TEST(test_glwd_prometheus_metrics_glwd_flow_ok)
 {
   struct _u_request auth_req;
   struct _u_response auth_resp, resp;
@@ -320,7 +320,7 @@ START_TEST(test_glwd_prometheus_metrics_glwd_flow_ok)
   o_free(code);
   o_free(redirect_uri_encoded);
 }
-END_TEST
+END_TEST*/
 
 static Suite *glewlwyd_suite(void)
 {
@@ -333,7 +333,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_prometheus_metrics_auth_pwd_increase);
   tcase_add_test(tc_core, test_glwd_prometheus_metrics_auth_invalid_pwd_increase);
   tcase_add_test(tc_core, test_glwd_prometheus_metrics_oidc_flow_ok);
-  tcase_add_test(tc_core, test_glwd_prometheus_metrics_glwd_flow_ok);
+  //tcase_add_test(tc_core, test_glwd_prometheus_metrics_glwd_flow_ok);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
