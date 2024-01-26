@@ -3789,6 +3789,36 @@ static int is_authorization_type_enabled(struct _oidc_config * config, uint auth
   return (authorization_type < 7)?config->auth_type_enabled[authorization_type]:0;
 }
 
+static int check_client_redirect_uri_valid(struct _oidc_config * config,
+                                           const char * client_id,
+                                           const char * redirect_uri,
+                                           const char * ip_source) {
+  json_t * j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, client_id);
+  int uri_found = 0, ret;
+
+  if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
+    if (!o_strnullempty(redirect_uri)) {
+      if (json_array_has_string(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), redirect_uri)) {
+        uri_found = 1;
+      } else {
+        uri_found = 0;
+      }
+    } else {
+      uri_found = 1;
+    }
+    if (!uri_found) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_redirect_uri_valid - oidc - Error, redirect_uri '%s' is invalid for the client '%s', origin: %s", redirect_uri, client_id, ip_source);
+      ret = G_ERROR_UNAUTHORIZED;
+    } else {
+      ret = G_OK;
+    }
+  } else {
+    ret = G_ERROR_UNAUTHORIZED;
+  }
+  json_decref(j_client);
+  return ret;
+}
+
 /**
  * Verify if a client is valid without checking its secret
  */
@@ -4396,13 +4426,23 @@ static int is_pkce_char_valid(const char * code_challenge) {
   }
 }
 
-static int validate_code_challenge(json_t * j_result_code, const char * code_verifier) {
+static int validate_code_challenge(struct _oidc_config * config, json_t * j_result_code, const char * code_verifier) {
   int ret;
   unsigned char code_verifier_hash[32] = {0}, code_verifier_hash_b64[64] = {0};
   size_t code_verifier_hash_len = 32, code_verifier_hash_b64_len = 0;
   gnutls_datum_t key_data;
 
-  if (!json_string_null_or_empty(json_object_get(j_result_code, "code_challenge"))) {
+  if (json_object_get(config->j_params, "pkce-allowed") != json_true()) {
+    if (o_strnullempty(code_verifier)) {
+      ret = G_OK;
+    } else {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_code_challenge - code_verifier unauthorized");
+      ret = G_ERROR_UNAUTHORIZED;
+    }
+  } else if ((!o_strnullempty(code_verifier) && json_string_null_or_empty(json_object_get(j_result_code, "code_challenge"))) || (o_strnullempty(code_verifier) && !json_string_null_or_empty(json_object_get(j_result_code, "code_challenge")))) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_code_challenge - Invalid code_challenge or code_verifier");
+    ret = G_ERROR_UNAUTHORIZED;
+  } else {
     if (is_pkce_char_valid(code_verifier)) {
       if (0 == o_strncmp(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX, json_string_value(json_object_get(j_result_code, "code_challenge")), o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX))) {
         key_data.data = (unsigned char *)code_verifier;
@@ -4429,15 +4469,13 @@ static int validate_code_challenge(json_t * j_result_code, const char * code_ver
           ret = G_OK;
         } else {
           y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_code_challenge - Invalid code_challenge value");
-          ret = G_ERROR_PARAM;
+          ret = G_ERROR_UNAUTHORIZED;
         }
       }
     } else {
       y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_code_challenge - Invalid code_challenge character set");
-      ret = G_ERROR_PARAM;
+      ret = G_ERROR_UNAUTHORIZED;
     }
-  } else {
-    ret = G_OK;
   }
   return ret;
 }
@@ -4662,7 +4700,7 @@ static json_t * validate_authorization_code(struct _oidc_config * config, const 
               json_object_set_new(json_array_get(j_result, 0), "authorization_details", json_loads(json_string_value(json_object_get(json_array_get(j_result, 0), "gpoc_authorization_details")), JSON_DECODE_ANY, NULL));
             }
             json_object_del(json_array_get(j_result, 0), "gpoc_authorization_details");
-            if ((res = validate_code_challenge(json_array_get(j_result, 0), code_verifier)) == G_OK) {
+            if ((res = validate_code_challenge(config, json_array_get(j_result, 0), code_verifier)) == G_OK) {
               j_query = json_pack("{sss[s]s{sO}}",
                                   "table",
                                   GLEWLWYD_PLUGIN_OIDC_TABLE_CODE_SCOPE,
@@ -14126,6 +14164,13 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         response_mode = GLEWLWYD_RESPONSE_MODE_FRAGMENT;
       }
     }
+
+    if (!o_strnullempty(client_id) && !o_strnullempty(redirect_uri) && check_client_redirect_uri_valid(config, client_id, redirect_uri, ip_source) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - invlid client identified with redirect_uri");
+      response->status = 403;
+      break;
+    }
+
     if (u_map_has_key(map, "response_mode")) {
       str_response_mode = u_map_get(map, "response_mode");
       if (0 == o_strcmp("query", str_response_mode)) {
@@ -14229,6 +14274,11 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           login_hint = json_string_value(json_object_get(json_object_get(j_request, "request"), "login_hint"));
           prompt = json_string_value(json_object_get(json_object_get(j_request, "request"), "prompt"));
           max_age = json_string_value(json_object_get(json_object_get(j_request, "request"), "max_age"));
+          if (!o_strnullempty(client_id) && !o_strnullempty(redirect_uri) && check_client_redirect_uri_valid(config, client_id, redirect_uri, ip_source) != G_OK) {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - invlid client identified with redirect_uri");
+            response->status = 403;
+            break;
+          }
           if (code_challenge == NULL || request_par) {
             code_challenge = json_string_value(json_object_get(json_object_get(j_request, "request"), "code_challenge"));
           }
