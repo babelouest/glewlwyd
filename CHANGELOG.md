@@ -1,5 +1,12 @@
 # Glewlwyd Changelog
 
+## 2.7.7
+
+- Minor bugfixes and improvements
+- Build with flag `-Wpedantic`
+- Fix PKCE downgrade (Thanks Pieter Philippaerts)
+- Fix open redirection issue (Thanks Pieter Philippaerts)
+
 ## 2.7.6
 
 - Minor bugfixes and improvements
