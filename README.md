@@ -8,7 +8,7 @@
 
 Glewlwyd is mostly developped by myself on my free time, with gracious help from users.
 
-Nevertheless, it hasn't been audited or fully tested by external developpers.
+Nevertheless, it hasn't been fully audited or tested by external developpers.
 
 Glewlwyd can take a central place in a system where applications and environments need authentication and authorization, be aware of the risks: bugs, non discovered vulnerabilities, etc.
 
