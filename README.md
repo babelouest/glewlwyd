@@ -4,6 +4,18 @@
 ![CodeQL](https://github.com/babelouest/glewlwyd/workflows/CodeQL/badge.svg)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3475/badge)](https://bestpractices.coreinfrastructure.org/projects/3475)
 
+## Disclaimer
+
+Glewlwyd is mostly developped by myself on my free time, with gracious help from users.
+
+Nevertheless, it hasn't been audited or fully tested by external developpers.
+
+Glewlwyd can take a central place in a system where applications and environments need authentication and authorization, be aware of the risks: bugs, non discovered vulnerabilities, etc.
+
+I recommend not to use Glewlwyd in production, more likely to test OAuth2/OpenID behavior, MFA connections, or IdP in general. You can also explore its functionalities and help yourself with its source code for other implementations.
+
+If you intend to use it in production, it's highly recommended to follow the documentation and enable only the features you will use.
+
 ## Experimental Single-Sign-On (SSO) server with multiple factor authentication for OAuth2 and OpenID Connect authentication
 
 **[Glewlwyd 2.7.6 is available](https://github.com/babelouest/glewlwyd/releases/latest). Feel free to [install](docs/INSTALL.md) it, test it, use it ([with precautions!](#disclaimer)), and [send feedback](https://github.com/babelouest/glewlwyd/issues) if you feel like it!**
@@ -57,18 +69,6 @@ Adding new authentication schemes or backend storage for users and clients is po
 The backend API server is fully written in C and uses a small amount of resources.
 
 Its plugin architecture makes it easy to add new modules or plugins, or modify existing ones with less risks to have unmaintainable code.
-
-## Disclaimer
-
-Glewlwyd is mostly developped by myself on my free time, with gracious help from users.
-
-Nevertheless, it hasn't been audited or fully tested by external developpers.
-
-Glewlwyd can take a central place in a system where applications and environments need authentication and authorization, be aware of the risks: bugs, non discovered vulnerabilities, etc.
-
-I recommend not to use Glewlwyd in production, more likely to test OAuth2/OpenID behavior, MFA connections, or IdP in general. You can also explore its functionalities and help yourself with its source code for other implementations.
-
-If you intend to use it in production, it's highly recommended to follow the documentation and enable only the features you will use.
 
 # Installation
 
