@@ -57,14 +57,18 @@ class App extends Component {
           })
           .then(() => {
             this.setState({stateDecoded: stateDecoded}, () => {
-              var url = stateDecoded.complete_url;
-              if (url.indexOf('?') > -1) {
-                url += '&';
+              if (stateDecoded.complete_url.startsWith(config.GlewlwydUrl)) {
+                var url = stateDecoded.complete_url;
+                if (url.indexOf('?') > -1) {
+                  url += '&';
+                } else {
+                  url += '?';
+                }
+                url += "scheme_name=" + encodeURIComponent(stateDecoded.module) + "&provider=" + encodeURIComponent(stateDecoded.provider);
+                window.location.href = url;
               } else {
-                url += '?';
+                this.setState({stateDecoded: stateDecoded, errorAuthentication: true, gotoProfile: true});
               }
-              url += "scheme_name=" + stateDecoded.module + "&provider=" + stateDecoded.provider;
-              window.location.href = url;
             });
           })
           .fail((err) => {
@@ -98,7 +102,13 @@ class App extends Component {
           })
           .then(() => {
             this.setState({stateDecoded: stateDecoded}, () => {
-              window.location.href = stateDecoded.callback_url;
+              if (stateDecoded.callback_url.startsWith(config.GlewlwydUrl)) {
+                window.location.href = stateDecoded.callback_url;
+              } else {
+                console.log(stateDecoded.callback_url);
+                console.log(config.GlewlwydUrl);
+                this.setState({stateDecoded: false, unknownError: true, gotoLogin: true});
+              }
             });
           })
           .fail((err) => {
@@ -121,19 +131,31 @@ class App extends Component {
   }
   
   gotoLogin() {
-    window.location.href = this.state.stateDecoded.callback_url;
+    if (this.state.stateDecoded && this.state.stateDecoded.callback_url.startsWith(this.state.config.GlewlwydUrl)) {
+      window.location.href = this.state.stateDecoded.callback_url;
+    } else {
+      console.log(this.state.stateDecoded.callback_url);
+      console.log(this.state.config.GlewlwydUrl);
+      this.setState({stateDecoded: false, unknownError: true, gotoLogin: true});
+    }
   }
   
   gotoProfile() {
     if (this.state.stateDecoded && this.state.stateDecoded.complete_url) {
-      var url = this.state.stateDecoded.complete_url;
-      if (url.indexOf('?') > -1) {
-        url += '&';
+      if (this.state.stateDecoded.complete_url.startsWith(this.state.config.GlewlwydUrl)) {
+        var url = this.state.stateDecoded.complete_url;
+        if (url.indexOf('?') > -1) {
+          url += '&';
+        } else {
+          url += '?';
+        }
+        url += "scheme_name=" + encodeURIComponent(this.state.stateDecoded.module) + "&provider=" + encodeURIComponent(this.state.stateDecoded.provider);
+        window.location.href = url;
       } else {
-        url += '?';
+        console.log(this.state.stateDecoded.complete_url);
+        console.log(this.state.config.GlewlwydUrl);
+        this.setState({stateDecoded: false, unknownError: true, gotoLogin: true});
       }
-      url += "scheme_name=" + this.state.stateDecoded.module + "&provider=" + this.state.stateDecoded.provider;
-      window.location.href = url;
     } else {
       window.location.href = this.state.config.ProfileUrl;
     }
