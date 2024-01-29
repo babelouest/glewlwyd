@@ -522,6 +522,9 @@ class GlwdOauth2Params extends Component {
     </div>;
     return (
       <div>
+        <div className="alert alert-danger" role="alert">
+          {i18next.t("admin.mod-glwd-message-deprecated")}
+        </div>
         <div className="form-group">
           <div>
             <div>
