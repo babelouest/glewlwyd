@@ -27,17 +27,17 @@ set(SCHEME_MODULES )
 
 set(PROGRAM_VERSION_MAJOR "2")
 set(PROGRAM_VERSION_MINOR "7")
-set(PROGRAM_VERSION_PATCH "6")
+set(PROGRAM_VERSION_PATCH "7")
 set(PROJECT_DESCRIPTION "Single Sign On server, OAuth2, Openid Connect, multiple factor authentication with, HOTP/TOTP, FIDO2, TLS Certificates, etc. extensible via plugins ")
 set(PROJECT_BUGREPORT_PATH "https://github.com/babelouest/glewlwyd/issues")
 set(LIBCBOR_VERSION_REQUIRED "0.5.0")
 set(JANSSON_VERSION_REQUIRED "2.11")
-set(ORCANIA_VERSION_REQUIRED "2.3.3")
-set(YDER_VERSION_REQUIRED "1.4.20")
-set(ULFIUS_VERSION_REQUIRED "2.7.15")
-set(HOEL_VERSION_REQUIRED "1.4.29")
-set(RHONABWY_VERSION_REQUIRED "1.1.13")
-set(IDDAWC_VERSION_REQUIRED "1.1.9")
+set(ORCANIA_VERSION_REQUIRED "2.3.4")
+set(YDER_VERSION_REQUIRED "1.4.21")
+set(ULFIUS_VERSION_REQUIRED "2.7.16")
+set(HOEL_VERSION_REQUIRED "1.4.30")
+set(RHONABWY_VERSION_REQUIRED "1.1.14")
+set(IDDAWC_VERSION_REQUIRED "1.1.10")
 
 set(USER_MODULES_SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/user/")
 set(USER_MODULES )
@@ -837,7 +837,13 @@ install(TARGETS glewlwyd
 install(FILES docs/glewlwyd.conf.sample
     DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/glewlwyd RENAME glewlwyd.conf COMPONENT config)
 install(DIRECTORY webapp/
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/glewlwyd/webapp/ COMPONENT runtime)
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/glewlwyd/webapp/ COMPONENT runtime
+    PATTERN "webapp/callback.html" EXCLUDE
+    PATTERN "webapp/callback.js" EXCLUDE)
+if (WITH_SCHEME_OAUTH2)
+  install(FILES webapp/callback.html webapp/callback.js
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/glewlwyd/webapp/ COMPONENT runtime)
+endif ()
 install(FILES webapp/config.json.sample
     DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/glewlwyd/webapp/ RENAME config.json COMPONENT runtime)
 install(TARGETS ${USER_MODULES}
