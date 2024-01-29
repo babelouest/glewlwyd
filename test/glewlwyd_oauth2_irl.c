@@ -139,8 +139,6 @@ START_TEST(test_oauth2_irl_run_workflow)
   o_free(auth_req.http_url);
   auth_req.http_url = msprintf("%s/glwd/auth?response_type=code&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&scope=%s", SERVER_URI, json_string_value(json_object_get(json_object_get(j_params, "client"), "client_id")), redirect_uri_encoded, scope);
   auth_req.http_verb = o_strdup("GET");
-  auth_req.auth_basic_user = o_strdup(client_id);
-  auth_req.auth_basic_password = o_strdup(client_password);
   ulfius_init_response(&resp);
   ck_assert_int_eq(ulfius_send_http_request(&auth_req, &resp), U_OK);
   ck_assert_int_eq(resp.status, 302);

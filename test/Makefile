@@ -33,7 +33,7 @@ RESOURCES_ULFIUS=../docs/resources/ulfius/
 all: test $(CERT)/server.key
 
 clean:
-	rm -f *.o *.log valgrind.txt valgrind-*.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER) $(TARGET_PROFILE_DELETE) $(TARGET_PROMETHEUS) $(TARGET_SINGLE_USER_SESSION)
+	rm -f *.o *.log valgrind.txt valgrind-*.txt $(TARGET_ADMIN) $(TARGET_AUTH) $(TARGET_CRUD) $(TARGET_OAUTH2) $(TARGET_OIDC) $(TARGET_IRL) $(TARGET_CERTIFICATE) $(TARGET_REGISTER) $(TARGET_PROFILE_DELETE) $(TARGET_PROMETHEUS) $(TARGET_SINGLE_USER_SESSION) $(TARGET_SCHEME) $(TARGET_MISC)
 	rm -f $(CERT)/server.* $(CERT)/root* $(CERT)/client* $(CERT)/user* $(CERT)/packed* $(CERT)/apple* $(CERT)/certtool.log
 
 $(CERT)/server.key:

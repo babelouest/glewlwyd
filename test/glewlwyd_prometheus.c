@@ -245,83 +245,6 @@ START_TEST(test_glwd_prometheus_metrics_oidc_flow_ok)
 }
 END_TEST
 
-/*START_TEST(test_glwd_prometheus_metrics_glwd_flow_ok)
-{
-  struct _u_request auth_req;
-  struct _u_response auth_resp, resp;
-  struct _u_map body;
-  json_t * j_body;
-  char * cookie;
-  char * url, * redirect_uri_encoded, * code;
-  int code_total_1, code_total_2, at_total_1, at_total_2;
-  
-  ck_assert_int_ne(-1, code_total_1 = get_metrics("glewlwyd_oauth2_code_total{plugin=\"glwd\"}", NULL));
-  ck_assert_int_ne(-1, at_total_1 = get_metrics("glewlwyd_oauth2_access_token_total{plugin=\"glwd\"}", NULL));
-  ulfius_init_request(&auth_req);
-  ulfius_init_response(&auth_resp);
-  auth_req.http_verb = strdup("POST");
-  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
-  j_body = json_pack("{ssss}", "username", USERNAME, "password", PASSWORD);
-  ulfius_set_json_body_request(&auth_req, j_body);
-  json_decref(j_body);
-  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
-  ck_assert_int_eq(auth_resp.status, 200);
-  ck_assert_int_gt(auth_resp.nb_cookies, 0);
-  ck_assert_ptr_ne((cookie = msprintf("%s=%s", auth_resp.map_cookie[0].key, auth_resp.map_cookie[0].value)), NULL);
-  ck_assert_int_eq(u_map_put(auth_req.map_header, "Cookie", cookie), U_OK);
-  
-  ulfius_clean_response(&auth_resp);
-  
-  url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
-  j_body = json_pack("{ss}", "scope", SCOPE_LIST);
-  ck_assert_int_eq(run_simple_test(&auth_req, "PUT", url, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
-  json_decref(j_body);
-  o_free(url);
-
-  // Test token framework
-  redirect_uri_encoded = ulfius_url_encode(CLIENT_REDIRECT_URI);
-  url = msprintf("%s/glwd/auth?response_type=token&nonce=nonce1234&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&nonce=nonce4321&scope=%s", SERVER_URI, CLIENT, redirect_uri_encoded, SCOPE_LIST);
-  ck_assert_int_eq(run_simple_test(&auth_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "token="), 1);
-  o_free(url);
-  ck_assert_int_ne(-1, at_total_2 = get_metrics("glewlwyd_oauth2_access_token_total{plugin=\"glwd\"}", NULL));
-  ck_assert_int_eq(at_total_2, at_total_1+1);
-  
-  // Test code framework
-  o_free(auth_req.http_verb);
-  o_free(auth_req.http_url);
-  auth_req.http_url = msprintf("%s/glwd/auth?response_type=code&nonce=nonce1234&g_continue&client_id=%s&redirect_uri=%s&state=xyzabcd&scope=%s", SERVER_URI, CLIENT, redirect_uri_encoded, SCOPE_LIST);
-  auth_req.http_verb = o_strdup("GET");
-  auth_req.auth_basic_user = o_strdup(CLIENT);
-  auth_req.auth_basic_password = o_strdup(CLIENT_SECRET);
-  ulfius_init_response(&resp);
-  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &resp), U_OK);
-  ck_assert_int_eq(resp.status, 302);
-  code = o_strdup(strstr(u_map_get(resp.map_header, "Location"), "code=")+strlen("code="));
-  if (strchr(code, '&') != NULL) {
-    *strchr(code, '&') = '\0';
-  }
-  url = msprintf("%s/glwd/token/", SERVER_URI);
-  u_map_init(&body);
-  u_map_put(&body, "grant_type", "authorization_code");
-  u_map_put(&body, "client_id", CLIENT);
-  u_map_put(&body, "redirect_uri", CLIENT_REDIRECT_URI);
-  u_map_put(&body, "code", code);
-  ck_assert_int_eq(run_simple_test(NULL, "POST", url, CLIENT, CLIENT_SECRET, NULL, &body, 200, NULL, "token", NULL), 1);
-  u_map_clean(&body);
-  ulfius_clean_response(&resp);
-  o_free(url);
-  ck_assert_int_ne(-1, code_total_2 = get_metrics("glewlwyd_oauth2_code_total{plugin=\"glwd\"}", NULL));
-  ck_assert_int_eq(code_total_2, code_total_1+1);
-  ck_assert_int_ne(-1, at_total_2 = get_metrics("glewlwyd_oauth2_access_token_total{plugin=\"glwd\"}", NULL));
-  ck_assert_int_eq(at_total_2, at_total_1+2);
-
-  ulfius_clean_request(&auth_req);
-  o_free(cookie);
-  o_free(code);
-  o_free(redirect_uri_encoded);
-}
-END_TEST*/
-
 static Suite *glewlwyd_suite(void)
 {
   Suite *s;
@@ -333,7 +256,6 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_glwd_prometheus_metrics_auth_pwd_increase);
   tcase_add_test(tc_core, test_glwd_prometheus_metrics_auth_invalid_pwd_increase);
   tcase_add_test(tc_core, test_glwd_prometheus_metrics_oidc_flow_ok);
-  //tcase_add_test(tc_core, test_glwd_prometheus_metrics_glwd_flow_ok);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 

@@ -41,6 +41,10 @@
 #define CLIENT_NAME "client one use refresh tokens"
 #define CLIENT_SECRET "very-secret"
 
+#define CLIENT_ID_PUBLIC "client_public_refresh_one_use"
+#define CLIENT_NAME_PUBLIC "client public one use refresh tokens"
+#define CLIENT_REDIRECT_URI_PUBLIC "https://client.org/"
+
 struct _u_request admin_req;
 
 START_TEST(test_oidc_refresh_token_one_use_add_module_always_ok)
@@ -89,6 +93,37 @@ START_TEST(test_oidc_refresh_token_one_use_add_module_client_driven_ok)
                                   "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
                                   "refresh-token-one-use", PLUGIN_REFRESH_TOKEN_ONE_USE_CLIENT_DRIVEN,
                                   "client-refresh-token-one-use-parameter", "refresh-token-one-use",
+                                  "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
+                                  "allow-non-oidc", json_true(),
+                                  "auth-type-client-enabled", json_true(),
+                                  "auth-type-code-enabled", json_true(),
+                                  "auth-type-token-enabled", json_true(),
+                                  "auth-type-implicit-enabled", json_true(),
+                                  "auth-type-password-enabled", json_true(),
+                                  "auth-type-refresh-enabled", json_true(),
+                                  "auth-type-device-enabled", json_true());
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/mod/plugin/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
+START_TEST(test_oidc_refresh_token_one_use_add_module_client_driven_public_ok)
+{
+  json_t * j_parameters = json_pack("{sssssssos{sssssssssisisssosisosososososososo}}",
+                                "module", PLUGIN_MODULE,
+                                "name", PLUGIN_NAME,
+                                "display_name", PLUGIN_DISPLAY_NAME,
+                                "enabled", json_true(),
+                                "parameters",
+                                  "iss", PLUGIN_ISS,
+                                  "jwt-type", "sha",
+                                  "jwt-key-size", "256",
+                                  "key", "secret",
+                                  "code-duration", PLUGIN_CODE_DURATION,
+                                  "refresh-token-duration", PLUGIN_REFRESH_TOKEN_DURATION,
+                                  "refresh-token-one-use", PLUGIN_REFRESH_TOKEN_ONE_USE_CLIENT_DRIVEN,
+                                  "client-refresh-token-one-use-public-client", json_true(),
                                   "access-token-duration", PLUGIN_ACCESS_TOKEN_DURATION,
                                   "allow-non-oidc", json_true(),
                                   "auth-type-client-enabled", json_true(),
@@ -167,6 +202,25 @@ START_TEST(test_oidc_refresh_token_one_use_add_client_driven_one_use_ok)
 }
 END_TEST
 
+START_TEST(test_oidc_refresh_token_one_use_add_client_public_driven_one_use_ok)
+{
+  json_t * j_parameters = json_pack("{sssssssos[s]s[ss]so}",
+                                    "client_id", CLIENT_ID_PUBLIC,
+                                    "client_name", CLIENT_NAME,
+                                    "client_secret", CLIENT_SECRET,
+                                    "confidential", json_false(),
+                                    "redirect_uri",
+                                      CLIENT_REDIRECT_URI_PUBLIC,
+                                    "authorization_type",
+                                      "code",
+                                      "refresh_token",
+                                    "enabled", json_true());
+
+  ck_assert_int_eq(run_simple_test(&admin_req, "POST", SERVER_URI "/client/", NULL, NULL, j_parameters, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_parameters);
+}
+END_TEST
+
 START_TEST(test_oidc_refresh_token_one_use_add_client_driven_multiple_use_ok)
 {
   json_t * j_parameters = json_pack("{sssssssssos[ss]sos[s]}",
@@ -193,6 +247,12 @@ END_TEST
 START_TEST(test_oidc_refresh_token_one_use_delete_client)
 {
   ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/client/" CLIENT_ID, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
+}
+END_TEST
+
+START_TEST(test_oidc_refresh_token_one_use_delete_client_public)
+{
+  ck_assert_int_eq(run_simple_test(&admin_req, "DELETE", SERVER_URI "/client/" CLIENT_ID_PUBLIC, NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL), 1);
 }
 END_TEST
 
@@ -247,6 +307,120 @@ START_TEST(test_oidc_refresh_token_one_use_refresh_queue_valid)
   
   json_decref(j_resp);
   ulfius_clean_request(&req);
+}
+END_TEST
+
+START_TEST(test_oidc_refresh_token_one_use_public_refresh_queue_valid)
+{
+  struct _u_request auth_req, client_req;
+  struct _u_response auth_resp, resp;
+  json_t * j_body, * j_resp = NULL;
+  char * cookie;
+  char * url, * redirect_uri_encoded, * code;
+  const char * refresh_token;
+  
+  ulfius_init_request(&auth_req);
+  ulfius_init_response(&auth_resp);
+  auth_req.http_verb = strdup("POST");
+  auth_req.http_url = msprintf("%s/auth/", SERVER_URI);
+  j_body = json_pack("{ssss}", "username", USERNAME, "password", PASSWORD);
+  ulfius_set_json_body_request(&auth_req, j_body);
+  json_decref(j_body);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &auth_resp), U_OK);
+  ck_assert_int_eq(auth_resp.status, 200);
+  ck_assert_int_gt(auth_resp.nb_cookies, 0);
+  ck_assert_ptr_ne((cookie = msprintf("%s=%s", auth_resp.map_cookie[0].key, auth_resp.map_cookie[0].value)), NULL);
+  ck_assert_int_eq(u_map_put(auth_req.map_header, "Cookie", cookie), U_OK);
+  
+  ulfius_clean_response(&auth_resp);
+  
+  url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT_ID_PUBLIC);
+  j_body = json_pack("{ss}", "scope", SCOPE_LIST);
+  ck_assert_int_eq(run_simple_test(&auth_req, "PUT", url, NULL, NULL, j_body, NULL, 200, NULL, NULL, NULL), 1);
+  json_decref(j_body);
+  o_free(url);
+
+  // Test code framework
+  redirect_uri_encoded = ulfius_url_encode(CLIENT_REDIRECT_URI_PUBLIC);
+  ck_assert_int_eq(ulfius_set_request_properties(&auth_req, U_OPT_HTTP_VERB, "GET",
+                                                            U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT_ID_PUBLIC "&redirect_uri=",
+                                                            U_OPT_HTTP_URL_APPEND, redirect_uri_encoded,
+                                                            U_OPT_HTTP_URL_APPEND, "&scope=" SCOPE_LIST,
+                                                            U_OPT_NONE), U_OK);
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_send_http_request(&auth_req, &resp), U_OK);
+  ulfius_clean_request(&auth_req);
+  ck_assert_int_eq(resp.status, 302);
+  code = o_strdup(strstr(u_map_get(resp.map_header, "Location"), "code=")+strlen("code="));
+  if (strchr(code, '&') != NULL) {
+    *strchr(code, '&') = '\0';
+  }
+  ulfius_clean_response(&resp);
+
+  ulfius_init_request(&client_req);
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_set_request_properties(&client_req, U_OPT_HTTP_VERB, "POST",
+                                                              U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/token",
+                                                              U_OPT_POST_BODY_PARAMETER, "grant_type", "authorization_code",
+                                                              U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT_ID_PUBLIC,
+                                                              U_OPT_POST_BODY_PARAMETER, "redirect_uri", CLIENT_REDIRECT_URI_PUBLIC,
+                                                              U_OPT_POST_BODY_PARAMETER, "code", code,
+                                                              U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&client_req, &resp), U_OK);
+  ulfius_clean_request(&client_req);
+  ck_assert_int_eq(resp.status, 200);
+  ck_assert_ptr_ne(j_resp = ulfius_get_json_body_response(&resp, NULL), NULL);
+  ck_assert_ptr_ne(NULL, json_object_get(j_resp, "access_token"));
+  ck_assert_ptr_ne(NULL, refresh_token = json_string_value(json_object_get(j_resp, "refresh_token")));
+  ulfius_clean_response(&resp);
+
+  ulfius_init_request(&client_req);
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_set_request_properties(&client_req, U_OPT_HTTP_VERB, "POST",
+                                                              U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/token",
+                                                              U_OPT_POST_BODY_PARAMETER, "grant_type", "refresh_token",
+                                                              U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT_ID_PUBLIC,
+                                                              U_OPT_POST_BODY_PARAMETER, "refresh_token", refresh_token,
+                                                              U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&client_req, &resp), U_OK);
+  ulfius_clean_request(&client_req);
+  ck_assert_int_eq(resp.status, 200);
+  json_decref(j_resp);
+  ck_assert_ptr_ne(NULL, (j_resp = ulfius_get_json_body_response(&resp, NULL)));
+  ck_assert_ptr_ne(NULL, json_object_get(j_resp, "access_token"));
+  ck_assert_ptr_ne(NULL, json_object_get(j_resp, "refresh_token"));
+  ulfius_clean_response(&resp);
+
+  ulfius_init_request(&client_req);
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_set_request_properties(&client_req, U_OPT_HTTP_VERB, "POST",
+                                                              U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/token",
+                                                              U_OPT_POST_BODY_PARAMETER, "grant_type", "refresh_token",
+                                                              U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT_ID_PUBLIC,
+                                                              U_OPT_POST_BODY_PARAMETER, "refresh_token", json_string_value(json_object_get(j_resp, "refresh_token")),
+                                                              U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&client_req, &resp), U_OK);
+  ulfius_clean_request(&client_req);
+  ck_assert_int_eq(resp.status, 200);
+  json_decref(j_resp);
+  ulfius_clean_response(&resp);
+
+  ulfius_init_request(&client_req);
+  ulfius_init_response(&resp);
+  ck_assert_int_eq(ulfius_set_request_properties(&client_req, U_OPT_HTTP_VERB, "POST",
+                                                              U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/token",
+                                                              U_OPT_POST_BODY_PARAMETER, "grant_type", "refresh_token",
+                                                              U_OPT_POST_BODY_PARAMETER, "client_id", CLIENT_ID_PUBLIC,
+                                                              U_OPT_POST_BODY_PARAMETER, "refresh_token", refresh_token,
+                                                              U_OPT_NONE), U_OK);
+  ck_assert_int_eq(ulfius_send_http_request(&client_req, &resp), U_OK);
+  ulfius_clean_request(&client_req);
+  ck_assert_int_eq(resp.status, 400);
+  ulfius_clean_response(&resp);
+
+  o_free(cookie);
+  o_free(code);
+  o_free(redirect_uri_encoded);
 }
 END_TEST
 
@@ -394,8 +568,16 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_refresh_token_one_use_delete_module);
   tcase_add_test(tc_core, test_oidc_refresh_token_one_use_add_module_never_ok);
   tcase_add_test(tc_core, test_oidc_refresh_token_one_use_refresh_no_queue_valid);
-  tcase_add_test(tc_core, test_oidc_refresh_token_one_use_delete_module);
   tcase_add_test(tc_core, test_oidc_refresh_token_one_use_delete_client);
+  tcase_add_test(tc_core, test_oidc_refresh_token_one_use_delete_module);
+  tcase_add_test(tc_core, test_oidc_refresh_token_one_use_add_module_client_driven_public_ok);
+  tcase_add_test(tc_core, test_oidc_refresh_token_one_use_add_client_driven_one_use_ok);
+  tcase_add_test(tc_core, test_oidc_refresh_token_one_use_add_client_public_driven_one_use_ok);
+  tcase_add_test(tc_core, test_oidc_refresh_token_one_use_public_refresh_queue_valid);
+  tcase_add_test(tc_core, test_oidc_refresh_token_one_use_refresh_no_queue_valid);
+  tcase_add_test(tc_core, test_oidc_refresh_token_one_use_delete_client);
+  tcase_add_test(tc_core, test_oidc_refresh_token_one_use_delete_client_public);
+  tcase_add_test(tc_core, test_oidc_refresh_token_one_use_delete_module);
   tcase_set_timeout(tc_core, 30);
   suite_add_tcase(s, tc_core);
 
