@@ -493,6 +493,10 @@ static json_t * check_parameters (json_t * j_params) {
         json_array_append_new(j_error, json_string("Property 'client-refresh-token-one-use-parameter' is optional and must be a string"));
         ret = G_ERROR_PARAM;
       }
+      if (json_object_get(j_params, "client-refresh-token-one-use-public-client") != NULL && !json_is_boolean(json_object_get(j_params, "client-refresh-token-one-use-public-client"))) {
+        json_array_append_new(j_error, json_string("Property 'client-refresh-token-one-use-public-client' is optional and must be a boolean"));
+        ret = G_ERROR_PARAM;
+      }
     }
     if (json_object_get(j_params, "refresh-token-rolling") != NULL && !json_is_boolean(json_object_get(j_params, "refresh-token-rolling"))) {
       json_array_append_new(j_error, json_string("Property 'refresh-token-rolling' is optional and must be a boolean"));
@@ -13123,7 +13127,13 @@ static int is_refresh_token_one_use(struct _oidc_config * config, json_t * j_cli
     return 0;
   } else {
     if (j_client != NULL) {
-      return is_true(json_string_value(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-refresh-token-one-use-parameter")))));
+      if (json_object_get(config->j_params, "client-refresh-token-one-use-public-client") == json_true() && json_object_get(j_client, "confidential") != json_true()) {
+        return 1;
+      } else if (!json_string_null_or_empty(json_object_get(config->j_params, "client-refresh-token-one-use-parameter"))) {
+        return is_true(json_string_value(json_object_get(j_client, json_string_value(json_object_get(config->j_params, "client-refresh-token-one-use-parameter")))));
+      } else {
+        return 0;
+      }
     } else {
       return 0;
     }
