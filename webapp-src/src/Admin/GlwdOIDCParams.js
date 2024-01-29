@@ -19,8 +19,9 @@ let defaultParam = {
   "refresh-token-duration":1209600,
   "code-duration":600,
   "refresh-token-rolling":true,
-  "refresh-token-one-use":"never",
-  "client-refresh-token-one-use-parameter":"refresh-token-one-use",
+  "refresh-token-one-use":"client-driven",
+  "client-refresh-token-one-use-parameter":"",
+  "client-refresh-token-one-use-public-client": true,
   "allow-non-oidc":false,
   "auth-type-code-enabled":true,
   "auth-type-code-revoke-replayed":false,
@@ -52,10 +53,10 @@ let defaultParam = {
   "scope-claim":"no",
   "scope-claim-scope":[],
   "allowed-scope":["openid"],
-  "pkce-allowed":false,
+  "pkce-allowed":true,
   "pkce-method-plain-allowed":false,
   "pkce-required":false,
-  "pkce-required-public-client":false,
+  "pkce-required-public-client":true,
   "pkce-scopes":[],
   "introspection-revocation-allowed":false,
   "introspection-revocation-auth-scope":[],
@@ -2275,8 +2276,23 @@ class GlwdOIDCParams extends Component {
                     <div className="input-group-prepend">
                       <label className="input-group-text" htmlFor="mod-glwd-client-refresh-token-one-use-parameter">{i18next.t("admin.mod-glwd-client-refresh-token-one-use-parameter")}</label>
                     </div>
-                    <input type="text" className="form-control" id="mod-glwd-client-refresh-token-one-use-parameter-parameter" onChange={(e) => this.changeParam(e, "client-refresh-token-one-use-parameter")} value={this.state.mod.parameters["client-refresh-token-one-use-parameter"]} placeholder={i18next.t("admin.mod-glwd-client-refresh-token-one-use-parameter-ph")} disabled={this.state.mod.parameters["refresh-token-one-use"]!=="client-driven"} />
+                    <input type="text"
+                           className="form-control"
+                           id="mod-glwd-client-refresh-token-one-use-parameter-parameter"
+                           onChange={(e) => this.changeParam(e, "client-refresh-token-one-use-parameter")}
+                           value={this.state.mod.parameters["client-refresh-token-one-use-parameter"]}
+                           placeholder={i18next.t("admin.mod-glwd-client-refresh-token-one-use-parameter-ph")}
+                           disabled={this.state.mod.parameters["refresh-token-one-use"]!=="client-driven"} />
                   </div>
+                </div>
+                <div className="form-group form-check">
+                  <input type="checkbox"
+                         className="form-check-input"
+                         id="mod-glwd-refresh-token-one-use-public-client"
+                         onChange={(e) => this.toggleParam(e, "client-refresh-token-one-use-public-client")}
+                         checked={this.state.mod.parameters["client-refresh-token-one-use-public-client"]}
+                         disabled={this.state.mod.parameters["refresh-token-one-use"]!=="client-driven"} />
+                  <label className="form-check-label" htmlFor="mod-glwd-refresh-token-one-use-public-client">{i18next.t("admin.mod-glwd-client-refresh-token-one-use-parameter-public-client")}</label>
                 </div>
               </div>
             </div>
