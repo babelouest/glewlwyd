@@ -4433,13 +4433,14 @@ static int validate_code_challenge(struct _oidc_config * config, json_t * j_resu
     if (o_strnullempty(code_verifier)) {
       ret = G_OK;
     } else {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_code_challenge - code_verifier unauthorized");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_code_challenge - code_verifier unauthorized");
       ret = G_ERROR_UNAUTHORIZED;
     }
-  } else if ((!o_strnullempty(code_verifier) && json_string_null_or_empty(json_object_get(j_result_code, "code_challenge"))) || (o_strnullempty(code_verifier) && !json_string_null_or_empty(json_object_get(j_result_code, "code_challenge")))) {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_code_challenge - Invalid code_challenge or code_verifier");
+  } else if ((!o_strnullempty(code_verifier) && json_string_null_or_empty(json_object_get(j_result_code, "code_challenge"))) ||
+            (o_strnullempty(code_verifier) && !json_string_null_or_empty(json_object_get(j_result_code, "code_challenge")))) {
+    y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_code_challenge - Invalid code_challenge or code_verifier");
     ret = G_ERROR_UNAUTHORIZED;
-  } else {
+  } else if (!o_strnullempty(code_verifier) && !json_string_null_or_empty(json_object_get(j_result_code, "code_challenge"))) {
     if (is_pkce_char_valid(code_verifier)) {
       if (0 == o_strncmp(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX, json_string_value(json_object_get(j_result_code, "code_challenge")), o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX))) {
         key_data.data = (unsigned char *)code_verifier;
@@ -4450,7 +4451,7 @@ static int validate_code_challenge(struct _oidc_config * config, json_t * j_resu
             if (0 == o_strcmp(json_string_value(json_object_get(j_result_code, "code_challenge"))+o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX), (const char *)code_verifier_hash_b64)) {
               ret = G_OK;
             } else {
-              y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_code_challenge - Invalid code_challenge value");
+              y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_code_challenge - Invalid code_challenge value");
               ret = G_ERROR_UNAUTHORIZED;
             }
           } else {
@@ -4465,14 +4466,16 @@ static int validate_code_challenge(struct _oidc_config * config, json_t * j_resu
         if (0 == o_strcmp(json_string_value(json_object_get(j_result_code, "code_challenge")), code_verifier)) {
           ret = G_OK;
         } else {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_code_challenge - Invalid code_challenge value");
+          y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_code_challenge - Invalid code_challenge value");
           ret = G_ERROR_UNAUTHORIZED;
         }
       }
     } else {
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_code_challenge - Invalid code_challenge character set");
+      y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_code_challenge - Invalid code_challenge character set");
       ret = G_ERROR_UNAUTHORIZED;
     }
+  } else {
+    ret = G_OK;
   }
   return ret;
 }
@@ -10315,7 +10318,8 @@ static int check_auth_type_access_token_request (const struct _u_request * reque
   } else if (client_secret != NULL) {
     client_auth_method = GLEWLWYD_CLIENT_AUTH_METHOD_SECRET_BASIC;
   }
-  if (code == NULL || client_id == NULL || redirect_uri == NULL) {
+  if (o_strnullempty(code) || o_strnullempty(client_id) || o_strnullempty(redirect_uri)) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "check_auth_type_access_token_request - Missing input parameters");
     response->status = 400;
   } else {
     if (j_assertion_client != NULL) {
