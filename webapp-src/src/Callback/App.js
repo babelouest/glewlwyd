@@ -105,8 +105,6 @@ class App extends Component {
               if (stateDecoded.callback_url.startsWith(config.GlewlwydUrl)) {
                 window.location.href = stateDecoded.callback_url;
               } else {
-                console.log(stateDecoded.callback_url);
-                console.log(config.GlewlwydUrl);
                 this.setState({stateDecoded: false, unknownError: true, gotoLogin: true});
               }
             });
@@ -134,8 +132,6 @@ class App extends Component {
     if (this.state.stateDecoded && this.state.stateDecoded.callback_url.startsWith(this.state.config.GlewlwydUrl)) {
       window.location.href = this.state.stateDecoded.callback_url;
     } else {
-      console.log(this.state.stateDecoded.callback_url);
-      console.log(this.state.config.GlewlwydUrl);
       this.setState({stateDecoded: false, unknownError: true, gotoLogin: true});
     }
   }
@@ -152,8 +148,6 @@ class App extends Component {
         url += "scheme_name=" + encodeURIComponent(this.state.stateDecoded.module) + "&provider=" + encodeURIComponent(this.state.stateDecoded.provider);
         window.location.href = url;
       } else {
-        console.log(this.state.stateDecoded.complete_url);
-        console.log(this.state.config.GlewlwydUrl);
         this.setState({stateDecoded: false, unknownError: true, gotoLogin: true});
       }
     } else {
