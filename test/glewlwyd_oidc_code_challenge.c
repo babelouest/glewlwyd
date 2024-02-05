@@ -22,9 +22,11 @@
 #define SCOPE_NOT_REQUIRED "scope3"
 #define CLIENT "client1_id"
 #define CLIENT_CONFIDENTIAL "client3_id"
+#define CLIENT_CONFIDENTIAL_SECRET "password"
 #define REDIRECT_URI "..%2f..%2ftest-oidc.html?param=client1_cb1"
 #define REDIRECT_URI_CONFIDENTIAL "..%2f..%2ftest-oidc.html?param=client3"
 #define REDIRECT_URI_DECODED "../../test-oidc.html?param=client1_cb1"
+#define REDIRECT_URI_CONFIDENTIAL_DECODED "../../test-oidc.html?param=client3"
 #define ADMIN_USERNAME "admin"
 #define ADMIN_PASSWORD "password"
 
@@ -246,13 +248,13 @@ START_TEST(test_oidc_code_code_challenge_plain_verifier_invalid_value)
   struct _u_response resp;
   char * code = NULL;
   struct _u_map body;
-  
+
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST);
-  
+
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
 
@@ -267,7 +269,7 @@ START_TEST(test_oidc_code_code_challenge_plain_verifier_invalid_value)
   u_map_put(&body, "client_id", CLIENT);
   u_map_put(&body, "redirect_uri", REDIRECT_URI_DECODED);
   u_map_put(&body, "code", code);
-  
+
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
   u_map_clean(&body);
   ulfius_clean_response(&resp);
@@ -280,13 +282,13 @@ START_TEST(test_oidc_code_code_challenge_plain_verifier_ok)
   struct _u_response resp;
   char * code = NULL;
   struct _u_map body;
-  
+
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_VERIFIER_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_PLAIN "&scope=" SCOPE_LIST);
-  
+
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
 
@@ -301,7 +303,7 @@ START_TEST(test_oidc_code_code_challenge_plain_verifier_ok)
   u_map_put(&body, "client_id", CLIENT);
   u_map_put(&body, "redirect_uri", REDIRECT_URI_DECODED);
   u_map_put(&body, "code", code);
-  
+
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 200, NULL, NULL, NULL), 1);
   u_map_clean(&body);
   ulfius_clean_response(&resp);
@@ -314,13 +316,13 @@ START_TEST(test_oidc_code_code_challenge_s256_invalid_length)
   struct _u_response resp;
   char * code = NULL;
   struct _u_map body;
-  
+
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_42 "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE_LIST);
-  
+
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
 
@@ -335,7 +337,7 @@ START_TEST(test_oidc_code_code_challenge_s256_invalid_length)
   u_map_put(&body, "client_id", CLIENT);
   u_map_put(&body, "redirect_uri", REDIRECT_URI_DECODED);
   u_map_put(&body, "code", code);
-  
+
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
   u_map_clean(&body);
   ulfius_clean_response(&resp);
@@ -348,13 +350,13 @@ START_TEST(test_oidc_code_code_challenge_s256_invalid_charset)
   struct _u_response resp;
   char * code = NULL;
   struct _u_map body;
-  
+
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_INVALID_CHARSET "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE_LIST);
-  
+
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
 
@@ -369,7 +371,7 @@ START_TEST(test_oidc_code_code_challenge_s256_invalid_charset)
   u_map_put(&body, "client_id", CLIENT);
   u_map_put(&body, "redirect_uri", REDIRECT_URI_DECODED);
   u_map_put(&body, "code", code);
-  
+
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
   u_map_clean(&body);
   ulfius_clean_response(&resp);
@@ -382,13 +384,13 @@ START_TEST(test_oidc_code_code_challenge_s256_verifier_invalid_value)
   struct _u_response resp;
   char * code = NULL;
   struct _u_map body;
-  
+
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE_LIST);
-  
+
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
 
@@ -403,7 +405,7 @@ START_TEST(test_oidc_code_code_challenge_s256_verifier_invalid_value)
   u_map_put(&body, "client_id", CLIENT);
   u_map_put(&body, "redirect_uri", REDIRECT_URI_DECODED);
   u_map_put(&body, "code", code);
-  
+
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
   u_map_clean(&body);
   ulfius_clean_response(&resp);
@@ -434,13 +436,13 @@ START_TEST(test_oidc_code_code_challenge_s256_verifier_ok)
   struct _u_response resp;
   char * code = NULL;
   struct _u_map body;
-  
+
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&code_challenge=" CODE_CHALLENGE_VALID "&code_challenge_method=" CODE_CHALLENGE_METHOD_S256 "&scope=" SCOPE_LIST);
-  
+
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
 
@@ -455,7 +457,7 @@ START_TEST(test_oidc_code_code_challenge_s256_verifier_ok)
   u_map_put(&body, "client_id", CLIENT);
   u_map_put(&body, "redirect_uri", REDIRECT_URI_DECODED);
   u_map_put(&body, "code", code);
-  
+
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 200, NULL, NULL, NULL), 1);
   u_map_clean(&body);
   ulfius_clean_response(&resp);
@@ -468,13 +470,13 @@ START_TEST(test_oidc_code_code_challenge_downgrade)
   struct _u_response resp;
   char * code = NULL;
   struct _u_map body;
-  
+
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
   o_free(user_req.http_verb);
   user_req.http_verb = o_strdup("GET");
   o_free(user_req.http_url);
   user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE_LIST);
-  
+
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
 
@@ -489,7 +491,7 @@ START_TEST(test_oidc_code_code_challenge_downgrade)
   u_map_put(&body, "client_id", CLIENT);
   u_map_put(&body, "redirect_uri", REDIRECT_URI_DECODED);
   u_map_put(&body, "code", code);
-  
+
   ck_assert_int_eq(run_simple_test(NULL, "POST", SERVER_URI "/" PLUGIN_NAME "/token", NULL, NULL, NULL, &body, 403, NULL, NULL, NULL), 1);
   u_map_clean(&body);
   ulfius_clean_response(&resp);
@@ -503,9 +505,44 @@ START_TEST(test_oidc_code_code_challenge_missing_ok)
 }
 END_TEST
 
-START_TEST(test_oidc_code_code_challenge_missing_confidential_ok)
+START_TEST(test_oidc_code_code_flow_challenge_missing_confidential_ok)
 {
   ck_assert_int_eq(run_simple_test(&user_req, "GET", SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT_CONFIDENTIAL "&redirect_uri=" REDIRECT_URI_CONFIDENTIAL "&state=xyzabcd&scope=" SCOPE_LIST, NULL, NULL, NULL, NULL, 302, NULL, NULL, "code="), 1);
+}
+END_TEST
+
+START_TEST(test_oidc_code_code_challenge_missing_client_confidential_flow_ok)
+{
+  struct _u_response resp;
+  struct _u_request req;
+  char * code = NULL;
+
+  ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
+  ck_assert_int_eq(ulfius_init_request(&req), U_OK);
+  o_free(user_req.http_verb);
+  user_req.http_verb = o_strdup("GET");
+  o_free(user_req.http_url);
+  user_req.http_url = o_strdup(SERVER_URI "/" PLUGIN_NAME "/auth?response_type=code&nonce=nonce1234&g_continue&client_id=" CLIENT_CONFIDENTIAL "&redirect_uri=" REDIRECT_URI_CONFIDENTIAL "&state=xyzabcd&scope=" SCOPE_LIST);
+
+  ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
+  ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "code="), NULL);
+
+  code = o_strdup(strstr(u_map_get(resp.map_header, "Location"), "code=")+strlen("code="));
+  if (strchr(code, '&') != NULL) {
+    *strchr(code, '&') = '\0';
+  }
+
+  ck_assert_int_eq(U_OK, ulfius_set_request_properties(&req, U_OPT_HTTP_VERB, "POST",
+                                                             U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/token",
+                                                             U_OPT_POST_BODY_PARAMETER, "grant_type", "authorization_code",
+                                                             U_OPT_POST_BODY_PARAMETER, "redirect_uri", REDIRECT_URI_CONFIDENTIAL_DECODED,
+                                                             U_OPT_POST_BODY_PARAMETER, "code", code,
+                                                             U_OPT_NONE));
+
+  ck_assert_int_eq(run_simple_test(&req, "POST", SERVER_URI "/" PLUGIN_NAME "/token", CLIENT_CONFIDENTIAL, CLIENT_CONFIDENTIAL_SECRET, NULL, NULL, 200, NULL, NULL, NULL), 1);
+  ulfius_clean_response(&resp);
+  ulfius_clean_request(&req);
+  o_free(code);
 }
 END_TEST
 
@@ -518,12 +555,12 @@ END_TEST
 START_TEST(test_oidc_code_code_challenge_missing_resp_type_token_id_token_ok)
 {
   struct _u_response resp;
-  
+
   ck_assert_int_eq(ulfius_init_response(&resp), U_OK);
   ck_assert_int_eq(ulfius_set_request_properties(&user_req, U_OPT_HTTP_VERB, "GET",
                                                  U_OPT_HTTP_URL, SERVER_URI "/" PLUGIN_NAME "/auth?response_type=id_token&nonce=nonce1234&g_continue&client_id=" CLIENT "&redirect_uri=" REDIRECT_URI "&state=xyzabcd&scope=" SCOPE_LIST,
                                                  U_OPT_NONE), U_OK);
-  
+
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_int_eq(ulfius_send_http_request(&user_req, &resp), U_OK);
   ck_assert_ptr_ne(o_strstr(u_map_get(resp.map_header, "Location"), "&id_token="), NULL);
@@ -559,6 +596,8 @@ static Suite *glewlwyd_suite(void)
   tc_core = tcase_create("test_oidc_code_challenge");
   tcase_add_test(tc_core, test_oidc_code_code_challenge_add_plugin_with_plain);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_ok);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_client_confidential_flow_ok);
+  tcase_add_test(tc_core, test_oidc_code_code_flow_challenge_missing_confidential_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_invalid_code_challenge_method);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_plain_invalid_length);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_plain_invalid_charset);
@@ -575,6 +614,8 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_code_code_challenge_remove_plugin);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_add_plugin_without_plain);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_ok);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_client_confidential_flow_ok);
+  tcase_add_test(tc_core, test_oidc_code_code_flow_challenge_missing_confidential_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_plain_invalid_code_challenge_method);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_invalid_length);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_invalid_charset);
@@ -596,7 +637,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_code_code_challenge_scopes_not_required_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_remove_plugin);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_add_plugin_required_public_client);
-  tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_confidential_ok);
+  tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_client_confidential_flow_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_error);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_missing_resp_type_token_id_token_ok);
   tcase_add_test(tc_core, test_oidc_code_code_challenge_s256_verifier_ok);
@@ -616,13 +657,13 @@ int main(int argc, char *argv[])
   struct _u_response auth_resp;
   json_t * j_body;
   int res, do_test = 0, i;
-  
+
   y_init_logs("Glewlwyd test", Y_LOG_MODE_CONSOLE, Y_LOG_LEVEL_DEBUG, NULL, "Starting Glewlwyd test");
-  
+
   // Getting a valid session id for authenticated http requests
   ulfius_init_request(&user_req);
   ulfius_init_request(&admin_req);
-  
+
   ulfius_init_request(&auth_req);
   ulfius_init_response(&auth_resp);
   auth_req.http_verb = strdup("POST");
@@ -647,7 +688,17 @@ int main(int argc, char *argv[])
     } else {
       do_test = 1;
     }
-    
+    o_free(user_req.http_url);
+    user_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT_CONFIDENTIAL);
+    j_body = json_pack("{ss}", "scope", SCOPE_LIST);
+    ulfius_set_json_body_request(&user_req, j_body);
+    json_decref(j_body);
+    if (ulfius_send_http_request(&user_req, NULL) != U_OK) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "Grant scope '%s' for %s error", CLIENT_CONFIDENTIAL, SCOPE_LIST);
+    } else {
+      do_test = 1;
+    }
+
     y_log_message(Y_LOG_LEVEL_INFO, "User %s authenticated", USERNAME);
     do_test = 1;
   } else {
@@ -688,19 +739,24 @@ int main(int argc, char *argv[])
     number_failed = srunner_ntests_failed(sr);
     srunner_free(sr);
   }
-  
+
   j_body = json_pack("{ss}", "scope", "");
   ulfius_set_json_body_request(&user_req, j_body);
   json_decref(j_body);
   if (ulfius_send_http_request(&user_req, NULL) != U_OK) {
     y_log_message(Y_LOG_LEVEL_DEBUG, "Remove grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
   }
-  
+  o_free(user_req.http_url);
+  user_req.http_url = msprintf("%s/auth/grant/%s", SERVER_URI, CLIENT);
+  if (ulfius_send_http_request(&user_req, NULL) != U_OK) {
+    y_log_message(Y_LOG_LEVEL_DEBUG, "Remove grant scope '%s' for %s error", CLIENT, SCOPE_LIST);
+  }
+
   run_simple_test(&user_req, "DELETE", SERVER_URI "/auth/", NULL, NULL, NULL, NULL, 200, NULL, NULL, NULL);
-  
+
   ulfius_clean_request(&user_req);
   ulfius_clean_request(&admin_req);
-  
+
   y_close_logs();
 
   return (do_test && number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
