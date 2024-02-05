@@ -4424,23 +4424,27 @@ static int is_pkce_char_valid(const char * code_challenge) {
 }
 
 static int validate_code_challenge(struct _oidc_config * config, json_t * j_result_code, const char * code_verifier) {
-  int ret;
+  int ret,
+      has_code_challenge = !json_string_null_or_empty(json_object_get(j_result_code, "code_challenge")),
+      has_code_verifier = !o_strnullempty(code_verifier);
   unsigned char code_verifier_hash[32] = {0}, code_verifier_hash_b64[64] = {0};
   size_t code_verifier_hash_len = 32, code_verifier_hash_b64_len = 0;
   gnutls_datum_t key_data;
 
   if (json_object_get(config->j_params, "pkce-allowed") != json_true()) {
-    if (o_strnullempty(code_verifier)) {
+    if (!has_code_verifier) {
       ret = G_OK;
     } else {
       y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_code_challenge - code_verifier unauthorized");
       ret = G_ERROR_UNAUTHORIZED;
     }
-  } else if ((!o_strnullempty(code_verifier) && json_string_null_or_empty(json_object_get(j_result_code, "code_challenge"))) ||
-            (o_strnullempty(code_verifier) && !json_string_null_or_empty(json_object_get(j_result_code, "code_challenge")))) {
+  } else if (!has_code_verifier && !has_code_challenge) {
+    ret = G_OK;
+  } else if ((has_code_verifier && !has_code_challenge) ||
+            (!has_code_verifier && has_code_challenge)) {
     y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_code_challenge - Invalid code_challenge or code_verifier");
     ret = G_ERROR_UNAUTHORIZED;
-  } else if (!o_strnullempty(code_verifier) && !json_string_null_or_empty(json_object_get(j_result_code, "code_challenge"))) {
+  } else {
     if (is_pkce_char_valid(code_verifier)) {
       if (0 == o_strncmp(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX, json_string_value(json_object_get(j_result_code, "code_challenge")), o_strlen(GLEWLWYD_CODE_CHALLENGE_S256_PREFIX))) {
         key_data.data = (unsigned char *)code_verifier;
@@ -4474,8 +4478,6 @@ static int validate_code_challenge(struct _oidc_config * config, json_t * j_resu
       y_log_message(Y_LOG_LEVEL_ERROR, "oidc validate_code_challenge - Invalid code_challenge character set");
       ret = G_ERROR_UNAUTHORIZED;
     }
-  } else {
-    ret = G_OK;
   }
   return ret;
 }
@@ -4791,7 +4793,7 @@ static json_t * validate_authorization_code(struct _oidc_config * config, const 
     }
     o_free(code_hash);
   } else {
-    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_authorization_code - validate_code_challenge invalid code");
+    y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_authorization_code - invalid code");
     j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
   }
   return j_return;
