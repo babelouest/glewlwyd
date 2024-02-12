@@ -3789,6 +3789,36 @@ static int is_authorization_type_enabled(struct _oidc_config * config, uint auth
   return (authorization_type < 7)?config->auth_type_enabled[authorization_type]:0;
 }
 
+static int check_client_redirect_uri_valid(struct _oidc_config * config,
+                                           const char * client_id,
+                                           const char * redirect_uri,
+                                           const char * ip_source) {
+  json_t * j_client = config->glewlwyd_config->glewlwyd_plugin_callback_get_client(config->glewlwyd_config, client_id);
+  int uri_found = 0, ret;
+
+  if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
+    if (!o_strnullempty(redirect_uri)) {
+      if (json_array_has_string(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), redirect_uri)) {
+        uri_found = 1;
+      } else {
+        uri_found = 0;
+      }
+    } else {
+      uri_found = 1;
+    }
+    if (!uri_found) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_redirect_uri_valid - oidc - Error, redirect_uri '%s' is invalid for the client '%s', origin: %s", redirect_uri, client_id, ip_source);
+      ret = G_ERROR_UNAUTHORIZED;
+    } else {
+      ret = G_OK;
+    }
+  } else {
+    ret = G_ERROR_UNAUTHORIZED;
+  }
+  json_decref(j_client);
+  return ret;
+}
+
 /**
  * Verify if a client is valid without checking its secret
  */
@@ -14126,6 +14156,13 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
         response_mode = GLEWLWYD_RESPONSE_MODE_FRAGMENT;
       }
     }
+
+    if (!o_strnullempty(response_type) && check_client_redirect_uri_valid(config, client_id, redirect_uri, ip_source) != G_OK) {
+      y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - invlid client identified with redirect_uri");
+      response->status = 403;
+      break;
+    }
+
     if (u_map_has_key(map, "response_mode")) {
       str_response_mode = u_map_get(map, "response_mode");
       if (0 == o_strcmp("query", str_response_mode)) {
@@ -14229,6 +14266,11 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
           login_hint = json_string_value(json_object_get(json_object_get(j_request, "request"), "login_hint"));
           prompt = json_string_value(json_object_get(json_object_get(j_request, "request"), "prompt"));
           max_age = json_string_value(json_object_get(json_object_get(j_request, "request"), "max_age"));
+          if (check_client_redirect_uri_valid(config, client_id, redirect_uri, ip_source) != G_OK) {
+            y_log_message(Y_LOG_LEVEL_DEBUG, "callback_oidc_authorization - invlid client identified with redirect_uri");
+            response->status = 403;
+            break;
+          }
           if (code_challenge == NULL || request_par) {
             code_challenge = json_string_value(json_object_get(json_object_get(j_request, "request"), "code_challenge"));
           }
@@ -14473,10 +14515,7 @@ static int callback_oidc_authorization(const struct _u_request * request, struct
 
     // Check if at least one scope has been provided
     if (o_strnullempty(scope)) {
-      // Scope is not allowed for this user
-      y_log_message(Y_LOG_LEVEL_DEBUG, "oidc validate_endpoint_auth - scope list is missing or empty or scope 'openid' missing, origin: %s", ip_source);
-      u_map_put(&map_redirect, "error", "invalid_scope");
-      build_auth_response(config, response, response_mode, json_object_get(j_client, "client"), redirect_uri, &map_redirect);
+      response->status = 403;
       break;
     }
 

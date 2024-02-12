@@ -696,7 +696,7 @@ static int is_authorization_type_enabled(struct _oauth2_config * config, uint au
 
 static json_t * check_client_valid(struct _oauth2_config * config, const char * client_id, const char * client_header_login, const char * client_header_password, const char * redirect_uri, unsigned short authorization_type, int implicit_flow, const char * ip_source) {
   json_t * j_client, * j_element = NULL, * j_return;
-  int uri_found, authorization_type_enabled;
+  int uri_found = 0, authorization_type_enabled;
   size_t index = 0;
 
   if (client_id == NULL) {
@@ -707,20 +707,17 @@ static json_t * check_client_valid(struct _oauth2_config * config, const char * 
     return json_pack("{si}", "result", G_ERROR_PARAM);
   }
   j_client = config->glewlwyd_config->glewlwyd_callback_check_client_valid(config->glewlwyd_config, client_id, client_header_password);
-  if (check_result_value(j_client, G_OK)) {
+  if (check_result_value(j_client, G_OK) && json_object_get(json_object_get(j_client, "client"), "enabled") == json_true()) {
     if (!implicit_flow && client_header_password == NULL && json_object_get(json_object_get(j_client, "client"), "confidential") == json_true()) {
       y_log_message(Y_LOG_LEVEL_DEBUG, "check_client_valid - oauth2 - Error, confidential client must be authentified with its password, origin: %s", ip_source);
       j_return = json_pack("{si}", "result", G_ERROR_UNAUTHORIZED);
     } else {
       if (redirect_uri != NULL) {
-        uri_found = 0;
         json_array_foreach(json_object_get(json_object_get(j_client, "client"), "redirect_uri"), index, j_element) {
           if (0 == o_strcmp(json_string_value(j_element), redirect_uri)) {
             uri_found = 1;
           }
         }
-      } else {
-        uri_found = 1;
       }
 
       authorization_type_enabled = 0;
@@ -2444,8 +2441,8 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
   // Check if client is allowed to perform this request
   if (check_result_value(j_client, G_OK)) {
     // Client is allowed to use auth_code grant with this redirection_uri
-    if (u_map_has_key(request->map_url, "g_continue")) {
-      if (!o_strnullempty(u_map_get(request->map_url, "scope"))) {
+    if (!o_strnullempty(u_map_get(request->map_url, "scope"))) {
+      if (u_map_has_key(request->map_url, "g_continue")) {
         j_session = validate_session_client_scope(config, request, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
         if (check_result_value(j_session, G_OK)) {
           if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == json_false()) {
@@ -2526,26 +2523,20 @@ static int check_auth_type_auth_code_grant (const struct _u_request * request, s
         }
         json_decref(j_session);
       } else {
-        // Scope is not allowed for this user
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_auth_type_auth_code_grant - oauth2 - scope list is missing or empty, origin: %s", ip_source);
-        response->status = 302;
-        redirect_url = msprintf("%s%serror=invalid_scope%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
+        // Redirect to login page
+        redirect_url = get_login_url(config, request, "auth", u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"), NULL);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
+        response->status = 302;
       }
     } else {
-      // Redirect to login page
-      redirect_url = get_login_url(config, request, "auth", u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"), NULL);
-      ulfius_add_header_to_response(response, "Location", redirect_url);
-      o_free(redirect_url);
-      response->status = 302;
+      // Scope is not allowed for this user
+      y_log_message(Y_LOG_LEVEL_DEBUG, "check_auth_type_auth_code_grant - oauth2 - scope list is missing or empty, origin: %s", ip_source);
+      response->status = 403;
     }
   } else {
     // client is not authorized
-    response->status = 302;
-    redirect_url = msprintf("%s%serror=unauthorized_client%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
-    ulfius_add_header_to_response(response, "Location", redirect_url);
-    o_free(redirect_url);
+    response->status = 403;
     config->glewlwyd_config->glewlwyd_plugin_callback_metrics_increment_counter(config->glewlwyd_config, GLWD_METRICS_OAUTH2_UNAUTHORIZED_CLIENT, 1, "plugin", config->name, NULL);
   }
   o_free(state_param);
@@ -2707,8 +2698,8 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
   // Check if client is allowed to perform this request
   if (check_result_value(j_client, G_OK)) {
     // Client is allowed to use auth_code grant with this redirection_uri
-    if (u_map_has_key(request->map_url, "g_continue")) {
-      if (!o_strnullempty(u_map_get(request->map_url, "scope"))) {
+    if (!o_strnullempty(u_map_get(request->map_url, "scope"))) {
+      if (u_map_has_key(request->map_url, "g_continue")) {
         j_session = validate_session_client_scope(config, request, u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"));
         if (check_result_value(j_session, G_OK)) {
           if (json_object_get(json_object_get(j_session, "session"), "authorization_required") == json_false()) {
@@ -2791,25 +2782,19 @@ static int check_auth_type_implicit_grant (const struct _u_request * request, st
         }
         json_decref(j_session);
       } else {
-        // Empty scope is not allowed
-        response->status = 302;
-        redirect_url = msprintf("%s%serror=invalid_scope%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), state_param);
+        // Redirect to login page
+        redirect_url = get_login_url(config, request, "auth", u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"), NULL);
         ulfius_add_header_to_response(response, "Location", redirect_url);
         o_free(redirect_url);
+        response->status = 302;
       }
     } else {
-      // Redirect to login page
-      redirect_url = get_login_url(config, request, "auth", u_map_get(request->map_url, "client_id"), u_map_get(request->map_url, "scope"), NULL);
-      ulfius_add_header_to_response(response, "Location", redirect_url);
-      o_free(redirect_url);
-      response->status = 302;
+      // Empty scope is not allowed
+      response->status = 403;
     }
   } else {
     // client is not authorized
-    response->status = 302;
-    redirect_url = msprintf("%s%serror=unauthorized_client%s%s", u_map_get(request->map_url, "redirect_uri"), (o_strchr(u_map_get(request->map_url, "redirect_uri"), '?')!=NULL?"&":"?"), (u_map_get(request->map_url, "state")!=NULL?"&state=":""), (u_map_get(request->map_url, "state")!=NULL?u_map_get(request->map_url, "state"):""));
-    ulfius_add_header_to_response(response, "Location", redirect_url);
-    o_free(redirect_url);
+    response->status = 403;
   }
   o_free(state_param);
   json_decref(j_client);
@@ -3313,7 +3298,7 @@ static int callback_check_glewlwyd_session_or_token(const struct _u_request * re
 static int callback_oauth2_authorization(const struct _u_request * request, struct _u_response * response, void * user_data) {
   const char * response_type = u_map_get(request->map_url, "response_type");
   int result = U_CALLBACK_CONTINUE;
-  char * redirect_url, * state_encoded = NULL, * state_param = NULL;
+  char * state_encoded = NULL, * state_param = NULL;
 
   u_map_put(response->map_header, "Cache-Control", "no-store");
   u_map_put(response->map_header, "Pragma", "no-cache");
@@ -3326,41 +3311,21 @@ static int callback_oauth2_authorization(const struct _u_request * request, stru
   } else {
     state_param = o_strdup("");
   }
+
   if (0 == o_strcmp("code", response_type)) {
     if (is_authorization_type_enabled((struct _oauth2_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_AUTHORIZATION_CODE) && u_map_get(request->map_url, "redirect_uri") != NULL) {
       result = check_auth_type_auth_code_grant(request, response, user_data);
     } else {
-      if (u_map_get(request->map_url, "redirect_uri") != NULL) {
-        response->status = 302;
-        redirect_url = msprintf("%s#error=unsupported_response_type%s", u_map_get(request->map_url, "redirect_uri"), state_param);
-        ulfius_add_header_to_response(response, "Location", redirect_url);
-        o_free(redirect_url);
-      } else {
-        response->status = 403;
-      }
+      response->status = 403;
     }
   } else if (0 == o_strcmp("token", response_type)) {
     if (is_authorization_type_enabled((struct _oauth2_config *)user_data, GLEWLWYD_AUTHORIZATION_TYPE_IMPLICIT) && u_map_get(request->map_url, "redirect_uri") != NULL) {
       result = check_auth_type_implicit_grant(request, response, user_data);
     } else {
-      if (u_map_get(request->map_url, "redirect_uri") != NULL) {
-        response->status = 302;
-        redirect_url = msprintf("%s#error=unsupported_response_type%s", u_map_get(request->map_url, "redirect_uri"), state_param);
-        ulfius_add_header_to_response(response, "Location", redirect_url);
-        o_free(redirect_url);
-      } else {
-        response->status = 403;
-      }
-    }
-  } else {
-    if (u_map_get(request->map_url, "redirect_uri") != NULL) {
-      response->status = 302;
-      redirect_url = msprintf("%s#error=unsupported_response_type%s", u_map_get(request->map_url, "redirect_uri"), state_param);
-      ulfius_add_header_to_response(response, "Location", redirect_url);
-      o_free(redirect_url);
-    } else {
       response->status = 403;
     }
+  } else {
+    response->status = 403;
   }
   o_free(state_param);
 
