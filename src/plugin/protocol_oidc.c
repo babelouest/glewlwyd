@@ -5298,7 +5298,7 @@ static char * get_request_from_uri(struct _oidc_config * config, const char * re
       y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error invalid content type");
     }
   } else {
-    y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error ulfius_send_http_request_with_limit response status is %d", resp.status);
+    y_log_message(Y_LOG_LEVEL_ERROR, "get_request_from_uri - Error ulfius_send_http_request_with_limit response status is %ld", resp.status);
   }
 
   ulfius_clean_request(&req);
@@ -6092,7 +6092,7 @@ static int send_ciba_client_notification(struct _oidc_config * config, json_t * 
           if (resp.status == 200 || resp.status == 204) {
             ret = G_OK;
           } else {
-            y_log_message(Y_LOG_LEVEL_ERROR, "send_ciba_client_notification ping - Invalid response status: %d", resp.status);
+            y_log_message(Y_LOG_LEVEL_ERROR, "send_ciba_client_notification ping - Invalid response status: %ld", resp.status);
             ret = G_ERROR;
           }
         } else {
@@ -6129,7 +6129,7 @@ static int send_ciba_client_notification(struct _oidc_config * config, json_t * 
                 if (resp.status == 200 || resp.status == 204) {
                   ret = G_OK;
                 } else {
-                  y_log_message(Y_LOG_LEVEL_ERROR, "send_ciba_client_notification push - Invalid response status: %d", resp.status);
+                  y_log_message(Y_LOG_LEVEL_ERROR, "send_ciba_client_notification push - Invalid response status: %ld", resp.status);
                   ret = G_ERROR;
                 }
               } else {
@@ -6175,7 +6175,7 @@ static int send_ciba_client_notification(struct _oidc_config * config, json_t * 
             if (resp.status == 200 || resp.status == 204) {
               ret = G_OK;
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "send_ciba_client_notification ping - Invalid response status: %d", resp.status);
+              y_log_message(Y_LOG_LEVEL_ERROR, "send_ciba_client_notification ping - Invalid response status: %ld", resp.status);
               ret = G_ERROR;
             }
           } else {
@@ -13203,8 +13203,8 @@ static void * run_backchannel_logout_thread(void * args) {
             if (resp.status == 200) {
               y_log_message(Y_LOG_LEVEL_DEBUG, "Send backchannel_logout successfully for client %s", json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id")));
             } else {
-              y_log_message(Y_LOG_LEVEL_ERROR, "run_backchannel_logout_thread - Error backchannel_logout response for client %s, response status %d", json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id")), resp.status);
-              y_log_message(Y_LOG_LEVEL_DEBUG, "  -  response body %.*s", resp.binary_body_length, resp.binary_body);
+              y_log_message(Y_LOG_LEVEL_ERROR, "run_backchannel_logout_thread - Error backchannel_logout response for client %s, response status %ld", json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id")), resp.status);
+              y_log_message(Y_LOG_LEVEL_DEBUG, "  -  response body %.*s", (int)resp.binary_body_length, resp.binary_body);
             }
           } else {
             y_log_message(Y_LOG_LEVEL_ERROR, "run_backchannel_logout_thread - Error ulfius_send_http_request_with_limit for client %s", json_string_value(json_object_get(json_object_get(j_client, "client"), "client_id")));

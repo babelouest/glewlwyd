@@ -1633,7 +1633,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
           } else if (0 == o_strncmp((const char *)cbor_string_handle(key), "response", MIN(o_strlen("response"), cbor_string_length(key))) && cbor_isa_bytestring(cbor_map_handle(att_stmt)[i].value)) {
             response = cbor_map_handle(att_stmt)[i].value;
           } else {
-            message = msprintf("attStmt map element %d key is not valid: '%.*s'", i, cbor_string_length(key), cbor_string_handle(key));
+            message = msprintf("attStmt map element %d key is not valid: '%.*s'", i, (int)cbor_string_length(key), cbor_string_handle(key));
             json_array_append_new(j_error, json_string(message));
             o_free(message);
             break;
@@ -1796,7 +1796,7 @@ static json_t * check_attestation_android_safetynet(json_t * j_params, cbor_item
       }
       if (o_strnstr(issued_to, SAFETYNET_ISSUED_TO, issued_to_len) == NULL) {
         json_array_append_new(j_error, json_string("Error x509 dn"));
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - safetynet certificate issued for %.*s", issued_to_len, issued_to);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_android_safetynet - safetynet certificate issued for %.*s", (int)issued_to_len, issued_to);
         break;
       }
       if (json_object_get(j_params, "google-root-ca-r2") != json_null()) {
@@ -1887,7 +1887,7 @@ static json_t * check_attestation_fido_u2f(json_t * j_params, unsigned char * cr
           } else if (0 == o_strncmp((const char *)cbor_string_handle(key), "sig", MIN(o_strlen("sig"), cbor_string_length(key)))) {
             sig = cbor_map_handle(att_stmt)[i].value;
           } else {
-            message = msprintf("attStmt map element %d key is not valid: '%.*s'", i, cbor_string_length(key), cbor_string_handle(key));
+            message = msprintf("attStmt map element %d key is not valid: '%.*s'", i, (int)cbor_string_length(key), cbor_string_handle(key));
             json_array_append_new(j_error, json_string(message));
             o_free(message);
             break;
@@ -2425,7 +2425,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
             ret = G_ERROR_PARAM;
           }
         } else {
-          message = msprintf("Format '%.*s' is not supported by Glewlwyd WebAuthn scheme", fmt_len, fmt);
+          message = msprintf("Format '%.*s' is not supported by Glewlwyd WebAuthn scheme", (int)fmt_len, fmt);
           json_array_append_new(j_error, json_string(message));
           o_free(message);
           ret = G_ERROR_PARAM;
