@@ -108,11 +108,11 @@ static int check_code(struct config_module * config, json_t * j_param, const cha
   if ((code_hash = generate_hash(config->hash_algorithm, code)) != NULL) {
     time(&now);
     if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-      issued_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (time_t)json_integer_value(json_object_get(j_param, "code-duration"))));
+      issued_at_clause = msprintf("> FROM_UNIXTIME(%ld)", (now - (time_t)json_integer_value(json_object_get(j_param, "code-duration"))));
     } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-      issued_at_clause = msprintf("> TO_TIMESTAMP(%u)", (now - (time_t)json_integer_value(json_object_get(j_param, "code-duration"))));
+      issued_at_clause = msprintf("> TO_TIMESTAMP(%ld)", (now - (time_t)json_integer_value(json_object_get(j_param, "code-duration"))));
     } else { // HOEL_DB_TYPE_SQLITE
-      issued_at_clause = msprintf("> %u", (now - (time_t)json_integer_value(json_object_get(j_param, "code-duration"))));
+      issued_at_clause = msprintf("> %ld", (now - (time_t)json_integer_value(json_object_get(j_param, "code-duration"))));
     }
     j_query = json_pack("{sss{sOsssssis{ssss}}}",
                         "table",

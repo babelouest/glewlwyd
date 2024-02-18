@@ -73,7 +73,7 @@ static char * format_auth_basic_user(const char * format, json_t * j_user) {
   while (o_strchr(format_offset, '{') != NULL && o_strchr(format_offset, '}') != NULL && ret == G_OK) {
     // Append until '{'
     if (o_strchr(format_offset, '{') != format_offset) {
-      result = mstrcatf(result, "%.*s", (o_strchr(format_offset, '{') - format_offset), format_offset);
+      result = mstrcatf(result, "%.*s", (int)(o_strchr(format_offset, '{') - format_offset), format_offset);
     }
     // extract string between '{' and '}'
     sub = o_strndup(o_strchr(format_offset, '{')+1, (size_t)(o_strchr(format_offset, '}')-o_strchr(format_offset, '{')-1));
@@ -434,7 +434,7 @@ int user_auth_scheme_module_validate(struct config_module * config, const struct
           ret = G_OK;
         } else {
           if (response.status != 401 && response.status != 403) {
-            y_log_message(Y_LOG_LEVEL_WARNING, "user_auth_scheme_module_validate http - Error connecting to webservice %s, response status is %d", request.http_url, response.status);
+            y_log_message(Y_LOG_LEVEL_WARNING, "user_auth_scheme_module_validate http - Error connecting to webservice %s, response status is %ld", request.http_url, response.status);
           }
           ret = G_ERROR_UNAUTHORIZED;
         }

@@ -621,14 +621,14 @@ json_t * get_user_profile(struct config_elements * config, const char * username
                     if (user_middleware_module != NULL && user_middleware_module->enabled) {
                       if ((res = is_user_middleware_backend_api_run_enabled(config, user_middleware_module->name)) == G_OK) {
                         if ((result = user_middleware_module->module->user_middleware_module_get_profile(config->config_m, username, json_object_get(j_profile, "user"), user_middleware_module->cls)) != G_OK) {
-                          y_log_message(Y_LOG_LEVEL_ERROR, "get_user_profile - Error user_middleware_module_get_profile at index %d for user %s", i, username);
+                          y_log_message(Y_LOG_LEVEL_ERROR, "get_user_profile - Error user_middleware_module_get_profile at index %zu for user %s", i, username);
                           break;
                         }
                       } else if (res != G_ERROR_NOT_FOUND) {
                         y_log_message(Y_LOG_LEVEL_ERROR, "get_user_profile - Error is_user_middleware_backend_api_run_enabled (1)");
                       }
                     } else {
-                      y_log_message(Y_LOG_LEVEL_ERROR, "get_user_profile - Error pointer_list_get_at for user_middleware module at index %d", i);
+                      y_log_message(Y_LOG_LEVEL_ERROR, "get_user_profile - Error pointer_list_get_at for user_middleware module at index %zu", i);
                     }
                   }
                   if (result == G_OK) {

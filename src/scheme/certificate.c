@@ -257,11 +257,11 @@ static int update_user_certificate_last_used_scheme_storage(struct config_module
   char * last_used_clause;
   
   if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-    last_used_clause = msprintf("FROM_UNIXTIME(%u)", time(NULL));
+    last_used_clause = msprintf("FROM_UNIXTIME(%ld)", time(NULL));
   } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-    last_used_clause = msprintf("TO_TIMESTAMP(%u)", time(NULL));
+    last_used_clause = msprintf("TO_TIMESTAMP(%ld)", time(NULL));
   } else { // HOEL_DB_TYPE_SQLITE
-    last_used_clause = msprintf("%u", time(NULL));
+    last_used_clause = msprintf("%ld", time(NULL));
   }
   j_query = json_pack("{sss{s{ss}ss}s{sOssss}}",
                       "table",

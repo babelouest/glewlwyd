@@ -46,7 +46,7 @@ json_t * get_module_type_list(struct config_elements * config) {
                                                                                                       "display_name", user_module->display_name,
                                                                                                       "description", user_module->description));
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for user module at index %d", i);
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for user module at index %zu", i);
       }
     }
     // Gathering user middleware modules
@@ -58,7 +58,7 @@ json_t * get_module_type_list(struct config_elements * config) {
                                                                                                                  "display_name", user_middleware_module->display_name,
                                                                                                                  "description", user_middleware_module->description));
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for user_middleware module at index %d", i);
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for user_middleware module at index %zu", i);
       }
     }
     // Gathering client modules
@@ -70,7 +70,7 @@ json_t * get_module_type_list(struct config_elements * config) {
                                                                                                         "display_name", client_module->display_name,
                                                                                                         "description", client_module->description));
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for client module at index %d", i);
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for client module at index %zu", i);
       }
     }
     // Gathering user auth scheme modules
@@ -82,7 +82,7 @@ json_t * get_module_type_list(struct config_elements * config) {
                                                                                                         "display_name", scheme_module->display_name,
                                                                                                         "description", scheme_module->description));
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for user auth scheme module at index %d", i);
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for user auth scheme module at index %zu", i);
       }
     }
     // Gathering plugin modules
@@ -94,7 +94,7 @@ json_t * get_module_type_list(struct config_elements * config) {
                                                                                                         "display_name", plugin_module->display_name,
                                                                                                         "description", plugin_module->description));
       } else {
-        y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for plugin module at index %d", i);
+        y_log_message(Y_LOG_LEVEL_ERROR, "get_module_type_list - Error pointer_list_get_at for plugin module at index %zu", i);
       }
     }
   } else {

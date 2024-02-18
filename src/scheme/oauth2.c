@@ -214,11 +214,11 @@ static json_t * complete_session_identify(struct config_module * config, struct 
 
   time(&now);
   if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-    expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
+    expires_at_clause = msprintf("> FROM_UNIXTIME(%ld)", (now));
   } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-    expires_at_clause = msprintf("> TO_TIMESTAMP(%u)", now);
+    expires_at_clause = msprintf("> TO_TIMESTAMP(%ld)", now);
   } else { // HOEL_DB_TYPE_SQLITE
-    expires_at_clause = msprintf("> %u", (now));
+    expires_at_clause = msprintf("> %ld", (now));
   }
   j_query = json_pack("{sss[ss]s{sss{ssss}sisO}}",
                       "table",
@@ -459,11 +459,11 @@ static json_t * add_session_identify(struct config_module * config, struct _oaut
             if (i_build_auth_url_get(&i_session) == I_OK) {
               time(&now);
               if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-                expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
+                expires_at_clause = msprintf("FROM_UNIXTIME(%ld)", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
               } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-                expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
+                expires_at_clause = msprintf("TO_TIMESTAMP(%ld)", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
               } else { // HOEL_DB_TYPE_SQLITE
-                expires_at_clause = msprintf("%u", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
+                expires_at_clause = msprintf("%ld", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
               }
               i_export = i_export_session_str(&i_session);
               j_query = json_pack("{sss{sOs{ss}sssssi}}",
@@ -534,11 +534,11 @@ static json_t * add_session_for_user(struct config_module * config, struct _oaut
 
   time(&now);
   if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-    expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
+    expires_at_clause = msprintf("> FROM_UNIXTIME(%ld)", (now));
   } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-    expires_at_clause = msprintf("> TO_TIMESTAMP(%u)", now);
+    expires_at_clause = msprintf("> TO_TIMESTAMP(%ld)", now);
   } else { // HOEL_DB_TYPE_SQLITE
-    expires_at_clause = msprintf("> %u", (now));
+    expires_at_clause = msprintf("> %ld", (now));
   }
   j_query = json_pack("{sss{si}s{sOsis{ssss}}}",
                       "table",
@@ -572,11 +572,11 @@ static json_t * add_session_for_user(struct config_module * config, struct _oaut
               if (i_build_auth_url_get(&i_session) == I_OK) {
                 time(&now);
                 if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-                  expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
+                  expires_at_clause = msprintf("FROM_UNIXTIME(%ld)", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
                 } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-                  expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
+                  expires_at_clause = msprintf("TO_TIMESTAMP(%ld)", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
                 } else { // HOEL_DB_TYPE_SQLITE
-                  expires_at_clause = msprintf("%u", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
+                  expires_at_clause = msprintf("%ld", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
                 }
                 i_export = i_export_session_str(&i_session);
                 j_query = json_pack("{sss{sOs{ss}sssssi}}",
@@ -766,11 +766,11 @@ static json_t * add_registration_for_user(struct config_module * config, struct 
                 if (res == H_OK) {
                   time(&now);
                   if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-                    expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
+                    expires_at_clause = msprintf("FROM_UNIXTIME(%ld)", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
                   } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-                    expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
+                    expires_at_clause = msprintf("TO_TIMESTAMP(%ld)", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
                   } else { // HOEL_DB_TYPE_SQLITE
-                    expires_at_clause = msprintf("%u", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
+                    expires_at_clause = msprintf("%ld", (now + (time_t)json_integer_value(json_object_get(oauth2_config->j_parameters, "session_expiration"))));
                   }
                   j_last_id = h_last_insert_id(config->conn);
                   i_export = i_export_session_str(&i_session);
@@ -878,11 +878,11 @@ static int complete_session_for_user(struct config_module * config, const char *
 
   time(&now);
   if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-    expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
+    expires_at_clause = msprintf("> FROM_UNIXTIME(%ld)", (now));
   } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-    expires_at_clause = msprintf("> TO_TIMESTAMP(%u)", now);
+    expires_at_clause = msprintf("> TO_TIMESTAMP(%ld)", now);
   } else { // HOEL_DB_TYPE_SQLITE
-    expires_at_clause = msprintf("> %u", (now));
+    expires_at_clause = msprintf("> %ld", (now));
   }
   j_query = json_pack("{sss[ss]s{sss{ssss}sisO}}",
                       "table",

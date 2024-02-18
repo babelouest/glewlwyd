@@ -3038,11 +3038,11 @@ static int serialize_pushed_request_uri(struct _oidc_config * config,
           str_authorization_details = json_dumps(j_authorization_details, JSON_COMPACT);
         }
         if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-          expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)config->request_uri_duration));
+          expires_at_clause = msprintf("FROM_UNIXTIME(%ld)", (now + (time_t)config->request_uri_duration));
         } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-          expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)config->request_uri_duration ));
+          expires_at_clause = msprintf("TO_TIMESTAMP(%ld)", (now + (time_t)config->request_uri_duration ));
         } else { // HOEL_DB_TYPE_SQLITE
-          expires_at_clause = msprintf("%u", (now + (time_t)config->request_uri_duration));
+          expires_at_clause = msprintf("%ld", (now + (time_t)config->request_uri_duration));
         }
         if (u_map_count(additional_parameters)) {
           if ((j_additional_parameters = json_object()) != NULL) {
@@ -3165,11 +3165,11 @@ static int serialize_id_token(struct _oidc_config * config,
   } else {
     if (issued_for != NULL && now > 0 && id_token_hash != NULL) {
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        issued_at_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+        issued_at_clause = msprintf("FROM_UNIXTIME(%ld)", (now));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        issued_at_clause = msprintf("TO_TIMESTAMP(%u)", (now));
+        issued_at_clause = msprintf("TO_TIMESTAMP(%ld)", (now));
       } else { // HOEL_DB_TYPE_SQLITE
-        issued_at_clause = msprintf("%u", (now));
+        issued_at_clause = msprintf("%ld", (now));
       }
       j_query = json_pack("{sss{sssisosos{ss}ssssssss*soso}}",
                           "table",
@@ -3402,11 +3402,11 @@ static int serialize_access_token(struct _oidc_config * config,
     if ((access_token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, access_token)) != NULL) {
       if (issued_for != NULL && now > 0) {
         if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-          issued_at_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+          issued_at_clause = msprintf("FROM_UNIXTIME(%ld)", (now));
         } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-          issued_at_clause = msprintf("TO_TIMESTAMP(%u)", (now));
+          issued_at_clause = msprintf("TO_TIMESTAMP(%ld)", (now));
         } else { // HOEL_DB_TYPE_SQLITE
-          issued_at_clause = msprintf("%u", (now));
+          issued_at_clause = msprintf("%ld", (now));
         }
         if (j_authorization_details != NULL) {
           str_authorization_details = json_dumps(j_authorization_details, JSON_COMPACT);
@@ -3645,25 +3645,25 @@ static json_t * serialize_refresh_token(struct _oidc_config * config,
     if (token_hash != NULL && username != NULL && issued_for != NULL && now > 0 && duration > 0) {
       json_error_t error;
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        issued_at_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+        issued_at_clause = msprintf("FROM_UNIXTIME(%ld)", (now));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        issued_at_clause = msprintf("TO_TIMESTAMP(%u)", (now));
+        issued_at_clause = msprintf("TO_TIMESTAMP(%ld)", (now));
       } else { // HOEL_DB_TYPE_SQLITE
-        issued_at_clause = msprintf("%u", (now));
+        issued_at_clause = msprintf("%ld", (now));
       }
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        last_seen_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+        last_seen_clause = msprintf("FROM_UNIXTIME(%ld)", (now));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        last_seen_clause = msprintf("TO_TIMESTAMP(%u)", (now));
+        last_seen_clause = msprintf("TO_TIMESTAMP(%ld)", (now));
       } else { // HOEL_DB_TYPE_SQLITE
-        last_seen_clause = msprintf("%u", (now));
+        last_seen_clause = msprintf("%ld", (now));
       }
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)duration));
+        expires_at_clause = msprintf("FROM_UNIXTIME(%ld)", (now + (time_t)duration));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)duration ));
+        expires_at_clause = msprintf("TO_TIMESTAMP(%ld)", (now + (time_t)duration ));
       } else { // HOEL_DB_TYPE_SQLITE
-        expires_at_clause = msprintf("%u", (now + (time_t)duration));
+        expires_at_clause = msprintf("%ld", (now + (time_t)duration));
       }
       if (j_claims_request != NULL) {
         if ((str_claims_request = json_dumps(j_claims_request, JSON_COMPACT)) == NULL) {
@@ -4162,11 +4162,11 @@ static json_t * generate_authorization_code(struct _oidc_config * config,
         }
         time(&now);
         if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-          expiration_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)config->code_duration ));
+          expiration_clause = msprintf("FROM_UNIXTIME(%ld)", (now + (time_t)config->code_duration ));
         } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-          expiration_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)config->code_duration ));
+          expiration_clause = msprintf("TO_TIMESTAMP(%ld)", (now + (time_t)config->code_duration ));
         } else { // HOEL_DB_TYPE_SQLITE
-          expiration_clause = msprintf("%u", (now + (time_t)config->code_duration ));
+          expiration_clause = msprintf("%ld", (now + (time_t)config->code_duration ));
         }
         if (j_authorization_details != NULL) {
           str_authorization_details = json_dumps(j_authorization_details, JSON_COMPACT);
@@ -4928,11 +4928,11 @@ static json_t * validate_refresh_token(struct _oidc_config * config, const char 
     if ((token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, refresh_token)) != NULL) {
       time(&now);
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
+        expires_at_clause = msprintf("> FROM_UNIXTIME(%ld)", now);
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        expires_at_clause = msprintf("> TO_TIMESTAMP(%u)", now);
+        expires_at_clause = msprintf("> TO_TIMESTAMP(%ld)", now);
       } else { // HOEL_DB_TYPE_SQLITE
-        expires_at_clause = msprintf("> %u", (now));
+        expires_at_clause = msprintf("> %ld", (now));
       }
       j_query = json_pack("{sss[ssssssssssssssss]s{sssss{ssss}}}",
                           "table",
@@ -5217,11 +5217,11 @@ static int update_refresh_token(struct _oidc_config * config, json_int_t gpor_id
   char * expires_at_clause, * last_seen_clause;
 
   if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-    last_seen_clause = msprintf("FROM_UNIXTIME(%u)", (now));
+    last_seen_clause = msprintf("FROM_UNIXTIME(%ld)", now);
   } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-    last_seen_clause = msprintf("TO_TIMESTAMP(%u)", now);
+    last_seen_clause = msprintf("TO_TIMESTAMP(%ld)", now);
   } else { // HOEL_DB_TYPE_SQLITE
-    last_seen_clause = msprintf("%u", (now));
+    last_seen_clause = msprintf("%ld", (now));
   }
   j_query = json_pack("{sss{s{ss}}s{sssI}}",
                       "table",
@@ -5238,11 +5238,11 @@ static int update_refresh_token(struct _oidc_config * config, json_int_t gpor_id
   o_free(last_seen_clause);
   if (refresh_token_duration) {
     if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-      expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)refresh_token_duration));
+      expires_at_clause = msprintf("FROM_UNIXTIME(%ld)", (now + (time_t)refresh_token_duration));
     } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-      expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)refresh_token_duration));
+      expires_at_clause = msprintf("TO_TIMESTAMP(%ld)", (now + (time_t)refresh_token_duration));
     } else { // HOEL_DB_TYPE_SQLITE
-      expires_at_clause = msprintf("%u", (now + (time_t)refresh_token_duration));
+      expires_at_clause = msprintf("%ld", (now + (time_t)refresh_token_duration));
     }
     json_object_set_new(json_object_get(j_query, "set"), "gpor_expires_at", json_pack("{ss}", "raw", expires_at_clause));
     o_free(expires_at_clause);
@@ -6453,11 +6453,11 @@ static json_t * get_token_metadata(struct _oidc_config * config, const char * to
     if ((token_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, token)) != NULL) {
       time(&now);
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
+        expires_at_clause = msprintf("> FROM_UNIXTIME(%ld)", now);
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        expires_at_clause = msprintf("> TO_TIMESTAMP(%u)", now);
+        expires_at_clause = msprintf("> TO_TIMESTAMP(%ld)", now);
       } else { // HOEL_DB_TYPE_SQLITE
-        expires_at_clause = msprintf("> %u", (now));
+        expires_at_clause = msprintf("> %ld", (now));
       }
       if ((token_type_hint == NULL || 0 == o_strcmp("refresh_token", token_type_hint)) && o_strlen(token) == OIDC_REFRESH_TOKEN_LENGTH) {
         j_query = json_pack("{sss[ssssssss]s{sssss{ssss}}}",
@@ -8064,14 +8064,14 @@ static json_t * generate_device_authorization(struct _oidc_config * config, cons
       if (device_code_hash != NULL && user_code_hash != NULL) {
         time(&now);
         if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-          expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + expiration));
-          last_check_clause = msprintf("FROM_UNIXTIME(%u)", (now - (2*expiration)));
+          expires_at_clause = msprintf("FROM_UNIXTIME(%ld)", (now + expiration));
+          last_check_clause = msprintf("FROM_UNIXTIME(%ld)", (now - (2*expiration)));
         } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-          expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + expiration));
-          last_check_clause = msprintf("TO_TIMESTAMP(%u)", (now - (2*expiration)));
+          expires_at_clause = msprintf("TO_TIMESTAMP(%ld)", (now + expiration));
+          last_check_clause = msprintf("TO_TIMESTAMP(%ld)", (now - (2*expiration)));
         } else { // HOEL_DB_TYPE_SQLITE
-          expires_at_clause = msprintf("%u", (now + expiration));
-          last_check_clause = msprintf("%u", (now - (2*expiration)));
+          expires_at_clause = msprintf("%ld", (now + expiration));
+          last_check_clause = msprintf("%ld", (now - (2*expiration)));
         }
         if (j_authorization_details != NULL) {
           str_authorization_details = json_dumps(j_authorization_details, JSON_COMPACT);
@@ -8228,11 +8228,11 @@ static json_t * validate_device_auth_user_code(struct _oidc_config * config, con
     user_code_ucase[GLEWLWYD_DEVICE_AUTH_USER_CODE_LENGTH+1] = '\0';
     time(&now);
     if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-      expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
+      expires_at_clause = msprintf("> FROM_UNIXTIME(%ld)", now);
     } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-      expires_at_clause = msprintf("> TO_TIMESTAMP(%u)", now);
+      expires_at_clause = msprintf("> TO_TIMESTAMP(%ld)", now);
     } else { // HOEL_DB_TYPE_SQLITE
-      expires_at_clause = msprintf("> %u", (now));
+      expires_at_clause = msprintf("> %ld", (now));
     }
     if ((user_code_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, user_code_ucase)) != NULL) {
       j_query = json_pack("{sss[ss]s{sss{ssss}sssi}}",
@@ -11770,11 +11770,11 @@ static int serialize_ciba_request(struct _oidc_config * config,
     if (res == H_OK) {
       time(&now);
       if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        expires_at_clause = msprintf("FROM_UNIXTIME(%u)", (now + (time_t)requested_expiry));
+        expires_at_clause = msprintf("FROM_UNIXTIME(%ld)", (now + (time_t)requested_expiry));
       } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        expires_at_clause = msprintf("TO_TIMESTAMP(%u)", (now + (time_t)requested_expiry ));
+        expires_at_clause = msprintf("TO_TIMESTAMP(%ld)", (now + (time_t)requested_expiry ));
       } else { // HOEL_DB_TYPE_SQLITE
-        expires_at_clause = msprintf("%u", (now + (time_t)requested_expiry));
+        expires_at_clause = msprintf("%ld", (now + (time_t)requested_expiry));
       }
       j_query = json_pack("{sss{ss ss ss* sO ss* ss* ss ss ss* s{ss} ss ss* ss*}}",
                           "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
@@ -12345,11 +12345,11 @@ static json_t * get_ciba_requests_for_user(struct _oidc_config * config, const c
 
   time(&now);
   if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-    expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
+    expires_at_clause = msprintf("> FROM_UNIXTIME(%ld)", now);
   } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-    expires_at_clause = msprintf("> TO_TIMESTAMP(%u)", now);
+    expires_at_clause = msprintf("> TO_TIMESTAMP(%ld)", now);
   } else { // HOEL_DB_TYPE_SQLITE
-    expires_at_clause = msprintf("> %u", (now));
+    expires_at_clause = msprintf("> %ld", (now));
   }
   j_query = json_pack("{sss[ssss]s{sssssis{ssss}si}ss}",
                       "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
@@ -12522,11 +12522,11 @@ static json_t * get_ciba_request_from_user_req_id(struct _oidc_config * config, 
   if (!o_strnullempty(user_req_id)) {
     time(&now);
     if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-      expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
+      expires_at_clause = msprintf("> FROM_UNIXTIME(%ld)", now);
     } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-      expires_at_clause = msprintf("> TO_TIMESTAMP(%u)", now);
+      expires_at_clause = msprintf("> TO_TIMESTAMP(%ld)", now);
     } else { // HOEL_DB_TYPE_SQLITE
-      expires_at_clause = msprintf("> %u", (now));
+      expires_at_clause = msprintf("> %ld", (now));
     }
     j_query = json_pack("{sss[sssssssssss]s{sssssis{ssss}si}}",
                         "table", GLEWLWYD_PLUGIN_OIDC_TABLE_CIBA,
@@ -12934,11 +12934,11 @@ static json_t * verify_pushed_authorization_request(struct _oidc_config * config
   if (!o_strnullempty(client_id)) {
     time(&now);
     if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-      expires_at_clause = msprintf("((gpop_status=0 AND gpop_expires_at> FROM_UNIXTIME(%u)) OR gpop_status=1)", (now));
+      expires_at_clause = msprintf("((gpop_status=0 AND gpop_expires_at> FROM_UNIXTIME(%ld)) OR gpop_status=1)", (now));
     } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-      expires_at_clause = msprintf("((gpop_status=0 AND gpop_expires_at> TO_TIMESTAMP(%u)) OR gpop_status=1)", now);
+      expires_at_clause = msprintf("((gpop_status=0 AND gpop_expires_at> TO_TIMESTAMP(%ld)) OR gpop_status=1)", now);
     } else { // HOEL_DB_TYPE_SQLITE
-      expires_at_clause = msprintf("((gpop_status=0 AND gpop_expires_at> %u) OR gpop_status=1)", (now));
+      expires_at_clause = msprintf("((gpop_status=0 AND gpop_expires_at> %ld) OR gpop_status=1)", (now));
     }
     if ((request_uri_hash = config->glewlwyd_config->glewlwyd_callback_generate_hash(config->glewlwyd_config, request_uri)) != NULL) {
       j_query = json_pack("{sss[sssssssssssss]s{ss ss ss s{ss ss}}}",
@@ -13297,11 +13297,11 @@ static int disable_tokens_from_session(struct _oidc_config * config, const char 
 
   time(&now);
   if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_MARIADB) {
-    expires_at_clause = msprintf("> FROM_UNIXTIME(%u)", (now));
+    expires_at_clause = msprintf("> FROM_UNIXTIME(%ld)", (now));
   } else if (config->glewlwyd_config->glewlwyd_config->conn->type==HOEL_DB_TYPE_PGSQL) {
-    expires_at_clause = msprintf("> TO_TIMESTAMP(%u)", now);
+    expires_at_clause = msprintf("> TO_TIMESTAMP(%ld)", now);
   } else { // HOEL_DB_TYPE_SQLITE
-    expires_at_clause = msprintf("> %u", (now));
+    expires_at_clause = msprintf("> %ld", (now));
   }
   sid_escaped = h_escape_string_with_quotes(config->glewlwyd_config->glewlwyd_config->conn, sid);
   name_escaped = h_escape_string_with_quotes(config->glewlwyd_config->glewlwyd_config->conn, config->name);

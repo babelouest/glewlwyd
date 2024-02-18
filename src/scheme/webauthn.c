@@ -624,11 +624,11 @@ static json_t * get_credential_from_session(struct config_module * config, json_
       mod_name_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
       username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER(%s) AND gswu_mod_name = %s)", username_escaped, mod_name_escaped);
       if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-expiration"))));
+        expiration_clause = msprintf("> FROM_UNIXTIME(%ld)", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-expiration"))));
       } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        expiration_clause = msprintf("> TO_TIMESTAMP(%u)", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-expiration"))));
+        expiration_clause = msprintf("> TO_TIMESTAMP(%ld)", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-expiration"))));
       } else { // HOEL_DB_TYPE_SQLITE
-        expiration_clause = msprintf("> %u", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-expiration"))));
+        expiration_clause = msprintf("> %ld", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-expiration"))));
       }
       j_query = json_pack("{sss[ssssss]s{sss{ssss}sis{ssss}}}",
                           "table",
@@ -820,11 +820,11 @@ static json_t * get_assertion_from_session(struct config_module * config, json_t
       mod_name_escaped = h_escape_string_with_quotes(config->conn, json_string_value(json_object_get(j_params, "mod_name")));
       username_clause = msprintf(" = (SELECT gswu_id FROM "G_TABLE_WEBAUTHN_USER" WHERE UPPER(gswu_username) = UPPER(%s) AND gswu_mod_name = %s)", username_escaped, mod_name_escaped);
       if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-        expiration_clause = msprintf("> FROM_UNIXTIME(%u)", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-assertion"))));
+        expiration_clause = msprintf("> FROM_UNIXTIME(%ld)", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-assertion"))));
       } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-        expiration_clause = msprintf("> TO_TIMESTAMP(%u)", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-assertion"))));
+        expiration_clause = msprintf("> TO_TIMESTAMP(%ld)", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-assertion"))));
       } else { // HOEL_DB_TYPE_SQLITE
-        expiration_clause = msprintf("> %u", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-assertion"))));
+        expiration_clause = msprintf("> %ld", (now - (time_t)json_integer_value(json_object_get(j_params, "credential-assertion"))));
       }
       j_query = json_pack("{sss[ssss]s{sss{ssss}sis{ssss}si}}",
                           "table",

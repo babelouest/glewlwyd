@@ -49,11 +49,11 @@ static int is_current_otp_available(struct config_module * config, json_t * j_pa
   username_escaped = h_escape_string_with_quotes(config->conn, username);
   username_clause = msprintf(" = UPPER(%s)", username_escaped);
   if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-    last_used_clause = msprintf("< (FROM_UNIXTIME(%u-gso_totp_time_step_size))", now);
+    last_used_clause = msprintf("< (FROM_UNIXTIME(%ld-gso_totp_time_step_size))", now);
   } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-    last_used_clause = msprintf("< (TO_TIMESTAMP(%u-gso_totp_time_step_size))", now);
+    last_used_clause = msprintf("< (TO_TIMESTAMP(%ld-gso_totp_time_step_size))", now);
   } else { // HOEL_DB_TYPE_SQLITE
-    last_used_clause = msprintf("< (%u-gso_totp_time_step_size)", now);
+    last_used_clause = msprintf("< (%ld-gso_totp_time_step_size)", now);
   }
   j_query = json_pack("{sss[s]s{sOs{ssss}s{ssss}}}",
                       "table",
@@ -198,11 +198,11 @@ static int update_otp(struct config_module * config, json_t * j_params, const ch
   username_escaped = h_escape_string_with_quotes(config->conn, username);
   username_clause = msprintf(" = UPPER(%s)", username_escaped);
   if (config->conn->type==HOEL_DB_TYPE_MARIADB) {
-    last_login_clause = msprintf("FROM_UNIXTIME(%u)", (time(NULL)));
+    last_login_clause = msprintf("FROM_UNIXTIME(%ld)", (time(NULL)));
   } else if (config->conn->type==HOEL_DB_TYPE_PGSQL) {
-    last_login_clause = msprintf("TO_TIMESTAMP(%u)", (time(NULL)));
+    last_login_clause = msprintf("TO_TIMESTAMP(%ld)", (time(NULL)));
   } else { // HOEL_DB_TYPE_SQLITE
-    last_login_clause = msprintf("%u", (time(NULL)));
+    last_login_clause = msprintf("%ld", (time(NULL)));
   }
   j_query = json_pack("{sss{s{ss}}s{s{ssss}sO}}",
                       "table",
