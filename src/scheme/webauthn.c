@@ -1558,7 +1558,7 @@ static json_t * check_attestation_packed(json_t * j_params, cbor_item_t * auth_d
         if (json_object_get(j_params, "root-ca-list") != json_null() && validate_certificate_from_root(j_params, cert, x5c_array) != G_OK) {
           json_array_append_new(j_error, json_string("Unrecognized certificate authority"));
           if (gnutls_x509_crt_get_issuer_dn2(cert, &cert_issued_by) >= 0) {
-            message = msprintf("Unrecognized certificate autohority: %.*s", cert_issued_by.size, cert_issued_by.data);
+            message = msprintf("Unrecognized certificate autohority: %.*s", (int)cert_issued_by.size, cert_issued_by.data);
             y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_packed - %s", message);
             o_free(message);
             gnutls_free(cert_issued_by.data);
@@ -1914,7 +1914,7 @@ static json_t * check_attestation_fido_u2f(json_t * j_params, unsigned char * cr
       if (json_object_get(j_params, "root-ca-list") != json_null() && validate_certificate_from_root(j_params, cert, x5c) != G_OK) {
         json_array_append_new(j_error, json_string("Unrecognized certificate authority"));
         if (gnutls_x509_crt_get_issuer_dn2(cert, &cert_issued_by) >= 0) {
-          message = msprintf("Unrecognized certificate autohority: %.*s", cert_issued_by.size, cert_issued_by.data);
+          message = msprintf("Unrecognized certificate autohority: %.*s", (int)cert_issued_by.size, cert_issued_by.data);
           y_log_message(Y_LOG_LEVEL_DEBUG, "check_attestation_fido_u2f - %s", message);
           o_free(message);
           gnutls_free(cert_issued_by.data);
