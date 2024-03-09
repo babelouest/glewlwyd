@@ -441,7 +441,7 @@ START_TEST(test_glwd_geolocation_oidc_ok)
     }
     json_decref(j_response);
     ulfius_clean_response(&resp);
-    usleep(50000);
+    usleep(100000);
   } while (counter--);
   ck_assert_int_ne(0, counter);
   ulfius_clean_request(&admin_req_copy);
