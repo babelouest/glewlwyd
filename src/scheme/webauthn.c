@@ -2025,7 +2025,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
   unsigned char * client_data = NULL, * challenge_b64 = NULL, * att_obj = NULL, * cbor_bs_handle = NULL, rpid_hash[32], * fmt = NULL, * credential_id_b64 = NULL, * cbor_auth_data, * cred_pub_key, cert_x[256], cert_y[256], pubkey_export[1024];
   char * challenge_hash = NULL, * message = NULL;
   const char * rpid = NULL;
-  size_t client_data_len = 0, challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, cert_x_len = 0, cert_y_len = 0, pubkey_export_len = 1024, index = 0, cbor_bs_handle_len, rpid_len;
+  size_t challenge_b64_len = 0, att_obj_len = 0, rpid_hash_len = 32, fmt_len = 0, credential_id_len = 0, credential_id_b64_len, cbor_auth_data_len, cred_pub_key_len, cert_x_len = 0, cert_y_len = 0, pubkey_export_len = 1024, index = 0, cbor_bs_handle_len, rpid_len;
   uint32_t counter = 0;
   int ret = G_OK, res, status, has_x = 0, has_y = 0, key_type_valid = 0, key_alg_valid = 0;
   unsigned int i;
@@ -2034,6 +2034,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
   gnutls_pubkey_t g_key = NULL;
   gnutls_datum_t g_x, g_y;
   gnutls_ecc_curve_t curve = GNUTLS_ECC_CURVE_INVALID;
+  struct _o_datum client_dat = {0, NULL};
 
   if (j_scheme_data != NULL) {
     j_error = json_array();
@@ -2049,21 +2050,19 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
           ret = G_ERROR_PARAM;
           break;
         }
-        if ((client_data = o_malloc(json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON"))+4)) == NULL) {
-          y_log_message(Y_LOG_LEVEL_ERROR, "register_new_attestation - Error allocating resources for client_data");
-          json_array_append_new(j_error, json_string("Internal error"));
-          ret = G_ERROR_MEMORY;
-          break;
-        }
-        if (!o_base64_decode((const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), client_data, &client_data_len)) {
-          y_log_message(Y_LOG_LEVEL_DEBUG, "register_new_attestation - Error o_base64_decode client_data");
+        if (!o_base64_decode_alloc((const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), &client_dat)) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "register_new_attestation - Error o_base64_decode_alloc");
           json_array_append_new(j_error, json_string("Internal error"));
           ret = G_ERROR_PARAM;
           break;
         }
-        client_data[client_data_len] = '\0';
-        j_client_data = json_loads((const char *)client_data, JSON_DECODE_ANY, NULL);
-        if (j_client_data == NULL) {
+        if ((client_data = (unsigned char *)o_strndup((const char *)client_dat.data, client_dat.size)) == NULL) {
+          y_log_message(Y_LOG_LEVEL_DEBUG, "register_new_attestation - Error o_strdup");
+          json_array_append_new(j_error, json_string("Internal error"));
+          ret = G_ERROR_PARAM;
+          break;
+        }
+        if ((j_client_data = json_loadb((const char *)client_dat.data, client_dat.size, JSON_DECODE_ANY, NULL)) == NULL) {
           json_array_append_new(j_error, json_string("Error parsing JSON client data"));
           ret = G_ERROR_PARAM;
           break;
@@ -2491,6 +2490,7 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
       o_free(challenge_hash);
       o_free(att_obj);
       o_free(credential_id_b64);
+      o_free(client_dat.data);
       gnutls_pubkey_deinit(g_key);
       if (item != NULL) {
         cbor_decref(&item);
@@ -2513,15 +2513,15 @@ static json_t * register_new_attestation(struct config_module * config, json_t *
  */
 static int check_assertion(struct config_module * config, json_t * j_params, const char * username, json_t * j_scheme_data, json_t * j_assertion) {
   int ret, res;
-  unsigned char * client_data = NULL, * challenge_b64 = NULL, * auth_data = NULL, rpid_hash[32] = {0}, * flags, cdata_hash[32] = {0},
+  unsigned char * challenge_b64 = NULL, * auth_data = NULL, rpid_hash[32] = {0}, * flags, cdata_hash[32] = {0},
                   data_signed[128] = {0}, * counter;
   char * challenge_hash = NULL;
   const char * rpid = NULL;
-  size_t client_data_len, challenge_b64_len, auth_data_len, rpid_hash_len = 32, cdata_hash_len = 32, counter_value = 0, rpid_len = 0;
+  size_t challenge_b64_len, auth_data_len, rpid_hash_len = 32, cdata_hash_len = 32, counter_value = 0, rpid_len = 0;
   json_t * j_client_data = NULL, * j_credential = NULL, * j_query;
   gnutls_pubkey_t pubkey = NULL;
   gnutls_datum_t pubkey_dat, data, signature;
-  struct _o_datum dat = {0, NULL};
+  struct _o_datum dat = {0, NULL}, client_dat = {0, NULL};
 
   if (j_scheme_data != NULL && j_assertion != NULL) {
     do {
@@ -2543,20 +2543,14 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         ret = G_ERROR_PARAM;
         break;
       }
-      if ((client_data = o_malloc(json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON"))+2)) == NULL) {
-        y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error allocating resources for client_data");
-        ret = G_ERROR_MEMORY;
-        break;
-      }
-      if (!o_base64_decode((const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), client_data, &client_data_len)) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error o_base64_decode client_data");
+      if (!o_base64_decode_alloc((const unsigned char *)json_string_value(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "clientDataJSON")), &client_dat)) {
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error o_base64_decode_alloc client_dat");
         ret = G_ERROR_PARAM;
         break;
       }
-      client_data[client_data_len] = '\0';
-      j_client_data = json_loads((const char *)client_data, JSON_DECODE_ANY, NULL);
+      j_client_data = json_loadb((const char *)client_dat.data, client_dat.size, JSON_DECODE_ANY, NULL);
       if (j_client_data == NULL) {
-        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error parsing JSON client data %s", client_data);
+        y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error parsing JSON client data");
         ret = G_ERROR_PARAM;
         break;
       }
@@ -2612,7 +2606,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         ret = G_ERROR_PARAM;
         break;
       }
-      if ((auth_data = o_malloc(json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "authenticatorData"))+2)) == NULL) {
+      if ((auth_data = o_malloc(json_string_length(json_object_get(json_object_get(json_object_get(j_scheme_data, "credential"), "response"), "authenticatorData"))+4)) == NULL) {
         y_log_message(Y_LOG_LEVEL_DEBUG, "check_assertion - Error allocating resources for auth_data");
         ret = G_ERROR_PARAM;
         break;
@@ -2666,7 +2660,7 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       //y_log_message(Y_LOG_LEVEL_DEBUG, "authData.Extension: %d", !!(*flags & FLAG_ED));
 
       // Step 15
-      if (!generate_digest_raw(digest_SHA256, client_data, client_data_len, cdata_hash, &cdata_hash_len)) {
+      if (!generate_digest_raw(digest_SHA256, client_dat.data, client_dat.size, cdata_hash, &cdata_hash_len)) {
         y_log_message(Y_LOG_LEVEL_ERROR, "check_assertion - Error generate_digest_raw for cdata_hash");
         ret = G_ERROR_PARAM;
         break;
@@ -2722,7 +2716,9 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
       }
     } while (0); // This is not a loop, but a structure where you can easily cancel the rest of the process with breaks
     o_free(dat.data);
+    o_free(client_dat.data);
     dat.data = NULL;
+    client_dat.data = NULL;
 
     if (ret == G_OK) {
       // Update assertion
@@ -2803,7 +2799,6 @@ static int check_assertion(struct config_module * config, json_t * j_params, con
         ret = G_ERROR_DB;
       }
     }
-    o_free(client_data);
     o_free(challenge_b64);
     o_free(challenge_hash);
     o_free(auth_data);
