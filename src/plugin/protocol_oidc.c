@@ -1633,6 +1633,7 @@ static json_t * oidc_verify_dpop_proof(struct _oidc_config * config, const struc
   unsigned char ath[32] = {0}, ath_enc[64] = {0};
   size_t ath_len = 32, ath_enc_len = 64;
   gnutls_datum_t hash_data;
+  rhn_int_t i_value;
 
   if ((dpop_header = u_map_get_case(request->map_header, "DPoP")) != NULL && u_map_count_keys_case(request->map_header, "DPoP") == 1) {
     if (r_jwt_init(&dpop_jwt) == RHN_OK) {
@@ -1693,7 +1694,8 @@ static json_t * oidc_verify_dpop_proof(struct _oidc_config * config, const struc
               break;
             }
             time(&now);
-            if (((time_t)r_jwt_get_claim_int_value(dpop_jwt, "iat")-config->dpop_max_iat_gap) > now || ((time_t)r_jwt_get_claim_int_value(dpop_jwt, "iat"))+(config->dpop_max_iat) < now) {
+            i_value = r_jwt_get_claim_int_value(dpop_jwt, "iat");
+            if (((rhn_int_t)((time_t)i_value)) != i_value || ((time_t)i_value-config->dpop_max_iat_gap) > now || ((time_t)i_value)+(config->dpop_max_iat) < now) {
               y_log_message(Y_LOG_LEVEL_DEBUG, "oidc_verify_dpop_proof - Invalid iat");
               j_return = json_pack("{si}", "result", G_ERROR_PARAM);
               break;
@@ -7838,7 +7840,7 @@ static char * build_jwt_auth_response(struct _oidc_config * config, json_t * j_c
       if (r_jwt_set_properties(jwt, RHN_OPT_SIG_ALG, alg,
                                     RHN_OPT_CLAIM_JSON_T_VALUE, "iss", json_object_get(config->j_params, "iss"),
                                     RHN_OPT_CLAIM_JSON_T_VALUE, "aud", json_object_get(j_client, "client_id"),
-                                    RHN_OPT_CLAIM_RHN_INT_VALUE, "exp", ((rhn_int_t)now)+config->access_token_duration,
+                                    RHN_OPT_CLAIM_RHN_INT_VALUE, "exp", ((rhn_int_t)now)+(rhn_int_t)config->access_token_duration,
                                     RHN_OPT_NONE) == RHN_OK) {
         keys = u_map_enum_keys(map_query);
         for (i=0; keys[i]!=NULL; i++) {
