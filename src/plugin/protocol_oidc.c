@@ -5626,7 +5626,7 @@ static int decrypt_request_token(struct _oidc_config * config, jwt_t * jwt) {
   if (r_jwt_get_type(jwt) == R_JWT_TYPE_SIGN) {
     // Not encrypted
     ret = G_OK;
-  } else if (r_jwt_get_type(jwt) == R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT) {
+  } else if (r_jwt_get_type(jwt) == R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT && 0 != o_strcmp("DEF", r_jwt_get_enc_header_str_value(jwt, "zip"))) {
     if (json_object_get(config->j_params, "request-parameter-allow-encrypted") == json_true()) {
       alg = r_jwt_get_enc_alg(jwt);
       enc = r_jwt_get_enc(jwt);
