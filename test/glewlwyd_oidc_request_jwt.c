@@ -1850,6 +1850,38 @@ START_TEST(test_oidc_request_jwt_nested_rsa_response_ok)
 }
 END_TEST
 
+START_TEST(test_oidc_request_jwt_nested_rsa_invalid_zip)
+{
+  jwt_t * jwt_request = NULL;
+  char * url, * request;
+  r_jwt_init(&jwt_request);
+  
+  ck_assert_ptr_ne(jwt_request, NULL);
+  r_jwt_set_sign_alg(jwt_request, R_JWA_ALG_HS256);
+  r_jwt_set_enc_alg(jwt_request, R_JWA_ALG_RSA1_5);
+  r_jwt_set_enc(jwt_request, R_JWA_ENC_A128CBC);
+  ck_assert_int_eq(r_jwt_add_sign_key_symmetric(jwt_request, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET)), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_enc_keys_pem_der(jwt_request, R_FORMAT_PEM, NULL, 0, (unsigned char *)pubkey_2_pem, o_strlen(pubkey_2_pem)), RHN_OK);
+  r_jwt_set_header_str_value(jwt_request, "zip", "DEF");
+  r_jwt_set_claim_str_value(jwt_request, "aud", REDIRECT_URI);
+  r_jwt_set_claim_str_value(jwt_request, "response_type", RESPONSE_TYPE);
+  r_jwt_set_claim_str_value(jwt_request, "client_id", CLIENT);
+  r_jwt_set_claim_str_value(jwt_request, "redirect_uri", REDIRECT_URI);
+  r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
+  r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
+  r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
+  request = r_jwt_serialize_nested(jwt_request, R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT, NULL, 0, NULL, 0);
+  ck_assert_ptr_ne(request, NULL);
+  
+  url = msprintf(SERVER_URI "/" PLUGIN_NAME "/auth?g_continue&request=%s", request);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
+  
+  o_free(url);
+  o_free(request);
+  r_jwt_free(jwt_request);
+}
+END_TEST
+
 START_TEST(test_oidc_request_jwt_nested_rsa_response_invalid_enc_key)
 {
   jwt_t * jwt_request = NULL;
@@ -1946,6 +1978,48 @@ START_TEST(test_oidc_request_jwt_nested_hsa_response_ok)
   
   url = msprintf(SERVER_URI "/" PLUGIN_NAME "/auth?g_continue&request=%s", request);
   ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 302, NULL, NULL, "id_token="), 1);
+  
+  o_free(url);
+  o_free(request);
+  r_jwt_free(jwt_request);
+  r_jwk_free(jwk);
+}
+END_TEST
+
+START_TEST(test_oidc_request_jwt_nested_hsa_invalid_zip)
+{
+  jwt_t * jwt_request = NULL;
+  char * url, * request;
+  unsigned char key[32] = {0};
+  size_t key_len = 32;
+  gnutls_datum_t key_data;
+  jwk_t * jwk;
+  
+  r_jwt_init(&jwt_request);
+  ck_assert_ptr_ne(jwt_request, NULL);
+  r_jwt_set_sign_alg(jwt_request, R_JWA_ALG_HS256);
+  r_jwt_set_enc_alg(jwt_request, R_JWA_ALG_A128GCMKW);
+  r_jwt_set_enc(jwt_request, R_JWA_ENC_A128CBC);
+  r_jwt_add_sign_key_symmetric(jwt_request, (unsigned char *)CLIENT_SECRET, o_strlen(CLIENT_SECRET));
+  key_data.data = (unsigned char *)PLUGIN_KEY;
+  key_data.size = o_strlen(PLUGIN_KEY);
+  ck_assert_int_eq(gnutls_fingerprint(GNUTLS_DIG_SHA256, &key_data, key, &key_len), GNUTLS_E_SUCCESS);
+  ck_assert_int_eq(r_jwk_init(&jwk), RHN_OK);
+  ck_assert_int_eq(r_jwk_import_from_symmetric_key(jwk, key, key_len/2), RHN_OK);
+  ck_assert_int_eq(r_jwt_add_enc_keys(jwt_request, jwk, jwk), RHN_OK);
+  r_jwt_set_header_str_value(jwt_request, "zip", "DEF");
+  r_jwt_set_claim_str_value(jwt_request, "aud", REDIRECT_URI);
+  r_jwt_set_claim_str_value(jwt_request, "response_type", RESPONSE_TYPE);
+  r_jwt_set_claim_str_value(jwt_request, "client_id", CLIENT);
+  r_jwt_set_claim_str_value(jwt_request, "redirect_uri", REDIRECT_URI);
+  r_jwt_set_claim_str_value(jwt_request, "scope", SCOPE_LIST);
+  r_jwt_set_claim_str_value(jwt_request, "state", "xyzabcd");
+  r_jwt_set_claim_str_value(jwt_request, "nonce", "nonce1234");
+  request = r_jwt_serialize_nested(jwt_request, R_JWT_TYPE_NESTED_SIGN_THEN_ENCRYPT, NULL, 0, NULL, 0);
+  ck_assert_ptr_ne(request, NULL);
+  
+  url = msprintf(SERVER_URI "/" PLUGIN_NAME "/auth?g_continue&request=%s", request);
+  ck_assert_int_eq(run_simple_test(&user_req, "GET", url, NULL, NULL, NULL, NULL, 403, NULL, NULL, NULL), 1);
   
   o_free(url);
   o_free(request);
@@ -3157,6 +3231,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_request_jwt_add_module_request_signed_rsa);
   tcase_add_test(tc_core, test_oidc_request_jwt_add_client_pubkey);
   tcase_add_test(tc_core, test_oidc_request_jwt_nested_rsa_response_ok);
+  tcase_add_test(tc_core, test_oidc_request_jwt_nested_rsa_invalid_zip);
   tcase_add_test(tc_core, test_oidc_request_jwt_nested_rsa_response_invalid_enc_key);
   tcase_add_test(tc_core, test_oidc_request_jwt_nested_rsa_response_invalid_token);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_nested_rsa_ok);
@@ -3167,6 +3242,7 @@ static Suite *glewlwyd_suite(void)
   tcase_add_test(tc_core, test_oidc_request_jwt_add_module_request_signed_hsa);
   tcase_add_test(tc_core, test_oidc_request_jwt_add_client_pubkey);
   tcase_add_test(tc_core, test_oidc_request_jwt_nested_hsa_response_ok);
+  tcase_add_test(tc_core, test_oidc_request_jwt_nested_hsa_invalid_zip);
   tcase_add_test(tc_core, test_oidc_request_jwt_nested_hsa_response_invalid_enc_key);
   tcase_add_test(tc_core, test_oidc_request_jwt_nested_hsa_response_invalid_token);
   tcase_add_test(tc_core, test_oidc_request_token_jwt_nested_hsa_ok);
