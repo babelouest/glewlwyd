@@ -7,6 +7,7 @@
 - Fix PKCE downgrade (Thanks Pieter Philippaerts)
 - Security: Fix open redirection issue (Thanks Pieter Philippaerts) (CVE-2024-25715)
 - Disable automatic build for legacy oauth2 plugin module, this module is now deprecated
+- Plugin OIDC: Forbid JWT requests with zipped payload
 
 ## 2.7.6
 
