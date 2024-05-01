@@ -107,14 +107,14 @@ static json_t * is_client_ldap_parameters_valid(json_t * j_params, int readonly)
       if (json_object_get(j_params, "scope-match") != NULL && !json_is_array(json_object_get(j_params, "scope-match"))) {
         json_array_append_new(j_error, json_string("scope-match is optional and must be a JSON array"));
       } else if (json_object_get(j_params, "scope-match") != NULL) {
-        json_array_foreach(json_object_get(j_params, "scope-property-match-correspondence"), index, j_element) {
+        json_array_foreach(json_object_get(j_params, "scope-match"), index, j_element) {
           if (!json_is_string(json_object_get(j_element, "ldap-value"))) {
             json_array_append_new(j_error, json_string("ldap-value is mandatory and must be a string"));
           }
           if (!json_is_string(json_object_get(j_element, "scope-value"))) {
             json_array_append_new(j_error, json_string("scope-value is mandatory and must be a string"));
           }
-          if (!json_is_string(json_object_get(j_element, "match")) || 0 != o_strcmp("equals", json_string_value(json_object_get(j_element, "match"))) || 0 != o_strcmp("contains", json_string_value(json_object_get(j_element, "match"))) || 0 != o_strcmp("startswith", json_string_value(json_object_get(j_element, "match"))) || 0 != o_strcmp("endswith", json_string_value(json_object_get(j_element, "match")))) {
+          if (!json_is_string(json_object_get(j_element, "match")) || (0 != o_strcmp("equals", json_string_value(json_object_get(j_element, "match"))) && 0 != o_strcmp("contains", json_string_value(json_object_get(j_element, "match"))) && 0 != o_strcmp("startswith", json_string_value(json_object_get(j_element, "match"))) && 0 != o_strcmp("endswith", json_string_value(json_object_get(j_element, "match"))))) {
             json_array_append_new(j_error, json_string("match is mandatory and must have one of the following values: 'equals', 'contains', 'startswith', 'endswith'"));
           }
         }
@@ -912,16 +912,19 @@ static LDAPMod ** get_ldap_write_mod(json_t * j_params, json_t * j_client, int a
 
 static json_t * get_scope_from_ldap(json_t * j_params, const char * ldap_scope_value) {
   json_t * j_element = NULL;
-  const char * key = NULL, * value;
-  
-  if (json_object_get(j_params, "scope-property-match-correspondence") != NULL) {
-    json_object_foreach(json_object_get(j_params, "scope-property-match-correspondence"), key, j_element) {
-      value = json_string_value(j_element);
-      if ((0 == o_strcmp("equals", json_string_value(json_object_get(j_params, "scope-property-match"))) && 0 == o_strcmp(value, ldap_scope_value)) ||
-          (0 == o_strcmp("contains", json_string_value(json_object_get(j_params, "scope-property-match"))) && NULL != o_strstr(ldap_scope_value, value)) ||
-          (0 == o_strcmp("starts-with", json_string_value(json_object_get(j_params, "scope-property-match"))) && 0 != o_strncmp(ldap_scope_value, value, o_strlen(value))) ||
-          (0 == o_strcmp("ends-with", json_string_value(json_object_get(j_params, "scope-property-match"))) && 0 != strcmp(ldap_scope_value + o_strlen(ldap_scope_value) - o_strlen(value), value))) {
-        return json_string(key);
+  size_t index = 0;
+  const char * value, * scope, * match;
+
+  if (json_object_get(j_params, "scope-match") != NULL) {
+    json_array_foreach(json_object_get(j_params, "scope-match"), index, j_element) {
+      value = json_string_value(json_object_get(j_element, "ldap-value"));
+      scope = json_string_value(json_object_get(j_element, "scope-value"));
+      match = json_string_value(json_object_get(j_element, "match"));
+      if ((0 == o_strcmp("equals", match) && 0 == o_strcmp(value, ldap_scope_value)) ||
+          (0 == o_strcmp("contains", match) && NULL != o_strstr(ldap_scope_value, value)) ||
+          (0 == o_strcmp("starts-with", match) && 0 != o_strncmp(ldap_scope_value, value, o_strlen(value))) ||
+          (0 == o_strcmp("ends-with", match) && 0 != strcmp(ldap_scope_value + o_strlen(ldap_scope_value) - o_strlen(value), value))) {
+        return json_string(scope);
       }
     }
   }
