@@ -177,7 +177,7 @@ static json_t * is_user_ldap_parameters_valid(json_t * j_params, int readonly) {
           if (!json_is_string(json_object_get(j_element, "scope-value"))) {
             json_array_append_new(j_error, json_string("scope-value is mandatory and must be a string"));
           }
-          if (!json_is_string(json_object_get(j_element, "match")) || 0 != o_strcmp("equals", json_string_value(json_object_get(j_element, "match"))) || 0 != o_strcmp("contains", json_string_value(json_object_get(j_element, "match"))) || 0 != o_strcmp("startswith", json_string_value(json_object_get(j_element, "match"))) || 0 != o_strcmp("endswith", json_string_value(json_object_get(j_element, "match")))) {
+          if (!json_is_string(json_object_get(j_element, "match")) || (0 != o_strcmp("equals", json_string_value(json_object_get(j_element, "match"))) && 0 != o_strcmp("contains", json_string_value(json_object_get(j_element, "match"))) && 0 != o_strcmp("startswith", json_string_value(json_object_get(j_element, "match"))) && 0 != o_strcmp("endswith", json_string_value(json_object_get(j_element, "match"))))) {
             json_array_append_new(j_error, json_string("match is mandatory and must have one of the following values: 'equals', 'contains', 'startswith', 'endswith'"));
           }
         }
