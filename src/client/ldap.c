@@ -923,7 +923,7 @@ static json_t * get_scope_from_ldap(json_t * j_params, const char * ldap_scope_v
       if ((0 == o_strcmp("equals", match) && 0 == o_strcmp(value, ldap_scope_value)) ||
           (0 == o_strcmp("contains", match) && NULL != o_strstr(ldap_scope_value, value)) ||
           (0 == o_strcmp("starts-with", match) && 0 != o_strncmp(ldap_scope_value, value, o_strlen(value))) ||
-          (0 == o_strcmp("ends-with", match) && 0 != strcmp(ldap_scope_value + o_strlen(ldap_scope_value) - o_strlen(value), value))) {
+          (0 == o_strcmp("ends-with", match) && 0 != o_strcmp(ldap_scope_value + o_strlen(ldap_scope_value) - o_strlen(value), value))) {
         return json_string(scope);
       }
     }
