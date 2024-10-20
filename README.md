@@ -1,10 +1,10 @@
 # Glewlwyd SSO server
 
-![C/C++ CI](https://github.com/babelouest/glewlwyd/workflows/C/C++%20CI/badge.svg)
-![CodeQL](https://github.com/babelouest/glewlwyd/workflows/CodeQL/badge.svg)
-[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3475/badge)](https://bestpractices.coreinfrastructure.org/projects/3475)
+## NOTICE: This project is no longer being maintained. ⚠️
 
-## Disclaimer
+This project is now closed for me, I have no time nor motivation to maintain it, so I prefer closing this repository.
+
+## Project
 
 Glewlwyd is mostly developped by myself on my free time, with gracious help from users.
 
